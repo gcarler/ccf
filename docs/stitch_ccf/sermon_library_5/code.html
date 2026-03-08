@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Biblioteca de Prédicas Premium</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary-glow": "#3b82f6",
+                        "electric-blue": "#00d2ff",
+                        "deep-indigo": "#0a0c1a",
+                        "surface-indigo": "#161b33",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        :root {
+            --bg-deep: #05060b;
+            --accent-glow: rgba(59, 130, 246, 0.5);
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-deep);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .frosted-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .play-glow {
+            box-shadow: 0 0 20px 2px var(--accent-glow);
+        }
+        .series-card-gradient {
+            background: linear-gradient(to top, rgba(10, 12, 26, 0.95) 0%, rgba(10, 12, 26, 0) 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-deep-indigo text-slate-100 font-display">
+<div class="relative flex min-h-screen w-full flex-col bg-deep-indigo max-w-md mx-auto shadow-2xl overflow-hidden border-x border-white/5">
+<div class="h-12 w-full"></div>
+<div class="flex items-center px-6 py-2 justify-between sticky top-0 z-30 bg-deep-indigo/80 backdrop-blur-md">
+<div class="flex size-10 shrink-0 items-center justify-start">
+<span class="material-symbols-outlined text-2xl">chevron_left</span>
+</div>
+<h2 class="text-white text-base font-bold tracking-tight">Biblioteca de Prédicas</h2>
+<div class="flex w-10 items-center justify-end">
+<span class="material-symbols-outlined text-2xl opacity-70">notifications_none</span>
+</div>
+</div>
+<div class="px-6 py-4 sticky top-[56px] z-20">
+<div class="frosted-glass flex items-center h-12 w-full rounded-2xl px-4 transition-all focus-within:border-electric-blue/50">
+<span class="material-symbols-outlined text-xl text-white/40">search</span>
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-sm placeholder:text-white/30" placeholder="Buscar prédicas..."/>
+<span class="material-symbols-outlined text-xl text-white/40">tune</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto no-scrollbar pb-32">
+<div class="mt-2 mb-8">
+<div class="px-6 flex items-center justify-between mb-4">
+<h3 class="text-white text-lg font-extrabold tracking-tight">Series Destacadas</h3>
+<span class="text-electric-blue text-xs font-bold tracking-widest uppercase">Ver Todas</span>
+</div>
+<div class="flex gap-4 overflow-x-auto no-scrollbar px-6">
+<div class="relative flex-none w-[280px] h-[380px] rounded-[2rem] overflow-hidden group">
+<img alt="Serie" class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC96e7jM0Y8T8a4Bb4Okm4XshcPmEXz6KX6thDhdoPK7NdsiZ7C9BaxC0nHPVLN1f25qYpGmcLiExo-6wKhSiaxGSPFD685B-ndjvffhiNMjG2mh9kMiIYuPV-z9-qxXwO_r8BkVxGAdllorhb9_SwdfKO8YSOLn6EMdo_6mNHGX0M8wrvh9e3wL1jDBt_xqw7OqTy3W3dVncnwfosyQ1IiW5t2nUQW5yZFB4HjbU0VAOorAcbTE_SowjAE-Td2jQdFBAyge4Ki8lU"/>
+<div class="absolute inset-0 series-card-gradient"></div>
+<div class="absolute bottom-0 left-0 p-6 w-full">
+<span class="text-[10px] font-bold text-electric-blue uppercase tracking-widest mb-1 block">Nueva Serie</span>
+<h4 class="text-2xl font-black text-white leading-none">Venciendo<br/>Gigantes</h4>
+<p class="text-xs text-white/60 mt-2 font-medium">8 Episodios • Pastor Marcos Johnson</p>
+</div>
+</div>
+<div class="relative flex-none w-[280px] h-[380px] rounded-[2rem] overflow-hidden group">
+<img alt="Serie" class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAu1IDCppDYbROKXcPGwoynMAJVqcYreVBL_an5mp519lLPkeUM2DrtqjGH6NBzk_LDUMGohq_vKx2dH-fM6ETuMCRuRYnYDG1JaCzRdwUBA5FuHT1SKrNk2Xc9z3m4IDIlFsHcBajqYpGxNoAiKLGf81F3nbEeFd9fm-7NVy0dFareoMGKb6n9fs-5o3vLTNaJr4cm38FKHix9q27np4yom5D7h9PyV892E8ZKQTaXTQWUOap79Tr-C8dShguSP2JQVyloKW-DMLg"/>
+<div class="absolute inset-0 series-card-gradient"></div>
+<div class="absolute bottom-0 left-0 p-6 w-full">
+<span class="text-[10px] font-bold text-electric-blue uppercase tracking-widest mb-1 block">Popular</span>
+<h4 class="text-2xl font-black text-white leading-none">Caminando<br/>en Fe</h4>
+<p class="text-xs text-white/60 mt-2 font-medium">12 Episodios • Dra. Sarah Williams</p>
+</div>
+</div>
+</div>
+</div>
+<div class="flex gap-3 px-6 mb-8 overflow-x-auto no-scrollbar">
+<button class="flex h-10 shrink-0 items-center justify-center rounded-xl bg-electric-blue text-deep-indigo px-6 transition-all font-bold text-xs uppercase tracking-wider">
+                    Todas
+                </button>
+<button class="flex h-10 shrink-0 items-center justify-center rounded-xl frosted-glass text-white/80 px-5 font-bold text-xs uppercase tracking-wider">
+                    Series
+                </button>
+<button class="flex h-10 shrink-0 items-center justify-center rounded-xl frosted-glass text-white/80 px-5 font-bold text-xs uppercase tracking-wider">
+                    Predicadores
+                </button>
+<button class="flex h-10 shrink-0 items-center justify-center rounded-xl frosted-glass text-white/80 px-5 font-bold text-xs uppercase tracking-wider">
+                    Temas
+                </button>
+</div>
+<div class="px-6 space-y-6">
+<div class="flex items-center justify-between mb-2">
+<h3 class="text-white text-lg font-extrabold tracking-tight">Recientes</h3>
+</div>
+<div class="group relative bg-surface-indigo/40 rounded-3xl overflow-hidden border border-white/5 p-3">
+<div class="relative aspect-video rounded-2xl overflow-hidden">
+<img alt="Thumbnail" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCT5VDYe1ST6tpqTyOiOr6oPjZF5mkm2q16qgDa8VqSDoKKBm1XDax3S_pXC3UnYUWaoTOo0LnFkGlipxj6sVeDlfdlJvMuoHy9ddfFi4nx_4K_xVgrDcI0X5P7km6xyRL8DhPmMZOg45k8308Uol0Ho0fTQQU4CfJWeQpckexyfrVvQeIjDU_LXmukLciX5kW-W3giQdfNLNY4q8v-9Q5b3w94-cVb34lFBxSWg3CVeck8mEwv45Hq1Bhg7BTjSfkCt6BwRpLOXxk"/>
+<div class="absolute inset-0 bg-black/20"></div>
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="size-14 rounded-full bg-electric-blue text-deep-indigo flex items-center justify-center play-glow transition-transform group-active:scale-90">
+<span class="material-symbols-outlined text-3xl fill-1">play_arrow</span>
+</div>
+</div>
+<div class="absolute bottom-3 right-3 rounded-lg bg-black/60 px-2 py-1 text-[10px] font-bold text-white backdrop-blur-md">
+                            45:20
+                        </div>
+<div class="absolute bottom-0 left-0 w-full h-1 bg-white/20">
+<div class="h-full bg-electric-blue w-[65%]" style="box-shadow: 0 0 8px #00d2ff;"></div>
+</div>
+</div>
+<div class="pt-4 pb-2 px-1">
+<div class="flex justify-between items-start">
+<div>
+<span class="text-[10px] font-bold text-electric-blue uppercase tracking-[0.2em]">Cultura del Reino</span>
+<h4 class="text-lg font-bold text-white mt-1">Rompiendo Cadenas</h4>
+<p class="text-xs text-white/50 font-medium">Pastor David Chen</p>
+</div>
+<button class="p-2 rounded-xl frosted-glass text-white/60">
+<span class="material-symbols-outlined text-xl">bookmark</span>
+</button>
+</div>
+</div>
+</div>
+<div class="group relative bg-surface-indigo/40 rounded-3xl overflow-hidden border border-white/5 p-3">
+<div class="relative aspect-video rounded-2xl overflow-hidden">
+<img alt="Thumbnail" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC96e7jM0Y8T8a4Bb4Okm4XshcPmEXz6KX6thDhdoPK7NdsiZ7C9BaxC0nHPVLN1f25qYpGmcLiExo-6wKhSiaxGSPFD685B-ndjvffhiNMjG2mh9kMiIYuPV-z9-qxXwO_r8BkVxGAdllorhb9_SwdfKO8YSOLn6EMdo_6mNHGX0M8wrvh9e3wL1jDBt_xqw7OqTy3W3dVncnwfosyQ1IiW5t2nUQW5yZFB4HjbU0VAOorAcbTE_SowjAE-Td2jQdFBAyge4Ki8lU"/>
+<div class="absolute inset-0 bg-black/20"></div>
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="size-14 rounded-full bg-white/20 text-white flex items-center justify-center backdrop-blur-sm transition-all hover:bg-electric-blue hover:text-deep-indigo hover:play-glow">
+<span class="material-symbols-outlined text-3xl fill-1">play_arrow</span>
+</div>
+</div>
+<div class="absolute bottom-3 right-3 rounded-lg bg-black/60 px-2 py-1 text-[10px] font-bold text-white backdrop-blur-md">
+                            38:15
+                        </div>
+</div>
+<div class="pt-4 pb-2 px-1">
+<div class="flex justify-between items-start">
+<div>
+<span class="text-[10px] font-bold text-electric-blue uppercase tracking-[0.2em]">Vida Victoriosa</span>
+<h4 class="text-lg font-bold text-white mt-1">Nuevos Comienzos</h4>
+<p class="text-xs text-white/50 font-medium">Evang. Ricardo Gomez</p>
+</div>
+<button class="p-2 rounded-xl frosted-glass text-white/60">
+<span class="material-symbols-outlined text-xl">bookmark</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="fixed bottom-0 left-1/2 -translate-x-1/2 flex w-full max-w-md items-center border-t border-white/5 bg-deep-indigo/95 px-8 pb-8 pt-3 backdrop-blur-xl z-50">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-white/40" href="#">
+<span class="material-symbols-outlined text-2xl">home</span>
+<p class="text-[9px] font-bold uppercase tracking-widest">Inicio</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-electric-blue" href="#">
+<span class="material-symbols-outlined text-2xl fill-1">video_library</span>
+<p class="text-[9px] font-bold uppercase tracking-widest">Prédicas</p>
+</a>
+<div class="flex flex-1 flex-col items-center justify-center -mt-8">
+<div class="size-14 rounded-2xl bg-gradient-to-br from-electric-blue to-blue-600 flex items-center justify-center shadow-[0_8px_20px_-4px_rgba(0,210,255,0.5)]">
+<span class="material-symbols-outlined text-deep-indigo text-3xl font-bold">add</span>
+</div>
+</div>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-white/40" href="#">
+<span class="material-symbols-outlined text-2xl">favorite</span>
+<p class="text-[9px] font-bold uppercase tracking-widest">Ofrendar</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-white/40" href="#">
+<span class="material-symbols-outlined text-2xl">person</span>
+<p class="text-[9px] font-bold uppercase tracking-widest">Perfil</p>
+</a>
+</div>
+</div>
+
+</body></html>

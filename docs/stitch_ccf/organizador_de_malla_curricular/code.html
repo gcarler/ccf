@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Organizador de Malla Curricular</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4242f0",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101022",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-gradient-to-br from-white to-primary/5 min-h-screen text-slate-900 font-display">
+<!-- Header / Top Bar -->
+<header class="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-4 pt-12 pb-4">
+<div class="flex items-center justify-between">
+<button class="w-10 h-10 flex items-center justify-start text-slate-900">
+<span class="material-symbols-outlined text-2xl">arrow_back_ios</span>
+</button>
+<h1 class="text-xl font-extrabold tracking-tight text-slate-900">Malla Curricular</h1>
+<button class="text-primary font-semibold text-sm hover:opacity-80 transition-opacity">
+                Editar Orden
+            </button>
+</div>
+</header>
+<main class="pb-24">
+<!-- Semester Navigation -->
+<div class="flex overflow-x-auto no-scrollbar px-4 gap-4 py-6">
+<a class="flex-none px-6 py-2.5 rounded-full bg-primary text-white font-bold text-sm shadow-lg shadow-primary/30" href="#">
+                Semestre 1
+            </a>
+<a class="flex-none px-6 py-2.5 rounded-full bg-white text-slate-500 font-semibold text-sm border border-slate-200" href="#">
+                Semestre 2
+            </a>
+<a class="flex-none px-6 py-2.5 rounded-full bg-white text-slate-500 font-semibold text-sm border border-slate-200" href="#">
+                Semestre 3
+            </a>
+<a class="flex-none px-6 py-2.5 rounded-full bg-white text-slate-500 font-semibold text-sm border border-slate-200" href="#">
+                Semestre 4
+            </a>
+</div>
+<!-- Section Title & Drag Hint -->
+<div class="px-6 mb-4 flex items-center justify-between">
+<h2 class="text-2xl font-black text-slate-900 tracking-tight">Semestre 1</h2>
+<span class="text-xs font-medium text-slate-400 uppercase tracking-widest">4 Materias</span>
+</div>
+<!-- Course List (Sequential / Draggable UI) -->
+<div class="px-4 space-y-4">
+<!-- Course Card 1 -->
+<div class="glass-card rounded-xl p-5 shadow-sm flex items-center gap-4 group active:scale-[0.98] transition-all">
+<div class="text-slate-300 cursor-grab active:cursor-grabbing">
+<span class="material-symbols-outlined">drag_indicator</span>
+</div>
+<div class="flex-1">
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider mb-2">
+<span class="material-symbols-outlined text-[12px]">verified</span>
+                        Requisitos
+                    </div>
+<h3 class="text-base font-bold text-slate-900 leading-tight">Teología Pentecostal I</h3>
+<p class="text-sm text-slate-500 mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">person</span>
+                        Dr. Ricardo Méndez
+                    </p>
+</div>
+<div class="relative w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-slate-100">
+<img alt="Bible study session" class="w-full h-full object-cover" data-alt="Modern bible study group setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7QE0H5immxEvHX7tGxpZbwd4_iPM_8BPgJIFeeekOxcSVvoW6g3pRqfdSdTloVkr8CVQ-abFpNYUPF_wIgv5RNdhk_smfNlpy2p6kZHr2nYH8HAJqOmN9s0O-ouajFqDlW5_8tROj6BCHdUER7nIkbcfxFHFjCU27Ym9y1j1J1mhkyyOht6DntBGFjssyQ-Ynl1RUJMJiZunw1UCrfEsuh2z4Y_y0rcKGjdt3aoq1sFIObuxj2ryob5mBQe7f3qB-0B5X6nn5G7M"/>
+</div>
+</div>
+<!-- Course Card 2 -->
+<div class="glass-card rounded-xl p-5 shadow-sm flex items-center gap-4 group active:scale-[0.98] transition-all">
+<div class="text-slate-300 cursor-grab">
+<span class="material-symbols-outlined">drag_indicator</span>
+</div>
+<div class="flex-1">
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-2">
+<span class="material-symbols-outlined text-[12px]">link</span>
+                        Sin Requisitos
+                    </div>
+<h3 class="text-base font-bold text-slate-900 leading-tight">Historia del Avivamiento</h3>
+<p class="text-sm text-slate-500 mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">person</span>
+                        Mtra. Elena Gómez
+                    </p>
+</div>
+<div class="relative w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-slate-100">
+<img alt="Old historical documents" class="w-full h-full object-cover" data-alt="Historical archive documents and textures" src="https://lh3.googleusercontent.com/aida-public/AB6AXuASN1qw_fR719stQUjInX0qQdl0ONk933tbP2oK8W70hYmJmUQaadytOuvi6gT2LC9GB_txPf5SZO9h9AiJm_q2wcRNetPLy5px9PngJk2v97BN4scSLLvljjrn1UydrDpfEQiwUjRyVdKpJLxGmpHy2ktolKpy5L7sutWHj67hnGbULY1fe2MAX0xPYAzkLNfIPs6g7X6yjIJSdz_mEEWEdNYp_AUTTtvgD6onfXU60GHjs_-5FSOgCqVr6HBF4cEPdELKKQycOdA"/>
+</div>
+</div>
+<!-- Course Card 3 -->
+<div class="glass-card rounded-xl p-5 shadow-sm flex items-center gap-4 group active:scale-[0.98] transition-all">
+<div class="text-slate-300 cursor-grab">
+<span class="material-symbols-outlined">drag_indicator</span>
+</div>
+<div class="flex-1">
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider mb-2">
+<span class="material-symbols-outlined text-[12px]">verified</span>
+                        Requisitos
+                    </div>
+<h3 class="text-base font-bold text-slate-900 leading-tight">Hermenéutica Bíblica</h3>
+<p class="text-sm text-slate-500 mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">person</span>
+                        Pbro. Samuel Torres
+                    </p>
+</div>
+<div class="relative w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-slate-100">
+<img alt="Reading desk with lamp" class="w-full h-full object-cover" data-alt="Cozy library reading desk workspace" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjnFa2xJwa3fB64fdPGPEzT24l7m6hFm9Fq5CnDhMUd6xNjm6tM7ZO6J-a0GADVNyzLD6iYTshDPOAghc5lQy6vG7jjmTMG-KLmpIaQ_9kJgzt_m0DYPFBQ7Iy0eJLdFvBInCEEI7ZqEeqxJiJKQ6eBofpbq6LC3dWXrtcS0TtTp9pnJVkKyPIiijvkhboHRgPEspNjShcRH7GuFSIpWnTJUhXwGguMjH5F3-hHXRYTLo5DcAyAJQjp7Ak4weQi5RcWoVtPOmytGA"/>
+</div>
+</div>
+<!-- Course Card 4 -->
+<div class="glass-card rounded-xl p-5 shadow-sm flex items-center gap-4 group active:scale-[0.98] transition-all border-dashed border-2 border-primary/20 bg-primary/5">
+<div class="text-primary/40">
+<span class="material-symbols-outlined">add_circle</span>
+</div>
+<div class="flex-1 text-center py-2">
+<p class="text-primary font-bold text-sm tracking-wide">Añadir Nueva Materia</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Fixed) -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 px-6 pb-8 pt-3 z-30 flex items-center justify-between">
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Inicio</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">schema</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Malla</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Estudiantes</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Ajustes</span>
+</a>
+</nav>
+<!-- Floating Action Button for Reordering (Conditional View) -->
+<div class="fixed bottom-28 right-6">
+<button class="bg-primary text-white w-14 h-14 rounded-full shadow-2xl shadow-primary/40 flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl">save</span>
+</button>
+</div>
+</body></html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Acceso al Ministerio</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1973f0",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex h-screen w-full flex-col overflow-x-hidden bg-gradient-to-b from-primary/10 to-background-light dark:from-primary/20 dark:to-background-dark">
+<!-- Header / App Bar -->
+<div class="flex items-center p-4 pb-2 justify-between">
+<div class="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center justify-start">
+<span class="material-symbols-outlined text-2xl">arrow_back</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-12">Acceso al Ministerio</h2>
+</div>
+<div class="flex flex-col flex-1 px-6 pb-8">
+<!-- Logo Section with subtle glowing effect -->
+<div class="flex flex-col items-center justify-center pt-8 pb-10">
+<div class="relative">
+<div class="absolute inset-0 bg-primary/30 blur-2xl rounded-full"></div>
+<div class="relative bg-white dark:bg-slate-800 p-6 rounded-full shadow-xl">
+<span class="material-symbols-outlined text-primary text-6xl" style="font-variation-settings: 'FILL' 1">church</span>
+</div>
+</div>
+<h1 class="text-slate-900 dark:text-slate-100 text-3xl font-bold mt-8 text-center">¡Bienvenido!</h1>
+<p class="text-slate-600 dark:text-slate-400 text-base font-normal mt-2 text-center">Inicia sesión para continuar tu formación espiritual</p>
+</div>
+<!-- Login Form -->
+<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-2">
+<label class="text-slate-700 dark:text-slate-300 text-sm font-semibold ml-1">Correo electrónico</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">mail</span>
+<input class="w-full h-14 pl-12 pr-4 rounded-xl border-0 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md text-slate-900 dark:text-slate-100 ring-1 ring-primary/10 focus:ring-2 focus:ring-primary placeholder:text-slate-400 transition-all" placeholder="ejemplo@iglesia.com" type="email"/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-slate-700 dark:text-slate-300 text-sm font-semibold ml-1">Contraseña</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">lock</span>
+<input class="w-full h-14 pl-12 pr-12 rounded-xl border-0 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md text-slate-900 dark:text-slate-100 ring-1 ring-primary/10 focus:ring-2 focus:ring-primary placeholder:text-slate-400 transition-all" placeholder="••••••••" type="password"/>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer">visibility_off</span>
+</div>
+</div>
+<div class="flex justify-end mt-1">
+<a class="text-primary text-sm font-medium hover:underline" href="#">¿Olvidaste tu contraseña?</a>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col gap-4 mt-10">
+<button class="w-full h-14 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/30 active:scale-95 transition-transform">
+                    Iniciar Sesión
+                </button>
+<div class="flex items-center gap-4 my-2">
+<div class="h-px flex-1 bg-slate-300 dark:bg-slate-700"></div>
+<span class="text-slate-500 text-xs font-bold uppercase tracking-wider">o</span>
+<div class="h-px flex-1 bg-slate-300 dark:bg-slate-700"></div>
+</div>
+<button class="w-full h-14 bg-primary/10 dark:bg-primary/20 text-primary font-bold rounded-xl active:scale-95 transition-transform border border-primary/20">
+                    Registrarse
+                </button>
+</div>
+<!-- Social/Guest Footer -->
+<div class="mt-auto pt-8 text-center">
+<p class="text-slate-500 dark:text-slate-400 text-sm">
+                    ¿Primera vez aquí? <a class="text-primary font-bold" href="#">Explora como invitado</a>
+</p>
+</div>
+</div>
+<!-- Abstract Decorative Element -->
+<div class="absolute -bottom-20 -left-20 size-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute -top-20 -right-20 size-64 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+</div>
+</body></html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#259df4",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101a22",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased overflow-hidden">
+<div class="relative flex h-screen w-full flex-col bg-gradient-to-b from-white to-primary/10 dark:from-background-dark dark:to-primary/5">
+<!-- Header -->
+<div class="flex items-center p-4 pt-6 justify-between">
+<button class="text-slate-900 dark:text-slate-100 flex size-10 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<h2 class="text-lg font-bold tracking-tight flex-1 text-center pr-10 uppercase text-slate-800 dark:text-slate-200">Realizar Ofrenda</h2>
+</div>
+<div class="flex-1 overflow-y-auto no-scrollbar pb-24">
+<!-- Category Selection (Horizontal Scroll) -->
+<div class="px-4 py-4">
+<h3 class="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Tipo de Ofrenda</h3>
+<div class="glass-card rounded-xl p-4">
+<div class="flex gap-6 overflow-x-auto no-scrollbar py-2">
+<div class="flex flex-col items-center gap-2 shrink-0 group">
+<div class="size-14 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30 text-white">
+<span class="material-symbols-outlined">savings</span>
+</div>
+<span class="text-xs font-semibold text-primary">Diezmo</span>
+</div>
+<div class="flex flex-col items-center gap-2 shrink-0 opacity-60">
+<div class="size-14 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
+<span class="material-symbols-outlined">public</span>
+</div>
+<span class="text-xs font-medium">Misiones</span>
+</div>
+<div class="flex flex-col items-center gap-2 shrink-0 opacity-60">
+<div class="size-14 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
+<span class="material-symbols-outlined">volunteer_activism</span>
+</div>
+<span class="text-xs font-medium">General</span>
+</div>
+<div class="flex flex-col items-center gap-2 shrink-0 opacity-60">
+<div class="size-14 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
+<span class="material-symbols-outlined">church</span>
+</div>
+<span class="text-xs font-medium">Templo</span>
+</div>
+<div class="flex flex-col items-center gap-2 shrink-0 opacity-60">
+<div class="size-14 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
+<span class="material-symbols-outlined">school</span>
+</div>
+<span class="text-xs font-medium">Educación</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Amount Section -->
+<div class="px-4 py-4">
+<h3 class="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Monto a Ofrendar</h3>
+<div class="relative group">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-3xl font-bold text-primary">$</span>
+<input class="w-full bg-white dark:bg-slate-900 border-none rounded-xl py-6 pl-10 pr-4 text-4xl font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-primary shadow-sm" placeholder="0.00" type="number"/>
+</div>
+<div class="grid grid-cols-3 gap-3 mt-4">
+<button class="py-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold hover:border-primary hover:text-primary transition-all">$10</button>
+<button class="py-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold hover:border-primary hover:text-primary transition-all">$50</button>
+<button class="py-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold hover:border-primary hover:text-primary transition-all">$100</button>
+</div>
+</div>
+<!-- Frequency Toggle -->
+<div class="px-4 py-4">
+<div class="flex items-center justify-between bg-slate-200/50 dark:bg-slate-800/50 p-1.5 rounded-xl">
+<button class="flex-1 py-2 text-sm font-semibold rounded-lg bg-white dark:bg-slate-700 shadow-sm text-primary">Única vez</button>
+<button class="flex-1 py-2 text-sm font-semibold rounded-lg text-slate-500 dark:text-slate-400">Mensual</button>
+</div>
+</div>
+<!-- Payment Methods -->
+<div class="px-4 py-4">
+<h3 class="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Método de Pago</h3>
+<div class="space-y-3">
+<div class="flex items-center p-4 bg-white dark:bg-slate-900 rounded-xl border-2 border-primary">
+<div class="size-10 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center mr-3">
+<span class="material-symbols-outlined text-primary">credit_card</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-bold">Visa terminada en 4242</p>
+<p class="text-xs text-slate-500">Expira 12/26</p>
+</div>
+<span class="material-symbols-outlined text-primary">check_circle</span>
+</div>
+<button class="w-full flex items-center p-4 bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-slate-500 hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined mr-3">add_circle</span>
+<span class="text-sm font-medium">Agregar nuevo método</span>
+</button>
+</div>
+</div>
+<!-- Action Button -->
+<div class="px-4 py-6">
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/40 flex items-center justify-center gap-2 transform active:scale-[0.98] transition-all">
+<span>Confirmar Ofrenda</span>
+<span class="material-symbols-outlined">favorite</span>
+</button>
+<p class="text-center text-[10px] text-slate-400 dark:text-slate-500 mt-4 leading-relaxed">
+                    "Cada uno dé como propuso en su corazón: no con tristeza, ni por necesidad, porque Dios ama al dador alegre." 2 Cor. 9:7
+                </p>
+</div>
+</div>
+<!-- Bottom Navigation -->
+<div class="absolute bottom-0 left-0 right-0 border-t border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-4 pb-6 pt-2">
+<div class="flex gap-2">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-medium leading-normal">Inicio</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">volunteer_activism</span>
+<p class="text-[10px] font-medium leading-normal">Donar</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">event</span>
+<p class="text-[10px] font-medium leading-normal">Eventos</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">person</span>
+<p class="text-[10px] font-medium leading-normal">Perfil</p>
+</a>
+</div>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4242f0",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101022",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        ::-webkit-scrollbar { display: none; }
+        body { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+        .progress-ring { transform: rotate(-90deg); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<div class="relative flex min-h-screen w-full flex-col bg-gradient-to-b from-white to-blue-50/50 dark:from-background-dark dark:to-slate-900 overflow-x-hidden">
+<!-- Header -->
+<header class="sticky top-0 z-50 glass border-b border-primary/10 flex items-center bg-white/80 dark:bg-background-dark/80 px-4 py-3 justify-between">
+<div class="text-primary flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-primary/10 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">arrow_back_ios_new</span>
+</div>
+<h1 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center">Mis Calificaciones</h1>
+<div class="flex w-10 items-center justify-end">
+<button class="flex items-center justify-center rounded-full size-10 bg-primary/10 text-primary transition-all active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<main class="flex-1 pb-24">
+<!-- Summary Card -->
+<section class="p-5">
+<div class="relative overflow-hidden rounded-xl bg-primary p-6 text-white shadow-xl shadow-primary/20">
+<div class="absolute -right-10 -top-10 size-40 rounded-full bg-white/10 blur-3xl"></div>
+<div class="absolute -left-10 -bottom-10 size-32 rounded-full bg-white/5 blur-2xl"></div>
+<div class="relative flex items-center justify-between">
+<div class="flex flex-col gap-1">
+<span class="text-xs font-medium uppercase tracking-widest text-primary/30 bg-white/90 px-2 py-1 rounded-full w-fit mb-2">ESTUDIANTE</span>
+<h2 class="text-2xl font-bold">Resumen Académico</h2>
+<p class="text-white/80 text-sm mt-1">Has mejorado un 5% este semestre.</p>
+</div>
+<!-- Progress Ring -->
+<div class="relative flex items-center justify-center">
+<svg class="progress-ring size-24">
+<circle cx="48" cy="48" fill="transparent" r="40" stroke="rgba(255,255,255,0.2)" stroke-width="8"></circle>
+<circle cx="48" cy="48" fill="transparent" r="40" stroke="white" stroke-dasharray="251.2" stroke-dashoffset="20.1" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-xl font-bold">9.2</span>
+<span class="text-[10px] opacity-70">Promedio</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Semester Filter / Tabs -->
+<div class="flex gap-2 px-5 mb-4 overflow-x-auto no-scrollbar">
+<button class="px-5 py-2 rounded-full bg-primary text-white text-sm font-semibold whitespace-nowrap">Semestre Actual</button>
+<button class="px-5 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold whitespace-nowrap">2023 - II</button>
+<button class="px-5 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold whitespace-nowrap">2023 - I</button>
+</div>
+<!-- Grades List -->
+<div class="px-5 flex flex-col gap-4">
+<h3 class="text-slate-900 dark:text-slate-100 text-lg font-bold tracking-tight">Materias Inscritas</h3>
+<!-- Grade Card 1 -->
+<div class="glass border border-primary/5 rounded-xl p-4 flex flex-col gap-4 shadow-sm">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 size-12">
+<span class="material-symbols-outlined">menu_book</span>
+</div>
+<div class="flex-1 flex flex-col">
+<p class="text-slate-900 dark:text-slate-100 text-base font-semibold leading-tight">Teología Sistemática I</p>
+<p class="text-slate-500 text-xs font-normal">Prof. Dr. Samuel Méndez</p>
+</div>
+<div class="text-right">
+<p class="text-primary text-lg font-bold">9.5<span class="text-xs text-slate-400 font-normal">/10</span></p>
+<p class="text-[10px] text-slate-400 uppercase font-medium">Calificación</p>
+</div>
+</div>
+<div class="h-[1px] bg-slate-100 dark:bg-slate-800 w-full"></div>
+<div class="flex justify-between items-center">
+<div class="flex gap-1">
+<span class="size-2 rounded-full bg-green-500"></span>
+<span class="text-[10px] text-slate-500 font-medium">Aprobado</span>
+</div>
+<a class="text-primary text-xs font-bold flex items-center gap-1 hover:underline" href="#">
+                            Ver detalle
+                            <span class="material-symbols-outlined text-sm">chevron_right</span>
+</a>
+</div>
+</div>
+<!-- Grade Card 2 -->
+<div class="glass border border-primary/5 rounded-xl p-4 flex flex-col gap-4 shadow-sm">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 size-12">
+<span class="material-symbols-outlined">history_edu</span>
+</div>
+<div class="flex-1 flex flex-col">
+<p class="text-slate-900 dark:text-slate-100 text-base font-semibold leading-tight">Historia del Pentecostalismo</p>
+<p class="text-slate-500 text-xs font-normal">Lic. Martha Ruiz</p>
+</div>
+<div class="text-right">
+<p class="text-primary text-lg font-bold">8.8<span class="text-xs text-slate-400 font-normal">/10</span></p>
+<p class="text-[10px] text-slate-400 uppercase font-medium">Calificación</p>
+</div>
+</div>
+<div class="h-[1px] bg-slate-100 dark:bg-slate-800 w-full"></div>
+<div class="flex justify-between items-center">
+<div class="flex gap-1">
+<span class="size-2 rounded-full bg-green-500"></span>
+<span class="text-[10px] text-slate-500 font-medium">Aprobado</span>
+</div>
+<a class="text-primary text-xs font-bold flex items-center gap-1 hover:underline" href="#">
+                            Ver detalle
+                            <span class="material-symbols-outlined text-sm">chevron_right</span>
+</a>
+</div>
+</div>
+<!-- Grade Card 3 -->
+<div class="glass border border-primary/5 rounded-xl p-4 flex flex-col gap-4 shadow-sm">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 size-12">
+<span class="material-symbols-outlined">translate</span>
+</div>
+<div class="flex-1 flex flex-col">
+<p class="text-slate-900 dark:text-slate-100 text-base font-semibold leading-tight">Griego Bíblico I</p>
+<p class="text-slate-500 text-xs font-normal">Mtro. Esteban Torres</p>
+</div>
+<div class="text-right">
+<p class="text-primary text-lg font-bold">9.2<span class="text-xs text-slate-400 font-normal">/10</span></p>
+<p class="text-[10px] text-slate-400 uppercase font-medium">Calificación</p>
+</div>
+</div>
+<div class="h-[1px] bg-slate-100 dark:bg-slate-800 w-full"></div>
+<div class="flex justify-between items-center">
+<div class="flex gap-1">
+<span class="size-2 rounded-full bg-green-500"></span>
+<span class="text-[10px] text-slate-500 font-medium">Aprobado</span>
+</div>
+<a class="text-primary text-xs font-bold flex items-center gap-1 hover:underline" href="#">
+                            Ver detalle
+                            <span class="material-symbols-outlined text-sm">chevron_right</span>
+</a>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 glass border-t border-primary/10 bg-white/80 dark:bg-background-dark/80 px-4 pb-6 pt-2 z-50">
+<div class="flex justify-between items-center max-w-md mx-auto">
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">Inicio</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">school</span>
+<span class="text-[10px] font-bold">Notas</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-[10px] font-medium">Horario</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">Perfil</span>
+</a>
+</div>
+</nav>
+</div>
+</body></html>

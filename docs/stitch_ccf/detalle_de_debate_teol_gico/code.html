@@ -1,0 +1,187 @@
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4242f0",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101022",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        body {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display bg-gradient-to-b from-blue-50 to-white dark:from-background-dark dark:to-background-dark min-h-screen">
+<div class="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden pb-24">
+<!-- Header -->
+<div class="sticky top-0 z-20 flex items-center bg-white/80 dark:bg-background-dark/80 backdrop-blur-md p-4 pb-4 justify-between border-b border-primary/10">
+<div class="text-slate-900 dark:text-slate-100 flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-primary/10 cursor-pointer">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center">Detalle de Debate</h2>
+<div class="flex size-10 items-center justify-end rounded-full hover:bg-primary/10 cursor-pointer">
+<span class="material-symbols-outlined text-slate-900 dark:text-slate-100">more_vert</span>
+</div>
+</div>
+<div class="px-4 py-6 space-y-6">
+<!-- Main Thread Card (Original Post) -->
+<div class="glass-card rounded-xl p-5 shadow-sm">
+<div class="flex items-center gap-3 mb-4">
+<div class="relative">
+<div class="size-12 rounded-full bg-cover bg-center border-2 border-primary/20" data-alt="Perfil del Pastor Juan Pérez en primer plano" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC1fjxh4HH0dNKFvVhrnkOtHCCxTFd1oH-c7Sl-69885QG9mw4Aq4brKUeNoZtV_JNhVfsDZKlZ6bJM4KRaOMsz6t-Gdf7z3XOapTziCEIu-MjGDr1qnoM3H4XUJVL2Wed2ai_GuLrCaXA2Lc97C0u2puhAaVEXHZ2pv9zY1roCll5I7EESpipQ2TIOCyPDKg6o7wkZjGInpLxLtfHRJAdRLeY5jPWLJ-biOJ82L87h5BnvNEHDZOGL9UD2_agVaiYtjZxGbi3VJEE");'></div>
+<div class="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-white"></div>
+</div>
+<div>
+<p class="text-slate-900 dark:text-slate-100 font-bold text-base">Pastor Juan Pérez</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs">Hace 2 horas • Teología Sistemática</p>
+</div>
+</div>
+<h1 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-snug mb-3">
+                    ¿Cómo interpretar la Gracia en el contexto Pentecostal moderno?
+                </h1>
+<p class="text-slate-700 dark:text-slate-300 text-base leading-relaxed mb-6">
+                    Hermanos, abro este hilo para discutir las implicaciones teológicas de la Gracia santificante en nuestras congregaciones hoy. ¿Hasta qué punto nuestra experiencia del Espíritu redefine la comprensión tradicional?
+                </p>
+<div class="flex items-center justify-between border-t border-primary/10 pt-4">
+<div class="flex gap-4">
+<button class="flex items-center gap-2 text-primary font-semibold text-sm">
+<span class="material-symbols-outlined text-[20px] fill-1">front_hand</span>
+                            42 Amén
+                        </button>
+<button class="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-medium text-sm">
+<span class="material-symbols-outlined text-[20px]">chat_bubble</span>
+                            12
+                        </button>
+</div>
+<button class="text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-[22px]">share</span>
+</button>
+</div>
+</div>
+<!-- Replies Section -->
+<div class="space-y-4">
+<div class="flex items-center justify-between px-1">
+<h3 class="text-slate-900 dark:text-slate-100 text-sm font-bold uppercase tracking-wider">Respuestas de la comunidad</h3>
+<button class="text-primary text-xs font-bold">Ver respuestas anteriores</button>
+</div>
+<!-- Reply 1 -->
+<div class="bg-white dark:bg-slate-800/50 rounded-lg p-4 shadow-sm border border-primary/5">
+<div class="flex items-start gap-3">
+<div class="relative">
+<div class="size-10 rounded-full bg-cover bg-center" data-alt="Avatar de Estudiante Elena M. sonriendo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuApTeQ5-NA0IT3xp0HzvibOPIYCAX-Cf8H5pv8lz1cmwtbA3jj2oWxP2k4h2N2wP2-uXk4Ay9jzZ0xc50Gjen_Tt6iog-IGt-9Q_BzRuNE6Q98HkZah3RsMhiVlmsyEt0FTfsUTe5vDgLwhe0jsDP1SX3XTyUJ0o8TvGFz3KQh653g2g9F6chWGLDinfTg-3Hu5l7BuuhfLb1hCCKsVhbgSaEVRWlvCFv8sACFKDp2ikNgmctn08keMMaNMh5BmvTjbXDw2BMgpy4A");'></div>
+<div class="absolute bottom-0 right-0 size-2.5 bg-green-500 rounded-full border-2 border-white"></div>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<p class="text-slate-900 dark:text-slate-100 font-bold text-sm">Estudiante Elena M.</p>
+<span class="text-slate-400 text-[10px]">Hace 45 min</span>
+</div>
+<p class="text-slate-700 dark:text-slate-300 text-sm leading-normal">
+                                Excelente punto, Pastor. Considero que la experiencia del Espíritu Santo es inseparable de este concepto. No es solo un estado legal, sino una fuerza transformadora viva.
+                            </p>
+<div class="flex gap-4 mt-3">
+<button class="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">thumb_up</span> Amén (15)
+                                </button>
+<button class="text-xs font-bold text-primary">Responder</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Reply 2 (Professor) -->
+<div class="bg-white dark:bg-slate-800/50 rounded-lg p-4 shadow-sm border-l-4 border-primary">
+<div class="flex items-start gap-3">
+<div class="size-10 rounded-full bg-cover bg-center" data-alt="Perfil del Profesor Roberto Silva" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBQ9hmORdKCsO-ZhElMuRmJahXWTkj38oPnmqv2ZyNOzT1qc2ZkntAPU5uowBHnbrZCIFusE-Fx2kH5aRgdJ_wgFJ-3DXobIn5QedvF6d52DLFsb4sL-t-T3cwmKqsgcvziXFNQ7SSSa-Hpe1m-r_NztPGs92C5g1xM-qPgE1Je455xv5dN6gsZsMIVMMcoV98pQlcLaaLORu8pyKhyI7AN0iGVigicErCoiED8RmMADRZxKnOVhZrtDX5aptilm_UafGnE-HAKBfg");'></div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<div class="flex items-center gap-1.5">
+<p class="text-slate-900 dark:text-slate-100 font-bold text-sm">Prof. Roberto Silva</p>
+<span class="bg-primary/10 text-primary text-[10px] px-1.5 py-0.5 rounded-full font-bold">DOCENTE</span>
+</div>
+<span class="text-slate-400 text-[10px]">Hace 12 min</span>
+</div>
+<p class="text-slate-700 dark:text-slate-300 text-sm leading-normal">
+                                Elena tiene razón. Wesley hablaba de la "gracia preveniente", que encaja perfectamente con nuestra visión neumática. Debemos profundizar en la obra del Espíritu como agente de esa gracia.
+                            </p>
+<div class="flex gap-4 mt-3">
+<button class="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">thumb_up</span> Amén (8)
+                                </button>
+<button class="text-xs font-bold text-primary">Responder</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Reply 3 -->
+<div class="bg-white dark:bg-slate-800/50 rounded-lg p-4 shadow-sm border border-primary/5">
+<div class="flex items-start gap-3">
+<div class="size-10 rounded-full bg-cover bg-center grayscale" data-alt="Avatar de Usuario Mateo Torres" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDIYOTpMfp9kEQcjgpBQdSrtwaFnQZ9Xr3_MRENYrjib1e-tUXN-VIUvqcYhCYWw_KN99h87MbqsyRNY0mMlPD9QSv0HKshMQPhmQjnIXuObEg-hKj3KzQIeNQ3-yAt4LkpsFv22JQPoMBQZLyiP-Sz0xNxOdkXNgVPuteTR1gju_Hp4h8hvGHjqfvsw5lg9We90eeGQmrd72JXlb-V_jMgJKNS6Z7XFPx3QiZiD25dVmVzNV_HdAL1QwNNP1XH0hSrtBB3wAGlpZk");'></div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<p class="text-slate-900 dark:text-slate-100 font-bold text-sm">Mateo Torres</p>
+<span class="text-slate-400 text-[10px]">Hace 5 min</span>
+</div>
+<p class="text-slate-700 dark:text-slate-300 text-sm leading-normal">
+                                ¿Podrían recomendar algún libro que trate este vínculo específico entre Gracia y Pentecostalismo?
+                            </p>
+<div class="flex gap-4 mt-3">
+<button class="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">thumb_up</span> Amén
+                                </button>
+<button class="text-xs font-bold text-primary">Responder</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Bottom Input -->
+<div class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-background-dark/95 backdrop-blur-md p-4 pb-8 border-t border-primary/10 flex items-center gap-3">
+<div class="size-9 rounded-full bg-cover bg-center shrink-0 border border-primary/10" data-alt="Tu foto de perfil de usuario" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAnzdntZVXu-UDAsLnDT-D1PhsfWPkQ7Jx0AHDDDrFSUSKzIfsyMW9IkdPBuk5JSjLFbLC7dSUGSoopfTKZWVs8Z0wNv94-pn6QLwdlFnwcugj6QSpF0sd9ESScQbgAtbd_WYRalMNcsTptpQdCFQspLEVPllPOsBnfOSO7fAGPbiXhQ1At4WGV2Rh0obr9QD_82FFpCcQO4BfbcPa4BLCxnuqR87bzbDRIAtcrzBm51x0iSi5e-mcdCChqoiG-vnc7qr8-iEc_JAI");'></div>
+<div class="flex-1 relative">
+<input class="w-full bg-primary/5 border-none rounded-full py-2.5 px-5 text-sm focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-100 placeholder:text-slate-400" placeholder="Escribe tu respuesta..." type="text"/>
+</div>
+<button class="size-10 bg-primary text-white rounded-full flex items-center justify-center shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-[20px]">send</span>
+</button>
+</div>
+</div>
+</body></html>

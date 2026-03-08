@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Reportes Financieros Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#259df4",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101a22",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body::-webkit-scrollbar {
+            display: none;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="relative flex h-screen w-full flex-col overflow-hidden bg-gradient-to-b from-[#101a22] to-[#1a3a5a]">
+<!-- Top Navigation -->
+<div class="flex items-center p-4 pt-6 justify-between">
+<div class="flex size-10 items-center justify-center rounded-full bg-slate-800/50 text-slate-100">
+<span class="material-symbols-outlined">arrow_back_ios_new</span>
+</div>
+<h2 class="text-lg font-bold tracking-tight text-slate-100">Reportes Financieros</h2>
+<div class="flex size-10 items-center justify-center rounded-full bg-slate-800/50 text-slate-100">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto px-4 pb-24">
+<!-- Hero Glassmorphism Card -->
+<div class="mt-4 p-5 rounded-xl glass-card relative overflow-hidden">
+<div class="relative z-10">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-slate-400 text-sm font-medium">Ingresos Totales</p>
+<h3 class="text-3xl font-bold mt-1 text-white">$45,280.00</h3>
+</div>
+<span class="bg-primary/20 text-primary text-xs font-bold px-2 py-1 rounded-lg">+12.5%</span>
+</div>
+<p class="text-slate-400 text-xs mt-4">Tendencia - Últimos 30 días</p>
+<!-- Simplified Line Chart Visual -->
+<div class="mt-4 h-24 flex items-end gap-1">
+<div class="flex-1 bg-primary/20 rounded-t-sm" style="height: 40%"></div>
+<div class="flex-1 bg-primary/30 rounded-t-sm" style="height: 55%"></div>
+<div class="flex-1 bg-primary/40 rounded-t-sm" style="height: 45%"></div>
+<div class="flex-1 bg-primary/50 rounded-t-sm" style="height: 70%"></div>
+<div class="flex-1 bg-primary/60 rounded-t-sm" style="height: 60%"></div>
+<div class="flex-1 bg-primary/80 rounded-t-sm" style="height: 85%"></div>
+<div class="flex-1 bg-primary rounded-t-sm" style="height: 100%"></div>
+</div>
+<div class="mt-6 flex justify-between items-center">
+<p class="text-slate-300 text-sm italic">Resumen Mensual</p>
+<button class="bg-primary hover:bg-primary/90 text-white text-xs font-bold py-2 px-4 rounded-lg transition-colors">
+                            Ver Detalle
+                        </button>
+</div>
+</div>
+<!-- Abstract glow decoration -->
+<div class="absolute -top-10 -right-10 size-32 bg-primary/20 rounded-full blur-3xl"></div>
+</div>
+<!-- Breakdown Section -->
+<div class="mt-8">
+<h4 class="text-base font-bold text-slate-100 mb-4 px-1">Desglose por Categoría</h4>
+<div class="flex items-center gap-6 p-4 rounded-xl bg-slate-800/30 border border-slate-700/50">
+<!-- Donut Chart Placeholder -->
+<div class="relative size-24 shrink-0 flex items-center justify-center">
+<svg class="size-full -rotate-90" viewbox="0 0 36 36">
+<circle cx="18" cy="18" fill="transparent" r="15.9" stroke="rgba(255,255,255,0.05)" stroke-width="3.5"></circle>
+<circle cx="18" cy="18" fill="transparent" r="15.9" stroke="#259df4" stroke-dasharray="60 100" stroke-width="3.8"></circle>
+<circle cx="18" cy="18" fill="transparent" r="15.9" stroke="#1d4e89" stroke-dasharray="25 100" stroke-dashoffset="-60" stroke-width="3.8"></circle>
+<circle cx="18" cy="18" fill="transparent" r="15.9" stroke="#0e2a47" stroke-dasharray="15 100" stroke-dashoffset="-85" stroke-width="3.8"></circle>
+</svg>
+<div class="absolute text-[10px] font-bold text-slate-300">Total</div>
+</div>
+<div class="flex-1 space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-primary"></div>
+<span class="text-xs text-slate-300">Diezmos</span>
+</div>
+<span class="text-xs font-bold text-slate-100">$27,168</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-[#1d4e89]"></div>
+<span class="text-xs text-slate-300">Misiones</span>
+</div>
+<span class="text-xs font-bold text-slate-100">$11,320</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-[#0e2a47]"></div>
+<span class="text-xs text-slate-300">Ofrendas</span>
+</div>
+<span class="text-xs font-bold text-slate-100">$6,792</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Transactions -->
+<div class="mt-8">
+<div class="flex justify-between items-center mb-4 px-1">
+<h4 class="text-base font-bold text-slate-100">Transacciones Recientes</h4>
+<span class="text-primary text-xs font-medium cursor-pointer">Ver todas</span>
+</div>
+<div class="space-y-3">
+<!-- Row 1 -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/20 border border-slate-700/30 hover:bg-slate-800/40 transition-all">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden">
+<img class="size-full object-cover" data-alt="Avatar of a male church member" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-v9XfpCngqmrFIQzHDYKh3Qz_DYLYDLrhcIz5ZydSvbzmSoE7RTBBeWrSGzJDVK5fiYe3mjE-6BvxnnJJy6Hn1lXF_IHqU1BhaE0jaTOZHY5Iy8KfoCvrxyO9rvp7_2sDngohxuxcWO2tWF-KUdb2VZcrZ9VJPfWdhCAok-h0OgbTuBlSohPrTDGO8o4s6Cs7ucm5j6xpQWo-jTldPWty2aWngketJ0A8cNDWtCPacK6OSnpUFW6qSmeVIXMMAD797MlBEelpaMo"/>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-100">Ricardo Mendez</p>
+<p class="text-[10px] text-slate-400 uppercase tracking-wider">Diezmos</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-slate-100">$450.00</p>
+<span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded font-medium">Completado</span>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/20 border border-slate-700/30 hover:bg-slate-800/40 transition-all">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden">
+<img class="size-full object-cover" data-alt="Avatar of a female church member" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyfEm73t_T-KDdPMAi_h6gCQdsHS0c41ARk_rnVJP30EWfmXrck11wyIK0i3M0d3f20h5JeQjHs5aReGqmt1T7PU3dXCrxWCMg-INeKVvgJbx7mam1In04AwpkTKpaWePy7eUX_nP_lidwFUINq1wMYuVMNzOJZCY_HrD5V1kg-DW23oDSZCcSIuFcmHIO8kt-6lyehLMWaFk-S760ef5cgpo1DBhj0ABzAtakAAkiG5M5O5Ny8NtJ8rcE5HRRkj26A1GKC-lPgwk"/>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-100">Elena Rodriguez</p>
+<p class="text-[10px] text-slate-400 uppercase tracking-wider">Misiones</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-slate-100">$120.00</p>
+<span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded font-medium">Completado</span>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/20 border border-slate-700/30 hover:bg-slate-800/40 transition-all">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden">
+<img class="size-full object-cover" data-alt="Avatar of a church administrator" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpar31uoTENnIMQ0KezETsCohbIYU8kvY_W6gZQ4-KpOQlsUL47wx9WORbnZEhqGrXTqJJjUWVg8lxbxHhhevK68xz5CwE2JxgApZt8NxuJq-JQEHLyflrY4G08vILN0GJlTzW6svjKC19yK4yR28ymQ7ILB0QwyGdFjUG554ii2RRlRD-P8wZCsOo1HUQg6SIsm3P8A42KgWkddoZTEzOGIPCcS44JbEI38IQXlWjFvjKzV6aZEHDq7I93C4PAwB0pCyn0OCyC9s"/>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-100">Marcos Lopez</p>
+<p class="text-[10px] text-slate-400 uppercase tracking-wider">Construcción</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-slate-100">$1,200.00</p>
+<span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded font-medium">Completado</span>
+</div>
+</div>
+<!-- Row 4 -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/20 border border-slate-700/30 hover:bg-slate-800/40 transition-all">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden">
+<img class="size-full object-cover" data-alt="Avatar of a young female member" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdzcXwTul9VbKKKC4yOkttBdZ-xl-sla30CCnJc-XiW1TtRMYPaDpRfNIw3xuUg-_fMdk3eUkBK89032h4liPBPTJaTbsk-FhjZVCOzVbOPn0ysyGByaCTgxVGDFY_pdeUP7YaUH1pDUS38J1AxTyKi492SmRBxW_vVHO6S-aea5uNRnuPC9GM3Tdcq0Q5_YK2V1ksSSLsK-7oNWWaFnVa8IL-7tFhY72vWu0zehSRyjg6UeX9czZDKzE5TtYfFg-DADFNCDTp-Gc"/>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-100">Ana Victoria</p>
+<p class="text-[10px] text-slate-400 uppercase tracking-wider">Ofrendas</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-slate-100">$50.00</p>
+<span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded font-medium">Completado</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<div class="absolute bottom-0 left-0 right-0 border-t border-slate-700/50 bg-[#111518]/90 backdrop-blur-lg px-4 pb-6 pt-3 flex justify-between items-center">
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined text-2xl">home</span>
+<span class="text-[10px] font-medium">Inicio</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1">bar_chart</span>
+<span class="text-[10px] font-medium">Reportes</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined text-2xl">group</span>
+<span class="text-[10px] font-medium">Miembros</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined text-2xl">account_balance_wallet</span>
+<span class="text-[10px] font-medium">Tesorería</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined text-2xl">settings</span>
+<span class="text-[10px] font-medium">Ajustes</span>
+</a>
+</div>
+</div>
+</body></html>

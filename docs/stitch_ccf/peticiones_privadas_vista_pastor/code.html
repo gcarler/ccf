@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Peticiones Privadas - Vista Pastor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4242f0",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101022",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body::-webkit-scrollbar {
+            display: none;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(66, 66, 240, 0.1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-gradient-to-b from-white to-blue-50 dark:from-background-dark dark:to-background-dark min-h-screen font-display text-slate-900 dark:text-slate-100">
+<div class="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Header -->
+<header class="flex items-center bg-white/80 dark:bg-background-dark/80 backdrop-blur-md sticky top-0 z-10 p-4 justify-between border-b border-primary/10">
+<div class="text-primary flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<h1 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight flex-1 text-center">Muro Pastoral</h1>
+<div class="flex w-10 items-center justify-end">
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-slate-900 dark:text-white">search</span>
+</button>
+</div>
+</header>
+<!-- Summary Card -->
+<div class="p-4">
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-primary text-white shadow-lg shadow-primary/20 relative overflow-hidden">
+<div class="absolute right-[-20px] top-[-20px] opacity-10">
+<span class="material-symbols-outlined text-[120px]">mark_as_unread</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">notifications_active</span>
+<p class="text-white/90 text-sm font-medium leading-normal uppercase tracking-wider">Peticiones Nuevas</p>
+</div>
+<div class="flex items-baseline gap-2 mt-1">
+<p class="text-4xl font-bold leading-tight">12</p>
+<p class="text-blue-200 text-sm font-medium">+5% hoy</p>
+</div>
+</div>
+</div>
+<!-- Section Title -->
+<div class="px-4 pt-4 pb-2 flex items-center justify-between">
+<h2 class="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-tight">Peticiones Privadas</h2>
+<span class="material-symbols-outlined text-primary">filter_list</span>
+</div>
+<!-- Requests List -->
+<div class="flex flex-col gap-4 p-4 pb-24">
+<!-- Card 1 -->
+<div class="glass-card flex flex-col items-stretch justify-start rounded-xl p-4 shadow-sm">
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-3">
+<div class="size-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="Portrait of a male church member" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGEFtGcQ_2vav0yo3UkWnKHBF3zv8_Hyf_INXabroDeGwMYsLsWpAulg09JB-N4QTL61qAER2tV2YF9ibY8fTAPCumpxa0URxMvTlfX56ywCVRm5zHbJQsRGZQK3F-oDihmJLZDDwyV0ek8MMkTQdeg9aKwY5cp-BwjAZoJlac256HD7kapXlKuBV8JM_3qeM2cfriYNXuqEiBNGcVPmDz-seE69qq5t5lVSTQ2ZhkPUyvV_d-U11XZgXtG6X3yUGucwc9P28_Fvo"/>
+</div>
+<div>
+<p class="text-slate-900 dark:text-white text-base font-bold leading-tight">Juan Pérez</p>
+<p class="text-primary text-xs font-semibold tracking-wide flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">lock</span> CONFIDENCIAL
+                            </p>
+</div>
+</div>
+<span class="text-slate-400 text-xs">Hace 2h</span>
+</div>
+<div class="space-y-2 mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">medical_services</span>
+<p class="text-slate-600 dark:text-slate-300 text-sm font-medium">Motivo: Salud</p>
+</div>
+<p class="text-slate-700 dark:text-slate-200 text-sm leading-relaxed bg-white/50 dark:bg-slate-800/50 p-3 rounded-lg border border-primary/5">
+                        Pastor, pido oración por mi cirugía de la próxima semana. Es un tema delicado y privado que solo mi familia conoce.
+                    </p>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 flex items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-semibold transition-all hover:bg-primary/90 shadow-md shadow-primary/20">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+<span>Leído</span>
+</button>
+<button class="flex-1 flex items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary/10 text-primary text-sm font-semibold transition-all hover:bg-primary/20 border border-primary/20">
+<span class="material-symbols-outlined text-sm">volunteer_activism</span>
+<span>Alentar</span>
+</button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="glass-card flex flex-col items-stretch justify-start rounded-xl p-4 shadow-sm">
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-3">
+<div class="size-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="Portrait of a female church member" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDt5Rieda27NLi12o7P1PLeLul1crNAIHGZ1ywAoM7jtRh926OAibxDHExOh1uJiRF2c0O3Kzq6uv2pLusbo9clQ4MZJPbXca8CXTgLrBhTHny9Bwal2HP5ETIPGvgvau0QL7fAgUMqZNyuqKTDnhRrBEktMeeUY2_l1sQEJgT-G_OHIkXjSCi8RRkBqTEoHvua2XwHVfXr7Fz3Z5MezDKlUzmx1TK66r62zn9B3Ytj9xHUCAMi-hsK2Q5A5HeqWSJpfnXekyj5KEQ"/>
+</div>
+<div>
+<p class="text-slate-900 dark:text-white text-base font-bold leading-tight">María García</p>
+<p class="text-primary text-xs font-semibold tracking-wide flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">lock</span> CONFIDENCIAL
+                            </p>
+</div>
+</div>
+<span class="text-slate-400 text-xs">Hace 5h</span>
+</div>
+<div class="space-y-2 mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">family_restroom</span>
+<p class="text-slate-600 dark:text-slate-300 text-sm font-medium">Motivo: Familia</p>
+</div>
+<p class="text-slate-700 dark:text-slate-200 text-sm leading-relaxed bg-white/50 dark:bg-slate-800/50 p-3 rounded-lg border border-primary/5">
+                        Solicito oración por la restauración de mi matrimonio. Estamos pasando por una crisis fuerte. Gracias por su discreción.
+                    </p>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 flex items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-semibold transition-all hover:bg-primary/90 shadow-md shadow-primary/20">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+<span>Leído</span>
+</button>
+<button class="flex-1 flex items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary/10 text-primary text-sm font-semibold transition-all hover:bg-primary/20 border border-primary/20">
+<span class="material-symbols-outlined text-sm">volunteer_activism</span>
+<span>Alentar</span>
+</button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="glass-card flex flex-col items-stretch justify-start rounded-xl p-4 shadow-sm">
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-3">
+<div class="size-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="Portrait of a church member" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwrEFgwSNa3gyWs-Y94rP6xTta5CYmtnJJgDBg8wf6GYy2T3YlXNkA4QS7gZcRSbbwcLjOJzR5cGRs4yxr-wY9VOr-GSF8OezWvS2IadzUufk7qAg1ZkcZitQZUL5N1CyTw_7-VdbTQ2_6WLnk-pO2nkbQgGMxSEB5G3VwcyeMfp92IGtZkVKeLj2q0jYZyd-uVpIqaJzfPy-i9uOdKxu6heyFz9wmj2oxKl7R4aBet_AM-m27uGVoO1Ud9IyyZw3NMER_Zk_DhXM"/>
+</div>
+<div>
+<p class="text-slate-900 dark:text-white text-base font-bold leading-tight">Roberto Sosa</p>
+<p class="text-primary text-xs font-semibold tracking-wide flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">lock</span> CONFIDENCIAL
+                            </p>
+</div>
+</div>
+<span class="text-slate-400 text-xs">Ayer</span>
+</div>
+<div class="space-y-2 mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">work</span>
+<p class="text-slate-600 dark:text-slate-300 text-sm font-medium">Motivo: Trabajo</p>
+</div>
+<p class="text-slate-700 dark:text-slate-200 text-sm leading-relaxed bg-white/50 dark:bg-slate-800/50 p-3 rounded-lg border border-primary/5">
+                        Pastor, estoy enfrentando una situación difícil de ética en mi nuevo empleo. Pido sabiduría para actuar correctamente.
+                    </p>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 flex items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-semibold transition-all hover:bg-primary/90 shadow-md shadow-primary/20">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+<span>Leído</span>
+</button>
+<button class="flex-1 flex items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary/10 text-primary text-sm font-semibold transition-all hover:bg-primary/20 border border-primary/20">
+<span class="material-symbols-outlined text-sm">volunteer_activism</span>
+<span>Alentar</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white/90 dark:bg-background-dark/90 backdrop-blur-lg px-4 pb-6 pt-2 z-20">
+<div class="flex gap-2 max-w-md mx-auto">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-medium leading-normal">Inicio</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">lock</span>
+<p class="text-[10px] font-medium leading-normal">Peticiones</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+<p class="text-[10px] font-medium leading-normal">Mensajes</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<p class="text-[10px] font-medium leading-normal">Perfil</p>
+</a>
+</div>
+</nav>
+</div>
+</body></html>

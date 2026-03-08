@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#4242f0",
+              "background-light": "#f6f6f8",
+              "background-dark": "#101022",
+            },
+            fontFamily: {
+              "display": ["Plus Jakarta Sans", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display bg-gradient-to-b from-blue-50 to-white dark:from-background-dark dark:to-background-dark min-h-screen text-slate-900 dark:text-slate-100">
+<!-- Main Container -->
+<div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden pb-32">
+<!-- Top App Bar (iOS Style) -->
+<div class="sticky top-0 z-50 flex items-center bg-white/80 dark:bg-background-dark/80 backdrop-blur-md p-4 pb-2 justify-between border-b border-primary/10">
+<div class="text-primary flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined">arrow_back_ios</span>
+</div>
+<h1 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-10">Redes Sociales</h1>
+</div>
+<!-- Header Section -->
+<div class="px-6 pt-8 pb-4">
+<h2 class="text-slate-900 dark:text-slate-100 text-2xl font-extrabold tracking-tight">Perfiles Oficiales</h2>
+<p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Configura los enlaces de las plataformas digitales de la iglesia.</p>
+</div>
+<!-- Social Links List -->
+<div class="px-4 space-y-4">
+<!-- Facebook Card -->
+<div class="bg-white/60 dark:bg-slate-800/40 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-xl p-4 shadow-sm">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-3">
+<div class="bg-primary/10 text-primary p-2.5 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined">social_leaderboard</span>
+</div>
+<div>
+<p class="text-slate-900 dark:text-slate-100 font-bold">Facebook</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs">Enlace de Perfil</p>
+</div>
+</div>
+<button class="bg-primary/10 text-primary px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-primary/20 transition-colors">
+                        Probar Enlace
+                    </button>
+</div>
+<div class="relative">
+<input class="w-full bg-white/50 dark:bg-slate-900/50 border border-primary/10 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" placeholder="https://facebook.com/iglesia" type="text" value="https://facebook.com/bethel_oficial"/>
+</div>
+</div>
+<!-- Instagram Card -->
+<div class="bg-white/60 dark:bg-slate-800/40 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-xl p-4 shadow-sm">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-3">
+<div class="bg-primary/10 text-primary p-2.5 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined">photo_camera</span>
+</div>
+<div>
+<p class="text-slate-900 dark:text-slate-100 font-bold">Instagram</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs">Enlace de Perfil</p>
+</div>
+</div>
+<button class="bg-primary/10 text-primary px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-primary/20 transition-colors">
+                        Probar Enlace
+                    </button>
+</div>
+<div class="relative">
+<input class="w-full bg-white/50 dark:bg-slate-900/50 border border-primary/10 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" placeholder="https://instagram.com/iglesia" type="text"/>
+</div>
+</div>
+<!-- YouTube Card -->
+<div class="bg-white/60 dark:bg-slate-800/40 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-xl p-4 shadow-sm">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-3">
+<div class="bg-primary/10 text-primary p-2.5 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined">smart_display</span>
+</div>
+<div>
+<p class="text-slate-900 dark:text-slate-100 font-bold">YouTube</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs">Enlace de Perfil</p>
+</div>
+</div>
+<button class="bg-primary/10 text-primary px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-primary/20 transition-colors">
+                        Probar Enlace
+                    </button>
+</div>
+<div class="relative">
+<input class="w-full bg-white/50 dark:bg-slate-900/50 border border-primary/10 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" placeholder="https://youtube.com/c/iglesia" type="text"/>
+</div>
+</div>
+<!-- WhatsApp Card -->
+<div class="bg-white/60 dark:bg-slate-800/40 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-xl p-4 shadow-sm">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-3">
+<div class="bg-primary/10 text-primary p-2.5 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined">chat</span>
+</div>
+<div>
+<p class="text-slate-900 dark:text-slate-100 font-bold">WhatsApp</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs">Enlace Directo</p>
+</div>
+</div>
+<button class="bg-primary/10 text-primary px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-primary/20 transition-colors">
+                        Probar Enlace
+                    </button>
+</div>
+<div class="relative">
+<input class="w-full bg-white/50 dark:bg-slate-900/50 border border-primary/10 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" placeholder="https://wa.me/numero" type="text"/>
+</div>
+</div>
+<!-- Special Section: Transmisión Externa -->
+<div class="pt-6">
+<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold tracking-tight px-2 mb-4">Transmisión Externa</h2>
+<div class="bg-primary/5 border border-primary/20 rounded-xl p-5">
+<div class="flex items-start gap-4">
+<div class="bg-primary text-white p-3 rounded-xl shadow-lg shadow-primary/30">
+<span class="material-symbols-outlined">sensors</span>
+</div>
+<div class="flex-1">
+<p class="text-slate-900 dark:text-slate-100 font-bold mb-1">RTMP / Web Player</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs mb-4">Introduce el link directo de tu servidor de streaming personalizado.</p>
+<input class="w-full bg-white dark:bg-slate-900 border border-primary/30 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary outline-none" placeholder="rtmp://streaming.iglesia.com/live" type="text"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Button (Floating Action) -->
+<div class="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white dark:from-background-dark via-white/90 dark:via-background-dark/90 to-transparent">
+<button class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-[0_10px_30px_-10px_rgba(66,66,240,0.5)] active:scale-95 transition-transform">
+                Guardar Cambios
+            </button>
+</div>
+</div>
+<!-- Empty Spacer for Scrolling -->
+<div class="h-20"></div>
+</body></html>

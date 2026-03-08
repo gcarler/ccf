@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gestión de Comentarios Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4242f0",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101022",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body::-webkit-scrollbar {
+            display: none;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .bg-gradient-custom {
+            background: radial-gradient(circle at top right, #1e1e4a, #101022),
+                        radial-gradient(circle at bottom left, #4242f033, transparent);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="relative flex min-h-screen w-full flex-col bg-gradient-custom overflow-x-hidden pb-24">
+<!-- Header -->
+<header class="sticky top-0 z-50 flex items-center bg-background-dark/80 backdrop-blur-md px-4 py-4 justify-between border-b border-white/5">
+<div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/5">
+<span class="material-symbols-outlined text-slate-100">arrow_back_ios_new</span>
+</div>
+<h2 class="text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center">Gestión de Comentarios</h2>
+<div class="flex w-10 items-center justify-end">
+<button class="relative flex items-center justify-center size-10 rounded-full bg-white/5">
+<span class="material-symbols-outlined text-slate-100">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-primary rounded-full"></span>
+</button>
+</div>
+</header>
+<!-- Filters -->
+<div class="px-4 pt-6">
+<h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest pb-3">Filtrar por</h3>
+<div class="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-primary px-5 shadow-lg shadow-primary/20">
+<p class="text-white text-sm font-semibold">Todos</p>
+</div>
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-white/5 border border-white/10 px-5">
+<p class="text-slate-300 text-sm font-medium">Prédicas</p>
+</div>
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-white/5 border border-white/10 px-5">
+<p class="text-slate-300 text-sm font-medium">Testimonios</p>
+</div>
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-white/5 border border-white/10 px-5">
+<p class="text-slate-300 text-sm font-medium">Cursos</p>
+</div>
+</div>
+</div>
+<!-- Pending Section -->
+<div class="px-4 pt-8">
+<div class="flex items-center justify-between pb-4">
+<h3 class="text-slate-100 text-xl font-bold">Comentarios Pendientes</h3>
+<span class="bg-primary/20 text-primary text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-tighter">12 Pendientes</span>
+</div>
+<!-- Comment Card 1 -->
+<div class="glass-card rounded-xl p-4 mb-4">
+<div class="flex items-start gap-3">
+<img class="size-12 rounded-full object-cover border-2 border-primary/30" data-alt="Profile photo of a male church member" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCi5YHfTNqHMZwCy6HT9FunlLqt2t_EuHt-6NaGPltfLkypcNO3Kl4OhE6rxOq5oNe1Kh-kYgb6rcumYEYXhhWC6xKjXWNUADvc_uFkKkItq1vH6MEahm7zm5B7bGmHHgzqPCb8eP6-uX9DcICaAARIjFhFS9UgnlvfW-uIMIig7N0osSXU6VyJoHuynRCBX7AkCNVtXvasKaDQUE8QVq6JfO0LA9_AyPLVBhzZ0mTlVwK6L0jrwKKYsUZKGQCJswdrVHQO4y87a1c"/>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h4 class="text-slate-100 font-semibold text-sm">Samuel Rivera</h4>
+<span class="text-slate-500 text-[10px]">Hace 5 min</span>
+</div>
+<p class="text-primary text-[11px] font-medium mt-0.5">En: <span class="italic">"La Fe que Mueve Montañas"</span></p>
+<p class="text-slate-300 text-sm mt-2 leading-relaxed">Este mensaje cambió mi perspectiva hoy. Gracias Pastor por estas palabras tan poderosas.</p>
+</div>
+</div>
+<div class="flex gap-2 mt-4 pt-4 border-t border-white/5">
+<button class="flex-1 bg-primary text-white text-xs font-bold py-2.5 rounded-lg">Aprobar</button>
+<button class="flex-1 bg-white/5 text-slate-300 text-xs font-bold py-2.5 rounded-lg border border-white/10">Responder</button>
+<button class="size-10 flex items-center justify-center rounded-lg bg-red-500/10 text-red-400 border border-red-500/20">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</div>
+<!-- Comment Card 2 -->
+<div class="glass-card rounded-xl p-4 mb-4">
+<div class="flex items-start gap-3">
+<img class="size-12 rounded-full object-cover border-2 border-primary/30" data-alt="Profile photo of a female church member" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnvdzuxnB_KpUHO0vI6rJ1b37cfvsHamcRcXJ0UfAeakWKRmi_kI8ImCTE2x-Fg9sItADHKHjxMUf0Uo4YDzDT0H11DWFku8Yi94kgrXxamF7evazVmrVDnCZ5qYvxc7CSgQ5X_zU6oR5MpIMoaUGOb7IacTctRjTN3uHYB4-zB71gC_QC40cQ7GI8skoidiMYXjtMKmZ4oUS19hxssHKrXEuD-i8-NbNmbpJIys7j4GS5eEh1T0jck-nJKY7Pj2dUmmGWextgeNA"/>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h4 class="text-slate-100 font-semibold text-sm">Elena Martínez</h4>
+<span class="text-slate-500 text-[10px]">Hace 12 min</span>
+</div>
+<p class="text-primary text-[11px] font-medium mt-0.5">En: <span class="italic">Testimonio: Sanidad Familiar</span></p>
+<p class="text-slate-300 text-sm mt-2 leading-relaxed">Gloria a Dios por este testimonio. Me gustaría saber si hay un grupo de apoyo para estos casos.</p>
+</div>
+</div>
+<div class="flex gap-2 mt-4 pt-4 border-t border-white/5">
+<button class="flex-1 bg-primary text-white text-xs font-bold py-2.5 rounded-lg">Aprobar</button>
+<button class="flex-1 bg-white/5 text-slate-300 text-xs font-bold py-2.5 rounded-lg border border-white/10">Responder</button>
+<button class="size-10 flex items-center justify-center rounded-lg bg-red-500/10 text-red-400 border border-red-500/20">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</div>
+<!-- Comment Card 3 -->
+<div class="glass-card rounded-xl p-4 mb-4">
+<div class="flex items-start gap-3">
+<img class="size-12 rounded-full object-cover border-2 border-primary/30" data-alt="Profile photo of a male member" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7mmz_ZQYPXs4SFiYcaAkLdB9eQbC2RN3pBMJLnbEG8ln3Kewp9FciaiLbslhwBOQJHacXq7wbM8SEQEePOd33Hv4_MNoAubI0-L47k34i1DvKStjPA0xaM7DzA_BchcmSW0qiGZ9M8jpLozX-ADSdz9uRF62Ch76E0XuISwE2SfAuy111sRPgoYOoi1lK-KmqtFfwbEFLAFx-QTgOZmElbOz8x0erUDFzYqHoevXO-XnZxcG5oONQb_Niz1AHOWE9YBUB4FUzb9U"/>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h4 class="text-slate-100 font-semibold text-sm">David Castro</h4>
+<span class="text-slate-500 text-[10px]">Hace 1 hora</span>
+</div>
+<p class="text-primary text-[11px] font-medium mt-0.5">En: <span class="italic">Curso: Liderazgo Cristiano</span></p>
+<p class="text-slate-300 text-sm mt-2 leading-relaxed">¿Cuándo se habilita la lección 4? ¡Estoy ansioso por continuar!</p>
+</div>
+</div>
+<div class="flex gap-2 mt-4 pt-4 border-t border-white/5">
+<button class="flex-1 bg-primary text-white text-xs font-bold py-2.5 rounded-lg">Aprobar</button>
+<button class="flex-1 bg-white/5 text-slate-300 text-xs font-bold py-2.5 rounded-lg border border-white/10">Responder</button>
+<button class="size-10 flex items-center justify-center rounded-lg bg-red-500/10 text-red-400 border border-red-500/20">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<div class="fixed bottom-0 left-0 right-0 z-50">
+<div class="flex gap-2 border-t border-white/5 bg-background-dark/95 backdrop-blur-lg px-4 pb-8 pt-2">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">home</span>
+</div>
+<p class="text-[10px] font-medium">Inicio</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">group</span>
+</div>
+<p class="text-[10px] font-medium">Comunidad</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">verified_user</span>
+</div>
+<p class="text-[10px] font-bold">Moderación</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">account_circle</span>
+</div>
+<p class="text-[10px] font-medium">Perfil</p>
+</a>
+</div>
+</div>
+</div>
+</body></html>

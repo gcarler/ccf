@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4242f0",
+                        "background-light": "#f6f7fb",
+                        "background-dark": "#101022",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        ::-webkit-scrollbar { display: none; }
+        body { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .gradient-bg {
+            background: linear-gradient(180deg, #eef2ff 0%, #ffffff 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="relative flex h-auto min-h-screen w-full flex-col gradient-bg overflow-x-hidden">
+<!-- Header Section -->
+<div class="flex items-center p-4 pb-2 justify-between sticky top-0 bg-white/50 backdrop-blur-md z-10">
+<div class="text-primary flex size-10 shrink-0 items-center justify-center">
+<span class="material-symbols-outlined text-2xl">arrow_back_ios</span>
+</div>
+<h2 class="text-slate-900 font-bold text-lg flex-1 text-center">Mis Tareas</h2>
+<div class="flex w-10 items-center justify-end">
+<button class="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<div class="px-4">
+<div class="flex border-b border-slate-200 dark:border-slate-800 gap-8">
+<a class="flex flex-col items-center justify-center border-b-[3px] border-primary text-primary pb-3 pt-4" href="#">
+<p class="text-sm font-bold">Pendientes</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-transparent text-slate-400 pb-3 pt-4" href="#">
+<p class="text-sm font-bold">Completadas</p>
+</a>
+</div>
+</div>
+<!-- Summary Cards -->
+<div class="flex gap-4 p-4">
+<div class="flex min-w-[140px] flex-1 flex-col gap-1 rounded-xl p-4 bg-primary text-white shadow-lg shadow-primary/20">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">calendar_today</span>
+<p class="text-xs font-medium opacity-90 uppercase tracking-wider">Hoy</p>
+</div>
+<p class="text-3xl font-bold leading-tight">8</p>
+<p class="text-[10px] opacity-80">Tareas asignadas</p>
+</div>
+<div class="flex min-w-[140px] flex-1 flex-col gap-1 rounded-xl p-4 bg-white dark:bg-slate-800 border border-slate-100 shadow-sm">
+<div class="flex items-center gap-2 text-red-500">
+<span class="material-symbols-outlined text-sm">history</span>
+<p class="text-xs font-medium uppercase tracking-wider">Atrasadas</p>
+</div>
+<p class="text-3xl font-bold leading-tight text-slate-900 dark:text-white">3</p>
+<p class="text-[10px] text-slate-400">Acción inmediata</p>
+</div>
+</div>
+<!-- Section Title -->
+<div class="flex items-center justify-between px-4 pt-2 pb-2">
+<h3 class="text-slate-900 dark:text-white text-lg font-bold">Próximas Acciones</h3>
+<span class="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full tracking-wide">VER TODO</span>
+</div>
+<!-- Tasks List -->
+<div class="flex flex-col gap-4 p-4 pb-24">
+<!-- Task Card 1 -->
+<div class="glass-card rounded-xl p-4 flex flex-col gap-3 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 right-0 p-3">
+<span class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase">Alta Prioridad</span>
+</div>
+<div class="flex items-center gap-3">
+<img alt="Avatar contact" class="size-12 rounded-full object-cover border-2 border-white shadow-sm" data-alt="Portrait of a young man smiling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAd80b-Yll4QQWgay6P_UM_yR6sRpH6sFseZ5DMVa19LXoGzAhDszvPkkS56iSlmOgtxLHaPyCNomsnmbsD06hNF6fTYWt-1gOdYqYDFtRjMHluRccraJs8tEMk2MIbJwbIfa5dM3wzlCSdiG5PswTYZ8pUuAhuDTutNJiNmjfgyDB-k-EknPml9FUZTbgDUi0FO7CVbFpgEZgqtMFctkgDS9Ww077MfdNQzOWB2CyYWKAOgMe-9Vf3n98FyEFg_HXtiuMR9vUpY7Q"/>
+<div>
+<h4 class="font-bold text-slate-900">Carlos Méndez</h4>
+<p class="text-xs text-primary font-medium">Llamada de Bienvenida</p>
+</div>
+</div>
+<div class="flex items-center justify-between mt-1">
+<div class="flex gap-2">
+<button class="size-9 rounded-lg bg-green-500 text-white flex items-center justify-center">
+<span class="material-symbols-outlined text-xl">chat</span>
+</button>
+<button class="size-9 rounded-lg bg-primary text-white flex items-center justify-center">
+<span class="material-symbols-outlined text-xl">call</span>
+</button>
+</div>
+<button class="flex items-center gap-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-4 py-2 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 hover:shadow-primary/10 transition-all">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+                        Completar
+                    </button>
+</div>
+</div>
+<!-- Task Card 2 -->
+<div class="glass-card rounded-xl p-4 flex flex-col gap-3 shadow-sm">
+<div class="absolute top-0 right-0 p-3">
+<span class="bg-blue-100 text-blue-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase">Normal</span>
+</div>
+<div class="flex items-center gap-3">
+<img alt="Avatar contact" class="size-12 rounded-full object-cover border-2 border-white shadow-sm" data-alt="Portrait of a young woman smiling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCG-L-LfENJPcIbBDCQ4oJriheSVuqc5FrSmuP8eXtqBOPBzVsE8uPTAQCRRlpHOqjk8qz08myP3l0ZKO9gPN-xMf5cpoWx9hK-ylvEKmfIzA43UiT71N37zns0hMvWuiDVBv2kSzc6LvWAVKh2HIQZIzy0QaYF9k6zWkzo-OLO8oayO1Tcf0EaOc3T5k2khkq8pXJxFAx3s1rKlkszOzXb5ZQG-VIpo8iSgVpA_Ccj_UfGT3umpc0uhzhkd-u6p1IrDnY8GNsWnmc"/>
+<div>
+<h4 class="font-bold text-slate-900">Elena Rodríguez</h4>
+<p class="text-xs text-primary font-medium">Visita Domiciliaria</p>
+</div>
+</div>
+<div class="flex items-center justify-between mt-1">
+<div class="flex gap-2">
+<button class="size-9 rounded-lg bg-green-500 text-white flex items-center justify-center">
+<span class="material-symbols-outlined text-xl">chat</span>
+</button>
+<button class="size-9 rounded-lg bg-primary text-white flex items-center justify-center">
+<span class="material-symbols-outlined text-xl">location_on</span>
+</button>
+</div>
+<button class="flex items-center gap-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-4 py-2 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+                        Completar
+                    </button>
+</div>
+</div>
+<!-- Task Card 3 -->
+<div class="glass-card rounded-xl p-4 flex flex-col gap-3 shadow-sm border-l-4 border-l-red-500">
+<div class="absolute top-0 right-0 p-3">
+<span class="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase">Atrasado</span>
+</div>
+<div class="flex items-center gap-3">
+<img alt="Avatar contact" class="size-12 rounded-full object-cover border-2 border-white shadow-sm" data-alt="Portrait of a middle aged man with glasses" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvNDcdNxmb5-7hfp9wHD-kGNv4HKdtw9gW3W6oMcryJ_-xpeGnQGg1Q-R2q8qRVTOkl8OKq3md4pytxvWSPHg93J0_4BibBxj-y9S1NHTW2pYf75b2oZQGs9qeddECpEJ10V3J-VlUfsKuv3BPIMyTq7Bz0CGHA8dOfdIzoYnwZXe2HMdzIhXp7J1E8oScGesiTmScF4hj39_sBxQ24bCsojQbSUuz1hbvk5a0z50mp_5E5QSp_PiYtKb_vjmt4VLnpX-p3CFBEYs"/>
+<div>
+<h4 class="font-bold text-slate-900">Ricardo Santos</h4>
+<p class="text-xs text-primary font-medium">Seguimiento Consolidación</p>
+</div>
+</div>
+<div class="flex items-center justify-between mt-1">
+<div class="flex gap-2">
+<button class="size-9 rounded-lg bg-green-500 text-white flex items-center justify-center">
+<span class="material-symbols-outlined text-xl">chat</span>
+</button>
+<button class="size-9 rounded-lg bg-primary text-white flex items-center justify-center">
+<span class="material-symbols-outlined text-xl">call</span>
+</button>
+</div>
+<button class="flex items-center gap-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-4 py-2 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+                        Completar
+                    </button>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<div class="fixed bottom-0 left-0 right-0 flex border-t border-slate-100 bg-white/90 backdrop-blur-lg px-4 pb-6 pt-3 z-20">
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-medium leading-normal">Inicio</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">assignment_turned_in</span>
+<p class="text-[10px] font-bold leading-normal">Tareas</p>
+</a>
+<div class="relative -top-8 flex flex-1 justify-center">
+<button class="size-14 rounded-full bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/40 border-4 border-white">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+</div>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">group</span>
+<p class="text-[10px] font-medium leading-normal">Personas</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<p class="text-[10px] font-medium leading-normal">Perfil</p>
+</a>
+</div>
+</div>
+</body></html>

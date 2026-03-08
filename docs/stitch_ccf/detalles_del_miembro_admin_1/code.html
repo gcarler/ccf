@@ -1,0 +1,256 @@
+<!DOCTYPE html><html class="dark" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1973f0",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        body { font-family: 'Lexend', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden">
+<div class="relative w-full h-auto flex flex-col pt-6 px-4 bg-gradient-to-b from-primary/20 to-transparent">
+<div class="flex items-center justify-between mb-8">
+<button class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors" style="">
+<span class="material-symbols-outlined text-slate-900 dark:text-white" style="">arrow_back_ios_new</span>
+</button>
+<h1 class="text-lg font-bold text-slate-900 dark:text-white" style="">Perfil del Miembro</h1>
+<button class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors" style="">
+<span class="material-symbols-outlined text-slate-900 dark:text-white" style="">more_vert</span>
+</button>
+</div>
+<div class="flex flex-col items-center pb-6">
+<div class="relative">
+<div class="w-32 h-32 rounded-full ring-4 ring-primary p-1">
+<img alt="Juan Pérez" class="w-full h-full rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUKrhlZ7K3oC7t_wD0rxyVhSdCQ9qWymjiDkCnx-RkFK1J-c-p4TKMu5t1pEDHSLGE30oYPAWWp4g7zUH3rJLB_Kycqbl5NIBZtNUEIwsLahygg5CxR9J2kvb3Bg1qEqS7L2lnUQEokTd_sTFi5hdCs5LFCk9y4WPgxUlOW5GZZe1c0laAsbTTZA7modRlGxTn7ZUo3S8w7rk_RnBfbBtLSdkSnIi0A67P3aXe7mLW6h0dYKBhmi9iKuZ5uDjtr7o3M9thrUniQFs" style="">
+</div>
+<div class="absolute bottom-1 right-1 bg-primary text-white p-1.5 rounded-full border-2 border-background-dark">
+<span class="material-symbols-outlined text-xs" style="">verified</span>
+</div>
+</div>
+<div class="text-center mt-4">
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white" style="">Juan Pérez</h2>
+<span class="inline-block px-3 py-1 mt-1 text-sm font-medium text-primary bg-primary/10 rounded-full border border-primary/20" style="">
+                    Estudiante de Teología
+                </span>
+</div>
+</div>
+</div>
+<main class="px-4 pb-32 space-y-6">
+<section>
+<h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 px-1" style="">Información Personal</h3>
+<div class="glass-card rounded-xl p-4 space-y-4">
+<div class="flex items-center gap-4">
+<div class="bg-primary/10 p-2 rounded-lg">
+<span class="material-symbols-outlined text-primary" style="">mail</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs text-slate-500 dark:text-slate-400" style="">Email</span>
+<span class="text-sm font-medium text-slate-800 dark:text-slate-200" style="">juan.perez@iglesia.org</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="bg-primary/10 p-2 rounded-lg">
+<span class="material-symbols-outlined text-primary" style="">phone</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs text-slate-500 dark:text-slate-400" style="">Teléfono</span>
+<span class="text-sm font-medium text-slate-800 dark:text-slate-200" style="">+54 11 4567-8901</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="bg-primary/10 p-2 rounded-lg">
+<span class="material-symbols-outlined text-primary" style="">calendar_today</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs text-slate-500 dark:text-slate-400" style="">Miembro desde</span>
+<span class="text-sm font-medium text-slate-800 dark:text-slate-200" style="">12 de Octubre, 2022</span>
+</div>
+</div>
+</div>
+</section>
+<section>
+<h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 px-1" style="">Historial de Asistencia</h3>
+<div class="mb-4">
+<span class="text-[10px] font-semibold text-primary uppercase mb-2 block px-1" style="">Próximos Eventos</span>
+<div class="flex gap-3 overflow-x-auto hide-scrollbar pb-2 -mx-4 px-4">
+<div class="glass-card flex-shrink-0 w-40 rounded-xl p-3 border-l-4 border-l-primary">
+<h4 class="text-sm font-bold truncate" style="">Culto Dominical</h4>
+<p class="text-[10px] text-slate-400 mt-1 flex items-center gap-1" style="">
+<span class="material-symbols-outlined text-xs" style="">calendar_month</span> 15 Oct, 10:00 AM
+                        </p>
+</div>
+<div class="glass-card flex-shrink-0 w-40 rounded-xl p-3 border-l-4 border-l-slate-700">
+<h4 class="text-sm font-bold truncate" style="">Noche de Alabanza</h4>
+<p class="text-[10px] text-slate-400 mt-1 flex items-center gap-1" style="">
+<span class="material-symbols-outlined text-xs" style="">calendar_month</span> 18 Oct, 07:30 PM
+                        </p>
+</div>
+<div class="glass-card flex-shrink-0 w-40 rounded-xl p-3 border-l-4 border-l-slate-700">
+<h4 class="text-sm font-bold truncate" style="">Reunión de Jóvenes</h4>
+<p class="text-[10px] text-slate-400 mt-1 flex items-center gap-1" style="">
+<span class="material-symbols-outlined text-xs" style="">calendar_month</span> 21 Oct, 06:00 PM
+                        </p>
+</div>
+</div>
+</div>
+<div>
+<span class="text-[10px] font-semibold text-slate-500 uppercase mb-2 block px-1" style="">Eventos Pasados</span>
+<div class="glass-card rounded-xl divide-y divide-white/5 overflow-hidden">
+<div class="flex items-center justify-between p-3">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-emerald-500 text-lg" style="font-variation-settings: &quot;FILL&quot; 1;">check_circle</span>
+</div>
+<div>
+<h4 class="text-sm font-medium" style="">Culto Dominical</h4>
+<p class="text-[10px] text-slate-500" style="">08 de Octubre, 2023</p>
+</div>
+</div>
+<span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 font-bold uppercase" style="">Asistió</span>
+</div>
+<div class="flex items-center justify-between p-3">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-red-500 text-lg" style="">cancel</span>
+</div>
+<div>
+<h4 class="text-sm font-medium" style="">Casa de Gloria</h4>
+<p class="text-[10px] text-slate-500" style="">04 de Octubre, 2023</p>
+</div>
+</div>
+<span class="text-[10px] px-2 py-0.5 rounded bg-red-500/10 text-red-500 font-bold uppercase" style="">Ausente</span>
+</div>
+<div class="flex items-center justify-between p-3">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-emerald-500 text-lg" style="font-variation-settings: &quot;FILL&quot; 1;">check_circle</span>
+</div>
+<div>
+<h4 class="text-sm font-medium" style="">Culto Dominical</h4>
+<p class="text-[10px] text-slate-500" style="">01 de Octubre, 2023</p>
+</div>
+</div>
+<span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 font-bold uppercase" style="">Asistió</span>
+</div>
+</div>
+</div>
+</section>
+<section>
+<div class="flex justify-between items-center mb-3 px-1">
+<h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" style="">Progreso Académico</h3>
+<button class="text-xs font-bold text-primary" style="">Ver todos</button>
+</div>
+<div class="glass-card rounded-xl p-4 space-y-5">
+<div>
+<div class="flex justify-between items-center mb-2">
+<span class="text-sm font-semibold" style="">Fundamentos Teológicos</span>
+<span class="text-sm font-bold text-primary" style="">85%</span>
+</div>
+<div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 85%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-center mb-2">
+<span class="text-sm font-semibold" style="">Liderazgo Ministerial</span>
+<span class="text-sm font-bold text-primary" style="">42%</span>
+</div>
+<div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 42%"></div>
+</div>
+</div>
+</div>
+</section>
+<section>
+<h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 px-1" style="">Muro de Notas</h3>
+<div class="glass-card rounded-xl p-4">
+<div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700 mb-3">
+<p class="text-sm text-slate-300 italic" style="">"Interesado en participar en el próximo retiro de líderes. Ha demostrado gran compromiso en las clases de los lunes."</p>
+<div class="mt-2 text-[10px] text-slate-500 flex justify-between">
+<span class="" style="">Por: Admin Pastor</span>
+<span class="" style="">Hace 2 días</span>
+</div>
+</div>
+<button class="w-full py-2 border-2 border-dashed border-slate-700 rounded-lg flex items-center justify-center gap-2 text-slate-400 text-sm hover:border-primary hover:text-primary transition-colors" style="">
+<span class="material-symbols-outlined text-sm" style="">add</span>
+                    Nueva nota administrativa
+                </button>
+</div>
+</section>
+<section class="pb-8">
+<h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 px-1 text-center" style="">Acciones de Gestión</h3>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex items-center justify-center gap-2 bg-slate-200 dark:bg-slate-800 py-3 rounded-xl font-bold text-sm text-slate-900 dark:text-white" style="">
+<span class="material-symbols-outlined text-lg" style="">edit_note</span>
+                    Cambiar Rol
+                </button>
+<button class="flex items-center justify-center gap-2 bg-red-500/10 dark:bg-red-500/20 py-3 rounded-xl font-bold text-sm text-red-600 dark:text-red-400 border border-red-500/20" style="">
+<span class="material-symbols-outlined text-lg" style="">person_off</span>
+                    Desactivar
+                </button>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 glass-card border-t border-slate-200 dark:border-slate-800 px-4 pb-6 pt-3 z-50">
+<div class="max-w-lg mx-auto flex justify-between items-center">
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#" style="">
+<span class="material-symbols-outlined" style="">dashboard</span>
+<span class="text-[10px] font-medium" style="">Dashboard</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#" style="">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">group</span>
+<span class="text-[10px] font-medium" style="">Miembros</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#" style="">
+<span class="material-symbols-outlined" style="">auto_stories</span>
+<span class="text-[10px] font-medium" style="">Academia</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#" style="">
+<span class="material-symbols-outlined" style="">settings</span>
+<span class="text-[10px] font-medium" style="">Ajustes</span>
+</a>
+</div>
+</nav>
+
+</body></html>

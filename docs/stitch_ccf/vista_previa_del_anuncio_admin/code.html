@@ -1,0 +1,110 @@
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&amp;family=Noto+Sans:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4242f0",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101022",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-gradient-to-b from-primary/5 to-white dark:from-background-dark dark:to-background-dark overflow-x-hidden">
+<!-- TopAppBar -->
+<div class="sticky top-0 z-50 flex items-center bg-white/80 dark:bg-background-dark/80 backdrop-blur-md p-4 pb-2 justify-between border-b border-primary/10">
+<div class="text-primary flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-primary/10 cursor-pointer transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center">Vista Previa del Anuncio</h2>
+<div class="flex items-center justify-end">
+<button class="text-primary text-xs font-bold leading-normal tracking-wide bg-primary/10 px-3 py-2 rounded-full hover:bg-primary/20 transition-colors uppercase">
+                    Simular Notificación
+                </button>
+</div>
+</div>
+<!-- Featured Image Section -->
+<div class="w-full px-0 sm:px-4 py-0 sm:py-4">
+<div class="relative w-full aspect-[16/10] bg-center bg-no-repeat bg-cover flex flex-col justify-end overflow-hidden sm:rounded-xl shadow-lg" data-alt="People worshipping in a modern church environment" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA7cKo47_3-TzjS1IUGtID5Y-TwtzwXvrDEctmmAkHyAIscKZztCnK9p9Pql4zOxpeU6x9u-9ZWQo4JTLmT2R7KnoUHEpNleSdtqD5BKyFdzwhIBh9bso5CJf3FJtvm9egSUH_yuc7tk74pVIRvkwGDlxShbsL1Y8s2illkxylT2vCjlyZ_LHjwTNzITHL0bSrFgYCQk_p9JfAzVg3OUfl4uI3b3l4uVFwBGEiQ2z5ne0oViaHQUYbl-QWLNqk7TelDtBgREMUNicw");'>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+<div class="relative p-6">
+<span class="bg-primary text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest mb-2 inline-block">Evento Especial</span>
+</div>
+</div>
+</div>
+<!-- Content Section -->
+<div class="px-4 pb-32">
+<div class="flex items-center gap-2 mt-6 mb-2">
+<div class="size-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-sm">church</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider">Publicado por: Admin • 24 Mayo, 2024</p>
+</div>
+<h1 class="text-slate-900 dark:text-slate-100 tracking-tight text-3xl font-extrabold leading-tight pb-4">
+                Gran Evento de Adoración Pentecostal
+            </h1>
+<div class="flex flex-col gap-4 text-slate-700 dark:text-slate-300 text-base leading-relaxed">
+<p>
+                    Únete a nosotros este domingo para una experiencia de fe transformadora. Contaremos con invitados especiales y un tiempo poderoso de intercesión. No te pierdas esta oportunidad de conectar con nuestra comunidad en un ambiente de paz y renovación espiritual.
+                </p>
+<p>
+                    El evento incluirá sesiones de alabanza contemporánea, testimonios impactantes y un mensaje central enfocado en el fortalecimiento de la familia y el espíritu.
+                </p>
+</div>
+<!-- Event Details Card -->
+<div class="mt-8 p-4 rounded-xl bg-primary/5 border border-primary/10 flex flex-col gap-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">calendar_today</span>
+<div>
+<p class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase">Fecha y Hora</p>
+<p class="text-sm font-semibold">Domingo, 26 de Mayo • 10:00 AM</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">location_on</span>
+<div>
+<p class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase">Lugar</p>
+<p class="text-sm font-semibold">Auditorio Principal - Calle de la Fe 123</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Action Bar -->
+<div class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-background-dark/95 backdrop-blur-lg border-t border-primary/10 p-4 pb-8 flex items-center gap-3">
+<button class="flex-1 h-14 rounded-xl border-2 border-primary/20 text-primary font-bold hover:bg-primary/5 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">edit</span>
+                Regresar a Editar
+            </button>
+<button class="flex-[1.5] h-14 rounded-xl bg-primary text-white font-bold shadow-xl shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">send</span>
+                Publicar Ahora
+            </button>
+</div>
+</div>
+
+```</body></html>

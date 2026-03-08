@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0066FF",
+                        "vibrant-blue": "#0066FF",
+                        "navy-blue": "#0A2463",
+                        "ice-white": "#F8FAFC",
+                        "glass-border": "rgba(255, 255, 255, 0.4)",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "1rem",
+                        "2xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        :root {
+            --primary-blue: #0066FF;
+            --bg-gradient-start: #F0F4FF;
+            --bg-gradient-end: #FFFFFF;
+        }
+        .glass-light {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 15px -1px rgba(0, 102, 255, 0.05);
+        }
+        .hero-gradient-vibrant {
+            background: radial-gradient(circle at 0% 0%, rgba(0, 102, 255, 0.1) 0%, transparent 40%),
+                        radial-gradient(circle at 100% 100%, rgba(0, 102, 255, 0.05) 0%, transparent 40%),
+                        linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%);
+        }
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .status-badge {
+            @apply px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider;
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+            background-color: #F8FAFC;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display text-slate-800 antialiased overflow-x-hidden hero-gradient-vibrant">
+<div class="relative flex min-h-screen flex-col">
+<header class="flex items-center p-4 justify-between sticky top-0 z-50 glass-light border-b border-blue-100/50">
+<div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-vibrant-blue">
+<span class="material-symbols-outlined">menu</span>
+</div>
+<h1 class="text-lg font-bold leading-tight tracking-tight flex-1 text-center text-navy-blue">Cursos de Formación</h1>
+<div class="flex size-10 items-center justify-end">
+<button class="flex items-center justify-center rounded-full text-slate-400">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto pb-32">
+<div class="p-4">
+<div class="relative overflow-hidden rounded-2xl bg-navy-blue shadow-xl border border-white/10 aspect-[16/10] flex flex-col justify-end group">
+<div class="absolute inset-0 z-0 opacity-60 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDgzlBuO-oXqiS8NKZTQEsQhVGwiqFWp5Vtaj7VY_nJ2wZAdDHyQKHabAG1i_iGVz22Y4ifuvXzPg1mfJXeDpYiv8XbVWv_twaElw5IZI5dwE-DFVcqxfyrCgpr1GJVRRrjM354GWw88TCgjkHpbGW48fe-n6sXc_pO0e9dYP9QTSOdhDL4WkkH4TkAhxGSTnhdESBafP5RjQkFi7nkNrxg0dNHMEzTyGWOObMYgTYJWZwyoY_ZTTkZOa1ygU-0vPW_V5djSX57J4M');"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-navy-blue/90 via-navy-blue/40 to-transparent"></div>
+<div class="relative z-10 p-6 flex items-end justify-between gap-4">
+<div class="flex flex-col gap-2 flex-1">
+<span class="inline-flex px-2 py-0.5 rounded-sm bg-vibrant-blue text-white text-[10px] font-bold uppercase tracking-widest w-fit">Destacado</span>
+<h2 class="text-2xl font-bold text-white leading-tight">Fundamentos de la Fe</h2>
+<p class="text-blue-100/80 text-sm font-light">Módulo de Discipulado Nivel 1</p>
+<div class="flex items-center gap-3 mt-3">
+<div class="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
+<div class="h-full bg-vibrant-blue rounded-full shadow-[0_0_10px_rgba(0,102,255,0.8)]" style="width: 75%;"></div>
+</div>
+<span class="text-xs font-bold text-white">75%</span>
+</div>
+</div>
+<div class="relative flex items-center justify-center size-16 shrink-0">
+<svg class="absolute size-full progress-ring" viewBox="0 0 100 100">
+<circle class="text-white/20" cx="50" cy="50" fill="transparent" r="44" stroke="currentColor" stroke-width="5"></circle>
+<circle class="text-vibrant-blue" cx="50" cy="50" fill="transparent" r="44" stroke="currentColor" stroke-dasharray="276" stroke-dashoffset="69" stroke-linecap="round" stroke-width="6"></circle>
+</svg>
+<button class="flex items-center justify-center size-12 rounded-full bg-vibrant-blue text-white shadow-lg shadow-blue-600/40 active:scale-95 transition-transform z-10">
+<span class="material-symbols-outlined text-2xl fill-1">play_arrow</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="px-4 py-2 flex gap-3 overflow-x-auto no-scrollbar">
+<span class="px-5 py-2 rounded-full bg-vibrant-blue text-white text-sm font-semibold whitespace-nowrap shadow-md shadow-blue-500/20">Todos</span>
+<span class="px-5 py-2 rounded-full glass-light text-slate-500 text-sm font-medium whitespace-nowrap">Teología</span>
+<span class="px-5 py-2 rounded-full glass-light text-slate-500 text-sm font-medium whitespace-nowrap">Liderazgo</span>
+<span class="px-5 py-2 rounded-full glass-light text-slate-500 text-sm font-medium whitespace-nowrap">Biblia</span>
+</div>
+<h2 class="text-xs font-bold px-5 pt-8 pb-4 text-slate-400 uppercase tracking-[0.2em]">Mis Cursos en curso</h2>
+<div class="flex flex-col gap-4 px-4">
+<div class="glass-light p-4 rounded-2xl flex gap-4 transition-all active:scale-[0.98] border-white/60">
+<div class="flex size-14 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-vibrant-blue border border-blue-100">
+<span class="material-symbols-outlined text-2xl">menu_book</span>
+</div>
+<div class="flex flex-1 flex-col justify-center">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-bold text-base text-navy-blue">Escatología Bíblica</h3>
+<span class="status-badge bg-blue-100 text-vibrant-blue">AVANZADO</span>
+</div>
+<p class="text-slate-500 text-xs line-clamp-1 mb-3">Estudio profundo de los tiempos finales.</p>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+<span class="material-symbols-outlined text-xs">list_alt</span>
+                                12 Lecciones
+                            </div>
+<div class="flex-1 h-1 bg-blue-100 rounded-full overflow-hidden">
+<div class="h-full bg-vibrant-blue" style="width: 45%;"></div>
+</div>
+<span class="text-[10px] font-bold text-vibrant-blue">45%</span>
+</div>
+</div>
+</div>
+<div class="glass-light p-4 rounded-2xl flex gap-4 transition-all active:scale-[0.98] border-white/60">
+<div class="flex size-14 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-vibrant-blue border border-blue-100">
+<span class="material-symbols-outlined text-2xl">school</span>
+</div>
+<div class="flex flex-1 flex-col justify-center">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-bold text-base text-navy-blue">Liderazgo Ministerial</h3>
+<span class="status-badge bg-blue-50 text-blue-400">INTERMEDIO</span>
+</div>
+<p class="text-slate-500 text-xs line-clamp-1 mb-3">Principios para la iglesia contemporánea.</p>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+<span class="material-symbols-outlined text-xs">list_alt</span>
+                                8 Lecciones
+                            </div>
+<div class="flex-1 h-1 bg-blue-100 rounded-full overflow-hidden">
+<div class="h-full bg-vibrant-blue" style="width: 10%;"></div>
+</div>
+<span class="text-[10px] font-bold text-vibrant-blue">10%</span>
+</div>
+</div>
+</div>
+<div class="glass-light p-4 rounded-2xl flex gap-4 transition-all active:scale-[0.98] border-white/60">
+<div class="flex size-14 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-vibrant-blue border border-blue-100">
+<span class="material-symbols-outlined text-2xl">history_edu</span>
+</div>
+<div class="flex flex-1 flex-col justify-center">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-bold text-base text-navy-blue">Historia de la Iglesia</h3>
+<span class="status-badge bg-slate-100 text-slate-500">BÁSICO</span>
+</div>
+<p class="text-slate-500 text-xs line-clamp-1 mb-3">Desde Pentecostés hasta la Reforma.</p>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+<span class="material-symbols-outlined text-xs">list_alt</span>
+                                15 Lecciones
+                            </div>
+<div class="flex-1 h-1 bg-blue-100 rounded-full overflow-hidden">
+<div class="h-full bg-vibrant-blue" style="width: 90%;"></div>
+</div>
+<span class="text-[10px] font-bold text-vibrant-blue">90%</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 glass-light border-t border-blue-100/50 px-4 pb-8 pt-3 z-50">
+<div class="flex gap-2">
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400" href="#">
+<div class="flex h-7 items-center justify-center">
+<span class="material-symbols-outlined">home</span>
+</div>
+<p class="text-[10px] font-medium leading-normal">Inicio</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-vibrant-blue" href="#">
+<div class="flex h-7 items-center justify-center">
+<span class="material-symbols-outlined fill-1">book_2</span>
+</div>
+<p class="text-[10px] font-bold leading-normal">Cursos</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400" href="#">
+<div class="flex h-7 items-center justify-center">
+<span class="material-symbols-outlined">group</span>
+</div>
+<p class="text-[10px] font-medium leading-normal">Comunidad</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400" href="#">
+<div class="flex h-7 items-center justify-center">
+<span class="material-symbols-outlined">account_circle</span>
+</div>
+<p class="text-[10px] font-medium leading-normal">Perfil</p>
+</a>
+</div>
+</nav>
+</div>
+
+</body></html>

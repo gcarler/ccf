@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1973f0",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass {
+            background: rgba(25, 115, 240, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(25, 115, 240, 0.1);
+        }
+        .mesh-bg {
+            background-color: #101822;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(25, 115, 240, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(25, 115, 240, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(25, 115, 240, 0.05) 0px, transparent 50%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen mesh-bg">
+<div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
+<header class="sticky top-0 z-50 flex items-center bg-background-dark/80 backdrop-blur-md p-4 justify-between border-b border-primary/10">
+<div class="text-slate-100 flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-primary/10 cursor-pointer">
+<span class="material-symbols-outlined">arrow_back_ios_new</span>
+</div>
+<h2 class="text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center">Teología Sistemática</h2>
+<div class="flex w-10 items-center justify-end">
+<button class="flex size-10 cursor-pointer items-center justify-center rounded-full hover:bg-primary/10 text-slate-100">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</header>
+<main class="flex-1 pb-24">
+<div class="p-4">
+<div class="relative flex items-center justify-center bg-slate-800 aspect-video rounded-xl overflow-hidden shadow-2xl shadow-primary/20 group" data-alt="Video thumbnail of a theological lecture in a modern studio" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCJ8QZfHjovjtM5S5sC4F5VT9mKmKqZqEX07lfO4Kf-vItd6xq1nwYDmu4BR3fikqd8JIKfh9mVtfEjA5Iq0lmkxFhmESTzqEwCKw_4aO9Wo6nXcOZ7aBix-aMm9P27Tpt5aifxcrDdhXKkvwLY702vPg3WVLk4iF2mgjeIoEBdCZpHaVyubQmXf-9d6GH3-n5f5RmHqxuyCflers3G_pajGUrFkX9aUx7k9VOe2h_W0cuGXsbtgyiFXM6BQ8ssTI4SNcPZShdyX0I'); background-size: cover; background-position: center;">
+<div class="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors"></div>
+<button class="relative flex shrink-0 items-center justify-center rounded-full size-20 bg-primary text-white shadow-[0_0_30px_rgba(25,115,240,0.6)] hover:scale-105 transition-transform">
+<span class="material-symbols-outlined !text-4xl fill-1">play_arrow</span>
+</button>
+<div class="absolute inset-x-0 bottom-0 px-4 py-4 bg-gradient-to-t from-black/80 to-transparent">
+<div class="flex h-1.5 items-center justify-center mb-2">
+<div class="h-full w-[35%] rounded-full bg-primary"></div>
+<div class="size-3 rounded-full bg-white shadow-lg border-2 border-primary -ml-1"></div>
+<div class="h-full flex-1 rounded-full bg-white/30"></div>
+</div>
+<div class="flex items-center justify-between">
+<p class="text-white text-[10px] font-bold tracking-wider">12:45</p>
+<p class="text-white text-[10px] font-bold tracking-wider">45:00</p>
+</div>
+</div>
+</div>
+</div>
+<div class="px-4 py-2">
+<div class="inline-flex items-center px-2 py-1 rounded-md bg-primary/20 text-primary text-[10px] font-extrabold uppercase tracking-widest mb-2">
+                    Módulo 1 • Clase 01
+                </div>
+<h1 class="text-slate-100 text-3xl font-extrabold leading-tight tracking-tight mb-1">Lección 1: La Gracia Divina</h1>
+<p class="text-slate-400 text-sm font-medium">Impartido por: Dr. Samuel Mendez • 45 min de contenido</p>
+</div>
+<div class="px-4 mt-6 flex gap-4 border-b border-primary/10">
+<button class="pb-3 border-b-2 border-primary text-primary font-bold text-sm">Contenido</button>
+<button class="pb-3 text-slate-400 font-bold text-sm">Recursos</button>
+<button class="pb-3 text-slate-400 font-bold text-sm">Notas</button>
+</div>
+<div class="p-4 space-y-4">
+<div class="glass p-5 rounded-2xl">
+<h3 class="text-slate-100 font-bold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">list_alt</span>
+                        Contenido de la Lección
+                    </h3>
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<div class="size-6 rounded-md bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm font-bold">check</span>
+</div>
+<span class="text-slate-100 text-sm font-medium">Introducción a la Soteriología</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="size-6 rounded-md border-2 border-primary/30 flex items-center justify-center text-transparent">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<span class="text-slate-300 text-sm font-medium">Concepto Bíblico de la Gracia</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="size-6 rounded-md border-2 border-primary/30 flex items-center justify-center text-transparent">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<span class="text-slate-300 text-sm font-medium">Gracia Común vs. Gracia Especial</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="size-6 rounded-md border-2 border-primary/30 flex items-center justify-center text-transparent">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<span class="text-slate-300 text-sm font-medium">Aplicación Práctica y Conclusión</span>
+</div>
+</div>
+</div>
+<div class="glass p-5 rounded-2xl">
+<h3 class="text-slate-100 font-bold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">folder_open</span>
+                        Recursos Descargables
+                    </h3>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-3 rounded-xl bg-primary/5 border border-primary/10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-red-400">picture_as_pdf</span>
+<div class="flex flex-col">
+<span class="text-slate-100 text-xs font-bold">Guía de Estudio.pdf</span>
+<span class="text-slate-500 text-[10px]">2.4 MB • PDF</span>
+</div>
+</div>
+<button class="text-primary">
+<span class="material-symbols-outlined">download</span>
+</button>
+</div>
+<div class="flex items-center justify-between p-3 rounded-xl bg-primary/5 border border-primary/10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-blue-400">description</span>
+<div class="flex flex-col">
+<span class="text-slate-100 text-xs font-bold">Bibliografía Recomendada.docx</span>
+<span class="text-slate-500 text-[10px]">1.1 MB • Word</span>
+</div>
+</div>
+<button class="text-primary">
+<span class="material-symbols-outlined">download</span>
+</button>
+</div>
+</div>
+</div>
+<div class="glass p-5 rounded-2xl">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-slate-100 font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">edit_note</span>
+                            Mis Notas
+                        </h3>
+<button class="text-primary text-xs font-bold uppercase tracking-wider">Editar</button>
+</div>
+<div class="bg-primary/5 p-4 rounded-xl border border-primary/10 min-h-[100px]">
+<p class="text-slate-400 text-sm italic">"La gracia no es solo el perdón de los pecados, sino el poder divino para vivir una vida transformada..."</p>
+</div>
+</div>
+</div>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 z-50 flex gap-2 border-t border-primary/10 bg-background-dark/95 backdrop-blur-xl px-4 pb-6 pt-2">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined !text-[28px] fill-1">school</span>
+<p class="text-[10px] font-bold leading-normal tracking-wide">Cursos</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined !text-[28px]">menu_book</span>
+<p class="text-[10px] font-medium leading-normal tracking-wide">Biblia</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined !text-[28px]">groups</span>
+<p class="text-[10px] font-medium leading-normal tracking-wide">Comunidad</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined !text-[28px]">person</span>
+<p class="text-[10px] font-medium leading-normal tracking-wide">Perfil</p>
+</a>
+</nav>
+</div>
+</body></html>

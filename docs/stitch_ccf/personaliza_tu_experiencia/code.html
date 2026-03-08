@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4242f0",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101022",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body::-webkit-scrollbar {
+            display: none;
+        }
+        .ios-status-bar {
+            height: 44px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 overflow-hidden">
+<div class="relative flex h-screen w-full flex-col overflow-hidden">
+<div class="ios-status-bar flex items-end justify-between px-8 pb-2">
+<span class="text-xs font-semibold">9:41</span>
+<div class="flex gap-1.5 items-center">
+<span class="material-symbols-outlined text-[14px]">signal_cellular_4_bar</span>
+<span class="material-symbols-outlined text-[14px]">wifi</span>
+<span class="material-symbols-outlined text-[14px]">battery_full</span>
+</div>
+</div>
+<div class="flex items-center px-4 py-2 justify-between">
+<div class="text-slate-900 dark:text-slate-100 flex size-10 items-center justify-center rounded-full bg-slate-200/50 dark:bg-primary/20">
+<span class="material-symbols-outlined">arrow_back_ios_new</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-base font-semibold leading-tight flex-1 text-center pr-10">Personalización</h2>
+</div>
+<div class="flex w-full flex-row items-center justify-center gap-2 py-6">
+<div class="h-1.5 w-1.5 rounded-full bg-primary/30"></div>
+<div class="h-1.5 w-1.5 rounded-full bg-primary/30"></div>
+<div class="h-1.5 w-8 rounded-full bg-primary shadow-[0_0_8px_rgba(66,66,240,0.6)]"></div>
+</div>
+<div class="px-6 flex flex-col items-center">
+<h1 class="text-slate-900 dark:text-slate-100 text-[28px] font-bold leading-tight text-center">¿En qué sede te encuentras?</h1>
+<p class="text-slate-500 dark:text-slate-400 text-sm mt-2 text-center">Elige tu comunidad local para ver eventos cercanos</p>
+</div>
+<div class="mt-6 px-4">
+<div class="flex overflow-x-auto gap-4 pb-4 no-scrollbar">
+<div class="min-w-[180px] group relative flex flex-col gap-3 rounded-xl overflow-hidden aspect-[4/5] border-2 border-primary" data-alt="Modern church building with blue lighting">
+<div class="absolute inset-0 bg-cover bg-center" style="background-image: linear-gradient(to top, rgba(16, 16, 34, 0.9) 0%, rgba(16, 16, 34, 0.2) 50%, transparent 100%), url('https://lh3.googleusercontent.com/aida-public/AB6AXuAR89hqrGixgDo5gyAtEPJsXa4CXjRBdyuHElcJMkLKSXVPDJpAaK9seRqocRisjlh3c3QFunADv1tXzyBnOihU7z2r9Ehm321-QVeL8JVAzeYC3kZJ7UJ47FOoXBg6kM7pKUrv1zk-nK-yuxmfgbuKmHeYReN9livUS1nHXvbhfHLkU1ILfvStk4aU9aklJxVu-dDswb0fLZXfJni9jr-TJOgF4FGcsHYqNBQBqz0vZMoePd8SrfFRdoSeHWacr2VddquWUvmM0eU');"></div>
+<div class="mt-auto p-4 z-10">
+<p class="text-white text-lg font-bold">Sede Central</p>
+<p class="text-primary text-xs font-medium">Ciudad de Guatemala</p>
+</div>
+<div class="absolute top-3 right-3 z-10 bg-primary rounded-full p-1">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+</div>
+<div class="min-w-[180px] group relative flex flex-col gap-3 rounded-xl overflow-hidden aspect-[4/5] border-2 border-transparent" data-alt="Stained glass windows in modern architecture">
+<div class="absolute inset-0 bg-cover bg-center" style="background-image: linear-gradient(to top, rgba(16, 16, 34, 0.9) 0%, rgba(16, 16, 34, 0.2) 50%, transparent 100%), url('https://lh3.googleusercontent.com/aida-public/AB6AXuCgq9kmuTh-8XtJWTfpxffjssttOPON3V_q0-rPDEqC4AsyAI6yDvDPT82LLR6JBu7RJQhSrRapSIua6UWn00AGGHl3H-6jbR1-2TUFzKiCVwyQDT1gWOQNr8-uWfUsJxPEXd-vqpZFl8wKTRqsMjlRyNoXpgAUA5o1HTXrIi5Da38o4kgf_-vQfTUBWNUzwUzfNIrf1BLwPR8TBwK_EujlKSCmzymYnGI5Slzrjf7ETqfFZVpwnrCTO1JLrZe4EZizOmy86Avs_5s');"></div>
+<div class="mt-auto p-4 z-10">
+<p class="text-white text-lg font-bold">Sede Norte</p>
+<p class="text-slate-300 text-xs font-medium">Petén</p>
+</div>
+</div>
+<div class="min-w-[180px] group relative flex flex-col gap-3 rounded-xl overflow-hidden aspect-[4/5] border-2 border-transparent" data-alt="Night view of a contemporary sanctuary">
+<div class="absolute inset-0 bg-cover bg-center" style="background-image: linear-gradient(to top, rgba(16, 16, 34, 0.9) 0%, rgba(16, 16, 34, 0.2) 50%, transparent 100%), url('https://lh3.googleusercontent.com/aida-public/AB6AXuBHn08qY8p4hnaioqr8hNs3umIftMF8z23KAHCUsKwkbbKMhhnhjuOZr9zrtDopeH2724aDe_O2Qo11cSLhAZoG40R70sjQzW8bQZQYQaevqijP7suvwfz0mXl84HB9eeHHTuo9yvw1sTd5yb0PbE6XP7EK5L1RDnqd6hUUiWrarlXvHwtJm86VRjgJh8k8BG5mRnW23pebr5jFOvchXjMu3xMQmMG1YywTRkiUlcTnabbOu2GHomO4BDTHTex0n0QZxzmZDacHHYw');"></div>
+<div class="mt-auto p-4 z-10">
+<p class="text-white text-lg font-bold">Sede Sur</p>
+<p class="text-slate-300 text-xs font-medium">Escuintla</p>
+</div>
+</div>
+</div>
+</div>
+<div class="px-6 mt-8 flex-1">
+<div class="bg-primary/10 dark:bg-primary/5 rounded-xl border border-primary/20 p-5 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">notifications_active</span>
+</div>
+<div>
+<h3 class="text-slate-900 dark:text-slate-100 font-bold text-base leading-tight">Mantente conectado</h3>
+<p class="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Activar Notificaciones</p>
+</div>
+</div>
+<div class="relative inline-flex h-6 w-11 items-center rounded-full bg-primary">
+<span class="inline-block h-4 w-4 translate-x-6 transform rounded-full bg-white transition"></span>
+</div>
+</div>
+<div class="mt-4 flex flex-col gap-3">
+<div class="flex items-center gap-3 px-2 py-1">
+<span class="material-symbols-outlined text-primary text-[20px]">verified_user</span>
+<p class="text-slate-600 dark:text-slate-400 text-xs">Tu privacidad es nuestra prioridad espiritual.</p>
+</div>
+</div>
+</div>
+<div class="p-6 pb-10 bg-gradient-to-t from-background-light dark:from-background-dark via-background-light dark:via-background-dark to-transparent">
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(66,66,240,0.4)] flex items-center justify-center gap-2 transition-all">
+                Ir al Inicio
+                <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+<div class="absolute bottom-1 left-1/2 -translate-x-1/2 h-1 w-32 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+</div>
+</body></html>

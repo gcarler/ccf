@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1973f0",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        body::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<!-- Main Container -->
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Header -->
+<header class="sticky top-0 z-10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-4 pt-6 pb-2">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-slate-900 dark:text-slate-100 text-2xl">arrow_back_ios</span>
+</div>
+<h1 class="text-lg font-bold tracking-tight">Gestión de Usuarios</h1>
+<div class="w-8 flex justify-end">
+<span class="material-symbols-outlined text-slate-900 dark:text-slate-100">more_vert</span>
+</div>
+</div>
+<!-- Search Bar -->
+<div class="relative w-full mb-2">
+<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+<span class="material-symbols-outlined text-slate-400 text-xl">search</span>
+</div>
+<input class="block w-full pl-10 pr-4 py-3 bg-slate-200/50 dark:bg-primary/10 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary transition-all placeholder:text-slate-500" placeholder="Buscar por nombre o email" type="text"/>
+</div>
+<!-- Filters -->
+<div class="flex items-center gap-6 overflow-x-auto py-3 no-scrollbar border-b border-slate-200 dark:border-slate-800">
+<button class="whitespace-nowrap text-sm font-semibold text-primary border-b-2 border-primary pb-2">Todos</button>
+<button class="whitespace-nowrap text-sm font-medium text-slate-500 dark:text-slate-400 pb-2">Estudiantes</button>
+<button class="whitespace-nowrap text-sm font-medium text-slate-500 dark:text-slate-400 pb-2">Líderes</button>
+<button class="whitespace-nowrap text-sm font-medium text-slate-500 dark:text-slate-400 pb-2">Administradores</button>
+</div>
+</header>
+<!-- User List -->
+<main class="flex-1 px-4 py-2 space-y-1">
+<!-- User Row 1 -->
+<div class="flex items-center justify-between py-4 border-b border-slate-100 dark:border-slate-800/50">
+<div class="flex items-center gap-3">
+<div class="h-12 w-12 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center">
+<img class="h-full w-full object-cover" data-alt="Close up portrait of a young man smiling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJ00MevraiuEQNdt6mq811-PFxCXvt20QD6MV9zPH7Gnsft9PyhdINNDrTlsbLq85KmDTLy4ZXakOeFM8vaWd_PAF40mW2NptlnVSUutpzMDhKzm6OQjt8deBhO-1ReB0tOIPTY0ralEgFTS3gEEmCgWur3_8fzNNbw_L0RHIGOs1HaZjvVGnNwoAx3sbAL_0z4pr4OBwXfOt_r1knuifZ1zXAUpjYmvBuK59qrEktPi3f4La4sB247MSEaChFIHZzTXWsuJwSdtQ"/>
+</div>
+<div>
+<p class="font-semibold text-sm">Juan Pérez</p>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary">Estudiante</span>
+</div>
+</div>
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+<!-- User Row 2 -->
+<div class="flex items-center justify-between py-4 border-b border-slate-100 dark:border-slate-800/50">
+<div class="flex items-center gap-3">
+<div class="h-12 w-12 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center">
+<img class="h-full w-full object-cover" data-alt="Portrait of a woman with long dark hair" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAz2xhYXzw7pMyVnzN6AaAqeEbsRksZ_OAWv_YTCQA4vDZKSuE0AUQd1HIyP43MeFcGWoErPzsvZ_EDBe6gdzmuuMmBXWBQ1vdmLxXRSLEmazsuic8UZeVBAUNYL6WZ7m9XsQMtNOcgTj9TIJD5jFkH-sznXPT0WJ0H0BL37ah01sQEU5UKgkG-5NxzuQFcyrCZUIlGmybvR_oYTLmPtedNM6ShQu4NM7QKfiBulwmMJS23Cuauj8EWQ3jYM1oIoM9HVIesRb3aYtc"/>
+</div>
+<div>
+<p class="font-semibold text-sm">María García</p>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-500">Líder</span>
+</div>
+</div>
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+<!-- User Row 3 -->
+<div class="flex items-center justify-between py-4 border-b border-slate-100 dark:border-slate-800/50">
+<div class="flex items-center gap-3">
+<div class="h-12 w-12 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center">
+<img class="h-full w-full object-cover" data-alt="Profile picture of a man with glasses" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwDs1IRokmk6C4vcgsAe3vThxJI_BpLLVK9Q-ekJG5mtP7BPQkdPDfWqjpG4AhaLu2ma8r5oEWeb-J0DgfbG9H-iokvQ2ElDoHP3A-L5LZ5f0t_iANyg0NHEQUicKAuhYxuQe_CMnybk2sutqMfuD6CJEbVXdFiceM5F3DcvEYllKaJnBTNPOVlhOZW-POsMws2pptHcUHVDVFjw18NaxhbxizfT2JO5N5-e3zwo0rneUoo7S0iGOgvas-uWyzTK65_uaCNjf57pQ"/>
+</div>
+<div>
+<p class="font-semibold text-sm">Carlos Rodríguez</p>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary">Estudiante</span>
+</div>
+</div>
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+<!-- User Row 4 -->
+<div class="flex items-center justify-between py-4 border-b border-slate-100 dark:border-slate-800/50">
+<div class="flex items-center gap-3">
+<div class="h-12 w-12 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center">
+<img class="h-full w-full object-cover" data-alt="Smiling woman with curly hair looking at camera" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhT4-r1jqLKkYu5esnKrPSs_sEiMaxIVeJOOWbO7WnPFo5qt2zJyByRWcorfhklYhTh8nZvP65Byn4l7iknhDnOr_RtERjoysXf2J9ndYIgK2X5Mf7y0nifzhqL6JBpicwHUwnfB9oXil5yK5EgY9rB9oy1LUO-spUTmWzlzIDUvFZ8-rBnsp3dRodhFh0sBzMaJjTOIWC4Viogslx9ybxE3nf_8F4pX-OljysJGOmhy1U71OouTqUG8KGqpKqI-MRZBdFhjS3OTs"/>
+</div>
+<div>
+<p class="font-semibold text-sm">Ana Martínez</p>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-500">Administrador</span>
+</div>
+</div>
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+<!-- User Row 5 -->
+<div class="flex items-center justify-between py-4 border-b border-slate-100 dark:border-slate-800/50">
+<div class="flex items-center gap-3">
+<div class="h-12 w-12 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center">
+<img class="h-full w-full object-cover" data-alt="Headshot of a middle aged man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTj7nZFzoPBZwTgmNnX_odA1zMK_yTlFCn29yDBKuFXrUjuEfq9Ovj0u2DOFn-s2sGxwDeEcdExlzL4gLCK32S-PzHj-biRzkycUrk9uX3lBQNcD2yQKSEGMfs2x4M7eAEsmCHZmWHKskp5FsmQZdJRg9exsMFIbQtkm6ftfubXuWZQHneiH542qp37KRauftmDPETPEdYSMfV11zVtfAz4yvJbRxWq8z8_9HpiibYqHt8UjIOq7TvCx-5z25xN5lpuPeohNVZnmQ"/>
+</div>
+<div>
+<p class="font-semibold text-sm">Roberto Sánchez</p>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary">Estudiante</span>
+</div>
+</div>
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+<!-- Padding for FAB -->
+<div class="h-24"></div>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-24 right-6 flex items-center gap-2 bg-primary text-white px-6 py-4 rounded-full shadow-lg shadow-primary/40 active:scale-95 transition-transform">
+<span class="material-symbols-outlined">person_add</span>
+<span class="font-bold text-sm">Añadir Usuario</span>
+</button>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-background-light dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 px-6 py-3 flex justify-between items-center z-20">
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">Inicio</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined fill-1">group</span>
+<span class="text-[10px] font-medium">Usuarios</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-[10px] font-medium">Eventos</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-medium">Ajustes</span>
+</a>
+</nav>
+</div>
+</body></html>

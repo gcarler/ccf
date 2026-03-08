@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#259df4",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101a22",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        ::-webkit-scrollbar { display: none; }
+        body { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-input {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(37, 157, 244, 0.1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased">
+<div class="relative flex h-screen w-full flex-col bg-gradient-to-b from-white to-primary/5 dark:from-background-dark dark:to-background-dark overflow-hidden">
+<!-- Top Navigation Bar -->
+<div class="flex items-center bg-white/80 dark:bg-background-dark/80 backdrop-blur-md p-4 sticky top-0 z-10 border-b border-primary/10">
+<button class="text-primary flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined">arrow_back_ios_new</span>
+</button>
+<h1 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-10">Editar Testimonio</h1>
+</div>
+<!-- Main Content Area -->
+<div class="flex-1 overflow-y-auto px-5 py-6 space-y-6">
+<div class="space-y-1">
+<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold">Información del Testimonio</h2>
+<p class="text-slate-500 dark:text-slate-400 text-sm">Modifica los detalles del testimonio compartido.</p>
+</div>
+<div class="space-y-4">
+<!-- Member Name Field -->
+<div class="flex flex-col gap-2">
+<label class="text-slate-700 dark:text-slate-300 text-sm font-semibold px-1">Nombre del Miembro</label>
+<div class="glass-input rounded-xl flex items-center px-4 py-3 shadow-sm focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+<span class="material-symbols-outlined text-primary/60 mr-3">person</span>
+<input class="bg-transparent border-none p-0 w-full focus:ring-0 text-slate-900 dark:text-slate-100 placeholder:text-slate-400" type="text" value="Mateo Rodriguez"/>
+</div>
+</div>
+<!-- Category Dropdown -->
+<div class="flex flex-col gap-2">
+<label class="text-slate-700 dark:text-slate-300 text-sm font-semibold px-1">Categoría</label>
+<div class="glass-input rounded-xl flex items-center px-4 shadow-sm focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+<span class="material-symbols-outlined text-primary/60 mr-3">category</span>
+<select class="bg-transparent border-none py-3 px-0 w-full focus:ring-0 text-slate-900 dark:text-slate-100 appearance-none">
+<option value="sanidad">Sanidad Divina</option>
+<option value="familia">Restauración Familiar</option>
+<option value="finanzas">Provisión Financiera</option>
+<option value="espiritual">Crecimiento Espiritual</option>
+</select>
+<span class="material-symbols-outlined text-slate-400">expand_more</span>
+</div>
+</div>
+<!-- Testimony Content -->
+<div class="flex flex-col gap-2">
+<label class="text-slate-700 dark:text-slate-300 text-sm font-semibold px-1">Contenido del Testimonio</label>
+<div class="glass-input rounded-xl shadow-sm focus-within:ring-2 focus-within:ring-primary/30 transition-all p-4">
+<textarea class="bg-transparent border-none p-0 w-full focus:ring-0 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 min-h-[180px] resize-none leading-relaxed">Quiero dar gracias a Dios por su inmensa bondad. El mes pasado mi familia estaba pasando por una crisis financiera muy fuerte, pero oramos con fe y las puertas se abrieron de manera milagrosa. Una empresa me llamó para un puesto que superaba mis expectativas. ¡Toda la gloria sea para Él!</textarea>
+</div>
+</div>
+<!-- Internal Notes -->
+<div class="flex flex-col gap-2">
+<label class="text-slate-700 dark:text-slate-300 text-sm font-semibold px-1">Notas Internas (Admin)</label>
+<div class="glass-input rounded-xl flex items-center px-4 py-3 shadow-sm focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+<span class="material-symbols-outlined text-primary/60 mr-3">edit_note</span>
+<input class="bg-transparent border-none p-0 w-full focus:ring-0 text-slate-900 dark:text-slate-100 placeholder:text-slate-400" placeholder="Agregar nota para moderadores..." type="text"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Footer Buttons -->
+<div class="p-6 bg-white/90 dark:bg-background-dark/90 backdrop-blur-lg border-t border-primary/10 space-y-3">
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+                Guardar Cambios
+            </button>
+<button class="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold py-4 rounded-xl transition-all">
+                Cancelar
+            </button>
+</div>
+</div>
+</body></html>

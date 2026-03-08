@@ -1,0 +1,148 @@
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1973f0",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                        "silver-accent": "#e2e8f0",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .silver-mesh {
+            background-color: #f8fafc;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(210, 40%, 90%, 1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(210, 20%, 95%, 1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(210, 40%, 85%, 1) 0, transparent 50%);
+        }
+        .glass-silver {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .silver-glow {
+            box-shadow: 0 0 15px rgba(226, 232, 240, 0.6);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Header -->
+<div class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10">
+<div class="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center justify-start">
+<span class="material-symbols-outlined">arrow_back_ios</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Credencial Digital</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="flex cursor-pointer items-center justify-center rounded-lg h-12 bg-transparent text-slate-900 dark:text-slate-100 p-0">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</div>
+<!-- Profile Section -->
+<div class="flex p-6 @container">
+<div class="flex w-full flex-col gap-4 items-center">
+<div class="flex gap-4 flex-col items-center">
+<div class="relative">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-32 w-32 border-4 border-silver-accent silver-glow" data-alt="Retrato profesional de un ministro de culto" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBJgRs2yVDmR5mYBmVUbKe8i-8zZWb0iClqCs9s9-ZjAcAfZk9KIchdMWADXBPJcEFQ4UJSUBKZSSdNPibyzuxDBmPl88FVV__Gau70FkciNgHrZGKF87aNybtw2Kyd9pXys3ovRzoqiXf7rmzuPosals63c2IJOnY7bs24d2d8xwd0hn39_E_FL9LtWxcfeg25A0QPN0vAVr_mxiWtlAJyJdG-ndUa8koDu7JusN5ajITpBvmex7-g4G7HLsfozzjATRTpLC9GSBE");'>
+</div>
+<div class="absolute bottom-1 right-1 bg-primary rounded-full p-1 border-2 border-background-dark">
+<span class="material-symbols-outlined text-white text-sm" style="font-variation-settings: 'FILL' 1">verified</span>
+</div>
+</div>
+<div class="flex flex-col items-center justify-center">
+<p class="text-slate-900 dark:text-slate-100 text-2xl font-bold leading-tight tracking-[-0.015em] text-center">Ministro de Culto</p>
+<p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-normal text-center">Pentecostal Church Modern</p>
+<p class="text-primary text-sm font-semibold mt-1">ID: MIN-778291</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Digital ID Card (Glassmorphism + Silver Mesh) -->
+<div class="px-6 py-2">
+<div class="silver-mesh relative overflow-hidden rounded-xl p-6 shadow-2xl flex flex-col gap-8 min-h-[220px]">
+<!-- Decorative Elements -->
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-[120px]">church</span>
+</div>
+<div class="flex justify-between items-start z-10">
+<div class="flex flex-col">
+<p class="text-slate-800 text-xs font-bold uppercase tracking-widest mb-1">Estatus Oficial</p>
+<h3 class="text-slate-900 text-2xl font-bold leading-tight">Credencial de Ministro</h3>
+</div>
+<div class="glass-silver rounded-lg p-2 flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-slate-800">military_tech</span>
+</div>
+</div>
+<div class="flex justify-between items-end z-10">
+<div class="flex flex-col gap-1">
+<p class="text-slate-600 text-[10px] font-bold uppercase tracking-tighter">Válido hasta</p>
+<p class="text-slate-900 text-base font-bold">Diciembre 2025</p>
+</div>
+<div class="flex flex-col items-end gap-1">
+<p class="text-slate-600 text-[10px] font-bold uppercase tracking-tighter">Sede Central</p>
+<p class="text-slate-900 text-base font-bold">Distrito Metropolitano</p>
+</div>
+</div>
+</div>
+</div>
+<!-- QR Access Code Section -->
+<div class="flex-1 flex flex-col items-center justify-center p-8">
+<h4 class="text-slate-500 dark:text-slate-400 text-xs font-bold leading-normal tracking-[0.2em] uppercase mb-4">Código de Acceso</h4>
+<div class="bg-white p-4 rounded-xl shadow-lg border-4 border-silver-accent/30">
+<div class="w-48 h-48 bg-slate-900 flex items-center justify-center rounded-lg" data-alt="Código QR de alta resolución para acceso digital">
+<!-- Placeholder for high contrast QR -->
+<div class="grid grid-cols-4 grid-rows-4 gap-1 w-40 h-40">
+<div class="bg-white"></div><div class="bg-white"></div><div class="bg-white"></div><div class="bg-white"></div>
+<div class="bg-white"></div><div class="bg-slate-900"></div><div class="bg-slate-900"></div><div class="bg-white"></div>
+<div class="bg-white"></div><div class="bg-slate-900"></div><div class="bg-slate-900"></div><div class="bg-white"></div>
+<div class="bg-white"></div><div class="bg-white"></div><div class="bg-white"></div><div class="bg-white"></div>
+</div>
+</div>
+</div>
+<p class="mt-6 text-slate-400 dark:text-slate-500 text-xs text-center px-12 italic">Escanee este código en los puntos de control autorizados para validar su identidad ministerial.</p>
+</div>
+<!-- Bottom Navigation Bar -->
+<div class="mt-auto border-t border-slate-200 dark:border-slate-800 bg-background-light dark:bg-slate-900/80 backdrop-blur-md px-4 pb-8 pt-3">
+<div class="flex gap-2">
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-medium leading-normal tracking-[0.015em]">Inicio</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">badge</span>
+<p class="text-[10px] font-medium leading-normal tracking-[0.015em]">Carnet</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<p class="text-[10px] font-medium leading-normal tracking-[0.015em]">Eventos</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">manage_accounts</span>
+<p class="text-[10px] font-medium leading-normal tracking-[0.015em]">Perfil</p>
+</a>
+</div>
+</div>
+
+```</body></html>

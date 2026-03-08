@@ -1,0 +1,201 @@
+<html class="light" lang="es"><head><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-gradient-to-b from-white to-background-light dark:from-background-dark dark:to-slate-900 min-h-screen">```html
+
+
+
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Calendario de Eventos</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e40af",
+                        "accent": "#1973f0",
+                        "background-light": "#f0f7ff",
+                        "background-dark": "#0f172a",
+                    },
+                    fontFamily: {
+                        "sans": ["Manrope", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply font-sans antialiased;
+            }
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+
+
+<div class="relative mx-auto flex h-screen max-w-[430px] flex-col overflow-hidden bg-transparent shadow-2xl">
+<div class="h-12 w-full shrink-0"></div>
+<header class="flex items-center justify-between px-6 pb-6 pt-2">
+<div>
+<p class="text-[10px] font-bold uppercase tracking-[0.2em] text-accent/70">Vida Pentecostal</p>
+<h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Calendario</h1>
+</div>
+<button class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 dark:bg-slate-800 dark:ring-slate-700">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-300">notifications</span>
+</button>
+</header>
+<div class="shrink-0 overflow-x-auto px-6 pb-6 hide-scrollbar">
+<div class="mb-4">
+<h2 class="text-lg font-bold text-slate-800 dark:text-white">Enero 2024</h2>
+</div>
+<div class="flex gap-4">
+<div class="flex flex-col items-center justify-center min-w-[56px] h-24 rounded-3xl bg-white/50 dark:bg-slate-800/50">
+<span class="text-[10px] font-bold text-slate-400 uppercase">Lun</span>
+<span class="text-xl font-bold text-slate-600 dark:text-slate-300">12</span>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[56px] h-24 rounded-3xl bg-white/50 dark:bg-slate-800/50">
+<span class="text-[10px] font-bold text-slate-400 uppercase">Mar</span>
+<span class="text-xl font-bold text-slate-600 dark:text-slate-300">13</span>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[56px] h-24 rounded-3xl bg-primary shadow-xl shadow-primary/20 scale-110">
+<span class="text-[10px] font-bold text-white/70 uppercase">Mié</span>
+<span class="text-xl font-extrabold text-white">14</span>
+<div class="mt-1 h-1 w-1 rounded-full bg-white"></div>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[56px] h-24 rounded-3xl bg-white/50 dark:bg-slate-800/50">
+<span class="text-[10px] font-bold text-slate-400 uppercase">Jue</span>
+<span class="text-xl font-bold text-slate-600 dark:text-slate-300">15</span>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[56px] h-24 rounded-3xl bg-white/50 dark:bg-slate-800/50">
+<span class="text-[10px] font-bold text-slate-400 uppercase">Vie</span>
+<span class="text-xl font-bold text-slate-600 dark:text-slate-300">16</span>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[56px] h-24 rounded-3xl bg-white/50 dark:bg-slate-800/50">
+<span class="text-[10px] font-bold text-slate-400 uppercase">Sáb</span>
+<span class="text-xl font-bold text-slate-600 dark:text-slate-300">17</span>
+</div>
+</div>
+</div>
+<main class="flex-1 overflow-y-auto px-6 pb-32 hide-scrollbar space-y-8">
+<div class="flex items-center justify-between">
+<h2 class="text-sm font-bold text-slate-400 tracking-wider uppercase">Próximos Hoy</h2>
+<div class="h-[1px] flex-1 bg-slate-200 dark:bg-slate-800 ml-4"></div>
+</div>
+<div class="group relative aspect-[4/5] w-full overflow-hidden rounded-[40px] shadow-2xl transition-transform active:scale-[0.98]">
+<img alt="Noche de Alabanza" class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsVhms9v-9k30P90DhHuOkj58EI9szj5W65wN35z5aOrEafEAwsxh-U2ekMOpXSvqA6AiRWH2hMygFHOLuc2V7TkIvxvBT8sYt2pue7WRGYjxsppqfuCLXRVv2OtONQDzDgVTQIlcmF7K495phQ0Y-_sOyjWwkkHB7cy6uS8LFFLrK3BJV1LeIrssTuTwmrzJ5FnbQMorAyeYqB62T4p0LdlkS3AtSTORgYei9HMe5DbIbeXggdbYjJ7OgBhjdZg8xiqthUt5924w"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="glass-card absolute bottom-6 left-6 right-6 p-6 rounded-[32px]">
+<div class="mb-3 flex items-center justify-between">
+<span class="rounded-full bg-accent/90 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white">Servicio en Vivo</span>
+<div class="flex items-center gap-1 text-white/90">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<span class="text-xs font-medium">09:00 AM</span>
+</div>
+</div>
+<h3 class="mb-4 text-2xl font-extrabold text-white leading-tight">Gran Noche de Alabanza y Adoración</h3>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-3">
+<img alt="Miembro" class="h-8 w-8 rounded-full border-2 border-white/20 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJbHshD25fsAKqCbuWGhKN2mEHxOFCTlgtsF3CRPMhX-YTSedf3lAGlJg-u-h91sH3g3lrJfwnun84f5WxuCpI0-DSJlA2z6xMSyCO5h8MWq_c9UG8IfkBtciw24u4sqPpt20xNxp-045FuTeMRneK_g3abnSqv2MNFV0HwXEWC51lHwxiHlkTrfWiQeSaskZHFEq18r1C8-DLpt1mU1IoPzghurvKzrxQl9vsxatsW7oZQ8_v5clifaT8frQ6jitumNYJpDcOw0I"/>
+<img alt="Miembro" class="h-8 w-8 rounded-full border-2 border-white/20 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPMIO8k3icWb6hbtsGl2EVmnXPbLhbaPh9WmLdBotH4NDUOhcrwuFBLwq3cCTGlOGmrLJ_oumDjJ0atvUiVb_iHddXB89BkJ_Pwv41L78lu60vN4J7Dw5k0fzU0g4yKq4zQhE_e5TxayDoN-z4cQHYmy_M5ZG9vvb-WEjXTce0AN8wTOVJRaBfl6qUSIVXJJGIXUb3n0dZmZs7WeyMVkqUzlOQokf0adgP1L6X9sOjJN1YgXMn9-wENFYlNOVtxnmLcXpKneaLccE"/>
+<div class="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/20 bg-white/10 text-[10px] font-bold text-white backdrop-blur-md">+120</div>
+</div>
+<button class="rounded-2xl bg-white px-6 py-3 text-sm font-bold text-slate-900 shadow-xl transition-all hover:bg-slate-50">Inscribirse</button>
+</div>
+</div>
+</div>
+<div class="group relative aspect-[4/5] w-full overflow-hidden rounded-[40px] shadow-2xl transition-transform active:scale-[0.98]">
+<img alt="Congreso de Jóvenes" class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZ0eklaG29pOL4nX7OJzkWh33Kd1HPiQXc3-RW1-4tVSk6prsmATc26PWVpBC4L_Rk2VGaCBm_zc8A2SlSv87o0GrSuKV9T_yQ4rDRqAmLKta-kAgmw9pZTDMvYDAX1YDYaRMSgzPv2XWKgA16UJndwai9_1FDMia7cbvtid3XAXV0mu99RsaCy936URk2Z_bwqddLEzjGfmEvP5n4TTYxD8DpJlP2v59EbcAx5Kk8iENlMwPfbYz23qYxRtTzGnP-d_64sBQacbc"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="glass-card absolute bottom-6 left-6 right-6 p-6 rounded-[32px]">
+<div class="mb-3 flex items-center justify-between">
+<span class="rounded-full bg-orange-500/90 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white">Evento Juvenil</span>
+<div class="flex items-center gap-1 text-white/90">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span class="text-xs font-medium">Auditorio Principal</span>
+</div>
+</div>
+<h3 class="mb-4 text-2xl font-extrabold text-white leading-tight">Congreso de Jóvenes: "Impacto Radical"</h3>
+<div class="flex items-center justify-between">
+<span class="text-sm font-extrabold text-white">GRATIS</span>
+<button class="rounded-2xl bg-white px-6 py-3 text-sm font-bold text-slate-900 shadow-xl transition-all">Inscribirse</button>
+</div>
+</div>
+</div>
+<div class="group relative aspect-[4/5] w-full overflow-hidden rounded-[40px] shadow-2xl transition-transform active:scale-[0.98]">
+<img alt="Estudio Bíblico" class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDeElQrI-koJ4F7KwioMVm8NDHN-drW2Zc4mx_lamzG25UXV2SkDZ7GFvsX7HlmRaw7CJdSefiZeE2MFgOJf-EMC5OAU6x_6a80BVtswuC57hF2BN1R6dq4OJqVQwHRNDxlElt1ga8KCBCejGkgNuqLjDar9WXpNDXD8bYR_K3pRFJIKf1n6kM8Mvlw6WOxHR54yzhX-hHz7KM5NOYkbeU7jJ-SbRrg9ZUDImIjCTl35wUaEwrFiV_2eXW5Yx49RPTOn7I2b9vVx4c"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="glass-card absolute bottom-6 left-6 right-6 p-6 rounded-[32px]">
+<div class="mb-3 flex items-center justify-between">
+<span class="rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white backdrop-blur-md">Solo Online</span>
+<div class="flex items-center gap-1 text-white/90">
+<span class="material-symbols-outlined text-sm">videocam</span>
+<span class="text-xs font-medium">06:30 PM</span>
+</div>
+</div>
+<h3 class="mb-4 text-2xl font-extrabold text-white leading-tight">Estudio Bíblico: Fundamentos de Fe</h3>
+<div class="flex items-center justify-between">
+<span class="text-sm font-medium text-white/80">ID Zoom: 892 012 994</span>
+<button class="rounded-2xl bg-accent px-6 py-3 text-sm font-bold text-white shadow-xl transition-all hover:bg-blue-600">Unirse</button>
+</div>
+</div>
+</div>
+</main>
+<div class="absolute bottom-28 right-8">
+<button class="flex h-14 w-14 items-center justify-center rounded-[20px] bg-slate-900 text-white shadow-2xl shadow-slate-900/40 transition-transform active:scale-90 dark:bg-white dark:text-slate-900">
+<span class="material-symbols-outlined text-2xl">add</span>
+</button>
+</div>
+<nav class="absolute bottom-0 left-0 right-0 z-50 bg-white/80 pb-10 pt-4 backdrop-blur-2xl dark:bg-slate-900/80">
+<div class="flex items-center justify-around px-4">
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[9px] font-bold uppercase tracking-widest">Inicio</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">mic</span>
+<span class="text-[9px] font-bold uppercase tracking-widest">Sermones</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+<span class="text-[9px] font-bold uppercase tracking-widest">Eventos</span>
+<div class="mt-1 h-1 w-1 rounded-full bg-primary"></div>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="text-[9px] font-bold uppercase tracking-widest">Biblia</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[9px] font-bold uppercase tracking-widest">Perfil</span>
+</a>
+</div>
+</nav>
+<div class="absolute bottom-2 left-1/2 h-1.5 w-32 -translate-x-1/2 rounded-full bg-slate-200 dark:bg-slate-800"></div>
+</div>
+
+</body></html>

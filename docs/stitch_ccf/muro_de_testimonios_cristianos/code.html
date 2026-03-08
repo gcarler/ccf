@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#259df4",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101a22",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        ::-webkit-scrollbar { display: none; }
+        body { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<div class="relative flex min-h-screen w-full flex-col max-w-[430px] mx-auto bg-background-light dark:bg-background-dark shadow-2xl overflow-hidden">
+<!-- Header -->
+<header class="sticky top-0 z-50 flex items-center bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md p-4 pb-2 justify-between border-b border-slate-200 dark:border-slate-800">
+<div class="text-primary flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined">arrow_back_ios_new</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center">Muro de Testimonios</h2>
+<div class="flex size-10 items-center justify-end">
+<button class="text-slate-600 dark:text-slate-400">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto">
+<!-- Featured Hero Section -->
+<div class="@container px-4 py-4">
+<div class="relative flex flex-col justify-end overflow-hidden rounded-xl min-h-[320px] shadow-lg group">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="Modern worship atmosphere with blue lights and silhouettes" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBxFGcxVzvwWPbi07TdoOYoV1bibWqrTSWJAXZy2NW8S1U5Lp92oEGosl_tLLp1mQ7NF2hIQkS4KGjyUXeN3kS24yQnsWEe01jKT1JhS51oSfPeZEulMrTD6b95CBXAros5LpQeU_X6y7tXrOIZdBMb7I7fuw-y4aJtguyXPaOMFAcosTmndDWCXD6dzudYzdXhiVOTtdm1Z8VPVNe0tNLrpbQOj8C9EqGvO-lDiSg7iqyW2GhKPXhbYDlGv3yxGnclqWWhFrHYP2Y");'>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-background-dark via-background-dark/20 to-transparent"></div>
+<div class="relative p-6">
+<span class="inline-block bg-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-white mb-2">Historias de Fe</span>
+<h1 class="text-white text-3xl font-bold leading-tight drop-shadow-md">Milagros que Transforman</h1>
+<p class="text-slate-200 text-sm mt-2 font-medium opacity-90">Explora lo que Dios está haciendo en nuestra congregación hoy.</p>
+</div>
+</div>
+</div>
+<!-- Action Button -->
+<div class="flex px-4 py-2">
+<button class="flex w-full items-center justify-center rounded-xl h-14 bg-primary text-white gap-3 shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="text-base font-bold tracking-tight">Publicar Testimonio</span>
+</button>
+</div>
+<!-- Categories / Filter -->
+<div class="flex gap-2 px-4 py-4 overflow-x-auto no-scrollbar">
+<button class="bg-primary text-white px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap">Todos</button>
+<button class="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap">Sanidad</button>
+<button class="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap">Provisión</button>
+<button class="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap">Restauración</button>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight px-4 pb-4">Testimonios Destacados</h2>
+<!-- Testimonies List -->
+<div class="px-4 space-y-4 pb-24">
+<!-- Testimony Card 1 -->
+<article class="glass-card rounded-xl p-5 border border-slate-200 dark:border-slate-800 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Portrait of a smiling young man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACBybI56juCJziliOsUPj6ZxS1n4vTBF-TxY6Cat0fxRFmTcLn-01VdXEC0uzEhYV52Zp7QLKSM-rSXxzg_pCQXh7HEkHP2K0SRdl6lXu4eezSuPU7VtpAlBMD2yyiPGRlm4adl-AS5zMWVR2SxKqdulhGnA2Fq3Ee0yMN3RUbjzgxoJ_uPszwbbF3cb5Dc3zsEo32ql542egbFAe1d5acV1WmaW3r6zV7M8Mc5Ldqs6_AkwA7nbbqj35c5nCK9mGXH8j7V8rVNZQ"/>
+</div>
+<div>
+<h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">Andrés Mendoza</h4>
+<p class="text-[10px] text-slate-500 uppercase tracking-tighter">Hace 2 horas</p>
+</div>
+</div>
+<span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded">PROVISIÓN</span>
+</div>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                        "En un momento de gran necesidad económica, Dios abrió una puerta que parecía imposible. Después de meses buscando empleo, recibí una oferta que superó mis oraciones. ¡Gloria a Dios!"
+                    </p>
+<div class="flex items-center justify-between pt-2 border-t border-slate-200/50 dark:border-white/5">
+<div class="flex gap-4">
+<button class="flex items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">volunteer_activism</span>
+<span class="text-xs font-semibold">124 Amén</span>
+</button>
+<button class="flex items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">share</span>
+<span class="text-xs font-semibold">Compartir</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Testimony Card 2 -->
+<article class="glass-card rounded-xl p-5 border border-slate-200 dark:border-slate-800 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Portrait of a joyful young woman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuASvoQwI1im2hWFdB96C5auIT64uT_F3RTemhk_Emu3oCsKtoWIjVxLf-SibznQn3AzLH9XYbMdQMp2czBxT506YuPoLCrDOTbDc1ZOYAkp1H83XK2V7WNrvUc7BNFbdKxD0RK4iUbH6L9Swpll0A4OVvulkF-xZ4hjrvYvxYQZWoIFy9fHKErKn7R_Kn2b7sHXF35iJ8IkYVDqDITXeyZDN_rczj44VX3q4qHJVsd4PvCJ_QFeHoUxeF8aQzgGtczoeuxMVfo-4lM"/>
+</div>
+<div>
+<h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">Elena Rodríguez</h4>
+<p class="text-[10px] text-slate-500 uppercase tracking-tighter">Ayer, 4:30 PM</p>
+</div>
+</div>
+<span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded">SANIDAD</span>
+</div>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                        "Fui sana de una afección crónica en mi espalda durante el servicio de oración del domingo pasado. El dolor que me acompañó por años desapareció por completo. ¡El poder de la fe es real!"
+                    </p>
+<div class="flex items-center justify-between pt-2 border-t border-slate-200/50 dark:border-white/5">
+<div class="flex gap-4">
+<button class="flex items-center gap-1.5 text-primary">
+<span class="material-symbols-outlined text-[20px] fill-current">volunteer_activism</span>
+<span class="text-xs font-semibold">312 Amén</span>
+</button>
+<button class="flex items-center gap-1.5 text-slate-500">
+<span class="material-symbols-outlined text-[20px]">share</span>
+<span class="text-xs font-semibold">Compartir</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Testimony Card 3 (Image content) -->
+<article class="glass-card rounded-xl p-0 border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden">
+<div class="h-48 w-full bg-cover bg-center" data-alt="Family hugging together in the sunset" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBTDpm0YkVVEHanWKtRCcHnTWi8mh3e2MeY6KBk9rZsXOMQwSN-XsGg9v-BnbRc5Ci5R2IsHPZ7rVeh60PxTNzJHTbvQ_mPAEmpH9wp2dzMJH4wwBXmfPMp2zHKAANAiK9N1Vj7b-FrOd268WzJFwlulfTl3FU5q3Qb3oM8j7X-LpzUqbPDZ_IjPv9nTpELHCeH-ygxWtsoThc6_oQsk_VeX38Vn-F22-RQ7CvDlz4CK1XK67bAMvtoEHUupAmXWIMsw_NoGt8DRPk')"></div>
+<div class="p-5 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Portrait of a middle aged man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBrJjysvJ81rhMEnY_MFC1KNJKT6WRqxo534hajvneGL49jt_4v6CTzjE8QuZtlvfUkuP6YPgUcpFayOo66MBTKJA65x3ROghySfThIBjExpD2aWvon9Xsr7FhQwAXo0XM_2v1t7ryo7JatxQ3D-GKYCBPTV1TrMCQCBkx99cpjdOrPhK1Q6LUCoASh4Oq8pTeMXH902Y-8aFD_rXU-V2skWMxNuSkKwDZXSTwA9vR9XmEP3agTP6IsugzUGa4KqFD4UTYpXMUP1sc"/>
+</div>
+<div>
+<h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">Familia Salazar</h4>
+<p class="text-[10px] text-slate-500 uppercase tracking-tighter">Hace 2 días</p>
+</div>
+</div>
+<span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded">RESTAURACIÓN</span>
+</div>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                            "Dios restauró nuestro matrimonio cuando todo parecía perdido. Hoy servimos juntos con gozo."
+                        </p>
+<div class="flex items-center justify-between pt-2 border-t border-slate-200/50 dark:border-white/5">
+<div class="flex gap-4">
+<button class="flex items-center gap-1.5 text-slate-500">
+<span class="material-symbols-outlined text-[20px]">volunteer_activism</span>
+<span class="text-xs font-semibold">89 Amén</span>
+</button>
+<button class="flex items-center gap-1.5 text-slate-500">
+<span class="material-symbols-outlined text-[20px]">share</span>
+<span class="text-xs font-semibold">Compartir</span>
+</button>
+</div>
+</div>
+</div>
+</article>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto bg-white/90 dark:bg-background-dark/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 px-6 pb-6 pt-3 flex justify-between items-center z-50">
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">Inicio</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined fill-current">chat_bubble</span>
+<span class="text-[10px] font-bold">Muro</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">calendar_month</span>
+<span class="text-[10px] font-medium">Eventos</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">Perfil</span>
+</a>
+</nav>
+</div>
+</body></html>

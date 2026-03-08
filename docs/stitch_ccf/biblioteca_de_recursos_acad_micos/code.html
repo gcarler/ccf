@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Biblioteca de Recursos Académicos</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4242f0",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#0a0a1a",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .gradient-bg {
+            background: radial-gradient(circle at top right, #1e1e4a, #0a0a1a);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col overflow-hidden">
+<div class="flex-1 flex flex-col overflow-y-auto no-scrollbar gradient-bg">
+<!-- Header -->
+<div class="sticky top-0 z-20 glass px-4 pt-12 pb-4">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-slate-100 cursor-pointer">arrow_back_ios</span>
+<h1 class="text-lg font-bold tracking-tight text-white">Biblioteca</h1>
+<span class="material-symbols-outlined text-slate-100 cursor-pointer">account_circle</span>
+</div>
+<!-- Search Bar -->
+<div class="relative">
+<div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-slate-400 text-xl">search</span>
+</div>
+<input class="w-full bg-white/10 border-none rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-slate-400 focus:ring-2 focus:ring-primary/50 transition-all" placeholder="Buscar libros, guías o artículos..." type="text"/>
+</div>
+</div>
+<!-- Categories -->
+<div class="flex gap-3 px-4 py-4 overflow-x-auto no-scrollbar">
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary px-6 shadow-lg shadow-primary/20">
+<p class="text-white text-sm font-medium">Todos</p>
+</div>
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white/5 border border-white/10 px-6">
+<p class="text-slate-300 text-sm font-medium">Libros</p>
+</div>
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white/5 border border-white/10 px-6">
+<p class="text-slate-300 text-sm font-medium">Guías</p>
+</div>
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white/5 border border-white/10 px-6">
+<p class="text-slate-300 text-sm font-medium">PDFs</p>
+</div>
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white/5 border border-white/10 px-6">
+<p class="text-slate-300 text-sm font-medium">Artículos</p>
+</div>
+</div>
+<!-- Favorites Section -->
+<section class="px-4 py-2">
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-lg font-bold text-white">Favoritos</h2>
+<span class="text-xs text-primary font-semibold">Ver todos</span>
+</div>
+<div class="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+<!-- Fav Card 1 -->
+<div class="flex-shrink-0 w-40 glass rounded-2xl p-3 flex flex-col gap-2 border-l-4 border-l-primary">
+<div class="h-24 w-full rounded-lg bg-gradient-to-br from-primary/30 to-blue-600/10 flex items-center justify-center relative overflow-hidden">
+<span class="material-symbols-outlined text-4xl text-primary/80">menu_book</span>
+<div class="absolute top-1 right-1">
+<span class="material-symbols-outlined text-primary text-sm font-fill">star</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-white truncate">Teología Sistemática</span>
+<span class="text-[10px] text-slate-400 truncate">Wayne Grudem</span>
+</div>
+</div>
+<!-- Fav Card 2 -->
+<div class="flex-shrink-0 w-40 glass rounded-2xl p-3 flex flex-col gap-2 border-l-4 border-l-blue-400">
+<div class="h-24 w-full rounded-lg bg-gradient-to-br from-blue-400/30 to-blue-600/10 flex items-center justify-center relative overflow-hidden">
+<span class="material-symbols-outlined text-4xl text-blue-400/80">description</span>
+<div class="absolute top-1 right-1">
+<span class="material-symbols-outlined text-primary text-sm font-fill">star</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-white truncate">Guía de Exégesis</span>
+<span class="text-[10px] text-slate-400 truncate">Dpto. Académico</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Resources List -->
+<section class="px-4 py-6 flex flex-col gap-4">
+<h2 class="text-lg font-bold text-white">Recursos Recientes</h2>
+<!-- Resource Item 1 -->
+<div class="glass rounded-2xl p-4 flex items-center gap-4 relative overflow-hidden group">
+<div class="h-16 w-16 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-3xl">picture_as_pdf</span>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<h3 class="text-sm font-bold text-white truncate">Historia del Pentecostalismo</h3>
+<p class="text-xs text-slate-400 mb-2">Varios Autores • 4.2 MB</p>
+<!-- Progress Bar Mockup -->
+<div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[0%] transition-all duration-1000 group-hover:w-[100%] shadow-[0_0_8px_#4242f0]"></div>
+</div>
+</div>
+<button class="shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 hover:bg-primary transition-colors">
+<span class="material-symbols-outlined text-primary group-hover:text-white text-xl">download</span>
+</button>
+</div>
+<!-- Resource Item 2 -->
+<div class="glass rounded-2xl p-4 flex items-center gap-4 relative overflow-hidden group">
+<div class="h-16 w-16 rounded-xl bg-blue-400/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-blue-400 text-3xl">auto_stories</span>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<h3 class="text-sm font-bold text-white truncate">Manual del Estudiante 2024</h3>
+<p class="text-xs text-slate-400 mb-2">Seminario Bíblico • 12.8 MB</p>
+<div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-0 group-hover:w-[60%] transition-all duration-1000 shadow-[0_0_8px_#4242f0]"></div>
+</div>
+</div>
+<button class="shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 hover:bg-primary transition-colors">
+<span class="material-symbols-outlined text-primary group-hover:text-white text-xl">download</span>
+</button>
+</div>
+<!-- Resource Item 3 -->
+<div class="glass rounded-2xl p-4 flex items-center gap-4 relative overflow-hidden group">
+<div class="h-16 w-16 rounded-xl bg-purple-400/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-purple-400 text-3xl">article</span>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<h3 class="text-sm font-bold text-white truncate">Hermenéutica Avanzada</h3>
+<p class="text-xs text-slate-400 mb-2">Dr. J. Rodriguez • 1.5 MB</p>
+<div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-0 group-hover:w-[100%] transition-all duration-1000 shadow-[0_0_8px_#4242f0]"></div>
+</div>
+</div>
+<button class="shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 hover:bg-primary transition-colors">
+<span class="material-symbols-outlined text-primary group-hover:text-white text-xl">download</span>
+</button>
+</div>
+<!-- Resource Item 4 -->
+<div class="glass rounded-2xl p-4 flex items-center gap-4 relative overflow-hidden group">
+<div class="h-16 w-16 rounded-xl bg-orange-400/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-orange-400 text-3xl">picture_as_pdf</span>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<h3 class="text-sm font-bold text-white truncate">Ética y Liderazgo</h3>
+<p class="text-xs text-slate-400 mb-2">Material de Estudio • 3.1 MB</p>
+<div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-0 group-hover:w-[100%] transition-all duration-1000 shadow-[0_0_8px_#4242f0]"></div>
+</div>
+</div>
+<button class="shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 hover:bg-primary transition-colors">
+<span class="material-symbols-outlined text-primary group-hover:text-white text-xl">download</span>
+</button>
+</div>
+</section>
+<!-- Bottom Spacer -->
+<div class="h-24 shrink-0"></div>
+</div>
+<!-- Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 z-30 glass border-t border-white/10 px-6 pb-8 pt-4">
+<div class="flex items-center justify-between max-w-md mx-auto">
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">Inicio</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined font-fill">library_books</span>
+<span class="text-[10px] font-medium">Biblioteca</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">star</span>
+<span class="text-[10px] font-medium">Favoritos</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">Perfil</span>
+</a>
+</div>
+</nav>
+</body></html>

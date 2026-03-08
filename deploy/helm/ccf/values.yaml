@@ -1,0 +1,53 @@
+global:
+  imagePullSecrets: []
+
+backend:
+  image: "ghcr.io/ccf/backend:latest"
+  replicaCount: 2
+  env:
+    DATABASE_URL: "postgresql+psycopg2://postgres:postgres@postgres:5432/ccf_db"
+    REDIS_URL: "redis://redis:6379/0"
+    KAFKA_BOOTSTRAP_SERVERS: "redpanda:9092"
+    SECRET_KEY: "replace-me"
+    ENABLE_OTEL: "false"
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  service:
+    type: ClusterIP
+    port: 8000
+
+frontend:
+  image: "ghcr.io/ccf/frontend:latest"
+  replicaCount: 2
+  env:
+    NEXT_PUBLIC_GRAPHQL_URL: "https://api.example.com/graphql"
+  service:
+    type: ClusterIP
+    port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+
+ingress:
+  enabled: true
+  className: "nginx"
+  tls:
+    enabled: true
+    hosts:
+      - host: app.example.com
+        secretName: ccf-tls
+  hosts:
+    backend: app.example.com
+    frontend: app.example.com
+  paths:
+    backend: /api
+    frontend: /

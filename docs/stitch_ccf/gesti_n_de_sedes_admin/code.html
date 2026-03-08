@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gestión de Sedes Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#259df4",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101a22",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body::-webkit-scrollbar {
+            display: none;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .vibrant-glow {
+            box-shadow: 0 10px 25px -5px rgba(37, 157, 244, 0.4);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-gradient-to-b from-white to-blue-50 dark:from-background-dark dark:to-slate-900 min-h-screen font-display text-slate-900 dark:text-slate-100">
+<div class="relative flex min-h-screen w-full flex-col max-w-md mx-auto overflow-hidden">
+<!-- Header -->
+<div class="sticky top-0 z-20 flex items-center bg-white/80 dark:bg-background-dark/80 backdrop-blur-md p-4 justify-between border-b border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-3">
+<div class="text-primary cursor-pointer">
+<span class="material-symbols-outlined text-2xl">arrow_back_ios_new</span>
+</div>
+<h1 class="text-xl font-bold tracking-tight">Gestión de Sedes</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex size-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+</div>
+<!-- Content Area -->
+<main class="flex-1 px-4 py-6 space-y-4">
+<div class="flex items-center justify-between mb-2">
+<h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500">Sedes Registradas</h2>
+<span class="text-xs font-medium text-primary">3 Sedes en total</span>
+</div>
+<!-- Location Card 1 -->
+<div class="glass-card rounded-2xl p-4 shadow-sm flex flex-col gap-4 border border-white dark:border-slate-700/30">
+<div class="flex items-start justify-between">
+<div class="flex gap-3">
+<div class="size-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">church</span>
+</div>
+<div>
+<h3 class="font-bold text-lg">Sede Central</h3>
+<p class="text-sm text-slate-500 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">location_on</span>
+                                Av. Principal 123, Ciudad
+                            </p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+</label>
+<span class="text-[10px] font-bold text-primary uppercase">Activa</span>
+</div>
+</div>
+<div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3 mt-1">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-slate-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Foto de perfil del pastor Juan Pérez" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAB7fcJubWO8aopLEd5Oyfip1qKUeSrAlIP99Zw_G04xKoQDWHHFWXfaed1tFy-xjI6sgOERqiO-0uv-gsUYGUczCzHm8J-mFmIoy1lSKCV-Ap-Ep4G8N8uFolX8pYnNaXrJTbFFqGYlRmvdBwIGNdg63tQyTHm0Gj0wjzbnM01vs6H_8MUjtYhLi_9mEdR8ZJIMVDn9ix3lrTrfDwIJjeJSuBUiShiS0R3UWPl17clmTIqHhCv2rSrYETMMfJU2vDfMREMXvC0x8"/>
+</div>
+<p class="text-xs text-slate-600 dark:text-slate-400">Pastor <span class="font-semibold text-slate-800 dark:text-slate-200">Juan Pérez</span></p>
+</div>
+<button class="text-primary text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">edit</span>
+                        Editar
+                    </button>
+</div>
+</div>
+<!-- Location Card 2 -->
+<div class="glass-card rounded-2xl p-4 shadow-sm flex flex-col gap-4 border border-white dark:border-slate-700/30">
+<div class="flex items-start justify-between">
+<div class="flex gap-3">
+<div class="size-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">apartment</span>
+</div>
+<div>
+<h3 class="font-bold text-lg">Sede Norte</h3>
+<p class="text-sm text-slate-500 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">location_on</span>
+                                Calle Norte 45, Distrito 2
+                            </p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+</label>
+<span class="text-[10px] font-bold text-primary uppercase">Activa</span>
+</div>
+</div>
+<div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3 mt-1">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-slate-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Foto de perfil de la pastora María García" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnaIV7pg7pBjVh9bQZPcYHiX4Stu7kqtltm13NCQYtzpB90EHhx6uO88bg6lSo5w0CC8q-h2vRYpt07O9tfPUrnQOk4d5DzgWiZiUVovWpBqgzxLNzmZB87JWIIVssMYZND8rY2SHN_LV37tT-MS-EmO2PZE8jUyh_5BUPTGvgmC-FfmDRf2J2okL9AQGd9kh5P4QfdLxFjci6ym3g5BHgjjssC94nb6i81peeUwIUZAHvxOSKqiMzIEgeaFxUXENex0ypdhHnQ14"/>
+</div>
+<p class="text-xs text-slate-600 dark:text-slate-400">Pastora <span class="font-semibold text-slate-800 dark:text-slate-200">María García</span></p>
+</div>
+<button class="text-primary text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">edit</span>
+                        Editar
+                    </button>
+</div>
+</div>
+<!-- Location Card 3 (Inactive) -->
+<div class="glass-card rounded-2xl p-4 shadow-sm flex flex-col gap-4 border border-white dark:border-slate-700/30 opacity-70">
+<div class="flex items-start justify-between">
+<div class="flex gap-3">
+<div class="size-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined">meeting_room</span>
+</div>
+<div>
+<h3 class="font-bold text-lg">Anexo Sur</h3>
+<p class="text-sm text-slate-500 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">location_on</span>
+                                Zona Sur KM 12
+                            </p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+</label>
+<span class="text-[10px] font-bold text-slate-400 uppercase">Inactiva</span>
+</div>
+</div>
+<div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3 mt-1">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-slate-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Foto de perfil del pastor Carlos Ruiz" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDD_HDJpIvSPhoyfrGc-2l1WAze9DsgsgeUMXLBe6iQowmhAlLKmz1XoQM2bIqu7pVB1QNsVPi103atUsIGiN7K9VJSDIU7iVsmwLRiPbQfd1chMTLdervHub9jLHnNDVFBbueWPAbdTK0Pm_u89rphc23AWQDrtiKWR7ZIDW47KDnakw5BUOfnO8Gv4IK3WUY1CuFkqVr5TGmi6uQbRoz6IyNU7urmtX8SeiIJuW9DBkvOVILfkuBQ5w0C1aSRpRP70ilre6pEx6s"/>
+</div>
+<p class="text-xs text-slate-600 dark:text-slate-400">Pastor <span class="font-semibold text-slate-800 dark:text-slate-200">Carlos Ruiz</span></p>
+</div>
+<button class="text-primary text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">edit</span>
+                        Editar
+                    </button>
+</div>
+</div>
+<div class="h-24"></div> <!-- Spacer for the bottom button -->
+</main>
+<!-- Fixed Action Button Area -->
+<div class="fixed bottom-24 left-1/2 -translate-x-1/2 w-full max-w-md px-6 z-30">
+<button class="vibrant-glow flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-white font-bold text-base transition-transform active:scale-95">
+<span class="material-symbols-outlined">add_circle</span>
+                Añadir Nueva Sede
+            </button>
+</div>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md flex border-t border-slate-100 dark:border-slate-800 bg-white/95 dark:bg-background-dark/95 backdrop-blur-md px-4 pb-8 pt-3 z-40">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined text-2xl fill-1">home</span>
+<p class="text-[10px] font-bold uppercase tracking-widest">Inicio</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined text-2xl">group</span>
+<p class="text-[10px] font-bold uppercase tracking-widest">Líderes</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined text-2xl">calendar_month</span>
+<p class="text-[10px] font-bold uppercase tracking-widest">Eventos</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined text-2xl">settings</span>
+<p class="text-[10px] font-bold uppercase tracking-widest">Ajustes</p>
+</a>
+</nav>
+</div>
+</body></html>

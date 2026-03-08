@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Perfil y Logros del Estudiante</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4242f0",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101022",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        body {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(66, 66, 240, 0.1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100">
+<div class="relative flex h-screen w-full flex-col bg-gradient-to-b from-white to-blue-50 dark:from-background-dark dark:to-slate-900 overflow-x-hidden">
+<!-- Header -->
+<div class="flex items-center p-4 justify-between sticky top-0 z-10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="text-primary flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined">arrow_back_ios_new</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center">Perfil del Estudiante</h2>
+<div class="flex w-10 items-center justify-end">
+<button class="flex items-center justify-center rounded-full size-10 text-primary hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto pb-24">
+<!-- Profile Info Section -->
+<div class="flex p-6 @container">
+<div class="flex w-full flex-col gap-4 items-center">
+<div class="flex gap-4 flex-col items-center">
+<div class="relative">
+<div class="absolute inset-0 rounded-full border-4 border-primary animate-pulse opacity-50 blur-md"></div>
+<div class="relative bg-center bg-no-repeat aspect-square bg-cover rounded-full border-4 border-white dark:border-slate-800 shadow-xl min-h-32 w-32 overflow-hidden" data-alt="Professional portrait of a young male student smiling" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBIweNbiA0B74odk7CCI8ePmj7A9CQDrt28gfW2zBrehdKCOHS_nL_mC3sO6ulxdK0HHzx_8xvSb2iIKKK32p_yqlXIr-mKu6nCq_eejbQVljkayqxQt2JOzEg34W0qHL9h_-ZUa6HKH9o1gb3a8NcdMPD5B6--HgzqETMBfAF-b8nQvttyCn66_-HFQlX2_88MG4v8on4yGGblRvzT1SEnqXyqDAbi0JNt3z5ZyN25cjw_b3vFQjWSYmSucKNTFc8cVP8ddbkVsSc");'>
+</div>
+<div class="absolute bottom-1 right-1 bg-primary text-white p-1.5 rounded-full shadow-lg border-2 border-white dark:border-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1">verified</span>
+</div>
+</div>
+<div class="flex flex-col items-center justify-center">
+<p class="text-slate-900 dark:text-slate-100 text-2xl font-bold leading-tight tracking-tight text-center">Juan Pérez</p>
+<p class="text-primary font-medium text-base text-center">Estudiante de 3er Semestre</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal text-center mt-1">ID Académico: 2024-0012</p>
+</div>
+</div>
+</div>
+</div>
+<!-- General Progress -->
+<div class="px-6 mb-8">
+<div class="glass-card p-5 rounded-xl shadow-sm">
+<div class="flex justify-between items-center mb-3">
+<span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Progreso General</span>
+<span class="text-sm font-bold text-primary">74%</span>
+</div>
+<div class="w-full bg-primary/10 rounded-full h-3">
+<div class="bg-primary h-3 rounded-full shadow-[0_0_10px_rgba(66,66,240,0.4)]" style="width: 74%"></div>
+</div>
+<p class="text-[11px] text-slate-500 dark:text-slate-400 mt-2">Próximo hito: Certificación de Liderazgo Ministerial</p>
+</div>
+</div>
+<!-- Badges Section -->
+<div class="mb-8">
+<div class="flex items-center justify-between px-6 pb-4">
+<h3 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight">Mis Insignias</h3>
+<span class="text-primary text-xs font-semibold">Ver todas</span>
+</div>
+<div class="flex w-full overflow-x-auto px-6 gap-6 py-2 no-scrollbar">
+<div class="flex flex-col items-center gap-3 min-w-[100px] group">
+<div class="relative size-20 flex items-center justify-center rounded-full bg-gradient-to-br from-yellow-300 to-amber-600 shadow-lg shadow-amber-200 dark:shadow-amber-900/20 transform group-hover:scale-105 transition-transform">
+<div class="absolute inset-0 rounded-full border-2 border-white/30"></div>
+<span class="material-symbols-outlined text-4xl text-white" style="font-variation-settings: 'FILL' 1">workspace_premium</span>
+</div>
+<p class="text-slate-800 dark:text-slate-200 text-xs font-medium text-center leading-tight">Primer Curso<br/>Completado</p>
+</div>
+<div class="flex flex-col items-center gap-3 min-w-[100px] group">
+<div class="relative size-20 flex items-center justify-center rounded-full bg-gradient-to-br from-blue-300 to-blue-600 shadow-lg shadow-blue-200 dark:shadow-blue-900/20 transform group-hover:scale-105 transition-transform">
+<div class="absolute inset-0 rounded-full border-2 border-white/30"></div>
+<span class="material-symbols-outlined text-4xl text-white" style="font-variation-settings: 'FILL' 1">church</span>
+</div>
+<p class="text-slate-800 dark:text-slate-200 text-xs font-medium text-center leading-tight">Intercesor<br/>Activo</p>
+</div>
+<div class="flex flex-col items-center gap-3 min-w-[100px] group">
+<div class="relative size-20 flex items-center justify-center rounded-full bg-gradient-to-br from-slate-200 to-slate-400 shadow-lg shadow-slate-200 dark:shadow-slate-800 transform group-hover:scale-105 transition-transform">
+<div class="absolute inset-0 rounded-full border-2 border-white/30"></div>
+<span class="material-symbols-outlined text-4xl text-white" style="font-variation-settings: 'FILL' 1">school</span>
+</div>
+<p class="text-slate-800 dark:text-slate-200 text-xs font-medium text-center leading-tight">Estudiante<br/>Destacado</p>
+</div>
+<div class="flex flex-col items-center gap-3 min-w-[100px] group opacity-40 grayscale">
+<div class="relative size-20 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700">
+<span class="material-symbols-outlined text-4xl text-slate-400">lock</span>
+</div>
+<p class="text-slate-800 dark:text-slate-200 text-xs font-medium text-center leading-tight">Misionero<br/>Global</p>
+</div>
+</div>
+</div>
+<!-- Courses Section -->
+<div class="px-6 pb-6">
+<h3 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight mb-4">Carreras en Curso</h3>
+<div class="flex flex-col gap-4">
+<div class="glass-card p-4 rounded-xl flex items-center gap-4 border-l-4 border-l-primary">
+<div class="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">menu_book</span>
+</div>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">Teología Sistemática I</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">En progreso • Mod. 4 de 12</p>
+</div>
+<span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</div>
+<div class="glass-card p-4 rounded-xl flex items-center gap-4 border-l-4 border-l-primary">
+<div class="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">history_edu</span>
+</div>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">Historia Eclesiástica</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">En progreso • Mod. 2 de 8</p>
+</div>
+<span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<div class="fixed bottom-0 left-0 right-0 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-background-dark/95 backdrop-blur-md px-4 pb-8 pt-2">
+<div class="flex gap-2">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-medium uppercase tracking-wider">Inicio</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">auto_stories</span>
+<p class="text-[10px] font-medium uppercase tracking-wider">Academia</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">trophy</span>
+<p class="text-[10px] font-medium uppercase tracking-wider">Logros</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">account_circle</span>
+<p class="text-[10px] font-bold uppercase tracking-wider">Perfil</p>
+</a>
+</div>
+</div>
+</div>
+</body></html>

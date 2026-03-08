@@ -1,0 +1,13 @@
+venv/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+.git/
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.db
+.sqlite3
+node_modules/

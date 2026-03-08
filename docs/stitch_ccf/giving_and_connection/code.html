@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ofrendas y Conexión</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1973f0",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 transition-colors duration-300">
+<div class="relative mx-auto flex h-full min-h-screen max-w-[430px] flex-col overflow-x-hidden shadow-2xl bg-white dark:bg-background-dark">
+<header class="sticky top-0 z-10 flex items-center bg-white/80 dark:bg-background-dark/80 backdrop-blur-md p-4 pb-2 justify-between border-b border-primary/10">
+<div class="text-primary flex size-10 items-center justify-center rounded-full bg-primary/10">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-10">Ofrendas y Conexión</h2>
+</header>
+<main class="flex-1 pb-24 overflow-y-auto">
+<div class="p-4">
+<div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary to-primary/60 p-6 text-white shadow-lg shadow-primary/20">
+<h3 class="text-2xl font-bold mb-2">Apoya al Ministerio</h3>
+<p class="text-white/90 text-sm leading-relaxed">Tu generosidad impulsa nuestro alcance comunitario y nos ayuda a difundir el mensaje de esperanza en todo el mundo.</p>
+</div>
+</div>
+<section class="px-4 py-4">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-primary">volunteer_activism</span>
+<h3 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight">Diezmos y Ofrendas</h3>
+</div>
+<div class="grid grid-cols-4 gap-3 mb-4">
+<button class="flex h-12 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold hover:bg-primary hover:text-white transition-colors border border-primary/20">$10</button>
+<button class="flex h-12 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold hover:bg-primary hover:text-white transition-colors border border-primary/20">$20</button>
+<button class="flex h-12 items-center justify-center rounded-xl bg-primary text-white font-bold shadow-md shadow-primary/30 border border-primary/20">$50</button>
+<button class="flex h-12 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold hover:bg-primary hover:text-white transition-colors border border-primary/20">$100</button>
+</div>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+<input class="w-full pl-8 pr-4 py-4 rounded-xl border-none bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary text-lg font-medium" placeholder="Monto personalizado" type="number"/>
+</div>
+<button class="w-full mt-4 bg-primary py-4 rounded-xl text-white font-bold text-lg shadow-lg shadow-primary/30 active:scale-95 transition-transform">
+                Ofrendar Ahora
+            </button>
+</section>
+<hr class="mx-4 border-slate-200 dark:border-slate-800 my-4"/>
+<section class="px-4 py-4">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-primary">auto_awesome</span>
+<h3 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight">Muro de Oración</h3>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm mb-4">Comparte tus peticiones con nuestro equipo de intercesión. Estamos creyendo junto a ti.</p>
+<div class="space-y-4">
+<div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+<textarea class="w-full bg-transparent border-none focus:ring-0 text-slate-900 dark:text-slate-100 resize-none p-0" placeholder="¿Cómo podemos orar por ti?" rows="3"></textarea>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="rounded border-primary/30 text-primary focus:ring-primary bg-transparent" type="checkbox"/>
+<span class="text-xs text-slate-500 dark:text-slate-400">Publicar anónimamente</span>
+</label>
+<button class="flex items-center gap-1 text-primary font-bold text-sm">
+<span>Enviar</span>
+<span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<section class="px-4 py-6 mb-8">
+<div class="rounded-2xl bg-slate-100 dark:bg-slate-900 p-6">
+<h4 class="text-lg font-bold mb-4 text-center">Ponte en Contacto</h4>
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">mail</span>
+</div>
+<span class="text-sm font-medium">hola@iglesiamoderna.org</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">call</span>
+</div>
+<span class="text-sm font-medium">+1 (555) 0123-456</span>
+</div>
+</div>
+<div class="flex justify-center gap-6 mt-8">
+<a class="text-primary/60 hover:text-primary" href="#">
+<span class="material-symbols-outlined text-3xl">public</span>
+</a>
+<a class="text-primary/60 hover:text-primary" href="#">
+<span class="material-symbols-outlined text-3xl">play_circle</span>
+</a>
+<a class="text-primary/60 hover:text-primary" href="#">
+<span class="material-symbols-outlined text-3xl">groups</span>
+</a>
+<a class="text-primary/60 hover:text-primary" href="#">
+<span class="material-symbols-outlined text-3xl">podcasts</span>
+</a>
+</div>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-background-dark/95 backdrop-blur-md px-4 pb-6 pt-3 flex items-center justify-around z-20">
+<a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Inicio</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">video_library</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Sermones</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<div class="relative">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1">volunteer_activism</span>
+<div class="absolute -top-1 -right-1 size-2 bg-primary rounded-full border-2 border-white dark:border-background-dark"></div>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-wider">Dar</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Perfil</span>
+</a>
+</nav>
+</div>
+
+</body></html>
