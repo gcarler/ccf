@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import cast
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -18,6 +19,7 @@ from backend.auth import (
     role_in,
     VALID_ROLES,
 )
+from backend.core.audit import record_admin_action
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.rate_limit import rate_limiter
@@ -76,7 +78,16 @@ def create_user(
     if normalized_role not in VALID_ROLES:
         raise HTTPException(status_code=400, detail="Invalid role")
     user.role = normalized_role
-    return crud.create_user(db=db, user=user)
+    created = crud.create_user(db=db, user=user)
+    record_admin_action(
+        db,
+        current_user,
+        action="create_user",
+        resource_type="user",
+        resource_id=str(created.id),
+        metadata={"email": created.email, "role": created.role},
+    )
+    return created
 
 
 @router.post("/refresh", response_model=schemas.Token)
@@ -87,7 +98,9 @@ def refresh_access_token(
     stored = crud.verify_refresh_token(db, payload.refresh_token)
     if not stored:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
-    user = crud.get_user(db, stored.user_id)
+    stored_user_id = cast(int, getattr(stored, "user_id", 0))
+    user_id = int(stored_user_id)
+    user = crud.get_user(db, user_id)
     if not user or not getattr(user, "is_active", False):
         crud.revoke_refresh_token(db, payload.refresh_token)
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User inactive or not found")

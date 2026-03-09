@@ -4,3 +4,11 @@ __pycache__/
 uploads/
 analytics/*.duckdb
 analytics/*.duckdb.wal
+env/
+.env
+*.db
+*.db-wal
+backend/*.db
+backend/.env
+frontend/node_modules/
+frontend/.next/

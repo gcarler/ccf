@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from pydantic import BaseModel, EmailStr, ConfigDict
 
@@ -54,6 +54,23 @@ class RefreshToken(BaseModel):
     token: str
     expires_at: datetime
     revoked: bool
+
+    class Config:
+        from_attributes = True
+
+
+# -----------------
+# Governance & Audit
+# -----------------
+class AdminAuditLog(BaseModel):
+    id: int
+    actor_user_id: int
+    action: str
+    resource_type: str
+    resource_id: Optional[str] = None
+    action_data: Optional[dict[str, Any]] = None
+    ip_address: Optional[str] = None
+    created_at: datetime
 
     class Config:
         from_attributes = True

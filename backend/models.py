@@ -10,6 +10,7 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    JSON,
     String,
     Text,
     UniqueConstraint,
@@ -491,3 +492,17 @@ class RefreshToken(Base, TimestampMixin):
     revoked = Column(Boolean, default=False, nullable=False)
 
     user = relationship("User")
+
+
+class AdminAuditLog(Base, TimestampMixin):
+    __tablename__ = "admin_audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    actor_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    action = Column(String, nullable=False)
+    resource_type = Column(String, nullable=False)
+    resource_id = Column(String, nullable=True)
+    action_data = Column(JSON, nullable=True)
+    ip_address = Column(String, nullable=True)
+
+    actor = relationship("User")

@@ -9,6 +9,7 @@ from backend import crud
 from backend import models
 from backend import schemas
 from backend.auth import normalize_role, require_active_user, require_admin, require_staff_or_admin
+from backend.core.audit import record_admin_action
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.uploads import sanitize_filename, save_upload
@@ -29,7 +30,16 @@ def create_announcement(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    return crud.create_announcement(db=db, announcement=announcement)
+    created = crud.create_announcement(db=db, announcement=announcement)
+    record_admin_action(
+        db,
+        current_user,
+        action="create_announcement",
+        resource_type="announcement",
+        resource_id=str(created.id),
+        metadata={"title": created.title},
+    )
+    return created
 
 
 @router.delete("/admin/announcements/{announcement_id}")
@@ -39,6 +49,13 @@ def delete_announcement(
     current_user: models.User = Depends(require_admin),
 ):
     if crud.delete_announcement(db, announcement_id):
+        record_admin_action(
+            db,
+            current_user,
+            action="delete_announcement",
+            resource_type="announcement",
+            resource_id=str(announcement_id),
+        )
         return {"detail": "Announcement deleted"}
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Announcement not found")
 
@@ -54,7 +71,16 @@ def create_sermon(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    return crud.create_sermon(db=db, sermon=sermon)
+    created = crud.create_sermon(db=db, sermon=sermon)
+    record_admin_action(
+        db,
+        current_user,
+        action="create_sermon",
+        resource_type="sermon",
+        resource_id=str(created.id),
+        metadata={"title": created.title},
+    )
+    return created
 
 
 @router.delete("/admin/sermons/{sermon_id}")
@@ -64,6 +90,13 @@ def delete_sermon(
     current_user: models.User = Depends(require_admin),
 ):
     if crud.delete_sermon(db, sermon_id):
+        record_admin_action(
+            db,
+            current_user,
+            action="delete_sermon",
+            resource_type="sermon",
+            resource_id=str(sermon_id),
+        )
         return {"detail": "Sermon deleted"}
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sermon not found")
 
@@ -79,7 +112,16 @@ def create_book(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    return crud.create_book(db=db, book=book)
+    created = crud.create_book(db=db, book=book)
+    record_admin_action(
+        db,
+        current_user,
+        action="create_book",
+        resource_type="book",
+        resource_id=str(created.id),
+        metadata={"title": created.title},
+    )
+    return created
 
 
 @router.delete("/admin/books/{book_id}")
@@ -89,6 +131,13 @@ def delete_book(
     current_user: models.User = Depends(require_admin),
 ):
     if crud.delete_book(db, book_id):
+        record_admin_action(
+            db,
+            current_user,
+            action="delete_book",
+            resource_type="book",
+            resource_id=str(book_id),
+        )
         return {"detail": "Book deleted"}
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
 
@@ -108,7 +157,16 @@ def update_page_content(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    return crud.update_page_content(db=db, page_key=page_key, content=content)
+    updated = crud.update_page_content(db=db, page_key=page_key, content=content)
+    record_admin_action(
+        db,
+        current_user,
+        action="update_page_content",
+        resource_type="page_content",
+        resource_id=page_key,
+        metadata=content.model_dump(exclude_unset=True),
+    )
+    return updated
 
 
 @router.get("/content/{page_key}/versions", response_model=List[schemas.PageContentVersion])
@@ -158,6 +216,14 @@ def update_testimonial_status(
     db_testimonial = crud.update_testimonial(db, testimonial_id=testimonial_id, testimonial=testimonial)
     if db_testimonial is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Testimonial not found")
+    record_admin_action(
+        db,
+        current_user,
+        action="update_testimonial",
+        resource_type="testimonial",
+        resource_id=str(testimonial_id),
+        metadata=testimonial.model_dump(exclude_unset=True),
+    )
     return db_testimonial
 
 
@@ -180,6 +246,14 @@ async def upload_media_asset(
         url=f"/static/{unique_name}",
         mime_type=file.content_type,
         size_bytes=len(contents),
+    )
+    record_admin_action(
+        db,
+        current_user,
+        action="upload_media_asset",
+        resource_type="media_asset",
+        resource_id=str(asset.id),
+        metadata={"filename": filename, "mime_type": file.content_type},
     )
     return asset
 

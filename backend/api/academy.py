@@ -11,6 +11,7 @@ from backend import crud
 from backend import models
 from backend import schemas
 from backend.auth import normalize_role, require_active_user, require_staff_or_admin, role_in
+from backend.core.audit import record_admin_action
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.uploads import sanitize_filename, save_upload
@@ -82,13 +83,26 @@ def close_formal_acta(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
 ):
-    return crud.close_formal_acta(
+    acta = crud.close_formal_acta(
         db,
         course_id=course_id,
         closed_by_user_id=int(getattr(current_user, "id", 0)),
         min_grade=payload.min_grade,
         min_attendance=payload.min_attendance,
     )
+    record_admin_action(
+        db,
+        current_user,
+        action="close_formal_acta",
+        resource_type="formal_acta",
+        resource_id=str(acta.id),
+        metadata={
+            "course_id": course_id,
+            "min_grade": payload.min_grade,
+            "min_attendance": payload.min_attendance,
+        },
+    )
+    return acta
 
 
 @router.get("/courses/{course_id}/formal/last-acta", response_model=Optional[schemas.FormalActa])
@@ -187,6 +201,14 @@ async def upload_resource(
     db.add(db_resource)
     db.commit()
     db.refresh(db_resource)
+    record_admin_action(
+        db,
+        current_user,
+        action="upload_lesson_resource",
+        resource_type="lesson_resource",
+        resource_id=str(db_resource.id),
+        metadata={"lesson_id": lesson_id, "title": title},
+    )
     return db_resource
 
 
@@ -195,4 +217,12 @@ def sync_certificates(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
 ):
-    return crud.issue_pending_certificates(db)
+    issued = crud.issue_pending_certificates(db)
+    record_admin_action(
+        db,
+        current_user,
+        action="sync_certificates",
+        resource_type="certificate",
+        metadata={"issued_count": len(issued)},
+    )
+    return issued

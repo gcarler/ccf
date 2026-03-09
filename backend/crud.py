@@ -864,6 +864,46 @@ def issue_pending_certificates(db: Session) -> List[models.Certificate]:
     for enrollment in enrollments:
         issued.append(issue_certificate_for_enrollment(db, enrollment))
     return issued
+
+
+# -----------------
+# Governance & Audit
+# -----------------
+def create_admin_audit_log(
+    db: Session,
+    actor_user_id: int,
+    action: str,
+    resource_type: str,
+    resource_id: Optional[str] = None,
+    metadata: Optional[dict[str, Any]] = None,
+    ip_address: Optional[str] = None,
+) -> models.AdminAuditLog:
+    entry = models.AdminAuditLog(
+        actor_user_id=actor_user_id,
+        action=action,
+        resource_type=resource_type,
+        resource_id=resource_id,
+        metadata=metadata,
+        ip_address=ip_address,
+    )
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return entry
+
+
+def get_admin_audit_logs(
+    db: Session,
+    limit: int = 100,
+    actor_user_id: Optional[int] = None,
+    resource_type: Optional[str] = None,
+) -> List[models.AdminAuditLog]:
+    query = db.query(models.AdminAuditLog).order_by(models.AdminAuditLog.created_at.desc())
+    if actor_user_id:
+        query = query.filter(models.AdminAuditLog.actor_user_id == actor_user_id)
+    if resource_type:
+        query = query.filter(models.AdminAuditLog.resource_type == resource_type)
+    return query.limit(limit).all()
 # -----------------
 # Refresh Tokens
 # -----------------

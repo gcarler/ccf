@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from backend import crud, models, schemas
 from backend.auth import require_admin, require_active_user
+from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 
 
@@ -16,7 +17,16 @@ def create_task(
     db=Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    return crud.create_agent_task(db, task)
+    created = crud.create_agent_task(db, task)
+    record_admin_action(
+        db,
+        current_user,
+        action="create_agent_task",
+        resource_type="agent_task",
+        resource_id=str(created.id),
+        metadata={"title": created.title, "priority": created.priority},
+    )
+    return created
 
 
 @router.get("/tasks", response_model=List[schemas.AgentTask])
@@ -38,6 +48,14 @@ def update_task(
     updated = crud.update_agent_task(db, task_id, payload)
     if not updated:
         raise HTTPException(status_code=404, detail="Task not found")
+    record_admin_action(
+        db,
+        current_user,
+        action="update_agent_task",
+        resource_type="agent_task",
+        resource_id=str(task_id),
+        metadata=payload.model_dump(exclude_unset=True),
+    )
     return updated
 
 
@@ -47,7 +65,16 @@ def create_insight(
     db=Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    return crud.create_agent_insight(db, insight)
+    created = crud.create_agent_insight(db, insight)
+    record_admin_action(
+        db,
+        current_user,
+        action="create_agent_insight",
+        resource_type="agent_insight",
+        resource_id=str(created.id),
+        metadata={"title": created.title, "type": created.insight_type},
+    )
+    return created
 
 
 @router.get("/insights", response_model=List[schemas.AgentInsight])
@@ -68,4 +95,11 @@ def acknowledge_insight(
     insight = crud.acknowledge_insight(db, insight_id)
     if not insight:
         raise HTTPException(status_code=404, detail="Insight not found")
+    record_admin_action(
+        db,
+        current_user,
+        action="ack_agent_insight",
+        resource_type="agent_insight",
+        resource_id=str(insight_id),
+    )
     return {"status": "ok"}

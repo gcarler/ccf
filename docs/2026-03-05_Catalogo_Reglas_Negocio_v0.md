@@ -24,7 +24,7 @@
 ## Reglas transversales
 | ID | Dominio | Regla | Trazabilidad | Estado |
 |---|---|---|---|---|
-| RN-TR-001 | Seguridad | Toda accion admin queda en bitacora | Panel admin + backend | Pendiente |
+| RN-TR-001 | Seguridad | Toda accion admin queda en bitacora | Panel admin + backend | Implementado (auditoría backend) |
 | RN-TR-002 | Comunicaciones | Confirmaciones criticas se notifican por correo | Inscripcion, aprobacion, certificacion | Pendiente |
 | RN-TR-003 | Datos | Identificadores de usuario y curso son unicos y auditables | DB y API | Parcial |
 

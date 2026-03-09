@@ -7,6 +7,7 @@ from backend import crud
 from backend import models
 from backend import schemas
 from backend.auth import require_active_user, require_admin, require_staff_or_admin
+from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.mesh_websockets import manager
 
@@ -45,7 +46,16 @@ def create_member(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
 ):
-    return crud.create_member(db, member)
+    created = crud.create_member(db, member)
+    record_admin_action(
+        db,
+        current_user,
+        action="create_member",
+        resource_type="member",
+        resource_id=str(created.id),
+        metadata={"first_name": created.first_name, "last_name": created.last_name},
+    )
+    return created
 
 
 @router.patch("/members/{member_id}", response_model=schemas.Member)
@@ -58,6 +68,14 @@ def update_member(
     updated = crud.update_member(db, member_id, member)
     if not updated:
         raise HTTPException(status_code=404, detail="Member not found")
+    record_admin_action(
+        db,
+        current_user,
+        action="update_member",
+        resource_type="member",
+        resource_id=str(member_id),
+        metadata=member.model_dump(exclude_unset=True),
+    )
     return updated
 
 
@@ -80,7 +98,16 @@ def create_family(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
 ):
-    return crud.create_family(db, family)
+    created = crud.create_family(db, family)
+    record_admin_action(
+        db,
+        current_user,
+        action="create_family",
+        resource_type="family",
+        resource_id=str(created.id),
+        metadata={"name": created.name},
+    )
+    return created
 
 
 @router.get("/events", response_model=List[schemas.Event])
@@ -94,7 +121,16 @@ def create_event(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    return crud.create_event(db, event)
+    created = crud.create_event(db, event)
+    record_admin_action(
+        db,
+        current_user,
+        action="create_event",
+        resource_type="event",
+        resource_id=str(created.id),
+        metadata={"name": created.name, "event_type": created.event_type},
+    )
+    return created
 
 
 @router.get("/glory-houses", response_model=List[schemas.GloryHouse])
@@ -108,7 +144,16 @@ def create_glory_house(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
 ):
-    return crud.create_glory_house(db, glory_house)
+    created = crud.create_glory_house(db, glory_house)
+    record_admin_action(
+        db,
+        current_user,
+        action="create_glory_house",
+        resource_type="glory_house",
+        resource_id=str(created.id),
+        metadata={"name": created.name, "zone": created.zone},
+    )
+    return created
 
 
 @router.get("/volunteers", response_model=List[schemas.Volunteer])
@@ -122,7 +167,16 @@ def create_volunteer(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
 ):
-    return crud.create_volunteer(db, volunteer)
+    created = crud.create_volunteer(db, volunteer)
+    record_admin_action(
+        db,
+        current_user,
+        action="create_volunteer",
+        resource_type="volunteer",
+        resource_id=str(created.id),
+        metadata={"name": created.name, "role": created.role},
+    )
+    return created
 
 
 @router.get("/consolidation/pipeline", response_model=List[schemas.ConsolidationPipeline])
@@ -151,6 +205,14 @@ async def create_pipeline_lead(
     current_user: models.User = Depends(require_staff_or_admin),
 ):
     db_lead = crud.create_pipeline_lead(db, lead)
+    record_admin_action(
+        db,
+        current_user,
+        action="create_pipeline_lead",
+        resource_type="pipeline_lead",
+        resource_id=str(db_lead.id),
+        metadata={"stage": db_lead.stage, "source": db_lead.source},
+    )
     await manager.broadcast_event(
         {
             "event": "pipeline_lead_created",
@@ -171,6 +233,14 @@ async def update_pipeline_lead(
     updated = crud.update_pipeline_lead(db, lead_id, payload)
     if not updated:
         raise HTTPException(status_code=404, detail="Lead not found")
+    record_admin_action(
+        db,
+        current_user,
+        action="update_pipeline_lead",
+        resource_type="pipeline_lead",
+        resource_id=str(lead_id),
+        metadata=payload.model_dump(exclude_unset=True),
+    )
     await manager.broadcast_event(
         {
             "event": "pipeline_lead_updated",
@@ -196,6 +266,14 @@ async def create_call_log(
     created = crud.create_pastoral_call_log(db, lead_id=lead_id, call_log=call_log)
     if not created:
         raise HTTPException(status_code=404, detail="Lead not found")
+    record_admin_action(
+        db,
+        current_user,
+        action="create_pastoral_call",
+        resource_type="pastoral_call",
+        resource_id=str(created.id),
+        metadata={"lead_id": lead_id, "outcome": created.outcome},
+    )
     await manager.broadcast_event(
         {
             "event": "pastoral_call_logged",
@@ -214,4 +292,13 @@ def create_counseling(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
 ):
-    return crud.create_counseling_session(db, session)
+    created = crud.create_counseling_session(db, session)
+    record_admin_action(
+        db,
+        current_user,
+        action="create_counseling_session",
+        resource_type="counseling_session",
+        resource_id=str(created.id),
+        metadata={"scheduled_at": str(created.scheduled_at), "status": created.status},
+    )
+    return created
