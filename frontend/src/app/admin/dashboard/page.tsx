@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/http';
 import {
     LayoutDashboard,
     Bell,
@@ -16,18 +17,50 @@ import {
     Plus,
     Activity,
     Settings,
-    CheckCircle2
+    CheckCircle2,
+    Loader2
 } from 'lucide-react';
 
+type AdminStats = {
+    users: number;
+    donations: number;
+    attendance: number;
+};
+
 export default function AdminDashboard() {
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, user, token } = useAuth();
     const router = useRouter();
+    const [stats, setStats] = useState<AdminStats>({ users: 0, donations: 0, attendance: 24 });
+    const [loading, setLoading] = useState(true);
+
+    const fetchData = useCallback(async () => {
+        if (!token) return;
+        try {
+            const data = await apiFetch<AdminStats>('/auth/stats/summary', {
+                token,
+                cache: 'no-store'
+            });
+            setStats({
+                users: data?.users ?? 0,
+                donations: data?.donations ?? 0,
+                attendance: data?.attendance ?? 0
+            });
+        } catch (e) {
+            console.error("Dashboard fetch error", e);
+        } finally {
+            setLoading(false);
+        }
+    }, [token]);
+
+    useEffect(() => {
+        if (isAuthenticated) fetchData();
+    }, [isAuthenticated, fetchData]);
 
     const tasks = [
         {
             id: '1',
             title: 'Nuevos Miembros',
-            description: 'Aprobar 5 solicitudes',
+            description: 'Aprobar solicitudes pendientes',
             icon: UserPlus,
             color: 'text-primary',
             bgColor: 'bg-primary/10',
@@ -37,21 +70,11 @@ export default function AdminDashboard() {
         {
             id: '2',
             title: 'Ofrendas Especiales',
-            description: 'Categorizar 12 recibos',
+            description: 'Categorizar nuevos recibos',
             icon: Heart,
             color: 'text-amber-500',
             bgColor: 'bg-amber-500/10',
             action: 'Ir',
-            badge: null
-        },
-        {
-            id: '3',
-            title: 'Newsletter Semanal',
-            description: 'Finalizar borrador',
-            icon: Mail,
-            color: 'text-emerald-500',
-            bgColor: 'bg-emerald-500/10',
-            action: null,
             badge: null
         }
     ];
@@ -75,7 +98,6 @@ export default function AdminDashboard() {
                                 <div className="size-full bg-slate-800 flex items-center justify-center text-white font-black uppercase">
                                     {String((user as any)?.username || 'A').charAt(0)}
                                 </div>
-
                             </div>
                         </div>
                         <div>
@@ -97,10 +119,10 @@ export default function AdminDashboard() {
                             <div className="absolute top-0 right-0 -mr-16 -mt-16 bg-white/10 size-64 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-1000"></div>
                             <div className="relative z-10">
                                 <p className="text-blue-100 text-[10px] font-black uppercase tracking-[0.2em]">Ofrendas del Mes</p>
-                                <h3 className="text-4xl font-black mt-2 tracking-tight">$12,450.00</h3>
+                                <h3 className="text-4xl font-black mt-2 tracking-tight">${stats.donations.toLocaleString()}</h3>
                                 <div className="flex items-center gap-2 mt-6 bg-white/10 backdrop-blur-md w-fit px-4 py-2 rounded-xl text-[10px] font-black border border-white/10 uppercase tracking-widest">
                                     <TrendingUp size={14} className="text-white" />
-                                    <span>+15% vs mes anterior</span>
+                                    <span>Datos en tiempo real</span>
                                 </div>
                             </div>
                         </div>
@@ -111,17 +133,17 @@ export default function AdminDashboard() {
                             </div>
                             <div>
                                 <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest">Usuarios</p>
-                                <p className="text-2xl font-black text-white">1,240</p>
+                                <p className="text-2xl font-black text-white">{loading ? '...' : stats.users}</p>
                             </div>
                         </div>
 
                         <div className="rounded-[2rem] bg-slate-900/40 backdrop-blur-xl border border-white/5 p-6 flex flex-col gap-4 group hover:border-emerald-500/30 transition-all">
                             <div className="size-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-all">
-                                <Calendar size={20} />
+                                <Activity size={20} />
                             </div>
                             <div>
                                 <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest">Asistencia</p>
-                                <p className="text-2xl font-black text-white">850</p>
+                                <p className="text-2xl font-black text-white">{loading ? '...' : stats.attendance}</p>
                             </div>
                         </div>
                     </section>
@@ -129,7 +151,7 @@ export default function AdminDashboard() {
                     {/* Chart Mockup */}
                     <section className="space-y-4">
                         <div className="flex items-center justify-between px-2">
-                            <h3 className="text-white text-lg font-black tracking-tight uppercase tracking-widest">Crecimiento</h3>
+                            <h3 className="text-white text-lg font-black tracking-tight uppercase tracking-widest">Actividad</h3>
                             <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Ver Detalles</button>
                         </div>
                         <div className="rounded-[2.5rem] bg-slate-900/40 backdrop-blur-xl border border-white/5 p-8 h-56 flex flex-col justify-end group hover:border-white/10 transition-all">
@@ -154,7 +176,7 @@ export default function AdminDashboard() {
                     <section className="space-y-6">
                         <div className="flex items-center justify-between px-2">
                             <h3 className="text-white text-lg font-black tracking-tight uppercase tracking-widest">Tareas Pendientes</h3>
-                            <div className="size-7 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] font-black shadow-lg shadow-rose-500/20">5</div>
+                            <div className="size-7 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] font-black shadow-lg shadow-rose-500/20">2</div>
                         </div>
                         <div className="space-y-4">
                             {tasks.map((task) => (
@@ -166,13 +188,9 @@ export default function AdminDashboard() {
                                         <p className="text-sm font-black text-white tracking-tight">{task.title}</p>
                                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">{task.description}</p>
                                     </div>
-                                    {task.action ? (
-                                        <button className="px-5 py-2.5 bg-primary hover:bg-primary-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-95 border border-primary-400/20">
-                                            {task.action}
-                                        </button>
-                                    ) : (
-                                        <ChevronRight size={20} className="text-slate-700 group-hover:text-primary transition-colors" />
-                                    )}
+                                    <button onClick={() => router.push(task.id === '1' ? '/admin/members' : '/admin/finance')} className="px-5 py-2.5 bg-primary hover:bg-primary-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-95 border border-primary-400/20">
+                                        {task.action}
+                                    </button>
                                 </div>
                             ))}
                         </div>
@@ -191,7 +209,7 @@ export default function AdminDashboard() {
                         <span className="text-[9px] font-black uppercase tracking-widest">Métricas</span>
                     </button>
                     <div className="relative -top-8 px-2">
-                        <button className="bg-primary size-16 rounded-[2rem] text-white shadow-2xl shadow-primary/40 flex items-center justify-center border-4 border-slate-950 hover:scale-110 active:scale-90 transition-all">
+                        <button onClick={() => router.push('/admin/cms')} className="bg-primary size-16 rounded-[2rem] text-white shadow-2xl shadow-primary/40 flex items-center justify-center border-4 border-slate-950 hover:scale-110 active:scale-90 transition-all">
                             <Plus size={32} />
                         </button>
                     </div>
@@ -208,5 +226,3 @@ export default function AdminDashboard() {
         </div>
     );
 }
-
-

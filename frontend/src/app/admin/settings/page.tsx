@@ -15,7 +15,8 @@ import {
 
     Settings,
     LogOut,
-    ChevronRight
+    ChevronRight,
+    Sparkles
 } from 'lucide-react';
 
 export default function MinistrySettings() {
@@ -34,6 +35,7 @@ export default function MinistrySettings() {
             title: "Administración General",
             items: [
                 { icon: Church, label: "Perfil del Ministerio", sub: "Nombre, misión, visión y logo", path: "/admin/settings/profile" },
+                { icon: Sparkles, label: "Experiencia de Usuario", sub: "Activar módulos, IA y marca visual", path: "/admin/settings/experience" },
                 { icon: Contact, label: "Información de Contacto", sub: "Teléfonos, correos y atención", path: "/admin/settings/contact" },
                 { icon: Share2, label: "Redes Sociales", sub: "Instagram, YouTube, Facebook", path: "/admin/settings/socials" },
             ]
