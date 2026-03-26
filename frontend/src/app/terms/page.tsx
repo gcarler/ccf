@@ -1,27 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Navbar from '@/components/Navbar';
 import { FileText } from 'lucide-react';
-import { apiUrl } from '@/lib/api';
+import { useContentBlock } from '@/hooks/useContent';
 
 export default function TermsPage() {
-    const [content, setContent] = useState<any>(null);
-
-    useEffect(() => {
-        const fetchContent = async () => {
-            try {
-                const res = await fetch(apiUrl('/content/terms_of_service'));
-                if (res.ok) {
-                    const data = await res.json();
-                    setContent(JSON.parse(data.content));
-                }
-            } catch (e) {
-                console.error("Error fetching terms of service", e);
-            }
-        };
-        fetchContent();
-    }, []);
+    const { data: content } = useContentBlock('terms_of_service');
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-background-dark bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">

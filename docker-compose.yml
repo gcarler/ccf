@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: ccf_db
     ports:
-      - "5432:5432"
+      - "5435:5432"
 
   redis:
     image: redis:7
@@ -46,19 +46,29 @@ services:
       dockerfile: backend.Dockerfile
     ports:
       - "8000:8000"
-    volumes:
-      - .:/app
     environment:
       DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/ccf_db
       REDIS_URL: redis://redis:6379/0
       KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
       UPLOADS_DIR: uploads
       SECRET_KEY: changeme
+      ENV: production
     depends_on:
       - db
       - redis
       - redpanda
       - minio
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

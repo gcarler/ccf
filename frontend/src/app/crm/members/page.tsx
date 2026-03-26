@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Search,
     Filter,
@@ -17,12 +17,16 @@ import {
     GraduationCap,
     ShieldCheck,
     ExternalLink,
-    Loader2
+    Loader2,
+    Users,
+    Clock
 } from 'lucide-react';
-
-import { apiUrl } from '@/lib/api';
+import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import ViewSwitcher, { ViewType, getStoredView } from '@/components/ViewSwitcher';
+import CrmShell from '@/components/crm/CrmShell';
+import AdminHero from '@/components/admin/AdminHero';
 
 interface Member {
     id: number;
@@ -41,9 +45,18 @@ interface Family {
     name: string;
 }
 
+const KANBAN_STAGES = [
+    { id: 'Activo', label: 'Activo', color: 'emerald' },
+    { id: 'Visitante', label: 'Visitante', color: 'blue' },
+    { id: 'Consolidación', label: 'Consolidación', color: 'amber' },
+    { id: 'Inactivo', label: 'Inactivo', color: 'slate' },
+];
+
 export default function MembersPage() {
     const { addToast } = useToast();
+    const { token } = useAuth();
     const [activeTab, setActiveTab] = useState('members');
+    const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_members_view', 'table'));
     const [members, setMembers] = useState<Member[]>([]);
     const [families, setFamilies] = useState<Family[]>([]);
     const [loading, setLoading] = useState(true);
@@ -80,26 +93,34 @@ export default function MembersPage() {
     const [newFamily, setNewFamily] = useState({ name: '' });
 
 
-    const fetchData = async () => {
+    const heroWatchers = ['Comunidad', 'Optimus Brain'];
+
+    const fetchData = useCallback(async () => {
+        if (!token) {
+            setMembers([]);
+            setFamilies([]);
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         try {
-            const [memRes, famRes] = await Promise.all([
-                fetch(apiUrl('/members/')),
-                fetch(apiUrl('/families/'))
+            const [membersData, familiesData] = await Promise.all([
+                apiFetch<Member[]>('/crm/members/', { token, cache: 'no-store' }),
+                apiFetch<Family[]>('/crm/families/', { token, cache: 'no-store' })
             ]);
-            if (memRes.ok) setMembers(await memRes.json());
-            if (famRes.ok) setFamilies(await famRes.json());
+            setMembers(Array.isArray(membersData) ? membersData : []);
+            setFamilies(Array.isArray(familiesData) ? familiesData : []);
         } catch (err) {
+            console.error('Error loading members', err);
             addToast("Error al cargar datos", "error");
         } finally {
             setLoading(false);
         }
-    };
+    }, [token, addToast]);
 
     useEffect(() => {
         fetchData();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [fetchData]);
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -108,27 +129,29 @@ export default function MembersPage() {
             return;
         }
 
+        if (!token) {
+            addToast("Sesión no válida", "error");
+            return;
+        }
+
         try {
-            const response = await fetch(apiUrl('/members/'), {
+            await apiFetch('/crm/members/', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+                token,
+                body: {
                     ...newMember,
                     family_id: parseInt(newMember.family_id),
                     birthday: newMember.birthday ? new Date(newMember.birthday).toISOString() : null
-                })
+                }
             });
 
-            if (response.ok) {
-                addToast("Miembro registrado exitosamente", "success");
-                setIsRegModalOpen(false);
-                setNewMember({ first_name: '', last_name: '', email: '', phone: '', family_id: '', role_in_family: 'Miembro', birthday: '' });
-                fetchData();
-            } else {
-                addToast("Error al registrar miembro", "error");
-            }
+            addToast("Miembro registrado exitosamente", "success");
+            setIsRegModalOpen(false);
+            setNewMember({ first_name: '', last_name: '', email: '', phone: '', family_id: '', role_in_family: 'Miembro', birthday: '' });
+            fetchData();
         } catch (err) {
-            addToast("Error de conexión", "error");
+            console.error('register member error', err);
+            addToast("Error al registrar miembro", "error");
         }
     };
 
@@ -139,23 +162,25 @@ export default function MembersPage() {
             return;
         }
 
+        if (!token) {
+            addToast("Sesión no válida", "error");
+            return;
+        }
+
         try {
-            const response = await fetch(apiUrl('/families/'), {
+            await apiFetch('/crm/families/', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newFamily)
+                token,
+                body: newFamily
             });
 
-            if (response.ok) {
-                addToast("Familia registrada exitosamente", "success");
-                setIsFamilyRegModalOpen(false);
-                setNewFamily({ name: '' });
-                fetchData();
-            } else {
-                addToast("Error al registrar familia", "error");
-            }
+            addToast("Familia registrada exitosamente", "success");
+            setIsFamilyRegModalOpen(false);
+            setNewFamily({ name: '' });
+            fetchData();
         } catch (err) {
-            addToast("Error de conexión", "error");
+            console.error('register family error', err);
+            addToast("Error al registrar familia", "error");
         }
     };
 
@@ -169,26 +194,29 @@ export default function MembersPage() {
         fetchAcademyProfile(member.id);
 
         try {
-            const response = await fetch(apiUrl(`/members/${member.id}/communications`));
-            if (response.ok) {
-                const data = await response.json();
-                setHistory(data);
-            }
+            if (!token) throw new Error('no-token');
+            const data = await apiFetch(`/crm/members/${member.id}/communications`, {
+                token,
+                cache: 'no-store'
+            });
+            setHistory(Array.isArray(data) ? data : []);
         } catch (err) {
             addToast("Error al cargar historial", "error");
+            setHistory([]);
         } finally {
             setLoadingHistory(false);
         }
     };
 
     const fetchAcademyProfile = async (memberId: number) => {
+        if (!token) return;
         setLoadingAcademy(true);
         try {
-            const response = await fetch(apiUrl(`/members/${memberId}/academy-profile`));
-            if (response.ok) {
-                const data = await response.json();
-                setAcademyProfile(data);
-            }
+            const data = await apiFetch(`/crm/members/${memberId}/academy-profile`, {
+                token,
+                cache: 'no-store'
+            });
+            setAcademyProfile(data);
         } catch (err) {
             console.error("Error fetching academy profile", err);
         } finally {
@@ -199,23 +227,24 @@ export default function MembersPage() {
     const handleCreateAcademyAccount = async () => {
         if (!selectedMember) return;
         setIsCreatingAccount(true);
+        if (!token) {
+            addToast("Sesión no válida", "error");
+            return;
+        }
+
         try {
-            const response = await fetch(apiUrl(`/members/${selectedMember.id}/create-academy-account`), {
+            const result = await apiFetch(`/crm/members/${selectedMember.id}/create-academy-account`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: academyPassword })
+                token,
+                body: { password: academyPassword }
             });
 
-            if (response.ok) {
-                addToast("Cuenta de academia creada exitosamente", "success");
-                fetchAcademyProfile(selectedMember.id);
-                fetchData();
-            } else {
-                const errData = await response.json();
-                addToast(errData.detail || "Error al crear cuenta", "error");
-            }
-        } catch (err) {
-            addToast("Error de conexión", "error");
+            addToast("Cuenta de academia creada exitosamente", "success");
+            fetchAcademyProfile(selectedMember.id);
+            fetchData();
+        } catch (err: any) {
+            const detail = err?.detail?.detail;
+            addToast(detail || "Error al crear cuenta", "error");
         } finally {
             setIsCreatingAccount(false);
         }
@@ -225,102 +254,124 @@ export default function MembersPage() {
         e.preventDefault();
         if (!selectedMember || !newMessageContent) return;
 
+        if (!token) {
+            addToast("Sesión no válida", "error");
+            return;
+        }
+
         try {
-            const response = await fetch(apiUrl('/messaging/send'), {
+            await apiFetch('/messaging/send', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+                token,
+                body: {
                     member_id: selectedMember.id,
                     channel: messageChannel,
                     content: newMessageContent
-                })
+                }
             });
 
-            if (response.ok) {
-                addToast("Mensaje enviado exitosamente", "success");
-                setNewMessageContent('');
-                // Refresh history without closing modal
-                const histRes = await fetch(apiUrl(`/members/${selectedMember.id}/communications`));
-                if (histRes.ok) setHistory(await histRes.json());
-            } else {
-                addToast("Error al enviar mensaje", "error");
-            }
+            addToast("Mensaje enviado exitosamente", "success");
+            setNewMessageContent('');
+            const logs = await apiFetch(`/crm/members/${selectedMember.id}/communications`, {
+                token,
+                cache: 'no-store'
+            });
+            setHistory(Array.isArray(logs) ? logs : []);
         } catch (err) {
-            addToast("Error de conexión", "error");
+            console.error('send message error', err);
+            addToast("Error al enviar mensaje", "error");
         }
     };
 
     const getFamilyName = (id: number) => families.find(f => f.id === id)?.name || 'Sin Familia';
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Gestión de Membresía</h1>
-                    <p className="text-slate-500 mt-1">Administra los miembros y familias de la congregación.</p>
-                </div>
-                {activeTab === 'members' ? (
-                    <button
-                        onClick={() => setIsRegModalOpen(true)}
-                        className="flex items-center gap-2 bg-blue-600 px-6 py-3 rounded-2xl text-sm font-black text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 uppercase tracking-widest"
-                    >
-                        <Plus size={20} />
-                        Registrar Miembro
-                    </button>
-                ) : (
-                    <button
-                        onClick={() => setIsFamilyRegModalOpen(true)}
-                        className="flex items-center gap-2 bg-indigo-600 px-6 py-3 rounded-2xl text-sm font-black text-white hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 uppercase tracking-widest"
-                    >
-                        <Plus size={20} />
-                        Registrar Familia
-                    </button>
-                )}
-            </div>
+        <CrmShell
+            breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'CRM Pastoral', icon: Users }, { label: 'Membresía', icon: Users }]}
+            rightActions={
+                activeTab === 'members'
+                    ? (
+                        <button
+                            onClick={() => setIsRegModalOpen(true)}
+                            className="flex items-center gap-2 bg-blue-600 px-5 py-2 rounded-2xl text-xs font-black text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-900/20 uppercase tracking-widest"
+                        >
+                            <Plus size={14} /> Registrar miembro
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => setIsFamilyRegModalOpen(true)}
+                            className="flex items-center gap-2 bg-slate-900 px-5 py-2 rounded-2xl text-xs font-black text-white hover:bg-black transition-all shadow-lg uppercase tracking-widest"
+                        >
+                            <Plus size={14} /> Registrar familia
+                        </button>
+                    )
+            }
+        >
+        <AdminHero
+            eyebrow="Membresía"
+            title="Gestión de membresía"
+            description="Administra personas, familias y su avance pastoral desde un solo panel."
+            tags={['Familias', 'Academia', 'IA']}
+            watchers={heroWatchers}
+            primaryAction={{ label: 'Registrar miembro', icon: Plus, onClick: () => setIsRegModalOpen(true) }}
+            secondaryAction={{ label: 'Registrar familia', icon: Plus, onClick: () => setIsFamilyRegModalOpen(true) }}
+        />
+        <div className="space-y-8">
 
             {/* Tabs & Filters */}
-            <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
-                <div className="flex p-1 bg-slate-100 rounded-2xl w-full md:w-auto">
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="flex p-1 bg-slate-100 dark:bg-white/5 rounded-2xl w-full md:w-auto">
                     <button
                         onClick={() => setActiveTab('members')}
-                        className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'members' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'members' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         Miembros
                     </button>
                     <button
                         onClick={() => setActiveTab('families')}
-                        className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'families' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'families' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         Familias
                     </button>
                 </div>
 
-                <div className="flex gap-4 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-80">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    <div className="relative flex-1 md:w-72">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <input
                             type="text"
-                            placeholder="Buscar por nombre, email o familia..."
-                            className="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white"
+                            placeholder="Buscar miembro..."
+                            className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-100 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-white/5 text-sm"
                         />
                     </div>
-                    <button className="p-3 rounded-2xl border border-slate-100 bg-white text-slate-500 hover:bg-slate-50 transition-colors">
-                        <Filter size={20} />
+                    {activeTab === 'members' && (
+                        <ViewSwitcher
+                            viewType={viewType}
+                            setViewType={setViewType}
+                            availableViews={['table', 'list', 'grid', 'kanban']}
+                            storageKey="crm_members_view"
+                        />
+                    )}
+                    <button className="p-2.5 rounded-xl border border-slate-100 dark:border-white/10 bg-white dark:bg-white/5 text-slate-500 hover:bg-slate-50 transition-colors">
+                        <Filter size={16} />
                     </button>
                 </div>
             </div>
 
             {/* Members & Families Display */}
-            <div className="glass-card overflow-hidden border border-slate-100 shadow-xl shadow-slate-100/50">
+            <div className="bg-white dark:bg-[#1e1f21] rounded-[2rem] border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm">
                 {loading ? (
                     <div className="flex justify-center py-20">
                         <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 ) : activeTab === 'members' ? (
+                    <>
+                    {/* TABLE VIEW */}
+                    {viewType === 'table' && (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b border-slate-100 bg-slate-50/50">
+                                <tr className="border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
                                     <th className="px-6 py-4 text-xs font-black uppercase text-slate-400 tracking-widest">Miembro</th>
                                     <th className="px-6 py-4 text-xs font-black uppercase text-slate-400 tracking-widest">Familia / Rol</th>
                                     <th className="px-6 py-4 text-xs font-black uppercase text-slate-400 tracking-widest">Contacto</th>
@@ -328,25 +379,24 @@ export default function MembersPage() {
                                     <th className="px-6 py-4 text-xs font-black uppercase text-slate-400 tracking-widest text-right">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                                 {members.map((member) => (
-                                    <tr key={member.id} className="hover:bg-slate-50/80 transition-colors group">
+                                    <tr key={member.id} className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors group">
                                         <td className="px-6 py-5">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-50 flex items-center justify-center text-blue-600 font-bold border border-blue-50">
                                                     {member.first_name.charAt(0)}
                                                 </div>
                                                 <div>
-                                                    <h4 className="font-bold text-slate-800">{member.first_name} {member.last_name}</h4>
-                                                    <p className="text-[10px] uppercase font-black tracking-widest text-slate-400">ID: #M{member.id.toString().padStart(4, '0')}</p>
+                                                    <h4 className="font-bold text-slate-800 dark:text-slate-100">{member.first_name} {member.last_name}</h4>
+                                                    <p className="text-[10px] uppercase font-black tracking-widest text-slate-400">#M{member.id.toString().padStart(4, '0')}</p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-5">
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-slate-700 flex items-center gap-1.5">
-                                                    <FamilyIcon size={14} className="text-slate-400" />
-                                                    {getFamilyName(member.family_id)}
+                                                <span className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                                    <FamilyIcon size={14} className="text-slate-400" /> {getFamilyName(member.family_id)}
                                                 </span>
                                                 <span className="text-xs text-slate-400 mt-0.5">{member.role_in_family}</span>
                                             </div>
@@ -354,31 +404,25 @@ export default function MembersPage() {
                                         <td className="px-6 py-5">
                                             <div className="flex flex-col gap-1">
                                                 <div className="flex items-center gap-2 text-xs text-slate-500">
-                                                    <Mail size={12} className="text-slate-300" />
-                                                    {member.email}
+                                                    <Mail size={12} className="text-slate-300" /> {member.email || '—'}
                                                 </div>
                                                 <div className="flex items-center gap-2 text-xs text-slate-500">
-                                                    <Phone size={12} className="text-slate-300" />
-                                                    {member.phone}
+                                                    <Phone size={12} className="text-slate-300" /> {member.phone || '—'}
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-5 text-center">
-                                            <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest border border-emerald-100">
-                                                Activo
+                                            <span className="px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest">
+                                                {member.status || 'Activo'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-5 text-right">
                                             <div className="flex justify-end gap-2">
-                                                <button
-                                                    onClick={() => openHistory(member)}
-                                                    className="p-2 rounded-lg text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all"
-                                                    title="Ver Historial"
-                                                >
-                                                    <History size={18} />
+                                                <button onClick={() => openHistory(member)} className="p-2 rounded-lg text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all" title="Ver Historial">
+                                                    <History size={16} />
                                                 </button>
                                                 <button className="p-2 rounded-lg text-slate-300 hover:bg-slate-100 hover:text-slate-600 transition-colors">
-                                                    <MoreVertical size={18} />
+                                                    <MoreVertical size={16} />
                                                 </button>
                                             </div>
                                         </td>
@@ -387,6 +431,111 @@ export default function MembersPage() {
                             </tbody>
                         </table>
                     </div>
+                    )}
+
+                    {/* LIST VIEW */}
+                    {viewType === 'list' && (
+                    <div className="divide-y divide-slate-100 dark:divide-white/5">
+                        {members.map((member) => (
+                            <div key={member.id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+                                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-50 flex items-center justify-center text-blue-600 font-bold text-sm shrink-0">
+                                    {member.first_name.charAt(0)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate">{member.first_name} {member.last_name}</p>
+                                    <p className="text-xs text-slate-400 truncate">{getFamilyName(member.family_id)} · {member.role_in_family}</p>
+                                </div>
+                                <div className="hidden md:flex items-center gap-4">
+                                    <span className="text-xs text-slate-400 flex items-center gap-1"><Mail size={11} /> {member.email || '—'}</span>
+                                    <span className="text-xs text-slate-400 flex items-center gap-1"><Phone size={11} /> {member.phone || '—'}</span>
+                                </div>
+                                <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase">
+                                    {member.status || 'Activo'}
+                                </span>
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                                    <button onClick={() => openHistory(member)} className="p-1.5 rounded-lg text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all">
+                                        <History size={14} />
+                                    </button>
+                                    <button className="p-1.5 rounded-lg text-slate-300 hover:bg-slate-100">
+                                        <MoreVertical size={14} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    )}
+
+                    {/* GRID VIEW */}
+                    {viewType === 'grid' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-6">
+                        {members.map((member) => (
+                            <div key={member.id} className="group relative p-6 rounded-2xl border border-slate-100 dark:border-white/5 bg-white dark:bg-white/5 hover:shadow-lg hover:shadow-blue-50 dark:hover:bg-white/10 transition-all">
+                                <div className="flex flex-col items-center text-center gap-3">
+                                    <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-white font-black text-xl shadow-lg">
+                                        {member.first_name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-slate-800 dark:text-slate-100">{member.first_name} {member.last_name}</h4>
+                                        <p className="text-xs text-slate-400 mt-0.5">{getFamilyName(member.family_id)}</p>
+                                    </div>
+                                    <span className="px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase">
+                                        {member.status || 'Activo'}
+                                    </span>
+                                    {member.email && (
+                                        <p className="text-xs text-slate-400 flex items-center gap-1 truncate max-w-full"><Mail size={10} /> {member.email}</p>
+                                    )}
+                                </div>
+                                <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => openHistory(member)} className="p-1.5 rounded-lg text-slate-400 hover:bg-blue-50 hover:text-blue-600 bg-white dark:bg-slate-800 shadow-sm border border-slate-100">
+                                        <History size={12} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    )}
+
+                    {/* KANBAN VIEW */}
+                    {viewType === 'kanban' && (
+                    <div className="flex gap-4 p-6 overflow-x-auto pb-8">
+                        {KANBAN_STAGES.map((stage) => {
+                            const stageMembers = members.filter(m => (m.status || 'Activo') === stage.id);
+                            const allActivos = stage.id === 'Activo' ? members : stageMembers;
+                            const displayed = stage.id === 'Activo' ? members.filter(m => !m.status || m.status === 'Activo') : stageMembers;
+                            return (
+                                <div key={stage.id} className="flex-none w-72 flex flex-col gap-3">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{stage.label}</h3>
+                                        <span className="text-[11px] font-bold bg-slate-100 dark:bg-white/10 text-slate-500 px-2 py-0.5 rounded-full">{displayed.length}</span>
+                                    </div>
+                                    {displayed.map((member) => (
+                                        <div key={member.id} className="p-4 rounded-2xl border border-slate-100 dark:border-white/5 bg-white dark:bg-[#1e1f21] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group">
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                                                    {member.first_name.charAt(0)}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate">{member.first_name} {member.last_name}</p>
+                                                    <p className="text-[10px] text-slate-400 truncate">{getFamilyName(member.family_id)}</p>
+                                                </div>
+                                            </div>
+                                            {member.email && <p className="text-[11px] text-slate-400 flex items-center gap-1 truncate"><Mail size={10}/> {member.email}</p>}
+                                            <div className="flex justify-end mt-2 gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => openHistory(member)} className="p-1 rounded-lg text-slate-400 hover:bg-blue-50 hover:text-blue-600">
+                                                    <History size={12} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {displayed.length === 0 && (
+                                        <div className="flex items-center justify-center py-8 rounded-2xl border-2 border-dashed border-slate-100 dark:border-white/5 text-slate-300 text-xs">Sin registros</div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                    )}
+                    </>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
                         {families.map(family => {
@@ -743,5 +892,6 @@ export default function MembersPage() {
                 </div>
             )}
         </div>
+        </CrmShell>
     );
 }

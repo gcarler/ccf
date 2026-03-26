@@ -4,22 +4,29 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
+import AdminShell from '@/components/admin/AdminShell';
+import AdminHero from '@/components/admin/AdminHero';
 import {
     LayoutDashboard,
-    Bell,
-    TrendingUp,
     Users,
-    Calendar,
-    ChevronRight,
+    Activity,
+    TrendingUp,
+    Bell,
     UserPlus,
     Heart,
-    Mail,
-    Plus,
-    Activity,
-    Settings,
-    CheckCircle2,
-    Loader2
+    Zap,
+    Target,
+    Layers,
+    Calendar,
+    ArrowUpRight,
+    PieChart,
+    ChevronRight,
+    Search,
+    BrainCircuit,
+    Sparkles
 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import clsx from 'clsx';
 
 type AdminStats = {
     users: number;
@@ -36,192 +43,229 @@ export default function AdminDashboard() {
     const fetchData = useCallback(async () => {
         if (!token) return;
         try {
-            const data = await apiFetch<AdminStats>('/auth/stats/summary', {
-                token,
-                cache: 'no-store'
-            });
+            const data = await apiFetch<AdminStats>('/auth/stats/summary', { token });
             setStats({
                 users: data?.users ?? 0,
                 donations: data?.donations ?? 0,
                 attendance: data?.attendance ?? 0
             });
-        } catch (e) {
-            console.error("Dashboard fetch error", e);
-        } finally {
-            setLoading(false);
-        }
+        } catch (e) { console.error(e); }
+        finally { setLoading(false); }
     }, [token]);
 
-    useEffect(() => {
-        if (isAuthenticated) fetchData();
-    }, [isAuthenticated, fetchData]);
-
-    const tasks = [
-        {
-            id: '1',
-            title: 'Nuevos Miembros',
-            description: 'Aprobar solicitudes pendientes',
-            icon: UserPlus,
-            color: 'text-primary',
-            bgColor: 'bg-primary/10',
-            action: 'Revisar',
-            badge: null
-        },
-        {
-            id: '2',
-            title: 'Ofrendas Especiales',
-            description: 'Categorizar nuevos recibos',
-            icon: Heart,
-            color: 'text-amber-500',
-            bgColor: 'bg-amber-500/10',
-            action: 'Ir',
-            badge: null
-        }
-    ];
+    useEffect(() => { if (isAuthenticated) fetchData(); }, [isAuthenticated, fetchData]);
 
     if (!isAuthenticated) return null;
 
     return (
-        <div className="min-h-screen bg-slate-950 font-display text-slate-100 selection:bg-primary/30 relative overflow-x-hidden flex flex-col">
-            {/* Ambient Backgrounds */}
-            <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
-            <div className="fixed inset-0 z-0 bg-slate-950 pointer-events-none">
-                <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/10 via-slate-950 to-slate-950 opacity-40 blur-3xl mix-blend-screen"></div>
-            </div>
+        <AdminShell
+            breadcrumbs={[
+                { label: 'Gestión Central', icon: Bell },
+                { label: 'Dashboard Ejecutivo', icon: LayoutDashboard }
+            ]}
+        >
+            <AdminHero
+                eyebrow="Resumen de Operación"
+                title="Consola de Control Central"
+                description="Monitorea el crecimiento espiritual y académico de la comunidad en tiempo real. Optimus Brain está analizando las tendencias de participación."
+                tags={['Dashboard', 'Real-time', 'BI']}
+                watchers={['Admin Team', 'Optimus Brain']}
+                primaryAction={{ label: 'Nueva Campaña', icon: Zap, onClick: () => {} }}
+                secondaryAction={{ label: 'Ver Reportes', icon: TrendingUp, onClick: () => router.push('/admin/reports') }}
+            />
 
-            <div className="relative z-10 max-w-4xl mx-auto flex flex-col min-h-screen w-full">
-                {/* Header */}
-                <header className="flex items-center justify-between p-6 pt-10">
-                    <div className="flex items-center gap-4">
-                        <div className="size-12 rounded-2xl bg-gradient-to-tr from-primary to-blue-400 p-0.5 shadow-lg shadow-primary/20">
-                            <div className="size-full rounded-[0.9rem] bg-slate-950 flex items-center justify-center overflow-hidden border border-white/10">
-                                <div className="size-full bg-slate-800 flex items-center justify-center text-white font-black uppercase">
-                                    {String((user as any)?.username || 'A').charAt(0)}
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Panel de Control</h2>
-                            <h1 className="text-xl font-black text-white tracking-tight">Gestión Central</h1>
-                        </div>
-                    </div>
-                    <button className="size-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-primary hover:bg-white/10 transition-all relative">
-                        <Bell size={20} />
-                        <span className="absolute top-3.5 right-3.5 size-2 bg-primary rounded-full ring-2 ring-slate-950"></span>
-                    </button>
-                </header>
-
-                <main className="flex-1 px-6 space-y-8 pb-32 animate-in fade-in slide-in-from-bottom-8 duration-700">
-
-                    {/* Hero Stats */}
-                    <section className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2 relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-primary via-primary-600 to-indigo-800 p-8 text-white shadow-2xl shadow-primary/30 group">
-                            <div className="absolute top-0 right-0 -mr-16 -mt-16 bg-white/10 size-64 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-1000"></div>
-                            <div className="relative z-10">
-                                <p className="text-blue-100 text-[10px] font-black uppercase tracking-[0.2em]">Ofrendas del Mes</p>
-                                <h3 className="text-4xl font-black mt-2 tracking-tight">${stats.donations.toLocaleString()}</h3>
-                                <div className="flex items-center gap-2 mt-6 bg-white/10 backdrop-blur-md w-fit px-4 py-2 rounded-xl text-[10px] font-black border border-white/10 uppercase tracking-widest">
-                                    <TrendingUp size={14} className="text-white" />
-                                    <span>Datos en tiempo real</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="rounded-[2rem] bg-slate-900/40 backdrop-blur-xl border border-white/5 p-6 flex flex-col gap-4 group hover:border-primary/30 transition-all">
-                            <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
-                                <Users size={20} />
-                            </div>
-                            <div>
-                                <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest">Usuarios</p>
-                                <p className="text-2xl font-black text-white">{loading ? '...' : stats.users}</p>
-                            </div>
-                        </div>
-
-                        <div className="rounded-[2rem] bg-slate-900/40 backdrop-blur-xl border border-white/5 p-6 flex flex-col gap-4 group hover:border-emerald-500/30 transition-all">
-                            <div className="size-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-all">
-                                <Activity size={20} />
-                            </div>
-                            <div>
-                                <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest">Asistencia</p>
-                                <p className="text-2xl font-black text-white">{loading ? '...' : stats.attendance}</p>
-                            </div>
-                        </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-20">
+                {/* Main Stats Area */}
+                <div className="lg:col-span-8 space-y-8">
+                    <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <StatCard 
+                            label="Usuarios Totales" value={loading ? '...' : stats.users.toLocaleString()} 
+                            icon={Users} trend="+12.5%" color="blue" 
+                        />
+                        <StatCard 
+                            label="Ofrendas del Mes" value={`$${loading ? '...' : stats.donations.toLocaleString()}`} 
+                            icon={Heart} trend="+8.2%" color="rose" 
+                        />
+                        <StatCard 
+                            label="Asistencia Promedio" value={`${loading ? '...' : stats.attendance}%`} 
+                            icon={Activity} trend="-2.1%" color="emerald" 
+                        />
                     </section>
 
-                    {/* Chart Mockup */}
-                    <section className="space-y-4">
-                        <div className="flex items-center justify-between px-2">
-                            <h3 className="text-white text-lg font-black tracking-tight uppercase tracking-widest">Actividad</h3>
-                            <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Ver Detalles</button>
-                        </div>
-                        <div className="rounded-[2.5rem] bg-slate-900/40 backdrop-blur-xl border border-white/5 p-8 h-56 flex flex-col justify-end group hover:border-white/10 transition-all">
-                            <div className="flex items-end justify-between h-full gap-3">
-                                {[40, 60, 35, 90, 75, 50, 100].map((h, i) => (
-                                    <div
-                                        key={i}
-                                        style={{ height: `${h}%` }}
-                                        className={`w-full rounded-t-xl transition-all duration-500 group-hover:opacity-100 ${i === 6 ? 'bg-primary shadow-[0_0_15px_rgba(37,157,244,0.4)]' :
-                                            i === 3 ? 'bg-primary/80' : 'bg-primary/20 opacity-40'
-                                            }`}
-                                    ></div>
+                    {/* Interactive Chart Section */}
+                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-10 shadow-xl space-y-8 group">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <h3 className="text-xl font-black tracking-tight mb-1">Tendencia de Crecimiento</h3>
+                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Participación Semanal</p>
+                            </div>
+                            <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/10">
+                                {['7D', '30D', '90D'].map(p => (
+                                    <button key={p} className={clsx("px-4 py-1.5 rounded-lg text-[10px] font-black transition-all", p === '7D' ? "bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-sm" : "text-slate-500")}>{p}</button>
                                 ))}
                             </div>
-                            <div className="flex justify-between mt-6 text-[9px] font-black text-slate-600 uppercase tracking-widest">
-                                <span>Lun</span><span>Mar</span><span>Mie</span><span>Jue</span><span>Vie</span><span>Sab</span><span>Dom</span>
-                            </div>
                         </div>
-                    </section>
-
-                    {/* Tasks Pending */}
-                    <section className="space-y-6">
-                        <div className="flex items-center justify-between px-2">
-                            <h3 className="text-white text-lg font-black tracking-tight uppercase tracking-widest">Tareas Pendientes</h3>
-                            <div className="size-7 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] font-black shadow-lg shadow-rose-500/20">2</div>
-                        </div>
-                        <div className="space-y-4">
-                            {tasks.map((task) => (
-                                <div key={task.id} className="flex items-center gap-5 p-5 rounded-[2rem] bg-slate-900/20 backdrop-blur-md border border-white/5 hover:bg-slate-900/40 hover:border-white/10 transition-all group">
-                                    <div className={`size-12 rounded-2xl ${task.bgColor} flex items-center justify-center ${task.color} group-hover:scale-110 transition-transform shadow-lg`}>
-                                        <task.icon size={24} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-black text-white tracking-tight">{task.title}</p>
-                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">{task.description}</p>
-                                    </div>
-                                    <button onClick={() => router.push(task.id === '1' ? '/admin/members' : '/admin/finance')} className="px-5 py-2.5 bg-primary hover:bg-primary-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-95 border border-primary-400/20">
-                                        {task.action}
-                                    </button>
+                        <div className="h-64 flex items-end gap-3 lg:gap-5 pt-10">
+                            {[40, 65, 30, 85, 70, 55, 100].map((h, i) => (
+                                <div key={i} className="flex-1 flex flex-col items-center gap-4 group/bar">
+                                    <motion.div 
+                                        initial={{ height: 0 }} animate={{ height: `${h}%` }}
+                                        className={clsx(
+                                            "w-full rounded-t-2xl transition-all duration-700 relative",
+                                            i === 6 ? "bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.4)]" : "bg-slate-200 dark:bg-white/10 opacity-60 group-hover/bar:opacity-100"
+                                        )}
+                                    >
+                                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity bg-slate-900 text-white px-2 py-1 rounded text-[9px] font-black">
+                                            {h}%
+                                        </div>
+                                    </motion.div>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{['L','M','M','J','V','S','D'][i]}</span>
                                 </div>
                             ))}
                         </div>
                     </section>
-                </main>
 
-                {/* Bottom Navigation */}
-                <nav className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-2xl border-t border-white/5 px-8 pb-10 pt-4 flex justify-between items-center">
-                    <button className="flex flex-col items-center gap-1.5 text-primary">
-                        <LayoutDashboard size={24} />
-                        <span className="text-[9px] font-black uppercase tracking-widest">Inicio</span>
-                        <div className="size-1 rounded-full bg-primary mt-1 shadow-[0_0_8px_#259df4]"></div>
-                    </button>
-                    <button onClick={() => router.push('/admin/metrics')} className="flex flex-col items-center gap-1.5 text-slate-500">
-                        <Activity size={24} />
-                        <span className="text-[9px] font-black uppercase tracking-widest">Métricas</span>
-                    </button>
-                    <div className="relative -top-8 px-2">
-                        <button onClick={() => router.push('/admin/cms')} className="bg-primary size-16 rounded-[2rem] text-white shadow-2xl shadow-primary/40 flex items-center justify-center border-4 border-slate-950 hover:scale-110 active:scale-90 transition-all">
-                            <Plus size={32} />
+                    {/* Recent Activity List */}
+                    <section className="space-y-6">
+                        <div className="flex justify-between items-center px-4">
+                            <h3 className="text-lg font-black tracking-tight uppercase tracking-widest">Actividad Reciente</h3>
+                            <button className="text-[11px] font-black text-blue-600 uppercase tracking-widest hover:underline">Ver Todo</button>
+                        </div>
+                        <div className="space-y-4">
+                            {[
+                                { title: 'Nueva Inscripción', desc: 'Ricardo Mendez se unió a "Fundamentos de la Fe"', time: 'Hace 5 min', icon: UserPlus, color: 'text-blue-500', bg: 'bg-blue-50' },
+                                { title: 'Donación Recibida', desc: 'Ofrenda especial pro-construcción confirmada', time: 'Hace 12 min', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-50' },
+                                { title: 'Examen Completado', desc: 'Elena Rodriguez aprobó "Historia de la Iglesia"', time: 'Hace 45 min', icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+                            ].map((item, idx) => (
+                                <div key={idx} className="flex items-center gap-6 p-6 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[2rem] hover:border-blue-500/20 transition-all group cursor-pointer shadow-sm hover:shadow-md">
+                                    <div className={clsx("size-14 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform", item.bg, "dark:bg-white/10", item.color)}>
+                                        <item.icon size={28} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="text-sm font-black text-slate-900 dark:text-white truncate">{item.title}</h4>
+                                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-1 truncate">{item.desc}</p>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{item.time}</p>
+                                        <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-600 transition-colors inline-block" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                </div>
+
+                {/* Sidebar Contextual BI */}
+                <aside className="lg:col-span-4 space-y-8">
+                    <div className="bg-slate-900 rounded-[3rem] p-10 text-white shadow-2xl space-y-10 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 -mr-20 -mt-20 size-64 bg-blue-600/20 rounded-full blur-[80px] group-hover:bg-blue-600/30 transition-all duration-1000" />
+                        
+                        <div className="relative z-10">
+                            <div className="flex items-center gap-3 mb-6">
+                                <PieChart size={20} className="text-blue-400" />
+                                <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-blue-400">Distribución de Impacto</h4>
+                            </div>
+                            <div className="relative size-56 mx-auto mb-10">
+                                <svg className="size-full -rotate-90 drop-shadow-2xl" viewBox="0 0 36 36">
+                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
+                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#2563eb" strokeWidth="4.5" strokeDasharray="75 100" />
+                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#334155" strokeWidth="4.5" strokeDasharray="25 100" strokeDashoffset="-75" />
+                                </svg>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span className="text-4xl font-black tracking-tighter">75%</span>
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Crecimiento</span>
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                <ProgressItem label="Inscripciones" value="75%" color="bg-blue-600" />
+                                <ProgressItem label="Graduaciones" value="25%" color="bg-slate-700" />
+                            </div>
+                        </div>
+
+                        <div className="relative z-10 pt-10 border-t border-white/5">
+                            <div className="p-6 bg-white/5 rounded-3xl border border-white/10 space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <Sparkles size={18} className="text-blue-400" />
+                                    <h5 className="text-[10px] font-black uppercase tracking-widest">IA Insights</h5>
+                                </div>
+                                <p className="text-[11px] font-bold text-slate-400 leading-relaxed uppercase tracking-wider">
+                                    "La participación ha subido un 15% en los cursos no formales. Se recomienda potenciar la ruta formal para el próximo trimestre."
+                                </p>
+                            </div>
+                        </div>
+
+                        <button className="relative z-10 w-full py-5 bg-white text-slate-900 rounded-2xl text-[11px] font-black uppercase tracking-[0.3em] shadow-xl hover:scale-[1.02] transition-all active:scale-95">
+                            Generar Auditoría
                         </button>
                     </div>
-                    <button onClick={() => router.push('/admin/tasks')} className="flex flex-col items-center gap-1.5 text-slate-500">
-                        <CheckCircle2 size={24} />
-                        <span className="text-[9px] font-black uppercase tracking-widest">Tareas</span>
-                    </button>
-                    <button onClick={() => router.push('/admin/settings')} className="flex flex-col items-center gap-1.5 text-slate-500">
-                        <Settings size={24} />
-                        <span className="text-[9px] font-black uppercase tracking-widest">Ajustes</span>
-                    </button>
-                </nav>
+
+                    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] p-10 shadow-xl space-y-8">
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Próximos Eventos</h4>
+                            <Calendar size={18} className="text-slate-300" />
+                        </div>
+                        <div className="space-y-6">
+                            {[
+                                { day: '15', month: 'MAR', title: 'Cierre de Actas Cohorte B', time: '09:00 AM' },
+                                { day: '22', month: 'MAR', title: 'Asamblea de Líderes', time: '06:30 PM' },
+                            ].map((event, i) => (
+                                <div key={i} className="flex gap-6 items-center group cursor-pointer">
+                                    <div className="flex flex-col items-center justify-center size-14 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                        <span className="text-lg font-black leading-none">{event.day}</span>
+                                        <span className="text-[8px] font-black uppercase">{event.month}</span>
+                                    </div>
+                                    <div>
+                                        <h5 className="text-[13px] font-black text-slate-800 dark:text-white group-hover:text-blue-600 transition-colors">{event.title}</h5>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{event.time}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </AdminShell>
+    );
+}
+
+function StatCard({ label, value, icon: Icon, trend, color }: any) {
+    const colors: any = {
+        blue: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20',
+        rose: 'text-rose-600 bg-rose-50 dark:bg-rose-900/20',
+        emerald: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20'
+    };
+    return (
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
+            <div className="absolute top-0 right-0 -mr-6 -mt-6 size-24 bg-slate-50 dark:bg-white/5 rounded-full scale-0 group-hover:scale-100 transition-transform duration-700" />
+            <div className="relative z-10 space-y-6">
+                <div className="flex justify-between items-center">
+                    <div className={clsx("size-14 rounded-2xl flex items-center justify-center transition-transform group-hover:rotate-12", colors[color])}>
+                        <Icon size={28} />
+                    </div>
+                    <div className={clsx("text-[10px] font-black px-2 py-0.5 rounded-lg border", 
+                        trend.startsWith('+') ? "text-emerald-500 bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-500/20" : "text-rose-500 bg-rose-50 border-rose-100 dark:bg-rose-900/20 dark:border-rose-500/20"
+                    )}>
+                        {trend}
+                    </div>
+                </div>
+                <div>
+                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{label}</p>
+                    <h4 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">{value}</h4>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function ProgressItem({ label, value, color }: any) {
+    return (
+        <div className="space-y-2">
+            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <span>{label}</span>
+                <span className="text-white">{value}</span>
+            </div>
+            <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                <motion.div initial={{ width: 0 }} animate={{ width: value }} className={clsx("h-full", color)} />
             </div>
         </div>
     );

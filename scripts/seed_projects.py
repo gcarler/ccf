@@ -1,0 +1,55 @@
+import asyncio
+from backend.database import SessionLocal
+from backend.crud import create_project, create_project_task
+from backend.schemas import ProjectCreate, ProjectTaskCreate
+from datetime import datetime, timedelta
+
+def seed_projects():
+    db = SessionLocal()
+    try:
+        # Create a default project
+        project_data = ProjectCreate(
+            title="Proyecto CCF Fase 1",
+            description="Implementación del nuevo ecosistema web.",
+            owner_id=1
+        )
+        project = create_project(db, project_data)
+        
+        # Create tasks
+        tasks = [
+            ProjectTaskCreate(
+                project_id=project.id,
+                title="Diseño de UI/UX Proyectos",
+                status="EN CURSO",
+                priority="Alta",
+                due_date=datetime.utcnow() + timedelta(days=5),
+                description="Finalizar la interfaz de usuario con estilo ClickUp."
+            ),
+            ProjectTaskCreate(
+                project_id=project.id,
+                title="Implementación Base de Datos",
+                status="PENDIENTE",
+                priority="Media",
+                due_date=datetime.utcnow() + timedelta(days=7),
+                description="Migraciones de Alembic para el módulo de proyectos."
+            ),
+            ProjectTaskCreate(
+                project_id=project.id,
+                title="Componentes Frontend (React)",
+                status="EN CURSO",
+                priority="Media",
+                due_date=datetime.utcnow() + timedelta(days=10),
+                description="Crear Toolbar y Drawer unificados."
+            )
+        ]
+        for task in tasks:
+            create_project_task(db, task)
+            
+        print("Project and tasks seeded successfully!")
+    except Exception as e:
+        print(f"Error seeding projects: {e}")
+    finally:
+        db.close()
+
+if __name__ == "__main__":
+    seed_projects()

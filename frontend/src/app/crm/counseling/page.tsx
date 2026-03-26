@@ -1,10 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Calendar, User, Clock, CheckCircle2, XCircle, Plus, Search, Filter, Loader2, ArrowLeft, MessageSquare, History } from 'lucide-react';
-import { apiUrl } from '@/lib/api';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Users, Filter, Plus, Calendar, Clock, Heart, Search, Video, MoreVertical, X as CloseIcon, ShieldCheck, CheckCircle2, XCircle, Loader2, ArrowLeft, MessageSquare, History, Link2 } from 'lucide-react';
+import { apiFetch } from '@/lib/http';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import CrmShell from '@/components/crm/CrmShell';
+import AdminHero from '@/components/admin/AdminHero';
 
 interface CounselingSession {
     id: number;
@@ -37,54 +40,57 @@ export default function CounselingPage() {
     });
 
     const router = useRouter();
+    const { token } = useAuth();
 
-    useEffect(() => {
-        fetchSessions();
-    }, []);
+    const heroWatchers = ['Cuidado Pastoral', 'Optimus Brain'];
 
-    const fetchSessions = async () => {
+    const fetchSessions = useCallback(async () => {
+        if (!token) {
+            setSessions([]);
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         try {
-            const res = await fetch(apiUrl('/crm/counseling/'));
-            if (res.ok) {
-                const data = await res.json();
-                setSessions(data);
-            }
+            const data = await apiFetch<CounselingSession[]>('/crm/counseling/', { token, cache: 'no-store' });
+            setSessions(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error(err);
         } finally {
             setLoading(false);
         }
-    };
+    }, [token]);
+
+    useEffect(() => {
+        fetchSessions();
+    }, [fetchSessions]);
 
     const handleCreateSession = async () => {
+        if (!token) return;
         try {
-            const res = await fetch(apiUrl('/crm/counseling/'), {
+            await apiFetch('/crm/counseling/', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newSession)
+                token,
+                body: newSession,
             });
-            if (res.ok) {
-                toast.success('Sesión agendada correctamente');
-                setShowModal(false);
-                fetchSessions();
-            }
+            toast.success('Sesión agendada correctamente');
+            setShowModal(false);
+            fetchSessions();
         } catch (err) {
             toast.error('Error al agendar sesión');
         }
     };
 
     const handleUpdateStatus = async (id: number, status: string) => {
+        if (!token) return;
         try {
-            const res = await fetch(apiUrl(`/crm/counseling/${id}`), {
+            await apiFetch(`/crm/counseling/${id}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status })
+                token,
+                body: { status }
             });
-            if (res.ok) {
-                toast.success(`Estado actualizado a ${status}`);
-                fetchSessions();
-            }
+            toast.success(`Estado actualizado a ${status}`);
+            fetchSessions();
         } catch (err) {
             toast.error('Error al actualizar estado');
         }
@@ -97,26 +103,34 @@ export default function CounselingPage() {
     });
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 pb-12">
-            {/* Header */}
-            <div className="flex justify-between items-end shrink-0">
-                <div>
-                    <button onClick={() => router.back()} className="mb-4 flex items-center gap-2 text-slate-400 hover:text-slate-200 transition-colors text-xs font-bold uppercase tracking-widest">
-                        <ArrowLeft size={14} /> Volver
-                    </button>
-                    <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
-                        <MessageSquare className="text-purple-500" /> Centro de Consejería
-                    </h1>
-                    <p className="text-slate-500 mt-1 uppercase text-[10px] font-black tracking-[0.2em]">Cuidado pastoral y acompañamiento espiritual</p>
-                </div>
+        <CrmShell
+            breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'CRM Pastoral', icon: Users }, { label: 'Consejería', icon: Heart }]}
+            rightActions={
                 <button
                     onClick={() => setShowModal(true)}
                     className="px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-xl shadow-purple-900/20 transition-all flex items-center gap-2"
                 >
-                    <Plus size={16} /> Agendar Sesión
+                    <Plus size={16} /> Agendar sesión
                 </button>
+            }
+        >
+        <AdminHero
+            eyebrow="Consejería"
+            title="Centro de consejería"
+            description="Coordina sesiones pastorales y seguimiento espiritual por estado con IA que prioriza casos urgentes."
+            tags={['Consejería', 'Seguimiento', 'IA']}
+            watchers={heroWatchers}
+            primaryAction={{ label: 'Agendar sesión', icon: Plus, onClick: () => setShowModal(true) }}
+            secondaryAction={{ label: 'Ver políticas', icon: Link2, onClick: () => {} }}
+        />
+        {/* Header */}
+            <div className="flex justify-between items-end shrink-0">
+                <div>
+                    <p className="text-slate-500 mt-1 uppercase text-[10px] font-black tracking-[0.2em]">Cuidado pastoral y acompañamiento espiritual</p>
+                </div>
             </div>
 
+            <div className="space-y-8">
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[
@@ -302,6 +316,7 @@ export default function CounselingPage() {
                     </div>
                 </div>
             )}
-        </div>
+            </div>
+        </CrmShell>
     );
 }

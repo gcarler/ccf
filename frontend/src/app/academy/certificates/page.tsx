@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Award, Download, Share2, School, Bell } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -9,6 +9,7 @@ import { useStudentEnrollments } from '@/hooks/useStudentEnrollments';
 import type { CertificateRecord } from '@/types/academy';
 import CertificateModal from '@/components/CertificateModal';
 import AdminHero from '@/components/admin/AdminHero';
+import { toast } from 'sonner';
 
 export default function StudentCertificates() {
     const { user, token, isAuthenticated } = useAuth();
@@ -19,6 +20,7 @@ export default function StudentCertificates() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeCertificate, setActiveCertificate] = useState<CertificateRecord | null>(null);
+    const [sharingId, setSharingId] = useState<number | null>(null);
 
     useEffect(() => {
         if (!userId || !token || !isAuthenticated) return;
@@ -56,6 +58,21 @@ export default function StudentCertificates() {
         enrollments.find((en) => en.id === certificate.enrollment_id);
 
     const totalLoading = loading || loadingEnrollments;
+
+    const handleShare = useCallback((certificate: CertificateRecord) => {
+        try {
+            setSharingId(certificate.id);
+            const base = typeof window !== 'undefined' ? window.location.origin : '';
+            const url = `${base}/academy/certificates/${certificate.certificate_code}`;
+            if (navigator?.clipboard) {
+                navigator.clipboard.writeText(url).then(() => toast.success('Enlace copiado')); 
+            } else {
+                toast.message('Comparte este enlace', { description: url });
+            }
+        } finally {
+            setTimeout(() => setSharingId(null), 1000);
+        }
+    }, []);
 
     if (!isAuthenticated) return null;
 
@@ -134,8 +151,12 @@ export default function StudentCertificates() {
                                                             <p className="text-xs font-medium text-slate-500">Emitido el {new Date(certificate.issued_at).toLocaleDateString()}</p>
                                                         </div>
                                                     </div>
-                                                    <button className="p-2.5 rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-colors border border-white/5">
-                                                        <Share2 size={18} />
+                                                    <button
+                                                        onClick={() => handleShare(certificate)}
+                                                        className="p-2.5 rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-colors border border-white/5"
+                                                        disabled={sharingId === certificate.id}
+                                                    >
+                                                        <Share2 size={18} className={sharingId === certificate.id ? 'animate-pulse text-primary' : ''} />
                                                     </button>
                                                 </div>
                                                 <div className="flex gap-3">

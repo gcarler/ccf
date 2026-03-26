@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 
 from backend import crud, models, schemas
 from backend.auth import require_admin, require_active_user
@@ -103,3 +104,32 @@ def acknowledge_insight(
         resource_id=str(insight_id),
     )
     return {"status": "ok"}
+
+
+class AskRequest(BaseModel):
+    query: str
+
+
+@router.post("/ask")
+def ask_optimus(
+    payload: AskRequest,
+    db=Depends(get_db),
+    current_user: models.User = Depends(require_active_user)
+):
+    # 1. Search in KB
+    results = crud.search_knowledge_base(db, payload.query)
+    
+    if not results:
+        return {
+            "answer": "Lo siento, no encontr?? informaci??n espec??fica sobre eso en mi base de conocimientos actual. ??Te gustar??a que asigne esta duda a un pastor?",
+            "sources": []
+        }
+    
+    # 2. Simulate AI response generation
+    context = "\n".join([r.content for r in results])
+    # In a real app, we would send 'context' and 'payload.query' to OpenAI/Gemini here.
+    
+    return {
+        "answer": f"Seg??n nuestros manuales y doctrina: {results[0].content[:200]}...",
+        "sources": [r.title for r in results]
+    }

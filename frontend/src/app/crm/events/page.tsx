@@ -1,10 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { apiUrl } from '@/lib/api';
+import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { Plus, Calendar, Settings, Clock, Check, X as CloseIcon, LayoutGrid, List } from 'lucide-react';
+import { Plus, Calendar, Check, X as CloseIcon, Link2, Users } from 'lucide-react';
+import ViewSwitcher, { ViewType, getStoredView } from '@/components/ViewSwitcher';
+import CrmShell from '@/components/crm/CrmShell';
+import AdminHero from '@/components/admin/AdminHero';
 
 interface Event {
     id: number;
@@ -26,6 +29,7 @@ interface Member {
 export default function EventsPage() {
     const { token } = useAuth();
     const { addToast } = useToast();
+    const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_events_view', 'grid'));
     const [events, setEvents] = useState<Event[]>([]);
     const [members, setMembers] = useState<Member[]>([]);
     const [loading, setLoading] = useState(true);
@@ -53,11 +57,11 @@ export default function EventsPage() {
         setLoading(true);
         try {
             const [eventsRes, membersRes] = await Promise.all([
-                fetch(apiUrl('/events/')),
-                fetch(apiUrl('/members/'))
+                apiFetch<Event[]>('/crm/events/', { token, cache: 'no-store' }),
+                apiFetch<Member[]>('/crm/members/', { token, cache: 'no-store' })
             ]);
-            if (eventsRes.ok) setEvents(await eventsRes.json());
-            if (membersRes.ok) setMembers(await membersRes.json());
+            setEvents(Array.isArray(eventsRes) ? eventsRes : []);
+            setMembers(Array.isArray(membersRes) ? membersRes : []);
         } catch (err) {
             addToast("Error al cargar datos", "error");
         } finally {
@@ -68,7 +72,7 @@ export default function EventsPage() {
     useEffect(() => {
         fetchData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [token]);
 
     const handleCreateEvent = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -85,20 +89,16 @@ export default function EventsPage() {
         if (newEvent.event_type === 'ONCE') payload.fixed_date = new Date(newEvent.fixed_date).toISOString();
 
         try {
-            const response = await fetch(apiUrl('/events/'), {
+            await apiFetch('/crm/events/', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                token,
+                body: payload
             });
 
-            if (response.ok) {
-                addToast("Evento creado exitosamente", "success");
-                setIsRegModalOpen(false);
-                setNewEvent({ name: '', description: '', event_type: 'PERMANENT', day_of_week: '0', month_day: '', fixed_date: '' });
-                fetchData();
-            } else {
-                addToast("Error al crear evento", "error");
-            }
+            addToast("Evento creado exitosamente", "success");
+            setIsRegModalOpen(false);
+            setNewEvent({ name: '', description: '', event_type: 'PERMANENT', day_of_week: '0', month_day: '', fixed_date: '' });
+            fetchData();
         } catch (err) {
             addToast("Error de conexión", "error");
         }
@@ -119,17 +119,16 @@ export default function EventsPage() {
 
         for (const memberId of attendedMemberIds) {
             try {
-                const response = await fetch(apiUrl('/attendance/'), {
+                await apiFetch('/crm/attendance/', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
+                    token,
+                    body: {
                         member_id: memberId,
                         event_id: selectedEvent.id,
                         attendance_date: new Date(attendanceDate).toISOString()
-                    })
+                    }
                 });
-                if (response.ok) successCount++;
-                else errorCount++;
+                successCount++;
             } catch (err) {
                 errorCount++;
             }
@@ -149,54 +148,130 @@ export default function EventsPage() {
         }
     };
 
+    const heroWatchers = ['Eventos', 'Optimus Brain'];
+
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Eventos y Asistencia</h1>
-                    <p className="text-slate-500 mt-1">Programa eventos recurrentes y registra la asistencia comunitaria.</p>
-                </div>
+        <CrmShell
+            breadcrumbs={[{ label: 'CCF', icon: Calendar }, { label: 'CRM Pastoral', icon: Users }, { label: 'Eventos', icon: Calendar }]}
+            viewOptions={['grid', 'list', 'kanban']}
+            viewType={viewType}
+            onViewChange={(view) => setViewType(view as ViewType)}
+            rightActions={
                 <button
                     onClick={() => setIsRegModalOpen(true)}
-                    className="flex items-center gap-2 bg-blue-600 px-6 py-3 rounded-2xl text-sm font-black text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 uppercase tracking-widest"
+                    className="flex items-center gap-2 bg-blue-600 px-5 py-2 rounded-2xl text-[11px] font-black text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-900/20 uppercase tracking-widest"
                 >
-                    <Plus size={20} />
-                    Nuevo Evento
+                    <Plus size={16} /> Nuevo evento
                 </button>
+            }
+        >
+        <AdminHero
+            eyebrow="Eventos"
+            title="Eventos y asistencia"
+            description="Programa encuentros recurrentes y registra la participación en tiempo real con paneles estilo ClickUp."
+            tags={['Agenda', 'Asistencia', 'IA']}
+            watchers={heroWatchers}
+            primaryAction={{ label: 'Crear evento', icon: Plus, onClick: () => setIsRegModalOpen(true) }}
+            secondaryAction={{ label: 'Ver calendario', icon: Link2, onClick: () => setViewType('grid') }}
+        />
+        <div className="space-y-8">
+
+            {/* Toolbar: View Switcher */}
+            <div className="flex items-center justify-end">
+                <ViewSwitcher
+                    viewType={viewType}
+                    setViewType={setViewType}
+                    availableViews={['grid', 'list', 'kanban']}
+                    storageKey="crm_events_view"
+                />
             </div>
 
-            {/* Events Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {loading ? (
-                    Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="glass-card p-6 border border-slate-100/50 bg-white/50 animate-pulse h-48 rounded-[2rem]" />
-                    ))
-                ) : (
-                    events.map(ev => (
-                        <div key={ev.id} className="p-6 rounded-[2rem] border border-slate-100 bg-white hover:border-blue-100 hover:shadow-2xl hover:shadow-blue-50 transition-all group flex flex-col justify-between">
+            {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="animate-pulse h-48 rounded-[2rem] bg-slate-100" />
+                    ))}
+                </div>
+            ) : (
+            <>
+            {/* GRID VIEW */}
+            {viewType === 'grid' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {events.map(ev => (
+                        <div key={ev.id} className="p-6 rounded-[2rem] border border-slate-100 dark:border-white/5 bg-white dark:bg-[#1e1f21] hover:border-blue-100 hover:shadow-2xl hover:shadow-blue-50 transition-all group flex flex-col justify-between">
                             <div>
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-50 to-indigo-50 text-blue-600 flex items-center justify-center">
                                         <Calendar size={20} />
                                     </div>
-                                    <span className="px-3 py-1 bg-slate-50 text-slate-500 text-[10px] font-black uppercase tracking-widest rounded-full">
-                                        {ev.event_type}
-                                    </span>
+                                    <span className="px-3 py-1 bg-slate-50 dark:bg-white/10 text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-full">{ev.event_type}</span>
                                 </div>
-                                <h3 className="text-lg font-black text-slate-900 mb-2 truncate">{ev.name}</h3>
-                                <p className="text-sm font-medium text-slate-500 line-clamp-2">{ev.description || "Evento comunitario de CCF."}</p>
+                                <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2 truncate">{ev.name}</h3>
+                                <p className="text-sm font-medium text-slate-500 line-clamp-2">{ev.description || 'Evento comunitario de CCF.'}</p>
                             </div>
-
-                            <button
-                                onClick={() => openAttendance(ev)}
-                                className="mt-6 w-full py-3 bg-slate-50 group-hover:bg-blue-600 text-slate-500 group-hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
-                            >
+                            <button onClick={() => openAttendance(ev)} className="mt-6 w-full py-3 bg-slate-50 dark:bg-white/5 group-hover:bg-blue-600 text-slate-500 group-hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
                                 Panel de Asistencia
                             </button>
                         </div>
-                    ))
-                )}
-            </div>
+                    ))}
+                </div>
+            )}
+
+            {/* LIST VIEW */}
+            {viewType === 'list' && (
+                <div className="bg-white dark:bg-[#1e1f21] rounded-[2rem] border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm divide-y divide-slate-100 dark:divide-white/5">
+                    {events.map(ev => (
+                        <div key={ev.id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+                            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center shrink-0">
+                                <Calendar size={16} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate">{ev.name}</p>
+                                <p className="text-xs text-slate-400 truncate">{ev.description || 'Sin descripción'}</p>
+                            </div>
+                            <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500 text-[10px] font-black uppercase">{ev.event_type}</span>
+                            <button onClick={() => openAttendance(ev)} className="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-[10px] font-black uppercase opacity-0 group-hover:opacity-100 transition-opacity">
+                                Asistencia
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* KANBAN VIEW */}
+            {viewType === 'kanban' && (
+                <div className="flex gap-4 overflow-x-auto pb-6">
+                    {['PERMANENT', 'ANNUAL', 'ONCE'].map(type => (
+                        <div key={type} className="flex-none w-72">
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-500">
+                                    {type === 'PERMANENT' ? 'Semanal' : type === 'ANNUAL' ? 'Anual' : 'Única Vez'}
+                                </h3>
+                                <span className="text-[11px] font-bold bg-slate-100 dark:bg-white/10 text-slate-500 px-2 py-0.5 rounded-full">{events.filter(e => e.event_type === type).length}</span>
+                            </div>
+                            <div className="flex flex-col gap-3">
+                                {events.filter(e => e.event_type === type).map(ev => (
+                                    <div key={ev.id} className="p-4 rounded-2xl border border-slate-100 dark:border-white/5 bg-white dark:bg-[#1e1f21] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <Calendar size={14} className="text-blue-500 shrink-0" />
+                                            <p className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate">{ev.name}</p>
+                                        </div>
+                                        {ev.description && <p className="text-[11px] text-slate-400 line-clamp-2 mb-3">{ev.description}</p>}
+                                        <button onClick={() => openAttendance(ev)} className="w-full py-1.5 rounded-xl bg-slate-50 dark:bg-white/5 group-hover:bg-blue-600 group-hover:text-white text-slate-400 text-[10px] font-black uppercase tracking-widest transition-all">
+                                            Asistencia
+                                        </button>
+                                    </div>
+                                ))}
+                                {events.filter(e => e.event_type === type).length === 0 && (
+                                    <div className="flex items-center justify-center py-8 rounded-2xl border-2 border-dashed border-slate-100 dark:border-white/5 text-slate-300 text-xs">Sin eventos</div>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+            </>
+            )}
 
             {/* Registration Modal */}
             {isRegModalOpen && (
@@ -355,5 +430,6 @@ export default function EventsPage() {
                 </div>
             )}
         </div>
+        </CrmShell>
     );
 }

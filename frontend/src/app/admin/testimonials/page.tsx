@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Check, Clock, Shield, X, Loader2, User, Edit2, MessageSquare } from "lucide-react";
-import { apiUrl } from "@/lib/api";
+import React, { useEffect, useState, useCallback } from "react";
+import { Check, Clock, Shield, X, Loader2, User, Edit2, MessageSquare, Home, Star } from "lucide-react";
+import { apiFetch } from "@/lib/http";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 
@@ -11,6 +11,7 @@ interface Testimonial {
   content: string;
   emotion: string;
   is_approved: boolean;
+  show_on_home: boolean;
   created_at: string;
   author_id: number;
 }
@@ -22,52 +23,58 @@ export default function AdminTestimonialsPage() {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<'pendientes' | 'aprobados'>('pendientes');
 
-  const fetchTestimonials = async () => {
+  const fetchTestimonials = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     try {
-      const response = await fetch(apiUrl("/admin/testimonials/"), {
-        headers: { Authorization: `Bearer ${token}` },
+      const data = await apiFetch<Testimonial[]>("/admin/testimonials", {
+        token,
+        cache: "no-store",
       });
-      if (!response.ok) {
-        addToast("Error al cargar testimonios", "error");
-        setTestimonials([]);
-        return;
-      }
-      const data = await response.json();
-      setTestimonials(data);
+      setTestimonials(Array.isArray(data) ? data : []);
     } catch {
       addToast("Error de conexión", "error");
+      setTestimonials([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, addToast]);
 
   useEffect(() => {
     fetchTestimonials();
-  }, [token]);
+  }, [fetchTestimonials]);
+
+  const handleToggleHome = async (id: number, showOnHome: boolean) => {
+    if (!token) return;
+
+    try {
+      await apiFetch(`/admin/testimonials/${id}`, {
+        method: "PATCH",
+        token,
+        body: { show_on_home: showOnHome },
+      });
+
+      addToast(showOnHome ? "Testimonio destacado en Home" : "Testimonio removido del Home", "success");
+      fetchTestimonials();
+    } catch {
+      addToast("Error al actualizar", "error");
+    }
+  };
 
   const handleAction = async (id: number, approved: boolean) => {
     if (!token) return;
 
     try {
-      const response = await fetch(apiUrl(`/admin/testimonials/${id}`), {
+      await apiFetch(`/admin/testimonials/${id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ is_approved: approved }),
+        token,
+        body: { is_approved: approved },
       });
 
-      if (response.ok) {
-        addToast(approved ? "Testimonio aprobado" : "Testimonio rechazado", "success");
-        fetchTestimonials();
-      } else {
-        addToast("Error al procesar", "error");
-      }
+      addToast(approved ? "Testimonio aprobado" : "Testimonio rechazado", "success");
+      fetchTestimonials();
     } catch {
-      addToast("Error de conexión", "error");
+      addToast("Error al procesar", "error");
     }
   };
 
@@ -156,12 +163,25 @@ export default function AdminTestimonialsPage() {
                     </button>
                   </>
                 ) : (
-                  <button
-                      onClick={() => handleAction(t.id, false)}
-                      className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-3 rounded-xl text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
-                    >
-                      Ocultar / Revocar
-                  </button>
+                  <div className="flex flex-col w-full gap-2">
+                    <button
+                        onClick={() => handleToggleHome(t.id, !t.show_on_home)}
+                        className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${
+                          t.show_on_home 
+                            ? 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/30' 
+                            : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/5 hover:border-blue-500 hover:text-blue-500'
+                        }`}
+                      >
+                        {t.show_on_home ? <Star size={16} fill="currentColor" /> : <Home size={16} />}
+                        {t.show_on_home ? 'Destacado en Home' : 'Mostrar en Home'}
+                    </button>
+                    <button
+                        onClick={() => handleAction(t.id, false)}
+                        className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-3 rounded-xl text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                      >
+                        Ocultar / Revocar
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

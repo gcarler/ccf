@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
     ChevronLeft,
@@ -11,175 +11,227 @@ import {
     ShieldCheck,
     ChevronRight,
     ArrowRight,
-    Globe
+    Globe,
+    CheckCircle2,
+    DollarSign,
+    Sparkles,
+    HandHeart,
+    Lock
 } from 'lucide-react';
-import { apiUrl } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import { apiFetch } from '@/lib/http';
+import { motion, AnimatePresence } from 'framer-motion';
+import clsx from 'clsx';
 
-const ICON_MAP: Record<string, any> = {
-    Building: Building,
-    Heart: Heart,
-    Globe: Globe
-};
+const AMOUNTS = ['20', '50', '100', '200'];
 
 export default function DonatePage() {
+    const { user } = useAuth();
     const { addToast } = useToast();
     const [amount, setAmount] = useState('50');
     const [type, setType] = useState('Diezmo');
-    const [customAmount, setCustomAmount] = useState(false);
+    const [isCustom, setIsCustom] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [categories, setCategories] = useState<any[]>([]);
-
-    useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                const res = await fetch(apiUrl('/content/donation_types'));
-                if (res.ok) {
-                    const data = await res.json();
-                    setCategories(JSON.parse(data.content).categories);
-                }
-            } catch (e) {
-                console.error("Error fetching donation categories", e);
-            }
-        };
-        fetchCategories();
-    }, []);
+    const [completed, setCompleted] = useState(false);
 
     const handleDonation = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await fetch(apiUrl('/donations/'), {
+            await apiFetch('/donations/', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+                body: {
                     amount: parseFloat(amount),
                     donation_type: type,
-                    donor_name: "Anónimo"
-                })
+                    donor_name: user?.username || "Anónimo"
+                }
             });
-            if (res.ok) {
-                addToast("Ofrenda procesada con éxito. ¡Gracias!", "success");
-                setAmount('50');
-            }
+            setCompleted(true);
+            addToast("¡Gracias por tu generosidad!", "success");
         } catch (error) {
-            addToast("Error al procesar ofrenda", "error");
+            console.error(error);
+            addToast("Error al procesar", "error");
         } finally {
             setLoading(false);
         }
     };
 
-    return (
-        <div className="min-h-screen bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 flex justify-center">
-            <div className="w-full max-w-md relative pb-10">
-                {/* Background Details */}
-                <div className="absolute top-0 left-0 right-0 h-80 bg-gradient-to-br from-emerald-600 via-emerald-800 to-slate-900 rounded-b-[4rem] z-0 pointer-events-none"></div>
-
-                {/* Header */}
-                <header className="relative z-10 flex items-center justify-between px-6 pt-12 pb-6 text-white">
-                    <Link href="/" className="size-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all backdrop-blur-md">
-                        <ChevronLeft size={20} />
+    if (completed) {
+        return (
+            <div className="min-h-screen bg-white dark:bg-[#1e1f21] flex items-center justify-center p-6">
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                    className="max-w-md w-full text-center space-y-8 p-10 bg-slate-50 dark:bg-white/5 rounded-[3rem] border border-slate-200 dark:border-white/10 shadow-2xl"
+                >
+                    <div className="size-24 rounded-full bg-emerald-500 text-white mx-auto flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                        <CheckCircle2 size={48} />
+                    </div>
+                    <div className="space-y-3">
+                        <h2 className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">¡Ofrenda Recibida!</h2>
+                        <p className="text-slate-500 dark:text-slate-400 font-medium">Tu generosidad permite que el ministerio siga creciendo y alcanzando más vidas.</p>
+                    </div>
+                    <div className="py-6 border-y border-slate-200 dark:border-white/10 flex justify-between items-center px-4">
+                        <div className="text-left">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Monto Sembrado</p>
+                            <p className="text-2xl font-black text-slate-800 dark:text-white">${amount}</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Categoría</p>
+                            <p className="text-sm font-bold text-blue-600 dark:text-blue-400">{type}</p>
+                        </div>
+                    </div>
+                    <Link href="/" className="block w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-3xl font-black text-sm uppercase tracking-widest active:scale-95 transition-all shadow-xl">
+                        Volver al Inicio
                     </Link>
-                    <h1 className="text-lg font-black tracking-widest uppercase">Ofrendas</h1>
-                    <div className="size-10"></div>
-                </header>
+                </motion.div>
+            </div>
+        );
+    }
 
-                {/* Main Content */}
-                <main className="relative z-10 px-6 space-y-6">
+    return (
+        <div className="min-h-screen bg-white dark:bg-[#1e1f21] relative overflow-hidden flex flex-col items-center">
+            {/* Decorative backgrounds */}
+            <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-br from-blue-600 to-indigo-900 opacity-10 dark:opacity-20 pointer-events-none" />
+            <div className="absolute top-[-10%] right-[-10%] size-96 bg-blue-500 rounded-full blur-[120px] opacity-10 animate-pulse" />
 
+            <header className="w-full max-w-5xl px-6 pt-12 flex items-center justify-between relative z-10">
+                <Link href="/" className="size-12 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-blue-600 transition-all shadow-sm">
+                    <ChevronLeft size={24} />
+                </Link>
+                <div className="flex flex-col items-center">
+                    <h1 className="text-sm font-black uppercase tracking-[0.3em] text-slate-400">Generosidad</h1>
+                    <div className="h-1 w-8 bg-blue-600 rounded-full mt-1" />
+                </div>
+                <div className="size-12" />
+            </header>
+
+            <main className="w-full max-w-5xl px-6 py-12 grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10 items-start">
+                {/* Left Side: Inspiration */}
+                <div className="space-y-8 pt-4">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest">
+                        <HandHeart size={14} /> Tu siembra tiene propósito
+                    </div>
+                    <h2 className="text-4xl lg:text-6xl font-black text-slate-800 dark:text-white tracking-tighter leading-[0.9]">
+                        Honramos a Dios <br /> con nuestra <br /> <span className="text-blue-600">generosidad.</span>
+                    </h2>
+                    <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-md leading-relaxed">
+                        Cada ofrenda y diezmo fortalece la misión de transformar vidas y comunidades a través del evangelio.
+                    </p>
+                    
+                    <div className="grid grid-cols-1 gap-4 pt-4">
+                        <BenefitCard icon={ShieldCheck} title="Seguridad Total" desc="Tus transacciones están protegidas con encriptación de nivel bancario." />
+                        <BenefitCard icon={Globe} title="Impacto Global" desc="Apoyas misiones y ayuda social en toda la región." />
+                    </div>
+                </div>
+
+                {/* Right Side: Action Card */}
+                <div className="bg-white dark:bg-[#1e1f21] rounded-[3rem] border border-slate-100 dark:border-white/5 p-8 lg:p-12 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] dark:shadow-black/50 space-y-10">
                     {/* Amount Selector */}
-                    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 dark:border-white/5">
-                        <div className="text-center mb-8">
-                            <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mb-2">Tu siembra</p>
-                            {customAmount ? (
-                                <div className="flex items-center justify-center gap-1">
-                                    <span className="text-2xl font-black text-slate-400">$</span>
-                                    <input
-                                        type="number"
-                                        value={amount}
-                                        onChange={(e) => setAmount(e.target.value)}
-                                        className="text-5xl font-black text-slate-900 dark:text-white bg-transparent w-32 text-center outline-none"
-                                        autoFocus
+                    <div className="space-y-6">
+                        <div className="text-center">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Selecciona un monto</p>
+                            <div className="flex items-center justify-center gap-2">
+                                <span className="text-3xl font-black text-slate-300">$</span>
+                                {isCustom ? (
+                                    <input 
+                                        type="number" autoFocus value={amount} onChange={(e) => setAmount(e.target.value)}
+                                        className="text-6xl font-black text-slate-800 dark:text-white bg-transparent w-48 text-center outline-none tracking-tighter"
                                     />
-                                </div>
-                            ) : (
-                                <div className="flex items-center justify-center gap-1">
-                                    <span className="text-2xl font-black text-slate-400">$</span>
-                                    <span className="text-6xl font-black text-slate-900 dark:text-white tracking-tighter">{amount}</span>
-                                </div>
-                            )}
+                                ) : (
+                                    <span className="text-7xl font-black text-slate-800 dark:text-white tracking-tighter">{amount}</span>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-3 mb-6">
-                            {['20', '50', '100'].map((val) => (
-                                <button
-                                    key={val}
-                                    onClick={() => { setAmount(val); setCustomAmount(false); }}
-                                    className={`py-3 rounded-2xl font-black text-sm transition-all ${amount === val && !customAmount ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200'}`}
+                        <div className="grid grid-cols-4 gap-3">
+                            {AMOUNTS.map(val => (
+                                <button 
+                                    key={val} onClick={() => { setAmount(val); setIsCustom(false); }}
+                                    className={clsx(
+                                        "py-4 rounded-2xl font-black text-sm transition-all",
+                                        amount === val && !isCustom 
+                                            ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105" 
+                                            : "bg-slate-50 dark:bg-white/5 text-slate-500 hover:bg-slate-100"
+                                    )}
                                 >
                                     ${val}
                                 </button>
                             ))}
                         </div>
-                        <button
-                            onClick={() => setCustomAmount(true)}
-                            className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${customAmount ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-400 hover:bg-slate-100'}`}
+                        <button 
+                            onClick={() => setIsCustom(true)}
+                            className={clsx(
+                                "w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border-2",
+                                isCustom ? "border-blue-600 bg-blue-50/50 dark:bg-blue-500/10 text-blue-600" : "border-transparent bg-slate-50 dark:bg-white/5 text-slate-400"
+                            )}
                         >
-                            Otra Cantidad
+                            Otra cantidad personalizada
                         </button>
                     </div>
 
-                    {/* Destination/Type */}
-                    <div className="space-y-3">
-                        <h3 className="font-black text-xs uppercase tracking-widest text-slate-500 ml-2">Destino</h3>
-                        <div className="grid gap-3">
-                            {(categories.length > 0 ? categories : [
-                                { id: 'Diezmo', label: 'Diezmo', icon: 'Building' },
-                                { id: 'Ofrenda General', label: 'Ofrenda General', icon: 'Heart' }
-                            ]).map((item) => {
-                                const Icon = ICON_MAP[item.icon] || Heart;
-                                return (
-                                    <button
-                                        key={item.id}
-                                        onClick={() => setType(item.id)}
-                                        className={`w-full p-4 rounded-2xl flex items-center justify-between transition-all border ${type === item.id ? 'border-emerald-500 bg-white dark:bg-slate-900 shadow-lg' : 'border-transparent bg-white/60 dark:bg-slate-800/40 hover:bg-white'}`}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className={`size-10 rounded-xl flex items-center justify-center bg-emerald-500/10 text-emerald-500`}>
-                                                <Icon size={18} />
-                                            </div>
-                                            <span className="font-bold text-sm">{item.label}</span>
-                                        </div>
-                                        <div className={`size-5 rounded-full border-2 flex items-center justify-center ${type === item.id ? 'border-emerald-500' : 'border-slate-300'}`}>
-                                            {type === item.id && <div className="size-2.5 bg-emerald-500 rounded-full"></div>}
-                                        </div>
-                                    </button>
-                                );
-                            })}
+                    {/* Type Selector */}
+                    <div className="space-y-4">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Destino de la semilla</p>
+                        <div className="grid grid-cols-2 gap-3">
+                            <TypeOption active={type === 'Diezmo'} onClick={() => setType('Diezmo')} icon={Building} label="Diezmo" />
+                            <TypeOption active={type === 'Ofrenda'} onClick={() => setType('Ofrenda')} icon={Heart} label="Ofrenda" />
                         </div>
                     </div>
 
-                    {/* Action Button */}
-                    <button
+                    {/* Submit */}
+                    <button 
                         onClick={handleDonation}
                         disabled={loading || !amount || parseFloat(amount) <= 0}
-                        className="w-full h-16 mt-8 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-slate-900/20 flex items-center justify-center gap-3 disabled:opacity-50 transition-transform active:scale-95"
+                        className="w-full py-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-3xl font-black text-sm uppercase tracking-[0.2em] shadow-2xl active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                     >
-                        {loading ? 'Procesando...' : (
-                            <>
-                                Continuar al Pago <ArrowRight size={18} />
-                            </>
-                        )}
+                        {loading ? <Loader2 size={24} className="animate-spin" /> : <><CreditCard size={20} /> Continuar al Pago</>}
                     </button>
 
-                    <div className="flex items-center justify-center gap-2 mt-6 opacity-60">
-                        <ShieldCheck size={14} className="text-slate-400" />
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pago 100% Seguro</span>
+                    <div className="flex items-center justify-center gap-4 pt-4 border-t border-slate-50 dark:border-white/5 opacity-40">
+                        <div className="flex items-center gap-1"><Lock size={12} /><span className="text-[9px] font-black uppercase">Secure SSL</span></div>
+                        <div className="flex items-center gap-1"><CheckCircle2 size={12} /><span className="text-[9px] font-black uppercase">Verified Merchant</span></div>
                     </div>
+                </div>
+            </main>
+        </div>
+    );
+}
 
-                </main>
+function BenefitCard({ icon: Icon, title, desc }: any) {
+    return (
+        <div className="flex items-start gap-4 group">
+            <div className="size-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 shrink-0 group-hover:scale-110 transition-transform shadow-sm">
+                <Icon size={20} />
+            </div>
+            <div>
+                <h4 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">{title}</h4>
+                <p className="text-xs text-slate-500 leading-relaxed mt-0.5">{desc}</p>
             </div>
         </div>
     );
 }
 
+function TypeOption({ active, onClick, icon: Icon, label }: any) {
+    return (
+        <button 
+            onClick={onClick}
+            className={clsx(
+                "p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all group",
+                active 
+                    ? "border-blue-600 bg-blue-50/50 dark:bg-blue-500/10 shadow-md" 
+                    : "border-slate-50 dark:border-white/5 hover:border-blue-200"
+            )}
+        >
+            <div className={clsx(
+                "size-10 rounded-xl flex items-center justify-center transition-all",
+                active ? "bg-blue-600 text-white shadow-lg" : "bg-slate-50 dark:bg-white/5 text-slate-400"
+            )}>
+                <Icon size={20} />
+            </div>
+            <span className={clsx("text-[10px] font-black uppercase tracking-widest", active ? "text-blue-600 dark:text-white" : "text-slate-500")}>{label}</span>
+        </button>
+    );
+}
+
+function Loader2({ size, className }: any) { return <Sparkles size={size} className={className} />; } // Simplified fallback

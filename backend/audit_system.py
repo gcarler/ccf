@@ -9,13 +9,16 @@ def audit_endpoint(method, path, data=None, params=None, token=None):
         headers["Authorization"] = f"Bearer {token}"
     
     try:
+        response = None
         if method == "GET":
             response = requests.get(f"{BASE_URL}{path}", params=params, headers=headers)
         elif method == "POST":
             response = requests.post(f"{BASE_URL}{path}", json=data, headers=headers)
         elif method == "PATCH":
             response = requests.patch(f"{BASE_URL}{path}", json=data, headers=headers)
-        
+        else:
+            raise ValueError(f"M??todo no soportado: {method}")
+
         status = response.status_code
         try:
             result = response.json()
@@ -27,7 +30,7 @@ def audit_endpoint(method, path, data=None, params=None, token=None):
         return 500, str(e)
 
 def run_audit():
-    print("--- INICIANDO AUDITORÍA CCF PLATFORM ---")
+    print("--- INICIANDO AUDITOR??A CCF PLATFORM ---")
     
     # 1. Test Root
     s, r = audit_endpoint("GET", "/")
@@ -48,7 +51,7 @@ def run_audit():
             print(f"[AUTH] Login FALLIDO: {s} - {resp.text}")
     except Exception as e:
         token = None
-        print(f"[AUTH] Error de conexión: {e}")
+        print(f"[AUTH] Error de conexi??n: {e}")
 
     if token:
         # 3. Test Courses
@@ -56,11 +59,11 @@ def run_audit():
         print(f"[COURSES] Listado: {s} (Encontrados: {len(r) if isinstance(r, list) else 0})")
 
         # 4. Test Testimonials (Admin)
-        s, r = audit_endpoint("GET", "/admin/testimonials/", token=token)
+        s, r = audit_endpoint("GET", "/admin/testimonials", token=token)
         print(f"[TESTIMONIALS] Admin: {s} (Encontrados: {len(r) if isinstance(r, list) else 0})")
 
         # 5. Test Members
-        s, r = audit_endpoint("GET", "/members/", token=token)
+        s, r = audit_endpoint("GET", "/crm/members/", token=token)
         print(f"[MEMBERS] Listado: {s} (Encontrados: {len(r) if isinstance(r, list) else 0})")
 
         # 6. Test Enrollment logic
@@ -69,7 +72,7 @@ def run_audit():
             s, r = audit_endpoint("GET", f"/users/{user_id}/enrollments", token=token)
             print(f"[ENROLLMENTS] Usuario {user_id}: {s}")
 
-    print("\n--- FIN DE LA AUDITORÍA ---")
+    print("\n--- FIN DE LA AUDITOR??A ---")
 
 if __name__ == "__main__":
     run_audit()

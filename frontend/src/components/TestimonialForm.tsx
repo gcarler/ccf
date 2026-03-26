@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Send, Smile } from "lucide-react";
-import { apiUrl } from "../lib/api";
+import { apiFetch } from "@/lib/http";
 
 interface TestimonialFormProps {
   userId: number;
@@ -27,28 +27,22 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(apiUrl("/testimonials/"), {
+      await apiFetch("/testimonials", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+        token,
+        body: {
           content,
           emotion,
           author_id: userId,
-        }),
+        },
       });
 
-      if (response.ok) {
         setMessage("Gracias. Tu testimonio fue enviado para moderacion.");
         setContent("");
         if (onSubmitted) onSubmitted();
-      } else {
-        setMessage("Hubo un error al enviar el testimonio.");
-      }
     } catch (error) {
-      setMessage("No se pudo conectar con el servidor.");
+      console.error("testimonial error", error);
+      setMessage("Hubo un error al enviar el testimonio.");
     } finally {
       setIsSubmitting(false);
     }

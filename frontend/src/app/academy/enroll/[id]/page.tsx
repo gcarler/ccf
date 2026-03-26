@@ -1,16 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { apiUrl } from '@/lib/api';
+import { useRouter } from 'next/navigation';
+import { apiFetch } from '@/lib/http';
 import { ArrowLeft, BookOpen, Upload, CreditCard, Wallet, Landmark, Lock, CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 
+import { motion, AnimatePresence } from "framer-motion";
+import AcademyDetailShell from '@/components/academy/AcademyDetailShell';
+
 export default function EnrollmentWizard({ params }: { params: { id: string } }) {
     const { token, isAuthenticated, user } = useAuth();
-    const router = useRouter();
     const { addToast } = useToast();
+    const router = useRouter();
 
     const [step, setStep] = useState(1);
     const [course, setCourse] = useState<any>(null);
@@ -26,51 +29,29 @@ export default function EnrollmentWizard({ params }: { params: { id: string } })
 
         const fetchCourse = async () => {
             try {
-                // Since there isn't a single course GET endpoint, we'll fetch all and find it
-                const response = await fetch(apiUrl('/courses/?modality=formal'), { cache: 'no-store' });
-                const informalRes = await fetch(apiUrl('/courses/?modality=no_formal'), { cache: 'no-store' });
-
-                const dataFormal = await response.ok ? await response.json() : [];
-                const dataInformal = await informalRes.ok ? await informalRes.json() : [];
-
-                const allCourses = [...dataFormal, ...dataInformal];
-                const found = allCourses.find(c => c.id.toString() === params.id);
-
-                if (found) {
-                    setCourse(found);
-                } else {
-                    addToast("Curso no encontrado", "error");
-                    router.push('/academy');
-                }
+                const data = await apiFetch(`/courses/${params.id}`, { cache: 'no-store' });
+                setCourse(data);
             } catch (error) {
-                addToast("Error al cargar detalles del curso", "error");
+                addToast("Curso no encontrado", "error");
+                router.push('/academy');
             } finally {
                 setLoading(false);
             }
         };
 
         fetchCourse();
-    }, [isAuthenticated, params.id, router, addToast]);
+        // router is stable in Next.js app router
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAuthenticated, params.id, addToast]);
 
     const handleEnrollment = async () => {
         setEnrolling(true);
         try {
-            const response = await fetch(apiUrl("/enrollments/"), {
+            await apiFetch("/enrollments/", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ user_id: user?.id, course_id: parseInt(params.id) }),
+                token,
+                body: { user_id: user?.id, course_id: parseInt(params.id) }
             });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                addToast(errorData.detail || "No se pudo realizar la inscripción.", "error");
-                setEnrolling(false);
-                return;
-            }
-
             addToast("¡Inscripción y pago exitosos!", "success");
             setStep(3); // Success step
         } catch (error) {
@@ -80,297 +61,220 @@ export default function EnrollmentWizard({ params }: { params: { id: string } })
     };
 
     if (loading) {
-        return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><Loader2 className="animate-spin text-primary w-12 h-12" /></div>;
+        return (
+            <AcademyDetailShell title="Procesando curso" description="Preparando requisitos de inscripción" variant="violet">
+                <div className="flex items-center justify-center py-20">
+                    <Loader2 className="animate-spin text-[hsl(var(--primary))] w-10 h-10" />
+                </div>
+            </AcademyDetailShell>
+        );
     }
 
     if (!course) return null;
 
     return (
-        <div className="min-h-screen bg-slate-950 font-display text-slate-100 selection:bg-primary/30 relative">
-            {/* Background elements */}
-            <div className="fixed inset-0 z-0 bg-slate-950 pointer-events-none">
-                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-slate-950 to-slate-950 opacity-60 blur-3xl rounded-full mix-blend-screen"></div>
+        <AcademyDetailShell
+            title={`Inscripción · ${course.title}`}
+            description="Completa requisitos, realiza pago y confirma tu nivel de formación"
+            variant="violet"
+            contentClassName="max-w-xl mx-auto"
+        >
+            <div className="px-6 mt-4 mb-4">
+                <div className="flex items-center justify-between gap-4 p-2 bg-[hsl(var(--surface-2))] rounded-2xl border border-[hsl(var(--border))]">
+                    {[1, 2, 3].map((s) => (
+                        <div key={s} className="flex-1 flex items-center gap-2">
+                            <div className={`h-1 flex-1 rounded-full transition-all duration-500 ${step >= s ? 'bg-[hsl(var(--primary))] shadow-[0_0_8px_hsl(var(--primary)/0.5)]' : 'bg-[hsl(var(--border))]'}`}></div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
-            <div className="relative flex flex-col min-h-screen w-full max-w-lg mx-auto overflow-hidden">
-                {/* TopAppBar */}
-                <div className="flex items-center px-6 pt-8 pb-4 justify-between sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-white/5">
-                    <button onClick={() => router.back()} className="text-primary flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 hover:bg-primary/20 transition-colors">
-                        <ArrowLeft size={20} />
-                    </button>
-                    <h2 className="text-white text-lg font-bold leading-tight tracking-tight flex-1 text-center">
-                        {step === 1 ? 'Inscripción a Carrera' : step === 2 ? 'Pago de Matrícula' : 'Inscripción Exitosa'}
-                    </h2>
-                    <div className="size-10"></div>
-                </div>
-
-                {/* Progress Steps Indicator */}
-                <div className="px-6 mt-6">
-                    <div className="flex justify-between items-center bg-white/5 p-3 rounded-2xl border border-white/5 shadow-inner">
-                        <div className={`flex flex-col items-center flex-1 transition-opacity ${step >= 1 ? 'opacity-100' : 'opacity-40'}`}>
-                            <span className={`font-bold text-[10px] uppercase tracking-widest ${step >= 1 ? 'text-primary' : 'text-slate-500'}`}>Requisitos</span>
-                            <div className={`h-1.5 w-1.5 rounded-full mt-2 transition-colors ${step >= 1 ? 'bg-primary shadow-[0_0_8px_rgba(66,66,240,0.8)]' : 'bg-slate-700'}`}></div>
-                        </div>
-                        <div className={`flex flex-col items-center flex-1 transition-opacity ${step >= 2 ? 'opacity-100' : 'opacity-40'}`}>
-                            <span className={`font-bold text-[10px] uppercase tracking-widest ${step >= 2 ? 'text-primary' : 'text-slate-500'}`}>Pago</span>
-                            <div className={`h-1.5 w-1.5 rounded-full mt-2 transition-colors ${step >= 2 ? 'bg-primary shadow-[0_0_8px_rgba(66,66,240,0.8)]' : 'bg-slate-700'}`}></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto pb-32">
-                    {/* STEP 1: Info & Documents */}
-                    {step === 1 && (
-                        <div className="animate-in fade-in slide-in-from-right-8 duration-500">
-                            {/* Hero Section */}
-                            <div className="px-6 py-6">
-                                <div className="relative bg-primary rounded-[2rem] overflow-hidden min-h-[220px] shadow-2xl shadow-primary/20 flex flex-col justify-end p-8 border border-white/10 group">
-                                    <div className="absolute top-6 right-6 text-white/10 group-hover:scale-110 transition-transform duration-700">
-                                        <BookOpen size={100} strokeWidth={1} />
+            <div className="flex-1 px-6 pb-32">
+                    <AnimatePresence mode="wait">
+                        {step === 1 && (
+                            <motion.div 
+                                key="step1"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                className="space-y-6"
+                            >
+                                {/* Course Hero Card */}
+                                <div className="relative group">
+                                    <div className="absolute inset-0 bg-[hsl(var(--primary))] opacity-10 blur-2xl rounded-[2.5rem] group-hover:opacity-20 transition-opacity"></div>
+                                    <div className="relative p-8 rounded-[2.5rem] bg-slate-900 border border-white/10 overflow-hidden min-h-[220px] flex flex-col justify-end">
+                                        <div className="absolute top-0 right-0 p-8 text-white/5 opacity-20 transform translate-x-4 -translate-y-4 group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
+                                            <BookOpen size={160} strokeWidth={1} />
+                                        </div>
+                                        <div className="relative z-10">
+                                            <span className="inline-block px-3 py-1 rounded-full bg-white/10 border border-white/10 text-[9px] font-black uppercase tracking-[0.2em] text-white mb-4">
+                                                {course.modality === 'formal' ? 'Ruta Formal' : 'Ruta No Formal'}
+                                            </span>
+                                            <h1 className="text-3xl font-black text-white leading-none tracking-tighter mb-2">{course.title}</h1>
+                                            <p className="text-white/60 text-xs font-bold uppercase tracking-widest">{course.code}</p>
+                                        </div>
                                     </div>
-                                    <div className="z-10 relative">
-                                        <span className="bg-white/20 backdrop-blur-md text-white border border-white/10 text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 rounded-lg mb-3 inline-block shadow-sm">
-                                            {course.modality === 'formal' ? 'Ruta Formal' : 'Ruta No Formal'}
-                                        </span>
-                                        <h1 className="text-white text-3xl font-black leading-tight tracking-tight drop-shadow-md">{course.title}</h1>
-                                        <p className="text-primary-100 mt-2 text-sm font-medium">{course.code}</p>
-                                    </div>
-                                    <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/80 to-transparent mix-blend-multiply"></div>
                                 </div>
-                            </div>
 
-                            {/* Curriculum Glass Card */}
-                            <div className="px-6 mb-8">
-                                <div className="bg-slate-900/50 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/10">
-                                    <div className="flex items-center gap-3 mb-6">
-                                        <div className="p-2.5 bg-primary/20 rounded-xl text-primary border border-primary/20">
+                                {/* Quick Specs */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="p-5 rounded-3xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                                        <p className="text-[10px] font-black text-[hsl(var(--text-secondary))] uppercase tracking-widest mb-1">Carga Horaria</p>
+                                        <p className="text-lg font-black">{course.duration_hours}h <span className="text-[10px] text-[hsl(var(--text-secondary))]">Estimadas</span></p>
+                                    </div>
+                                    <div className="p-5 rounded-3xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                                        <p className="text-[10px] font-black text-[hsl(var(--text-secondary))] uppercase tracking-widest mb-1">Modalidad</p>
+                                        <p className="text-lg font-black">{course.is_self_paced ? 'Sincrónico' : 'Híbrido'}</p>
+                                    </div>
+                                </div>
+
+                                {/* Enrollment Info */}
+                                <div className="surface-card p-6 border-none bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="size-10 rounded-xl bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.2)] flex items-center justify-center text-[hsl(var(--primary))]">
                                             <BookOpen size={20} />
                                         </div>
-                                        <h3 className="font-bold text-white text-lg tracking-tight">Resumen del Curso</h3>
+                                        <h3 className="font-black text-sm uppercase tracking-widest">Contenido Curricular</h3>
                                     </div>
-                                    <div className="space-y-4">
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-slate-400 font-medium">Duración</span>
-                                            <span className="font-bold text-slate-200">{course.duration_hours} Horas</span>
-                                        </div>
-                                        <div className="flex justify-between items-center text-sm border-t border-white/5 pt-4">
-                                            <span className="text-slate-400 font-medium">Modalidad</span>
-                                            <span className="font-bold text-slate-200">{course.is_self_paced ? 'Autoguiado' : 'Con cohorte'}</span>
-                                        </div>
-                                        {course.description && (
-                                            <p className="text-xs text-slate-400 leading-relaxed mt-4 pt-4 border-t border-white/5 text-justify">
-                                                {course.description}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Document Attachment Section (Mock UI to match Stitch) */}
-                            {course.modality === 'formal' && (
-                                <div className="px-6 mb-8">
-                                    <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest mb-4 ml-1">Adjuntar Documentos</h3>
-                                    <div className="grid grid-cols-1 gap-3">
-                                        <button className="flex items-center justify-between p-5 bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-white/5 shadow-sm hover:border-primary/30 transition-colors group">
-                                            <div className="flex items-center gap-4">
-                                                <div className="p-3 bg-white/5 rounded-xl text-slate-300 group-hover:text-primary transition-colors">
-                                                    <CreditCard size={20} />
-                                                </div>
-                                                <div className="text-left">
-                                                    <p className="text-sm font-bold text-slate-200">Identificación Oficial</p>
-                                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">DNI, Cédula o Pasaporte</p>
-                                                </div>
-                                            </div>
-                                            <Upload size={20} className="text-slate-500 group-hover:text-primary transition-colors" />
-                                        </button>
-                                        <button className="flex items-center justify-between p-5 bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-white/5 shadow-sm hover:border-primary/30 transition-colors group">
-                                            <div className="flex items-center gap-4">
-                                                <div className="p-3 bg-white/5 rounded-xl text-slate-300 group-hover:text-primary transition-colors">
-                                                    <BookOpen size={20} />
-                                                </div>
-                                                <div className="text-left">
-                                                    <p className="text-sm font-bold text-slate-200">Estudios Previos</p>
-                                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Título de secundaria o equivalente</p>
-                                                </div>
-                                            </div>
-                                            <Upload size={20} className="text-slate-500 group-hover:text-primary transition-colors" />
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* STEP 2: Payment */}
-                    {step === 2 && (
-                        <div className="animate-in fade-in slide-in-from-right-8 duration-500 pb-8">
-                            {/* Summary Card */}
-                            <div className="p-6">
-                                <div className="flex flex-col rounded-[2.5rem] shadow-2xl bg-slate-900/80 backdrop-blur-xl overflow-hidden border border-white/10 group">
-                                    <div className="w-full h-32 bg-primary/20 relative overflow-hidden flex items-center justify-center">
-                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent z-10"></div>
-                                        <BookOpen className="w-16 h-16 text-primary opacity-50 absolute right-4 -top-4 -rotate-12 transform group-hover:rotate-0 transition-transform duration-700" strokeWidth={1} />
-                                    </div>
-                                    <div className="flex w-full flex-col p-8 -mt-16 z-20">
-                                        <p className="text-primary font-black text-[10px] uppercase tracking-widest drop-shadow-md bg-slate-900 px-3 py-1 rounded-full w-fit mb-4 border border-primary/20">Resumen Académico</p>
-                                        <p className="text-white text-2xl font-black leading-tight tracking-tight">{course.title}</p>
-                                        <div className="flex items-center justify-between mt-6 pt-6 border-t border-white/10">
-                                            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Total de Inscripción</p>
-                                            <p className="text-primary text-2xl font-black drop-shadow-md">{course.modality === 'formal' ? '$250.00' : 'Gratis'} <span className="text-sm">USD</span></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {course.modality === 'formal' ? (
-                                <>
-                                    {/* Payment Methods */}
-                                    <div className="px-6 py-4">
-                                        <h3 className="text-white text-base font-bold leading-tight tracking-tight mb-4">Métodos de Pago</h3>
-                                        <div className="bg-slate-900/50 backdrop-blur-xl rounded-3xl p-3 flex flex-col gap-3 border border-white/5">
-                                            <label className="flex items-center gap-4 rounded-2xl p-4 flex-row-reverse cursor-pointer transition-all hover:bg-slate-800/50 border border-transparent has-[:checked]:border-primary/50 has-[:checked]:bg-primary/10">
-                                                <input defaultChecked name="payment-method" type="radio" value="card" onChange={(e) => setPaymentMethod(e.target.value)} className="h-5 w-5 border-2 border-slate-600 bg-transparent text-primary focus:ring-primary focus:ring-offset-0 checked:border-primary appearance-none rounded-full checked:bg-primary checked:ring-2 checked:ring-primary/20" />
-                                                <div className="flex grow items-center gap-4">
-                                                    <div className="size-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary shadow-inner">
-                                                        <CreditCard size={24} />
+                                    <p className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed text-justify mb-4">
+                                        {course.description || "Este curso ha sido diseñado para proporcionar una base sólida en principios ministeriales y liderazgo efectivo."}
+                                    </p>
+                                    {course.modality === 'formal' && (
+                                        <div className="pt-4 border-t border-[hsl(var(--border))]">
+                                            <p className="text-[10px] font-black text-[hsl(var(--primary))] uppercase tracking-widest mb-4">Documentación Necesaria</p>
+                                            <div className="space-y-3">
+                                                <button className="w-full group flex items-center justify-between p-4 rounded-2xl bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.5)] transition-all">
+                                                    <div className="flex items-center gap-3">
+                                                        <CreditCard size={18} className="text-[hsl(var(--text-secondary))]" />
+                                                        <span className="text-[11px] font-bold">Identificación Oficial</span>
                                                     </div>
-                                                    <div className="flex flex-col">
-                                                        <p className="text-white text-sm font-bold">Tarjeta de Crédito / Débito</p>
-                                                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Visa, Mastercard, AMEX</p>
+                                                    <Upload size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]" />
+                                                </button>
+                                                <button className="w-full group flex items-center justify-between p-4 rounded-2xl bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.5)] transition-all">
+                                                    <div className="flex items-center gap-3">
+                                                        <BookOpen size={18} className="text-[hsl(var(--text-secondary))]" />
+                                                        <span className="text-[11px] font-bold">Registro de Calificaciones</span>
                                                     </div>
-                                                </div>
-                                            </label>
-                                            <label className="flex items-center gap-4 rounded-2xl p-4 flex-row-reverse cursor-pointer transition-all hover:bg-slate-800/50 border border-transparent has-[:checked]:border-primary/50 has-[:checked]:bg-primary/10">
-                                                <input name="payment-method" type="radio" value="paypal" onChange={(e) => setPaymentMethod(e.target.value)} className="h-5 w-5 border-2 border-slate-600 bg-transparent text-primary focus:ring-primary focus:ring-offset-0 checked:border-primary appearance-none rounded-full checked:bg-primary checked:ring-2 checked:ring-primary/20" />
-                                                <div className="flex grow items-center gap-4">
-                                                    <div className="size-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 shadow-inner">
-                                                        <Wallet size={24} />
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <p className="text-white text-sm font-bold">PayPal</p>
-                                                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Procesamiento instantáneo</p>
-                                                    </div>
-                                                </div>
-                                            </label>
-                                            <label className="flex items-center gap-4 rounded-2xl p-4 flex-row-reverse cursor-pointer transition-all hover:bg-slate-800/50 border border-transparent has-[:checked]:border-primary/50 has-[:checked]:bg-primary/10">
-                                                <input name="payment-method" type="radio" value="bank" onChange={(e) => setPaymentMethod(e.target.value)} className="h-5 w-5 border-2 border-slate-600 bg-transparent text-primary focus:ring-primary focus:ring-offset-0 checked:border-primary appearance-none rounded-full checked:bg-primary checked:ring-2 checked:ring-primary/20" />
-                                                <div className="flex grow items-center gap-4">
-                                                    <div className="size-12 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-inner">
-                                                        <Landmark size={24} />
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <p className="text-white text-sm font-bold">Transferencia Bancaria</p>
-                                                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Banco Nacional, BAC</p>
-                                                    </div>
-                                                </div>
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    {/* Card Details (Mock) */}
-                                    {paymentMethod === 'card' && (
-                                        <div className="px-6 py-4 flex flex-col gap-5 animate-in fade-in slide-in-from-top-4">
-                                            <h3 className="text-white text-base font-bold leading-tight tracking-tight">Detalles de la Tarjeta</h3>
-                                            <div className="flex flex-col gap-4">
-                                                <div className="flex flex-col gap-2">
-                                                    <label className="text-[10px] font-black tracking-widest uppercase text-slate-400 ml-1">Nombre en la Tarjeta</label>
-                                                    <input type="text" placeholder="Ej. Juan Pérez" className="w-full px-5 py-4 bg-slate-900/50 backdrop-blur-md rounded-2xl border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-slate-600 text-white font-medium" />
-                                                </div>
-                                                <div className="flex flex-col gap-2">
-                                                    <label className="text-[10px] font-black tracking-widest uppercase text-slate-400 ml-1">Número de Tarjeta</label>
-                                                    <div className="relative">
-                                                        <input type="text" placeholder="0000 0000 0000 0000" className="w-full px-5 py-4 bg-slate-900/50 backdrop-blur-md rounded-2xl border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-slate-600 text-white font-medium tracking-widest" />
-                                                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500">
-                                                            <Lock size={20} />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="flex flex-col gap-2">
-                                                        <label className="text-[10px] font-black tracking-widest uppercase text-slate-400 ml-1">Vencimiento</label>
-                                                        <input type="text" placeholder="MM/YY" className="w-full px-5 py-4 bg-slate-900/50 backdrop-blur-md rounded-2xl border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-slate-600 text-white font-medium tracking-widest" />
-                                                    </div>
-                                                    <div className="flex flex-col gap-2">
-                                                        <label className="text-[10px] font-black tracking-widest uppercase text-slate-400 ml-1">CVV</label>
-                                                        <input type="password" placeholder="***" className="w-full px-5 py-4 bg-slate-900/50 backdrop-blur-md rounded-2xl border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-slate-600 text-white font-medium tracking-widest" />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Security Badge */}
-                                            <div className="flex items-center justify-center gap-2 py-4 px-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 mt-2">
-                                                <CheckCircle2 className="text-emerald-500" size={16} />
-                                                <p className="text-[10px] text-emerald-400/80 uppercase tracking-widest font-black">Pago Seguro Encriptado SSL 256-bit</p>
+                                                    <Upload size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]" />
+                                                </button>
                                             </div>
                                         </div>
                                     )}
-                                </>
-                            ) : (
-                                <div className="px-6 py-12 text-center text-slate-400 animate-in fade-in">
-                                    <div className="w-20 h-20 bg-emerald-500/10 text-emerald-500 rounded-full mx-auto flex items-center justify-center mb-6">
-                                        <CheckCircle2 size={40} />
-                                    </div>
-                                    <p className="text-lg font-bold text-white mb-2 tracking-tight">Registro Gratuito</p>
-                                    <p className="text-sm">Al continuar, quedarás inscrito automáticamente en este curso de liderazgo.</p>
                                 </div>
-                            )}
-                        </div>
-                    )}
+                            </motion.div>
+                        )}
 
-                    {/* STEP 3: Success */}
-                    {step === 3 && (
-                        <div className="animate-in zoom-in-95 duration-500 flex flex-col items-center justify-center h-full pt-12 text-center px-6">
-                            <div className="relative">
-                                <div className="absolute inset-0 bg-emerald-500/20 blur-2xl rounded-full"></div>
-                                <div className="w-32 h-32 bg-emerald-500 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-emerald-500/40 border border-emerald-400 rotate-6 transform hover:rotate-0 transition-transform relative z-10">
-                                    <CheckCircle2 size={64} className="text-white" strokeWidth={2.5} />
-                                </div>
-                            </div>
-                            <h2 className="text-4xl font-black text-white mb-4 tracking-tight leading-tight">¡Inscripción Exitosa!</h2>
-                            <p className="text-slate-400 mb-10 max-w-sm text-lg leading-relaxed">
-                                Ya eres parte de <span className="text-white font-bold">{course.title}</span>. Prepárate para iniciar este nuevo ciclo de aprendizaje.
-                            </p>
-                            <button
-                                onClick={() => router.push('/academy')}
-                                className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-5 rounded-2xl shadow-xl transition-all border border-white/10 active:scale-95 text-sm uppercase tracking-widest flex items-center justify-center gap-3"
+                        {step === 2 && (
+                            <motion.div 
+                                key="step2"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                className="space-y-6"
                             >
-                                Ir a Mis Cursos <BookOpen size={18} />
-                            </button>
-                        </div>
-                    )}
+                                <div className="surface-card p-8 bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]">
+                                    <div className="flex flex-col items-center text-center mb-8">
+                                        <div className="size-16 rounded-[1.5rem] bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.2)] flex items-center justify-center text-[hsl(var(--primary))] mb-4">
+                                            <Wallet size={32} />
+                                        </div>
+                                        <h3 className="text-xl font-black tracking-tighter mb-1">Resumen de Cargo</h3>
+                                        <p className="text-xs text-[hsl(var(--text-secondary))] font-medium">Inscripción al ciclo académico actual</p>
+                                    </div>
+
+                                    <div className="space-y-4 pt-4">
+                                        <div className="flex justify-between items-center text-xs">
+                                            <span className="font-bold text-[hsl(var(--text-secondary))] uppercase tracking-widest">Matrícula Base</span>
+                                            <span className="font-black">$200.00 USD</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-xs pb-4 border-b border-[hsl(var(--border))]">
+                                            <span className="font-bold text-[hsl(var(--text-secondary))] uppercase tracking-widest">Derechos de Admisión</span>
+                                            <span className="font-black">$50.00 USD</span>
+                                        </div>
+                                        <div className="flex justify-between items-center bg-[hsl(var(--surface-3))] p-4 rounded-2xl">
+                                            <span className="text-[11px] font-black uppercase tracking-widest">Inversión Total</span>
+                                            <span className="text-2xl font-black text-[hsl(var(--primary))] tracking-tighter">$250.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <p className="text-[10px] font-black text-[hsl(var(--text-secondary))] uppercase tracking-[0.25em] ml-1 mb-2">Método de Financiamiento</p>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {['card', 'paypal', 'bank'].map((id) => (
+                                            <label key={id} className={`flex items-center gap-4 p-5 rounded-2xl border transition-all cursor-pointer ${paymentMethod === id ? 'bg-[hsl(var(--primary)/0.1)] border-[hsl(var(--primary)/0.5)]' : 'bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))]'}`}>
+                                                <input type="radio" name="pay-opt" value={id} className="hidden" onChange={(e) => setPaymentMethod(e.target.value)} checked={paymentMethod === id} />
+                                                <div className={`size-12 rounded-xl flex items-center justify-center border transition-all ${paymentMethod === id ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))] text-white shadow-lg shadow-primary/20' : 'bg-[hsl(var(--surface-2))] border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]'}`}>
+                                                    {id === 'card' && <CreditCard size={24} />}
+                                                    {id === 'paypal' && <Wallet size={24} />}
+                                                    {id === 'bank' && <Landmark size={24} />}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-[13px] font-black uppercase tracking-wider">{id === 'card' ? 'Tarjeta de Crédito' : id === 'paypal' ? 'PayPal Checkout' : 'Depósito Directo'}</p>
+                                                    <p className="text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-widest">{id === 'card' ? 'Mastercard / Visa' : 'Transferencia Segura'}</p>
+                                                </div>
+                                                {paymentMethod === id && <CheckCircle2 size={20} className="text-[hsl(var(--primary))]" />}
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {step === 3 && (
+                            <motion.div 
+                                key="step3"
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="flex flex-col items-center justify-center pt-12 text-center"
+                            >
+                                <div className="relative mb-8">
+                                    <div className="absolute inset-0 bg-emerald-500/20 blur-3xl animate-pulse"></div>
+                                    <div className="relative size-32 rounded-[2.5rem] bg-emerald-500 border border-emerald-400 flex items-center justify-center text-white shadow-2xl shadow-emerald-500/30">
+                                        <CheckCircle2 size={64} strokeWidth={2.5} />
+                                    </div>
+                                </div>
+                                <h2 className="text-4xl font-black tracking-tighter mb-4 leading-none">¡Bienvenido!</h2>
+                                <p className="text-sm text-[hsl(var(--text-secondary))] font-medium leading-relaxed max-w-[280px] mb-10">
+                                    Tu inscripción a <span className="text-[hsl(var(--text-primary))] font-black">{course.title}</span> ha sido procesada con éxito.
+                                </p>
+                                <button
+                                    onClick={() => router.push('/academy')}
+                                    className="w-full py-5 rounded-2xl bg-[hsl(var(--text-primary))] text-[hsl(var(--bg-primary))] font-black uppercase tracking-widest text-xs hover:opacity-90 active:scale-95 transition-all shadow-xl"
+                                >
+                                    Ir a mi Academia
+                                </button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
-                {/* Floating Bottom Button */}
-                {step < 3 && (
-                    <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent z-40">
-                        <div className="max-w-lg mx-auto">
-                            <button
-                                onClick={() => {
-                                    if (step === 1) setStep(2);
-                                    else if (step === 2) handleEnrollment();
-                                }}
-                                disabled={enrolling}
-                                className="w-full bg-primary text-white py-5 rounded-2xl font-black uppercase tracking-widest text-sm shadow-[0_0_40px_rgba(66,66,240,0.4)] flex items-center justify-center gap-3 active:scale-[0.98] transition-all hover:bg-primary/90 disabled:opacity-70 disabled:active:scale-100"
-                            >
-                                {enrolling ? (
-                                    <><Loader2 className="animate-spin w-5 h-5" /> Procesando pago...</>
-                                ) : (
-                                    <>
-                                        {step === 1 ? 'Continuar al Pago' : 'Finalizar Inscripción'}
-                                        <ArrowRight size={18} />
-                                    </>
-                                )}
-                            </button>
-                            {step === 2 && course.modality === 'formal' && (
-                                <p className="text-center text-[9px] font-black uppercase tracking-wider text-slate-500 mt-5 px-6 pb-2">
-                                    Al hacer clic en &quot;Finalizar&quot;, aceptas nuestros <span className="text-primary cursor-pointer hover:underline">Términos</span> y <span className="text-primary cursor-pointer hover:underline">Políticas</span>.
-                                </p>
-
+            {step < 3 && (
+                <div className="sticky bottom-0 left-0 w-full p-6 bg-gradient-to-t from-[hsl(var(--bg-primary))] via-[hsl(var(--bg-primary)/0.9)] to-transparent">
+                         <button
+                            onClick={() => {
+                                if (step === 1) setStep(2);
+                                else if (step === 2) handleEnrollment();
+                            }}
+                            disabled={enrolling}
+                            className="w-full h-16 rounded-2xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-primary/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all hover:brightness-110 disabled:opacity-50"
+                        >
+                            {enrolling ? (
+                                <><Loader2 className="animate-spin w-5 h-5" /> Encriptando...</>
+                            ) : (
+                                <>
+                                    {step === 1 ? 'Iniciar Inscripción' : 'Confirmar Membresía'}
+                                    <ArrowRight size={18} />
+                                </>
                             )}
-                        </div>
+                        </button>
+                        {step === 2 && (
+                             <div className="flex items-center justify-center gap-2 mt-6">
+                                <Lock size={12} className="text-emerald-500" />
+                                <p className="text-[9px] font-black uppercase tracking-[0.1em] text-[hsl(var(--text-secondary))]">Transacción Encriptada 256-bit SSL</p>
+                             </div>
+                        )}
                     </div>
                 )}
-            </div>
-        </div>
+        </AcademyDetailShell>
     );
 }

@@ -1,8 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, Users, Shield, CalendarCheck, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
-import { apiUrl } from '@/lib/api';
+import { Calendar, Users, Shield, CalendarCheck, CheckCircle2, AlertCircle, Loader2, Link2 } from 'lucide-react';
+import { apiFetch } from '@/lib/http';
+import { useAuth } from '@/context/AuthContext';
+import CrmShell from '@/components/crm/CrmShell';
+import AdminHero from '@/components/admin/AdminHero';
 
 interface Volunteer {
     id: number;
@@ -19,33 +22,39 @@ export default function VolunteersPage() {
     const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const { token } = useAuth();
+
     useEffect(() => {
-        fetch(apiUrl('/volunteers/'))
-            .then(res => res.json())
+        if (!token) {
+            setVolunteers([]);
+            setLoading(false);
+            return;
+        }
+        setLoading(true);
+        apiFetch<Volunteer[]>('/crm/volunteers', { token, cache: 'no-store' })
             .then(data => {
-                setVolunteers(data);
-                setLoading(false);
+                setVolunteers(Array.isArray(data) ? data : []);
             })
             .catch(err => {
                 console.error(err);
-                setLoading(false);
-            });
-    }, []);
+            })
+            .finally(() => setLoading(false));
+    }, [token]);
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 pb-20">
-            <div className="flex justify-between items-end">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-                        <Shield className="text-indigo-600" /> Servidores y Voluntariado
-                    </h1>
-                    <p className="text-slate-500 mt-1">Organiza y asigna el equipo de servicio para los eventos locales.</p>
-                </div>
-                <button className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-200 transition-all flex items-center gap-2">
-                    <CalendarCheck size={16} /> Programar Rol
-                </button>
-            </div>
-
+        <CrmShell
+            breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'CRM Pastoral', icon: Users }, { label: 'Voluntariado', icon: Shield }]}
+        >
+        <AdminHero
+            eyebrow="Voluntariado"
+            title="Servidores y roles dinámicos"
+            description="Coordina ujieres, alabanza y seguridad con agendas ClickUp. Optimus Brain sugiere refuerzos para eventos críticos."
+            tags={['Ujieres', 'Alabanza', 'Seguridad']}
+            watchers={['Equipo Voluntariado', 'Optimus Brain']}
+            primaryAction={{ label: 'Programar rol', icon: CalendarCheck, onClick: () => {} }}
+            secondaryAction={{ label: 'Ver instructivo', icon: Link2, onClick: () => {} }}
+        />
+        <div className="space-y-8 pb-12">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 {/* Sidebar Filter */}
                 <div className="lg:col-span-1 space-y-4">
@@ -133,5 +142,6 @@ export default function VolunteersPage() {
                 </div>
             </div>
         </div>
+        </CrmShell>
     );
 }

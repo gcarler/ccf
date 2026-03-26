@@ -12,7 +12,9 @@ import {
     Calendar,
     MessagesSquare,
     UserCircle,
-    FileText
+    FileText,
+    GraduationCap,
+    ShieldCheck
 } from 'lucide-react';
 
 const SIDEBAR_SECTIONS = [
@@ -43,6 +45,13 @@ const SIDEBAR_SECTIONS = [
         title: 'Personal',
         items: [
             { id: 'profile', label: 'Mi Perfil', href: '/academy/profile', icon: UserCircle },
+        ]
+    },
+    {
+        title: 'Equipo Académico',
+        items: [
+            { id: 'teacher', label: 'Panel Docente', href: '/academy/teacher', icon: GraduationCap },
+            { id: 'coordination', label: 'Coordinación', href: '/academy/coordination', icon: ShieldCheck },
         ]
     }
 ];

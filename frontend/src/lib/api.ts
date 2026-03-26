@@ -1,7 +1,11 @@
-export const API_BASE_URL = "http://localhost:8001";
+const DEFAULT_API_URL = "http://localhost:8000";
+
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
+  process.env.API_BASE_URL?.replace(/\/$/, "") ||
+  DEFAULT_API_URL;
 
 export function apiUrl(path: string): string {
-  // Ensure path starts with /
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
   return `${API_BASE_URL}${cleanPath}`;
 }

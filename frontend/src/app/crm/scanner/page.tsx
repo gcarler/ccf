@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { QrCode, ShieldCheck, X, Zap, RefreshCcw, UserCheck, AlertCircle } from 'lucide-react';
-import { apiUrl } from '@/lib/api';
+import { QrCode, ShieldCheck, Zap, RefreshCcw, UserCheck, AlertCircle, Link2, Users } from 'lucide-react';
+import { apiFetch } from '@/lib/http';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
+import CrmShell from '@/components/crm/CrmShell';
+import AdminHero from '@/components/admin/AdminHero';
 
 // Simulating a QR scanner for this environment since camera access might be restricted in some environments
 // or require specific permissions. We provide a premium manual input + auto-scan simulation.
@@ -21,20 +23,11 @@ export default function ScannerPage() {
         setLoading(true);
         setIsScanning(false);
         try {
-            const res = await fetch(apiUrl(`/crm/scanner/validate/${token}`), {
-                method: 'POST'
-            });
-            const data = await res.json();
-
-            if (res.ok) {
-                setScannedData(data);
-                toast.success('¡Asistencia Confirmada!');
-            } else {
-                toast.error(data.detail || 'Error en el escaneo');
-                setIsScanning(true);
-            }
-        } catch (err) {
-            toast.error('Error de conexión');
+            const data = await apiFetch(`/crm/scanner/validate/${token}`, { method: 'POST' });
+            setScannedData(data);
+            toast.success('¡Asistencia Confirmada!');
+        } catch (error: any) {
+            toast.error(error?.detail?.detail || 'Error en el escaneo');
             setIsScanning(true);
         } finally {
             setLoading(false);
@@ -47,8 +40,29 @@ export default function ScannerPage() {
         setManualToken('');
     };
 
+    const heroWatchers = ['Control acceso', 'Optimus Brain'];
+
     return (
-        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        <CrmShell
+            breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'CRM Pastoral', icon: Users }, { label: 'Escáner', icon: QrCode }]}
+            rightActions={
+                scannedData ? (
+                    <button onClick={resetScanner} className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-black transition-all">
+                        Reiniciar
+                    </button>
+                ) : undefined
+            }
+        >
+        <AdminHero
+            eyebrow="Asistencia"
+            title="Escáner de asistencia"
+            description="Valida credenciales digitales en segundos. Optimus Brain marca alertas de duplicados y tokens vencidos."
+            tags={['QR', 'Tokens', 'Seguridad']}
+            watchers={heroWatchers}
+            primaryAction={{ label: 'Ver reporte del día', icon: Link2, onClick: () => {} }}
+            secondaryAction={scannedData ? { label: 'Escanear de nuevo', icon: RefreshCcw, onClick: resetScanner } : undefined}
+        />
+        <div className="flex flex-col items-center justify-center p-6 relative overflow-hidden">
             {/* Background elements */}
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
             <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-primary/20 blur-[120px] rounded-full"></div>
@@ -148,13 +162,7 @@ export default function ScannerPage() {
                 </div>
             </div>
 
-            {/* Close Button */}
-            <button
-                onClick={() => router.back()}
-                className="fixed top-8 right-8 p-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl transition-all"
-            >
-                <X size={24} />
-            </button>
         </div>
+        </CrmShell>
     );
 }

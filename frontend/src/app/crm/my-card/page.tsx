@@ -1,10 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { ShieldCheck, User, QrCode, Sparkles, Church, Share2, Download, ArrowLeft, Loader2 } from 'lucide-react';
-import { apiUrl } from '@/lib/api';
+import { ShieldCheck, User, QrCode, Sparkles, Church, Share2, Download, ArrowLeft, Loader2, Link2, Users } from 'lucide-react';
+import { apiFetch } from '@/lib/http';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import CrmShell from '@/components/crm/CrmShell';
+import AdminHero from '@/components/admin/AdminHero';
 
 interface Member {
     id: number;
@@ -19,24 +22,26 @@ export default function MyCardPage() {
     const [member, setMember] = useState<Member | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const { token } = useAuth();
 
-    useEffect(() => {
-        fetchMyMemberData();
-    }, []);
-
-    const fetchMyMemberData = async () => {
+    const fetchMyMemberData = useCallback(async () => {
+        if (!token) {
+            setLoading(false);
+            return;
+        }
         try {
-            const res = await fetch(apiUrl('/crm/members/me'));
-            if (res.ok) {
-                const data = await res.json();
-                setMember(data);
-            }
+            const data = await apiFetch<Member>('/crm/members/me', { token, cache: 'no-store' });
+            setMember(data);
         } catch (err) {
             console.error(err);
         } finally {
             setLoading(false);
         }
-    };
+    }, [token]);
+
+    useEffect(() => {
+        fetchMyMemberData();
+    }, [fetchMyMemberData]);
 
     if (loading) {
         return (
@@ -115,25 +120,28 @@ export default function MyCardPage() {
     const theme = getRoleTheme(member.church_role);
 
     return (
-        <div className="min-h-screen bg-slate-950 p-6 flex flex-col items-center justify-center space-y-12 pb-20 relative overflow-hidden">
-            {/* Ambient background */}
-            <div className={`absolute -top-40 -right-40 w-[600px] h-[600px] bg-gradient-to-br ${theme.primary} opacity-20 blur-[120px] rounded-full`}></div>
-            <div className={`absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-gradient-to-tr ${theme.primary} opacity-10 blur-[120px] rounded-full`}></div>
-
-            {/* Header */}
-            <div className="relative z-10 w-full max-w-sm flex justify-between items-center px-2">
-                <button onClick={() => router.back()} className="text-slate-400 hover:text-white transition-colors">
-                    <ArrowLeft size={24} />
+        <CrmShell
+            breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'CRM Pastoral', icon: Users }, { label: 'Mi carnet', icon: QrCode }]}
+            rightActions={
+                <button className="flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-2xl text-[11px] font-black text-white hover:bg-black transition-all">
+                    <Share2 size={16} /> Compartir
                 </button>
-                <div className="text-center">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Credencial Digital</p>
-                    <h2 className="text-white font-black text-lg">Centro Cristiano de Fe</h2>
-                </div>
-                <div className="size-6"></div> {/* Spacer */}
-            </div>
+            }
+        >
+        <AdminHero
+            eyebrow="Credencial"
+            title="Credencial digital"
+            description="Comparte tu código personal para validar asistencia y servir. Añádelo a Google Wallet o compártelo en segundos."
+            tags={['QR', 'Wallet', 'Seguridad']}
+            watchers={['Equipo Identidad', 'Optimus Brain']}
+            primaryAction={{ label: 'Descargar PDF', icon: Download, onClick: () => {} }}
+            secondaryAction={{ label: 'Ver políticas', icon: Link2, onClick: () => {} }}
+        />
+        <div className="flex flex-col items-center justify-center space-y-12 pb-20 relative overflow-hidden">
+            <div className={`absolute -top-40 -right-40 w-[600px] h-[600px] bg-gradient-to-br ${theme.primary} opacity-20 blur-[120px] rounded-full pointer-events-none`}></div>
+            <div className={`absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-gradient-to-tr ${theme.primary} opacity-10 blur-[120px] rounded-full pointer-events-none`}></div>
 
-            {/* CARNET CARD */}
-            <div className={`w-full max-w-[340px] aspect-[4/6] bg-gradient-to-br ${theme.primary} ${theme.border} border rounded-[3rem] shadow-2xl ${theme.glow} relative overflow-hidden p-8 flex flex-col animate-in zoom-in-95 duration-700 group`}>
+            <div className={`relative z-10 w-full max-w-[340px] aspect-[4/6] bg-gradient-to-br ${theme.primary} ${theme.border} border rounded-[3rem] shadow-2xl ${theme.glow} overflow-hidden p-8 flex flex-col animate-in zoom-in-95 duration-700 group`}>
 
                 {/* Textures/Overlays */}
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
@@ -201,7 +209,6 @@ export default function MyCardPage() {
                 </div>
             </div>
 
-            {/* Actions */}
             <div className="grid grid-cols-2 gap-4 w-full max-w-sm relative z-10">
                 <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-3xl transition-all active:scale-95 group">
                     <Share2 size={18} className="text-slate-400 group-hover:text-primary transition-colors" />
@@ -216,12 +223,12 @@ export default function MyCardPage() {
                 </button>
             </div>
 
-            {/* Security Notice */}
             <div className="w-full max-w-[340px] text-center px-8 relative z-10">
                 <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest leading-relaxed">
                     Esta credencial es personal e intransferible. El uso indebido será reportado a la administración del ministerio.
                 </p>
             </div>
         </div>
+        </CrmShell>
     );
 }

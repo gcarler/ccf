@@ -10,7 +10,7 @@ class Settings(BaseSettings):
 
     environment: str = Field(default="local")
     database_url: str = Field(
-        default="sqlite:///" + __file__.replace("config.py", "../ccf_final.db")
+        default="postgresql+pg8000://postgres:admin123@localhost:5435/ccf_db"
     )
     secret_key: str = Field(default="change-me")
     access_token_expire_minutes: int = Field(default=60 * 24)
@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     enable_otel: bool = Field(default=False)
     otel_endpoint: str = Field(default="http://localhost:4317")
     feature_flags: Dict[str, bool] = Field(default_factory=dict)
+    password_reset_expire_minutes: int = Field(default=60)
+    email_verification_expire_hours: int = Field(default=48)
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

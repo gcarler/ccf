@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { Settings as SettingsIcon, Save, Key, Globe, Shield, Smartphone } from 'lucide-react';
-import { apiUrl } from '@/lib/api';
+import { Settings as SettingsIcon, Save, Key, Globe, Shield, Smartphone, Link2, Users } from 'lucide-react';
+import { apiFetch } from '@/lib/http';
+import CrmShell from '@/components/crm/CrmShell';
+import AdminHero from '@/components/admin/AdminHero';
 
 
 export default function SettingsPage() {
@@ -23,38 +25,31 @@ export default function SettingsPage() {
         smtpServer: ''
     });
 
-    const fetchSettings = async () => {
+    const fetchSettings = useCallback(async () => {
+        if (!token) return;
         try {
-            const res = await fetch(apiUrl('/settings'));
-            if (res.ok) {
-                const data = await res.json();
-                setConfig(data);
-            }
+            const data = await apiFetch('/crm/settings', { token, cache: 'no-store' });
+            if (data) setConfig(data);
         } catch (err) {
             console.error("Error fetching settings", err);
         }
-    };
+    }, [token]);
 
-    React.useEffect(() => {
+    useEffect(() => {
         fetchSettings();
-    }, []);
+    }, [fetchSettings]);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
 
         try {
-            const response = await fetch(apiUrl('/settings'), {
+            await apiFetch('/crm/settings', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(config)
+                token,
+                body: config
             });
-
-            if (response.ok) {
-                addToast("Configuraciones guardadas correctamente", "success");
-            } else {
-                addToast("Error al guardar configuraciones", "error");
-            }
+            addToast("Configuraciones guardadas correctamente", "success");
         } catch (err) {
             addToast("Error de conexión", "error");
         } finally {
@@ -64,30 +59,32 @@ export default function SettingsPage() {
 
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-                        <SettingsIcon className="text-slate-400" size={32} />
-                        Configuración del CRM
-                    </h1>
-                    <p className="text-slate-500 mt-1">Administra los parámetros globales y APIs de conexión.</p>
-                </div>
+        <CrmShell
+            breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'CRM Pastoral', icon: Users }, { label: 'Configuración', icon: SettingsIcon }]}
+            rightActions={
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center gap-2 bg-slate-900 px-6 py-3 rounded-2xl text-[10px] font-black tracking-widest text-white hover:bg-slate-800 transition-all uppercase disabled:opacity-50"
+                    className="flex items-center gap-2 bg-slate-900 px-6 py-2 rounded-2xl text-[11px] font-black tracking-widest text-white hover:bg-slate-800 transition-all uppercase disabled:opacity-50"
                 >
                     {isSaving ? 'Guardando...' : (
                         <>
-                            <Save size={16} />
-                            Guardar Cambios
+                            <Save size={16} /> Guardar
                         </>
                     )}
                 </button>
-            </div>
+            }
+        >
+            <AdminHero
+                eyebrow="Configuración"
+                title="Configuración del CRM"
+                description="Administra parámetros globales, APIs y seguridad de la plataforma."
+                tags={['APIs', 'Seguridad', 'IA']}
+                watchers={['Equipo Sistemas', 'Optimus Brain']}
+                primaryAction={{ label: 'Documentación API', icon: Link2, onClick: () => {} }}
+            />
 
-            <form onSubmit={handleSave} className="space-y-8">
+            <form onSubmit={handleSave} className="space-y-8 max-w-4xl mx-auto">
 
                 {/* General Settings */}
                 <div className="glass-card p-8 border border-slate-100 rounded-3xl shadow-sm">
@@ -208,6 +205,6 @@ export default function SettingsPage() {
                 </div>
 
             </form>
-        </div>
+        </CrmShell>
     );
 }

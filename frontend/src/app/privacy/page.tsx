@@ -1,27 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Navbar from '@/components/Navbar';
 import { ShieldAlert } from 'lucide-react';
-import { apiUrl } from '@/lib/api';
+import { useContentBlock } from '@/hooks/useContent';
 
 export default function PrivacyPage() {
-    const [content, setContent] = useState<any>(null);
-
-    useEffect(() => {
-        const fetchContent = async () => {
-            try {
-                const res = await fetch(apiUrl('/content/privacy_policy'));
-                if (res.ok) {
-                    const data = await res.json();
-                    setContent(JSON.parse(data.content));
-                }
-            } catch (e) {
-                console.error("Error fetching privacy policy", e);
-            }
-        };
-        fetchContent();
-    }, []);
+    const { data: content } = useContentBlock('privacy_policy');
 
     const rawContent = content?.content || "Cargando contenido...";
 

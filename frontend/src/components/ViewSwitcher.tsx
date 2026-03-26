@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import { LayoutGrid, List, Kanban, Table2, GanttChart, CalendarDays } from "lucide-react";
 import clsx from "clsx";
 
-export type ViewType = "grid" | "list" | "kanban" | "table" | "gantt" | "calendar";
+export type ViewType = "grid" | "list" | "kanban" | "table" | "gantt" | "calendar" | "board";
 
 interface ViewOption {
     id: ViewType;
@@ -16,6 +16,7 @@ const ALL_VIEWS: ViewOption[] = [
     { id: "table", label: "Tabla", icon: Table2 },
     { id: "list", label: "Lista", icon: List },
     { id: "grid", label: "Grid", icon: LayoutGrid },
+    { id: "board", label: "Tablero", icon: Kanban },
     { id: "kanban", label: "Kanban", icon: Kanban },
     { id: "gantt", label: "Gantt", icon: GanttChart },
     { id: "calendar", label: "Calendario", icon: CalendarDays },
@@ -32,7 +33,7 @@ interface ViewSwitcherProps {
 export default function ViewSwitcher({
     viewType,
     setViewType,
-    availableViews = ["table", "list", "grid", "kanban", "gantt", "calendar"],
+    availableViews = ["table", "list", "grid", "kanban", "board", "gantt", "calendar"],
     storageKey,
 }: ViewSwitcherProps) {
     // Persist preference

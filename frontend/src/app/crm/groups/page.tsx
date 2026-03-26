@@ -1,8 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Home, MapPin, Users, Heart, Search, Filter, Compass, Loader2 } from 'lucide-react';
-import { apiUrl } from '@/lib/api';
+import { Home, MapPin, Users, Heart, Search, Filter, Compass, Loader2, Link2 } from 'lucide-react';
+import { apiFetch } from '@/lib/http';
+import { useAuth } from '@/context/AuthContext';
+import CrmShell from '@/components/crm/CrmShell';
+import AdminHero from '@/components/admin/AdminHero';
 
 interface GloryHouse {
     id: number;
@@ -17,33 +20,40 @@ interface GloryHouse {
 export default function GroupsPage() {
     const [groups, setGroups] = useState<GloryHouse[]>([]);
     const [loading, setLoading] = useState(true);
+    const { token } = useAuth();
 
     useEffect(() => {
-        fetch(apiUrl('/groups/'))
-            .then(res => res.json())
-            .then(data => {
-                setGroups(data);
-                setLoading(false);
+        if (!token) {
+            setGroups([]);
+            setLoading(false);
+            return;
+        }
+        setLoading(true);
+        apiFetch<GloryHouse[]>('/crm/glory-houses', { token, cache: 'no-store' })
+            .then((data) => {
+                setGroups(Array.isArray(data) ? data : []);
             })
-            .catch(err => {
+            .catch((err) => {
                 console.error(err);
-                setLoading(false);
-            });
-    }, []);
+                setGroups([]);
+            })
+            .finally(() => setLoading(false));
+    }, [token]);
 
     return (
+        <CrmShell
+            breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'CRM Pastoral', icon: Users }, { label: 'Casas de Gloria', icon: Home }]}
+        >
+        <AdminHero
+            eyebrow="Grupos"
+            title="Casas de Gloria"
+            description="Mapea y administra los grupos que sostienen el discipulado en los barrios con IA para detectar zonas sin cobertura."
+            tags={['Mapas', 'Discipulado', 'IA']}
+            watchers={['Equipo Casas', 'Optimus Brain']}
+            primaryAction={{ label: 'Nueva casa', icon: Home, onClick: () => {} }}
+            secondaryAction={{ label: 'Ver mapa', icon: Link2, onClick: () => {} }}
+        />
         <div className="space-y-8 animate-in fade-in duration-500 pb-20">
-            <div className="flex justify-between items-end">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-                        <Home className="text-blue-600" /> Casas de Gloria (Grupos)
-                    </h1>
-                    <p className="text-slate-500 mt-1">Conecta a la congregación en comunidades íntimas de crecimiento y adoración.</p>
-                </div>
-                <button className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-200 transition-all flex items-center gap-2">
-                    <Home size={16} /> Nueva Casa
-                </button>
-            </div>
 
             {/* Metrics & Search Bar */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -136,5 +146,6 @@ export default function GroupsPage() {
                 </div>
             </div>
         </div>
+        </CrmShell>
     );
 }

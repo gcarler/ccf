@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
     FileText, 
     Download, 
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiUrl } from '@/lib/api';
+import { apiFetch } from '@/lib/http';
 import { useToast } from '@/context/ToastContext';
 
 interface Submission {
@@ -38,39 +39,37 @@ export default function SubmissionsPage() {
     const [grade, setGrade] = useState<number>(0);
     const [feedback, setFeedback] = useState<string>('');
 
-    const fetchSubmissions = async () => {
+    const fetchSubmissions = useCallback(async () => {
         try {
-            const response = await fetch(apiUrl('/admin/submissions'), {
-                headers: { Authorization: `Bearer ${token}` }
+            const response = await apiFetch<Submission[]>('/admin/submissions', {
+                token,
+                cache: 'no-store'
             });
-            if (response.ok) {
-                setSubmissions(await response.json());
-            }
+            setSubmissions(Array.isArray(response) ? response : []);
         } catch (error) {
             addToast("Error al cargar entregas", "error");
         } finally {
             setLoading(false);
         }
-    };
+    }, [token, addToast]);
 
     useEffect(() => {
         if (token) fetchSubmissions();
-    }, [token]);
+    }, [token, fetchSubmissions]);
 
     const handleGrade = async (id: number) => {
         try {
-            const response = await fetch(apiUrl(`/admin/submissions/${id}/grade?grade=${grade}&feedback=${encodeURIComponent(feedback)}`), {
+            await apiFetch(`/admin/submissions/${id}/grade`, {
                 method: "PATCH",
-                headers: { Authorization: `Bearer ${token}` }
+                token,
+                query: {
+                    grade,
+                    feedback,
+                }
             });
-
-            if (response.ok) {
-                addToast("Calificación guardada", "success");
-                setGradingId(null);
-                fetchSubmissions();
-            } else {
-                addToast("Error al calificar", "error");
-            }
+            addToast("Calificación guardada", "success");
+            setGradingId(null);
+            fetchSubmissions();
         } catch (error) {
             addToast("Error de conexión", "error");
         }
@@ -173,7 +172,7 @@ export default function SubmissionsPage() {
                                                         <p className="text-4xl font-black leading-none">{sub.grade}</p>
                                                     </div>
                                                     {sub.teacher_feedback && (
-                                                        <p className="text-xs text-slate-500 font-medium italic px-2 bg-white/50 dark:bg-white/5 p-3 rounded-xl border border-slate-200 dark:border-white/5 w-full">"{sub.teacher_feedback}"</p>
+                                                        <p className="text-xs text-slate-500 font-medium italic px-2 bg-white/50 dark:bg-white/5 p-3 rounded-xl border border-slate-200 dark:border-white/5 w-full">&ldquo;{sub.teacher_feedback}&rdquo;</p>
                                                     )}
                                                     <button 
                                                         onClick={() => {

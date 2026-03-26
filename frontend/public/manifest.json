@@ -1,0 +1,21 @@
+{
+  "name": "CCF Platform",
+  "short_name": "CCF",
+  "description": "Plataforma de Formación y Gestión CCF",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e1f21",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

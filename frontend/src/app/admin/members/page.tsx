@@ -1,138 +1,204 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { apiUrl } from '@/lib/api';
-import { Search, UserPlus, MoreVertical, Edit2, Loader2, Users } from 'lucide-react';
-import Link from 'next/link';
+import { useToast } from '@/context/ToastContext';
+import { 
+    Search, 
+    UserPlus, 
+    MoreHorizontal, 
+    Edit3, 
+    Loader2, 
+    Users, 
+    Shield, 
+    Lock, 
+    Mail, 
+    ChevronRight,
+    Filter,
+    Layout,
+    Settings,
+    CheckCircle2,
+    XCircle,
+    Fingerprint,
+    Smartphone,
+    Clock
+} from 'lucide-react';
+import Image from 'next/image';
+import { apiFetch } from '@/lib/http';
+import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import { DataTable } from '@/components/ui/DataTable';
+import { ColumnDef } from '@tanstack/react-table';
+import Skeleton from '@/components/ui/Skeleton';
+import StatusPicker, { StatusOption } from '@/components/ui/StatusPicker';
+import InlineEdit from '@/components/ui/InlineEdit';
+import { motion, AnimatePresence } from 'framer-motion';
+import clsx from 'clsx';
 
-interface Member {
-    id: number;
-    username: string;
-    email: string;
-    role: string;
-}
+const ROLE_OPTIONS: StatusOption[] = [
+    { label: 'ADMIN', value: 'admin', color: 'bg-rose-500', text: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-900/20' },
+    { label: 'STAFF', value: 'staff', color: 'bg-blue-500', text: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+    { label: 'PASTOR', value: 'pastor', color: 'bg-purple-500', text: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+    { label: 'MIEMBRO', value: 'estudiante', color: 'bg-slate-400', text: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-100 dark:bg-white/5' },
+];
 
 export default function AdminMembersPage() {
     const { token } = useAuth();
-    const [members, setMembers] = useState<Member[]>([]);
+    const { addToast } = useToast();
+    const [members, setMembers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filterRole, setFilterRole] = useState('all');
+    const [search, setSearch] = useState('');
+    const [selectedMember, setSelectedMember] = useState<any>(null);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-    useEffect(() => {
-        // Fetch all users using a generic endpoint (adjust if you have a specific members endpoint)
-        // For MVP, we might just mock this or use an existing endpoint if one exists.
-        // Assuming we need to add an endpoint or use a mock for now to demonstrate UI.
-        
-        // Mock data for UI demonstration since we don't have a /users/ list endpoint yet
-        setMembers([
-            { id: 1, username: 'Juan Pérez', email: 'juan@example.com', role: 'estudiante' },
-            { id: 2, username: 'María García', email: 'maria@example.com', role: 'coordinador' },
-            { id: 3, username: 'Carlos Rodríguez', email: 'carlos@example.com', role: 'estudiante' },
-            { id: 4, username: 'Ana Martínez', email: 'ana@example.com', role: 'admin' },
-            { id: 5, username: 'Roberto Sánchez', email: 'roberto@example.com', role: 'docente' },
-        ]);
-        setLoading(false);
+    const fetchUsers = useCallback(async () => {
+        if (!token) return;
+        setLoading(true);
+        try {
+            const res = await apiFetch<any[]>('/auth/user-list', { token, cache: 'no-store' });
+            setMembers(Array.isArray(res) ? res : []);
+        } catch (e) { console.error(e); }
+        finally { setLoading(false); }
     }, [token]);
 
-    const filteredMembers = members.filter(member => {
-        const matchesSearch = member.username.toLowerCase().includes(searchTerm.toLowerCase()) || member.email.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesRole = filterRole === 'all' || member.role === filterRole;
-        return matchesSearch && matchesRole;
-    });
+    useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-    const getRoleBadge = (role: string) => {
-        switch(role) {
-            case 'admin': return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-amber-500/10 text-amber-500">Administrador</span>;
-            case 'coordinador': return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-purple-500/10 text-purple-500">Coordinador</span>;
-            case 'docente': return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-500">Docente</span>;
-            default: return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-primary/10 text-primary">Estudiante</span>;
+    const updateRole = useCallback(async (id: number, newRole: string) => {
+        setMembers(prev => prev.map(m => m.id === id ? { ...m, role: newRole } : m));
+        try {
+            await apiFetch(`/auth/users/${id}/role`, { method: 'PATCH', token, body: { role: newRole } });
+            addToast('Rol actualizado correctamente', 'success');
+        } catch (e) { addToast('Error al actualizar rol', 'error'); }
+    }, [token, addToast]);
+
+    const columns = useMemo<ColumnDef<any>[]>(() => [
+        {
+            accessorKey: 'username',
+            header: 'Usuario / Cuenta',
+            size: 300,
+            cell: ({ row }) => (
+                <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-white/10 shrink-0">
+                        <Image src={`https://ui-avatars.com/api/?name=${row.original.username}&background=random&color=fff`} alt="AV" width={32} height={32} unoptimized />
+                    </div>
+                    <div className="truncate flex-1">
+                        <p className="text-[13px] font-black text-slate-800 dark:text-white leading-tight truncate">{row.original.username}</p>
+                        <p className="text-[10px] text-slate-400 font-medium truncate">{row.original.email}</p>
+                    </div>
+                </div>
+            )
+        },
+        {
+            accessorKey: 'role',
+            header: 'Rol de Sistema',
+            cell: ({ row }) => (
+                <div onClick={(e) => e.stopPropagation()}>
+                    <StatusPicker currentValue={row.original.role} options={ROLE_OPTIONS} onSelect={(val) => updateRole(row.original.id, val)} />
+                </div>
+            )
+        },
+        {
+            accessorKey: 'is_active',
+            header: 'Estado',
+            cell: info => (
+                <div className="flex items-center gap-1.5">
+                    {info.getValue() ? (
+                        <span className="flex items-center gap-1 text-[10px] font-black text-emerald-500 uppercase"><CheckCircle2 size={12} /> Activo</span>
+                    ) : (
+                        <span className="flex items-center gap-1 text-[10px] font-black text-rose-500 uppercase"><XCircle size={12} /> Bloqueado</span>
+                    )}
+                </div>
+            )
+        },
+        {
+            id: 'actions',
+            header: '',
+            size: 50,
+            cell: () => <button className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400"><MoreHorizontal size={16} /></button>
         }
+    ], [updateRole]);
+
+    const filtered = members.filter(m => 
+        m.username.toLowerCase().includes(search.toLowerCase()) || 
+        m.email.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const handleOpenMember = (member: any) => {
+        setSelectedMember(member);
+        setIsDrawerOpen(true);
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 max-w-5xl mx-auto">
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                <div>
-                    <h1 className="flex items-center gap-3 text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-                        <Users className="text-primary" size={32} /> Gestión de Usuarios
-                    </h1>
-                    <p className="text-slate-500 font-medium mt-1">Administra los roles y accesos de los miembros.</p>
-                </div>
-                <button className="flex items-center gap-2 bg-primary text-white px-6 py-3.5 rounded-2xl shadow-lg shadow-primary/40 active:scale-95 transition-all hover:bg-primary/90">
-                    <UserPlus size={18} />
-                    <span className="font-bold text-xs uppercase tracking-widest">Añadir Usuario</span>
-                </button>
-            </header>
+        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in">
+            <WorkspaceToolbar 
+                breadcrumbs={[{ label: 'Gestión Central', icon: Shield }, { label: 'Usuarios y Roles', icon: Users }]}
+                viewType="table" setViewType={() => {}} onSearch={setSearch}
+                rightActions={
+                    <button onClick={() => setIsCreateModalOpen(true)} className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                        <UserPlus size={14} /> Añadir Usuario
+                    </button>
+                }
+            />
 
-            <div className="bg-white dark:bg-slate-900/40 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-xl overflow-hidden">
-                <div className="p-6 border-b border-slate-200 dark:border-white/5 flex flex-col md:flex-row gap-4 justify-between items-center bg-slate-50/50 dark:bg-transparent">
-                    {/* Search Bar */}
-                    <div className="relative w-full md:max-w-md">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                        <input 
-                            type="text" 
-                            placeholder="Buscar por nombre o email..." 
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-primary transition-all font-medium shadow-sm"
-                        />
+            <main className="flex-1 overflow-auto scrollbar-thin">
+                {loading ? (
+                    <div className="p-8 space-y-4">
+                        {[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-14 w-full rounded-2xl" />)}
                     </div>
+                ) : (
+                    <DataTable data={filtered} columns={columns} onRowClick={handleOpenMember} />
+                )}
+            </main>
 
-                    {/* Filters */}
-                    <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 hide-scrollbar">
-                        {['all', 'estudiante', 'docente', 'admin'].map((role) => (
-                            <button 
-                                key={role}
-                                onClick={() => setFilterRole(role)}
-                                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-all ${filterRole === role ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10'}`}
-                            >
-                                {role === 'all' ? 'Todos' : role}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="divide-y divide-slate-100 dark:divide-white/5">
-                    {loading ? (
-                        <div className="p-12 flex justify-center"><Loader2 className="animate-spin text-primary" size={32} /></div>
-                    ) : filteredMembers.length > 0 ? (
-                        filteredMembers.map(member => (
-                            <div key={member.id} className="flex items-center justify-between p-6 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
-                                <div className="flex items-center gap-4">
-                                    <div className="h-14 w-14 rounded-2xl overflow-hidden bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:scale-105 transition-transform">
-                                        <img 
-                                            src={`https://ui-avatars.com/api/?name=${member.username}&background=random&color=fff`} 
-                                            alt={member.username} 
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </div>
-                                    <div>
-                                        <p className="font-black text-slate-900 dark:text-white text-base leading-none mb-2">{member.username}</p>
-                                        <div className="flex items-center gap-3">
-                                            <p className="text-xs text-slate-500 font-medium">{member.email}</p>
-                                            {getRoleBadge(member.role)}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button className="p-2.5 bg-white dark:bg-slate-800 text-slate-400 hover:text-primary rounded-xl border border-slate-200 dark:border-white/10 shadow-sm transition-all active:scale-95">
-                                        <Edit2 size={16} />
-                                    </button>
-                                    <button className="p-2.5 bg-white dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-xl border border-slate-200 dark:border-white/10 shadow-sm transition-all active:scale-95">
-                                        <MoreVertical size={16} />
-                                    </button>
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="p-16 text-center text-slate-500 font-medium italic">
-                            No se encontraron usuarios que coincidan con la búsqueda.
+            <WorkspaceDrawer 
+                isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}
+                title={selectedMember?.username || 'Detalles de Usuario'}
+                subtitle="Configuración Técnica de Cuenta"
+                actions={<><button className="px-4 py-2 text-[11px] font-bold text-rose-500">Bloquear Cuenta</button><button className="px-6 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[11px] font-bold shadow-lg">Guardar Cambios</button></>}
+            >
+                <div className="space-y-10 animate-fade-in">
+                    <section className="flex items-center gap-6">
+                        <div className="size-20 rounded-[2rem] bg-slate-100 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 flex items-center justify-center overflow-hidden shadow-xl">
+                            <Image src={`https://ui-avatars.com/api/?name=${selectedMember?.username}&background=random&color=fff`} alt="AV" width={80} height={80} unoptimized />
                         </div>
-                    )}
+                        <div className="space-y-1">
+                            <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{selectedMember?.username}</h3>
+                            <p className="text-sm text-slate-500 font-medium">{selectedMember?.email}</p>
+                        </div>
+                    </section>
+
+                    <section className="grid grid-cols-2 gap-4">
+                        <AdminStat label="Rol Actual" value={selectedMember?.role} icon={Shield} />
+                        <AdminStat label="Verificación" value={selectedMember?.is_email_verified ? 'Completada' : 'Pendiente'} icon={Mail} />
+                        <AdminStat label="Último Acceso" value="Hace 2 horas" icon={Clock} />
+                        <AdminStat label="Dispositivo" value="Desktop (Win32)" icon={Smartphone} />
+                    </section>
+
+                    <section className="p-6 bg-blue-50 dark:bg-blue-900/10 rounded-[2.5rem] border border-blue-100 dark:border-blue-900/30 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="size-12 rounded-2xl bg-white dark:bg-white/10 flex items-center justify-center text-blue-600 shadow-sm"><Fingerprint size={24} /></div>
+                            <div>
+                                <h4 className="text-[11px] font-black uppercase tracking-widest text-blue-600">Seguridad Biométrica / 2FA</h4>
+                                <p className="text-xs text-slate-500">Forzar autenticación de dos factores.</p>
+                            </div>
+                        </div>
+                        <div className="h-6 w-11 bg-slate-200 dark:bg-white/10 rounded-full relative cursor-pointer"><div className="absolute left-1 top-1 size-4 bg-white rounded-full" /></div>
+                    </section>
                 </div>
+            </WorkspaceDrawer>
+        </div>
+    );
+}
+
+function AdminStat({ label, value, icon: Icon }: any) {
+    return (
+        <div className="p-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-2xl group hover:border-blue-500/20 transition-all">
+            <div className="flex items-center gap-2 mb-2">
+                <Icon size={14} className="text-slate-400 group-hover:text-blue-500" />
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
             </div>
+            <p className="text-[13px] font-black text-slate-800 dark:text-white capitalize">{value}</p>
         </div>
     );
 }

@@ -6,8 +6,11 @@ import { useAuth } from '@/context/AuthContext';
 import { ArrowLeft, Send, Camera, EyeOff, Globe } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 
+import { apiFetch } from '@/lib/http';
+import { motion } from 'framer-motion';
+
 export default function PublishTestimony() {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user, token } = useAuth();
     const router = useRouter();
     const { addToast } = useToast();
 
@@ -22,127 +25,159 @@ export default function PublishTestimony() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!testimonyText.trim()) return;
+        if (!testimonyText.trim() || !user) return;
 
         setIsSubmitting(true);
-        // Simulate API call
-        setTimeout(() => {
-            setIsSubmitting(false);
-            addToast('¡Gracias por compartir tu historia!', 'success');
+        try {
+            await apiFetch('/cms/testimonials', {
+                method: 'POST',
+                token: token || undefined,
+                body: {
+                    author_id: user.id,
+                    content: testimonyText,
+                    emotion: selectedCategory,
+                    is_approved: false // Default to unapproved for moderation
+                }
+            });
 
+            addToast('¡Gracias por compartir tu historia! Será revisada por moderación.', 'success');
             router.push('/community/testimonies');
-        }, 1200);
+        } catch (err: any) {
+            addToast(err?.detail?.message || 'Error al publicar el testimonio', 'error');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 font-display text-slate-100 selection:bg-primary/30 relative overflow-x-hidden flex flex-col">
-            {/* Ambient Backgrounds */}
-            <div className="fixed inset-0 z-0 bg-slate-950 pointer-events-none">
-                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-slate-950 to-slate-950 opacity-60 blur-3xl mix-blend-screen"></div>
-            </div>
+        <div className="p-8 lg:p-12 space-y-12 max-w-3xl mx-auto animate-in fade-in duration-700">
+            {/* Header Section */}
+            <header className="flex items-center gap-6">
+                <button 
+                    onClick={() => router.back()} 
+                    className="size-12 rounded-2xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--primary)/0.3)] transition-all active:scale-90"
+                >
+                    <ArrowLeft size={20} />
+                </button>
+                <div className="space-y-0.5">
+                    <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-black uppercase tracking-[0.3em] text-[9px]">
+                        <div className="size-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]"></div>
+                        Inspiración
+                    </div>
+                    <h1 className="text-3xl font-black text-[hsl(var(--text-primary))] tracking-tighter">Publicar Milagro</h1>
+                </div>
+            </header>
 
-            <div className="relative z-10 max-w-4xl mx-auto flex flex-col h-screen w-full">
-                {/* Header Section */}
-                <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl px-6 py-4 border-b border-white/5 flex items-center justify-between">
-                    <button onClick={() => router.back()} className="text-slate-300 flex size-10 items-center justify-center rounded-full hover:bg-white/10 transition-colors pointer-events-auto cursor-pointer">
-                        <ArrowLeft size={20} />
-                    </button>
-                    <h2 className="text-white text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-10">Publicar Testimonio</h2>
-                </header>
+            <form onSubmit={handleSubmit} className="space-y-10">
+                {/* Hero / Instruction */}
+                <div className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-[2.5rem] p-8 md:p-10 shadow-sm relative overflow-hidden">
+                    <div className="absolute -right-4 -top-4 size-32 bg-[hsl(var(--primary)/0.05)] rounded-full blur-3xl"></div>
+                    <h2 className="text-2xl font-black text-[hsl(var(--text-primary))] tracking-tight mb-2 relative z-10">Cuéntanos tu historia</h2>
+                    <p className="text-[hsl(var(--text-secondary))] text-sm font-medium relative z-10">Tu fe es la evidencia de que Dios sigue obrando milagros hoy.</p>
+                </div>
 
-                <main className="flex-1 px-6 flex flex-col pt-6 pb-24 overflow-y-auto hide-scrollbar z-10">
-                    <form onSubmit={handleSubmit} className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-8 duration-700">
-                        <div className="mb-8">
-                            <h1 className="text-white text-3xl font-black tracking-tight leading-tight">Cuéntanos tu historia</h1>
-                            <p className="text-slate-400 mt-2 text-sm font-medium">Tu fe puede inspirar a otros hoy.</p>
+                {/* Text Area */}
+                <section className="space-y-6">
+                    <h4 className="text-[hsl(var(--primary))] text-[10px] uppercase font-black tracking-[0.2em] flex items-center gap-2">
+                        <div className="size-1.5 rounded-full bg-current"></div>
+                        Tu Testimonio
+                    </h4>
+                    <div className="relative group">
+                        <div className="absolute -inset-1 bg-gradient-to-br from-[hsl(var(--primary))] to-transparent opacity-0 group-focus-within:opacity-10 transition-opacity rounded-[2rem] blur-xl"></div>
+                        <div className="relative bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] group-focus-within:border-[hsl(var(--primary))] rounded-[2.5rem] p-8 shadow-inner transition-all">
+                            <textarea
+                                value={testimonyText}
+                                onChange={(e) => setTestimonyText(e.target.value)}
+                                className="w-full bg-transparent border-none focus:ring-0 text-[hsl(var(--text-primary))] placeholder-[hsl(var(--text-secondary)/0.5)] resize-none h-48 text-base leading-relaxed font-medium italic"
+                                placeholder="Escribe tu testimonio aquí... ¿Qué hizo el Señor en tu vida?"
+                                required
+                            />
                         </div>
+                    </div>
+                </section>
 
-                        {/* Testimony Text Area */}
-                        <section className="mb-8">
-                            <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl p-5 min-h-[220px] flex flex-col shadow-inner focus-within:ring-2 focus-within:ring-primary/50 focus-within:border-primary/50 transition-all">
-                                <textarea
-                                    value={testimonyText}
-                                    onChange={(e) => setTestimonyText(e.target.value)}
-                                    className="w-full bg-transparent border-none focus:ring-0 text-white placeholder-slate-500 resize-none flex-1 text-base leading-relaxed"
-                                    placeholder="Escribe tu testimonio aquí... ¿Qué hizo Dios en tu vida?"
-                                    required
-                                />
+                {/* Category Selector */}
+                <section className="space-y-6">
+                    <h4 className="text-[hsl(var(--primary))] text-[10px] uppercase font-black tracking-[0.2em] flex items-center gap-2">
+                        <div className="size-1.5 rounded-full bg-current"></div>
+                        Área del Milagro
+                    </h4>
+                    <div className="flex flex-wrap gap-3">
+                        {categories.map(category => (
+                            <button
+                                key={category}
+                                type="button"
+                                onClick={() => setSelectedCategory(category)}
+                                className={`h-11 px-6 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all border ${selectedCategory === category
+                                    ? 'bg-[hsl(var(--primary))] text-white shadow-lg shadow-primary/30 border-transparent scale-105'
+                                    : 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.4)]'
+                                    }`}
+                            >
+                                {category}
+                            </button>
+                        ))}
+                    </div>
+                </section>
+
+                {/* Multimedia Upload */}
+                <section className="space-y-6">
+                    <h4 className="text-[hsl(var(--primary))] text-[10px] uppercase font-black tracking-[0.2em] flex items-center gap-2">
+                        <div className="size-1.5 rounded-full bg-current"></div>
+                        Multimedia (Opcional)
+                    </h4>
+                    <div className="border-2 border-dashed border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.5)] rounded-[2.5rem] p-12 flex flex-col items-center justify-center bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] transition-all cursor-pointer group scale-in duration-500">
+                        <div className="size-16 rounded-[1.5rem] bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))] mb-6 group-hover:scale-110 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all shadow-sm">
+                            <Camera size={28} strokeWidth={2.5} />
+                        </div>
+                        <p className="text-[hsl(var(--text-primary))] font-black text-sm uppercase tracking-tight">Añadir Evidencia</p>
+                        <p className="text-[hsl(var(--text-secondary))] text-[10px] mt-2 font-black uppercase tracking-widest opacity-60">Foto o Video (Máx 50MB)</p>
+                    </div>
+                </section>
+
+                {/* Privacy Visibility */}
+                <section className="space-y-6">
+                    <h4 className="text-[hsl(var(--primary))] text-[10px] uppercase font-black tracking-[0.2em] flex items-center gap-2 mb-6">
+                        <div className="size-1.5 rounded-full bg-current"></div>
+                        Visibilidad
+                    </h4>
+                    <div className={`flex items-center justify-between p-6 rounded-3xl transition-all border ${isAnonymous ? 'bg-[hsl(var(--primary)/0.05)] border-[hsl(var(--primary)/0.3)] shadow-lg' : 'bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]'}`}>
+                        <div className="flex items-start gap-4">
+                            <div className={`p-3 rounded-2xl shrink-0 transition-colors ${isAnonymous ? 'bg-[hsl(var(--primary))] text-white shadow-lg' : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]'}`}>
+                                <Globe size={20} strokeWidth={2.5} />
                             </div>
-                        </section>
-
-                        {/* Category Selector */}
-                        <section className="mb-8 flex flex-col gap-4">
-                            <h3 className="text-primary text-[10px] uppercase font-black tracking-widest flex items-center gap-2">
-                                <div className="size-1.5 rounded-full bg-primary"></div>
-                                Categoría
-                            </h3>
-                            <div className="flex flex-wrap gap-3">
-                                {categories.map(category => (
-                                    <button
-                                        key={category}
-                                        type="button"
-                                        onClick={() => setSelectedCategory(category)}
-                                        className={`flex h-11 shrink-0 items-center justify-center rounded-2xl px-6 transition-all text-xs font-bold uppercase tracking-widest whitespace-nowrap border ${selectedCategory === category
-                                            ? 'bg-primary text-white shadow-lg shadow-primary/30 border-primary/50'
-                                            : 'bg-slate-900/50 text-slate-400 hover:text-white border-white/5 hover:border-white/20'
-                                            }`}
-                                    >
-                                        {category}
-                                    </button>
-                                ))}
+                            <div className="flex flex-col pt-1">
+                                <span className={`font-black text-sm uppercase tracking-tight transition-colors ${isAnonymous ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-primary))]'}`}>Publicar como Anónimo</span>
+                                <span className="text-[hsl(var(--text-secondary))] text-[11px] font-medium mt-1">Tu nombre no aparecerá en el muro de milagros.</span>
                             </div>
-                        </section>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                            <input type="checkbox" className="sr-only peer" checked={isAnonymous} onChange={() => setIsAnonymous(!isAnonymous)} />
+                            <div className="w-12 h-6 bg-[hsl(var(--surface-3))] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[hsl(var(--primary))] border border-[hsl(var(--border))]"></div>
+                        </label>
+                    </div>
+                </section>
 
-                        {/* Media Upload Area */}
-                        <section className="mb-8 flex flex-col gap-4">
-                            <h3 className="text-primary text-[10px] uppercase font-black tracking-widest flex items-center gap-2">
-                                <div className="size-1.5 rounded-full bg-primary"></div>
-                                Multimedia (Opcional)
-                            </h3>
-                            <div className="border-2 border-dashed border-white/20 hover:border-primary/50 rounded-[2rem] p-10 flex flex-col items-center justify-center bg-slate-900/30 hover:bg-slate-900/60 transition-colors cursor-pointer group backdrop-blur-xl">
-                                <div className="size-14 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4 shadow-sm group-hover:scale-110 group-hover:bg-primary group-hover:text-white border border-primary/20 transition-all">
-                                    <Camera size={28} />
-                                </div>
-                                <p className="text-white font-bold text-sm">Añadir Foto o Video</p>
-                                <p className="text-slate-500 text-xs mt-1.5 font-medium uppercase tracking-widest">Sube archivos hasta 50MB</p>
-                            </div>
-                        </section>
-
-                        {/* Visibility Toggle */}
-                        <section className="space-y-4 mb-10 flex-1">
-                            <h3 className="text-primary text-[10px] uppercase font-black tracking-widest flex items-center gap-2 mb-4">
-                                <div className="size-1.5 rounded-full bg-primary"></div>
-                                Privacidad
-                            </h3>
-                            <div className={`flex items-center justify-between p-5 rounded-3xl transition-all border ${isAnonymous ? 'bg-primary/10 border-primary/30' : 'bg-slate-900/50 border-white/5'}`}>
-                                <div className="flex items-start gap-4">
-                                    <div className={`p-2.5 rounded-xl shrink-0 transition-colors ${isAnonymous ? 'bg-primary/20 text-primary' : 'bg-white/5 text-slate-400'}`}>
-                                        <EyeOff size={20} />
-                                    </div>
-                                    <div className="flex flex-col pt-0.5">
-                                        <span className={`font-bold text-sm transition-colors ${isAnonymous ? 'text-primary' : 'text-white'}`}>Publicar como Anónimo</span>
-                                        <span className="text-slate-500 text-[11px] font-medium leading-tight mt-1">Tu nombre no será visible en el muro.</span>
-                                    </div>
-                                </div>
-                                <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                                    <input type="checkbox" className="sr-only peer" checked={isAnonymous} onChange={() => setIsAnonymous(!isAnonymous)} />
-                                    <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary border border-white/10"></div>
-                                </label>
-                            </div>
-                        </section>
-
-                        {/* Bottom Actions */}
-                        <button
-                            type="submit"
-                            disabled={isSubmitting || !testimonyText.trim()}
-                            className="w-full bg-primary hover:bg-primary-600 disabled:opacity-50 disabled:bg-primary text-white py-4 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl shadow-primary/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
-                        >
-                            <span>{isSubmitting ? 'Publicando...' : 'Publicar Testimonio'}</span>
-                            {!isSubmitting && <Send size={18} className="translate-x-[2px] translate-y-[-2px]" />}
-                        </button>
-                    </form>
-                </main>
-            </div>
+                {/* Publish Action */}
+                <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={isSubmitting || !testimonyText.trim()}
+                    className="w-full h-16 bg-[hsl(var(--primary))] text-white rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-primary/30 hover:opacity-95 disabled:opacity-50 transition-all flex items-center justify-center gap-3"
+                >
+                    {isSubmitting ? (
+                        <div className="flex items-center gap-2">
+                            <div className="size-4 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
+                            Publicando...
+                        </div>
+                    ) : (
+                        <>
+                            <span>Publicar Testimonio</span>
+                            <Send size={18} strokeWidth={2.5} />
+                        </>
+                    )}
+                </motion.button>
+            </form>
         </div>
     );
 }

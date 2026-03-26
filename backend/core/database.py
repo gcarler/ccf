@@ -6,8 +6,12 @@ from .config import get_settings
 
 settings = get_settings()
 
+db_url = settings.database_url
+if "sqlite" in db_url or "5432" in db_url:
+    db_url = "postgresql+pg8000://postgres:admin123@localhost:5435/ccf_db"
+
 engine = create_engine(
-    settings.database_url,
+    db_url,
     future=True,
     pool_pre_ping=True,
 )

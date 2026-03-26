@@ -3,88 +3,81 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 
+export type ThemeMode = 'day' | 'night';
+
 interface ThemeContextProps {
-    theme: 'light' | 'dark';
+    theme: ThemeMode;
     toggleTheme: () => void;
-    palette: string;
-    setPalette: (palette: string) => void;
+    setTheme: (mode: ThemeMode) => void;
 }
 
-// Preset palettes
-const palettes: Record<string, Record<string, string>> = {
-    light: {
-        '--bg-primary': '#f8fafc',
-        '--bg-secondary': '#ffffff',
-        '--text-primary': '#0f172a',
-        '--text-secondary': '#64748b',
-        '--accent': '#3b82f6',
+const themeTokens: Record<ThemeMode, Record<string, string>> = {
+    day: {
+        '--bg-primary': '0 0% 100%',
+        '--bg-secondary': '210 40% 98%',
+        '--text-primary': '222 47% 11%',
+        '--text-secondary': '215 16% 47%',
+        '--surface-1': '0 0% 100%',
+        '--surface-2': '210 40% 98%',
+        '--surface-3': '210 40% 96.1%',
+        '--border': '214 32% 91%',
+        '--border-glass': '0 0% 100% / 0.2',
+        '--shadow-glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
     },
-    dark: {
-        '--bg-primary': '#0f172a',
-        '--bg-secondary': '#1e293b',
-        '--text-primary': '#f1f5f9',
-        '--text-secondary': '#94a3b8',
-        '--accent': '#60a5fa',
-    },
-    ocean: {
-        '--bg-primary': '#e0f7fa',
-        '--bg-secondary': '#b2ebf2',
-        '--text-primary': '#006064',
-        '--text-secondary': '#004d40',
-        '--accent': '#00bcd4',
-    },
-    sunset: {
-        '--bg-primary': '#fff3e0',
-        '--bg-secondary': '#ffcc80',
-        '--text-primary': '#bf360c',
-        '--text-secondary': '#e64a19',
-        '--accent': '#ff9800',
-    },
+    night: {
+        '--bg-primary': '222 47% 4%',
+        '--bg-secondary': '222 47% 6%',
+        '--text-primary': '210 40% 98%',
+        '--text-secondary': '215 20.2% 65.1%',
+        '--surface-1': '222 47% 4%',
+        '--surface-2': '222 47% 10%',
+        '--surface-3': '222 47% 15%',
+        '--border': '217 33% 17%',
+        '--border-glass': '255 255% 255% / 0.05',
+        '--shadow-glass': '0 8px 32px 0 rgba(0, 0, 0, 0.4)',
+    }
 };
 
 const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-    const [theme, setTheme] = useState<'light' | 'dark'>('light');
-    const [palette, setPaletteState] = useState<string>('light');
+    const [theme, setTheme] = useState<ThemeMode>('day');
 
-    // Load saved theme and palette
+    // Load saved theme preference and fall back to OS hint
     useEffect(() => {
-        const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-        const savedPalette = localStorage.getItem('palette');
-        if (savedTheme) setTheme(savedTheme);
-        if (savedPalette && palettes[savedPalette]) setPaletteState(savedPalette);
+        const savedTheme = localStorage.getItem('theme-mode') as ThemeMode | null;
+        if (savedTheme && themeTokens[savedTheme]) {
+            setTheme(savedTheme);
+        } else if (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            setTheme('night');
+        }
     }, []);
 
     // Apply theme attribute
     useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
+        document.documentElement.setAttribute('data-theme', theme === 'night' ? 'night' : 'day');
+        if (theme === 'night') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        localStorage.setItem('theme-mode', theme);
     }, [theme]);
 
     // Apply palette CSS variables
     useEffect(() => {
-        const vars = palettes[palette] || palettes['light'];
+        const vars = themeTokens[theme];
         Object.entries(vars).forEach(([key, value]) => {
             document.documentElement.style.setProperty(key, value);
         });
-        localStorage.setItem('palette', palette);
-    }, [palette]);
+    }, [theme]);
 
     const toggleTheme = () => {
-        setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
-    };
-
-    const setPalette = (name: string) => {
-        if (palettes[name]) {
-            setPaletteState(name);
-        } else {
-            console.warn(`Palette ${name} not found`);
-        }
+        setTheme(prev => (prev === 'day' ? 'night' : 'day'));
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme, palette, setPalette }}>
+        <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
             {children}
         </ThemeContext.Provider>
     );

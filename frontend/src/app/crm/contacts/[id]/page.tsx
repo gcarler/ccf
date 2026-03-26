@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { apiUrl } from '@/lib/api';
+import { apiFetch } from '@/lib/http';
 import {
-    ArrowLeft,
-    MoreVertical,
     Phone,
     MessageSquare,
     Heart,
@@ -16,8 +14,13 @@ import {
     Plus,
     Sparkles,
     CheckCircle2,
-    Check
+    Check,
+    MoreVertical,
+    Link2,
+    Users
 } from 'lucide-react';
+import CrmShell from '@/components/crm/CrmShell';
+import AdminHero from '@/components/admin/AdminHero';
 
 interface CallLog {
     id: number;
@@ -28,7 +31,7 @@ interface CallLog {
 }
 
 export default function LeadDetail({ params }: { params: { id: string } }) {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, token } = useAuth();
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('history');
     const [lead, setLead] = useState<any>(null);
@@ -36,37 +39,30 @@ export default function LeadDetail({ params }: { params: { id: string } }) {
     const [counselingSessions, setCounselingSessions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (params.id) {
-            fetchLeadData();
-        }
-    }, [params.id]);
-
-    const fetchLeadData = async () => {
+    const fetchLeadData = useCallback(async () => {
+        if (!token || !params.id) return;
+        setLoading(true);
         try {
-            const leadRes = await fetch(apiUrl(`/pipeline/${params.id}`));
-            if (leadRes.ok) {
-                const leadData = await leadRes.json();
-                setLead(leadData);
-            }
-
-            const logsRes = await fetch(apiUrl(`/crm/pipeline/leads/${params.id}/calls`));
-            if (logsRes.ok) {
-                const logsData = await logsRes.json();
-                setCallLogs(logsData);
-            }
-
-            const counsRes = await fetch(apiUrl(`/crm/counseling/lead/${params.id}`));
-            if (counsRes.ok) {
-                const counsData = await counsRes.json();
-                setCounselingSessions(counsData);
-            }
+            const [leadData, logsData, counselingData] = await Promise.all([
+                apiFetch(`/pipeline/${params.id}`, { token, cache: 'no-store' }),
+                apiFetch<CallLog[]>(`/crm/pipeline/leads/${params.id}/calls`, { token, cache: 'no-store' }),
+                apiFetch(`/crm/counseling/lead/${params.id}`, { token, cache: 'no-store' })
+            ]);
+            setLead(leadData);
+            setCallLogs(Array.isArray(logsData) ? logsData : []);
+            setCounselingSessions(Array.isArray(counselingData) ? counselingData : []);
         } catch (err) {
             console.error(err);
+            setCallLogs([]);
+            setCounselingSessions([]);
         } finally {
             setLoading(false);
         }
-    };
+    }, [token, params.id]);
+
+    useEffect(() => {
+        fetchLeadData();
+    }, [fetchLeadData]);
 
     const combinedTimeline = [
         ...callLogs.map(log => ({
@@ -104,53 +100,51 @@ export default function LeadDetail({ params }: { params: { id: string } }) {
     if (!isAuthenticated) return null;
     if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-primary font-black uppercase tracking-widest text-xs">Cargando...</div>;
 
+    const heroWatchers = ['Coordinación Pastoral', 'Optimus Brain'];
+
     return (
-        <div className="min-h-screen bg-slate-950 font-display text-slate-100 selection:bg-primary/30 relative overflow-x-hidden flex flex-col uppercase-none">
-            {/* Ambient Backgrounds */}
-            <div className="fixed inset-0 z-0 bg-slate-950 pointer-events-none">
-                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-slate-950 to-slate-950 opacity-40 blur-3xl mix-blend-screen"></div>
-            </div>
-
-            <div className="relative z-10 max-w-4xl mx-auto flex flex-col min-h-screen w-full">
-                {/* Header Section */}
-                <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl px-6 py-6 border-b border-white/5 flex items-center justify-between">
-                    <button onClick={() => router.back()} className="text-slate-400 flex size-10 items-center justify-center rounded-full bg-white/5 hover:bg-primary/20 hover:text-primary transition-all cursor-pointer">
-                        <ArrowLeft size={20} />
-                    </button>
-                    <h2 className="text-white text-lg font-black tracking-tight flex-1 text-center pr-10">Detalle de Seguimiento</h2>
-                    <button className="flex size-10 items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white transition-all">
-                        <MoreVertical size={20} />
-                    </button>
-                </header>
-
-                <main className="flex-1 pb-32 overflow-y-auto hide-scrollbar animate-in fade-in slide-in-from-bottom-8 duration-700">
-
-                    {/* Hero Profile Section */}
-                    <section className="px-6 pt-10 pb-6 flex flex-col items-center text-center space-y-4">
-                        <div className="relative group">
-                            <div className="size-32 rounded-[2.5rem] overflow-hidden border-4 border-white/10 group-hover:border-primary/50 transition-all shadow-2xl relative">
-                                <div className="size-full rounded-[2.2rem] bg-slate-800 flex items-center justify-center text-white text-3xl font-black">
-                                    {lead?.first_name?.charAt(0).toUpperCase() || '?'}
-                                </div>
-                            </div>
-                            <div className="absolute -bottom-2 -right-2 size-8 rounded-full bg-emerald-500 border-4 border-slate-950 flex items-center justify-center">
-                                <Check size={14} className="text-white" />
+        <CrmShell
+            breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'CRM Pastoral', icon: Users }, { label: lead ? `${lead.first_name} ${lead.last_name}` : 'Contacto', icon: Users }]}
+            rightActions={
+                <button className="flex size-10 items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white transition-all">
+                    <MoreVertical size={20} />
+                </button>
+            }
+        >
+            <AdminHero
+                eyebrow="Contacto"
+                title={lead ? `${lead.first_name} ${lead.last_name}` : 'Detalle de seguimiento'}
+                description="Historia, notas y próximos pasos para este contacto."
+                tags={[`Etapa: ${lead?.stage ?? '...'}`, `Origen: ${lead?.source ?? '...'}`]}
+                watchers={heroWatchers}
+                primaryAction={{ label: 'Ver pipeline', icon: Link2, onClick: () => router.push('/crm/pipeline') }}
+                secondaryAction={{ label: 'Agregar nota', icon: Plus, onClick: () => setActiveTab('notes') }}
+            />
+            <div className="space-y-10">
+                <section className="px-6 pt-2 pb-6 flex flex-col items-center text-center space-y-4">
+                    <div className="relative group">
+                        <div className="size-32 rounded-[2.5rem] overflow-hidden border-4 border-white/10 group-hover:border-primary/50 transition-all shadow-2xl relative">
+                            <div className="size-full rounded-[2.2rem] bg-slate-800 flex items-center justify-center text-white text-3xl font-black">
+                                {lead?.first_name?.charAt(0).toUpperCase() || '?'}
                             </div>
                         </div>
-                        <div className="space-y-1">
-                            <h1 className="text-3xl font-black tracking-tight text-white">{lead?.first_name} {lead?.last_name}</h1>
-                            <p className="text-primary font-black uppercase tracking-[0.2em] text-[10px]">Etapa: {lead?.stage} • Origen: {lead?.source}</p>
+                        <div className="absolute -bottom-2 -right-2 size-8 rounded-full bg-emerald-500 border-4 border-slate-950 flex items-center justify-center">
+                            <Check size={14} className="text-white" />
                         </div>
-                        <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/5">
-                            <Clock size={12} className="text-primary" />
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
-                                Miembro desde: {lead ? new Date(lead.created_at).toLocaleDateString() : '...'}
-                            </span>
-                        </div>
-                    </section>
+                    </div>
+                    <div className="space-y-1">
+                        <h1 className="text-3xl font-black tracking-tight text-white">{lead?.first_name} {lead?.last_name}</h1>
+                        <p className="text-primary font-black uppercase tracking-[0.2em] text-[10px]">Etapa: {lead?.stage} • Origen: {lead?.source}</p>
+                    </div>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/5">
+                        <Clock size={12} className="text-primary" />
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
+                            Miembro desde: {lead ? new Date(lead.created_at).toLocaleDateString() : '...'}
+                        </span>
+                    </div>
+                </section>
 
-                    {/* Quick Stats */}
-                    <section className="px-6 py-4 flex gap-4 overflow-x-auto hide-scrollbar">
+                <section className="px-6 py-4 flex gap-4 overflow-x-auto hide-scrollbar">
                         {[
                             { label: 'Llamadas', val: callLogs.length.toString(), icon: Phone },
                             { label: 'Prayer Requests', val: callLogs.filter(l => l.prayer_requests).length.toString(), icon: Heart },
@@ -167,8 +161,7 @@ export default function LeadDetail({ params }: { params: { id: string } }) {
                         ))}
                     </section>
 
-                    {/* Tabs */}
-                    <section className="sticky top-[80px] z-40 bg-slate-950/80 backdrop-blur-xl px-6 pt-6 border-b border-white/5">
+                <section className="sticky top-0 z-40 bg-slate-950/70 backdrop-blur-xl px-6 pt-6 border-b border-white/5">
                         <div className="flex gap-10 justify-center">
                             {[
                                 { id: 'history', label: 'Historial de Contacto' },
@@ -189,8 +182,7 @@ export default function LeadDetail({ params }: { params: { id: string } }) {
                         </div>
                     </section>
 
-                    {/* Timeline */}
-                    <section className="px-8 py-10 space-y-10">
+                <section className="px-8 py-10 space-y-10">
                         {combinedTimeline.map((item, idx) => (
                             <div key={item.id} className="relative flex gap-6">
                                 {idx !== combinedTimeline.length - 1 && (
@@ -229,8 +221,7 @@ export default function LeadDetail({ params }: { params: { id: string } }) {
                         )}
                     </section>
 
-                    {/* Call to Action */}
-                    <section className="px-6 py-6 border-t border-white/5 mt-6 mb-20 space-y-6">
+                <section className="px-6 py-6 border-t border-white/5 mt-6 space-y-6">
                         <div className="bg-primary/5 rounded-[2.5rem] border border-primary/20 p-8 flex flex-col gap-6 relative overflow-hidden group">
                             <div className="absolute top-0 right-0 -mr-10 -mt-10 size-32 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
                             <div className="flex items-center gap-4 relative z-10">
@@ -252,17 +243,8 @@ export default function LeadDetail({ params }: { params: { id: string } }) {
                                 </button>
                             </div>
                         </div>
-                    </section>
-                </main>
-
-                {/* Floating Action Button */}
-                <button
-                    onClick={() => router.push('/crm/pipeline')}
-                    className="fixed bottom-32 right-8 size-16 bg-primary text-white rounded-[2rem] shadow-2xl shadow-primary/40 flex items-center justify-center hover:scale-110 active:scale-90 transition-all z-50 animate-bounce"
-                >
-                    <Plus size={32} />
-                </button>
+                </section>
             </div>
-        </div>
+        </CrmShell>
     );
 }

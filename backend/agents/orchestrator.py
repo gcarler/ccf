@@ -48,7 +48,7 @@ class AgentOrchestrator:
         )
         content = payload.output[0].content[0].text
         return schemas.AgentInsightCreate(
-            title="Diagnóstico automático",
+            title="Diagn??stico autom??tico",
             insight_type="diagnostic",
             payload=content,
         )
@@ -63,7 +63,7 @@ def bootstrap_diagnostic_task(summary: str, metrics: Dict[str, Any]) -> None:
         crud.create_agent_task(
             db,
             schemas.AgentTaskCreate(
-                title="Revisar diagnóstico automático",
+                title="Revisar diagn??stico autom??tico",
                 description=insight.payload[:500],
                 priority="high",
                 source="agent",

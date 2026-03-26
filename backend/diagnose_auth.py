@@ -17,13 +17,13 @@ def diagnose():
     print(f"Usuario encontrado: {user.username} (ID: {user.id})")
     print(f"Hash en DB: {user.password_hash}")
     
-    print("Probando autenticación...")
+    print("Probando autenticaci??n...")
     result = crud.authenticate_user(db, email, password)
     
     if result:
-        print("AUTENTICACIÓN EXITOSA")
+        print("AUTENTICACI??N EXITOSA")
     else:
-        print("AUTENTICACIÓN FALLIDA")
+        print("AUTENTICACI??N FALLIDA")
     
     db.close()
 

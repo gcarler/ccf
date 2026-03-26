@@ -1,157 +1,159 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Church, Search, HandHeart, CalendarDays, User, HeartHandshake } from 'lucide-react';
+import { Church, Search, HandHeart, CalendarDays, User, HeartHandshake, Loader2, PlusCircle, UserCircle, Heart } from 'lucide-react';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/http';
+
+interface PrayerRequest {
+    id: number;
+    name: string;
+    request: string;
+    category: string;
+    is_answered: boolean;
+    is_anonymous: boolean;
+    created_at: string;
+}
+
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function PrayerWall() {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, token, user } = useAuth();
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('Recientes');
+    const [requests, setRequests] = useState<PrayerRequest[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!isAuthenticated) return;
+
+        const fetchRequests = async () => {
+            try {
+                const data = await apiFetch<PrayerRequest[]>('/prayer/', { token });
+                setRequests(data);
+            } catch (error) {
+                console.error("Error fetching prayer requests:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchRequests();
+    }, [isAuthenticated, token]);
 
     if (!isAuthenticated) return null;
 
     const tabs = ['Recientes', 'Urgentes', 'Mis Pedidos'];
 
     return (
-        <div className="min-h-screen bg-slate-950 font-display text-slate-100 selection:bg-primary/30 relative overflow-x-hidden flex flex-col">
-            {/* Ambient Backgrounds - Ethereal Bg */}
-            <div className="fixed inset-0 z-0 bg-slate-950 pointer-events-none">
-                <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/15 via-slate-950/50 to-slate-950 opacity-100 blur-3xl mix-blend-screen"></div>
-            </div>
-
-            <div className="relative z-10 max-w-4xl mx-auto flex flex-col h-screen w-full">
-                {/* Header Section */}
-                <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl px-6 pt-10 pb-0 border-b border-white/5">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3 animate-in fade-in slide-in-from-left-4 duration-500">
-                            <Church className="text-primary" size={28} />
-                            <h1 className="text-2xl font-black tracking-tight text-white drop-shadow-md">Muro de Oración</h1>
-                        </div>
-                        <Link href="/community/prayer/request" className="bg-primary hover:bg-primary-600 text-white px-5 py-2.5 rounded-full text-sm font-black shadow-lg shadow-primary/30 transition-all active:scale-95 flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-500">
-                            Pedir Oración
-                        </Link>
+        <div className="p-8 lg:p-12 space-y-12 max-w-5xl mx-auto animate-in fade-in duration-700">
+            {/* Header Section */}
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                <div>
+                    <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-black uppercase tracking-[0.3em] text-[10px] mb-1">
+                        <HandHeart size={14} strokeWidth={2.5} />
+                        Interacción Espiritual
                     </div>
+                    <h1 className="text-4xl font-black text-[hsl(var(--text-primary))] tracking-tighter">Muro de Oración</h1>
+                    <p className="text-[hsl(var(--text-secondary))] text-sm font-medium mt-1">Comparte tus cargas y apóyanos en intercesión.</p>
+                </div>
+                
+                <Link href="/community/prayer/request" className="h-14 px-8 bg-[hsl(var(--primary))] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/30 hover:bg-[hsl(var(--primary)/0.9)] transition-all active:scale-95 flex items-center gap-3">
+                    <PlusCircle size={20} strokeWidth={2.5} />
+                    Pedir Oración
+                </Link>
+            </header>
 
-                    {/* Filter Tabs */}
-                    <div className="flex gap-6 overflow-x-auto hide-scrollbar">
-                        {tabs.map((tab) => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                className={`pb-3 text-sm font-black tracking-wide uppercase transition-all whitespace-nowrap border-b-2 ${activeTab === tab
-                                        ? 'border-primary text-primary drop-shadow-[0_0_8px_rgba(66,66,240,0.5)]'
-                                        : 'border-transparent text-slate-500 hover:text-slate-300'
-                                    }`}
-                            >
-                                {tab}
-                            </button>
-                        ))}
+            {/* Content Area */}
+            <div className="space-y-8">
+                {/* Tabs / Filter */}
+                <div className="flex gap-8 border-b border-[hsl(var(--border))] px-2">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={`pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === tab
+                                ? 'text-[hsl(var(--primary))]'
+                                : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
+                                }`}
+                        >
+                            {tab}
+                            {activeTab === tab && (
+                                <motion.div 
+                                    layoutId="prayer-tab"
+                                    className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-[hsl(var(--primary))] shadow-[0_0_12px_hsl(var(--primary)/0.5)]" 
+                                />
+                            )}
+                        </button>
+                    ))}
+                </div>
+
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-24 gap-6">
+                        <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={48} strokeWidth={1.5} />
+                        <p className="text-[hsl(var(--text-secondary))] font-black uppercase tracking-[0.2em] text-[10px]">Sincronizando peticiones...</p>
                     </div>
-                </header>
-
-                {/* Main Feed */}
-                <main className="flex-1 px-6 py-6 space-y-5 overflow-y-auto relative z-10 hide-scrollbar animate-in fade-in slide-in-from-bottom-8 duration-700">
-
-                    {/* Prayer Card 1 */}
-                    <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-[2rem] p-6 flex flex-col gap-5 shadow-xl transition-all group hover:border-primary/30">
-                        <div className="flex justify-between items-start">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner border border-primary/20">
-                                    <User size={24} />
-                                </div>
-                                <div>
-                                    <p className="text-white text-base font-bold">Anónimo</p>
-                                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-0.5">Hace 15 min</p>
-                                </div>
-                            </div>
-                            <span className="bg-primary/10 text-primary border border-primary/20 text-[9px] uppercase font-black px-3 py-1.5 rounded-xl tracking-widest shadow-sm">Salud</span>
+                ) : requests.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-32 text-center space-y-6 bg-[hsl(var(--surface-2))] rounded-[3rem] border border-dashed border-[hsl(var(--border))]">
+                        <div className="size-24 rounded-[2.5rem] bg-[hsl(var(--surface-3))] flex items-center justify-center text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))]">
+                            <HandHeart size={40} strokeWidth={1.5} />
                         </div>
-                        <div className="space-y-2.5">
-                            <h3 className="text-white font-black text-xl leading-snug group-hover:text-primary transition-colors">Recuperación de Juan Carlos</h3>
-                            <p className="text-slate-400 text-sm leading-relaxed">
-                                Pedimos oración por la pronta recuperación de nuestro hermano Juan, quien se encuentra en cirugía de emergencia. Confiamos en el poder sanador de Dios.
-                            </p>
-                        </div>
-                        <div className="flex items-center justify-between pt-4 border-t border-white/5 mt-2">
-                            <div className="flex items-center gap-2 text-primary">
-                                <HandHeart size={16} className="fill-current opacity-80" />
-                                <span className="text-xs font-black tracking-wide">124 orando</span>
-                            </div>
-                            <button className="flex items-center gap-2 bg-primary/10 hover:bg-primary text-primary hover:text-white px-5 py-2.5 rounded-xl transition-all duration-300 active:scale-95 group/btn border border-primary/20 hover:border-primary">
-                                <HeartHandshake size={16} className="group-hover/btn:-rotate-12 transition-transform" />
-                                <span className="text-xs font-black uppercase tracking-widest">Me uno</span>
-                            </button>
+                        <div className="space-y-1">
+                            <h3 className="text-[hsl(var(--text-primary))] font-black uppercase tracking-[0.1em]">No hay peticiones aún</h3>
+                            <p className="text-[hsl(var(--text-secondary))] text-sm font-medium max-w-xs mx-auto">Sé el primero en compartir tu carga o agradecer al Señor.</p>
                         </div>
                     </div>
-
-                    {/* Prayer Card 2 */}
-                    <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-[2rem] p-6 flex flex-col gap-5 shadow-xl transition-all group hover:border-emerald-500/30">
-                        <div className="flex justify-between items-start">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-inner font-black border border-white/10">
-                                    MS
-                                </div>
-                                <div>
-                                    <p className="text-white text-base font-bold">Mateo Silva</p>
-                                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-0.5">Hace 2 horas</p>
-                                </div>
-                            </div>
-                            <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] uppercase font-black px-3 py-1.5 rounded-xl tracking-widest shadow-sm">Trabajo</span>
-                        </div>
-                        <div className="space-y-2.5">
-                            <h3 className="text-white font-black text-xl leading-snug group-hover:text-emerald-400 transition-colors">Provisión y Nueva Etapa</h3>
-                            <p className="text-slate-400 text-sm leading-relaxed">
-                                Estoy buscando una nueva oportunidad laboral. Pido oración para que el Señor abra las puertas correctas y me dé sabiduría en las entrevistas esta semana.
-                            </p>
-                        </div>
-                        <div className="flex items-center justify-between pt-4 border-t border-white/5 mt-2">
-                            <div className="flex items-center gap-2 text-emerald-400">
-                                <HandHeart size={16} className="fill-current opacity-80" />
-                                <span className="text-xs font-black tracking-wide">56 orando</span>
-                            </div>
-                            <button className="flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white px-5 py-2.5 rounded-xl transition-all duration-300 active:scale-95 group/btn border border-emerald-500/20 hover:border-emerald-500">
-                                <HeartHandshake size={16} className="group-hover/btn:-rotate-12 transition-transform" />
-                                <span className="text-xs font-black uppercase tracking-widest">Me uno</span>
-                            </button>
-                        </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <AnimatePresence mode="popLayout">
+                            {requests.map((request, idx) => (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: idx * 0.05 }}
+                                    key={request.id} 
+                                    className="group surface-card p-8 bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] shadow-sm hover:shadow-xl hover:border-[hsl(var(--primary)/0.3)] transition-all flex flex-col gap-6"
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-center gap-4">
+                                            <div className="size-12 rounded-2xl bg-[hsl(var(--surface-3))] flex items-center justify-center text-[hsl(var(--primary))] border border-[hsl(var(--border))] shadow-inner">
+                                                <UserCircle size={24} strokeWidth={1.5} />
+                                            </div>
+                                            <div>
+                                                <p className="text-[hsl(var(--text-primary))] text-sm font-black tracking-tight">{request.is_anonymous ? 'Anónimo' : request.name}</p>
+                                                <p className="text-[hsl(var(--text-secondary))] text-[10px] font-black uppercase tracking-widest mt-0.5 opacity-60">
+                                                    {new Date(request.created_at).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className="bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)] text-[9px] uppercase font-black px-3 py-1 rounded-xl tracking-widest">
+                                            {request.category}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="flex-1">
+                                        <p className="text-[hsl(var(--text-secondary))] text-sm leading-relaxed font-medium line-clamp-4 italic">
+                                            &ldquo;{request.request}&rdquo;
+                                        </p>
+                                    </div>
+                                    
+                                    <div className="flex items-center justify-between pt-6 border-t border-[hsl(var(--border))]">
+                                        <div className="flex items-center gap-2 text-[hsl(var(--primary))]">
+                                            <div className="size-2 rounded-full bg-current animate-pulse shadow-[0_0_8px_currentColor]"></div>
+                                            <span className="text-[10px] font-black uppercase tracking-widest">En intercesión</span>
+                                        </div>
+                                        <button className="h-10 px-6 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--primary))] hover:text-white border border-[hsl(var(--border))] hover:border-transparent rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 group/btn">
+                                            <Heart size={14} className="group-hover/btn:fill-white" />
+                                            Me uno
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
                     </div>
-
-                    {/* Prayer Card 3 */}
-                    <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-[2rem] p-6 flex flex-col gap-5 shadow-xl transition-all group hover:border-rose-500/30">
-                        <div className="flex justify-between items-start">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-slate-400 shadow-inner border border-white/10">
-                                    <User size={24} />
-                                </div>
-                                <div>
-                                    <p className="text-white text-base font-bold">Anónimo</p>
-                                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-0.5">Hace 5 horas</p>
-                                </div>
-                            </div>
-                            <span className="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[9px] uppercase font-black px-3 py-1.5 rounded-xl tracking-widest shadow-sm">Familia</span>
-                        </div>
-                        <div className="space-y-2.5">
-                            <h3 className="text-white font-black text-xl leading-snug group-hover:text-rose-400 transition-colors">Restauración Familiar</h3>
-                            <p className="text-slate-400 text-sm leading-relaxed">
-                                Por la paz en mi hogar y la reconciliación entre mis hijos. Que el amor de Cristo sea el centro de nuestra convivencia.
-                            </p>
-                        </div>
-                        <div className="flex items-center justify-between pt-4 border-t border-white/5 mt-2">
-                            <div className="flex items-center gap-2 text-rose-400">
-                                <HandHeart size={16} className="fill-current opacity-80" />
-                                <span className="text-xs font-black tracking-wide">89 orando</span>
-                            </div>
-                            <button className="flex items-center gap-2 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white px-5 py-2.5 rounded-xl transition-all duration-300 active:scale-95 group/btn border border-rose-500/20 hover:border-rose-500">
-                                <HeartHandshake size={16} className="group-hover/btn:-rotate-12 transition-transform" />
-                                <span className="text-xs font-black uppercase tracking-widest">Me uno</span>
-                            </button>
-                        </div>
-                    </div>
-
-                </main>
+                )}
             </div>
         </div>
     );

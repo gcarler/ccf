@@ -1,200 +1,273 @@
 "use client";
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { apiUrl } from '@/lib/api';
+import { apiFetch } from '@/lib/http';
+import AdminShell from '@/components/admin/AdminShell';
+import AdminHero from '@/components/admin/AdminHero';
 import {
-    ArrowLeft,
-    Bell,
     TrendingUp,
     PieChart,
     DollarSign,
     ArrowUpRight,
-    MoreVertical
+    Download,
+    Link2,
+    Bell,
+    Users,
+    GraduationCap,
+    BookOpen,
+    Target,
+    Filter,
+    Calendar,
+    ChevronDown,
+    Activity,
+    Zap,
+    BrainCircuit,
+    Layers
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import clsx from 'clsx';
 
-export default function FinancialReports() {
+type ReportTab = 'academic' | 'financial' | 'operational';
+
+export default function AdvancedBIReports() {
     const { isAuthenticated, token } = useAuth();
-    const router = useRouter();
-    const [analytics, setAnalytics] = React.useState<any>(null);
-    const [loading, setLoading] = React.useState(true);
+    const [activeTab, setActiveTab] = useState<ReportTab>('academic');
+    const [analytics, setAnalytics] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
-    React.useEffect(() => {
+    useEffect(() => {
         const fetchAnalytics = async () => {
             if (!token) return;
+            setLoading(true);
             try {
-                const res = await fetch(apiUrl('/analytics/events/summary'), {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) setAnalytics(await res.json());
+                // Simulamos carga de datos complejos de BI
+                const data = await apiFetch('/analytics/events/summary', { token });
+                setAnalytics(data);
             } catch (e) {
-                console.error("Analytics fetch failed", e);
+                console.error('BI Analytics fetch failed', e);
             } finally {
                 setLoading(false);
             }
         };
         fetchAnalytics();
-    }, [token]);
-
-    const transactions = [
-        { id: '1', name: 'Ricardo Mendez', category: 'Diezmos', amount: 450.00, status: 'Completado', avatar: 'https://i.pravatar.cc/150?u=10' },
-        { id: '2', name: 'Elena Rodriguez', category: 'Misiones', amount: 120.00, status: 'Completado', avatar: 'https://i.pravatar.cc/150?u=11' },
-        { id: '3', name: 'Marcos Lopez', category: 'Construcción', amount: 1200.00, status: 'Completado', avatar: 'https://i.pravatar.cc/150?u=12' },
-        { id: '4', name: 'Ana Victoria', category: 'Ofrendas', amount: 50.00, status: 'Completado', avatar: 'https://i.pravatar.cc/150?u=13' },
-    ];
+    }, [token, activeTab]);
 
     if (!isAuthenticated) return null;
 
+    const tabs = [
+        { id: 'academic', label: 'Académico', icon: GraduationCap },
+        { id: 'financial', label: 'Financiero', icon: DollarSign },
+        { id: 'operational', label: 'Operativo', icon: Activity },
+    ];
+
     return (
-        <div className="flex flex-col h-full bg-slate-950/20 font-display">
-            {/* Header Area */}
-            <div className="px-8 pt-10 pb-6 flex items-center justify-between">
-                <button onClick={() => router.back()} className="p-3 rounded-2xl bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all">
-                    <ArrowLeft size={20} />
-                </button>
-                <h1 className="text-xl font-black text-white tracking-tight uppercase tracking-[0.1em]">Reportes Financieros</h1>
-                <button className="p-3 rounded-2xl bg-white/5 border border-white/10 text-primary hover:bg-primary/10 transition-all relative">
-                    <Bell size={20} />
-                    <span className="absolute top-3.5 right-3.5 size-2 bg-primary rounded-full ring-2 ring-slate-950"></span>
-                </button>
+        <AdminShell
+            breadcrumbs={[
+                { label: 'Gestión Central', icon: Bell },
+                { label: 'Inteligencia de Negocios', icon: BrainCircuit }
+            ]}
+        >
+            <AdminHero
+                eyebrow="Business Intelligence"
+                title="Centro de Análisis Avanzado"
+                description="Visualiza el impacto real de la plataforma a través de métricas cruzadas. Optimus BI analiza tendencias de retención, ingresos y efectividad académica."
+                tags={['BI Core', 'Machine Learning', 'Real-time']}
+                watchers={['Dirección General', 'Comité Académico']}
+                primaryAction={{ label: 'Exportar Reporte Full', icon: Download, onClick: () => {} }}
+                secondaryAction={{ label: 'Configurar Alertas', icon: Zap, onClick: () => {} }}
+            />
+
+            {/* Sub-navigation Tabs */}
+            <div className="flex flex-wrap items-center gap-4 mb-10 bg-slate-100/50 dark:bg-white/5 p-2 rounded-[2rem] w-fit border border-slate-200 dark:border-white/10">
+                {tabs.map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as ReportTab)}
+                        className={clsx(
+                            "flex items-center gap-3 px-8 py-3.5 rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest transition-all active:scale-95",
+                            activeTab === tab.id 
+                                ? "bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-xl shadow-blue-500/10" 
+                                : "text-slate-500 hover:bg-white/50 dark:hover:bg-white/5"
+                        )}
+                    >
+                        <tab.icon size={16} />
+                        {tab.label}
+                    </button>
+                ))}
             </div>
 
-            <main className="flex-1 px-8 pb-32 space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
-
-                {/* Hero Financial Card */}
-                <section>
-                    <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-slate-900 via-primary-900/40 to-slate-950 p-8 border border-white/5 shadow-2xl group">
-                        <div className="absolute top-0 right-0 -mr-20 -mt-20 size-80 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all duration-1000"></div>
-
-                        <div className="relative z-10">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Eventos Totales (7 días)</p>
-                                    <h3 className="text-4xl font-black mt-2 text-white">{analytics?.total_events || "0"}</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Main Insight Card */}
+                <div className="lg:col-span-8 space-y-8">
+                    <section className="relative overflow-hidden rounded-[3rem] bg-slate-900 border border-white/5 p-10 text-white shadow-2xl group min-h-[400px] flex flex-col justify-between">
+                        <div className="absolute top-0 right-0 -mr-24 -mt-24 size-96 bg-blue-600/20 rounded-full blur-[100px] group-hover:bg-blue-600/30 transition-all duration-1000" />
+                        
+                        <div className="relative z-10 flex justify-between items-start">
+                            <div>
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="px-3 py-1 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-2">
+                                        <Layers size={12} /> Perspectiva de {activeTab}
+                                    </div>
+                                    <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Actulizado hace 2 min</span>
                                 </div>
-                                <div className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-500 text-[10px] font-black px-3 py-1.5 rounded-xl border border-emerald-500/20 uppercase tracking-widest">
-                                    <TrendingUp size={14} />
-                                    <span>+12.5%</span>
+                                <h3 className="text-4xl font-black tracking-tighter leading-none mb-2">Indicador de Eficacia</h3>
+                                <p className="text-slate-400 text-sm font-medium max-w-md">Análisis predictivo basado en el comportamiento del último trimestre.</p>
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                                <span className="text-5xl font-black text-white tracking-tighter">84.2%</span>
+                                <div className="flex items-center gap-1.5 text-emerald-500 text-[10px] font-black uppercase tracking-widest">
+                                    <TrendingUp size={14} /> +5.4% este mes
                                 </div>
-                            </div>
-
-                            <p className="text-[10px] font-black text-slate-600 mt-8 uppercase tracking-widest">Tendencia - Últimos 30 días</p>
-
-                            {/* Trend Chart Mockup */}
-                            <div className="mt-4 h-28 flex items-end gap-2.5">
-                                {[40, 55, 45, 70, 60, 85, 100, 75, 90].map((h, i) => (
-                                    <div
-                                        key={i}
-                                        style={{ height: `${h}%` }}
-                                        className={`flex-1 rounded-t-lg transition-all duration-500 group-hover:opacity-100 ${i === 6 ? 'bg-primary shadow-[0_0_15px_rgba(37,157,244,0.4)]' :
-                                            'bg-white/10 opacity-30 group-hover:opacity-50'
-                                            }`}
-                                    ></div>
-                                ))}
-                            </div>
-
-                            <div className="mt-8 flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/5">
-                                <p className="text-[10px] font-black text-slate-400 italic uppercase tracking-widest">Resumen de Crecimiento</p>
-                                <button className="bg-primary hover:bg-primary-600 text-white text-[10px] font-black py-2.5 px-6 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-95 border border-primary-400/20 uppercase tracking-widest">
-                                    Ver Detalle
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Breakdown Grid */}
-                <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="md:col-span-2 bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-[2.5rem] p-8 flex flex-col md:flex-row items-center gap-8 shadow-2xl">
-                        <div className="relative size-32 shrink-0 group">
-                            <svg className="size-full -rotate-90 drop-shadow-[0_0_10px_rgba(37,157,244,0.2)]" viewBox="0 0 36 36">
-                                <circle cx="18" cy="18" fill="transparent" r="15.9" stroke="rgba(255,255,255,0.03)" strokeWidth="3"></circle>
-                                <circle cx="18" cy="18" fill="transparent" r="15.9" stroke="#259df4" strokeDasharray="60 100" strokeWidth="3.5" className="transition-all duration-1000"></circle>
-                                <circle cx="18" cy="18" fill="transparent" r="15.9" stroke="#1d4e89" strokeDasharray="25 100" strokeDashoffset="-60" strokeWidth="3.5" className="opacity-70"></circle>
-                                <circle cx="18" cy="18" fill="transparent" r="15.9" stroke="#0e2a47" strokeDasharray="15 100" strokeDashoffset="-85" strokeWidth="3.5" className="opacity-40"></circle>
-                            </svg>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Total</span>
-                                <PieChart size={16} className="text-primary mt-1" />
                             </div>
                         </div>
 
-                        <div className="flex-1 w-full space-y-5">
-                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Desglose Operativo</h4>
-                            {[
-                                { color: 'bg-primary', label: 'Diezmos', val: '$27,168', perc: 60 },
-                                { color: 'bg-blue-800', label: 'Misiones', val: '$11,320', perc: 25 },
-                                { color: 'bg-slate-800', label: 'Ofrendas', val: '$6,792', perc: 15 },
-                            ].map((item, idx) => (
-                                <div key={idx} className="flex items-center justify-between group">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`size-2.5 rounded-full ${item.color} shadow-lg shadow-black/20 group-hover:scale-125 transition-transform`}></div>
-                                        <span className="text-xs font-black text-slate-300 uppercase tracking-tight">{item.label}</span>
+                        {/* Custom Chart Illustration */}
+                        <div className="relative z-10 h-48 flex items-end gap-4 mt-8">
+                            {[65, 40, 80, 55, 90, 70, 85, 60, 100, 75, 95, 80].map((h, i) => (
+                                <div key={i} className="flex-1 flex flex-col items-center gap-3 group/bar">
+                                    <div 
+                                        style={{ height: `${h}%` }} 
+                                        className={clsx(
+                                            "w-full rounded-t-2xl transition-all duration-700 relative",
+                                            i === 8 ? "bg-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.5)]" : "bg-white/10 opacity-30 group-hover/bar:opacity-60"
+                                        )}
+                                    >
+                                        {i === 8 && <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-slate-900 px-3 py-1.5 rounded-lg text-[10px] font-black shadow-xl whitespace-nowrap">Pico de Actividad</div>}
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-xs font-black text-white">{item.val}</p>
-                                        <div className="w-16 bg-slate-950 h-1 rounded-full mt-1 overflow-hidden">
-                                            <div className={`${item.color} h-full`} style={{ width: `${item.perc}%` }}></div>
-                                        </div>
-                                    </div>
+                                    <span className="text-[9px] font-black text-slate-500 uppercase">{['E','F','M','A','M','J','J','A','S','O','N','D'][i]}</span>
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </section>
 
-                    <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-[2.5rem] p-8 flex flex-col justify-center items-center text-center space-y-4 shadow-2xl">
-                        <div className="size-16 rounded-[1.5rem] bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20">
-                            <DollarSign size={32} />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Caja Chica</p>
-                            <h4 className="text-2xl font-black text-white">$1,450.00</h4>
-                        </div>
-                        <button className="w-full py-3 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] font-black text-white border border-white/5 uppercase tracking-widest transition-all">
-                            Conciliar
-                        </button>
-                    </div>
-                </section>
-
-                {/* Recent Transactions */}
-                <section className="space-y-6">
-                    <div className="flex justify-between items-center px-2">
-                        <h4 className="text-white text-lg font-black tracking-tight uppercase tracking-widest">Transacciones Recientes</h4>
-                        <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Ver todas</button>
-                    </div>
-
-                    <div className="space-y-4">
-                        {transactions.map((tr) => (
-                            <div key={tr.id} className="flex items-center justify-between p-5 rounded-[2rem] bg-slate-900/20 backdrop-blur-md border border-white/5 hover:bg-slate-900/40 hover:border-white/10 transition-all group cursor-pointer">
-                                <div className="flex items-center gap-5">
-                                    <div className="size-12 rounded-2xl overflow-hidden border-2 border-white/5 group-hover:border-primary/50 transition-all shadow-xl shadow-black/40">
-                                        <div className="size-full bg-slate-800 flex items-center justify-center text-white text-[10px] font-bold">
-                                            {tr.name?.charAt(0)}
-                                        </div>
-
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-black text-white tracking-tight group-hover:text-primary transition-colors">{tr.name}</p>
-                                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">{tr.category}</p>
-                                    </div>
+                    {/* Secondary Metrics Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 space-y-6 shadow-xl">
+                            <div className="flex justify-between items-center">
+                                <div className="size-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center">
+                                    <Users size={24} />
                                 </div>
-                                <div className="flex items-center gap-6">
-                                    <div className="text-right">
-                                        <p className="text-sm font-black text-white">${tr.amount.toFixed(2)}</p>
-                                        <span className="text-[8px] font-black bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-lg border border-emerald-500/20 uppercase tracking-widest">
-                                            {tr.status}
-                                        </span>
-                                    </div>
-                                    <button className="text-slate-700 hover:text-white transition-colors">
-                                        <ArrowUpRight size={18} />
-                                    </button>
+                                <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors"><ChevronDown size={18} /></button>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Retención de Cohortes</p>
+                                <h4 className="text-2xl font-black tracking-tight">76% Finalización</h4>
+                            </div>
+                            <div className="space-y-3">
+                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                    <span>Formal</span>
+                                    <span>92%</span>
+                                </div>
+                                <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                                    <div className="h-full bg-indigo-500 w-[92%]" />
+                                </div>
+                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                    <span>No Formal</span>
+                                    <span>64%</span>
+                                </div>
+                                <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                                    <div className="h-full bg-slate-400 w-[64%]" />
                                 </div>
                             </div>
-                        ))}
+                        </div>
+
+                        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 space-y-6 shadow-xl">
+                            <div className="flex justify-between items-center">
+                                <div className="size-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center">
+                                    <Target size={24} />
+                                </div>
+                                <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors"><Filter size={18} /></button>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Costo por Estudiante</p>
+                                <h4 className="text-2xl font-black tracking-tight">$12.50 / mes</h4>
+                            </div>
+                            <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-500/20">
+                                <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 leading-relaxed uppercase tracking-wider">
+                                    Optimus AI: "Reducción del 15% en costos operativos mediante automatización de actas."
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                </section>
-            </main>
-        </div>
+                </div>
+
+                {/* Sidebar BI Tools */}
+                <aside className="lg:col-span-4 space-y-8">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-[3rem] p-8 shadow-2xl space-y-8">
+                        <div className="flex items-center gap-3">
+                            <BrainCircuit size={20} className="text-blue-600" />
+                            <h4 className="text-lg font-black uppercase tracking-widest tracking-tighter">Acciones BI</h4>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            <button className="w-full flex items-center justify-between p-5 bg-slate-50 dark:bg-white/5 rounded-2xl border border-transparent hover:border-blue-500/30 transition-all group">
+                                <div className="flex items-center gap-4 text-left">
+                                    <div className="size-10 rounded-xl bg-white dark:bg-white/10 flex items-center justify-center text-slate-500 shadow-sm group-hover:scale-110 transition-transform">
+                                        <Calendar size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[11px] font-black uppercase tracking-widest text-slate-800 dark:text-white">Filtro Temporal</p>
+                                        <p className="text-[10px] font-bold text-slate-500">Últimos 6 meses</p>
+                                    </div>
+                                </div>
+                                <ArrowUpRight size={16} className="text-slate-400" />
+                            </button>
+
+                            <button className="w-full flex items-center justify-between p-5 bg-slate-50 dark:bg-white/5 rounded-2xl border border-transparent hover:border-blue-500/30 transition-all group">
+                                <div className="flex items-center gap-4 text-left">
+                                    <div className="size-10 rounded-xl bg-white dark:bg-white/10 flex items-center justify-center text-slate-500 shadow-sm group-hover:scale-110 transition-transform">
+                                        <BookOpen size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[11px] font-black uppercase tracking-widest text-slate-800 dark:text-white">Segmento</p>
+                                        <p className="text-[10px] font-bold text-slate-500">Modalidad Formal</p>
+                                    </div>
+                                </div>
+                                <ArrowUpRight size={16} className="text-slate-400" />
+                            </button>
+                        </div>
+
+                        <div className="pt-8 border-t border-slate-100 dark:border-white/5">
+                            <div className="flex items-center justify-between mb-6">
+                                <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Distribución de Ingresos</h5>
+                                <PieChart size={14} className="text-slate-400" />
+                            </div>
+                            <div className="relative size-48 mx-auto mb-8">
+                                <svg className="size-full -rotate-90 drop-shadow-2xl" viewBox="0 0 36 36">
+                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="rgba(59,130,246,0.1)" strokeWidth="4" />
+                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#3b82f6" strokeWidth="4" strokeDasharray="65 100" />
+                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#1e293b" strokeWidth="4" strokeDasharray="35 100" strokeDashoffset="-65" />
+                                </svg>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">$45K</span>
+                                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Total USD</span>
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="size-2 rounded-full bg-blue-500" />
+                                        <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Educativo</span>
+                                    </div>
+                                    <span className="text-[11px] font-black text-slate-900 dark:text-white">65%</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="size-2 rounded-full bg-slate-800" />
+                                        <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Donaciones</span>
+                                    </div>
+                                    <span className="text-[11px] font-black text-slate-900 dark:text-white">35%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button className="w-full py-5 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                            Generar PDF Inteligente
+                        </button>
+                    </div>
+                </aside>
+            </div>
+        </AdminShell>
     );
 }

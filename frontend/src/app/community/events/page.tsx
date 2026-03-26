@@ -7,8 +7,10 @@ import { Calendar, Bell, ChevronRight, MapPin, Clock, Video, Share2, Plus, Calen
 
 import Link from 'next/link';
 
+import { motion } from 'framer-motion';
+
 export default function EventsCalendar() {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('Todos');
 
@@ -27,168 +29,168 @@ export default function EventsCalendar() {
     ];
 
     return (
-        <div className="min-h-screen bg-slate-950 font-display text-slate-100 selection:bg-primary/30 relative overflow-x-hidden flex flex-col">
-            {/* Ambient Backgrounds */}
-            <div className="fixed inset-0 z-0 bg-slate-950 pointer-events-none">
-                <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-[radial-gradient(circle_at_top_left,_var(--tw-gradient-stops))] from-primary/20 via-slate-950 to-slate-950 opacity-60 blur-3xl mix-blend-screen"></div>
-                <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(circle_at_bottom_right,_var(--tw-gradient-stops))] from-blue-600/10 via-slate-950 to-slate-950 opacity-50 blur-3xl mix-blend-screen"></div>
-            </div>
-
-            <div className="relative z-10 max-w-4xl mx-auto flex flex-col h-screen w-full">
-                {/* Header Section */}
-                <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl px-6 pt-10 pb-4 border-b border-white/5">
-                    <div className="flex items-center justify-between mb-8">
-                        <div className="animate-in fade-in slide-in-from-left-6 duration-700">
-                            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/80">Comunidad El Faro</p>
-                            <h1 className="text-3xl font-black tracking-tight text-white mt-1 drop-shadow-md">Calendario</h1>
-                        </div>
-                        <button className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl hover:bg-white/10 transition-all group animate-in fade-in slide-in-from-right-6 duration-700">
-                            <Bell size={22} className="text-white/70 group-hover:text-white transition-colors" />
-                            <span className="absolute top-3 right-3 h-2 w-2 rounded-full bg-primary ring-4 ring-slate-950/40 animate-pulse"></span>
+        <div className="p-8 lg:p-12 space-y-12 max-w-5xl mx-auto animate-in fade-in duration-700">
+            {/* Header Section */}
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-black uppercase tracking-[0.3em] text-[10px]">
+                        <div className="size-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]"></div>
+                        Comunidad El Faro
+                    </div>
+                    <h1 className="text-4xl font-black text-[hsl(var(--text-primary))] tracking-tighter">Calendario de Eventos</h1>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                    <h2 className="text-xl font-black tabular-nums">Enero 2026</h2>
+                    <div className="flex gap-1">
+                        <button className="p-2 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-3))] transition-colors">
+                            <ChevronRight size={16} className="rotate-180" />
+                        </button>
+                        <button className="p-2 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-3))] transition-colors">
+                            <ChevronRight size={16} />
                         </button>
                     </div>
+                </div>
+            </header>
 
-                    <div className="flex items-center justify-between mb-6 animate-in fade-in duration-700 delay-100">
-                        <h2 className="text-xl font-bold text-white/90">Enero 2024</h2>
-                        <button className="text-[11px] font-black text-primary uppercase tracking-[0.2em] hover:underline transition-all">Ver Todo</button>
-                    </div>
+            {/* Horizontal Date Picker - Refined */}
+            <div className="flex gap-4 overflow-x-auto hide-scrollbar py-4 px-2 -mx-2">
+                {dates.map((date, idx) => (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                        key={date.num}
+                        className={`flex flex-col items-center justify-center min-w-[72px] h-28 rounded-[2rem] transition-all cursor-pointer border ${date.active
+                            ? 'bg-[hsl(var(--primary))] text-white shadow-[0_12px_32px_hsl(var(--primary)/0.3)] border-transparent scale-110 z-10'
+                            : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)]'
+                            }`}
+                    >
+                        <span className={`text-[10px] font-black uppercase mb-1 ${date.active ? 'opacity-80' : 'opacity-60'}`}>
+                            {date.day}
+                        </span>
+                        <span className="text-2xl font-black tabular-nums">
+                            {date.num}
+                        </span>
+                        {date.active && (
+                            <motion.div 
+                                layoutId="active-dot"
+                                className="mt-2 h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_8px_white]" 
+                            />
+                        )}
+                    </motion.div>
+                ))}
+            </div>
 
-                    {/* Horizontal Date Picker */}
-                    <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2 animate-in fade-in slide-in-from-right-12 duration-1000 delay-200">
-                        {dates.map((date) => (
-                            <div
-                                key={date.num}
-                                className={`flex flex-col items-center justify-center min-w-[64px] h-24 rounded-[2rem] transition-all cursor-pointer border ${date.active
-                                    ? 'bg-primary text-white shadow-[0_12px_24px_rgba(66,66,240,0.4)] border-primary/50 scale-110 z-20'
-                                    : 'bg-white/5 text-slate-500 border-white/5 hover:bg-white/10 hover:border-white/20'
-                                    }`}
-                            >
-                                <span className={`text-[10px] font-black uppercase mb-1 ${date.active ? 'text-white/80' : 'text-slate-500'}`}>
-                                    {date.day}
-                                </span>
-                                <span className={`text-xl font-black ${date.active ? 'text-white' : 'text-slate-400'}`}>
-                                    {date.num}
-                                </span>
-                                {date.active && <div className="mt-1 h-1 w-1 rounded-full bg-white shadow-[0_0_8px_#ffffff]"></div>}
+            {/* Main Content Area */}
+            <div className="space-y-8">
+                {/* Category Filter */}
+                <div className="flex gap-8 border-b border-[hsl(var(--border))] px-2">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={`pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === tab
+                                ? 'text-[hsl(var(--primary))]'
+                                : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
+                                }`}
+                        >
+                            {tab}
+                            {activeTab === tab && (
+                                <motion.div 
+                                    layoutId="active-tab"
+                                    className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-[hsl(var(--primary))] shadow-[0_0_12px_hsl(var(--primary)/0.5)]" 
+                                />
+                            )}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Events Grid - High Density */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20">
+                    {/* Event Card 1 */}
+                    <motion.div 
+                        whileHover={{ y: -4 }}
+                        className="group bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl hover:border-[hsl(var(--primary)/0.3)] transition-all"
+                    >
+                        <div className="relative aspect-[16/8] overflow-hidden bg-[hsl(var(--surface-3))]">
+                            <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary)/0.2)] via-transparent to-transparent opacity-60"></div>
+                            <div className="absolute inset-0 flex items-center justify-center opacity-10 group-hover:scale-110 transition-transform duration-700">
+                                <CalendarDays size={80} />
                             </div>
-                        ))}
-                    </div>
-                </header>
-
-                <main className="flex-1 overflow-y-auto pb-32 pt-8 px-6 space-y-8 relative z-10 hide-scrollbar">
-                    {/* Category Filter */}
-                    <div className="flex gap-4 overflow-x-auto hide-scrollbar animate-in fade-in slide-in-from-left-8 duration-700 delay-300">
-                        {tabs.map((tab) => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                className={`shrink-0 text-xs font-black uppercase tracking-widest px-1 py-3 transition-all border-b-2 ${activeTab === tab
-                                    ? 'text-primary border-primary drop-shadow-[0_0_8px_rgba(66,66,240,0.5)]'
-                                    : 'text-slate-500 border-transparent hover:text-slate-300'
-                                    }`}
-                            >
-                                {tab}
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="flex items-center gap-3 animate-in fade-in duration-700 delay-400">
-                        <div className="size-2 rounded-full bg-primary shadow-[0_0_8px_#4242f0]"></div>
-                        <h2 className="text-[11px] font-black text-slate-500 tracking-[0.25em] uppercase">Eventos destacados</h2>
-                    </div>
-
-                    {/* Events List */}
-                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500">
-
-                        {/* Event Card 1 */}
-                        <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-[3rem] overflow-hidden group shadow-2xl transition-all hover:border-primary/30">
-                            <div className="relative aspect-[16/10] overflow-hidden">
-                                <div className="absolute inset-0 h-full w-full bg-slate-900 transition-transform duration-1000 group-hover:scale-110">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-slate-900/40 to-slate-900 opacity-60"></div>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <CalendarDays size={64} className="text-white/10" />
-                                    </div>
-                                </div>
-
-                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
-                                <div className="absolute top-6 left-6 flex gap-3">
-                                    <span className="rounded-xl bg-primary/90 text-white px-3.5 py-1.5 text-[9px] font-black uppercase tracking-widest backdrop-blur-md shadow-lg">Servicio Especial</span>
-                                    <div className="flex items-center gap-1.5 text-white bg-slate-950/50 px-3.5 py-1.5 rounded-xl backdrop-blur-md border border-white/10 shadow-lg">
-                                        <Clock size={12} className="text-primary" />
-                                        <span className="text-[10px] font-black tracking-tight">19:30</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="p-8 space-y-6">
-                                <h3 className="text-2xl font-black text-white leading-tight group-hover:text-primary transition-colors">Noche de Avivamiento y Gloria</h3>
-                                <div className="flex items-center justify-between border-t border-white/5 pt-6">
-                                    <div className="flex -space-x-3">
-                                        {[1, 2, 3].map(i => (
-                                            <div key={i} className="size-9 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-bold overflow-hidden shadow-md">
-                                                <User size={16} />
-                                            </div>
-                                        ))}
-                                        <div className="size-9 rounded-full border-2 border-slate-900 bg-primary text-[10px] font-black text-white flex items-center justify-center shadow-md">+2.5k</div>
-                                    </div>
-                                    <div className="flex gap-3">
-                                        <button className="size-12 bg-white/5 text-white rounded-2xl flex items-center justify-center border border-white/10 hover:bg-white/10 transition-all active:scale-95 shadow-lg">
-                                            <Share2 size={20} />
-                                        </button>
-                                        <button className="bg-primary hover:bg-primary-600 text-white px-8 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-[0.15em] shadow-xl shadow-primary/30 transition-all active:scale-95 border border-primary-400/20">
-                                            Inscribirse
-                                        </button>
-                                    </div>
+                            
+                            <div className="absolute top-6 left-6 flex gap-2">
+                                <span className="rounded-xl bg-[hsl(var(--primary))] text-white px-3 py-1 text-[9px] font-black uppercase tracking-widest shadow-lg">Servicio Especial</span>
+                                <div className="flex items-center gap-1.5 bg-black/20 backdrop-blur-md px-3 py-1 rounded-xl text-white text-[10px] font-bold">
+                                    <Clock size={12} strokeWidth={2.5} />
+                                    19:30
                                 </div>
                             </div>
                         </div>
-
-                        {/* Event Card 2 */}
-                        <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-[3rem] overflow-hidden group shadow-2xl transition-all hover:border-emerald-500/30">
-                            <div className="relative aspect-[16/10] overflow-hidden">
-                                <div className="absolute inset-0 h-full w-full bg-slate-900 transition-transform duration-1000 group-hover:scale-110">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-slate-900/40 to-slate-900 opacity-60"></div>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <Users size={64} className="text-white/10" />
-                                    </div>
+                        
+                        <div className="p-8">
+                            <h3 className="text-xl font-black text-[hsl(var(--text-primary))] leading-tight mb-4 group-hover:text-[hsl(var(--primary))] transition-colors">Noche de Avivamiento y Gloria</h3>
+                            
+                            <div className="flex items-center justify-between mt-8 pt-6 border-t border-[hsl(var(--border))]">
+                                <div className="flex -space-x-2">
+                                    {[1, 2, 3].map(i => (
+                                        <div key={i} className="size-8 rounded-full border-2 border-[hsl(var(--surface-2))] bg-[hsl(var(--surface-3))] flex items-center justify-center text-[10px] font-bold overflow-hidden">
+                                            <User size={14} />
+                                        </div>
+                                    ))}
+                                    <div className="size-8 rounded-full border-2 border-[hsl(var(--surface-2))] bg-[hsl(var(--primary))] text-[9px] font-black text-white flex items-center justify-center">+2.5k</div>
                                 </div>
-
-                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
-                                <div className="absolute top-6 left-6 flex gap-3">
-                                    <span className="rounded-xl bg-emerald-500/90 text-white px-3.5 py-1.5 text-[9px] font-black uppercase tracking-widest backdrop-blur-md shadow-lg">Congreso Juvenil</span>
-                                    <div className="flex items-center gap-1.5 text-white bg-slate-950/50 px-3.5 py-1.5 rounded-xl backdrop-blur-md border border-white/10 shadow-lg">
-                                        <MapPin size={12} className="text-emerald-400" />
-                                        <span className="text-[10px] font-black tracking-tight">Auditorio</span>
-                                    </div>
-                                </div>
+                                
+                                <button className="h-10 px-6 bg-[hsl(var(--text-primary))] text-[hsl(var(--bg-primary))] rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:opacity-90 transition-all active:scale-95">
+                                    Reservar
+                                </button>
                             </div>
-                            <div className="p-8 space-y-6">
-                                <h3 className="text-2xl font-black text-white leading-tight group-hover:text-emerald-400 transition-colors">Generación de Fuego: 2024</h3>
-                                <div className="flex items-center justify-between border-t border-white/5 pt-6">
-                                    <div className="animate-pulse">
-                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">Entrada Libre</span>
-                                    </div>
-                                    <div className="flex gap-3">
-                                        <button className="size-12 bg-white/5 text-white rounded-2xl flex items-center justify-center border border-white/10 hover:bg-white/10 transition-all active:scale-95 shadow-lg">
-                                            <Share2 size={20} />
-                                        </button>
-                                        <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-[0.15em] shadow-xl shadow-emerald-500/20 transition-all active:scale-95 border border-emerald-400/20">
-                                            Inscribirse
-                                        </button>
-                                    </div>
+                        </div>
+                    </motion.div>
+
+                    {/* Event Card 2 */}
+                    <motion.div 
+                        whileHover={{ y: -4 }}
+                        className="group bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl hover:border-emerald-500/30 transition-all"
+                    >
+                        <div className="relative aspect-[16/8] overflow-hidden bg-[hsl(var(--surface-3))]">
+                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent opacity-60"></div>
+                            <div className="absolute inset-0 flex items-center justify-center opacity-10 group-hover:scale-110 transition-transform duration-700">
+                                <Users size={80} />
+                            </div>
+                            
+                            <div className="absolute top-6 left-6 flex gap-2">
+                                <span className="rounded-xl bg-emerald-500 text-white px-3 py-1 text-[9px] font-black uppercase tracking-widest shadow-lg">Juveniles</span>
+                                <div className="flex items-center gap-1.5 bg-black/20 backdrop-blur-md px-3 py-1 rounded-xl text-white text-[10px] font-bold">
+                                    <MapPin size={12} strokeWidth={2.5} />
+                                    Auditorio
                                 </div>
                             </div>
                         </div>
-
-                    </div>
-                </main>
-
-                {/* Floating Action Button */}
-                <div className="fixed bottom-24 right-8 z-30 animate-in zoom-in-50 duration-500 delay-1000">
-                    <button className="flex h-16 w-16 items-center justify-center rounded-[2rem] bg-primary text-white shadow-2xl shadow-primary/40 border border-primary-400/30 active:scale-90 transition-all hover:bg-primary-600 group">
-                        <Plus size={32} className="group-hover:rotate-90 transition-transform duration-300" />
-                    </button>
+                        
+                        <div className="p-8">
+                            <h3 className="text-xl font-black text-[hsl(var(--text-primary))] leading-tight mb-4 group-hover:text-emerald-500 transition-colors">Generación de Fuego: 2026</h3>
+                            
+                            <div className="flex items-center justify-between mt-8 pt-6 border-t border-[hsl(var(--border))]">
+                                <div className="px-3 py-1 bg-emerald-500/10 rounded-lg text-emerald-600 text-[10px] font-black uppercase tracking-widest">Entrada Libre</div>
+                                
+                                <button className="h-10 px-6 bg-[hsl(var(--text-primary))] text-[hsl(var(--bg-primary))] rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:opacity-90 transition-all active:scale-95">
+                                    Detalles
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
                 </div>
             </div>
+
+            {/* Floating Quick Add */}
+            <motion.button 
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                className="fixed bottom-12 right-12 size-16 bg-[hsl(var(--primary))] text-white rounded-[2rem] shadow-[0_16px_40px_hsl(var(--primary)/0.4)] flex items-center justify-center z-50 border border-white/20"
+            >
+                <Plus size={32} strokeWidth={2.5} />
+            </motion.button>
         </div>
     );
 }

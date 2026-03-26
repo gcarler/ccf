@@ -3,7 +3,8 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { ArrowLeft, MoreVertical, ThumbsUp, MessageSquare, Share2, Send, Hand } from 'lucide-react';
+import { MoreVertical, ThumbsUp, MessageSquare, Share2, Send, Hand } from 'lucide-react';
+import AcademyDetailShell from '@/components/academy/AcademyDetailShell';
 
 export default function TheologicalDebateDetail({ params }: { params: { id: string } }) {
     const { user, isAuthenticated } = useAuth();
@@ -12,29 +13,18 @@ export default function TheologicalDebateDetail({ params }: { params: { id: stri
     if (!isAuthenticated) return null;
 
     return (
-        <div className="min-h-screen bg-slate-950 font-display text-slate-100 selection:bg-primary/30 relative overflow-x-hidden flex flex-col">
-            {/* Ambient Backgrounds */}
-            <div className="fixed inset-0 z-0 bg-slate-950 pointer-events-none">
-                <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-slate-950 to-slate-950 opacity-50 blur-3xl rounded-full mix-blend-screen"></div>
-            </div>
-
-            <div className="relative z-10 max-w-4xl mx-auto flex flex-col h-screen w-full">
-                {/* Header Navigation */}
-                <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-white/5 px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <button onClick={() => router.back()} className="flex items-center justify-center size-10 rounded-full hover:bg-white/10 transition-colors cursor-pointer text-slate-300">
-                            <ArrowLeft size={20} />
-                        </button>
-                        <h1 className="text-white text-lg font-bold tracking-tight">Detalle de Debate</h1>
-                        <button className="flex items-center justify-center size-10 rounded-full hover:bg-white/10 transition-colors cursor-pointer text-slate-400">
-                            <MoreVertical size={20} />
-                        </button>
-                    </div>
-                </header>
-
-                {/* Main Content */}
-                <main className="flex-1 overflow-y-auto pb-32 px-6 pt-6 relative z-10 hide-scrollbar space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
-
+        <AcademyDetailShell
+            title="Detalle de debate"
+            description="Profundiza en tu formación compartiendo argumentos y fuentes por nivel académico."
+            variant="sky"
+            rightAction={
+                <button className="flex items-center justify-center size-10 rounded-full bg-white/5 hover:bg-primary/20 transition-colors text-primary">
+                    <MoreVertical size={20} />
+                </button>
+            }
+            onBack={() => router.back()}
+            contentClassName="space-y-6 pb-32"
+        >
                     {/* Main Thread Card (Original Post) */}
                     <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 shadow-2xl">
                         <div className="flex items-center gap-4 mb-5">
@@ -163,11 +153,9 @@ export default function TheologicalDebateDetail({ params }: { params: { id: stri
                         </div>
 
                     </div>
-                </main>
-
                 {/* Sticky Bottom Input */}
-                <div className="fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-xl border-t border-white/10 p-4 pb-8 z-50">
-                    <div className="max-w-4xl mx-auto flex items-center gap-3">
+                <div className="sticky bottom-0 w-full bg-slate-950/90 backdrop-blur-xl border-t border-white/10 p-4 pb-8 rounded-[2rem]">
+                    <div className="flex items-center gap-3">
                         <div className="size-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-xs font-bold shrink-0 text-white shadow-inner bg-gradient-to-br from-primary/50 to-emerald-500/50">
                             {user?.username ? user.username.charAt(0).toUpperCase() : 'U'}
                         </div>
@@ -184,7 +172,6 @@ export default function TheologicalDebateDetail({ params }: { params: { id: stri
                     </div>
                 </div>
 
-            </div>
-        </div>
+        </AcademyDetailShell>
     );
 }

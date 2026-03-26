@@ -1,1 +1,1 @@
-from app import app  # noqa: F401
+from backend.app import app  # noqa: F401

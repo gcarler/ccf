@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Columns, UserPlus, PhoneCall, Home, HandHeart, CheckCircle2, ChevronRight, MoreVertical, Loader2, MessageSquare, Bell, Play, Pause, Trash2, Save } from 'lucide-react';
-import { apiUrl } from '@/lib/api';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Columns, UserPlus, PhoneCall, Home, HandHeart, CheckCircle2, ChevronRight, MoreVertical, Loader2, MessageSquare, Bell, Play, Pause, Trash2, Save, Link2, Users } from 'lucide-react';
+import { apiFetch } from '@/lib/http';
 import { toast } from 'react-toastify';
+import { useAuth } from '@/context/AuthContext';
+import CrmShell from '@/components/crm/CrmShell';
+import AdminHero from '@/components/admin/AdminHero';
 
 interface Automation {
     id?: number;
@@ -28,24 +31,27 @@ export default function CRMAutomationsPage() {
     const [automations, setAutomations] = useState<Automation[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const { token } = useAuth();
 
-    useEffect(() => {
-        fetchAutomations();
-    }, []);
-
-    const fetchAutomations = async () => {
+    const fetchAutomations = useCallback(async () => {
+        if (!token) {
+            setAutomations([]);
+            setLoading(false);
+            return;
+        }
         try {
-            const res = await fetch(apiUrl('/crm/automations'));
-            if (res.ok) {
-                const data = await res.json();
-                setAutomations(data);
-            }
+            const data = await apiFetch<Automation[]>('/crm/automations', { token, cache: 'no-store' });
+            setAutomations(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error(err);
         } finally {
             setLoading(false);
         }
-    };
+    }, [token]);
+
+    useEffect(() => {
+        fetchAutomations();
+    }, [fetchAutomations]);
 
     const handleAdd = () => {
         setAutomations([...automations, {
@@ -62,18 +68,16 @@ export default function CRMAutomationsPage() {
         const auto = automations[index];
         try {
             const method = auto.id ? 'PUT' : 'POST';
-            const url = auto.id ? apiUrl(`/crm/automations/${auto.id}`) : apiUrl('/crm/automations');
+            const path = auto.id ? `/crm/automations/${auto.id}` : '/crm/automations';
 
-            const res = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(auto)
+            await apiFetch(path, {
+                method: method as 'POST' | 'PUT',
+                token,
+                body: auto,
             });
 
-            if (res.ok) {
-                toast.success('Automatización guardada');
-                fetchAutomations();
-            }
+            toast.success('Automatización guardada');
+            fetchAutomations();
         } catch (err) {
             toast.error('Error al guardar');
         } finally {
@@ -81,22 +85,29 @@ export default function CRMAutomationsPage() {
         }
     };
 
+    const heroWatchers = ['Automations', 'Optimus Brain'];
+
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 max-w-5xl mx-auto pb-20">
-            <div className="flex justify-between items-end">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-                        <Bell className="text-blue-600" /> Automatizaciones de Consolidación
-                    </h1>
-                    <p className="text-slate-500 mt-1">Configura mensajes automáticos que se envían cuando un contacto avanza en el proceso.</p>
-                </div>
+        <CrmShell
+            breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'CRM Pastoral', icon: Users }, { label: 'Automatizaciones', icon: Columns }]}
+            rightActions={
                 <button
                     onClick={handleAdd}
-                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-200 transition-all"
+                    className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-200 transition-all"
                 >
-                    + Nueva Regla
+                    + Nueva regla
                 </button>
-            </div>
+            }
+        >
+        <AdminHero
+            eyebrow="Automatizaciones"
+            title="Automatizaciones de consolidación"
+            description="Configura secuencias multicanal para cada etapa del pipeline; Optimus Brain sugiere delays y canales según engagement."
+            tags={['Workflows', 'Plantillas', 'IA']}
+            watchers={heroWatchers}
+            primaryAction={{ label: 'Documentación', icon: Link2, onClick: () => {} }}
+        />
+        <div className="space-y-8 animate-in fade-in duration-500 max-w-5xl mx-auto pb-20">
 
             <div className="grid gap-6">
                 {automations.map((auto, idx) => (
@@ -203,5 +214,7 @@ export default function CRMAutomationsPage() {
                 )}
             </div>
         </div>
+        </CrmShell>
     );
 }
+

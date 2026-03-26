@@ -38,7 +38,10 @@ export default function CrmSidebar() {
         );
     };
 
-    const isActive = (path: string) => pathname === path;
+    const isActive = (path: string) => {
+        if (path === '/crm' || path === '/') return pathname === path;
+        return pathname?.startsWith(path);
+    };
 
     const navItem = (href: string, icon: React.ReactNode, label: string, color?: string, isLocked?: boolean) => (
         <Link
@@ -96,7 +99,7 @@ export default function CrmSidebar() {
                         <div className="size-6 rounded bg-gradient-to-tr from-cu-purple to-indigo-500 flex items-center justify-center text-white font-black text-[10px] shrink-0 shadow-md">
                             C
                         </div>
-                        <h2 className="text-[13px] font-bold text-white truncate">Carlos's Workspace</h2>
+                        <h2 className="text-[13px] font-bold text-white truncate">Carlos&apos;s Workspace</h2>
                     </div>
                     <ChevronDown size={14} className="text-slate-500 group-hover:text-white transition-colors" />
                 </div>
@@ -178,3 +181,4 @@ export default function CrmSidebar() {
         </div>
     );
 }
+

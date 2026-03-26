@@ -45,9 +45,9 @@ def seed_agent_data():
     cursor.execute("DELETE FROM agent_insights")
     
     tasks = [
-        ("Optimizar Retención Academia", "Se detectó una caída del 15% en la finalización del Módulo 2. Sugerido: Campaña de recordatorio vía WhatsApp.", "pending", "Intelligence Engine", "Pastoral Care", "high"),
-        ("Auditoría de Ofrendas", "Desviación inusual detectada en la zona norte. Verificar registros manuales vs digitales.", "pending", "Financial Agent", "Admin Finance", "medium"),
-        ("Bienvenida Automática", "5 nuevos leads en etapa 'new' sin contacto por > 24h.", "pending", "CRM Agent", "Liderazgo Local", "high")
+        ("Optimizar Retenci??n Academia", "Se detect?? una ca??da del 15% en la finalizaci??n del M??dulo 2. Sugerido: Campa??a de recordatorio v??a WhatsApp.", "pending", "Intelligence Engine", "Pastoral Care", "high"),
+        ("Auditor??a de Ofrendas", "Desviaci??n inusual detectada en la zona norte. Verificar registros manuales vs digitales.", "pending", "Financial Agent", "Admin Finance", "medium"),
+        ("Bienvenida Autom??tica", "5 nuevos leads en etapa 'new' sin contacto por > 24h.", "pending", "CRM Agent", "Liderazgo Local", "high")
     ]
     
     cursor.executemany("""
@@ -57,8 +57,8 @@ def seed_agent_data():
     
     insights = [
         ("Crecimiento Exponencial", "Growth", json.dumps({"metric": "Miembros", "increase": "22%", "period": "Feb-Mar"}), 0),
-        ("Alerta de Deserción", "Retention", json.dumps({"impact": "Módulo 2 Academia", "risk": "High", "recommendation": "Webinar de refuerzo"}), 0),
-        ("Eficiencia Operativa", "Finance", json.dumps({"saving": "$450/mo", "insight": "Automatización de comprobantes completada"}), 0)
+        ("Alerta de Deserci??n", "Retention", json.dumps({"impact": "M??dulo 2 Academia", "risk": "High", "recommendation": "Webinar de refuerzo"}), 0),
+        ("Eficiencia Operativa", "Finance", json.dumps({"saving": "$450/mo", "insight": "Automatizaci??n de comprobantes completada"}), 0)
     ]
     
     cursor.executemany("""
@@ -68,7 +68,7 @@ def seed_agent_data():
     
     conn.commit()
     conn.close()
-    print("✅ SQLite Agent data seeded.")
+    print("??? SQLite Agent data seeded.")
 
 def seed_analytics_data():
     Path('d:/ccf/analytics').mkdir(parents=True, exist_ok=True)
@@ -104,9 +104,9 @@ def seed_analytics_data():
     
     conn.executemany("INSERT INTO domain_events VALUES (?, ?, ?)", events)
     conn.close()
-    print("✅ DuckDB Analytics data seeded.")
+    print("??? DuckDB Analytics data seeded.")
 
 if __name__ == "__main__":
     seed_agent_data()
     seed_analytics_data()
-    print("🚀 All Intelligence Content seeded 100%.")
+    print("???? All Intelligence Content seeded 100%.")

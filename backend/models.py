@@ -1,508 +1,218 @@
 from __future__ import annotations
-
-import datetime as dt
 import uuid
-
+import datetime as dt
+from typing import List, Optional
 from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    Float,
-    ForeignKey,
-    Integer,
-    JSON,
-    String,
-    Text,
-    UniqueConstraint,
+    Column, Integer, String, Text, Boolean, DateTime, Date, 
+    ForeignKey, Numeric, JSON, Enum, Table, UniqueConstraint,
+    PrimaryKeyConstraint, func, cast
 )
-from sqlalchemy.orm import relationship
-
+from sqlalchemy.orm import relationship, backref
 from backend.core.database import Base
 
+# 1. IDENTITY & GAMIFICATION
+class Role(Base):
+    __tablename__ = "roles"
+    role_id = Column(Integer, primary_key=True)
+    name = Column(String(50), unique=True, nullable=False)
+    permissions = Column(JSON) 
+    role_users = relationship("User", back_populates="user_role_obj")
 
-class TimestampMixin:
-    created_at = Column(DateTime, default=dt.datetime.utcnow, nullable=False)
-    updated_at = Column(
-        DateTime,
-        default=dt.datetime.utcnow,
-        onupdate=dt.datetime.utcnow,
-        nullable=False,
-    )
+class Level(Base):
+    __tablename__ = "levels"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(50), unique=True, nullable=False)
+    min_xp = Column(Integer, default=0)
+    icon_key = Column(String(50), nullable=True)
 
-
-class User(Base, TimestampMixin):
+class User(Base):
     __tablename__ = "users"
-
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
-    password_hash = Column(String, nullable=False)
-    role = Column(String, default="estudiante", nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False)
+    username = Column(String(50), unique=True, nullable=False)
+    email = Column(String(100), unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    role_id = Column(Integer, ForeignKey("roles.role_id"), nullable=True)
+    role = Column(String(20), default="estudiante")
+    
+    xp = Column(Integer, default=0)
+    current_level_id = Column(Integer, ForeignKey("levels.id"), nullable=True)
+    
+    is_active = Column(Boolean, default=True)
+    is_email_verified = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=dt.datetime.utcnow)
+    updated_at = Column(DateTime, default=dt.datetime.utcnow, onupdate=dt.datetime.utcnow)
 
-    member = relationship("Member", back_populates="user", uselist=False)
+    user_role_obj = relationship("Role", back_populates="role_users")
     enrollments = relationship("Enrollment", back_populates="student")
-    testimonials = relationship("Testimonial", back_populates="author")
+    badges = relationship("UserBadge", back_populates="user")
+    ui_prefs = relationship("UserUIPreference", back_populates="user", uselist=False)
 
-
-class Testimonial(Base, TimestampMixin):
-    __tablename__ = "testimonials"
-
+class Badge(Base):
+    __tablename__ = "badges"
     id = Column(Integer, primary_key=True, index=True)
-    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    content = Column(Text, nullable=False)
-    emotion = Column(String, nullable=True)
-    is_approved = Column(Boolean, default=False, nullable=False)
-
-    author = relationship("User", back_populates="testimonials")
-
-
-class Course(Base, TimestampMixin):
-    __tablename__ = "courses"
-
-    id = Column(Integer, primary_key=True, index=True)
-    code = Column(String, unique=True, index=True, nullable=False)
-    title = Column(String, index=True, nullable=False)
+    name = Column(String(100), unique=True, nullable=False)
     description = Column(Text, nullable=True)
-    modality = Column(String, nullable=False)
-    is_published = Column(Boolean, default=True, nullable=False)
-    is_self_paced = Column(Boolean, default=False, nullable=False)
-    duration_hours = Column(Integer, default=0, nullable=False)
-    cohort_name = Column(String, nullable=True)
-    certificate_type = Column(String, nullable=True)
+    icon_key = Column(String(50), nullable=False)
+    xp_reward = Column(Integer, default=50)
 
-    lessons = relationship("Lesson", back_populates="course", cascade="all, delete-orphan")
-    enrollments = relationship("Enrollment", back_populates="course")
-    assessments = relationship("Assessment", back_populates="course", cascade="all, delete-orphan")
-    actas = relationship("FormalActa", back_populates="course", cascade="all, delete-orphan")
-
-
-class Lesson(Base, TimestampMixin):
-    __tablename__ = "lessons"
-
+class UserBadge(Base):
+    __tablename__ = "user_badges"
     id = Column(Integer, primary_key=True, index=True)
-    course_id = Column(Integer, ForeignKey("courses.id"), index=True, nullable=False)
-    title = Column(String, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    badge_id = Column(Integer, ForeignKey("badges.id"), nullable=False)
+    earned_at = Column(DateTime, default=dt.datetime.utcnow)
+
+    user = relationship("User", back_populates="badges")
+    badge = relationship("Badge")
+
+class UserUIPreference(Base):
+    __tablename__ = "user_ui_preferences"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    settings = Column(JSON, default={})
+    updated_at = Column(DateTime, default=dt.datetime.utcnow, onupdate=dt.datetime.utcnow)
+
+    user = relationship("User", back_populates="ui_prefs")
+
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    token = Column(String(255), unique=True, index=True, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    revoked = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=dt.datetime.utcnow)
+
+# 2. ACADEMY
+class Course(Base):
+    __tablename__ = "courses"
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String(20), unique=True, index=True, nullable=False)
+    title = Column(String(200), index=True, nullable=False)
+    description = Column(Text, nullable=True)
+    modality = Column(String(20), nullable=False)
+    is_published = Column(Boolean, default=True)
+    certificate_type = Column(String(50), nullable=True)
+    xp_per_lesson = Column(Integer, default=10)
+    created_at = Column(DateTime, default=dt.datetime.utcnow)
+
+    lessons = relationship("Lesson", back_populates="course")
+    enrollments = relationship("Enrollment", back_populates="course")
+    assessments = relationship("Assessment", back_populates="course")
+
+class Lesson(Base):
+    __tablename__ = "lessons"
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+    title = Column(String(200), nullable=False)
     content = Column(Text, nullable=False)
-    order_index = Column(Integer, default=0, nullable=False)
-    duration_minutes = Column(Integer, default=0, nullable=False)
+    order_index = Column(Integer, default=0)
 
     course = relationship("Course", back_populates="lessons")
-    resources = relationship("Resource", back_populates="lesson", cascade="all, delete-orphan")
-    submissions = relationship("AssignmentSubmission", back_populates="lesson", cascade="all, delete-orphan")
+    resources = relationship("Resource", back_populates="lesson")
 
-
-class Resource(Base, TimestampMixin):
+class Resource(Base):
     __tablename__ = "resources"
-
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, nullable=False)
-    file_url = Column(String, nullable=False)
-    resource_type = Column(String, nullable=False)
     lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=True)
-    course_id = Column(Integer, ForeignKey("courses.id"), nullable=True)
+    title = Column(String(200), nullable=False)
+    file_url = Column(Text, nullable=False)
+    resource_type = Column(String(50), nullable=False) 
+    created_at = Column(DateTime, default=dt.datetime.utcnow)
 
     lesson = relationship("Lesson", back_populates="resources")
 
-
-class Assessment(Base, TimestampMixin):
-    __tablename__ = "assessments"
-
+class CoursePrerequisite(Base):
+    __tablename__ = "course_prerequisites"
     id = Column(Integer, primary_key=True, index=True)
-    course_id = Column(Integer, ForeignKey("courses.id"), index=True, nullable=False)
-    title = Column(String, nullable=False)
-    description = Column(Text, nullable=True)
-    max_score = Column(Float, default=100, nullable=False)
-    passing_score = Column(Float, default=70, nullable=False)
-    is_published = Column(Boolean, default=True, nullable=False)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+    prerequisite_course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
 
-    course = relationship("Course", back_populates="assessments")
-    attempts = relationship("AssessmentAttempt", back_populates="assessment")
-
-
-class Enrollment(Base, TimestampMixin):
+class Enrollment(Base):
     __tablename__ = "enrollments"
     __table_args__ = (UniqueConstraint("user_id", "course_id", name="uq_user_course"),)
-
+    
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
-    course_id = Column(Integer, ForeignKey("courses.id"), index=True, nullable=False)
-    status = Column(String, default="active", nullable=False)
-    progress_percent = Column(Float, default=0, nullable=False)
-    final_grade = Column(Float, nullable=True)
-    attendance_percent = Column(Float, default=0, nullable=False)
-    approved = Column(Boolean, default=False, nullable=False)
-    acta_closed = Column(Boolean, default=False, nullable=False)
-    certificate_issued = Column(Boolean, default=False, nullable=False)
-    completed_at = Column(DateTime, nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+    status = Column(String(20), default="active")
+    progress_percent = Column(Numeric(5, 2), default=0)
+    lessons_completed = Column(JSON, default=[])
+    approved = Column(Boolean, default=False)
+    acta_closed = Column(Boolean, default=False)
+    certificate_issued = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=dt.datetime.utcnow)
 
     student = relationship("User", back_populates="enrollments")
     course = relationship("Course", back_populates="enrollments")
-    assessment_attempts = relationship("AssessmentAttempt", back_populates="enrollment", cascade="all, delete-orphan")
-    certificates = relationship("Certificate", back_populates="enrollment", cascade="all, delete-orphan")
-    attendances = relationship("Attendance", back_populates="enrollment")
 
-
-class AssessmentAttempt(Base, TimestampMixin):
-    __tablename__ = "assessment_attempts"
-
-    id = Column(Integer, primary_key=True, index=True)
-    assessment_id = Column(Integer, ForeignKey("assessments.id"), index=True, nullable=False)
-    enrollment_id = Column(Integer, ForeignKey("enrollments.id"), index=True, nullable=False)
-    submitted_score = Column(Float, nullable=False)
-    passed = Column(Boolean, default=False, nullable=False)
-
-    assessment = relationship("Assessment", back_populates="attempts")
-    enrollment = relationship("Enrollment", back_populates="assessment_attempts")
-
-
-class CoursePrerequisite(Base):
-    __tablename__ = "course_prerequisites"
-
-    id = Column(Integer, primary_key=True, index=True)
-    course_id = Column(Integer, ForeignKey("courses.id"), index=True, nullable=False)
-    prerequisite_course_id = Column(Integer, ForeignKey("courses.id"), index=True, nullable=False)
-
-
-class FormalActa(Base, TimestampMixin):
-    __tablename__ = "formal_actas"
-
+class Assessment(Base):
+    __tablename__ = "assessments"
     id = Column(Integer, primary_key=True, index=True)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
-    cohort_name = Column(String, nullable=True)
-    closed_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    min_grade = Column(Float, default=70, nullable=False)
-    min_attendance = Column(Float, default=80, nullable=False)
+    title = Column(String(200), nullable=False)
+    passing_score = Column(Numeric(5, 2), default=70)
+    is_published = Column(Boolean, default=True)
 
-    course = relationship("Course", back_populates="actas")
+    course = relationship("Course", back_populates="assessments")
 
-
-class Certificate(Base, TimestampMixin):
+class Certificate(Base):
     __tablename__ = "certificates"
-
     id = Column(Integer, primary_key=True, index=True)
-    enrollment_id = Column(Integer, ForeignKey("enrollments.id"), index=True, nullable=False)
-    certificate_code = Column(String, unique=True, index=True, nullable=False)
-    certificate_type = Column(String, nullable=True)
-    issued_at = Column(DateTime, default=dt.datetime.utcnow, nullable=False)
+    enrollment_id = Column(Integer, ForeignKey("enrollments.id"), nullable=False)
+    certificate_code = Column(String(50), unique=True, index=True)
+    certificate_type = Column(String(50), nullable=True)
+    issued_at = Column(DateTime, default=dt.datetime.utcnow)
 
-    enrollment = relationship("Enrollment", back_populates="certificates")
-
-
-class Family(Base, TimestampMixin):
-    __tablename__ = "families"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True, nullable=False)
-
-    members = relationship("Member", back_populates="family")
-
-
-class Member(Base, TimestampMixin):
+# 3. CRM, AUDIT & AGENTS
+class Member(Base):
     __tablename__ = "members"
-
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=True)
-    family_id = Column(Integer, ForeignKey("families.id"), nullable=True)
-    first_name = Column(String, index=True, nullable=False)
-    last_name = Column(String, index=True, nullable=False)
-    email = Column(String, index=True, nullable=True)
-    phone = Column(String, nullable=True)
-    role_in_family = Column(String, nullable=True)
-    church_role = Column(String, default="Miembro", nullable=False)
-    qr_token = Column(String, unique=True, index=True, default=lambda: str(uuid.uuid4()), nullable=False)
-    birthday = Column(DateTime, nullable=True)
-
-    user = relationship("User", back_populates="member")
-    family = relationship("Family", back_populates="members")
-    attendances = relationship("Attendance", back_populates="member")
-
-
-class Event(Base, TimestampMixin):
-    __tablename__ = "events"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True, nullable=False)
-    description = Column(Text, nullable=True)
-    event_type = Column(String, nullable=False)
-    day_of_week = Column(Integer, nullable=True)
-    month_day = Column(String, nullable=True)
-    fixed_date = Column(DateTime, nullable=True)
-
-    attendances = relationship("Attendance", back_populates="event")
-
-
-class Attendance(Base, TimestampMixin):
-    __tablename__ = "attendance"
-
-    id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(Integer, ForeignKey("members.id"), index=True, nullable=True)
-    event_id = Column(Integer, ForeignKey("events.id"), index=True, nullable=True)
-    enrollment_id = Column(Integer, ForeignKey("enrollments.id"), index=True, nullable=True)
-    attendance_date = Column(DateTime, default=dt.datetime.utcnow, index=True, nullable=False)
-    status = Column(String, default="attended", nullable=False)
-
-    member = relationship("Member", back_populates="attendances")
-    event = relationship("Event", back_populates="attendances")
-    enrollment = relationship("Enrollment", back_populates="attendances")
-
-
-class AssignmentSubmission(Base, TimestampMixin):
-    __tablename__ = "assignment_submissions"
-
-    id = Column(Integer, primary_key=True, index=True)
-    enrollment_id = Column(Integer, ForeignKey("enrollments.id"), index=True, nullable=False)
-    lesson_id = Column(Integer, ForeignKey("lessons.id"), index=True, nullable=False)
-    file_url = Column(String, nullable=False)
-    comment = Column(Text, nullable=True)
-    grade = Column(Float, nullable=True)
-    teacher_feedback = Column(Text, nullable=True)
-
-    enrollment = relationship("Enrollment")
-    lesson = relationship("Lesson", back_populates="submissions")
-
-
-class Announcement(Base, TimestampMixin):
-    __tablename__ = "announcements"
-
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, index=True, nullable=False)
-    content = Column(Text, nullable=False)
-    image_url = Column(String, nullable=True)
-    category = Column(String, default="General", nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False)
-
-
-class Sermon(Base, TimestampMixin):
-    __tablename__ = "sermons"
-
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, index=True, nullable=False)
-    description = Column(Text, nullable=True)
-    preacher = Column(String, nullable=False)
-    video_url = Column(String, nullable=True)
-    audio_url = Column(String, nullable=True)
-    thumbnail_url = Column(String, nullable=True)
-    duration = Column(String, nullable=True)
-    date = Column(DateTime, default=dt.datetime.utcnow, nullable=False)
-    views = Column(Integer, default=0, nullable=False)
-
-
-class Book(Base, TimestampMixin):
-    __tablename__ = "books"
-
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, index=True, nullable=False)
-    description = Column(Text, nullable=True)
-    author = Column(String, nullable=False)
-    cover_image_url = Column(String, nullable=True)
-    download_url = Column(String, nullable=True)
-    is_published = Column(Boolean, default=True, nullable=False)
-
-
-class PageContent(Base, TimestampMixin):
-    __tablename__ = "page_contents"
-
-    id = Column(Integer, primary_key=True, index=True)
-    page_key = Column(String, unique=True, index=True, nullable=False)
-    title = Column(String, nullable=True)
-    content = Column(Text, nullable=True)
-    image_url = Column(String, nullable=True)
-
-
-class PageContentVersion(Base, TimestampMixin):
-    __tablename__ = "page_content_versions"
-
-    id = Column(Integer, primary_key=True, index=True)
-    page_content_id = Column(Integer, ForeignKey("page_contents.id"), nullable=False)
-    title = Column(String, nullable=True)
-    content = Column(Text, nullable=True)
-    image_url = Column(String, nullable=True)
-
-    page_content = relationship("PageContent")
-
-
-class Volunteer(Base, TimestampMixin):
-    __tablename__ = "volunteers"
-
-    id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(Integer, ForeignKey("members.id"), nullable=True)
-    name = Column(String, nullable=False)
-    role = Column(String, nullable=False)
-    assigned_event = Column(String, nullable=False)
-    status = Column(String, default="Pendiente", nullable=False)
-
-
-class ConsolidationPipeline(Base, TimestampMixin):
-    __tablename__ = "consolidation_pipeline"
-
-    id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String, index=True, nullable=False)
-    last_name = Column(String, index=True, nullable=False)
-    phone = Column(String, nullable=False)
-    source = Column(String, nullable=False)
-    stage = Column(String, default="new", nullable=False)
-    notes = Column(Text, nullable=True)
-    prayer_requests = Column(Text, nullable=True)
-    assigned_pastor_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    is_automation_paused = Column(Boolean, default=False, nullable=False)
-
-    call_logs = relationship("PastoralCallLog", back_populates="lead", cascade="all, delete-orphan")
-
-
-class PastoralCallLog(Base, TimestampMixin):
-    __tablename__ = "pastoral_call_logs"
-
-    id = Column(Integer, primary_key=True, index=True)
-    lead_id = Column(Integer, ForeignKey("consolidation_pipeline.id"), index=True, nullable=False)
-    pastor_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    outcome = Column(String, nullable=False)
-    notes = Column(Text, nullable=True)
-    prayer_requests = Column(Text, nullable=True)
-
-    lead = relationship("ConsolidationPipeline", back_populates="call_logs")
-
-
-class ConsolidationAutomation(Base, TimestampMixin):
-    __tablename__ = "consolidation_automations"
-
-    id = Column(Integer, primary_key=True, index=True)
-    stage = Column(String, index=True, nullable=False)
-    delay_days = Column(Integer, default=0, nullable=False)
-    channel = Column(String, nullable=False)
-    template = Column(Text, nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False)
-
-
-class CounselingSession(Base, TimestampMixin):
-    __tablename__ = "counseling_sessions"
-
-    id = Column(Integer, primary_key=True, index=True)
-    pastor_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
-    member_id = Column(Integer, ForeignKey("members.id"), nullable=True, index=True)
-    lead_id = Column(Integer, ForeignKey("consolidation_pipeline.id"), nullable=True, index=True)
-    scheduled_at = Column(DateTime, nullable=False)
-    duration_minutes = Column(Integer, default=60, nullable=False)
-    status = Column(String, default="Pendiente", nullable=False)
-    topic = Column(String, nullable=True)
-    summary = Column(Text, nullable=True)
-    confidential_notes = Column(Text, nullable=True)
-
-    member = relationship("Member")
-    lead = relationship("ConsolidationPipeline")
-
-
-class Donation(Base, TimestampMixin):
-    __tablename__ = "donations"
-
-    id = Column(Integer, primary_key=True, index=True)
-    amount = Column(Float, nullable=False)
-    currency = Column(String, default="USD", nullable=False)
-    donor_name = Column(String, nullable=True)
-    donor_email = Column(String, nullable=True)
-    donation_type = Column(String, default="Ofrenda General", nullable=False)
-    status = Column(String, default="completada", nullable=False)
-
-
-class CommunicationLog(Base, TimestampMixin):
-    __tablename__ = "communication_logs"
-
-    id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(Integer, ForeignKey("members.id"), index=True, nullable=False)
-    channel = Column(String, nullable=False)
-    content = Column(Text, nullable=False)
-
-
-class MediaAsset(Base, TimestampMixin):
-    __tablename__ = "media_assets"
-
-    id = Column(Integer, primary_key=True, index=True)
-    filename = Column(String, nullable=False)
-    url = Column(String, nullable=False)
-    mime_type = Column(String, nullable=True)
-    size_bytes = Column(Integer, nullable=True)
-
-
-class ContentMetric(Base, TimestampMixin):
-    __tablename__ = "content_metrics"
-
-    id = Column(Integer, primary_key=True, index=True)
-    content_type = Column(String, nullable=False)
-    content_id = Column(Integer, nullable=False)
-    metric_type = Column(String, nullable=False, default="view")
-    value = Column(Integer, default=0, nullable=False)
-
-
-class Capability(Base, TimestampMixin):
-    __tablename__ = "mesh_capabilities"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True, nullable=False)
-    description = Column(Text, nullable=False)
-    version = Column(String, default="1.0.0", nullable=False)
-    tools_schema = Column(Text, nullable=True)
-    input_metadata = Column(Text, nullable=True)
-    output_metadata = Column(Text, nullable=True)
-    is_active = Column(Boolean, default=True, nullable=False)
-    last_registered_at = Column(DateTime, default=dt.datetime.utcnow, nullable=False)
-
-
-class GloryHouse(Base, TimestampMixin):
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    first_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=False)
+    email = Column(String(100), nullable=True)
+    church_role = Column(String(50), default="Miembro")
+    
+class GloryHouse(Base):
     __tablename__ = "glory_houses"
-
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True, nullable=False)
-    zone = Column(String, index=True, nullable=False)
-    leader_name = Column(String, nullable=False)
-    members_count = Column(Integer, default=0, nullable=False)
-    schedule = Column(String, nullable=False)
-    status = Column(String, default="Activo", nullable=False)
+    name = Column(String(100), nullable=False)
+    leader_name = Column(String(100), nullable=True)
+    status = Column(String(20), default="active")
 
-
-class AgentTask(Base, TimestampMixin):
-    __tablename__ = "agent_tasks"
-
+class Donation(Base):
+    __tablename__ = "donations"
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, nullable=False)
-    description = Column(Text, nullable=True)
-    status = Column(String, default="pending", nullable=False)
-    source = Column(String, nullable=False)
-    assignee = Column(String, nullable=True)
-    priority = Column(String, default="medium", nullable=False)
-    extra = Column(Text, nullable=True)
+    amount = Column(Numeric(12, 2), nullable=False)
+    donor_name = Column(String(200), nullable=True)
+    created_at = Column(DateTime, default=dt.datetime.utcnow)
 
-
-class AgentInsight(Base, TimestampMixin):
-    __tablename__ = "agent_insights"
-
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, nullable=False)
-    insight_type = Column(String, nullable=False)
-    payload = Column(Text, nullable=False)
-    acknowledged = Column(Boolean, default=False, nullable=False)
-
-
-class RefreshToken(Base, TimestampMixin):
-    __tablename__ = "refresh_tokens"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    token = Column(String, unique=True, index=True, nullable=False)
-    expires_at = Column(DateTime, nullable=False)
-    revoked = Column(Boolean, default=False, nullable=False)
-
-    user = relationship("User")
-
-
-class AdminAuditLog(Base, TimestampMixin):
+class AdminAuditLog(Base):
     __tablename__ = "admin_audit_logs"
-
     id = Column(Integer, primary_key=True, index=True)
     actor_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    action = Column(String, nullable=False)
-    resource_type = Column(String, nullable=False)
-    resource_id = Column(String, nullable=True)
+    action = Column(String(50), nullable=False)
+    resource_type = Column(String(50), nullable=False)
+    resource_id = Column(String(100), nullable=True)
     action_data = Column(JSON, nullable=True)
-    ip_address = Column(String, nullable=True)
+    created_at = Column(DateTime, default=dt.datetime.utcnow)
 
-    actor = relationship("User")
+class AgentInsight(Base):
+    __tablename__ = "agent_insights"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False)
+    insight_type = Column(String(50), nullable=False)
+    payload = Column(Text, nullable=False)
+    acknowledged = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=dt.datetime.utcnow)
+
+class AgentTask(Base):
+    __tablename__ = "agent_tasks"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    status = Column(String(50), default="pending")
+    priority = Column(String(20), default="medium")
+    source = Column(String(50), default="agent")
+    created_at = Column(DateTime, default=dt.datetime.utcnow)

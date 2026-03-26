@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { apiUrl } from "../lib/api";
+import { apiFetch, ApiError } from "@/lib/http";
 
 interface Enrollment {
   id: number;
@@ -37,7 +38,7 @@ interface MyEnrollmentsProps {
   refreshToken: number;
 }
 
-import { CheckCircle, Award, FileText, Send, AlertCircle, Info, ArrowRight, Play, BookOpen, ChevronRight, X as CloseIcon, Loader2, BookMarked, School, Paperclip, Upload, File } from "lucide-react";
+import { CheckCircle, Award, FileText, Send, AlertCircle, Info, ArrowRight, Play, BookOpen, ChevronRight, X as CloseIcon, Loader2, BookMarked, School, Paperclip, Upload, File, Clock } from "lucide-react";
 import { useToast } from "@/context/ToastContext";
 import { useMeshSocket } from "@/hooks/useMeshSocket";
 import CertificateModal from "./CertificateModal";
@@ -72,7 +73,7 @@ export default function MyEnrollments({ userId, token, refreshToken }: MyEnrollm
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [loadingLessons, setLoadingLessons] = useState(false);
 
-  const loadEnrollments = async () => {
+  const loadEnrollments = useCallback(async () => {
     if (!token) {
       setEnrollments([]);
       setLoading(false);
@@ -81,104 +82,80 @@ export default function MyEnrollments({ userId, token, refreshToken }: MyEnrollm
 
     setLoading(true);
     try {
-      const response = await fetch(apiUrl(`/users/${userId}/enrollments`), {
+      const data = await apiFetch<Enrollment[]>(`/users/${userId}/enrollments`, {
+        token,
         cache: "no-store",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
-      if (!response.ok) {
-        setEnrollments([]);
-        return;
-      }
-      const data: Enrollment[] = await response.json();
-      setEnrollments(data);
+      const normalized = Array.isArray(data) ? data : [];
+      setEnrollments(normalized);
 
-      data.forEach(async (item) => {
-        if (item.status === 'active' || item.status === 'enrolled') {
-          try {
-            fetch(apiUrl(`/enrollments/${item.id}/check-in`), {
-              method: "POST",
-              headers: { Authorization: `Bearer ${token}` }
-            });
-          } catch (e) { }
+      normalized.forEach((item) => {
+        if (item.status === "active" || item.status === "enrolled") {
+          apiFetch(`/enrollments/${item.id}/check-in`, {
+            method: "POST",
+            token,
+          }).catch(() => {});
         }
       });
 
       const assessmentsEntries = await Promise.all(
-        data.map(async (item) => {
-          const assessmentsResponse = await fetch(apiUrl(`/courses/${item.course.id}/assessments`), {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          if (!assessmentsResponse.ok) {
+        normalized.map(async (item) => {
+          try {
+            const assessments = await apiFetch<Assessment[]>(`/courses/${item.course.id}/assessments`, {
+              token,
+              cache: "no-store",
+            });
+            return [item.course.id, Array.isArray(assessments) ? assessments : []] as const;
+          } catch {
             return [item.course.id, []] as const;
           }
-          const assessments = (await assessmentsResponse.json()) as Assessment[];
-          return [item.course.id, assessments] as const;
         })
       );
       setAssessmentsByCourse(Object.fromEntries(assessmentsEntries));
 
-      const certificateResponse = await fetch(apiUrl(`/users/${userId}/certificates`), {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (certificateResponse.ok) {
-        const certificates = (await certificateResponse.json()) as Certificate[];
+      try {
+        const certificates = await apiFetch<Certificate[]>(`/users/${userId}/certificates`, {
+          token,
+          cache: "no-store",
+        });
         const mapped: Record<number, Certificate> = {};
-        certificates.forEach((cert) => {
+        (Array.isArray(certificates) ? certificates : []).forEach((cert) => {
           mapped[cert.enrollment_id] = cert;
         });
         setCertificatesByEnrollment(mapped);
+      } catch {
+        setCertificatesByEnrollment({});
       }
     } catch (error) {
+      console.error("Error loading enrollments", error);
       setEnrollments([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, userId]);
 
   useEffect(() => {
     loadEnrollments();
-  }, [userId, token, refreshToken]);
+  }, [loadEnrollments, refreshToken]);
 
   // Handle Mesh Events
   useEffect(() => {
     if (lastEvent) {
-      try {
-        const payload = JSON.parse(lastEvent);
-        if (payload.event === "MESH_EVENT_ASSESSMENT_SCORED" && payload.user_id === userId) {
-          addToast(`Examen calificado: ${payload.score}% - ${payload.passed ? 'Aprobado' : 'Reprobado'}`, payload.passed ? 'success' : 'error');
-          loadEnrollments();
-        }
-      } catch (e) {
-        console.error("Error parsing mesh event", e);
+      if (lastEvent.event === "MESH_EVENT_ASSESSMENT_SCORED" && lastEvent.user_id === userId) {
+        addToast(`Examen calificado: ${lastEvent.score}% - ${lastEvent.passed ? 'Aprobado' : 'Reprobado'}`, lastEvent.passed ? 'success' : 'error');
+        loadEnrollments();
       }
     }
-  }, [lastEvent]);
+  }, [lastEvent, addToast, userId, loadEnrollments]);
 
   const submitAssessment = async (enrollmentId: number, assessmentId: number) => {
     const score = parseFloat(scoreByAssessment[assessmentId] || "0");
     try {
-      const response = await fetch(apiUrl(`/enrollments/${enrollmentId}/assessments/${assessmentId}/submit`), {
+      const result = await apiFetch<{ passed: boolean }>(`/enrollments/${enrollmentId}/assessments/${assessmentId}/submit`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ submitted_score: score }),
+        token,
+        body: { submitted_score: score },
       });
-
-      if (!response.ok) {
-        const err = await response.json();
-        setMessageByEnrollment(prev => ({ ...prev, [enrollmentId]: err.detail || "Error al calificar" }));
-        return;
-      }
-
-      const result = await response.json();
       setMessageByEnrollment(prev => ({
         ...prev,
         [enrollmentId]: result.passed ? "¡Felicidades! Has aprobado el curso." : "No alcanzaste la nota mínima."
@@ -187,7 +164,8 @@ export default function MyEnrollments({ userId, token, refreshToken }: MyEnrollm
       loadEnrollments();
 
     } catch (error) {
-      setMessageByEnrollment(prev => ({ ...prev, [enrollmentId]: "Error de conexión" }));
+      const detail = error instanceof ApiError ? (error.detail as any)?.detail : null;
+      setMessageByEnrollment(prev => ({ ...prev, [enrollmentId]: detail || "Error al calificar" }));
     }
   };
 
@@ -195,15 +173,14 @@ export default function MyEnrollments({ userId, token, refreshToken }: MyEnrollm
     setViewingLessonsCourse(enrollment);
     setLoadingLessons(true);
     try {
-      const res = await fetch(apiUrl(`/courses/${enrollment.course.id}/lessons`), {
-        headers: { Authorization: `Bearer ${token}` }
+      const data = await apiFetch<Lesson[]>(`/courses/${enrollment.course.id}/lessons`, {
+        token,
+        cache: "no-store",
       });
-      if (res.ok) {
-        const data = await res.json();
-        setLessons(data);
-        if (data.length > 0) {
-          setSelectedLesson(data[0]);
-        }
+      const normalized = Array.isArray(data) ? data : [];
+      setLessons(normalized);
+      if (normalized.length > 0) {
+        setSelectedLesson(normalized[0]);
       }
     } catch (err) {
       addToast("Error al cargar lecciones", "error");
@@ -291,9 +268,9 @@ export default function MyEnrollments({ userId, token, refreshToken }: MyEnrollm
                       <div className="space-y-4">
                         <h4 className="text-sm font-bold text-white flex items-center gap-2"><Paperclip size={18} className="text-primary" /> Material de Estudio</h4>
                         <div className="space-y-2">
-                          {selectedLesson.resources && selectedLesson.resources.length > 0 ? (
-                            selectedLesson.resources.map((res: any) => (
-                              <a key={res.id} href={res.file_url.startsWith('http') ? res.file_url : `${apiUrl('')}${res.file_url}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 bg-slate-900 border border-white/5 rounded-2xl hover:border-primary/50 transition-all group">
+                            {selectedLesson.resources && selectedLesson.resources.length > 0 ? (
+                              selectedLesson.resources.map((res: any) => (
+                                <a key={res.id} href={res.file_url?.startsWith('http') ? res.file_url : apiUrl(res.file_url || '')} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 bg-slate-900 border border-white/5 rounded-2xl hover:border-primary/50 transition-all group">
                                 <div className="flex items-center gap-3">
                                   <div className="p-2 bg-primary/10 rounded-lg text-primary"><File size={16} /></div>
                                   <span className="text-xs font-medium text-slate-300 group-hover:text-white">{res.title}</span>
@@ -320,21 +297,21 @@ export default function MyEnrollments({ userId, token, refreshToken }: MyEnrollm
                               className="hidden"
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
-                                if (file && viewingLessonsCourse) {
-                                  const formData = new FormData();
-                                  formData.append('file', file);
-                                  formData.append('enrollment_id', viewingLessonsCourse.id.toString());
-                                  fetch(apiUrl(`/lessons/${selectedLesson.id}/submit-assignment`), {
-                                    method: 'POST',
-                                    headers: { Authorization: `Bearer ${token}` },
-                                    body: formData
-                                  })
-                                    .then(res => res.ok ? addToast("Tarea entregada", "success") : addToast("Error", "error"))
-                                    .catch(() => addToast("Error", "error"));
-                                }
-                              }}
-                            />
-                            Subir Archivo
+                                  if (file && viewingLessonsCourse) {
+                                    const formData = new FormData();
+                                    formData.append('file', file);
+                                    formData.append('enrollment_id', viewingLessonsCourse.id.toString());
+                                    apiFetch(`/lessons/${selectedLesson.id}/submit-assignment`, {
+                                      method: 'POST',
+                                      token,
+                                      body: formData
+                                    })
+                                      .then(() => addToast("Tarea entregada", "success"))
+                                      .catch(() => addToast("Error al subir archivo", "error"));
+                                  }
+                                }}
+                              />
+                              Subir Archivo
                           </label>
                         </div>
                       </div>
@@ -359,42 +336,57 @@ export default function MyEnrollments({ userId, token, refreshToken }: MyEnrollm
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-loose">No tienes cursos activos.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3 px-4">
+        <div className="flex flex-col gap-2">
           {enrollments.map((item) => {
             const progressCircumference = 263.89;
             const progressOffset = progressCircumference - (progressCircumference * item.progress_percent) / 100;
 
             return (
-              <article key={item.id} className="glass p-4 rounded-2xl flex flex-col gap-3">
-                <div className="flex gap-4 items-center cursor-pointer group" onClick={() => openLessons(item)}>
-                  <div className="relative flex size-14 shrink-0 items-center justify-center">
-                    <svg className="absolute inset-0 size-14 -rotate-90" viewBox="0 0 100 100">
-                      <circle className="text-white/5 stroke-current" cx="50" cy="50" fill="transparent" r="42" strokeWidth="8"></circle>
-                      <circle className="text-primary stroke-current transition-all duration-1000 ease-out" cx="50" cy="50" fill="transparent" r="42" strokeLinecap="round" strokeWidth="8" style={{ strokeDasharray: progressCircumference, strokeDashoffset: progressOffset }}></circle>
+              <article key={item.id} className="bg-white dark:bg-black/20 border border-[#e8eaed] dark:border-white/5 p-4 rounded-3xl flex flex-col gap-3 group hover:border-indigo-500/30 transition-all hover:shadow-xl hover:shadow-indigo-500/5 cursor-pointer" onClick={() => openLessons(item)}>
+                <div className="flex gap-4 items-center relative">
+                  <div className="relative flex size-12 shrink-0 items-center justify-center">
+                    <svg className="absolute inset-0 size-12 -rotate-90" viewBox="0 0 100 100">
+                      <circle className="text-slate-100 dark:text-white/5 stroke-current" cx="50" cy="50" fill="transparent" r="42" strokeWidth="10"></circle>
+                      <circle className="text-indigo-600 stroke-current transition-all duration-1000 ease-out" cx="50" cy="50" fill="transparent" r="42" strokeLinecap="round" strokeWidth="10" style={{ strokeDasharray: progressCircumference, strokeDashoffset: progressOffset }}></circle>
                     </svg>
-                    <span className="material-symbols-outlined text-2xl text-primary group-hover:scale-110 transition-transform">
-                      {item.course.modality === 'formal' ? 'school' : 'menu_book'}
-                    </span>
+                    <div className="z-10 text-indigo-600 dark:text-indigo-400">
+                      {item.course.modality === 'formal' ? <School size={16} /> : <BookOpen size={16} />}
+                    </div>
                   </div>
 
                   <div className="flex flex-1 flex-col justify-center min-w-0">
                     <div className="flex justify-between items-start">
-                      <h3 className="font-bold text-base truncate pr-2 text-white">{item.course.title}</h3>
-                      <span className="text-[9px] font-bold text-primary px-1.5 py-0.5 rounded bg-primary/10 shrink-0">{Math.round(item.progress_percent)}%</span>
+                      <h3 className="font-bold text-[14px] truncate pr-2 text-slate-800 dark:text-white tracking-tight">{item.course.title}</h3>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                         <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 uppercase tracking-widest">{Math.round(item.progress_percent)}%</span>
+                         <ChevronRight size={14} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                      </div>
                     </div>
-                    <p className="text-slate-400 text-xs line-clamp-1 capitalize">{item.course.modality.replace('_', ' ')}</p>
+                    <div className="flex items-center gap-3 mt-0.5">
+                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+                            <Clock size={10} />
+                            {item.course.modality.replace('_', ' ')}
+                        </p>
+                        <div className="w-1 h-1 rounded-full bg-slate-200 dark:bg-white/10" />
+                        <p className="text-slate-400 text-[10px] font-medium truncate">En progreso</p>
+                    </div>
                   </div>
-                  <span className="material-symbols-outlined text-slate-600">chevron_right</span>
                 </div>
 
-                <div className="flex gap-2 border-white/5 empty:hidden pt-2 border-t">
+                <div className="flex gap-2 empty:hidden pt-2 border-t border-slate-50 dark:border-white/5">
                   {item.approved && certificatesByEnrollment[item.id] ? (
-                    <button onClick={() => setSelectedCertificate({ cert: certificatesByEnrollment[item.id], enrollment: item })} className="flex-1 py-2 bg-emerald-500/10 text-emerald-400 rounded-xl text-xs font-bold transition-all flex justify-center gap-2">
-                      Ver Certificado <Award size={14} />
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); setSelectedCertificate({ cert: certificatesByEnrollment[item.id], enrollment: item }); }} 
+                        className="flex-1 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
+                    >
+                      <Award size={12} /> Certificado Disponible
                     </button>
                   ) : !item.approved && item.progress_percent >= 90 && (
-                    <button onClick={() => setActiveExam(item.id)} className="flex-1 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex justify-center gap-2">
-                      Tomar Examen <ArrowRight size={14} />
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); setActiveExam(item.id); }} 
+                        className="flex-1 py-1.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
+                    >
+                      Tomar Examen <ArrowRight size={12} />
                     </button>
                   )}
                 </div>

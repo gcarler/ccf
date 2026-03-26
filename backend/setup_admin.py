@@ -1,6 +1,11 @@
-from backend.security import get_password_hash
-from backend.database import SessionLocal
-from backend import models
+try:
+    from backend.security import get_password_hash
+    from backend.core.database import SessionLocal
+    from backend import models
+except ImportError:
+    from security import get_password_hash
+    from core.database import SessionLocal
+    import models
 
 def create_admin():
     db = SessionLocal()
