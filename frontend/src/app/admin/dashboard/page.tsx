@@ -189,7 +189,7 @@ export default function AdminDashboard() {
                                     <h5 className="text-[10px] font-black uppercase tracking-widest">IA Insights</h5>
                                 </div>
                                 <p className="text-[11px] font-bold text-slate-400 leading-relaxed uppercase tracking-wider">
-                                    "La participación ha subido un 15% en los cursos no formales. Se recomienda potenciar la ruta formal para el próximo trimestre."
+                                    &quot;La participación ha subido un 15% en los cursos no formales. Se recomienda potenciar la ruta formal para el próximo trimestre.&quot;
                                 </p>
                             </div>
                         </div>

@@ -8,6 +8,7 @@ import type { CourseSummary, DashboardMetrics, PilotReadiness } from '@/types/ac
 import { GraduationCap, Target, AlertTriangle, BarChart3, Loader2, Users, ShieldCheck, Download, Filter } from 'lucide-react';
 import clsx from 'clsx';
 import { toast } from 'sonner';
+import { DSMetric, DSCard, DSBadge } from '@/design';
 
 export default function CoordinationConsole() {
     const { token, user, isAuthenticated } = useAuth();
@@ -86,7 +87,7 @@ export default function CoordinationConsole() {
             <main className="flex-1 overflow-y-auto p-8 lg:p-12 space-y-10">
                 {!isCoordination && (
                     <div className="border border-rose-300 bg-rose-100 text-rose-800 rounded-3xl px-6 py-4 text-sm font-semibold">
-                        Esta consola está restringida al equipo académico. Tus permisos actuales son "{user?.role || 'estudiante'}".
+                        Esta consola está restringida al equipo académico. Tus permisos actuales son &quot;{user?.role || 'estudiante'}&quot;.
                     </div>
                 )}
 
@@ -96,9 +97,9 @@ export default function CoordinationConsole() {
 
                 {metrics && (
                     <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <CoordStat icon={Users} label="Cursos totales" value={metrics.total_courses} tone="blue" />
-                        <CoordStat icon={BarChart3} label="Inscripciones" value={metrics.total_enrollments} tone="emerald" />
-                        <CoordStat icon={Target} label="Formal aprobados" value={metrics.approved_formal_enrollments} tone="amber" />
+                        <DSMetric label="Cursos totales" value={String(metrics.total_courses)} trend="+4 cohortes" tone="blue" />
+                        <DSMetric label="Inscripciones" value={String(metrics.total_enrollments)} trend="Semana actual" tone="emerald" />
+                        <DSMetric label="Formales aprobados" value={String(metrics.approved_formal_enrollments)} trend="Actas activas" tone="amber" />
                     </section>
                 )}
 
@@ -140,21 +141,21 @@ export default function CoordinationConsole() {
                     </section>
                 )}
 
-                {courses.length > 0 && (
-                    <section className="rounded-[2.5rem] border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] shadow-xl">
-                        <header className="px-6 py-5 border-b border-slate-100 dark:border-white/5 space-y-3">
+                {filteredCourses.length > 0 && (
+                    <DSCard tone="light" className="shadow-2xl">
+                        <header className="px-6 py-5 border-b border-slate-100 space-y-3">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Cohortes formales</p>
-                                    <h3 className="text-xl font-black text-slate-900 dark:text-white">Seguimiento de actas y certificados</h3>
+                                    <DSBadge tone="blue" label="Cohortes formales" />
+                                    <h3 className="text-xl font-black text-slate-900">Seguimiento de actas y certificados</h3>
                                 </div>
-                                <button onClick={downloadSnapshot} className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.3em] px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5">
+                                <button onClick={downloadSnapshot} className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.3em] px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50">
                                     <Download size={14} /> Reporte
                                 </button>
                             </div>
                             <div className="flex flex-col lg:flex-row lg:items-center lg:gap-4 gap-3">
                                 <div className="flex items-center gap-2 flex-1">
-                                    <div className="rounded-2xl bg-slate-100 dark:bg-white/5 px-3 py-2 flex items-center gap-2 flex-1">
+                                    <div className="rounded-2xl bg-slate-100 px-3 py-2 flex items-center gap-2 flex-1">
                                         <Filter size={16} className="text-slate-400" />
                                         <input
                                             value={search}
@@ -166,7 +167,7 @@ export default function CoordinationConsole() {
                                     <select
                                         value={modalityFilter}
                                         onChange={(e) => setModalityFilter(e.target.value as 'all' | 'formal' | 'non_formal')}
-                                        className="rounded-2xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                                        className="rounded-2xl border border-slate-200 bg-transparent px-3 py-2 text-sm"
                                     >
                                         <option value="all">Todas las modalidades</option>
                                         <option value="formal">Formal</option>
@@ -188,8 +189,8 @@ export default function CoordinationConsole() {
                                 </thead>
                                 <tbody>
                                     {filteredCourses.map((course) => (
-                                        <tr key={course.id} className="border-t border-slate-100 dark:border-white/5">
-                                            <td className="px-6 py-4 font-semibold text-slate-900 dark:text-white">{course.title}</td>
+                                        <tr key={course.id} className="border-t border-slate-100">
+                                            <td className="px-6 py-4 font-semibold text-slate-900">{course.title}</td>
                                             <td className="px-6 py-4 text-slate-500">{course.cohort_name || 'Sin asignar'}</td>
                                             <td className="px-6 py-4">{course.modality === 'formal' ? 'Formal' : 'No formal'}</td>
                                             <td className="px-6 py-4 text-slate-500">{course.certificate_type || 'Pendiente'}</td>
@@ -198,28 +199,9 @@ export default function CoordinationConsole() {
                                 </tbody>
                             </table>
                         </div>
-                    </section>
+                    </DSCard>
                 )}
             </main>
-        </div>
-    );
-}
-
-function CoordStat({ icon: Icon, label, value, tone }: { icon: any; label: string; value: number | string; tone: 'blue' | 'emerald' | 'amber' }) {
-    const styles = {
-        blue: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
-        emerald: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30',
-        amber: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
-    };
-    return (
-        <div className="rounded-[2.5rem] bg-white dark:bg-[#111418] border border-slate-200 dark:border-white/5 shadow-sm p-6 flex items-center gap-4">
-            <div className={clsx('size-12 rounded-2xl flex items-center justify-center border', styles[tone])}>
-                <Icon size={22} />
-            </div>
-            <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-1">{label}</p>
-                <p className="text-2xl font-black text-slate-900 dark:text-white">{value}</p>
-            </div>
         </div>
     );
 }

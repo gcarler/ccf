@@ -21,82 +21,160 @@ import {
     User,
     LogOut,
     ExternalLink,
-    ShieldCheck
+    ShieldCheck,
+    PanelLeftOpen,
+    X,
+    GripVertical
 } from 'lucide-react';
+import clsx from 'clsx';
 import { useTheme } from '@/app/theme/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as Popover from '@radix-ui/react-popover';
 import { usePathname } from 'next/navigation';
 
-export default function WorkspaceLayout({
-    children,
-    sidebarTitle,
-    sidebarSections = []
-}: {
-    children: React.ReactNode,
-    sidebarTitle: string,
-    sidebarSections?: any[]
-}) {
+export default function WorkspaceLayout({ children, sidebarTitle = "CCF Platform", sidebarSections: _sidebarSections }: { children: React.ReactNode, sidebarTitle?: string, sidebarSections?: any[] }) {
+    // Provide a default fallback so the Gray Tool Panel is globally available
+    const sidebarSections = _sidebarSections && _sidebarSections.length > 0 ? _sidebarSections : [
+        { label: 'General' }
+    ];
     const { theme, toggleTheme } = useTheme();
     const { user, logout } = useAuth();
     const pathname = usePathname();
-    const [sidebarMode, setSidebarMode] = useState<'full' | 'mini' | 'hidden'>('full');
+    const [blackSidebarVisible, setBlackSidebarVisible] = useState(true);
+    const [graySidebarMode, setGraySidebarMode] = useState<'full' | 'mini' | 'hidden'>('full');
     const [showInbox, setShowInbox] = useState(false);
     const [showAiChat, setShowAiChat] = useState(false);
 
     useEffect(() => {
-        const savedMode = localStorage.getItem('ccf_sidebar_mode') as 'full' | 'mini' | 'hidden';
-        if (savedMode) setSidebarMode(savedMode);
+        const savedBlack = localStorage.getItem('ccf_black_sidebar') !== 'false';
+        setBlackSidebarVisible(savedBlack);
+
+        const savedGray = localStorage.getItem('ccf_gray_sidebar') as 'full' | 'mini' | 'hidden';
+        if (savedGray) setGraySidebarMode(savedGray);
     }, []);
 
-    const cycleSidebar = () => {
-        setSidebarMode(prev => {
-            const next = prev === 'full' ? 'mini' : prev === 'mini' ? 'hidden' : 'full';
-            localStorage.setItem('ccf_sidebar_mode', next);
-            return next;
-        });
+    const handleSetGrayMode = (mode: 'full' | 'mini' | 'hidden') => {
+        setGraySidebarMode(mode);
+        localStorage.setItem('ccf_gray_sidebar', mode);
+    };
+
+    const handleSetBlackMode = (visible: boolean) => {
+        setBlackSidebarVisible(visible);
+        localStorage.setItem('ccf_black_sidebar', visible ? 'true' : 'false');
     };
 
     return (
         <ProtectedRoute>
-            <div className="flex h-screen w-full bg-white dark:bg-[#1e1f21] overflow-hidden transition-colors duration-500 font-sans">
+            <div className="flex h-screen w-full bg-slate-50 dark:bg-[#111213] overflow-hidden transition-colors duration-500 font-sans">
                 
                 <AnimatePresence mode="popLayout">
-                    {sidebarMode !== 'hidden' && (
+                    {blackSidebarVisible && (
                         <motion.div 
-                            initial={{ x: -100, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            exit={{ x: -100, opacity: 0 }}
-                            className="flex shrink-0 z-50"
+                            initial={{ x: -80, width: 0, opacity: 0 }}
+                            animate={{ x: 0, width: 'auto', opacity: 1 }}
+                            exit={{ x: -80, width: 0, opacity: 0 }}
+                            className="flex shrink-0 z-50 h-[100dvh] py-[10vh] pl-4"
                         >
-                            <WorkspaceMiniSidebar isMini={sidebarMode === 'mini'} />
-                            {sidebarMode === 'full' && (
-                                <WorkspaceMainSidebar title={sidebarTitle} sections={sidebarSections} />
-                            )}
+                            <WorkspaceMiniSidebar onHide={() => handleSetBlackMode(false)} />
                         </motion.div>
                     )}
                 </AnimatePresence>
 
-                <div className="flex-1 flex flex-col min-w-0 relative">
-                    <header className="h-12 border-b border-slate-100 dark:border-white/5 flex items-center justify-between px-4 bg-white dark:bg-[#1e1f21] shrink-0 z-40">
-                        <div className="flex items-center gap-3">
-                            <Tooltip content="Cambiar navegación">
-                                <button onClick={cycleSidebar} className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-500 transition-all border border-transparent">
-                                    {sidebarMode === 'full' ? <PanelLeftClose size={18} /> : <PanelLeft size={18} />}
-                                </button>
-                            </Tooltip>
+                {/* Extracted Gray Tool Panel */}
+                <AnimatePresence mode="popLayout">
+                    {graySidebarMode !== 'hidden' && sidebarSections && sidebarSections.length > 0 && (
+                        <motion.div 
+                            initial={{ x: -210, width: 0, opacity: 0 }}
+                            animate={{ x: 0, width: graySidebarMode === 'mini' ? 52 : 210, opacity: 1 }}
+                            exit={{ x: -210, width: 0, opacity: 0 }}
+                            className="flex shrink-0 z-40 h-[100dvh] overflow-hidden py-0 pl-0 border-r border-slate-200 dark:border-white/5"
+                            layout
+                        >
+                            <WorkspaceMainSidebar title={sidebarTitle} sections={sidebarSections} isMini={graySidebarMode === 'mini'} />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                    {!blackSidebarVisible && (
+                        <motion.button
+                            initial={{ x: -100, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: -100, opacity: 0 }}
+                            onClick={() => handleSetBlackMode(true)}
+                            className="fixed left-0 top-[50vh] -translate-y-1/2 z-[100] bg-white dark:bg-[#1e1f21] p-1.5 pr-2.5 py-4 rounded-r-2xl shadow-[5px_0_15px_rgba(0,0,0,0.1)] dark:shadow-[5px_0_15px_rgba(0,0,0,0.5)] border border-l-0 border-slate-200 dark:border-white/10 text-slate-500 hover:text-blue-600 transition-colors group cursor-grab active:cursor-grabbing flex flex-col items-center gap-2"
+                            title="Desplegar Menú Principal"
+                            drag="y"
+                            dragConstraints={{ top: -350, bottom: 350 }}
+                            dragElastic={0.1}
+                            dragMomentum={false}
+                        >
+                            <span className="absolute -right-2 top-1/2 -translate-y-1/2 size-4 bg-blue-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity blur-md pointer-events-none" />
+                            <GripVertical size={14} className="opacity-30 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                            <PanelLeft size={20} className="relative z-10 pointer-events-none" />
+                        </motion.button>
+                    )}
+                </AnimatePresence>
+
+                <div className="flex-1 flex flex-col min-w-0 relative bg-white dark:bg-[#1e1f21] rounded-l-2xl border-l border-slate-200 dark:border-white/5 my-3 mr-3 shadow-xl overflow-hidden">
+                    <header className="h-10 border-b border-slate-100 dark:border-white/5 flex items-center justify-between px-4 bg-white dark:bg-[#1e1f21] shrink-0 z-40">
+                        <div className="flex items-center gap-4">
+                            {/* 3-State Sidebar Controls (For Gray Tool Panel) */}
+                            {sidebarSections && sidebarSections.length > 0 && (
+                                <div className="flex items-center gap-1 bg-slate-100 dark:bg-black/20 p-1 rounded-xl border border-slate-200 dark:border-white/5">
+                                    <Tooltip content="Extender Herramientas">
+                                        <button 
+                                            onClick={() => handleSetGrayMode('full')} 
+                                            className={clsx(
+                                                "p-1 rounded-lg transition-all",
+                                                graySidebarMode === 'full' 
+                                                    ? "bg-white dark:bg-[#2a2b2d] shadow-sm text-blue-600 dark:text-blue-400 font-bold" 
+                                                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                                            )}
+                                        >
+                                            <PanelLeftOpen size={14} strokeWidth={graySidebarMode === 'full' ? 2.5 : 2} />
+                                        </button>
+                                    </Tooltip>
+                                    <Tooltip content="Contraer Herramientas">
+                                        <button 
+                                            onClick={() => handleSetGrayMode('mini')} 
+                                            className={clsx(
+                                                "p-1 rounded-lg transition-all",
+                                                graySidebarMode === 'mini' 
+                                                    ? "bg-white dark:bg-[#2a2b2d] shadow-sm text-blue-600 dark:text-blue-400 font-bold" 
+                                                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                                            )}
+                                        >
+                                            <PanelLeftClose size={14} strokeWidth={graySidebarMode === 'mini' ? 2.5 : 2} />
+                                        </button>
+                                    </Tooltip>
+                                    <Tooltip content="Ocultar Herramientas">
+                                        <button 
+                                            onClick={() => handleSetGrayMode('hidden')} 
+                                            className={clsx(
+                                                "p-1 rounded-lg transition-all",
+                                                graySidebarMode === 'hidden' 
+                                                    ? "bg-rose-100 dark:bg-rose-500/20 shadow-sm text-rose-600 dark:text-rose-400 font-bold" 
+                                                    : "text-slate-500 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400"
+                                            )}
+                                        >
+                                            <X size={14} strokeWidth={graySidebarMode === 'hidden' ? 2.5 : 2} />
+                                        </button>
+                                    </Tooltip>
+                                </div>
+                            )}
                             
                             <div className="flex items-center gap-2">
-                                <div className="size-6 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-sm">
-                                    <Layout size={14} />
+                                <div className="size-5 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-sm">
+                                    <Layout size={12} />
                                 </div>
-                                <span className="text-[13px] font-black text-slate-800 dark:text-slate-200 tracking-tight">CCF Platform</span>
+                                <span className="text-[12px] font-black text-slate-800 dark:text-slate-200 tracking-tight">CCF Platform</span>
                             </div>
                         </div>
 
-                        <div className="hidden md:flex items-center bg-slate-100 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-lg px-3 py-1.5 w-64 lg:w-96 cursor-pointer hover:bg-slate-200 transition-all group">
-                            <Search size={14} className="text-slate-400 group-hover:text-blue-500" />
-                            <span className="text-[11px] font-bold text-slate-400 ml-2">Presiona Ctrl+K para buscar...</span>
+                        <div className="hidden md:flex items-center bg-slate-100 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-lg px-3 py-1 w-64 lg:w-96 cursor-pointer hover:bg-slate-200 transition-all group">
+                            <Search size={12} className="text-slate-400 group-hover:text-blue-500" />
+                            <span className="text-[10px] font-bold text-slate-400 ml-2">Presiona Ctrl+K para buscar...</span>
                         </div>
 
                         <div className="flex items-center gap-1">
@@ -116,7 +194,7 @@ export default function WorkspaceLayout({
                             {/* Profile Popover */}
                             <Popover.Root>
                                 <Popover.Trigger asChild>
-                                    <button className="size-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-[10px] font-black text-white cursor-pointer shadow-lg active:scale-95 transition-all">
+                                    <button className="size-7 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-[9px] font-black text-white cursor-pointer shadow-lg active:scale-95 transition-all">
                                         {user?.username?.substring(0, 2).toUpperCase() || 'U'}
                                     </button>
                                 </Popover.Trigger>

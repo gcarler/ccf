@@ -11,6 +11,7 @@ export interface ApiFetchOptions {
   headers?: HeadersInit;
   query?: Record<string, QueryValue>;
   cache?: RequestCache;
+  credentials?: RequestCredentials;
 }
 
 export class ApiError extends Error {
@@ -40,11 +41,11 @@ function buildHeaders(base?: HeadersInit) {
 }
 
 export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
-  const { method = "GET", body, token, headers, query, cache } = options;
+  const { method = "GET", body, token, headers, query, cache, credentials } = options;
   const url = buildUrl(path, query);
   const finalHeaders = buildHeaders(headers);
 
-  const init: RequestInit = { method, headers: finalHeaders, cache };
+  const init: RequestInit = { method, headers: finalHeaders, cache, credentials: credentials ?? "include" };
 
   if (token) {
     finalHeaders.set("Authorization", `Bearer ${token}`);

@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     secret_key: str = Field(default="change-me")
     access_token_expire_minutes: int = Field(default=60 * 24)
     refresh_token_expire_days: int = Field(default=30)
+    access_token_cookie_name: str = Field(default="mesh_access")
+    access_token_cookie_secure: bool = Field(default=False)
 
     cors_origins: List[str] = Field(default_factory=lambda: ["*"])
     redis_url: str = Field(default="redis://localhost:6379/0")

@@ -1,177 +1,214 @@
 "use client";
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { 
+    MessageSquare, 
+    ThumbsUp, 
+    ThumbsDown, 
+    CheckCircle2, 
+    User, 
+    Clock, 
+    Share2, 
+    MoreVertical, 
+    Plus,
+    ChevronLeft,
+    Send,
+    Bot,
+    Sparkles,
+    ShieldCheck,
+    Award
+} from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { MoreVertical, ThumbsUp, MessageSquare, Share2, Send, Hand } from 'lucide-react';
-import AcademyDetailShell from '@/components/academy/AcademyDetailShell';
+import { useToast } from '@/context/ToastContext';
+import { apiFetch } from '@/lib/http';
+import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import { motion, AnimatePresence } from 'framer-motion';
+import clsx from 'clsx';
 
-export default function TheologicalDebateDetail({ params }: { params: { id: string } }) {
-    const { user, isAuthenticated } = useAuth();
+export default function ForumThreadDetail() {
+    const params = useParams<{ id: string }>();
+    const id = params?.id ?? '';
     const router = useRouter();
+    const { token, user } = useAuth();
+    const { addToast } = useToast();
+    const [thread, setThread] = useState<any>(null);
+    const [replies, setReplies] = useState<any[]>([]);
+    const [inputText, setInputText] = useState('');
+    const [loading, setLoading] = useState(true);
 
-    if (!isAuthenticated) return null;
+    useEffect(() => {
+        const fetchThread = async () => {
+            if (!token) return;
+            try {
+                // Mock data for visual excellence
+                setThread({
+                    id,
+                    title: 'Interpretación de Romanos 8:28 en el contexto del sufrimiento',
+                    content: 'Hermanos, abro este debate para profundizar en la promesa de que "todas las cosas ayudan a bien". ¿Cómo debemos explicar esto a alguien que está pasando por una pérdida profunda?',
+                    author: 'Pastor Carlos',
+                    category: 'Teología',
+                    upvotes: 56,
+                    created_at: 'Ayer, 4:30 PM',
+                    author_role: 'Pastor Principal'
+                });
+                setReplies([
+                    { id: 1, text: 'Excelente pregunta. El contexto del capítulo habla de la gloria venidera que no se compara con el presente.', author: 'Elena Rodriguez', time: 'Hace 2 horas', upvotes: 12, is_pastoral: true, is_accepted: true },
+                    { id: 2, text: 'Yo creo que debemos enfocarnos en la soberanía de Dios más que en el bienestar terrenal.', author: 'Marcos Lopez', time: 'Hace 45 min', upvotes: 4, is_pastoral: false, is_accepted: false },
+                ]);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchThread();
+    }, [id, token]);
+
+    const handleSendReply = () => {
+        if (!inputText.trim()) return;
+        const newReply = { id: Date.now(), text: inputText, author: user?.username, time: 'Ahora', upvotes: 0, is_pastoral: user?.role === 'admin' };
+        setReplies([...replies, newReply]);
+        setInputText('');
+        addToast('Respuesta publicada', 'success');
+    };
+
+    if (!thread) return null;
 
     return (
-        <AcademyDetailShell
-            title="Detalle de debate"
-            description="Profundiza en tu formación compartiendo argumentos y fuentes por nivel académico."
-            variant="sky"
-            rightAction={
-                <button className="flex items-center justify-center size-10 rounded-full bg-white/5 hover:bg-primary/20 transition-colors text-primary">
-                    <MoreVertical size={20} />
-                </button>
-            }
-            onBack={() => router.back()}
-            contentClassName="space-y-6 pb-32"
-        >
-                    {/* Main Thread Card (Original Post) */}
-                    <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 shadow-2xl">
-                        <div className="flex items-center gap-4 mb-5">
-                            <div className="relative">
-                                <div className="size-14 rounded-full bg-slate-800 border-2 border-primary/30 flex items-center justify-center shadow-inner text-lg font-black bg-gradient-to-br from-indigo-500 to-primary">
-                                    JP
+        <div className="flex flex-col h-full bg-slate-50/50 dark:bg-[#1e1f21] overflow-hidden font-display">
+            <WorkspaceToolbar 
+                breadcrumbs={[
+                    { label: 'Foro Academia', icon: MessageSquare },
+                    { label: 'Detalle de Debate', icon: Share2 }
+                ]}
+                viewType="list" setViewType={() => {}}
+                rightActions={
+                    <button onClick={() => router.back()} className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-blue-600 transition-all text-[11px] font-black uppercase tracking-widest">
+                        <ChevronLeft size={16} /> Volver al Foro
+                    </button>
+                }
+            />
+
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-8 lg:p-12">
+                <div className="max-w-4xl mx-auto space-y-10">
+                    
+                    {/* Main Thread Content */}
+                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] p-10 shadow-xl space-y-8 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 -mr-12 -mt-12 size-40 bg-blue-600/5 rounded-full blur-3xl" />
+                        
+                        <div className="relative z-10 flex flex-col gap-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full text-[9px] font-black uppercase tracking-widest">{thread.category}</span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{thread.created_at}</span>
                                 </div>
-                                <div className="absolute bottom-0 right-0 size-3.5 bg-emerald-500 rounded-full border-2 border-slate-900"></div>
+                                <button className="p-2 text-slate-300 hover:text-slate-600 transition-colors"><MoreVertical size={20} /></button>
                             </div>
-                            <div>
-                                <p className="text-white font-bold text-base">Pastor Juan Pérez</p>
-                                <p className="text-slate-400 text-xs font-medium">Hace 2 horas • Teología Sistemática</p>
+
+                            <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-tight">{thread.title}</h1>
+                            
+                            <div className="p-8 bg-slate-50 dark:bg-black/20 rounded-[2rem] border border-slate-100 dark:border-white/5">
+                                <p className="text-[16px] leading-relaxed text-slate-700 dark:text-slate-300 font-medium">
+                                    {thread.content}
+                                </p>
                             </div>
-                        </div>
 
-                        <h2 className="text-white text-2xl font-black leading-snug mb-4 tracking-tight">
-                            ¿Cómo interpretar la Gracia en el contexto Pentecostal moderno?
-                        </h2>
-
-                        <p className="text-slate-300 text-base leading-relaxed mb-8">
-                            Hermanos, abro este hilo para discutir las implicaciones teológicas de la Gracia santificante en nuestras congregaciones hoy. ¿Hasta qué punto nuestra experiencia del Espíritu redefine la comprensión tradicional?
-                        </p>
-
-                        <div className="flex items-center justify-between border-t border-white/10 pt-5">
-                            <div className="flex gap-6">
-                                <button className="flex items-center gap-2 text-primary font-bold text-sm hover:text-primary-300 transition-colors">
-                                    <Hand size={18} className="fill-current" />
-                                    42 Amén
-                                </button>
-                                <button className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-bold text-sm">
-                                    <MessageSquare size={18} />
-                                    12
-                                </button>
-                            </div>
-                            <button className="text-slate-400 hover:text-white transition-colors">
-                                <Share2 size={20} />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Replies Section */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between px-2 mb-2">
-                            <h3 className="text-slate-400 text-xs font-black uppercase tracking-widest">Respuestas de la comunidad</h3>
-                            <button className="text-primary text-[10px] font-black uppercase tracking-widest hover:underline cursor-pointer">Ver anteriores</button>
-                        </div>
-
-                        {/* Reply 1 */}
-                        <div className="bg-slate-900/40 rounded-3xl p-5 shadow-sm border border-white/5">
-                            <div className="flex items-start gap-4">
-                                <div className="relative shrink-0">
-                                    <div className="size-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-xs font-bold bg-gradient-to-br from-amber-500/20 to-amber-600/20 text-amber-500">
-                                        EM
-                                    </div>
-                                    <div className="absolute bottom-0 right-0 size-2.5 bg-emerald-500 rounded-full border-2 border-slate-900"></div>
-                                </div>
-                                <div className="flex-1">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <p className="text-white font-bold text-sm">Estudiante Elena M.</p>
-                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Hace 45 min</span>
-                                    </div>
-                                    <p className="text-slate-300 text-sm leading-relaxed mb-3">
-                                        Excelente punto, Pastor. Considero que la experiencia del Espíritu Santo es inseparable de este concepto. No es solo un estado legal, sino una fuerza transformadora viva.
-                                    </p>
-                                    <div className="flex gap-5">
-                                        <button className="text-xs font-bold text-slate-400 hover:text-primary flex items-center gap-1.5 transition-colors">
-                                            <ThumbsUp size={14} className="fill-current" /> Amén (15)
-                                        </button>
-                                        <button className="text-[10px] uppercase tracking-widest font-black text-slate-500 hover:text-white transition-colors">Responder</button>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="size-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white text-[10px] font-black uppercase">{thread.author.charAt(0)}</div>
+                                    <div>
+                                        <p className="text-[13px] font-black text-slate-800 dark:text-white uppercase leading-none mb-1">{thread.author}</p>
+                                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{thread.author_role}</p>
                                     </div>
                                 </div>
+                                <div className="flex items-center gap-2 bg-white dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/10">
+                                    <button className="flex items-center gap-2 px-4 py-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl text-[12px] font-black text-blue-600 transition-all">
+                                        <ThumbsUp size={16} /> {thread.upvotes}
+                                    </button>
+                                    <button className="p-2 text-slate-300 hover:text-rose-500 transition-all"><ThumbsDown size={16} /></button>
+                                </div>
                             </div>
                         </div>
+                    </section>
 
-                        {/* Reply 2 (Professor) */}
-                        <div className="bg-primary/5 rounded-3xl p-5 shadow-sm border border-primary/20 border-l-4 border-l-primary relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none"></div>
-                            <div className="flex items-start gap-4 relative z-10">
-                                <div className="size-10 rounded-full bg-slate-800 border border-primary/30 flex items-center justify-center text-xs font-bold bg-gradient-to-br from-primary to-blue-600 shadow-inner shrink-0 text-white">
-                                    RS
-                                </div>
-                                <div className="flex-1">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-white font-bold text-sm">Prof. Roberto Silva</p>
-                                            <span className="bg-primary text-white text-[8px] px-2 py-0.5 rounded-md font-black uppercase tracking-widest">DOCENTE</span>
+                    {/* AI Wisdom Injection */}
+                    <section className="bg-blue-50 dark:bg-blue-900/10 rounded-[3rem] p-10 border border-blue-100 dark:border-blue-500/20 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 -mr-10 -mt-10 size-32 bg-blue-600/10 rounded-full blur-3xl group-hover:bg-blue-600/20 transition-all duration-1000" />
+                        <div className="relative z-10 flex gap-6 items-start">
+                            <div className="size-12 rounded-2xl bg-blue-600 flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20"><Bot size={24} className="text-white" /></div>
+                            <div className="space-y-3">
+                                <h4 className="text-[11px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                                    <Sparkles size={14} /> Optimus Teological Assistant
+                                </h4>
+                                <p className="text-[14px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium italic">
+                                    &ldquo;Basado en la hermenéutica clásica, Romanos 8:28 debe leerse en conexión con el verso 29 (conformidad a la imagen de Cristo). Esto sugiere que el &lsquo;bien&rsquo; es espiritual y eterno, más que circunstancial.&rdquo;
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Replies List */}
+                    <div className="space-y-6 pb-32">
+                        <h3 className="text-lg font-black tracking-tight uppercase tracking-widest px-4 text-slate-400">{replies.length} Respuestas</h3>
+                        <div className="space-y-4">
+                            {replies.map((reply) => (
+                                <motion.div 
+                                    key={reply.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                                    className={clsx(
+                                        "p-8 bg-white dark:bg-white/5 border rounded-[2.5rem] transition-all relative overflow-hidden",
+                                        reply.is_accepted ? "border-emerald-500/30 shadow-emerald-500/5" : "border-slate-200 dark:border-white/10"
+                                    )}
+                                >
+                                    {reply.is_accepted && (
+                                        <div className="absolute top-0 right-0 p-6 opacity-10"><Award size={48} className="text-emerald-500" /></div>
+                                    )}
+                                    <div className="flex gap-6 items-start">
+                                        <div className="flex flex-col items-center gap-2 shrink-0">
+                                            <div className="size-10 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-500 font-black text-[10px] uppercase">{reply.author.charAt(0)}</div>
+                                            {reply.is_pastoral && <ShieldCheck size={16} className="text-blue-500" />}
                                         </div>
-                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Hace 12 min</span>
+                                        <div className="flex-1 space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <span className="text-[13px] font-black text-slate-800 dark:text-white uppercase leading-none block mb-1">{reply.author}</span>
+                                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{reply.time}</span>
+                                                </div>
+                                                {reply.is_accepted && (
+                                                    <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                                                        <CheckCircle2 size={12} /> Mejor Respuesta
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-[14px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed">{reply.text}</p>
+                                            <div className="flex items-center gap-4 pt-4">
+                                                <button className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 hover:text-blue-600 transition-colors uppercase"><ThumbsUp size={14} /> {reply.upvotes}</button>
+                                                <button className="text-[10px] font-black text-slate-400 hover:text-blue-600 transition-colors uppercase">Responder</button>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <p className="text-slate-200 text-sm leading-relaxed mb-3">
-                                        Elena tiene razón. Wesley hablaba de la &quot;gracia preveniente&quot;, que encaja perfectamente con nuestra visión neumática. Debemos profundizar en la obra del Espíritu como agente de esa gracia.
-                                    </p>
-
-                                    <div className="flex gap-5">
-                                        <button className="text-xs font-bold text-slate-400 hover:text-primary flex items-center gap-1.5 transition-colors">
-                                            <ThumbsUp size={14} className="fill-current" /> Amén (8)
-                                        </button>
-                                        <button className="text-[10px] uppercase tracking-widest font-black text-slate-500 hover:text-white transition-colors">Responder</button>
-                                    </div>
-                                </div>
-                            </div>
+                                </motion.div>
+                            ))}
                         </div>
-
-                        {/* Reply 3 */}
-                        <div className="bg-slate-900/40 rounded-3xl p-5 shadow-sm border border-white/5">
-                            <div className="flex items-start gap-4">
-                                <div className="size-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-xs font-bold shrink-0 text-slate-400">
-                                    MT
-                                </div>
-                                <div className="flex-1">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <p className="text-white font-bold text-sm">Mateo Torres</p>
-                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Hace 5 min</span>
-                                    </div>
-                                    <p className="text-slate-300 text-sm leading-relaxed mb-3">
-                                        ¿Podrían recomendar algún libro que trate este vínculo específico entre Gracia y Pentecostalismo?
-                                    </p>
-                                    <div className="flex gap-5">
-                                        <button className="text-xs font-bold text-slate-400 hover:text-primary flex items-center gap-1.5 transition-colors">
-                                            <ThumbsUp size={14} className="" /> Amén
-                                        </button>
-                                        <button className="text-[10px] uppercase tracking-widest font-black text-slate-500 hover:text-white transition-colors">Responder</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                {/* Sticky Bottom Input */}
-                <div className="sticky bottom-0 w-full bg-slate-950/90 backdrop-blur-xl border-t border-white/10 p-4 pb-8 rounded-[2rem]">
-                    <div className="flex items-center gap-3">
-                        <div className="size-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-xs font-bold shrink-0 text-white shadow-inner bg-gradient-to-br from-primary/50 to-emerald-500/50">
-                            {user?.username ? user.username.charAt(0).toUpperCase() : 'U'}
-                        </div>
-                        <div className="flex-1 relative group">
-                            <input
-                                className="w-full bg-slate-900 border border-white/10 rounded-full py-3.5 px-5 text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary/50 text-white placeholder-slate-500 transition-all shadow-inner"
-                                placeholder="Escribe tu respuesta..."
-                                type="text"
-                            />
-                        </div>
-                        <button className="size-12 bg-primary text-white rounded-full flex items-center justify-center shadow-lg shadow-primary/30 active:scale-95 transition-transform hover:bg-primary-600 shrink-0">
-                            <Send size={18} className="translate-x-[2px] translate-y-[-1px]" />
-                        </button>
                     </div>
                 </div>
+            </main>
 
-        </AcademyDetailShell>
+            {/* Sticky Reply Bar */}
+            <footer className="fixed bottom-0 left-0 right-0 md:left-64 z-20 p-6 bg-white/80 dark:bg-[#1e1f21]/80 backdrop-blur-xl border-t border-slate-100 dark:border-white/5">
+                <div className="max-w-4xl mx-auto flex items-center gap-4 bg-slate-100 dark:bg-black/20 rounded-[2.5rem] p-2 pl-6 pr-2 shadow-inner border border-slate-200 dark:border-white/10">
+                    <input 
+                        value={inputText} onChange={(e) => setInputText(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSendReply()}
+                        placeholder="Añade tu comentario al debate..." 
+                        className="flex-1 bg-transparent border-none outline-none py-3 text-sm font-medium text-slate-800 dark:text-white placeholder:text-slate-400" 
+                    />
+                    <button 
+                        onClick={handleSendReply}
+                        className="size-12 bg-blue-600 hover:bg-blue-500 rounded-full flex items-center justify-center text-white shadow-xl shadow-blue-500/20 active:scale-90 transition-all"
+                    >
+                        <Send size={20} fill="currentColor" />
+                    </button>
+                </div>
+            </footer>
+        </div>
     );
 }

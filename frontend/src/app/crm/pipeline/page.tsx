@@ -79,7 +79,7 @@ export default function ConsolidationPipelinePage() {
 
     useEffect(() => { fetchPipeline(); }, [fetchPipeline]);
 
-    const handleUpdateStage = async (leadId: number, newStage: string) => {
+    const handleUpdateStage = useCallback(async (leadId: number, newStage: string) => {
         try {
             await apiFetch(`/crm/consolidation/pipeline/${leadId}`, {
                 method: 'PATCH',
@@ -91,7 +91,7 @@ export default function ConsolidationPipelinePage() {
         } catch (err) {
             addToast('Error al actualizar etapa', 'error');
         }
-    };
+    }, [token, addToast, fetchPipeline]);
 
     const columns = useMemo<ColumnDef<any>[]>(() => [
         { 
@@ -138,7 +138,7 @@ export default function ConsolidationPipelinePage() {
                 </button>
             )
         }
-    ], [token]);
+    ], [handleUpdateStage]);
 
     return (
         <div className="flex flex-col h-full bg-slate-50/50 dark:bg-[#1e1f21] overflow-hidden font-display">
@@ -236,7 +236,7 @@ export default function ConsolidationPipelinePage() {
                             <h5 className="text-[10px] font-black uppercase tracking-widest">Recomendación IA</h5>
                         </div>
                         <p className="text-[13px] font-medium text-slate-600 dark:text-slate-300 leading-relaxed italic">
-                            "El prospecto ha asistido a 2 servicios seguidos. Es el momento ideal para invitarlo a la Casa de Gloria de su sector."
+                            &quot;El prospecto ha asistido a 2 servicios seguidos. Es el momento ideal para invitarlo a la Casa de Gloria de su sector.&quot;
                         </p>
                     </section>
                 </div>

@@ -1,45 +1,41 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+import uuid
 from backend import crud, schemas, models
-from backend.database import get_db
-from backend.auth import get_current_user, require_admin
-from backend.core.audit import record_admin_action
+from backend.core.database import get_db
+from backend.auth import require_admin
 
-router = APIRouter(prefix="/finance", tags=["finance"])
+router = APIRouter(prefix="/finance", tags=["Finance"])
 
-@router.get("/summary")
-def read_treasury_summary(
+@router.get("/funds")
+def get_ministerial_funds(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
+    current_user: models.User = Depends(require_admin)
 ):
-    return crud.get_treasury_summary(db)
+    """Lista los fondos ministeriales. Solo para admin."""
+    return crud.get_funds(db)
 
-@router.get("/transactions", response_model=List[schemas.TreasuryTransaction])
-def read_transactions(
-    type: Optional[str] = None,
-    skip: int = 0,
-    limit: int = 100,
+@router.get("/transactions")
+def get_transactions(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
+    current_user: models.User = Depends(require_admin)
 ):
-    return crud.get_treasury_transactions(db, skip=skip, limit=limit, type=type)
+    """Obtiene el historial de transacciones contables."""
+    return crud.get_treasury_transactions(db)
 
-@router.post("/transactions", response_model=schemas.TreasuryTransaction)
-def create_transaction(
-    transaction: schemas.TreasuryTransactionCreate,
+@router.post("/donations")
+def register_donation(
+    person_id: Optional[uuid.UUID], 
+    fund_id: int, 
+    amount: float, 
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
+    current_user: models.User = Depends(require_admin)
 ):
-    db_tx = crud.create_treasury_transaction(db, transaction)
-    
-    record_admin_action(
-        db,
-        current_user,
-        action="create_treasury_transaction",
-        resource_type="treasury_transaction",
-        resource_id=str(db_tx.id),
-        metadata=transaction.model_dump()
-    )
-    
-    return db_tx
+    """Registra una ofrenda. Solo para admin."""
+    return crud.create_donation(db, person_id=person_id, fund_id=fund_id, amount=amount)
+
+@router.get("/impact")
+def get_mission_impact(db: Session = Depends(get_db)):
+    """Muestra el impacto social. Publico."""
+    return crud.get_mission_impact(db)

@@ -27,12 +27,11 @@ export default function LoginPage() {
             formData.append('username', email);
             formData.append('password', password);
 
-            const data = await apiFetch<{ access_token: string; refresh_token?: string }>('/auth/login', {
+            await apiFetch('/auth/login', {
                 method: 'POST',
                 body: formData,
             });
-
-            await login(data.access_token, data.refresh_token);
+            await login();
         } catch (err: any) {
             const detail = err?.detail?.detail || err?.detail?.message;
             setError(detail || 'Error al iniciar sesión. Verifica tus credenciales.');

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { apiFetch } from '@/lib/http';
@@ -32,12 +32,7 @@ export default function TeacherWorkspace() {
         return ['admin', 'coordinador', 'docente', 'staff'].includes(role);
     }, [user?.role]);
 
-    useEffect(() => {
-        if (!token || !isAuthenticated) return;
-        loadSubmissions();
-    }, [token, isAuthenticated]);
-
-    const loadSubmissions = async () => {
+    const loadSubmissions = useCallback(async () => {
         try {
             setLoading(true);
             const data = await apiFetch<AssignmentSubmissionReview[]>(`/academy/admin/submissions?limit=50`, {
@@ -51,7 +46,14 @@ export default function TeacherWorkspace() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [token]);
+
+    useEffect(() => {
+        if (!token || !isAuthenticated) return;
+        loadSubmissions();
+    }, [token, isAuthenticated, loadSubmissions]);
+
+
 
     const pending = submissions.filter((submission) => submission.grade == null);
     const graded = submissions.filter((submission) => submission.grade != null);

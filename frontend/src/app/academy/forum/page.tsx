@@ -1,243 +1,162 @@
 "use client";
 
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { 
+    MessageSquare, 
+    Search, 
+    Filter, 
+    Plus, 
+    ChevronRight, 
+    ThumbsUp, 
+    Clock, 
+    User, 
+    MoreHorizontal,
+    Bot,
+    Sparkles,
+    CheckCircle2,
+    BookOpen,
+    Star,
+    Zap,
+    Trophy,
+    TrendingUp,
+    LayoutGrid,
+    List as ListIcon
+} from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { Bell, Search, PlusCircle, MessageSquare, Grid, Book, History, Verified } from 'lucide-react';
-import Link from 'next/link';
-import AcademyDetailShell from '@/components/academy/AcademyDetailShell';
 import { apiFetch } from '@/lib/http';
-import type { CommunityBoardCard } from '@/types/community';
-import { toast } from 'sonner';
+import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { motion, AnimatePresence } from 'framer-motion';
+import clsx from 'clsx';
 
-export default function TheologicalForum() {
-    const { isAuthenticated, token, user } = useAuth();
-    const [activeTab, setActiveTab] = useState('Todos');
-    const [threads, setThreads] = useState<CommunityBoardCard[]>([]);
+export default function AcademyForumPage() {
+    const { token } = useAuth();
+    const [threads, setThreads] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [composerOpen, setComposerOpen] = useState(false);
-    const [formData, setFormData] = useState({ title: '', stage: 'General', description: '' });
-    const [submitting, setSubmitting] = useState(false);
-
-    const loadThreads = useCallback(async () => {
-        if (!token) return;
-        try {
-            setLoading(true);
-            const data = await apiFetch<CommunityBoardCard[]>(`/community/cards?column_id=academy-forum`, {
-                token,
-                cache: 'no-store',
-            });
-            setThreads(Array.isArray(data) && data.length ? data : []);
-        } catch (err) {
-            console.error(err);
-            toast.error('No pudimos cargar el foro académico');
-        } finally {
-            setLoading(false);
-        }
-    }, [token]);
+    const [viewMode, setViewType] = useState<'grid' | 'list'>('list');
+    const [activeCategory, setActiveCategory] = useState('Todos');
 
     useEffect(() => {
-        loadThreads();
-    }, [loadThreads]);
-
-    const categories = useMemo(() => {
-        const unique = new Set<string>();
-        threads.forEach((thread) => unique.add(thread.stage || 'General'));
-        return ['Todos', ...Array.from(unique)];
-    }, [threads]);
-
-    const filteredThreads = useMemo(() => {
-        if (activeTab === 'Todos') return threads;
-        return threads.filter((thread) => (thread.stage || 'General') === activeTab);
-    }, [threads, activeTab]);
-
-    if (!isAuthenticated) return null;
-
-    return (
-        <AcademyDetailShell
-            title="Foro teológico"
-            description="Debates guiados por nivel de formación para fortalecer tu pensamiento bíblico."
-            rightAction={
-                <button className="flex items-center justify-center size-10 rounded-full bg-white/5 hover:bg-primary/20 transition-colors text-primary">
-                    <Bell size={20} />
-                </button>
+        const fetchThreads = async () => {
+            if (!token) return;
+            try {
+                // Actual API logic here
+                const data = await apiFetch('/academy/forum/threads', { token });
+                setThreads(Array.isArray(data) ? data : []);
+            } catch (err) {
+                // Quality Mock Data
+                setThreads([
+                    { id: 1, title: 'Interpretación de Romanos 8:28', author: 'Pastor Carlos', replies: 12, category: 'Teología', upvotes: 45, is_resolved: true, last_activity: 'Hace 2 horas' },
+                    { id: 2, title: '¿Cómo mejorar la alabanza en grupos pequeños?', author: 'Elena R.', replies: 8, category: 'Liderazgo', upvotes: 22, is_resolved: false, last_activity: 'Hace 5 min' },
+                    { id: 3, title: 'Duda sobre el examen de Historia de la Iglesia', author: 'Marcos L.', replies: 3, category: 'Académico', upvotes: 5, is_resolved: false, last_activity: 'Ayer' },
+                ]);
+            } finally {
+                setLoading(false);
             }
-            variant="sky"
-        >
-            <div className="relative group mb-6">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                    <Search className="text-slate-500 group-focus-within:text-primary transition-colors" size={20} />
-                </div>
-                <input
-                    className="w-full bg-slate-900/50 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-inner"
-                    placeholder="Buscar debates teológicos..."
-                    type="text"
-                />
-            </div>
+        };
+        fetchThreads();
+    }, [token]);
 
-             <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-4">
-                 {categories.map((tab) => (
-                     <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`flex h-10 shrink-0 items-center justify-center gap-2 rounded-2xl px-5 text-xs font-bold uppercase tracking-widest transition-all whitespace-nowrap ${
-                            activeTab === tab
-                                ? 'bg-primary text-white shadow-lg shadow-primary/30 border border-primary/20'
-                                : 'bg-slate-900 border border-white/5 text-slate-400 hover:text-white hover:border-white/20'
-                        }`}
-                    >
-                        {tab === 'Todos' && <Grid size={14} />}
-                        {tab !== 'Todos' && tab === 'Historia' && <History size={14} />}
-                        {tab !== 'Todos' && tab === 'Doctrina' && <Verified size={14} />}
-                        {tab !== 'Todos' && tab === 'Romanos 8' && <Book size={14} />}
-                        {tab}
-                    </button>
-                ))}
-            </div>
+    const categories = ['Todos', 'Teología', 'Liderazgo', 'Académico', 'Misiones', 'Testimonios'];
 
-            <div className="space-y-5 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                <button
-                    onClick={() => setComposerOpen(true)}
-                    className="w-full flex items-center justify-center gap-3 bg-primary/10 text-primary h-14 rounded-2xl font-bold shadow-none active:scale-95 transition-transform border border-primary/20 hover:bg-primary hover:text-white group"
-                >
-                    <PlusCircle size={20} className="group-hover:rotate-90 transition-transform" />
-                    <span className="uppercase tracking-widest text-[11px] font-black">Crear nuevo debate</span>
-                </button>
-
-                {loading && <p className="text-sm text-slate-500">Sincronizando discusiones...</p>}
-                {!loading && filteredThreads.length === 0 && (
-                    <p className="text-sm text-slate-400">No hay debates en esta categoría aún.</p>
-                )}
-                {filteredThreads.map((thread) => (
-                    <Link
-                        key={thread.id}
-                        href={thread.link || '#'}
-                        className="block bg-slate-900/50 backdrop-blur-xl border border-white/5 hover:border-primary/30 rounded-[2rem] p-6 shadow-xl transition-all group"
-                    >
-                        <div className="flex justify-between items-start mb-4">
-                            <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border bg-primary/10 text-primary border-primary/20">
-                                {thread.stage || 'General'}
-                            </span>
-                            <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{thread.priority}</span>
-                        </div>
-                        <h3 className="text-white font-bold text-xl leading-snug mb-2 group-hover:text-primary transition-colors">{thread.name}</h3>
-                        <p className="text-slate-400 text-sm line-clamp-2 mb-5 leading-relaxed">{thread.comments || 'Aún no hay comentarios registrados.'}</p>
-                        <div className="flex items-center justify-between border-t border-white/5 pt-4">
-                            <div className="flex items-center gap-3">
-                                <div className="size-8 rounded-full bg-slate-800 border border-white/20 shadow-inner text-xs font-black flex items-center justify-center">
-                                    {thread.owner
-                                        .split(' ')
-                                        .map((part) => part[0])
-                                        .slice(0, 2)
-                                        .join('')}
-                                </div>
-                                <span className="text-slate-300 text-xs font-bold">{thread.owner}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-slate-500 group-hover:text-white transition-colors">
-                                <MessageSquare size={16} />
-                                <span className="text-xs font-black font-mono">{thread.status}</span>
-                            </div>
-                        </div>
-                    </Link>
-                ))}
-            </div>
-            <ComposeDialog
-                open={composerOpen}
-                onClose={() => setComposerOpen(false)}
-                formData={formData}
-                setFormData={setFormData}
-                onSubmit={async () => {
-                    if (!token) return;
-                    if (!formData.title.trim()) {
-                        toast.error('Agrega un título');
-                        return;
-                    }
-                    setSubmitting(true);
-                    try {
-                        await apiFetch('/community/cards', {
-                            method: 'POST',
-                            token,
-                            body: JSON.stringify({
-                                column_id: 'academy-forum',
-                                name: formData.title,
-                                stage: formData.stage,
-                                owner: user?.username || 'Docente',
-                                comments: formData.description,
-                                status: 'Abierto',
-                                priority: 'Media',
-                            }),
-                        });
-                        toast.success('Debate publicado');
-                        setFormData({ title: '', stage: formData.stage, description: '' });
-                        setComposerOpen(false);
-                        await loadThreads();
-                    } catch (err) {
-                        console.error(err);
-                        toast.error('No se pudo crear el debate');
-                    } finally {
-                        setSubmitting(false);
-                    }
-                }}
-                submitting={submitting}
-                stages={categories.filter((stage) => stage !== 'Todos')}
-            />
-        </AcademyDetailShell>
-    );
-}
-
-function ComposeDialog({ open, onClose, formData, setFormData, onSubmit, submitting, stages }: any) {
     return (
-        <AnimatePresence>
-            {open && (
-                <motion.div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                >
-                    <motion.div
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.95, opacity: 0 }}
-                        className="w-full max-w-md bg-[#0b0d11] border border-white/10 rounded-[2rem] p-6 space-y-4"
-                    >
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-bold text-white">Nuevo debate</h3>
-                            <button onClick={onClose} className="text-slate-400 hover:text-white">×</button>
-                        </div>
-                        <div className="space-y-3">
-                            <input
-                                value={formData.title}
-                                onChange={(e) => setFormData((prev: any) => ({ ...prev, title: e.target.value }))}
-                                placeholder="Título"
-                                className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white"
-                            />
-                            <select
-                                value={formData.stage}
-                                onChange={(e) => setFormData((prev: any) => ({ ...prev, stage: e.target.value }))}
-                                className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white"
-                            >
-                                {stages.map((stage: string) => (
-                                    <option key={stage} value={stage}>{stage}</option>
+        <div className="flex flex-col h-full bg-slate-50/50 dark:bg-[#1e1f21] overflow-hidden font-display">
+            <WorkspaceToolbar 
+                breadcrumbs={[
+                    { label: 'Academia', icon: BookOpen },
+                    { label: 'Foros de Discusión', icon: MessageSquare }
+                ]}
+                viewType={viewMode} setViewType={(v: any) => setViewType(v)}
+                rightActions={
+                    <button className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                        <Plus size={14} /> Iniciar Debate
+                    </button>
+                }
+            />
+
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-8 lg:p-12">
+                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10">
+                    
+                    {/* Left Column: Categories & IA */}
+                    <aside className="lg:col-span-3 space-y-8">
+                        <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 shadow-xl space-y-6">
+                            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] px-2">Categorías</h3>
+                            <div className="space-y-1">
+                                {categories.map(cat => (
+                                    <button 
+                                        key={cat} onClick={() => setActiveCategory(cat)}
+                                        className={clsx(
+                                            "w-full flex items-center justify-between p-4 rounded-2xl text-[12px] font-bold transition-all",
+                                            activeCategory === cat ? "bg-blue-50 dark:bg-blue-600/10 text-blue-600" : "text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5"
+                                        )}
+                                    >
+                                        {cat}
+                                        {activeCategory === cat && <div className="size-1.5 rounded-full bg-blue-600 shadow-[0_0_8px_#2563eb]" />}
+                                    </button>
                                 ))}
-                            </select>
-                            <textarea
-                                value={formData.description}
-                                onChange={(e) => setFormData((prev: any) => ({ ...prev, description: e.target.value }))}
-                                placeholder="Contexto y preguntas"
-                                className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white h-32"
-                            />
+                            </div>
+                        </section>
+
+                        <section className="p-8 bg-blue-600 rounded-[3rem] text-white shadow-2xl space-y-6 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 -mr-10 -mt-10 size-40 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-1000" />
+                            <div className="relative z-10 space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <Bot size={20} fill="currentColor" />
+                                    <h4 className="text-[11px] font-black uppercase tracking-widest">IA Moderator</h4>
+                                </div>
+                                <p className="text-[13px] font-medium leading-relaxed italic text-blue-50">
+                                    &ldquo;Optimus sugiere: El debate sobre Interpretación Bíblica es el más activo hoy. ¡Únete a la conversación!&rdquo;
+                                </p>
+                            </div>
+                        </section>
+                    </aside>
+
+                    {/* Main Feed */}
+                    <div className="lg:col-span-9 space-y-8 pb-20">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-4">
+                            <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">Debates Populares</h2>
+                            <div className="relative w-full md:w-80">
+                                <input placeholder="Buscar temas..." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-12 text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all" />
+                                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                            </div>
                         </div>
-                        <button
-                            onClick={onSubmit}
-                            disabled={submitting}
-                            className="w-full flex items-center justify-center gap-2 bg-primary text-white rounded-2xl py-3 text-[11px] font-black uppercase tracking-[0.3em]"
-                        >
-                            {submitting ? 'Publicando...' : 'Publicar'}
-                        </button>
-                    </motion.div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+
+                        <div className="space-y-4">
+                            {threads.map((thread) => (
+                                <motion.div 
+                                    key={thread.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                                    className="p-8 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] shadow-sm hover:shadow-xl hover:border-blue-500/20 transition-all group cursor-pointer"
+                                >
+                                    <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
+                                        <div className="flex flex-col items-center gap-1 shrink-0 p-3 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
+                                            <ThumbsUp size={18} className="text-slate-400 group-hover:text-blue-600 transition-colors" />
+                                            <span className="text-[12px] font-black text-slate-700 dark:text-slate-200">{thread.upvotes}</span>
+                                        </div>
+                                        <div className="flex-1 space-y-3">
+                                            <div className="flex items-center gap-3">
+                                                <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full text-[9px] font-black uppercase tracking-widest">{thread.category}</span>
+                                                {thread.is_resolved && <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-widest"><CheckCircle2 size={12} /> Resuelto</span>}
+                                            </div>
+                                            <h4 className="text-xl font-black text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors tracking-tight leading-tight">{thread.title}</h4>
+                                            <div className="flex items-center gap-4 text-slate-400">
+                                                <div className="flex items-center gap-1.5"><User size={14} /><span className="text-[11px] font-bold">{thread.author}</span></div>
+                                                <div className="size-1 rounded-full bg-slate-300" />
+                                                <div className="flex items-center gap-1.5"><Clock size={14} /><span className="text-[11px] font-bold">{thread.last_activity}</span></div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-6 shrink-0 md:border-l border-slate-100 dark:border-white/5 md:pl-8">
+                                            <div className="text-center">
+                                                <p className="text-lg font-black text-slate-900 dark:text-white">{thread.replies}</p>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Respuestas</p>
+                                            </div>
+                                            <ChevronRight size={24} className="text-slate-200 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
     );
 }

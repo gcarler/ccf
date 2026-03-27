@@ -19,9 +19,13 @@ export default function ProjectsLayout({
         return `Proyectos / ${last.charAt(0).toUpperCase() + last.slice(1)}`;
     };
 
+    const dummySections = [
+        { label: 'Placeholder' } // Minimal required to trigger length > 0
+    ];
+
     return (
         <ProtectedRoute>
-            <WorkspaceLayout sidebarTitle={getSidebarTitle()}>
+            <WorkspaceLayout sidebarTitle={getSidebarTitle()} sidebarSections={dummySections}>
                 <div className="bg-[#f8f9fb] dark:bg-[#141517] min-h-screen">
                     {children}
                 </div>

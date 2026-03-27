@@ -12,3 +12,13 @@ backend/*.db
 backend/.env
 frontend/node_modules/
 frontend/.next/
+
+*storybook.log
+storybook-static
+frontend/playwright-report/
+frontend/test-results/
+frontend/crm-lh.json
+frontend/....tmp_academy_page_old.tsx
+tmp/
+tmp_mcp/
+tmp_stitch/

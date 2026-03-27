@@ -6,8 +6,17 @@ import { useAuth } from './AuthContext';
 
 interface WorkspaceConfig {
     features_enabled: Record<string, boolean>;
+    features_raw?: Record<string, boolean>;
+    feature_rules?: Record<string, {
+        roles_allow?: string[];
+        roles_deny?: string[];
+        users_allow?: string[];
+        users_deny?: string[];
+        rollout_percent?: number;
+    }>;
     ui_theme_config: Record<string, any>;
     navigation_schema: any[];
+    requested_by?: string;
 }
 
 interface ConfigContextType {

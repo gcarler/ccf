@@ -185,7 +185,7 @@ export default function AdvancedBIReports() {
                             </div>
                             <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-500/20">
                                 <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 leading-relaxed uppercase tracking-wider">
-                                    Optimus AI: "Reducción del 15% en costos operativos mediante automatización de actas."
+                                    Optimus AI: &quot;Reducción del 15% en costos operativos mediante automatización de actas.&quot;
                                 </p>
                             </div>
                         </div>

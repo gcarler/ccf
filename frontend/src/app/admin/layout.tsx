@@ -23,18 +23,25 @@ const SIDEBAR_SECTIONS = [
         title: 'Gestión',
         items: [
             { id: 'dashboard', label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+            { id: 'radar', label: 'Radar del Pastor', href: '/admin/dashboard/radar', icon: BarChart3 },
             { id: 'comunidad', label: 'Comunidad', href: '/admin/members', icon: Users },
+            { id: 'talents', label: 'Buscador de Talentos', href: '/admin/talents', icon: Search },
+        ]
+    },
+    {
+        title: 'Ministerial',
+        items: [
+            { id: 'milestones', label: 'Hitos Espirituales', href: '/admin/spiritual-life/milestones', icon: Heart },
+            { id: 'candidates', label: 'Candidatos Bautismo', href: '/admin/analytics/candidates', icon: Users },
             { id: 'finanzas', label: 'Finanzas', href: '/admin/finance', icon: TrendingUp },
-            { id: 'donaciones', label: 'Donaciones', href: '/admin/donations/config', icon: Heart },
         ]
     },
     {
         title: 'Operaciones',
         items: [
+            { id: 'assets', label: 'Inventario de Activos', href: '/admin/inventory', icon: CheckSquare },
             { id: 'actas', label: 'Actas', href: '/admin/actas', icon: CheckSquare },
             { id: 'submissions', label: 'Calificaciones', href: '/admin/submissions', icon: FileText },
-            { id: 'moderation', label: 'Moderación', href: '/admin/testimonials', icon: MessageSquare },
-            { id: 'reports', label: 'Reportes', href: '/admin/reports', icon: BarChart3 },
         ]
     },
     {
@@ -42,13 +49,6 @@ const SIDEBAR_SECTIONS = [
         items: [
             { id: 'cms', label: 'Páginas Web', href: '/admin/cms', icon: Globe },
             { id: 'announcements', label: 'Anuncios', href: '/admin/announcements', icon: Megaphone },
-            { id: 'comments', label: 'Comentarios', href: '/admin/comments', icon: MessageSquare },
-        ]
-    },
-    {
-        title: 'Sistema',
-        items: [
-            { id: 'settings', label: 'Configuración', href: '/admin/settings', icon: Settings },
         ]
     }
 ];

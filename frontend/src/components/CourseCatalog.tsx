@@ -25,19 +25,26 @@ interface CourseCatalogProps {
   userId: number;
   token: string;
   enrolledCourseIds?: number[];
+  initialCourses?: Course[];
 }
 
 
-export default function CourseCatalog({ userId, token, enrolledCourseIds = [] }: CourseCatalogProps) {
+export default function CourseCatalog({ userId, token, enrolledCourseIds = [], initialCourses }: CourseCatalogProps) {
   const { addToast } = useToast();
   const router = useRouter();
 
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [courses, setCourses] = useState<Course[]>(initialCourses ?? []);
+  const [loading, setLoading] = useState(!initialCourses);
   const [filterModality, setFilterModality] = useState<Modality | "all">("all");
   const [viewType, setViewType] = useState<ViewType>(() => getStoredView('academy_catalog_view', 'grid'));
 
   useEffect(() => {
+    if (initialCourses && filterModality === 'all') {
+      setCourses(initialCourses);
+      setLoading(false);
+      return;
+    }
+
     const loadCourses = async () => {
       setLoading(true);
       try {
@@ -57,7 +64,7 @@ export default function CourseCatalog({ userId, token, enrolledCourseIds = [] }:
     };
 
     loadCourses();
-  }, [filterModality, token, addToast]);
+  }, [filterModality, token, addToast, initialCourses]);
 
 
   const handleEnrollClick = (courseId: number) => {

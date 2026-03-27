@@ -33,6 +33,8 @@ import StatusPicker, { StatusOption } from '@/components/ui/StatusPicker';
 import clsx from 'clsx';
 import { DataTable } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
+import { useRegisterCommands } from '@/context/CommandCenterContext';
+import { useRouter } from 'next/navigation';
 
 const TICKET_STATUS_OPTIONS: StatusOption[] = [
     { label: 'ABIERTO', value: 'abierto', color: 'bg-blue-500', text: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
@@ -44,6 +46,7 @@ const TICKET_STATUS_OPTIONS: StatusOption[] = [
 export default function SupportPage() {
     const { token, user } = useAuth();
     const { addToast } = useToast();
+    const router = useRouter();
     const [viewType, setViewType] = useState<ViewType>('table');
     const [tickets, setTickets] = useState<any[]>([]);
     const [selectedTicket, setSelectedTicket] = useState<any>(null);
@@ -128,6 +131,25 @@ export default function SupportPage() {
             t.description.toLowerCase().includes(search.toLowerCase())
         );
     }, [tickets, search]);
+
+    const supportBaseCommands = useMemo(() => [
+        { id: 'support-new-ticket', label: 'Crear ticket de soporte', description: 'Reportar incidente o duda', group: 'Soporte', action: () => setIsCreateModalOpen(true) },
+        { id: 'support-view-table', label: 'Vista tabla', description: 'Gestionar tickets en lista', group: 'Soporte', action: () => setViewType('table') },
+        { id: 'support-go-faq', label: 'Ver base de conocimiento', description: 'Guías y manuales', group: 'Soporte', action: () => router.push('/support#faq') },
+        { id: 'support-dashboard', label: 'Volver al dashboard', group: 'Soporte', action: () => router.push('/support') },
+    ], [router]);
+
+    const supportTicketCommands = useMemo(() => filteredTickets.slice(0, 6).map((ticket) => ({
+        id: `support-ticket-${ticket.id}`,
+        label: ticket.subject,
+        description: `Estado: ${ticket.status}`,
+        group: 'Tickets',
+        action: () => handleOpenTicket(ticket),
+    })), [filteredTickets]);
+
+    const supportCommands = useMemo(() => [...supportBaseCommands, ...supportTicketCommands], [supportBaseCommands, supportTicketCommands]);
+
+    useRegisterCommands('support-hub', supportCommands);
 
     const columns = useMemo<ColumnDef<any>[]>(() => [
         {

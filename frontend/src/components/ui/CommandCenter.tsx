@@ -134,7 +134,7 @@ export function CommandCenter() {
     );
 }
 
-function Item({ icon: Icon, label, shortcut, description, onSelect }: { icon?: React.ComponentType<{ size?: number }>, label: string, shortcut?: string, description?: string, onSelect: () => void }) {
+function Item({ icon: Icon, label, shortcut, description, onSelect }: { icon?: React.ComponentType<any>, label: string, shortcut?: string, description?: string, onSelect: () => void }) {
     return (
         <Command.Item
             onSelect={onSelect}

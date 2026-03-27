@@ -1174,7 +1174,7 @@ export default function CommunityHubPage() {
                             <CommunityToolbarChip key={label} label={label} icon={icon} size="sm" />
                         ))}
                         <CommunityToolbarChip label="Personalizar" icon={SlidersHorizontal} size="sm" />
-                        <CommunityToolbarChip label="Add tarea" icon={Plus} variant="solid" tone="dark" />
+                        <CommunityToolbarChip label="Add tarea" icon={Plus} variant="solid" className="bg-slate-900 text-white border-slate-900" />
                     </div>
                 </div>
                     <p className="text-[11px] text-[hsl(var(--text-secondary))] flex items-center gap-3">

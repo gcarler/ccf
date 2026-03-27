@@ -187,7 +187,7 @@ export default function TaskAssignment() {
                         <CommunityToolbarChip
                             label={`Prioridad ${selectedProspect.priority}`}
                             variant="solid"
-                            tone="dark"
+                            className="bg-slate-900 text-white border-slate-900"
                         />
                     </div>
 

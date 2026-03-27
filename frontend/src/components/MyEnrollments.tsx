@@ -35,7 +35,7 @@ interface Certificate {
 interface MyEnrollmentsProps {
   userId: number;
   token: string;
-  refreshToken: number;
+  initialEnrollments?: Enrollment[];
 }
 
 import { CheckCircle, Award, FileText, Send, AlertCircle, Info, ArrowRight, Play, BookOpen, ChevronRight, X as CloseIcon, Loader2, BookMarked, School, Paperclip, Upload, File, Clock } from "lucide-react";
@@ -52,14 +52,14 @@ interface Lesson {
   resources?: any[];
 }
 
-export default function MyEnrollments({ userId, token, refreshToken }: MyEnrollmentsProps) {
+export default function MyEnrollments({ userId, token, initialEnrollments }: MyEnrollmentsProps) {
   const { addToast } = useToast();
-  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>(initialEnrollments ?? []);
   const [assessmentsByCourse, setAssessmentsByCourse] = useState<Record<number, Assessment[]>>({});
   const [certificatesByEnrollment, setCertificatesByEnrollment] = useState<Record<number, Certificate>>({});
   const [scoreByAssessment, setScoreByAssessment] = useState<Record<number, string>>({});
   const [messageByEnrollment, setMessageByEnrollment] = useState<Record<number, string>>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialEnrollments);
   const [activeExam, setActiveExam] = useState<number | null>(null);
 
   // Mesh WebSocket Integration
@@ -135,8 +135,10 @@ export default function MyEnrollments({ userId, token, refreshToken }: MyEnrollm
   }, [token, userId]);
 
   useEffect(() => {
+    if (initialEnrollments) return;
+    if (!token || !userId) return;
     loadEnrollments();
-  }, [loadEnrollments, refreshToken]);
+  }, [loadEnrollments, token, userId, initialEnrollments]);
 
   // Handle Mesh Events
   useEffect(() => {

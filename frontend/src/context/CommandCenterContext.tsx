@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useMemo, useState, useEffect, useRef } from "react";
 
 export type CommandItem = {
     id: string;
@@ -8,7 +8,7 @@ export type CommandItem = {
     description?: string;
     shortcut?: string;
     group?: string;
-    icon?: React.ComponentType<{ size?: number }>;
+    icon?: React.ComponentType<any>;
     action: () => void;
 };
 
@@ -48,4 +48,22 @@ export function useCommandCenter() {
         throw new Error("useCommandCenter debe usarse dentro de CommandCenterProvider");
     }
     return ctx;
+}
+
+export function useRegisterCommands(scopeId: string, commands: CommandItem[]) {
+    const { registerCommands } = useCommandCenter();
+    const commandsRef = useRef(commands);
+    commandsRef.current = commands;
+
+    const signature = useMemo(
+        () =>
+            commands
+                .map((item) => [item.id, item.label, item.description || "", item.shortcut || "", item.group || ""].join("::"))
+                .join("||"),
+        [commands],
+    );
+
+    useEffect(() => {
+        return registerCommands(scopeId, commandsRef.current);
+    }, [scopeId, signature, registerCommands]);
 }

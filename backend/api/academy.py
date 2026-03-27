@@ -424,23 +424,30 @@ def get_my_academy_profile(
     }
 
 
+@router.get("/analytics/candidates", response_model=List[schemas.User])
+def get_academy_candidates(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_staff_or_admin)
+):
+    return crud.get_academy_candidates(db)
+
+
 # -----------------
-# Gamification API
+# Forum API
 # -----------------
-@router.get("/gamification/status")
-def get_gamification_status(
+@router.get("/forum/threads", response_model=List[schemas.ForumThread])
+def get_forum_threads(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user)
 ):
-    status = crud.get_user_xp_and_level(db, str(current_user.user_id))
-    if not status:
-        raise HTTPException(status_code=404, detail="Stats not found")
-    return status
+    return crud.get_forum_threads(db)
 
 
-@router.get("/gamification/badges", response_model=List[schemas.UserBadge])
-def get_my_badges(
+@router.post("/forum/threads", response_model=schemas.ForumThread)
+def create_thread(
+    thread: schemas.ForumThreadBase,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user)
 ):
-    return db.query(models.UserBadge).filter(models.UserBadge.user_id == str(current_user.user_id)).all()
+    thread_data = schemas.ForumThreadCreate(**thread.model_dump(), author_id=current_user.id)
+    return crud.create_forum_thread(db, thread_data)

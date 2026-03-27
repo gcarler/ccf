@@ -1,0 +1,170 @@
+
+/* FARO DYNAMIC THEME VARIABLES */
+:root {
+  --faro-on-tertiary-fixed-variant: #3e484f;
+  --faro-surface-container-lowest: #ffffff;
+  --faro-surface-tint: #2c609d;
+  --faro-on-background: #001b3d;
+  --faro-inverse-primary: #a5c8ff;
+  --faro-on-surface: #001b3d;
+  --faro-secondary-fixed-dim: #00668f;
+  --faro-outline: #72777f;
+  --faro-on-error-container: #410002;
+  --faro-tertiary-fixed-dim: #495158;
+  --faro-on-surface-variant: #42474e;
+  --faro-secondary-container: #c5e7ff;
+  --faro-outline-variant: #c2c7cf;
+  --faro-primary-fixed-dim: #2c609d;
+  --faro-inverse-surface: #001b3d;
+  --faro-tertiary: #565f67;
+  --faro-surface-container-high: #e0e2e8;
+  --faro-error-container: #ffdad6;
+  --faro-surface-dim: #d9e2ff;
+  --faro-on-primary-container: #001d3a;
+  --faro-on-error: #ffffff;
+  --faro-background: #f8f9ff;
+  --faro-on-secondary: #ffffff;
+  --faro-tertiary-fixed: #dae4eb;
+  --faro-on-primary: #ffffff;
+  --faro-surface-container-highest: #d4e3ff;
+  --faro-inverse-on-surface: #f0f0f7;
+  --faro-surface-variant: #dee3eb;
+  --faro-surface: #f8f9ff;
+  --faro-primary-container: #d4e3ff;
+  --faro-on-primary-fixed-variant: #004786;
+  --faro-on-secondary-container: #001e2e;
+  --faro-on-tertiary-fixed: #131d24;
+  --faro-on-primary-fixed: #001d3a;
+  --faro-secondary-fixed: #c5e7ff;
+  --faro-on-tertiary: #ffffff;
+  --faro-primary: #2c609d;
+  --faro-on-tertiary-container: #131d23;
+  --faro-primary-fixed: #d4e3ff;
+  --faro-surface-container-low: #f0f3fa;
+  --faro-surface-bright: #f8f9ff;
+  --faro-error: #ba1a1a;
+  --faro-surface-container: #e9edf6;
+  --faro-tertiary-container: #dae4eb;
+  --faro-secondary: #00668f;
+  --faro-on-secondary-fixed-variant: #004c6d;
+  --faro-on-secondary-fixed: #001e2e;
+}
+
+.dark {
+  --faro-on-tertiary-fixed-variant: #3e484f;
+  --faro-surface-container-lowest: #000d2a;
+  --faro-surface-tint: #a5c8ff;
+  --faro-on-background: #d9e2ff;
+  --faro-inverse-primary: #2c609d;
+  --faro-on-surface: #d9e2ff;
+  --faro-secondary-fixed-dim: #80d0ff;
+  --faro-outline: #8c919b;
+  --faro-on-error-container: #ffdad6;
+  --faro-tertiary-fixed-dim: #bdc8d0;
+  --faro-on-surface-variant: #c2c6d1;
+  --faro-secondary-container: #2b9ace;
+  --faro-outline-variant: #424750;
+  --faro-primary-fixed-dim: #a5c8ff;
+  --faro-inverse-surface: #d9e2ff;
+  --faro-tertiary: #bdc8d0;
+  --faro-surface-container-high: #102855;
+  --faro-error-container: #93000a;
+  --faro-surface-dim: #001134;
+  --faro-on-primary-container: #86b4f7;
+  --faro-on-error: #690005;
+  --faro-background: #001134;
+  --faro-on-secondary: #00344b;
+  --faro-tertiary-fixed: #d9e4ec;
+  --faro-on-primary: #00315e;
+  --faro-surface-container-highest: #1d3361;
+  --faro-inverse-on-surface: #182f5c;
+  --faro-surface-variant: #1d3361;
+  --faro-surface: #001134;
+  --faro-primary-container: #004581;
+  --faro-on-primary-fixed-variant: #054783;
+  --faro-on-secondary-container: #002d41;
+  --faro-on-tertiary-fixed: #131d23;
+  --faro-on-primary-fixed: #001c3a;
+  --faro-secondary-fixed: #c5e7ff;
+  --faro-on-tertiary: #273238;
+  --faro-primary: #a5c8ff;
+  --faro-on-tertiary-container: #a8b3bb;
+  --faro-primary-fixed: #d4e3ff;
+  --faro-surface-container-low: #001944;
+  --faro-surface-bright: #223865;
+  --faro-error: #ffb4ab;
+  --faro-surface-container: #021d4a;
+  --faro-tertiary-container: #3b464c;
+  --faro-secondary: #80d0ff;
+  --faro-on-secondary-fixed-variant: #004c6a;
+  --faro-on-secondary-fixed: #001e2d;
+}
+
+/* FARO Public Theme Specialized CSS */
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    vertical-align: middle;
+}
+.faro-glass-nav {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+}
+.faro-beam-glow {
+    background: radial-gradient(circle at 50% 50%, rgba(44, 96, 157, 0.08) 0%, rgba(248, 249, 255, 0) 70%);
+}
+.faro-hero-gradient {
+    background: linear-gradient(135deg, #2c609d 0%, #004581 100%);
+}
+
+/* Extracted Stitch Specialized Styles */
+.bg-beam-gradient {
+    background: radial-gradient(circle at 50% 0%, rgba(165, 200, 255, 0.15) 0%, rgba(0, 17, 52, 0) 70%);
+}
+.text-glow {
+    text-shadow: 0 0 20px rgba(165, 200, 255, 0.4);
+}
+.glass-nav {
+    backdrop-filter: blur(20px);
+}
+.text-gradient-primary {
+    background: linear-gradient(135deg, #a5c8ff 0%, #004581 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.btn-gradient, .beam-gradient, .primary-gradient, .beam-effect {
+    background: linear-gradient(135deg, #a5c8ff 0%, #004581 100%);
+}
+.glass-card {
+    background: rgba(29, 51, 97, 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(165, 200, 255, 0.1);
+}
+.calendar-day-hover:hover {
+    background: rgba(165, 200, 255, 0.15);
+}
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.glassmorphic {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+.beam-glow {
+    box-shadow: 0 0 40px rgba(165, 200, 255, 0.15);
+}
+.bg-light-glow {
+    background: radial-gradient(circle at 50% 50%, rgba(128, 208, 255, 0.08) 0%, rgba(0, 17, 52, 0) 70%);
+}
+.editorial-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 2rem;
+}
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}

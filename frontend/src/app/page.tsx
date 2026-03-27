@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   Clock,
   Layout,
+  FolderKanban,
   Target,
   Bell,
   Star,
@@ -118,7 +119,7 @@ function CommandCenterHome({ user, token }: any) {
                 <div className="xl:col-span-8 space-y-6">
                     <div className="flex items-center justify-between px-2">
                         <h2 className="text-xl font-black tracking-tight flex items-center gap-2">
-                            <Layout size={20} className="text-blue-600" /> Mi Agenda
+                            <FolderKanban size={20} className="text-blue-600" /> Mi Agenda
                         </h2>
                         <Link href="/projects" className="text-[11px] font-black uppercase text-blue-600 hover:underline">Ver todo</Link>
                     </div>

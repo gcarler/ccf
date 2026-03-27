@@ -1,29 +1,25 @@
 from fastapi import APIRouter, Depends
-
-from backend import models, crud
-from backend.analytics import queries
-from backend.auth import require_admin
-from backend.core.database import get_db
 from sqlalchemy.orm import Session
+from backend import crud, schemas
+from backend.core.database import get_db
 
-router = APIRouter(prefix="/analytics", tags=["analytics"])
+router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
+@router.get("/radar", response_model=schemas.PastorRadarSchema)
+def get_pastor_radar(db: Session = Depends(get_db)):
+    """Obtiene los KPIs de inteligencia ministerial (Radar del Pastor)."""
+    radar = crud.get_pastor_radar(db)
+    if not radar:
+        # Fallback si no hay datos
+        return {
+            "membresia_viva": 0,
+            "bautismos_este_anio": 0,
+            "estudiantes_activos": 0,
+            "recaudacion_mes": 0
+        }
+    return radar
 
-@router.get("/summary")
-def analytics_summary(db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
-    return crud.get_analytics_summary(db)
-
-
-@router.get("/events/summary")
-def event_summary(days: int = 7, current_user: models.User = Depends(require_admin)):
-    return queries.get_event_summary(days)
-
-
-@router.get("/events/course-performance")
-def course_performance(limit: int = 10, current_user: models.User = Depends(require_admin)):
-    return queries.get_course_performance(limit)
-
-
-@router.get("/events/raw")
-def raw_events(limit: int = 50, current_user: models.User = Depends(require_admin)):
-    return queries.list_raw_events(limit)
+@router.get("/dashboard-metrics", response_model=schemas.DashboardMetrics)
+def get_dashboard_metrics(db: Session = Depends(get_db)):
+    """Metricas consolidadas para el dashboard administrativo."""
+    return crud.get_dashboard_metrics(db)

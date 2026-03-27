@@ -45,7 +45,7 @@ export default function MinistrySettings() {
             items: [
                 { icon: MapPin, label: "Gestión de Sedes", sub: "Sucursales y ministerios locales", path: "/admin/settings/locations" },
                 { icon: CreditCard, label: "Pagos y Donaciones", sub: "Pasarelas, diezmos y ofrendas", path: "/admin/donations/config" },
-                { icon: Settings, label: "Preferencias de la App", sub: "Notificaciones, idioma y tema", path: "/admin/settings/preferences" },
+                { icon: Settings, label: "Feature Flags y Sistema", sub: "Módulos, toggles y estado global", path: "/admin/settings/system" },
             ]
         }
     ];
