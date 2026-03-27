@@ -3,7 +3,11 @@ import logging
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from backend import models, crud, schemas
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 log = logging.getLogger(__name__)
 
@@ -19,7 +23,7 @@ def run_proactive_analysis(db: Session):
     stale_enrollments = db.query(models.Enrollment).filter(
         models.Enrollment.status == "active",
         models.Enrollment.progress_percent < 50,
-        models.Enrollment.created_at < (datetime.utcnow() - timedelta(days=30))
+        models.Enrollment.created_at < (_utcnow() - timedelta(days=30))
     ).all()
 
     if len(stale_enrollments) > 0:
@@ -33,7 +37,7 @@ def run_proactive_analysis(db: Session):
     # 2. Analyze CRM Pipeline Velocity
     new_leads = db.query(models.ConsolidationPipeline).filter(
         models.ConsolidationPipeline.stage == "new",
-        models.ConsolidationPipeline.created_at < (datetime.utcnow() - timedelta(days=3))
+        models.ConsolidationPipeline.created_at < (_utcnow() - timedelta(days=3))
     ).all()
 
     if len(new_leads) > 0:

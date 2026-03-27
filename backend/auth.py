@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import secrets
 from typing import Optional
 
@@ -30,6 +30,10 @@ ROLE_ALIASES = {
 VALID_ROLES = {"aspirante", "estudiante", "docente", "coordinador", "admin"}
 
 
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
 def normalize_role(role: str) -> str:
     role_value = str(role or "").strip().lower()
     return ROLE_ALIASES.get(role_value, role_value)
@@ -40,11 +44,12 @@ def role_in(user_role: str, allowed_roles: set[str]) -> bool:
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
+    now = _utcnow()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = now + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire, "iat": datetime.utcnow().timestamp()})
+        expire = now + timedelta(minutes=15)
+    to_encode.update({"exp": expire, "iat": now.timestamp()})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
@@ -75,7 +80,7 @@ async def get_current_user(db: Session = Depends(database.get_db), token: str = 
 
 def create_refresh_token(db: Session, user_id: int) -> str:
     token = secrets.token_urlsafe(48)
-    expires_at = datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)
+    expires_at = _utcnow() + timedelta(days=settings.refresh_token_expire_days)
     crud.create_refresh_token(db, user_id=user_id, token=token, expires_at=expires_at)
     return token
 

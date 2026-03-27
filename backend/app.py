@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,6 +23,10 @@ from backend.api import (
     projects,
     community,
     finance,
+    spiritual_life,
+    assets,
+    graph,
+    workspace,
 )
 from backend.core.config import get_settings
 from backend.core.database import Base, SessionLocal, engine
@@ -39,6 +44,16 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 import logging
 
 log = logging.getLogger(__name__)
+
+from backend.services.scheduler import start_background_scheduler
+from backend.core.websockets import ws_manager
+from fastapi import WebSocket, WebSocketDisconnect
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Base.metadata.create_all(bind=engine)
+    yield
 
 def create_application() -> FastAPI:
     app = FastAPI(
@@ -60,7 +75,8 @@ def create_application() -> FastAPI:
         },
         license_info={
             "name": "CCF Proprietary",
-        }
+        },
+        lifespan=lifespan,
     )
 
     @app.exception_handler(SQLAlchemyError)
@@ -97,44 +113,45 @@ def create_application() -> FastAPI:
     os.makedirs(uploads_dir, exist_ok=True)
     app.mount("/static", StaticFiles(directory=uploads_dir), name="static")
 
-    # Routers - Explicitly using the router object from each module
+    # Routers Ministerial v3.9 (Activos y Sincronizados)
     app.include_router(system.router)
     app.include_router(auth_router.router, tags=["auth"])
-    app.include_router(academy.router, tags=["academy"])
     app.include_router(analytics_router.router, tags=["analytics"])
     app.include_router(crm.router, prefix="/crm", tags=["crm"])
+    app.include_router(finance.router)
+    app.include_router(spiritual_life.router)
+    app.include_router(assets.router)
+    app.include_router(workspace.router)
+    
+    app.include_router(academy.router, tags=["academy"])
     app.include_router(messaging.router, tags=["messaging"])
     app.include_router(agents_router.router, tags=["agents"])
     app.include_router(prayer.router, prefix="/prayer", tags=["prayer"])
     app.include_router(support.router, prefix="/support", tags=["support"])
     app.include_router(donations.router)
-    app.include_router(finance.router)
-    app.include_router(projects.router)
+    app.include_router(projects.router, prefix="/projects", tags=["projects"])
     app.include_router(community.router)
     app.include_router(governance.router)
+    app.include_router(graph.router)
 
     if settings.enable_otel:
         configure_telemetry(app, engine)
     mount_security_headers(app)
 
-    @app.on_event("startup")
-    def on_startup() -> None:
-        # Prevent database initialization if we are in a test environment
-        # to avoid connection issues with production Postgres
-        if os.getenv("ENV") == "test" or settings.environment == "test":
-            log.info("Test environment detected. Skipping production startup tasks.")
-            return
-            
-        Base.metadata.create_all(bind=engine)
-        db = SessionLocal()
+    @app.websocket("/ws/{user_id}")
+    async def websocket_endpoint(websocket: WebSocket, user_id: str):
+        await ws_manager.connect(websocket, user_id)
         try:
-            crud.seed_courses_if_empty(db)
-            crud.seed_public_content_if_empty(db)
-            crud.ensure_page_content_defaults(db)
-            create_stored_procedures(db)
-        finally:
-            db.close()
+            while True:
+                data = await websocket.receive_text()
+                # Handle incoming messages from client if needed
+                await ws_manager.send_personal_message({"type": "ACK", "message": "Received"}, user_id)
+        except WebSocketDisconnect:
+            ws_manager.disconnect(websocket, user_id)
 
+    # Servicios secundarios desactivados para estabilidad ministerial v3.9
+    # start_background_scheduler()
+    
     return app
 
 

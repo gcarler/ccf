@@ -103,7 +103,7 @@ def seed_final_content():
 
     # 2. Events (Schema check: name, description, event_type, fixed_date)
     cursor.execute("DELETE FROM events")
-    now = dt.datetime.utcnow()
+    now = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
     events = [
         ("Noche de Alabanza Prof??tica", "Un tiempo de adoraci??n profunda en nuestra sede central.", "Servicio", (now + dt.timedelta(days=2)).isoformat()),
         ("Congreso 'Fuego Cruzado'", "Evento especial para j??venes con invitados nacionales. ??No te lo pierdas!", "Congreso", (now + dt.timedelta(days=15)).isoformat()),
