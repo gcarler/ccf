@@ -78,7 +78,7 @@ export default function RegisterPage() {
             <div className="absolute inset-0 z-0">
                 <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-600/10 blur-[120px] animate-pulse-soft"></div>
                 <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-soft delay-700"></div>
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] brightness-100 contrast-150"></div>
+                <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.03] brightness-100 contrast-150"></div>
             </div>
 
             <div className="relative z-10 w-full max-w-6xl">

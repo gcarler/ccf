@@ -245,7 +245,7 @@ function CommandCenterHome({ user, token }: any) {
                         {/* Academy Progress Banner */}
                         <motion.div variants={itemVariants} className="p-8 md:p-10 rounded-[3rem] bg-[#001b48] border border-[#018abd]/30 text-white relative overflow-hidden group shadow-2xl">
                             <div className="absolute top-[-20%] right-[-10%] w-[80%] h-[150%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#018abd]/40 via-[#004581]/10 to-transparent blur-2xl transition-transform duration-700 group-hover:scale-110" />
-                            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay" />
+                            <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-10 mix-blend-overlay" />
                             
                             <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
                                 <div className="space-y-5 flex-1 w-full">

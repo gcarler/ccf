@@ -1,0 +1,114 @@
+[
+  {
+    "viewport": "desktop",
+    "route": "/cms",
+    "status": 200,
+    "durationMs": 859,
+    "ok": true
+  },
+  {
+    "viewport": "desktop",
+    "route": "/cms/content",
+    "status": 200,
+    "durationMs": 846,
+    "ok": true
+  },
+  {
+    "viewport": "desktop",
+    "route": "/cms/media",
+    "status": 200,
+    "durationMs": 823,
+    "ok": true
+  },
+  {
+    "viewport": "desktop",
+    "route": "/cms/events",
+    "status": 200,
+    "durationMs": 829,
+    "ok": true
+  },
+  {
+    "viewport": "desktop",
+    "route": "/faro",
+    "status": 200,
+    "durationMs": 1157,
+    "ok": true
+  },
+  {
+    "viewport": "desktop",
+    "route": "/faro/eventos",
+    "status": 200,
+    "durationMs": 837,
+    "ok": true
+  },
+  {
+    "viewport": "desktop",
+    "route": "/faro/testimonios",
+    "status": 200,
+    "durationMs": 921,
+    "ok": true
+  },
+  {
+    "viewport": "desktop",
+    "route": "/community/announcements",
+    "status": 200,
+    "durationMs": 957,
+    "ok": true
+  },
+  {
+    "viewport": "mobile",
+    "route": "/cms",
+    "status": 200,
+    "durationMs": 862,
+    "ok": true
+  },
+  {
+    "viewport": "mobile",
+    "route": "/cms/content",
+    "status": 200,
+    "durationMs": 845,
+    "ok": true
+  },
+  {
+    "viewport": "mobile",
+    "route": "/cms/media",
+    "status": 200,
+    "durationMs": 841,
+    "ok": true
+  },
+  {
+    "viewport": "mobile",
+    "route": "/cms/events",
+    "status": 200,
+    "durationMs": 849,
+    "ok": true
+  },
+  {
+    "viewport": "mobile",
+    "route": "/faro",
+    "status": 200,
+    "durationMs": 1239,
+    "ok": true
+  },
+  {
+    "viewport": "mobile",
+    "route": "/faro/eventos",
+    "status": 200,
+    "durationMs": 857,
+    "ok": true
+  },
+  {
+    "viewport": "mobile",
+    "route": "/faro/testimonios",
+    "status": 200,
+    "durationMs": 824,
+    "ok": true
+  },
+  {
+    "viewport": "mobile",
+    "route": "/community/announcements",
+    "status": 200,
+    "durationMs": 899,
+    "ok": true
+  }
+]

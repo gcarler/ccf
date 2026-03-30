@@ -83,7 +83,7 @@ export function AuthShowcasePanel({ mode = "login", className }: AuthShowcasePan
             <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute -top-16 right-[-40px] w-64 h-64 bg-primary/40 blur-[150px]"></div>
                 <div className="absolute bottom-0 left-[-60px] w-72 h-72 bg-blue-500/30 blur-[180px]"></div>
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.08]"></div>
+                <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.08]"></div>
             </div>
 
             <div className="relative space-y-8">

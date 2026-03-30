@@ -1,19 +1,21 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     X, CheckCircle2, Clock, Flag, User, Calendar, 
     MoreHorizontal, MessageSquare, Send, Trash2, 
     ChevronRight, Paperclip, Bell, Hash, File, 
-    ExternalLink, Loader2, Image as ImageIcon
+    ExternalLink, Loader2, Image as ImageIcon,
+    UploadCloud, Download, Check
 } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
+import * as Popover from '@radix-ui/react-popover';
 import clsx from 'clsx';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
-import type { ProjectTaskRecord, ProjectCommentItem } from '@/types/projects';
+import type { ProjectTaskRecord, ProjectCommentItem, ProjectAttachment } from '@/types/projects';
 
 interface Props {
     task: ProjectTaskRecord | null;
@@ -28,7 +30,7 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdate }: Pro
     const [comments, setComments] = useState<ProjectCommentItem[]>([]);
     const [newComment, setNewComment] = useState('');
     const [isUploading, setIsUploading] = useState(false);
-    const [loadingComments, setLoading] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
 
     useEffect(() => {
         if (isOpen && task && token) {
@@ -38,54 +40,44 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdate }: Pro
 
     const fetchComments = async () => {
         if (!task) return;
-        setLoading(true);
         try {
             const data = await apiFetch<ProjectCommentItem[]>(`/projects/comments?project_id=${task.project_id}&task_id=${task.id}`, { token });
             setComments(data);
         } catch (err) { console.error(err); }
-        finally { setLoading(false); }
     };
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file || !task) return;
+    const handleUpdateField = async (field: string, value: any) => {
+        if (!task || !token) return;
+        try {
+            const updated = await apiFetch<ProjectTaskRecord>(`/projects/${task.project_id}/tasks/${task.id}`, {
+                method: 'PATCH',
+                token,
+                body: { [field]: value }
+            });
+            onUpdate(updated);
+            toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} actualizado`);
+        } catch (err) {
+            toast.error("Error al actualizar campo");
+        }
+    };
 
+    const handleFileUpload = async (file: File) => {
+        if (!task) return;
         setIsUploading(true);
         const formData = new FormData();
         formData.append('file', file);
-
         try {
-            // Nota: Usamos fetch nativo para multipart ya que apiFetch suele estar configurado para JSON
             const response = await fetch(`http://localhost:8000/api/projects/${task.project_id}/tasks/${task.id}/attachments`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
-
-            if (!response.ok) throw new Error('Error al subir archivo');
-            
+            if (!response.ok) throw new Error('Error al subir');
             const updatedTask = await response.json();
             onUpdate(updatedTask);
-            toast.success(`Archivo "${file.name}" adjuntado`);
-        } catch (err) {
-            toast.error("Error al subir el archivo");
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-    const handleAddComment = async () => {
-        if (!newComment.trim() || !task) return;
-        try {
-            const created = await apiFetch<ProjectCommentItem>(`/projects/${task.project_id}/comments`, {
-                method: 'POST',
-                token,
-                body: { content: newComment.trim(), task_id: task.id }
-            });
-            setComments([created, ...comments]);
-            setNewComment('');
-            toast.success("Comentario añadido");
-        } catch (err) { toast.error("Error al comentar"); }
+            toast.success(`Evidencia sincronizada`);
+        } catch (err) { toast.error("Fallo al subir evidencia"); }
+        finally { setIsUploading(false); }
     };
 
     if (!task) return null;
@@ -103,156 +95,79 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdate }: Pro
                                 initial={{ opacity: 0, x: 100 }} 
                                 animate={{ opacity: 1, x: 0 }} 
                                 exit={{ opacity: 0, x: 100 }}
-                                className="fixed right-0 top-0 z-[9001] h-screen w-full max-w-[700px] bg-white dark:bg-[#1e1f21] shadow-2xl border-l border-white/10 flex flex-col overflow-hidden font-display"
+                                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                                onDragLeave={() => setIsDragging(false)}
+                                onDrop={(e) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files?.[0]) handleFileUpload(e.dataTransfer.files[0]); }}
+                                className="fixed right-0 top-0 z-[9001] h-screen w-full max-w-[750px] bg-white dark:bg-[#1e1f21] shadow-2xl border-l border-white/10 flex flex-col overflow-hidden font-display"
                             >
-                                {/* Input oculto para archivos */}
-                                <input 
-                                    type="file" 
-                                    ref={fileInputRef} 
-                                    className="hidden" 
-                                    onChange={handleFileUpload} 
-                                />
+                                <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])} />
 
-                                {/* Header: Context & Actions */}
-                                <header className="px-8 py-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
+                                {/* Header Ministerial */}
+                                <header className="px-8 py-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/5 shrink-0">
                                     <div className="flex items-center gap-2">
                                         <Hash size={14} className="text-slate-400" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Tarea #{task.id}</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Misión #{task.id}</span>
                                         <ChevronRight size={12} className="text-slate-300" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">Detalles</span>
+                                        <StatusPicker value={task.status} onChange={(v) => handleUpdateField('status', v)} />
                                     </div>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2">
                                         {isUploading && <Loader2 size={18} className="animate-spin text-blue-600" />}
-                                        <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors"><Bell size={18} /></button>
-                                        <button 
-                                            onClick={() => fileInputRef.current?.click()}
-                                            className="p-2 text-slate-400 hover:text-blue-600 transition-all hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl"
-                                        >
-                                            <Paperclip size={18} />
-                                        </button>
+                                        <button onClick={() => fileInputRef.current?.click()} className="p-2 text-slate-400 hover:text-blue-600 transition-all hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl"><Paperclip size={18} /></button>
                                         <button className="p-2 text-slate-400 hover:text-rose-600 transition-colors"><Trash2 size={18} /></button>
                                         <div className="w-[1px] h-4 bg-slate-200 dark:bg-white/10 mx-1" />
-                                        <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
+                                        <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-all"><X size={20} /></button>
                                     </div>
                                 </header>
 
-                                <div className="flex-1 overflow-y-auto scrollbar-thin p-10 space-y-10">
-                                    {/* Task Title & Status */}
-                                    <div className="space-y-6">
-                                        <div className="flex items-start gap-4">
-                                            <div className={clsx(
-                                                "mt-1 size-8 rounded-xl flex items-center justify-center border-2",
-                                                task.status === 'done' ? "bg-green-500 border-green-500 text-white" : "border-slate-200 dark:border-white/10 text-slate-300"
-                                            )}>
-                                                {task.status === 'done' && <CheckCircle2 size={18} />}
-                                            </div>
-                                            <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight tracking-tight">{task.title}</h2>
-                                        </div>
-
-                                        <div className="flex flex-wrap gap-4 pt-4 border-t border-slate-100 dark:border-white/5">
-                                            <Property label="Estado" value={task.status.toUpperCase()} icon={CheckCircle2} color="text-emerald-500" />
-                                            <Property label="Prioridad" value={task.priority.toUpperCase()} icon={Flag} color={task.priority === 'high' ? 'text-rose-500' : 'text-slate-400'} />
-                                            <Property label="Entrega" value={task.due_date ? new Date(task.due_date).toLocaleDateString() : 'Sin fecha'} icon={Calendar} color="text-blue-500" />
+                                <div className="flex-1 overflow-y-auto scrollbar-thin p-10 space-y-12">
+                                    {/* Title Section */}
+                                    <div className="space-y-8">
+                                        <h2 className="text-4xl font-black text-slate-900 dark:text-white leading-tight tracking-tight outline-none" contentEditable suppressContentEditableWarning onBlur={(e) => handleUpdateField('title', e.currentTarget.textContent)}>
+                                            {task.title}
+                                        </h2>
+                                        <div className="flex flex-wrap gap-3">
+                                            <PriorityPicker value={task.priority} onChange={(v) => handleUpdateField('priority', v)} />
+                                            <PropertyBadge label="Entrega" value={task.due_date ? new Date(task.due_date).toLocaleDateString() : 'Sin fecha'} icon={Calendar} color="text-blue-500" bg="bg-blue-50 dark:bg-blue-900/20" />
+                                            <PropertyBadge label="Responsable" value="Sin asignar" icon={User} color="text-slate-400" bg="bg-slate-50 dark:bg-white/5" />
                                         </div>
                                     </div>
 
-                                    {/* Description */}
+                                    {/* Description Pro */}
                                     <section className="space-y-4">
-                                        <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Descripción</h4>
-                                        <div className="p-6 rounded-[2rem] bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5 min-h-[120px]">
-                                            <p className="text-[13px] font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
-                                                {task.description || "No hay descripción detallada."}
+                                        <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Descripción de la Misión</h4>
+                                        <div className="p-8 rounded-[2.5rem] bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5 min-h-[150px]">
+                                            <p className="text-[14px] font-medium text-slate-600 dark:text-slate-300 leading-relaxed outline-none" contentEditable suppressContentEditableWarning onBlur={(e) => handleUpdateField('description', e.currentTarget.textContent)}>
+                                                {task.description || "Haz clic para añadir el alcance detallado de esta tarea."}
                                             </p>
                                         </div>
                                     </section>
 
-                                    {/* Attachments Section (NUEVO) */}
-                                    {task.attachments && task.attachments.length > 0 && (
-                                        <section className="space-y-4">
-                                            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Evidencias / Adjuntos</h4>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                {task.attachments.map((file: any, i: number) => (
-                                                    <a 
-                                                        key={i} 
-                                                        href={`http://localhost:8000${file.url}`} 
-                                                        target="_blank" 
-                                                        className="flex items-center gap-3 p-3 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl hover:border-blue-500/50 transition-all group"
-                                                    >
-                                                        <div className="size-10 rounded-xl bg-slate-50 dark:bg-black/20 flex items-center justify-center text-slate-400 group-hover:text-blue-600 transition-colors">
-                                                            {file.name.match(/\.(jpg|jpeg|png|gif)$/i) ? <ImageIcon size={18} /> : <File size={18} />}
-                                                        </div>
-                                                        <div className="min-w-0 flex-1">
-                                                            <p className="text-[11px] font-bold truncate text-slate-700 dark:text-slate-200">{file.name}</p>
-                                                            <p className="text-[9px] font-medium text-slate-400 uppercase">Adjunto</p>
-                                                        </div>
-                                                        <ExternalLink size={12} className="text-slate-300 group-hover:text-blue-500" />
-                                                    </a>
-                                                ))}
-                                            </div>
-                                        </section>
-                                    )}
-
-                                    {/* Checklist / Supplies */}
-                                    {task.supplies && task.supplies.length > 0 && (
-                                        <section className="space-y-4">
-                                            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Actividades Técnicas</h4>
-                                            <div className="space-y-2">
-                                                {task.supplies.map(s => (
-                                                    <div key={s.id} className="flex items-center gap-3 p-4 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl">
-                                                        <div className={clsx("size-4 rounded border-2", s.status === 'ready' ? "bg-green-500 border-green-500" : "border-slate-200")} />
-                                                        <span className="text-[12px] font-bold text-slate-700 dark:text-slate-200">{s.item_name}</span>
-                                                        <span className="ml-auto text-[10px] font-black text-slate-400">×{s.quantity}</span>
+                                    {/* Evidencias List */}
+                                    <section className="space-y-4">
+                                        <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Evidencias ({task.attachments?.length || 0})</h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            {task.attachments?.map((file) => (
+                                                <div key={file.id} className="flex items-center gap-4 p-4 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-3xl hover:shadow-xl transition-all">
+                                                    <div className="size-12 rounded-2xl bg-slate-50 dark:bg-black/20 flex items-center justify-center text-slate-400"><ImageIcon size={24} /></div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-[12px] font-black truncate text-slate-800 dark:text-white">{file.filename}</p>
+                                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{(file.file_size || 0 / 1024).toFixed(1)} KB</p>
                                                     </div>
-                                                ))}
-                                            </div>
-                                        </section>
-                                    )}
-
-                                    {/* Comments Section */}
-                                    <section className="space-y-6 pt-10 border-t border-slate-100 dark:border-white/5">
-                                        <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                                            <MessageSquare size={14} /> Conversación
-                                        </h4>
-                                        
-                                        <div className="flex gap-4">
-                                            <div className="size-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-lg uppercase">
-                                                {user?.username?.substring(0, 2)}
-                                            </div>
-                                            <div className="flex-1 space-y-3">
-                                                <textarea 
-                                                    value={newComment}
-                                                    onChange={(e) => setNewComment(e.target.value)}
-                                                    placeholder="Escribe un comentario..."
-                                                    className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-[1.5rem] px-5 py-4 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all resize-none"
-                                                />
-                                                <div className="flex justify-end">
-                                                    <button 
-                                                        onClick={handleAddComment}
-                                                        className="px-6 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[11px] font-black uppercase tracking-widest rounded-xl hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-black/10"
-                                                    >
-                                                        Comentar <Send size={12} />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-6 pt-6">
-                                            {comments.map((c) => (
-                                                <div key={c.id} className="flex gap-4 group">
-                                                    <div className="size-10 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 font-bold text-xs uppercase">
-                                                        {c.author_name.substring(0, 2)}
-                                                    </div>
-                                                    <div className="flex-1 space-y-1">
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-[12px] font-black text-slate-800 dark:text-white">{c.author_name}</span>
-                                                            <span className="text-[10px] font-bold text-slate-400">{new Date(c.created_at).toLocaleDateString()}</span>
-                                                        </div>
-                                                        <p className="text-[13px] font-medium text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-white/5 p-4 rounded-2xl rounded-tl-none border border-slate-100 dark:border-white/5">
-                                                            {c.content}
-                                                        </p>
-                                                    </div>
+                                                    <a href={`http://localhost:8000${file.file_url}`} target="_blank" className="p-1.5 text-slate-300 hover:text-blue-600 transition-colors"><ExternalLink size={14} /></a>
                                                 </div>
                                             ))}
+                                            <div onClick={() => fileInputRef.current?.click()} className="p-4 border-2 border-dashed border-slate-100 dark:border-white/5 rounded-3xl flex items-center justify-center text-slate-300 hover:text-blue-500 cursor-pointer bg-slate-50/30 group">
+                                                <Plus size={20} className="group-hover:scale-110 transition-transform" />
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    {/* Comments Placeholder */}
+                                    <section className="pt-10 border-t border-slate-100 dark:border-white/5">
+                                        <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6">Conversación</h4>
+                                        <div className="flex gap-4">
+                                            <div className="size-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black text-xs shadow-lg uppercase">{user?.username?.substring(0, 2)}</div>
+                                            <textarea placeholder="Escribe un comentario..." className="flex-1 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-2xl px-6 py-4 text-sm font-medium outline-none resize-none" rows={2} />
                                         </div>
                                     </section>
                                 </div>
@@ -265,13 +180,62 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdate }: Pro
     );
 }
 
-function Property({ label, value, icon: Icon, color }: any) {
+function StatusPicker({ value, onChange }: { value: string, onChange: (v: string) => void }) {
+    const statuses = ['todo', 'in_progress', 'review', 'done'];
     return (
-        <div className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 px-4 py-2 rounded-2xl border border-slate-100 dark:border-white/5">
+        <Popover.Root>
+            <Popover.Trigger asChild>
+                <button className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-lg group hover:bg-blue-600 transition-all">
+                    <span className="text-[9px] font-black text-blue-600 uppercase group-hover:text-white transition-colors">{value}</span>
+                    <ChevronRight size={10} className="text-blue-400 group-hover:text-white transition-colors rotate-90" />
+                </button>
+            </Popover.Trigger>
+            <Popover.Portal>
+                <Popover.Content sideOffset={5} className="z-[10000] w-48 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-2 animate-in fade-in zoom-in-95">
+                    {statuses.map(s => (
+                        <button key={s} onClick={() => onChange(s)} className="w-full flex items-center justify-between px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl transition-colors">
+                            {s} {value === s && <Check size={12} className="text-blue-600" />}
+                        </button>
+                    ))}
+                </Popover.Content>
+            </Popover.Portal>
+        </Popover.Root>
+    );
+}
+
+function PriorityPicker({ value, onChange }: { value: string, onChange: (v: string) => void }) {
+    const priorities = ['low', 'normal', 'high', 'urgent'];
+    return (
+        <Popover.Root>
+            <Popover.Trigger asChild>
+                <div className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 px-4 py-2.5 rounded-2xl border border-slate-100 dark:border-white/5 cursor-pointer hover:bg-slate-100 transition-colors group">
+                    <Flag size={14} className={value === 'high' || value === 'urgent' ? 'text-rose-500' : 'text-slate-400'} />
+                    <div className="flex flex-col">
+                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Prioridad</span>
+                        <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 leading-none uppercase">{value}</span>
+                    </div>
+                </div>
+            </Popover.Trigger>
+            <Popover.Portal>
+                <Popover.Content sideOffset={5} className="z-[10000] w-48 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-2">
+                    {priorities.map(p => (
+                        <button key={p} onClick={() => onChange(p)} className="w-full flex items-center justify-between px-4 py-2 text-[10px] font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl">
+                            {p} {value === p && <Check size={12} className="text-blue-600" />}
+                        </button>
+                    ))}
+                </Popover.Content>
+            </Popover.Portal>
+        </Popover.Root>
+    );
+}
+
+function PropertyBadge({ label, value, icon: Icon, color, bg }: any) {
+    return (
+        <div className={clsx("flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-slate-100 dark:border-white/5", bg)}>
             <Icon size={14} className={color} />
             <div className="flex flex-col">
                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{label}</span>
-                <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 leading-none">{value}</span>
+                <span className={clsx("text-[11px] font-black uppercase leading-none text-slate-700 dark:text-slate-200")}>{value}</span>
             </div>
         </div>
     );

@@ -42,6 +42,7 @@ import { CheckCircle, Award, FileText, Send, AlertCircle, Info, ArrowRight, Play
 import { useToast } from "@/context/ToastContext";
 import { useMeshSocket } from "@/hooks/useMeshSocket";
 import CertificateModal from "./CertificateModal";
+import AssessmentModal from "./academy/AssessmentModal";
 
 interface Lesson {
   id: number;
@@ -57,10 +58,8 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
   const [enrollments, setEnrollments] = useState<Enrollment[]>(initialEnrollments ?? []);
   const [assessmentsByCourse, setAssessmentsByCourse] = useState<Record<number, Assessment[]>>({});
   const [certificatesByEnrollment, setCertificatesByEnrollment] = useState<Record<number, Certificate>>({});
-  const [scoreByAssessment, setScoreByAssessment] = useState<Record<number, string>>({});
-  const [messageByEnrollment, setMessageByEnrollment] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(!initialEnrollments);
-  const [activeExam, setActiveExam] = useState<number | null>(null);
+  const [activeAssessment, setActiveAssessment] = useState<{ id: number, enrollmentId: number } | null>(null);
 
   // Mesh WebSocket Integration
   const { lastEvent } = useMeshSocket(userId ? String(userId) : "");
@@ -82,7 +81,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
 
     setLoading(true);
     try {
-      const data = await apiFetch<Enrollment[]>(`/users/${userId}/enrollments`, {
+      const data = await apiFetch<Enrollment[]>(`/academy/users/${userId}/enrollments`, {
         token,
         cache: "no-store",
       });
@@ -91,7 +90,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
 
       normalized.forEach((item) => {
         if (item.status === "active" || item.status === "enrolled") {
-          apiFetch(`/enrollments/${item.id}/check-in`, {
+          apiFetch(`/academy/enrollments/${item.id}/check-in`, {
             method: "POST",
             token,
           }).catch(() => {});
@@ -101,7 +100,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
       const assessmentsEntries = await Promise.all(
         normalized.map(async (item) => {
           try {
-            const assessments = await apiFetch<Assessment[]>(`/courses/${item.course.id}/assessments`, {
+            const assessments = await apiFetch<Assessment[]>(`/academy/courses/${item.course.id}/assessments`, {
               token,
               cache: "no-store",
             });
@@ -114,7 +113,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
       setAssessmentsByCourse(Object.fromEntries(assessmentsEntries));
 
       try {
-        const certificates = await apiFetch<Certificate[]>(`/users/${userId}/certificates`, {
+        const certificates = await apiFetch<Certificate[]>(`/academy/users/${userId}/certificates`, {
           token,
           cache: "no-store",
         });
@@ -150,32 +149,17 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
     }
   }, [lastEvent, addToast, userId, loadEnrollments]);
 
-  const submitAssessment = async (enrollmentId: number, assessmentId: number) => {
-    const score = parseFloat(scoreByAssessment[assessmentId] || "0");
-    try {
-      const result = await apiFetch<{ passed: boolean }>(`/enrollments/${enrollmentId}/assessments/${assessmentId}/submit`, {
-        method: "POST",
-        token,
-        body: { submitted_score: score },
-      });
-      setMessageByEnrollment(prev => ({
-        ...prev,
-        [enrollmentId]: result.passed ? "¡Felicidades! Has aprobado el curso." : "No alcanzaste la nota mínima."
-      }));
-      setActiveExam(null);
-      loadEnrollments();
-
-    } catch (error) {
-      const detail = error instanceof ApiError ? (error.detail as any)?.detail : null;
-      setMessageByEnrollment(prev => ({ ...prev, [enrollmentId]: detail || "Error al calificar" }));
-    }
+  const handleAssessmentSuccess = (score: number) => {
+    addToast(`Examen completado con ${score}%`, "success");
+    setActiveAssessment(null);
+    loadEnrollments();
   };
 
   const openLessons = async (enrollment: Enrollment) => {
     setViewingLessonsCourse(enrollment);
     setLoadingLessons(true);
     try {
-      const data = await apiFetch<Lesson[]>(`/courses/${enrollment.course.id}/lessons`, {
+      const data = await apiFetch<Lesson[]>(`/academy/courses/${enrollment.course.id}/lessons`, {
         token,
         cache: "no-store",
       });
@@ -383,36 +367,32 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
                     >
                       <Award size={12} /> Certificado Disponible
                     </button>
-                  ) : !item.approved && item.progress_percent >= 90 && (
+                  ) : !item.approved && item.progress_percent >= 90 && assessmentsByCourse[item.course.id]?.length > 0 && (
                     <button 
-                        onClick={(e) => { e.stopPropagation(); setActiveExam(item.id); }} 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setActiveAssessment({ id: assessmentsByCourse[item.course.id][0].id, enrollmentId: item.id }); 
+                        }} 
                         className="flex-1 py-1.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
                     >
                       Tomar Examen <ArrowRight size={12} />
                     </button>
                   )}
                 </div>
-
-                {!item.approved && activeExam === item.id && (
-                  <div className="mt-2 space-y-4">
-                    {(assessmentsByCourse[item.course.id] || []).map((assessment) => (
-                      <div key={assessment.id} className="p-5 bg-slate-800/80 rounded-2xl border border-primary/20 shadow-inner">
-                        <div className="flex justify-between items-center mb-4">
-                          <p className="text-xs font-bold uppercase tracking-widest text-slate-200">Examen Final</p>
-                          <button onClick={() => setActiveExam(null)} className="text-slate-500 hover:text-white bg-white/5 rounded-full p-1"><CloseIcon size={16} /></button>
-                        </div>
-                        <div className="flex gap-2">
-                          <input type="number" min="0" max="100" value={scoreByAssessment[assessment.id] || ""} onChange={(e) => setScoreByAssessment(prev => ({ ...prev, [assessment.id]: e.target.value }))} className="flex-1 rounded-xl bg-slate-900 border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none" placeholder="Nota" />
-                          <button onClick={() => submitAssessment(item.id, assessment.id)} className="px-6 py-3 bg-primary text-white rounded-xl text-xs font-bold uppercase hover:bg-primary/90 transition-all">Enviar</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </article>
             );
           })}
         </div>
+      )}
+
+      {activeAssessment && (
+        <AssessmentModal
+          assessmentId={activeAssessment.id}
+          enrollmentId={activeAssessment.enrollmentId}
+          token={token}
+          onClose={() => setActiveAssessment(null)}
+          onSuccess={handleAssessmentSuccess}
+        />
       )}
 
       {selectedCertificate && (

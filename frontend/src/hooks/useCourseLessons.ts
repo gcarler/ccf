@@ -30,7 +30,7 @@ export function useCourseLessons(courseIds: number[], token?: string | null): Le
         const results = await Promise.all(
           normalizedIds.map(async (courseId) => {
             try {
-              const lessons = await apiFetch<LessonRecord[]>(`/courses/${courseId}/lessons`, {
+              const lessons = await apiFetch<LessonRecord[]>(`/academy/courses/${courseId}/lessons`, {
                 token,
                 cache: 'no-store',
               });

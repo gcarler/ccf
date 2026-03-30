@@ -1,8 +1,10 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
+import { apiFetch } from '@/lib/http';
 import {
     Menu,
     Bell,
@@ -11,129 +13,210 @@ import {
     ChevronRight,
     Plus,
     Calendar,
-    Megaphone
+    Megaphone,
+    Sparkles,
+    Zap,
+    Layout,
+    Globe,
+    Loader2,
+    Image as ImageIcon,
+    Check
 } from 'lucide-react';
+import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import { motion, AnimatePresence } from 'framer-motion';
+import clsx from 'clsx';
+
+interface Announcement {
+    id: number;
+    title: string;
+    content: string;
+    category: string;
+    featured: boolean;
+    date: string;
+}
 
 export default function AnnouncementsAdmin() {
-    const { isAuthenticated } = useAuth();
+    const { token, isAuthenticated } = useAuth();
+    const { addToast } = useToast();
     const router = useRouter();
+    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const announcements = [
-        {
-            id: '1',
-            category: 'Ministerio de Enseñanza',
-            title: 'Inicio de Clases Teológicas',
-            date: '12 MAY',
-            excerpt: 'Las inscripciones para el nuevo semestre del Instituto Bíblico ya están abiertas. Cupos limitados.',
-            featured: false
-        },
-        {
-            id: '2',
-            category: 'Administración',
-            title: 'Nuevo Horario de Culto',
-            date: '10 MAY',
-            excerpt: 'A partir del próximo domingo, el servicio matutino iniciará a las 9:30 AM para mayor comodidad.',
-            featured: false
-        },
-        {
-            id: '3',
-            category: 'Eventos Generales',
-            title: 'Vigilia Mensual: "Fuego Santo"',
-            date: '08 MAY',
-            excerpt: 'Acompáñanos este viernes en una noche de oración ininterrumpida y búsqueda profunda de Dios.',
-            featured: false
-        },
-    ];
+    const fetchAnnouncements = useCallback(async () => {
+        if (!token) return;
+        setLoading(true);
+        try {
+            const data = await apiFetch<Announcement[]>('/admin/announcements', { token, cache: 'no-store' });
+            setAnnouncements(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error(err);
+            addToast("Error al sincronizar comunicados", "error");
+        } finally {
+            setLoading(false);
+        }
+    }, [token, addToast]);
+
+    useEffect(() => {
+        if (isAuthenticated) fetchAnnouncements();
+    }, [isAuthenticated, fetchAnnouncements]);
+
+    const featuredAnn = announcements.find(a => a.featured) || announcements[0];
+    const normalAnnouncements = announcements.filter(a => a.id !== featuredAnn?.id);
 
     if (!isAuthenticated) return null;
 
     return (
-        <div className="flex flex-col h-full bg-slate-950/20 font-display">
-            {/* Header Area */}
-            <div className="bg-slate-900/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
-                <div className="px-8 pt-10 pb-4 flex items-center justify-between">
-                    <button className="p-3 rounded-2xl bg-white/5 border border-white/10 text-primary hover:bg-primary/10 transition-all">
-                        <Menu size={20} />
+        <div className="flex flex-col h-full bg-white dark:bg-[#0a0f16] font-display overflow-hidden">
+            <style jsx global>{`
+                .ann-aura {
+                    position: relative;
+                }
+                .ann-aura::after {
+                    content: '';
+                    position: absolute;
+                    inset: -1px;
+                    background: linear-gradient(45deg, var(--aura-color, #3b82f610), transparent 60%);
+                    z-index: -1;
+                    border-radius: inherit;
+                    opacity: 0;
+                    transition: opacity 0.5s ease;
+                }
+                .ann-aura:hover::after {
+                    opacity: 1;
+                }
+            `}</style>
+
+            <WorkspaceToolbar 
+                breadcrumbs={[{ label: 'Admin', icon: Layout }, { label: 'Comunicaciones Globales', icon: Megaphone }]}
+                viewType="grid" setViewType={() => {}}
+                rightActions={
+                    <button 
+                        onClick={() => router.push('/admin/announcements/new')}
+                        className="flex items-center gap-3 px-8 py-3 bg-blue-600 text-white rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all hover:bg-blue-700"
+                    >
+                        <Plus size={18} /> Nuevo Comunicado
                     </button>
-                    <h1 className="text-xl font-black text-white tracking-tight uppercase tracking-tight">Anuncios del Ministerio</h1>
-                    <button className="p-3 rounded-2xl bg-white/5 border border-white/10 text-primary hover:bg-primary/10 transition-all relative">
-                        <Bell size={20} />
-                        <span className="absolute top-3 right-3 size-2 bg-primary rounded-full ring-2 ring-slate-950 shadow-[0_0_8px_#4242f0]"></span>
-                    </button>
-                </div>
-            </div>
+                }
+            />
 
-            <main className="flex-1 px-8 py-10 pb-40 space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-8 lg:p-12 relative pb-40">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#3b82f605_0%,_transparent_50%)] pointer-events-none" />
 
-                {/* Featured Section */}
-                <section>
-                    <div className="relative group overflow-hidden rounded-[2.5rem] h-96 shadow-2xl border border-white/5">
-                        <div
-                            className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-                            style={{ backgroundImage: `linear-gradient(to top, rgba(16, 16, 34, 0.95) 0%, rgba(16, 16, 34, 0.4) 50%, transparent 100%), url('https://images.unsplash.com/photo-1438232992991-995b7058bbb3?q=80&w=800&auto=format&fit=crop')` }}
-                        ></div>
-                        <div className="absolute bottom-0 left-0 right-0 p-10 flex flex-col items-start gap-4">
-                            <span className="px-4 py-1.5 bg-primary text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-lg shadow-primary/40 border border-primary-400/20">Destacado</span>
-                            <h2 className="text-white text-3xl font-black leading-tight tracking-tight uppercase">Congreso Internacional de Avivamiento 2024</h2>
-                            <p className="text-slate-300 text-sm font-medium line-clamp-2 max-w-lg">Prepárate para tres días de gloria y poder bajo la unción del Espíritu Santo. ¡No te lo pierdas!</p>
-                            <button className="mt-4 flex items-center justify-center px-8 py-4 bg-primary text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-2xl shadow-primary/30 hover:bg-primary-600 active:scale-95 transition-all border border-primary-400/20">
-                                Leer Más
-                            </button>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Feed Section */}
-                <section className="space-y-6">
-                    <div className="flex items-center justify-between px-2">
-                        <h3 className="text-white text-xl font-black tracking-tight uppercase tracking-widest">Últimas Noticias</h3>
-                        <button
-                            onClick={() => router.push('/admin/announcements/new')}
-                            className="flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
+                <div className="max-w-6xl mx-auto space-y-16 relative z-10">
+                    
+                    {/* Header Cinematic */}
+                    <header className="space-y-4 text-center md:text-left">
+                        <motion.div 
+                            initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+                            className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-[0.3em] border border-blue-500/20"
                         >
-                            <Plus size={14} /> Crear Nuevo
-                        </button>
-                    </div>
+                            <Sparkles size={12} className="animate-pulse" /> Difusión de Visión CCF
+                        </motion.div>
+                        <h1 className="text-5xl lg:text-7xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                            El latido de la <br/> <span className="text-blue-600 italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-400">Comunidad.</span>
+                        </h1>
+                    </header>
 
-                    <div className="flex flex-col gap-6">
-                        {announcements.map((ann) => (
-                            <div key={ann.id} className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-[2.5rem] p-8 flex flex-col gap-6 shadow-2xl group hover:border-primary/30 transition-all">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-primary text-[10px] font-black uppercase tracking-[0.2em]">{ann.category}</span>
-                                        <h4 className="text-white text-lg font-black tracking-tight uppercase tracking-tight group-hover:text-primary transition-colors">{ann.title}</h4>
-                                    </div>
-                                    <span className="text-slate-600 text-[10px] font-black uppercase tracking-widest bg-white/5 px-3 py-1 rounded-lg border border-white/5">{ann.date}</span>
-                                </div>
-                                <p className="text-slate-400 text-sm font-medium leading-relaxed">{ann.excerpt}</p>
-                                <div className="flex items-center justify-between pt-6 border-t border-white/5">
-                                    <div className="flex gap-6">
-                                        <button className="text-primary hover:text-white flex items-center gap-2 transition-all">
-                                            <Share2 size={18} />
-                                            <span className="text-[10px] font-black uppercase tracking-widest">Compartir</span>
+                    {loading ? (
+                        <div className="py-40 flex flex-col items-center justify-center gap-6 text-slate-400 font-black uppercase tracking-[0.5em] animate-pulse">
+                            <Loader2 className="animate-spin text-blue-600" size={48} strokeWidth={1.5} /> Sincronizando Noticias...
+                        </div>
+                    ) : (
+                        <div className="space-y-16">
+                            {/* Featured Cinematic */}
+                            {featuredAnn && (
+                                <motion.section 
+                                    initial={{ opacity: 0, scale: 0.98 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="relative group overflow-hidden rounded-[4rem] h-[500px] shadow-2xl border border-white/10"
+                                >
+                                    <div
+                                        className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"
+                                        style={{ backgroundImage: `linear-gradient(to top, rgba(10, 15, 22, 0.95) 0%, rgba(10, 15, 22, 0.4) 50%, transparent 100%), url('https://images.unsplash.com/photo-1438232992991-995b7058bbb3?q=80&w=1200&auto=format&fit=crop')` }}
+                                    />
+                                    <div className="absolute inset-0 bg-blue-600/5 mix-blend-overlay" />
+                                    
+                                    <div className="absolute bottom-0 left-0 right-0 p-12 lg:p-16 flex flex-col items-start gap-6 relative z-10">
+                                        <div className="flex items-center gap-4">
+                                            <span className="px-5 py-2 bg-blue-600 text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-2xl shadow-blue-500/40">Noticia Destacada</span>
+                                            <span className="px-5 py-2 bg-white/10 backdrop-blur-xl text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-full border border-white/10">{featuredAnn.category}</span>
+                                        </div>
+                                        <h2 className="text-white text-4xl lg:text-6xl font-black leading-tight tracking-tighter uppercase max-w-4xl">{featuredAnn.title}</h2>
+                                        <p className="text-slate-300 text-lg font-medium line-clamp-2 max-w-2xl leading-relaxed italic">&ldquo;{featuredAnn.content.substring(0, 150)}...&rdquo;</p>
+                                        <button className="mt-4 px-10 py-5 bg-white text-slate-900 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:translate-y-[-4px] active:scale-95 transition-all flex items-center gap-3 group/btn">
+                                            Editar Reporte <Edit3 size={18} className="group-hover/btn:rotate-12 transition-transform" />
                                         </button>
-                                        <button className="text-slate-600 hover:text-primary transition-all">
-                                            <Bookmark size={18} />
-                                        </button>
                                     </div>
-                                    <button className="text-primary text-[10px] font-black uppercase tracking-widest flex items-center gap-2 group/btn">
-                                        Ver detalles
-                                        <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
-                                    </button>
+                                </motion.section>
+                            )}
+
+                            {/* Feed Grid */}
+                            <section className="space-y-10">
+                                <div className="flex items-center justify-between px-4">
+                                    <h3 className="text-slate-900 dark:text-white text-xl font-black tracking-[0.2em] uppercase flex items-center gap-3">
+                                        <Megaphone size={20} className="text-blue-600" /> Últimas Actualizaciones
+                                    </h3>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{announcements.length} Comunicados Activos</span>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <AnimatePresence>
+                                        {normalAnnouncements.map((ann, i) => (
+                                            <motion.div 
+                                                key={ann.id}
+                                                initial={{ opacity: 0, y: 30 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: i * 0.05 }}
+                                                className="ann-aura group bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-10 rounded-[3.5rem] flex flex-col gap-8 shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden"
+                                                style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as any}
+                                            >
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex flex-col gap-2">
+                                                        <span className="text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-[0.3em]">{ann.category}</span>
+                                                        <h4 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none group-hover:text-blue-600 transition-colors">{ann.title}</h4>
+                                                    </div>
+                                                    <div className="size-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-300 group-hover:text-blue-600 transition-all">
+                                                        <Megaphone size={20} />
+                                                    </div>
+                                                </div>
+                                                
+                                                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed line-clamp-3 italic">
+                                                    {ann.content}
+                                                </p>
+
+                                                <div className="flex items-center justify-between pt-8 border-t border-slate-50 dark:border-white/5">
+                                                    <div className="flex items-center gap-2 text-slate-400">
+                                                        <Calendar size={14} />
+                                                        <span className="text-[10px] font-black uppercase tracking-widest">{new Date(ann.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}</span>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <button className="p-3 bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-blue-600 rounded-xl transition-all"><Edit3 size={16} /></button>
+                                                        <button className="p-3 bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-rose-600 rounded-xl transition-all"><X size={16} /></button>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </AnimatePresence>
+
+                                    {/* Empty State / Add Card */}
+                                    <div 
+                                        onClick={() => router.push('/admin/announcements/new')}
+                                        className="bg-slate-50/50 dark:bg-white/5 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[3.5rem] p-10 flex flex-col items-center justify-center text-center space-y-6 hover:border-blue-500/50 hover:bg-blue-50/50 transition-all cursor-pointer group"
+                                    >
+                                        <div className="size-20 rounded-[2rem] bg-white dark:bg-[#0a0f16] shadow-xl flex items-center justify-center text-slate-300 group-hover:text-blue-600 group-hover:scale-110 group-hover:rotate-90 transition-all duration-500">
+                                            <Plus size={40} strokeWidth={1.5} />
+                                        </div>
+                                        <div>
+                                            <p className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight">Nuevo Mensaje</p>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Impactar a toda la congregación</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                    )}
+                </div>
             </main>
-
-            {/* Floating FAB for Mobile compatibility (optional but fits the design) */}
-            <button
-                onClick={() => router.push('/admin/announcements/new')}
-                className="fixed bottom-10 right-10 size-16 rounded-[2rem] bg-primary text-white shadow-2xl shadow-primary/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 border border-primary-400/20"
-            >
-                <Megaphone size={24} />
-            </button>
         </div>
     );
 }

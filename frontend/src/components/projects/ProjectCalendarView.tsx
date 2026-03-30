@@ -43,7 +43,10 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
     }, [currentMonth]);
 
     const getTasksForDay = (day: Date) => {
-        return tasks.filter(task => task.dueDate && isSameDay(new Date(task.dueDate), day));
+        return tasks.filter(task => {
+            const dateStr = task.due_date || task.dueDate;
+            return dateStr && isSameDay(new Date(dateStr), day);
+        });
     };
 
     return (

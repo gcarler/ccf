@@ -76,8 +76,16 @@ Capacidades entregadas:
 - Preview de estructura JSON en editor de contenido.
 - Moderacion basica de testimonios persistida en backend JSON.
 - Publicacion de anuncios via endpoint CMS persistido.
+- Workflow editorial por bloque (`draft`, `in_review`, `approved`, `published`, `archived`).
+- Programacion opcional (`publish_at`, `expire_at`) y acciones de transicion.
+- Rollback por version en editor de contenido.
+- Auditoria de cambios y transiciones en `admin_audit_logs`.
+- Media manager robusto con CRUD, filtros y carga de archivos (`/cms/media/upload`).
+- Metricas CMS en endpoint dedicado (`/api/cms/metrics`).
 
 Estado: en progreso.
+
+Estado actual: completado para MVP robusto de integracion Web+CMS.
 
 ## Hito 6 - Calidad y verificacion
 Validaciones ejecutadas:
@@ -104,3 +112,8 @@ Estado: en progreso (bloqueado por deuda tecnica previa).
 - Verificar navbar FARO editable en bloque `faro_nav_items`.
 - QA responsive en mobile/desktop para `/faro`, `/faro/eventos`, `/faro/testimonios`.
 - Revisar logs de API y auditoria en primer ciclo editorial.
+
+## Comandos de calidad sugeridos
+- Backend smoke (sin credenciales): `python scripts/web_cms_smoke.py --base-url http://localhost:8000`
+- Backend smoke (con credenciales de editor/admin): `python scripts/web_cms_smoke.py --base-url http://localhost:8000 --username <user> --password <pass>`
+- Frontend lint por alcance CMS/FARO: `npm run lint -- --file "src/app/cms/page.tsx" --file "src/app/cms/testimonials/page.tsx" --file "src/components/public/FaroNavbar.tsx" --file "src/app/(public)/faro/eventos/page.tsx"`

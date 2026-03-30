@@ -27,7 +27,7 @@ export default function SecurityAuditPage() {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<AuditLog[]>('/system/admin/audit', { token, cache: 'no-store' });
+            const data = await apiFetch<AuditLog[]>('/admin/audit', { token, cache: 'no-store' });
             setLogs(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error(error);

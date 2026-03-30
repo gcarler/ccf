@@ -67,6 +67,17 @@ def read_course_lessons(course_id: int, db: Session = Depends(get_db)):
     )
 
 
+@router.get("/courses/{course_id}/assessments", response_model=List[schemas.Assessment])
+def read_course_assessments(course_id: int, db: Session = Depends(get_db)):
+    """Lista todas las evaluaciones disponibles para un curso específico."""
+    return (
+        db.query(models.Assessment)
+        .join(models.Lesson)
+        .filter(models.Lesson.course_id == course_id)
+        .all()
+    )
+
+
 @router.get("/assessments/{assessment_id}", response_model=schemas.Assessment)
 def read_assessment(assessment_id: int, db: Session = Depends(get_db)):
     db_assessment = crud.get_assessment_with_questions(db, assessment_id)

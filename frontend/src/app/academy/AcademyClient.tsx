@@ -115,7 +115,7 @@ export default function AcademyClient({ initialCourses, initialEnrollments }: Ac
                 >
                     {/* Hero Section Premium */}
                     <motion.section variants={itemVariants} className="relative w-full rounded-[3.5rem] shadow-2xl group border border-white/10 overflow-hidden bg-[#001b48]">
-                        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.05] mix-blend-overlay" />
+                        <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.05] mix-blend-overlay" />
                         <div className="absolute top-[-50%] right-[-10%] w-[80%] h-[200%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#018abd]/30 via-[#004581]/10 to-transparent blur-3xl transition-transform duration-1000 group-hover:scale-110 pointer-events-none" />
                         
                         <div className="relative h-full flex flex-col md:flex-row items-center justify-between p-12 lg:p-16 gap-10">

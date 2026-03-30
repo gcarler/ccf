@@ -1,146 +1,214 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
+import { apiFetch } from '@/lib/http';
 import {
     ArrowLeft,
     Plus,
     Search,
     Edit3,
     Eye,
-    EyeOff
+    EyeOff,
+    BookOpen,
+    Video,
+    FileText,
+    TrendingUp,
+    MoreVertical,
+    Clock,
+    CheckCircle2,
+    Loader2,
+    Sparkles,
+    Zap,
+    Layout,
+    Globe
 } from 'lucide-react';
+import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import { motion, AnimatePresence } from 'framer-motion';
+import clsx from 'clsx';
 
-interface ContentItem {
-    id: string;
-    title: string;
-    author: string;
-    date: string;
-    status: 'Activo' | 'Borrador';
-    visible: boolean;
-    type: 'Prédica' | 'Curso' | 'Material';
-}
-
-export default function ContentList() {
-    const { isAuthenticated } = useAuth();
+export default function AdminContentList() {
+    const { token, isAuthenticated } = useAuth();
+    const { addToast } = useToast();
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState('Prédicas');
+    const [activeTab, setActiveTab] = useState<'courses' | 'sermons' | 'resources'>('courses');
+    const [items, setItems] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
-    const items: ContentItem[] = [
-        { id: '1', title: 'La Gracia Inagotable', author: 'Pastor Juan Pérez', date: '12 Oct 2023', status: 'Activo', visible: true, type: 'Prédica' },
-        { id: '2', title: 'Caminando en el Espíritu', author: 'Invitado Especial', date: '05 Oct 2023', status: 'Borrador', visible: false, type: 'Prédica' },
-        { id: '3', title: 'Serie: Fundamentos Bíblicos', author: 'Dpto. Educación', date: '28 Sep 2023', status: 'Activo', visible: true, type: 'Curso' },
-        { id: '4', title: 'Renovación Mental', author: 'Pastora Elena M.', date: '20 Sep 2023', status: 'Activo', visible: true, type: 'Prédica' },
-    ];
+    const fetchData = useCallback(async () => {
+        if (!token) return;
+        setLoading(true);
+        try {
+            if (activeTab === 'courses') {
+                const data = await apiFetch<any[]>('/academy/courses/?published_only=false', { token, cache: 'no-store' });
+                setItems(Array.isArray(data) ? data : []);
+            } else {
+                // Mock for sermons/resources until endpoints are ready
+                setItems([]);
+            }
+        } catch (err) {
+            console.error(err);
+            addToast("Error al sincronizar contenidos", "error");
+        } finally {
+            setLoading(false);
+        }
+    }, [token, activeTab, addToast]);
+
+    useEffect(() => {
+        if (isAuthenticated) fetchData();
+    }, [isAuthenticated, fetchData]);
+
+    const filteredItems = items.filter(item => 
+        (item.title || item.name || '').toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     if (!isAuthenticated) return null;
 
-    const filteredItems = items.filter(item => {
-        const matchesTab = (activeTab === 'Prédicas' && item.type === 'Prédica') ||
-            (activeTab === 'Cursos' && item.type === 'Curso') ||
-            (activeTab === 'Materiales' && item.type === 'Material');
-        const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.author.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesTab && matchesSearch;
-    });
-
     return (
-        <div className="flex flex-col h-full bg-slate-950/20 font-display">
-            {/* Header Area */}
-            <div className="bg-slate-900/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
-                <div className="px-8 pt-10 pb-4 flex items-center justify-between">
-                    <button onClick={() => router.back()} className="p-3 rounded-2xl bg-white/5 border border-white/10 text-primary hover:bg-primary/10 transition-all">
-                        <ArrowLeft size={20} />
-                    </button>
-                    <h1 className="text-xl font-black text-white tracking-tight uppercase tracking-[0.1em]">Gestión de Contenidos</h1>
-                    <button
-                        onClick={() => router.push('/admin/content/new')}
-                        className="p-3 rounded-2xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-110 active:scale-95 transition-all"
+        <div className="flex flex-col h-full bg-white dark:bg-[#0a0f16] font-display overflow-hidden">
+            <style jsx global>{`
+                .content-aura {
+                    position: relative;
+                }
+                .content-aura::after {
+                    content: '';
+                    position: absolute;
+                    inset: -1px;
+                    background: linear-gradient(45deg, var(--aura-color, #3b82f610), transparent 60%);
+                    z-index: -1;
+                    border-radius: inherit;
+                    opacity: 0;
+                    transition: opacity 0.5s ease;
+                }
+                .content-aura:hover::after {
+                    opacity: 1;
+                }
+            `}</style>
+
+            <WorkspaceToolbar 
+                breadcrumbs={[{ label: 'Admin', icon: Layout }, { label: 'Fábrica de Contenidos', icon: BookOpen }]}
+                viewType="list" setViewType={() => {}}
+                rightActions={
+                    <button 
+                        onClick={() => router.push('/admin/content/courses/new')}
+                        className="flex items-center gap-3 px-8 py-3 bg-blue-600 text-white rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all hover:bg-blue-700"
                     >
-                        <Plus size={20} />
+                        <Plus size={18} /> Crear Nuevo
                     </button>
-                </div>
+                }
+            />
 
-                {/* Tabs */}
-                <div className="flex px-8 gap-10 overflow-x-auto hide-scrollbar pt-4">
-                    {['Prédicas', 'Cursos', 'Materiales'].map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={`pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === tab ? 'text-primary' : 'text-slate-500 hover:text-slate-300'
-                                }`}
-                        >
-                            {tab}
-                            {activeTab === tab && (
-                                <div className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-full shadow-[0_0_8px_#259df4]"></div>
-                            )}
-                        </button>
-                    ))}
-                </div>
+            {/* Cinematic Tabs */}
+            <div className="flex px-10 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 shrink-0 relative overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#3b82f605_0%,_transparent_50%)] pointer-events-none" />
+                <TabBtn label="Cursos Faro" active={activeTab === 'courses'} onClick={() => setActiveTab('courses')} icon={BookOpen} />
+                <TabBtn label="Prédicas HD" active={activeTab === 'sermons'} onClick={() => setActiveTab('sermons')} icon={Video} />
+                <TabBtn label="Guías y Material" active={activeTab === 'resources'} onClick={() => setActiveTab('resources')} icon={FileText} />
             </div>
 
-            {/* Search Bar */}
-            <div className="px-8 py-8">
-                <div className="relative group">
-                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors" size={20} />
-                    <input
-                        type="text"
-                        placeholder="Buscar por título o pastor..."
-                        className="w-full bg-slate-900/40 border border-white/5 rounded-2xl py-4 pl-14 pr-6 text-sm font-medium focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none backdrop-blur-xl"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-8 lg:p-12 relative pb-40">
+                <div className="max-w-6xl mx-auto space-y-10 relative z-10">
+                    
+                    {/* Search Bar Cinematic */}
+                    <div className="relative group">
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={22} />
+                        <input 
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] py-6 pl-16 pr-8 text-sm font-bold shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none"
+                            placeholder={`Buscar en la biblioteca de ${activeTab === 'courses' ? 'cursos' : 'contenidos'}...`}
+                        />
+                    </div>
+
+                    <AnimatePresence mode="wait">
+                        {loading ? (
+                            <div className="py-40 flex flex-col items-center justify-center gap-6 text-slate-400 font-black uppercase tracking-[0.5em] animate-pulse">
+                                <Loader2 className="animate-spin" size={48} strokeWidth={1.5} /> Sincronizando Biblioteca...
+                            </div>
+                        ) : filteredItems.length > 0 ? (
+                            <motion.div 
+                                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                                className="grid grid-cols-1 gap-6"
+                            >
+                                {filteredItems.map((item, i) => (
+                                    <motion.div 
+                                        key={item.id}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: i * 0.05 }}
+                                        className="content-aura group bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-8 rounded-[3rem] shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col md:flex-row md:items-center justify-between gap-8"
+                                        style={{ '--aura-color': item.is_published ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)' } as any}
+                                    >
+                                        <div className="flex items-center gap-8 flex-1">
+                                            <div className={clsx(
+                                                "size-20 rounded-[2rem] flex items-center justify-center shadow-inner group-hover:scale-110 transition-all duration-500",
+                                                item.is_published ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600" : "bg-amber-50 dark:bg-amber-900/20 text-amber-600"
+                                            )}>
+                                                <BookOpen size={36} strokeWidth={1.5} />
+                                            </div>
+                                            <div className="flex-1 space-y-2">
+                                                <div className="flex items-center gap-3">
+                                                    <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none group-hover:text-blue-600 transition-colors">{item.title}</h3>
+                                                    <span className="px-2 py-0.5 bg-slate-100 dark:bg-white/10 rounded text-[8px] font-black text-slate-400 uppercase tracking-widest">{item.code}</span>
+                                                </div>
+                                                <div className="flex items-center gap-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                    <span className="flex items-center gap-1.5"><Clock size={12} /> {item.duration_hours} Horas</span>
+                                                    <span className="flex items-center gap-1.5"><Globe size={12} /> {item.modality}</span>
+                                                    <span className="flex items-center gap-1.5 text-blue-500"><CheckCircle2 size={12} /> {item.certificate_type}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-4 shrink-0">
+                                            <div className={clsx(
+                                                "px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border",
+                                                item.is_published ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-amber-50 text-amber-600 border-amber-100"
+                                            )}>
+                                                {item.is_published ? 'Publicado' : 'Borrador'}
+                                            </div>
+                                            <button 
+                                                onClick={() => router.push(`/admin/content/courses/${item.id}`)}
+                                                className="p-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl shadow-xl hover:scale-110 active:scale-95 transition-all"
+                                            >
+                                                <Edit3 size={20} />
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        ) : (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-40 text-center space-y-6">
+                                <div className="size-24 rounded-[2.5rem] bg-slate-50 dark:bg-white/5 border-2 border-dashed border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto text-slate-300">
+                                    <Sparkles size={40} strokeWidth={1} />
+                                </div>
+                                <div className="space-y-2">
+                                    <p className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight">Biblioteca en blanco</p>
+                                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Comienza a crear el currículo de tu iglesia hoy mismo.</p>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
-            </div>
-
-            {/* Content List */}
-            <main className="flex-1 px-8 pb-32 space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                {filteredItems.map((item) => (
-                    <div key={item.id} className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-[2rem] p-6 shadow-2xl group hover:border-white/10 transition-all">
-                        <div className="flex items-start justify-between mb-6">
-                            <div className="flex-1">
-                                <h4 className="text-lg font-black text-white tracking-tight group-hover:text-primary transition-colors">{item.title}</h4>
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">
-                                    {item.author} • <span className="text-slate-700">{item.date}</span>
-                                </p>
-                            </div>
-                            <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-lg border ${item.status === 'Activo'
-                                    ? 'bg-primary/10 text-primary border-primary/20 shadow-lg shadow-primary/5'
-                                    : 'bg-slate-800 text-slate-500 border-white/5'
-                                }`}>
-                                {item.status}
-                            </span>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-6 border-t border-white/5">
-                            <div className="flex items-center gap-2">
-                                <button className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${item.visible
-                                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                                        : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
-                                    }`}>
-                                    {item.visible ? <Eye size={14} /> : <EyeOff size={14} />}
-                                    {item.visible ? 'Visible' : 'Oculto'}
-                                </button>
-                            </div>
-                            <button className="flex items-center gap-2 text-primary bg-primary/10 hover:bg-primary hover:text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 border border-primary/20">
-                                <Edit3 size={16} />
-                                Editar
-                            </button>
-                        </div>
-                    </div>
-                ))}
-
-                {filteredItems.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 opacity-50">
-                        <div className="size-20 rounded-[2rem] bg-white/5 flex items-center justify-center text-slate-700">
-                            <Search size={32} />
-                        </div>
-                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">No se encontraron resultados</p>
-                    </div>
-                )}
             </main>
         </div>
+    );
+}
+
+function TabBtn({ label, active, onClick, icon: Icon }: any) {
+    return (
+        <button 
+            onClick={onClick}
+            className={clsx(
+                "px-8 py-6 text-[11px] font-black uppercase tracking-[0.3em] transition-all relative flex items-center gap-3 shrink-0 border-b-2",
+                active ? "text-blue-600 border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600"
+            )}
+        >
+            <Icon size={14} className={clsx(active ? "text-blue-600" : "text-slate-300")} />
+            {label}
+            {active && <motion.div layoutId="content-tab-active" className="absolute bottom-[-2px] left-0 right-0 h-1 bg-blue-600 rounded-t-full shadow-[0_0_15px_rgba(37,99,235,0.4)]" />}
+        </button>
     );
 }

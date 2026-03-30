@@ -182,7 +182,7 @@ export default function LoginPage() {
                 .grain-overlay {
                     position: absolute;
                     inset: 0;
-                    background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+                    background-image: url('/noise.svg');
                     opacity: 0.05;
                     pointer-events: none;
                     z-index: 2;

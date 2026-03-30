@@ -148,3 +148,30 @@ def list_ministerial_users(
 ):
     """Lista de usuarios. Solo para administradores."""
     return crud.get_users(db, skip=skip, limit=limit)
+
+
+@router.patch("/users/{user_id}", response_model=schemas.User)
+def update_ministerial_user(
+    user_id: int,
+    payload: schemas.UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    """Actualiza un usuario ministerial (rol, estado, etc)."""
+    user = crud.update_user(db, user_id=user_id, payload=payload)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+@router.delete("/users/{user_id}", status_code=204)
+def delete_ministerial_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    """Elimina un usuario del sistema."""
+    success = crud.delete_user(db, user_id=user_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="User not found")
+    return None

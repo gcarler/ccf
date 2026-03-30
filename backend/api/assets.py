@@ -17,3 +17,20 @@ def list_assets(db: Session = Depends(get_db)):
 def register_maintenance(item_id: uuid.UUID, description: str, db: Session = Depends(get_db)):
     """Registra un log de mantenimiento para un equipo."""
     return crud.create_maintenance_log(db, item_id=item_id, description=description, service_date=dt.date.today())
+
+@router.get("/maintenance-tasks", response_model=List[dict])
+def list_maintenance_tasks(db: Session = Depends(get_db)):
+    """Obtiene la lista de tareas de mantenimiento programadas."""
+    # Por ahora devolvemos los logs recientes como tareas
+    logs = db.query(models.MaintenanceLog).order_by(models.MaintenanceLog.service_date.desc()).all()
+    result = []
+    for l in logs:
+        result.append({
+            "id": l.id,
+            "item": l.asset.name if l.asset else "Desconocido",
+            "task": l.description,
+            "date": l.service_date.isoformat(),
+            "priority": "Alta" if "urgente" in l.description.lower() else "Media"
+        })
+    return result
+

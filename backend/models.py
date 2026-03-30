@@ -6,6 +6,8 @@ from sqlalchemy import (
     PrimaryKeyConstraint, func, cast, Index, Float
 )
 from sqlalchemy.orm import relationship, backref
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 from backend.core.database import Base
 
 
@@ -594,6 +596,20 @@ class PageContentVersion(Base):
     created_at = Column(DateTime, default=_utcnow)
 
 
+class ContentPublication(Base):
+    __tablename__ = "content_publications"
+    id = Column(Integer, primary_key=True, index=True)
+    page_key = Column(String(120), unique=True, nullable=False, index=True)
+    status = Column(String(30), default="draft", index=True)  # draft, in_review, approved, published, archived
+    publish_at = Column(DateTime, nullable=True)
+    expire_at = Column(DateTime, nullable=True)
+    last_published_at = Column(DateTime, nullable=True)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+
 class ContentMetric(Base):
     __tablename__ = "content_metrics"
     id = Column(Integer, primary_key=True, index=True)
@@ -611,6 +627,18 @@ class MediaAsset(Base):
     mime_type = Column(String(120), nullable=True)
     size_bytes = Column(Integer, default=0)
     created_at = Column(DateTime, default=_utcnow)
+
+
+class CmsMediaItem(Base):
+    __tablename__ = "cms_media_items"
+    id = Column(Integer, primary_key=True, index=True)
+    url = Column(String(500), nullable=False)
+    alt_text = Column(String(255), nullable=True)
+    section = Column(String(120), nullable=False, index=True, default="general")
+    tags = Column(JSON, default=[])
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 
 class Notification(Base):
@@ -669,6 +697,60 @@ class Donation(Base):
     
     member = relationship("Member", back_populates="donations")
 
+class DonationCategory(Base):
+    __tablename__ = "donation_categories"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False)
+    description = Column(String(255))
+    color_code = Column(String(50), default="blue")
+    is_active = Column(Boolean, default=True)
+
+
+class AssetItem(Base):
+    __tablename__ = "assets_items"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(200), nullable=False)
+    brand = Column(String(100))
+    serial_number = Column(String(100), unique=True)
+    purchase_price = Column(Float)
+    current_status = Column(String(50), default='Disponible') # Disponible, Mantenimiento, Dañado
+    category = Column(String(100), default='Mobiliario')
+    created_at = Column(DateTime, default=_utcnow)
+
+class MaintenanceLog(Base):
+    __tablename__ = "maintenance_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    item_id = Column(UUID(as_uuid=True), ForeignKey("assets_items.id"))
+    service_date = Column(DateTime, default=_utcnow)
+    description = Column(Text)
+    cost = Column(Float, default=0.0)
+    
+    asset = relationship("AssetItem")
+
+class ChurchLocation(Base):
+    __tablename__ = "church_locations"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False)
+    address = Column(String(200))
+    pastor_name = Column(String(100))
+    is_active = Column(Boolean, default=True)
+    location_type = Column(String(50), default="Central") # Central, Sede, Anexo
+    created_at = Column(DateTime, default=_utcnow)
+
+class SocialChannel(Base):
+    __tablename__ = "social_channels"
+    id = Column(Integer, primary_key=True, index=True)
+    platform = Column(String(50), nullable=False) # Facebook, Instagram, YouTube, Web
+    url = Column(String(255), nullable=False)
+    is_visible = Column(Boolean, default=True)
+
+class SystemVariable(Base):
+    __tablename__ = "system_variables"
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String(100), unique=True, nullable=False)
+    value = Column(Text)
+    description = Column(String(255))
+
 class CrmTask(Base):
     __tablename__ = "crm_tasks"
     id = Column(Integer, primary_key=True, index=True)
@@ -699,5 +781,26 @@ class VolunteerShift(Base):
     created_at = Column(DateTime, default=_utcnow)
 
     member = relationship("Member")
+
+class Announcement(Base):
+    __tablename__ = "announcements"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False)
+    content = Column(Text, nullable=False)
+    category = Column(String(100), default="General")
+    image_url = Column(String(500), nullable=True)
+    is_featured = Column(Boolean, default=False)
+    published_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, default=_utcnow)
+
+class Testimonial(Base):
+    __tablename__ = "testimonials"
+    id = Column(Integer, primary_key=True, index=True)
+    content = Column(Text, nullable=False)
+    emotion = Column(String(50), default="Gratitud")
+    is_approved = Column(Boolean, default=False)
+    show_on_home = Column(Boolean, default=False)
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
 
 

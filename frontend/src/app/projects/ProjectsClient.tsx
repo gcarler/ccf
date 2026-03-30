@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
     Layout, 
@@ -18,8 +18,8 @@ import type { ViewType } from '@/components/ViewSwitcher';
 import type { ProjectRecord } from '@/types/projects';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
 import type { ColumnDef } from '@tanstack/react-table';
-import DataTable from '@/components/ui/DataTable';
-import DSSectionHeader from '@/components/ui/SectionHeader';
+import { DataTable } from '@/components/ui/DataTable';
+import { SectionHeader } from '@/components/ui/SectionHeader';
 import DSSkeleton from '@/components/ui/Skeleton';
 import { toast } from 'sonner';
 import ProjectCreationModal from '@/components/projects/ProjectCreationModal';
@@ -43,6 +43,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const newProjectBtnRef = useRef<HTMLButtonElement>(null);
 
     const filtered = projects.filter((p) =>
         p.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -141,6 +142,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                 rightActions={
                     <div className="flex items-center gap-2">
                         <button 
+                            ref={newProjectBtnRef}
                             onClick={() => setIsCreateModalOpen(true)} 
                             className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all"
                         >
@@ -153,10 +155,9 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
             <main className="flex-1 overflow-y-auto scrollbar-thin p-6 lg:p-10 relative">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
                 <div className="max-w-[1400px] mx-auto space-y-10 relative z-10">
-                    <DSSectionHeader
-                        eyebrow="Estado del portfolio"
-                        title="Gestión de Proyectos"
-                        description="Supervisa y orquesta todas las iniciativas del ministerio desde un solo lugar."
+                    <SectionHeader
+                        label="Estado del portfolio"
+                        caption="Supervisa y orquesta todas las iniciativas del ministerio desde un solo lugar."
                     />
 
                     <AnimatePresence mode="wait">
@@ -179,6 +180,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
 
             <ProjectCreationModal 
                 isOpen={isCreateModalOpen} 
+                anchorRef={newProjectBtnRef}
                 onClose={() => setIsCreateModalOpen(false)} 
                 onSubmit={handleCreateSubmit} 
             />

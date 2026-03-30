@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
             <div className="absolute inset-0 z-0">
                 <div className="absolute top-[-15%] left-[-15%] w-[45%] h-[45%] rounded-full bg-indigo-600/30 blur-[130px] animate-pulse-soft"></div>
                 <div className="absolute bottom-[-20%] right-[-10%] w-[55%] h-[55%] rounded-full bg-blue-500/20 blur-[150px] animate-pulse-soft delay-500"></div>
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.18]"></div>
+                <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.18]"></div>
             </div>
 
             <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 lg:grid lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-center">

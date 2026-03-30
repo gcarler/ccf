@@ -4,66 +4,135 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import AdminHero from "@/components/admin/AdminHero";
-import { FARO_MEDIA_BLOCK_KEY } from "@/lib/cms/blocks";
-import { Image as ImageIcon, Plus, Save, Trash2 } from "lucide-react";
+import { Image as ImageIcon, Plus, Save, Search, Trash2, Upload } from "lucide-react";
 
 interface MediaItem {
+  id: number;
   url: string;
-  alt: string;
+  alt_text?: string;
   section: string;
+  tags: string[];
 }
 
-interface ContentRecord {
-  content?: string;
+interface DraftItem {
+  id?: number;
+  url: string;
+  alt_text: string;
+  section: string;
+  tags: string;
 }
 
-const EMPTY_ITEM: MediaItem = { url: "", alt: "", section: "general" };
+const EMPTY_ITEM: DraftItem = { url: "", alt_text: "", section: "general", tags: "" };
 
 export default function CmsMediaPage() {
   const { token, isAuthenticated } = useAuth();
   const [items, setItems] = useState<MediaItem[]>([]);
+  const [drafts, setDrafts] = useState<DraftItem[]>([]);
+  const [query, setQuery] = useState("");
+  const [sectionFilter, setSectionFilter] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = async () => {
     if (!token) return;
-    const load = async () => {
-      setLoading(true);
-      setMessage(null);
-      try {
-        const data = await apiFetch<ContentRecord>(`/content/${FARO_MEDIA_BLOCK_KEY}`, { token, cache: "no-store" });
-        const parsed = data?.content ? JSON.parse(data.content) : [];
-        setItems(Array.isArray(parsed) ? parsed : []);
-      } catch {
-        setItems([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [token]);
+    setLoading(true);
+    setMessage(null);
+    try {
+      const data = await apiFetch<MediaItem[]>("/cms/media", {
+        token,
+        cache: "no-store",
+        query: {
+          query: query || undefined,
+          section: sectionFilter || undefined
+        }
+      });
+      setItems(Array.isArray(data) ? data : []);
+    } catch {
+      setItems([]);
+      setMessage("No se pudo cargar la biblioteca.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const save = async () => {
-    if (!token) return;
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, query, sectionFilter]);
+
+  const saveDrafts = async () => {
+    if (!token || drafts.length === 0) return;
     setSaving(true);
     setMessage(null);
-    const payload = { content: JSON.stringify(items, null, 2) };
     try {
-      try {
-        await apiFetch(`/content/${FARO_MEDIA_BLOCK_KEY}`, { method: "PUT", token, body: payload });
-      } catch {
-        await apiFetch(`/content/${FARO_MEDIA_BLOCK_KEY}`, { method: "POST", token, body: payload });
+      for (const draft of drafts) {
+        const payload = {
+          url: draft.url,
+          alt_text: draft.alt_text || null,
+          section: draft.section || "general",
+          tags: draft.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+        };
+        if (draft.id) {
+          await apiFetch(`/cms/media/${draft.id}`, { method: "PATCH", token, body: payload });
+        } else {
+          await apiFetch(`/cms/media`, { method: "POST", token, body: payload });
+        }
       }
-      setMessage("Galeria guardada.");
+      setDrafts([]);
+      setMessage("Biblioteca actualizada.");
+      await load();
     } catch {
-      setMessage("No se pudo guardar la galeria.");
+      setMessage("No se pudo guardar la biblioteca.");
     } finally {
       setSaving(false);
     }
   };
 
-  const totalValid = useMemo(() => items.filter((item) => item.url.trim()).length, [items]);
+  const totalBySection = useMemo(() => {
+    const acc: Record<string, number> = {};
+    for (const item of items) {
+      acc[item.section] = (acc[item.section] || 0) + 1;
+    }
+    return acc;
+  }, [items]);
+
+  const pushItemToDraft = (item?: MediaItem) => {
+    setDrafts((prev) => [
+      ...prev,
+      item
+        ? {
+            id: item.id,
+            url: item.url,
+            alt_text: item.alt_text || "",
+            section: item.section,
+            tags: (item.tags || []).join(", ")
+          }
+        : { ...EMPTY_ITEM }
+    ]);
+  };
+
+  const uploadFile = async (file: File) => {
+    if (!token) return;
+    const form = new FormData();
+    form.append("file", file);
+    setUploading(true);
+    setMessage(null);
+    try {
+      await apiFetch("/cms/media/upload?section=general", {
+        method: "POST",
+        token,
+        body: form
+      });
+      setMessage("Archivo subido y agregado a biblioteca.");
+      await load();
+    } catch {
+      setMessage("No se pudo subir el archivo.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (!isAuthenticated) {
     return (
@@ -78,82 +147,86 @@ export default function CmsMediaPage() {
     <div className="space-y-8 px-4 py-8">
       <AdminHero
         eyebrow="CMS"
-        title="Biblioteca visual"
-        description="Gestiona imagenes reutilizables por seccion. Este modulo trabaja con URLs publicas."
-        tags={["Media", "Galeria", "FARO"]}
+        title="Media manager"
+        description="Biblioteca con filtros, metadatos, etiquetas y subida de archivos para contenido FARO."
+        tags={["Media", "Assets", "FARO"]}
         watchers={["Comunicaciones", "Diseno"]}
-        primaryAction={{ label: saving ? "Guardando..." : "Guardar galeria", icon: Save, onClick: save }}
+        primaryAction={{ label: saving ? "Guardando..." : "Guardar cambios", icon: Save, onClick: saveDrafts }}
       />
 
       <section className="rounded-[2rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-6 space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <label className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Buscar por URL o alt"
+              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent pl-10 pr-3 py-2 text-sm outline-none"
+            />
+          </label>
+          <input
+            value={sectionFilter}
+            onChange={(event) => setSectionFilter(event.target.value)}
+            placeholder="Filtrar por seccion"
+            className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none"
+          />
+          <label className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2 text-xs font-black uppercase tracking-[0.2em] cursor-pointer">
+            <Upload size={14} />
+            {uploading ? "Subiendo" : "Subir archivo"}
+            <input
+              type="file"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) uploadFile(file);
+              }}
+            />
+          </label>
+        </div>
+
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Items activos</p>
-            <p className="text-3xl font-black mt-1">{totalValid}</p>
-          </div>
+          <p className="text-xs text-slate-500">Activos: {items.length}</p>
           <button
-            onClick={() => setItems((prev) => [...prev, { ...EMPTY_ITEM }])}
+            onClick={() => pushItemToDraft()}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-black uppercase tracking-[0.2em]"
           >
             <Plus size={14} />
-            Nuevo
+            Nuevo item
           </button>
         </div>
 
-        {loading ? (
-          <p className="text-sm text-slate-500">Cargando galeria...</p>
-        ) : items.length === 0 ? (
-          <button
-            onClick={() => setItems([{ ...EMPTY_ITEM }])}
-            className="w-full rounded-2xl border border-dashed border-slate-200 dark:border-white/10 p-10 text-center text-sm text-slate-500"
-          >
-            Crear primer item
-          </button>
-        ) : (
-          <div className="space-y-4">
-            {items.map((item, index) => (
-              <div key={index} className="rounded-2xl border border-slate-100 dark:border-white/10 p-4 space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <input
-                    value={item.url}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      setItems((prev) => prev.map((row, rowIndex) => (rowIndex === index ? { ...row, url: value } : row)));
-                    }}
-                    placeholder="https://..."
-                    className="rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
-                  />
-                  <input
-                    value={item.alt}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      setItems((prev) => prev.map((row, rowIndex) => (rowIndex === index ? { ...row, alt: value } : row)));
-                    }}
-                    placeholder="Texto alternativo"
-                    className="rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
-                  />
-                  <input
-                    value={item.section}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      setItems((prev) => prev.map((row, rowIndex) => (rowIndex === index ? { ...row, section: value } : row)));
-                    }}
-                    placeholder="home, eventos, cursos..."
-                    className="rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
-                  />
-                </div>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(totalBySection).map(([section, count]) => (
+            <span key={section} className="text-[10px] uppercase tracking-[0.2em] px-2 py-1 rounded-full border border-slate-200 text-slate-500">
+              {section}: {count}
+            </span>
+          ))}
+        </div>
 
+        {loading ? (
+          <p className="text-sm text-slate-500">Cargando biblioteca...</p>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {items.map((item) => (
+              <div key={item.id} className="rounded-2xl border border-slate-100 dark:border-white/10 p-4 space-y-2">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">{item.section}</p>
+                <p className="text-xs text-slate-500 break-all">{item.url}</p>
+                <p className="text-sm text-slate-700 dark:text-slate-300">{item.alt_text || "Sin alt"}</p>
+                <p className="text-[10px] text-slate-400">{(item.tags || []).join(", ") || "Sin tags"}</p>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <ImageIcon size={14} />
-                    {item.section || "general"}
-                  </div>
+                  <button onClick={() => pushItemToDraft(item)} className="text-xs font-black uppercase tracking-[0.2em] text-primary">
+                    Editar
+                  </button>
                   <button
-                    onClick={() => setItems((prev) => prev.filter((_, rowIndex) => rowIndex !== index))}
-                    className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-rose-500"
+                    onClick={async () => {
+                      if (!token) return;
+                      await apiFetch(`/cms/media/${item.id}`, { method: "DELETE", token });
+                      await load();
+                    }}
+                    className="inline-flex items-center gap-1 text-xs font-black uppercase tracking-[0.2em] text-rose-500"
                   >
-                    <Trash2 size={13} />
-                    Eliminar
+                    <Trash2 size={12} /> Eliminar
                   </button>
                 </div>
               </div>
@@ -161,17 +234,45 @@ export default function CmsMediaPage() {
           </div>
         )}
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={save}
-            disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-[0.2em] disabled:opacity-60"
-          >
-            <Save size={14} />
-            {saving ? "Guardando" : "Guardar"}
-          </button>
-          {message && <p className="text-sm text-slate-500">{message}</p>}
-        </div>
+        {drafts.length > 0 && (
+          <div className="space-y-3 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Pendientes por guardar</p>
+            {drafts.map((draft, index) => (
+              <div key={`${draft.id || "new"}-${index}`} className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                <input
+                  value={draft.url}
+                  onChange={(event) => setDrafts((prev) => prev.map((row, i) => (i === index ? { ...row, url: event.target.value } : row)))}
+                  placeholder="https://..."
+                  className="rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                />
+                <input
+                  value={draft.alt_text}
+                  onChange={(event) => setDrafts((prev) => prev.map((row, i) => (i === index ? { ...row, alt_text: event.target.value } : row)))}
+                  placeholder="Texto alternativo"
+                  className="rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                />
+                <input
+                  value={draft.section}
+                  onChange={(event) => setDrafts((prev) => prev.map((row, i) => (i === index ? { ...row, section: event.target.value } : row)))}
+                  placeholder="Seccion"
+                  className="rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                />
+                <input
+                  value={draft.tags}
+                  onChange={(event) => setDrafts((prev) => prev.map((row, i) => (i === index ? { ...row, tags: event.target.value } : row)))}
+                  placeholder="tag1, tag2"
+                  className="rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {message && (
+          <p className="text-sm text-slate-500 flex items-center gap-2">
+            <ImageIcon size={14} /> {message}
+          </p>
+        )}
       </section>
     </div>
   );

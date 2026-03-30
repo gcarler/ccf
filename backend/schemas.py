@@ -18,6 +18,14 @@ class UserCreate(UserBase):
     password: str = Field(min_length=6)
 
 
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
+    xp: Optional[int] = None
+
+
 class User(UserBase):
     id: int
     xp: int = 0
@@ -121,6 +129,7 @@ class ProjectBase(BaseModel):
     color: Optional[str] = None
     icon: Optional[str] = None
     whiteboard_data: Optional[str] = None
+    progress_percent: int = 0
 
 
 class ProjectCreate(ProjectBase):
@@ -272,9 +281,26 @@ class Lesson(BaseModel):
     model_config = orm_config
 
 
+class AssessmentOption(BaseModel):
+    id: int
+    option_text: str
+    model_config = orm_config
+
+
+class AssessmentQuestion(BaseModel):
+    id: int
+    question_text: str
+    question_type: str
+    points: int
+    options: List[AssessmentOption] = Field(default_factory=list)
+    model_config = orm_config
+
+
 class Assessment(BaseModel):
     id: int
     title: str = "Assessment"
+    min_score: float = 70
+    questions: List[AssessmentQuestion] = Field(default_factory=list)
     model_config = orm_config
 
 
@@ -751,6 +777,62 @@ class PageContentVersionRead(BaseModel):
     title: str
     content: str
     created_at: datetime
+    model_config = orm_config
+
+
+class ContentWorkflowUpdate(BaseModel):
+    action: str
+    notes: Optional[str] = None
+    publish_at: Optional[datetime] = None
+    expire_at: Optional[datetime] = None
+
+
+class ContentWorkflowRead(BaseModel):
+    page_key: str
+    status: str
+    publish_at: Optional[datetime] = None
+    expire_at: Optional[datetime] = None
+    last_published_at: Optional[datetime] = None
+    notes: Optional[str] = None
+    updated_at: datetime
+
+
+class CmsMetrics(BaseModel):
+    total_blocks: int
+    draft_blocks: int
+    in_review_blocks: int
+    approved_blocks: int
+    published_blocks: int
+    archived_blocks: int
+    testimonials_total: int
+    testimonials_approved: int
+    announcements_total: int
+    announcements_active: int
+
+
+class CmsMediaCreate(BaseModel):
+    url: str
+    alt_text: Optional[str] = None
+    section: str = "general"
+    tags: List[str] = Field(default_factory=list)
+
+
+class CmsMediaUpdate(BaseModel):
+    url: Optional[str] = None
+    alt_text: Optional[str] = None
+    section: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+
+class CmsMediaRead(BaseModel):
+    id: int
+    url: str
+    alt_text: Optional[str] = None
+    section: str
+    tags: List[str] = Field(default_factory=list)
+    created_by: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
     model_config = orm_config
 
 

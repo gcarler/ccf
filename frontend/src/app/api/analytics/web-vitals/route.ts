@@ -6,12 +6,12 @@ export const runtime = 'nodejs'
 export async function POST(request: Request) {
   const payload = await request.json().catch(() => null)
   if (!payload) {
-    return NextResponse.json({ status: 'ignored' }, { status: 400 })
+    return NextResponse.json({ status: 'ignored', reason: 'empty-payload' })
   }
 
   const result = await persistWebVital(payload)
   if (!result.ok) {
-    return NextResponse.json({ status: 'ignored', reason: result.reason }, { status: 400 })
+    return NextResponse.json({ status: 'ignored', reason: result.reason })
   }
 
   console.info('[web-vitals]', payload)

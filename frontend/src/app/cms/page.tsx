@@ -13,6 +13,9 @@ interface CmsStats {
     testimonials: number;
     pendingTestimonials: number;
     sections: number;
+    publishedBlocks: number;
+    inReviewBlocks: number;
+    activeAnnouncements: number;
 }
 
 interface TestimonialPreview {
@@ -42,11 +45,19 @@ export default function CmsHomePage() {
                     token,
                     cache: 'no-store'
                 });
+                const metrics = await apiFetch<{
+                    published_blocks: number;
+                    in_review_blocks: number;
+                    announcements_active: number;
+                }>('/cms/metrics', { token, cache: 'no-store' });
                 setRecentTestimonials(Array.isArray(testimonials) ? testimonials.slice(0, 5) : []);
                 setStats({
                     testimonials: testimonials.length,
                     pendingTestimonials: testimonials.filter((testimony) => !testimony.is_approved).length,
-                    sections: FARO_BLOCKS.length
+                    sections: FARO_BLOCKS.length,
+                    publishedBlocks: metrics?.published_blocks ?? 0,
+                    inReviewBlocks: metrics?.in_review_blocks ?? 0,
+                    activeAnnouncements: metrics?.announcements_active ?? 0
                 });
             } catch (error) {
                 console.error('CMS home fetch', error);
@@ -89,11 +100,14 @@ export default function CmsHomePage() {
                 secondaryAction={{ label: 'Ver pauta', icon: LayoutDashboard, onClick: () => {} }}
             />
 
-            <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <section className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
                 {[
                     { label: 'Testimonios publicados', value: stats?.testimonials ?? '—' },
                     { label: 'Pendientes', value: stats?.pendingTestimonials ?? '—' },
-                    { label: 'Secciones hero activas', value: stats?.sections ?? '—' }
+                    { label: 'Secciones hero activas', value: stats?.sections ?? '—' },
+                    { label: 'Bloques publicados', value: stats?.publishedBlocks ?? '—' },
+                    { label: 'En revision', value: stats?.inReviewBlocks ?? '—' },
+                    { label: 'Anuncios activos', value: stats?.activeAnnouncements ?? '—' }
                 ].map((metric) => (
                     <div key={metric.label} className="rounded-[2rem] border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] px-6 py-5 shadow-sm">
                         <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-slate-400">{metric.label}</p>

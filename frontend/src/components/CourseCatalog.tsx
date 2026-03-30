@@ -50,7 +50,7 @@ export default function CourseCatalog({ userId, token, enrolledCourseIds = [], i
     const loadCourses = async () => {
       setLoading(true);
       try {
-        const data = await apiFetch<Course[]>("/courses/", {
+        const data = await apiFetch<Course[]>("/academy/courses/", {
           token,
           cache: "no-store",
           query: filterModality === "all" ? undefined : { modality: filterModality },

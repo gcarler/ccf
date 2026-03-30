@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
 import {
     Layout,
     Target,
@@ -33,7 +32,6 @@ import ProjectCalendarView from '@/components/projects/ProjectCalendarView';
 import ProjectTableView from '@/components/projects/ProjectTableView';
 import GanttView from '@/components/projects/GanttView';
 import TaskDetailModal from '@/components/projects/TaskDetailModal';
-import OmniCreateModal, { OmniTab } from '@/components/ui/OmniCreateModal';
 import ProjectActivityFeed from '@/components/projects/ProjectActivityFeed';
 import ProjectWikiEditor from '@/components/projects/ProjectWikiEditor';
 import ProjectWhiteboard from '@/components/projects/ProjectWhiteboard';
@@ -57,11 +55,6 @@ export default function ProjectDetailPage() {
     // Estado para el modal de detalle de tarea
     const [selectedTask, setSelectedTask] = useState<ProjectTaskRecord | null>(null);
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
-
-    // Omni Modal Estado Combinado
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [createModalTab, setCreateModalTab] = useState<OmniTab>('task');
-    const [createTaskStatus, setCreateTaskStatus] = useState('todo');
 
     useEffect(() => {
         const fetchProject = async () => {
@@ -103,7 +96,7 @@ export default function ProjectDetailPage() {
         <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden font-display animate-fade-in relative">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'Portfolio', icon: Layout, href: '/projects' },
+                    { label: 'Portfolio', icon: Layout },
                     { label: project.title, icon: Target }
                 ]}
                 viewType="grid"
@@ -122,10 +115,6 @@ export default function ProjectDetailPage() {
                 {/* Lateral Izquierdo: Info fija */}
                 <aside className="w-80 border-r border-slate-100 dark:border-white/5 p-8 space-y-10 overflow-y-auto scrollbar-hide shrink-0 z-10 bg-white dark:bg-[#1e1f21]">
                     <div>
-                        <Link href="/projects" className="flex w-fit items-center gap-2 px-3 py-1.5 mb-8 -ml-3 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all">
-                            <ChevronLeft size={14} /> Volver al Portfolio
-                        </Link>
-                        
                         <div className="flex items-center gap-4 mb-8">
                             <div className="size-14 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-xl shadow-blue-500/20" style={{ backgroundColor: project.color || '#2563eb' }}>
                                 {project.title.substring(0, 1)}
@@ -193,10 +182,18 @@ export default function ProjectDetailPage() {
                                         tasks={tasks}
                                         onTasksChange={setTasks}
                                         onOpenTask={handleOpenTask}
-                                        onAddTask={(status) => {
-                                            setCreateTaskStatus(status);
-                                            setCreateModalTab('task');
-                                            setIsCreateModalOpen(true);
+                                        onAddTask={async (status) => {
+                                            const title = window.prompt('Nombre de la tarea:');
+                                            if (!title) return;
+                                            try {
+                                                const newTask = await apiFetch<ProjectTaskRecord>(`/projects/${project.id}/tasks`, {
+                                                    method: 'POST',
+                                                    token,
+                                                    body: { title, status, priority: 'normal' }
+                                                });
+                                                setTasks([newTask, ...tasks]);
+                                                addToast('Tarea creada', 'success');
+                                            } catch { addToast('Error al crear', 'error'); }
                                         }}
                                     />
                                 )}
@@ -211,37 +208,18 @@ export default function ProjectDetailPage() {
                                     <ProjectCalendarView tasks={tasks} onTaskClick={handleOpenTask} />
                                 )}
 
-                                {activeTab === 'gantt' && <GanttView tasks={tasks} onTaskClick={handleOpenTask} />}
+                                {activeTab === 'gantt' && <GanttView tasks={tasks} />}
 
                                 {activeTab === 'wiki' && (
                                     <ProjectWikiEditor 
-                                        initialContent={project.description || '<h1>Documentación del Proyecto</h1><p>Escribe aquí el manual operativo.</p>'} 
-                                        onSave={async (content) => {
-                                            try {
-                                                await apiFetch(`/projects/${project.id}`, {
-                                                    method: 'PATCH',
-                                                    token,
-                                                    body: { description: content }
-                                                });
-                                                addToast("Wiki guardada", "success");
-                                            } catch { addToast("Error guardando wiki", "error"); }
-                                        }}
+                                        project_id={project.id} 
+                                        initialContent={project.description || ''} 
                                     />
                                 )}
 
                                 {activeTab === 'pizarra' && (
                                     <ProjectWhiteboard 
                                         project_id={project.id} 
-                                        initialData={(project as any).whiteboard_data || '[]'}
-                                        onSave={async (data) => {
-                                            try {
-                                                await apiFetch(`/projects/${project.id}`, {
-                                                    method: 'PATCH',
-                                                    token,
-                                                    body: { whiteboard_data: data }
-                                                });
-                                            } catch { console.error("Error guardando pizarra"); }
-                                        }}
                                     />
                                 )}
                             </motion.div>
@@ -250,26 +228,8 @@ export default function ProjectDetailPage() {
                 </div>
 
                 {/* Lateral Derecho: Feed de Actividad */}
-                <ProjectActivityFeed activities={(project as any).activities || []} />
+                <ProjectActivityFeed activities={project.activities || []} />
             </main>
-
-            <OmniCreateModal 
-                isOpen={isCreateModalOpen}
-                initialTab={createModalTab}
-                defaultStatus={createTaskStatus}
-                onClose={() => setIsCreateModalOpen(false)}
-                onTaskSubmit={async (data) => {
-                    try {
-                        const newTask = await apiFetch<ProjectTaskRecord>(`/projects/${project.id}/tasks`, {
-                            method: 'POST',
-                            token,
-                            body: data
-                        });
-                        setTasks([newTask, ...tasks]);
-                        addToast('Tarea creada', 'success');
-                    } catch { addToast('Error al crear tarea', 'error'); }
-                }}
-            />
 
             {/* Modal de Detalle de Tarea Unificado */}
             <TaskDetailModal 
@@ -278,7 +238,6 @@ export default function ProjectDetailPage() {
                 onClose={() => setIsTaskModalOpen(false)}
                 onUpdate={(updated) => {
                     setTasks(tasks.map(t => t.id === updated.id ? updated : t));
-                    setSelectedTask(updated);
                 }}
             />
         </div>
