@@ -3,9 +3,21 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Megaphone, Bell, Calendar, Sparkles, Pin } from 'lucide-react';
+import { apiFetch } from '@/lib/http';
+import { useAuth } from '@/context/AuthContext';
+
+interface AnnouncementItem {
+    id: number;
+    title: string;
+    excerpt: string;
+    date: string;
+    category: string;
+    isPinned?: boolean;
+}
 
 export default function AnnouncementsPage() {
-    const announcements = [
+    const { token } = useAuth();
+    const [announcements, setAnnouncements] = React.useState<AnnouncementItem[]>([
         {
             id: 1,
             title: "Congreso de Jóvenes: 'Inquebrantables'",
@@ -30,7 +42,29 @@ export default function AnnouncementsPage() {
             category: "Servicio",
             isPinned: false
         }
-    ];
+    ]);
+
+    React.useEffect(() => {
+        const load = async () => {
+            try {
+                const rows = await apiFetch<any[]>('/cms/announcements', { token: token || undefined, cache: 'no-store' });
+                if (!Array.isArray(rows) || rows.length === 0) return;
+                setAnnouncements(
+                    rows.map((item, index) => ({
+                        id: Number(item.id || index + 1),
+                        title: item.title || 'Anuncio',
+                        excerpt: item.content || item.excerpt || '',
+                        date: item.created_at ? new Date(item.created_at).toLocaleDateString('es-MX') : 'Reciente',
+                        category: item.category || 'General',
+                        isPinned: Boolean(item.featured || item.is_pinned)
+                    }))
+                );
+            } catch {
+                // fallback local data
+            }
+        };
+        load();
+    }, [token]);
 
     return (
         <div className="max-w-4xl mx-auto space-y-10 pb-20 animate-in fade-in duration-700">

@@ -2,8 +2,17 @@
 
 import Link from "next/link";
 import React from "react";
+import { useContentBlock } from "@/hooks/useContent";
 
 export default function PredicasPage() {
+    const { data: heroContent } = useContentBlock("faro_sermons_hero");
+    const heroEyebrow = heroContent?.eyebrow || "Mensaje Destacado";
+    const heroTitleLead = heroContent?.title_lead || "Alimento para el";
+    const heroAccent = heroContent?.title_accent || "Alma";
+    const heroDescription =
+        heroContent?.description ||
+        "Explora nuestra biblioteca de mensajes que iluminan el camino. Una guía espiritual diseñada para nutrir tu fe en tiempos de cambio.";
+
     return (
         <>
             <main className="pt-20 pb-32">
@@ -17,13 +26,13 @@ export default function PredicasPage() {
 <div className="relative z-10 max-w-4xl space-y-6">
 <div className="flex items-center space-x-3">
 <span className="w-12 h-[2px] bg-faro-primary"></span>
-<span className="font-headline font-bold text-faro-primary tracking-widest uppercase text-sm">Mensaje Destacado</span>
+<span className="font-headline font-bold text-faro-primary tracking-widest uppercase text-sm">{heroEyebrow}</span>
 </div>
 <h1 className="font-headline text-5xl md:text-7xl font-extrabold tracking-tight text-glow leading-tight">
-                    Alimento para el <span className="text-faro-primary italic">Alma</span>
+                    {heroTitleLead} <span className="text-faro-primary italic">{heroAccent}</span>
 </h1>
 <p className="text-lg md:text-xl text-faro-on-surface-variant max-w-2xl leading-relaxed">
-                    Explora nuestra biblioteca de mensajes que iluminan el camino. Una guía espiritual diseñada para nutrir tu fe en tiempos de cambio.
+                    {heroDescription}
                 </p>
 <div className="flex flex-wrap gap-4 pt-4">
 <button className="bg-gradient-to-br from-faro-primary to-faro-primary-container text-faro-on-primary px-8 py-4 rounded-[0.75rem] font-bold flex items-center space-x-2 shadow-[0_0_20px_rgba(165,200,255,0.3)] transition-transform hover:scale-105">

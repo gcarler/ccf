@@ -2,8 +2,17 @@
 
 import Link from "next/link";
 import React from "react";
+import { useContentBlock } from "@/hooks/useContent";
 
 export default function NosotrosPage() {
+    const { data: heroContent } = useContentBlock("faro_about_hero");
+    const heroEyebrow = heroContent?.eyebrow || "Nuestra Identidad";
+    const heroTitleLead = heroContent?.title_lead || "Iluminando el";
+    const heroTitleAccent = heroContent?.title_accent || "camino juntos";
+    const heroDescription =
+        heroContent?.description ||
+        "Somos una comunidad vibrante dedicada a guiar a las personas hacia una vida llena de propósito y luz a través del mensaje de esperanza.";
+
     return (
         <>
             <aside className="hidden lg:flex flex-col h-full py-8 px-4 h-full w-80 fixed left-0 top-0 z-[60] bg-[#001134] pt-28">
@@ -37,12 +46,12 @@ export default function NosotrosPage() {
 <div className="absolute inset-0 bg-light-glow pointer-events-none"></div>
 <div className="max-w-6xl mx-auto editorial-grid">
 <div className="col-span-12 lg:col-span-8">
-<span className="label-md uppercase tracking-[0.2em] text-faro-secondary font-semibold mb-6 block">Nuestra Identidad</span>
+<span className="label-md uppercase tracking-[0.2em] text-faro-secondary font-semibold mb-6 block">{heroEyebrow}</span>
 <h1 className="text-6xl md:text-8xl font-headline font-extrabold text-faro-on-background leading-tight tracking-tighter mb-8">
-                        Iluminando el <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-faro-primary to-faro-secondary">camino juntos.</span>
+                        {heroTitleLead} <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-faro-primary to-faro-secondary">{heroTitleAccent}.</span>
 </h1>
 <p className="text-xl md:text-2xl text-faro-on-surface-variant font-body leading-relaxed max-w-2xl">
-                        Somos una comunidad vibrante dedicada a guiar a las personas hacia una vida llena de propósito y luz a través del mensaje de esperanza.
+                        {heroDescription}
                     </p>
 </div>
 </div>

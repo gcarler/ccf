@@ -13,6 +13,8 @@ from backend.api import (
     agents as agents_router,
     analytics as analytics_router,
     auth as auth_router,
+    cms,
+    content,
     crm,
     dashboard,
     governance,
@@ -118,6 +120,8 @@ def create_application() -> FastAPI:
     app.include_router(system.router, prefix="/api/system")
     app.include_router(auth_router.router, prefix="/api", tags=["auth"])
     app.include_router(analytics_router.router, prefix="/api", tags=["analytics"])
+    app.include_router(cms.router, prefix="/api")
+    app.include_router(content.router, prefix="/api")
     app.include_router(dashboard.router, prefix="/api", tags=["dashboard"])
     app.include_router(crm.router, prefix="/api", tags=["crm"])
     app.include_router(finance.router, prefix="/api")

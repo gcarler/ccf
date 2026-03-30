@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import json
 import uuid
 from types import SimpleNamespace
 from typing import Optional, List
@@ -9,6 +10,7 @@ from sqlalchemy import or_, func, text
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
+from backend.content_defaults import PAGE_CONTENT_DEFAULTS
 from backend.core.security import get_password_hash, encrypt_data, decrypt_data
 
 
@@ -893,6 +895,40 @@ def update_page_content(db: Session, page_key: str, payload: schemas.PageContent
     db.commit()
     db.refresh(page)
     return page
+
+
+def get_page_content(db: Session, page_key: str):
+    return db.query(models.PageContent).filter(models.PageContent.page_key == page_key).first()
+
+
+def list_page_contents(db: Session, limit: int = 200):
+    return (
+        db.query(models.PageContent)
+        .order_by(models.PageContent.updated_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+
+def get_or_create_page_content(db: Session, page_key: str):
+    row = get_page_content(db, page_key)
+    if row:
+        return row
+
+    defaults = PAGE_CONTENT_DEFAULTS.get(page_key, {})
+    title = str(defaults.get("title") or page_key.replace("_", " ").title())
+    default_content = defaults.get("content", {})
+
+    if isinstance(default_content, str):
+        content_payload = default_content
+    else:
+        content_payload = json.dumps(default_content, ensure_ascii=False)
+
+    row = models.PageContent(page_key=page_key, title=title, content=content_payload)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
 
 
 def get_page_content_versions(db: Session, page_key: str):

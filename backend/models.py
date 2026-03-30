@@ -461,7 +461,26 @@ class ProjectTask(Base):
     project = relationship("Project", back_populates="tasks")
     assignee = relationship("User", back_populates="assigned_tasks")
     supplies = relationship("TaskSupply", back_populates="task", cascade="all, delete-orphan")
-    subtasks = relationship("ProjectTask", backref=backref("parent", remote_side=[id], cascade="all, delete-orphan", single_parent=True))
+    attachments = relationship("ProjectAttachment", back_populates="task", cascade="all, delete-orphan")
+    subtasks = relationship(
+        "ProjectTask",
+        backref=backref("parent", remote_side=[id]),
+        cascade="all, delete-orphan",
+    )
+
+class ProjectAttachment(Base):
+    __tablename__ = "project_attachments"
+    id = Column(Integer, primary_key=True, index=True)
+    task_id = Column(Integer, ForeignKey("project_tasks.id", ondelete="CASCADE"), nullable=False, index=True)
+    filename = Column(String(255), nullable=False)
+    file_url = Column(Text, nullable=False)
+    file_type = Column(String(100), nullable=True)
+    file_size = Column(Integer, nullable=True)
+    uploader_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+
+    task = relationship("ProjectTask", back_populates="attachments")
+    uploader = relationship("User")
 
 class TaskSupply(Base):
     __tablename__ = "task_supplies"

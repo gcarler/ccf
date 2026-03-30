@@ -2,19 +2,52 @@
 
 import Link from "next/link";
 import React from "react";
+import { useContentBlock } from "@/hooks/useContent";
+import { FARO_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
+
+interface PublicEventItem {
+    title?: string;
+    date?: string;
+    location?: string;
+    excerpt?: string;
+    category?: string;
+    featured?: boolean;
+}
 
 export default function EventosPage() {
+    const { data: heroContent } = useContentBlock("faro_events_hero");
+    const { data: eventsContent } = useContentBlock(FARO_EVENTS_BLOCK_KEY);
+    const heroEyebrow = heroContent?.eyebrow || "Calendario de Comunidad";
+    const heroTitle = heroContent?.title || "Nuestra Agenda";
+    const heroDescription =
+        heroContent?.description ||
+        "Espacios diseñados para el crecimiento, la conexión y la guía espiritual. Únete a nuestras próximas actividades.";
+    const parsedEvents = Array.isArray(eventsContent?.parsed) ? (eventsContent?.parsed as PublicEventItem[]) : [];
+    const featuredEvent =
+        parsedEvents.find((event) => event.featured) ||
+        parsedEvents[0] || {
+            date: "24 DE JUNIO, 2024",
+            title: "Noche de Iluminación: Adoración & Palabra",
+            location: "Auditorio Central"
+        };
+    const upcomingEvent =
+        parsedEvents[1] || {
+            date: "12",
+            title: "Cena de Jóvenes",
+            location: "Sede Norte • 19:30 hrs"
+        };
+
     return (
         <>
             <main className="pt-32 pb-20 px-6 md:px-12 max-w-7xl mx-auto">
 <header className="mb-16 md:grid md:grid-cols-12 gap-8 items-end">
 <div className="md:col-span-8">
-<span className="font-label text-xs tracking-[0.2em] uppercase text-faro-secondary mb-4 block">Calendario de Comunidad</span>
-<h1 className="font-headline text-5xl md:text-7xl font-extrabold tracking-tighter text-faro-on-surface leading-tight">Nuestra Agenda</h1>
+<span className="font-label text-xs tracking-[0.2em] uppercase text-faro-secondary mb-4 block">{heroEyebrow}</span>
+<h1 className="font-headline text-5xl md:text-7xl font-extrabold tracking-tighter text-faro-on-surface leading-tight">{heroTitle}</h1>
 </div>
 <div className="md:col-span-4 mt-6 md:mt-0">
 <p className="text-faro-on-surface-variant leading-relaxed opacity-80">
-                    Espacios diseñados para el crecimiento, la conexión y la guía espiritual. Únete a nuestras próximas actividades.
+                    {heroDescription}
                 </p>
 </div>
 </header>
@@ -25,13 +58,13 @@ export default function EventosPage() {
 <div className="absolute bottom-0 p-10 w-full">
 <div className="flex items-center gap-2 mb-4">
 <span className="bg-faro-primary-container text-faro-primary px-3 py-1 rounded-[0.75rem] text-[10px] font-bold tracking-widest uppercase">Destacado</span>
-<span className="text-faro-on-surface/60 text-xs font-label">24 DE JUNIO, 2024</span>
+<span className="text-faro-on-surface/60 text-xs font-label">{featuredEvent.date}</span>
 </div>
-<h2 className="font-headline text-4xl font-bold mb-4 text-glow">Noche de Iluminación: Adoración &amp; Palabra</h2>
+<h2 className="font-headline text-4xl font-bold mb-4 text-glow">{featuredEvent.title}</h2>
 <div className="flex items-center gap-6">
 <button className="beam-effect text-faro-on-primary px-8 py-3 rounded-[0.75rem] font-bold text-sm tracking-wide transition-transform active:scale-95">RESERVAR LUGAR</button>
 <span className="flex items-center gap-2 text-faro-primary font-medium">
-<span className="material-symbols-outlined text-lg">location_on</span> Auditorio Central
+<span className="material-symbols-outlined text-lg">location_on</span> {featuredEvent.location}
                         </span>
 </div>
 </div>
@@ -61,10 +94,10 @@ export default function EventosPage() {
 <div className="mt-8 pt-8 border-t border-faro-outline-variant/20">
 <p className="text-xs text-faro-on-surface-variant uppercase tracking-widest mb-4">Próximo en 48 horas</p>
 <div className="flex items-center gap-4">
-<div className="w-12 h-12 bg-faro-primary/10 rounded-[0.75rem] flex items-center justify-center text-faro-primary font-bold">12</div>
+<div className="w-12 h-12 bg-faro-primary/10 rounded-[0.75rem] flex items-center justify-center text-faro-primary font-bold">{upcomingEvent.date}</div>
 <div>
-<p className="text-sm font-bold">Cena de Jóvenes</p>
-<p className="text-xs text-faro-on-surface/60 italic">Sede Norte • 19:30 hrs</p>
+<p className="text-sm font-bold">{upcomingEvent.title}</p>
+<p className="text-xs text-faro-on-surface/60 italic">{upcomingEvent.location}</p>
 </div>
 </div>
 </div>

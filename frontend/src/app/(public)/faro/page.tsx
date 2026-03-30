@@ -2,8 +2,20 @@
 
 import Link from "next/link";
 import React from "react";
+import { useContentBlock } from "@/hooks/useContent";
 
 export default function PublicHomePage() {
+    const { data: heroContent } = useContentBlock("faro_home_hero");
+
+    const heroEyebrow = heroContent?.eyebrow || "Comunidad FARO";
+    const heroTitleLead = heroContent?.title_lead || "Ilumina tu";
+    const heroTitleAccent = heroContent?.title_accent || "Camino";
+    const heroDescription =
+        heroContent?.description ||
+        "Una comunidad vibrante donde la fe encuentra propósito. Descubre un espacio diseñado para guiarte, inspirarte y conectarte con lo trascendente.";
+    const heroPrimaryCta = heroContent?.primary_cta || "Únete a nosotros";
+    const heroSecondaryCta = heroContent?.secondary_cta || "Ver Predicaciones";
+
     return (
         <main className="pt-20">
             {/* Hero Section: The Radiant Guide */}
@@ -13,19 +25,19 @@ export default function PublicHomePage() {
                 </div>
                 <div className="grid grid-cols-12 gap-8 w-full z-10">
                     <div className="col-span-12 md:col-span-7 flex flex-col justify-center">
-                        <span className="label-md font-label uppercase tracking-[0.2em] text-faro-primary mb-6">Comunidad FARO</span>
+                        <span className="label-md font-label uppercase tracking-[0.2em] text-faro-primary mb-6">{heroEyebrow}</span>
                         <h1 className="font-headline text-5xl md:text-7xl font-extrabold text-faro-on-background tracking-tight leading-[1.1] mb-8">
-                            Ilumina tu <span className="text-faro-primary">Camino</span>
+                            {heroTitleLead} <span className="text-faro-primary">{heroTitleAccent}</span>
                         </h1>
                         <p className="text-faro-on-surface-variant text-lg md:text-xl max-w-xl leading-relaxed mb-10">
-                            Una comunidad vibrante donde la fe encuentra propósito. Descubre un espacio diseñado para guiarte, inspirarte y conectarte con lo trascendente.
+                            {heroDescription}
                         </p>
                         <div className="flex flex-wrap gap-4">
                             <button className="faro-hero-gradient text-white px-8 py-4 rounded-[0.75rem] font-semibold shadow-lg shadow-faro-primary/20 hover:opacity-90 transition-all">
-                                Únete a nosotros
+                                {heroPrimaryCta}
                             </button>
                             <button className="bg-faro-surface-bright text-faro-on-surface px-8 py-4 rounded-[0.75rem] font-semibold border border-faro-outline-variant/20 hover:bg-faro-surface-container-high transition-all">
-                                Ver Predicaciones
+                                {heroSecondaryCta}
                             </button>
                         </div>
                     </div>

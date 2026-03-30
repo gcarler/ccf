@@ -7,6 +7,7 @@ import { apiFetch } from '@/lib/http';
 import AdminHero from '@/components/admin/AdminHero';
 import CommunityToolbarChip from '@/components/community/ToolbarChip';
 import { LayoutDashboard, MessageCircle, Feather, Image as ImageIcon, CalendarRange, Link2 } from 'lucide-react';
+import { FARO_BLOCKS } from '@/lib/cms/blocks';
 
 interface CmsStats {
     testimonials: number;
@@ -19,6 +20,7 @@ interface TestimonialPreview {
     content: string;
     emotion: string;
     created_at: string;
+    is_approved?: boolean;
 }
 
 export default function CmsHomePage() {
@@ -36,15 +38,15 @@ export default function CmsHomePage() {
             }
             setLoading(true);
             try {
-                const testimonials = await apiFetch<TestimonialPreview[]>('/testimonials', {
+                const testimonials = await apiFetch<TestimonialPreview[]>('/cms/testimonials', {
                     token,
                     cache: 'no-store'
                 });
                 setRecentTestimonials(Array.isArray(testimonials) ? testimonials.slice(0, 5) : []);
                 setStats({
                     testimonials: testimonials.length,
-                    pendingTestimonials: testimonials.filter((testimony) => !testimony.emotion).length,
-                    sections: 4
+                    pendingTestimonials: testimonials.filter((testimony) => !testimony.is_approved).length,
+                    sections: FARO_BLOCKS.length
                 });
             } catch (error) {
                 console.error('CMS home fetch', error);

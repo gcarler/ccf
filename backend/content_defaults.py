@@ -163,4 +163,140 @@ PAGE_CONTENT_DEFAULTS = {
             ]
         }
     },
+    "faro_nav_items": {
+        "title": "Navegacion FARO",
+        "content": {
+            "items": [
+                {"label": "Sobre Nosotros", "href": "/faro/nosotros"},
+                {"label": "Testimonios", "href": "/faro/testimonios"},
+                {"label": "Eventos", "href": "/faro/eventos"},
+                {"label": "Predicas", "href": "/faro/predicas"},
+                {"label": "Cursos", "href": "/faro/cursos"},
+                {"label": "Sedes", "href": "/faro/sedes"}
+            ]
+        }
+    },
+    "faro_home_hero": {
+        "title": "Inicio FARO",
+        "content": {
+            "eyebrow": "Comunidad FARO",
+            "title_lead": "Ilumina tu",
+            "title_accent": "Camino",
+            "description": "Una comunidad vibrante donde la fe encuentra propósito.",
+            "primary_cta": "Únete a nosotros",
+            "secondary_cta": "Ver Predicaciones"
+        }
+    },
+    "faro_events_hero": {
+        "title": "Eventos FARO",
+        "content": {
+            "eyebrow": "Calendario de Comunidad",
+            "title": "Nuestra Agenda",
+            "description": "Espacios diseñados para el crecimiento, la conexión y la guía espiritual."
+        }
+    },
+    "faro_public_events": {
+        "title": "Agenda Publica FARO",
+        "content": [
+            {
+                "title": "Noche de Iluminación: Adoración y Palabra",
+                "date": "24 DE JUNIO, 2024",
+                "location": "Auditorio Central",
+                "excerpt": "Encuentro especial de adoración y enseñanza.",
+                "category": "Destacado",
+                "featured": True
+            },
+            {
+                "title": "Cena de Jóvenes",
+                "date": "12",
+                "location": "Sede Norte • 19:30 hrs",
+                "excerpt": "Espacio de comunidad y conexión.",
+                "category": "Jóvenes",
+                "featured": False
+            }
+        ]
+    },
+    "faro_testimonios_hero": {
+        "title": "Testimonios FARO",
+        "content": {
+            "eyebrow": "Impacto Real",
+            "title_lead": "Historias de",
+            "title_accent": "Transformación",
+            "description": "Descubre cómo la fe y la comunidad han iluminado vidas reales."
+        }
+    },
+    "faro_sermons_hero": {
+        "title": "Predicas FARO",
+        "content": {
+            "eyebrow": "Mensaje Destacado",
+            "title_lead": "Alimento para el",
+            "title_accent": "Alma",
+            "description": "Explora nuestra biblioteca de mensajes que iluminan el camino."
+        }
+    },
+    "faro_courses_hero": {
+        "title": "Cursos FARO",
+        "content": {
+            "eyebrow": "Formación y Sabiduría",
+            "title_lead": "El Camino",
+            "title_accent": "del Faro",
+            "description": "Explora cursos y recursos para profundizar tu fe."
+        }
+    },
+    "faro_discover_hero": {
+        "title": "Conocer a Jesus FARO",
+        "content": {
+            "eyebrow": "Inicia Tu Camino",
+            "title_lead": "La Luz que",
+            "title_accent": "Guía",
+            "title_tail": "Tu Vida.",
+            "description": "El comienzo de una relación que transforma tu historia.",
+            "cta": "Quiero conocer a Jesús"
+        }
+    },
+    "faro_about_hero": {
+        "title": "Nosotros FARO",
+        "content": {
+            "eyebrow": "Nuestra Identidad",
+            "title_lead": "Iluminando el",
+            "title_accent": "camino juntos",
+            "description": "Somos una comunidad vibrante dedicada a guiar personas hacia una vida con propósito."
+        }
+    },
+    "faro_locations_hero": {
+        "title": "Sedes FARO",
+        "content": {
+            "eyebrow": "Nuestra Presencia",
+            "title": "Nuestras Sedes",
+            "search_placeholder": "Buscar ciudad o dirección..."
+        }
+    },
+    "faro_testimonials_feed": {
+        "title": "Testimonios FARO",
+        "content": [
+            {
+                "id": 1,
+                "content": "Llegué con ansiedad y hoy tengo paz y comunidad.",
+                "emotion": "Restauración",
+                "is_approved": True,
+                "show_on_home": True,
+                "author_id": 1,
+                "author": {"id": 1, "username": "Comunidad FARO"},
+                "created_at": "2026-01-10T10:00:00Z"
+            }
+        ]
+    },
+    "faro_announcements_feed": {
+        "title": "Anuncios FARO",
+        "content": [
+            {
+                "id": 1,
+                "title": "Congreso de Jóvenes",
+                "content": "Inscripciones abiertas en recepción y web.",
+                "category": "Eventos",
+                "is_active": True,
+                "created_at": "2026-01-10T10:00:00Z"
+            }
+        ]
+    },
 }

@@ -2,18 +2,24 @@
 
 import Link from "next/link";
 import React from "react";
+import { useContentBlock } from "@/hooks/useContent";
 
 export default function SedesPage() {
+    const { data: heroContent } = useContentBlock("faro_locations_hero");
+    const heroEyebrow = heroContent?.eyebrow || "Nuestra Presencia";
+    const heroTitle = heroContent?.title || "Nuestras Sedes";
+    const heroSearchPlaceholder = heroContent?.search_placeholder || "Buscar ciudad o dirección...";
+
     return (
         <main className="pt-[88px] min-h-screen flex flex-col md:flex-row overflow-hidden bg-faro-surface">
             {/* Asider for Locations */}
             <aside className="w-full md:w-[450px] lg:w-[550px] bg-faro-surface-container-lowest flex flex-col h-[calc(100vh-88px)] z-10">
                 <div className="p-10 border-b border-white/5">
-                    <span className="text-faro-primary font-headline font-bold text-xs tracking-[0.2em] uppercase block mb-4">Nuestra Presencia</span>
-                    <h1 className="text-4xl font-headline font-extrabold tracking-tighter text-faro-on-surface mb-6">Nuestras Sedes</h1>
+                    <span className="text-faro-primary font-headline font-bold text-xs tracking-[0.2em] uppercase block mb-4">{heroEyebrow}</span>
+                    <h1 className="text-4xl font-headline font-extrabold tracking-tighter text-faro-on-surface mb-6">{heroTitle}</h1>
                     <div className="relative group">
                         <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-faro-outline">search</span>
-                        <input className="w-full bg-faro-surface-container-highest border-none rounded-[0.5rem] py-4 pl-12 pr-4 text-faro-on-surface placeholder:text-faro-outline focus:ring-1 focus:ring-faro-primary/50 transition-all font-body" placeholder="Buscar ciudad o dirección..." type="text" />
+                        <input className="w-full bg-faro-surface-container-highest border-none rounded-[0.5rem] py-4 pl-12 pr-4 text-faro-on-surface placeholder:text-faro-outline focus:ring-1 focus:ring-faro-primary/50 transition-all font-body" placeholder={heroSearchPlaceholder} type="text" />
                     </div>
                 </div>
 

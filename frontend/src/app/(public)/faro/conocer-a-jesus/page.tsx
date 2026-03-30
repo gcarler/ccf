@@ -2,8 +2,19 @@
 
 import Link from "next/link";
 import React from "react";
+import { useContentBlock } from "@/hooks/useContent";
 
 export default function ConocerAJesusPage() {
+    const { data: heroContent } = useContentBlock("faro_discover_hero");
+    const heroEyebrow = heroContent?.eyebrow || "Inicia Tu Camino";
+    const heroTitleLead = heroContent?.title_lead || "La Luz que";
+    const heroAccent = heroContent?.title_accent || "Guía";
+    const heroTitleTail = heroContent?.title_tail || "Tu Vida.";
+    const heroDescription =
+        heroContent?.description ||
+        "Conocer a Jesús no es una religión, es el comienzo de una relación que transforma la oscuridad en un propósito eterno.";
+    const heroCta = heroContent?.cta || "Quiero conocer a Jesús";
+
     return (
         <>
             <header className="relative min-h-[921px] flex items-center overflow-hidden pt-20">
@@ -14,16 +25,16 @@ export default function ConocerAJesusPage() {
 </div>
 <div className="container mx-auto px-6 relative z-10 grid md:grid-cols-12 gap-8">
 <div className="md:col-span-8 lg:col-span-7">
-<span className="inline-block px-4 py-1 rounded-[0.75rem] border border-faro-primary/30 text-faro-primary text-xs font-label tracking-[0.2em] uppercase mb-6 bg-faro-primary/5">Inicia Tu Camino</span>
+<span className="inline-block px-4 py-1 rounded-[0.75rem] border border-faro-primary/30 text-faro-primary text-xs font-label tracking-[0.2em] uppercase mb-6 bg-faro-primary/5">{heroEyebrow}</span>
 <h1 className="font-headline text-5xl md:text-7xl font-extrabold tracking-tight text-faro-on-background leading-none mb-8 text-glow">
-                    La Luz que <br/><span className="text-faro-primary italic">Guía</span> Tu Vida.
-                </h1>
+                    {heroTitleLead} <br/><span className="text-faro-primary italic">{heroAccent}</span> {heroTitleTail}
+</h1>
 <p className="text-xl md:text-2xl text-faro-on-surface-variant leading-relaxed mb-10 max-w-2xl font-light">
-                    Conocer a Jesús no es una religión, es el comienzo de una relación que transforma la oscuridad en un propósito eterno.
+                    {heroDescription}
                 </p>
 <div className="flex flex-wrap gap-6">
 <button className="px-10 py-4 rounded-[0.75rem] bg-gradient-to-br from-faro-primary to-faro-primary-container text-faro-on-primary font-bold text-lg shadow-lg hover:shadow-faro-primary/20 transition-all scale-100 active:scale-95">
-                        Quiero conocer a Jesús
+                        {heroCta}
                     </button>
 </div>
 </div>

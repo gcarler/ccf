@@ -65,6 +65,15 @@ class TaskSupply(TaskSupplyBase):
     task_id: int
     model_config = orm_config
 
+class ProjectAttachment(BaseModel):
+    id: int
+    task_id: int
+    filename: str
+    file_url: str
+    file_type: Optional[str] = None
+    file_size: Optional[int] = None
+    created_at: datetime
+    model_config = orm_config
 
 class ProjectTaskBase(BaseModel):
     title: str
@@ -724,6 +733,25 @@ class CommunicationLog(BaseModel):
 class PageContentUpdate(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
+
+
+class PageContentRead(BaseModel):
+    id: int
+    page_key: str
+    title: str
+    content: str
+    created_at: datetime
+    updated_at: datetime
+    model_config = orm_config
+
+
+class PageContentVersionRead(BaseModel):
+    id: int
+    page_key: str
+    title: str
+    content: str
+    created_at: datetime
+    model_config = orm_config
 
 
 class MilestoneCreate(BaseModel):

@@ -15,6 +15,7 @@ interface Testimonial {
     created_at: string;
     author_id: number;
     published?: boolean;
+    is_approved?: boolean;
 }
 
 const emotionFilters = ['Todos', 'Sanidad', 'Provisión', 'Restauración', 'Fe'];
@@ -33,8 +34,12 @@ export default function CmsTestimonialsPage() {
         }
         setLoading(true);
         try {
-            const data = await apiFetch<Testimonial[]>('/testimonials', { token, cache: 'no-store' });
-            setTestimonials(Array.isArray(data) ? data : []);
+            const data = await apiFetch<Testimonial[]>('/cms/testimonials', { token, cache: 'no-store' });
+            setTestimonials(
+                Array.isArray(data)
+                    ? data.map((row) => ({ ...row, published: row.published ?? row.is_approved ?? false }))
+                    : []
+            );
         } catch (error) {
             console.error('cms testimonials fetch', error);
             setTestimonials([]);
@@ -54,12 +59,17 @@ export default function CmsTestimonialsPage() {
 
     const handleTogglePublish = async (testimonial: Testimonial) => {
         if (!token) return;
-        // Placeholder: we simply toggle locally. Backend PATCH can be added later.
-        setTestimonials((prev) =>
-            prev.map((item) =>
-                item.id === testimonial.id ? { ...item, published: !item.published } : item
-            )
-        );
+        const nextPublished = !testimonial.published;
+        setTestimonials((prev) => prev.map((item) => (item.id === testimonial.id ? { ...item, published: nextPublished } : item)));
+        try {
+            await apiFetch(`/admin/testimonials/${testimonial.id}`, {
+                method: 'PATCH',
+                token,
+                body: { is_approved: nextPublished }
+            });
+        } catch {
+            setTestimonials((prev) => prev.map((item) => (item.id === testimonial.id ? { ...item, published: testimonial.published } : item)));
+        }
     };
 
     if (!isAuthenticated) {

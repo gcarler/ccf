@@ -2,8 +2,17 @@
 
 import Link from "next/link";
 import React from "react";
+import { useContentBlock } from "@/hooks/useContent";
 
 export default function TestimoniosPage() {
+    const { data: heroContent } = useContentBlock("faro_testimonios_hero");
+    const heroEyebrow = heroContent?.eyebrow || "Impacto Real";
+    const heroTitleLead = heroContent?.title_lead || "Historias de";
+    const heroAccent = heroContent?.title_accent || "Transformación";
+    const heroDescription =
+        heroContent?.description ||
+        "Descubre cómo la fe y la comunidad han iluminado el camino de personas reales en nuestra comunidad FARO. No son solo palabras, son vidas cambiadas.";
+
     return (
         <>
             <aside className="hidden lg:flex flex-col h-full w-80 fixed left-0 top-0 z-[60] bg-[#001134] py-8 px-4 font-manrope tracking-tight bg-faro-surface-container-low on surface">
@@ -52,12 +61,12 @@ export default function TestimoniosPage() {
 {/*  Light Leak Effect  */}
 <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-faro-secondary/10 rounded-[0.75rem] blur-[120px] -translate-y-1/2 translate-x-1/3"></div>
 <div className="relative z-10 max-w-5xl mx-auto">
-<span className="label-md font-label tracking-[0.2em] text-faro-primary uppercase mb-4 block">Impacto Real</span>
+<span className="label-md font-label tracking-[0.2em] text-faro-primary uppercase mb-4 block">{heroEyebrow}</span>
 <h1 className="text-display-lg font-headline font-extrabold text-7xl leading-tight tracking-tight mb-8 text-glow max-w-3xl">
-                    Historias de <span className="text-faro-primary italic">Transformación</span>
+                    {heroTitleLead} <span className="text-faro-primary italic">{heroAccent}</span>
 </h1>
 <p className="text-body-lg text-faro-on-surface-variant leading-relaxed max-w-xl text-lg opacity-80">
-                    Descubre cómo la fe y la comunidad han iluminado el camino de personas reales en nuestra comunidad FARO. No son solo palabras, son vidas cambiadas.
+                    {heroDescription}
                 </p>
 </div>
 </header>

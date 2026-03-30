@@ -2,8 +2,17 @@
 
 import Link from "next/link";
 import React from "react";
+import { useContentBlock } from "@/hooks/useContent";
 
 export default function CursosPage() {
+    const { data: heroContent } = useContentBlock("faro_courses_hero");
+    const heroEyebrow = heroContent?.eyebrow || "Formación & Sabiduría";
+    const heroTitleLead = heroContent?.title_lead || "El Camino";
+    const heroAccent = heroContent?.title_accent || "del Faro";
+    const heroDescription =
+        heroContent?.description ||
+        "Explora nuestra academia de cursos especializados y sumérgete en una selección literaria diseñada para iluminar tu entendimiento y profundizar tu fe.";
+
     return (
         <>
             <main className="pt-20 pb-32">
@@ -14,12 +23,12 @@ export default function CursosPage() {
 <div className="absolute inset-0 bg-gradient-to-r from-faro-background via-faro-background/80 to-transparent"></div>
 </div>
 <div className="relative z-10 max-w-4xl">
-<span className="label-md tracking-[0.2em] text-faro-primary uppercase font-bold mb-4 block">Formación &amp; Sabiduría</span>
+<span className="label-md tracking-[0.2em] text-faro-primary uppercase font-bold mb-4 block">{heroEyebrow}</span>
 <h1 className="text-6xl md:text-8xl font-headline font-extrabold text-faro-on-background tracking-tighter leading-none mb-6">
-                    El Camino <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-faro-primary to-faro-secondary">del Faro.</span>
+                    {heroTitleLead} <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-faro-primary to-faro-secondary">{heroAccent}.</span>
 </h1>
 <p className="text-xl text-faro-on-surface-variant max-w-xl leading-relaxed font-light">
-                    Explora nuestra academia de cursos especializados y sumérgete en una selección literaria diseñada para iluminar tu entendimiento y profundizar tu fe.
+                    {heroDescription}
                 </p>
 </div>
 </section>
