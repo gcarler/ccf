@@ -34,6 +34,8 @@ interface Lesson {
     id: number;
     title: string;
     content: string;
+    content_type?: string;
+    media_url?: string;
     order_index: number;
     duration_minutes: number;
     is_completed?: boolean;
@@ -47,8 +49,8 @@ interface Course {
 }
 
 export default function CourseViewPage() {
-    const params = useParams<{ id: string }>();
-    const id = params?.id ?? '';
+    const params = useParams();
+    const id = (params?.id as string) ?? '';
     const { token, user } = useAuth();
     const router = useRouter();
     const [course, setCourse] = useState<Course | null>(null);
@@ -61,8 +63,8 @@ export default function CourseViewPage() {
         try {
             const data = await apiFetch<Course>(`/academy/courses/${id}`, { token });
             setCourse(data);
-            if (data.lessons?.length > 0) {
-                const uncompleted = data.lessons.find((l) => !l.is_completed);
+            if (data && data.lessons && data.lessons.length > 0) {
+                const uncompleted = data.lessons.find((l: Lesson) => !l.is_completed);
                 setActiveLesson(uncompleted || data.lessons[0]);
             }
         } catch (err) { console.error(err); }
@@ -105,82 +107,79 @@ export default function CourseViewPage() {
 
     const completionRate = Math.round((course.lessons.filter(l => l.is_completed).length / course.lessons.length) * 100);
 
-    return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden font-display">
-            <WorkspaceToolbar 
-                breadcrumbs={[{ label: 'Academia', icon: GraduationCap }, { label: course.title, icon: BookOpen }]}
-                viewType="grid" setViewType={() => {}}
-                rightActions={
-                    <div className="flex items-center gap-2">
-                        <Tooltip content="Compartir curso"><button className="p-2 text-slate-400 hover:text-blue-600 transition-colors"><Share2 size={18} /></button></Tooltip>
-                        <Tooltip content="Ayuda"><button className="p-2 text-slate-400 hover:text-blue-600 transition-colors"><HelpCircle size={18} /></button></Tooltip>
-                        <div className="w-[1px] h-4 bg-slate-200 dark:bg-white/10 mx-2" />
-                        <button onClick={() => router.push('/academy')} className="flex items-center gap-2 px-4 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-all active:scale-95">Salir</button>
-                    </div>
-                }
-            />
+    const sidebarContent = (
+        <div className="flex flex-col h-full overflow-hidden">
+            <div className="p-8 space-y-6">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Avance Actual</h3>
+                    <span className="text-[10px] font-black px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-md tracking-widest">{completionRate}%</span>
+                </div>
+                <div className="h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden shadow-inner">
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${completionRate}%` }} className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 shadow-[0_0_10px_rgba(37,99,235,0.5)]" />
+                </div>
+            </div>
 
-            <div className="flex-1 flex overflow-hidden">
-                {/* Content Sidebar 3.0 */}
-                <aside className="w-80 lg:w-[400px] border-r border-slate-100 dark:border-white/5 bg-slate-50/30 dark:bg-black/10 flex flex-col shrink-0 relative z-10">
-                    <div className="p-8 space-y-6">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Currículo del Curso</h3>
-                            <span className="text-[10px] font-black px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-md tracking-widest">{completionRate}%</span>
-                        </div>
-                        <div className="h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden shadow-inner">
-                            <motion.div initial={{ width: 0 }} animate={{ width: `${completionRate}%` }} className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 shadow-[0_0_10px_rgba(37,99,235,0.5)]" />
-                        </div>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto scrollbar-thin px-4 pb-10 space-y-1">
-                        {course.lessons.sort((a, b) => a.order_index - b.order_index).map((lesson, idx) => {
-                            const isActive = activeLesson?.id === lesson.id;
-                            return (
-                                <button
-                                    key={lesson.id} onClick={() => setActiveLesson(lesson)}
-                                    className={clsx(
-                                        "w-full text-left px-5 py-4 rounded-2xl transition-all group flex items-start gap-4 relative overflow-hidden",
-                                        isActive 
-                                            ? "bg-white dark:bg-white/5 shadow-[var(--shadow-premium)] border border-slate-200 dark:border-white/10" 
-                                            : "hover:bg-white/50 dark:hover:bg-white/5 text-slate-500 border border-transparent"
-                                    )}
-                                >
-                                    {isActive && <div className="absolute left-0 top-4 bottom-4 w-1 bg-blue-600 rounded-full" />}
-                                    <div className={clsx(
-                                        "mt-0.5 size-8 rounded-xl shrink-0 flex items-center justify-center transition-all shadow-sm",
-                                        isActive ? "bg-blue-600 text-white" : "bg-slate-100 dark:bg-white/10 group-hover:bg-blue-50"
-                                    )}>
-                                        {lesson.is_completed ? <CheckCircle2 size={16} /> : <span className="text-[11px] font-black">{idx + 1}</span>}
-                                    </div>
-                                    <div className="flex-1 overflow-hidden">
-                                        <p className={clsx("text-[13px] font-bold leading-tight mb-1 truncate", isActive ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-400")}>{lesson.title}</p>
-                                        <div className="flex items-center gap-3 opacity-60">
-                                            <div className="flex items-center gap-1"><Clock size={10} /><span className="text-[9px] font-black uppercase tracking-widest">{lesson.duration_minutes}m</span></div>
-                                            {lesson.is_completed && <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Completada</span>}
-                                        </div>
-                                    </div>
-                                    <ChevronRight size={16} className={clsx("mt-2 transition-transform", isActive ? "text-blue-600 translate-x-0" : "text-slate-300 -translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0")} />
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    <div className="p-8 bg-white dark:bg-black/20 border-t border-slate-100 dark:border-white/5 space-y-4">
-                        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
-                            <span>Siguiente Desbloqueo</span>
-                            <Zap size={14} className="text-amber-500" />
-                        </div>
-                        <button 
-                            disabled={completionRate < 100}
-                            onClick={() => router.push(`/academy/assessments/${course.id}`)}
-                            className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[1.5rem] text-[11px] font-black uppercase tracking-[0.3em] shadow-xl disabled:opacity-30 disabled:grayscale transition-all active:scale-95 group relative overflow-hidden"
+            <div className="flex-1 overflow-y-auto scrollbar-thin px-4 pb-10 space-y-1">
+                {course.lessons.sort((a, b) => a.order_index - b.order_index).map((lesson, idx) => {
+                    const isActive = activeLesson?.id === lesson.id;
+                    const isCompleted = lesson.is_completed;
+                    
+                    return (
+                        <button
+                            key={lesson.id} onClick={() => setActiveLesson(lesson)}
+                            className={clsx(
+                                "w-full text-left px-5 py-4 rounded-2xl transition-all group flex items-start gap-4 relative overflow-hidden",
+                                isActive 
+                                    ? "bg-white dark:bg-white/5 shadow-[var(--shadow-premium)] border border-slate-200 dark:border-white/10" 
+                                    : "hover:bg-white/50 dark:hover:bg-white/5 text-slate-500 border border-transparent"
+                            )}
                         >
-                            <span className="relative z-10">Obtener Certificado</span>
-                            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className={clsx(
+                                "size-8 rounded-xl flex items-center justify-center shrink-0 border transition-all",
+                                isCompleted ? "bg-emerald-500 border-emerald-500 text-white" : 
+                                (isActive ? "bg-blue-600 border-blue-600 text-white" : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400")
+                            )}>
+                                {isCompleted ? <CheckCircle2 size={14} /> : (isActive ? <PlayCircle size={14} /> : <span className="text-[10px] font-black">{idx + 1}</span>)}
+                            </div>
+                            <div className="min-w-0">
+                                <p className={clsx("text-[13px] font-bold truncate leading-tight mb-1", isActive ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-400")}>{lesson.title}</p>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                        <Clock size={10} /> {lesson.duration_minutes} min
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                        {lesson.content_type === 'video' ? <PlayCircle size={10} /> : <FileText size={10} />} {lesson.content_type || 'lección'}
+                                    </div>
+                                </div>
+                            </div>
                         </button>
-                    </div>
-                </aside>
+                    );
+                })}
+            </div>
+        </div>
+    );
+
+    return (
+        <WorkspaceLayout 
+            sidebarTitle={course.title}
+            parentTitle="Academia Faro"
+            depth={2}
+            onBack={() => router.push('/academy')}
+            customSidebar={sidebarContent}
+        >
+            <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden font-display">
+                <WorkspaceToolbar 
+                    breadcrumbs={[{ label: 'Academia', icon: GraduationCap }, { label: course.title, icon: BookOpen }]}
+                    viewType="grid" setViewType={() => {}}
+                    rightActions={
+                        <div className="flex items-center gap-2">
+                            <Tooltip content="Compartir curso"><button className="p-2 text-slate-400 hover:text-blue-600 transition-colors"><Share2 size={18} /></button></Tooltip>
+                            <Tooltip content="Ayuda"><button className="p-2 text-slate-400 hover:text-blue-600 transition-colors"><HelpCircle size={18} /></button></Tooltip>
+                            <div className="w-[1px] h-4 bg-slate-200 dark:bg-white/10 mx-2" />
+                            <button onClick={() => router.push('/academy')} className="flex items-center gap-2 px-4 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-all active:scale-95">Salir</button>
+                        </div>
+                    }
+                />
 
                 {/* Content Main 3.0 */}
                 <main className="flex-1 overflow-y-auto scrollbar-thin bg-white dark:bg-[#1e1f21] relative">
@@ -191,18 +190,46 @@ export default function CourseViewPage() {
                             key={activeLesson?.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                             className="max-w-5xl mx-auto p-8 lg:p-16 space-y-12 pb-32"
                         >
-                            {/* Movie Player Container */}
-                            <div className="relative group/player rounded-[3rem] overflow-hidden shadow-[var(--shadow-floating)] border border-slate-200 dark:border-white/5 bg-black aspect-video">
-                                <VideoPlayer 
-                                    src="https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4"
-                                    onProgress={handleVideoProgress}
-                                    onComplete={handleLessonComplete}
-                                    initialTime={progress?.last_position_seconds || 0}
-                                />
-                                <div className="absolute top-6 left-6 flex gap-2">
-                                    <div className="px-3 py-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[9px] font-black uppercase tracking-[0.2em] text-white">4K ULTRA HD</div>
-                                    <div className="px-3 py-1 bg-blue-600/80 backdrop-blur-md rounded-full text-[9px] font-black uppercase tracking-[0.2em] text-white flex items-center gap-1.5"><Sparkles size={10} /> Optimus Enhanced</div>
-                                </div>
+                            {/* Dynamic Content Player Container */}
+                            <div className="relative group/player rounded-[3rem] overflow-hidden shadow-[var(--shadow-floating)] border border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-black aspect-video flex items-center justify-center">
+                                {(!activeLesson?.content_type || activeLesson.content_type === 'video') && (
+                                    <>
+                                        <VideoPlayer 
+                                            src={activeLesson?.media_url || "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4"}
+                                            onProgress={handleVideoProgress}
+                                            onComplete={handleLessonComplete}
+                                            initialTime={progress?.last_position_seconds || 0}
+                                        />
+                                        <div className="absolute top-6 left-6 flex gap-2">
+                                            <div className="px-3 py-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[9px] font-black uppercase tracking-[0.2em] text-white">4K ULTRA HD</div>
+                                            <div className="px-3 py-1 bg-blue-600/80 backdrop-blur-md rounded-full text-[9px] font-black uppercase tracking-[0.2em] text-white flex items-center gap-1.5"><Sparkles size={10} /> Optimus Enhanced</div>
+                                        </div>
+                                    </>
+                                )}
+                                {activeLesson?.content_type === 'pdf' && (
+                                    <div className="w-full h-full flex flex-col items-center justify-center p-12 text-center bg-slate-50 dark:bg-black space-y-6">
+                                        <FileText size={64} className="text-red-500" />
+                                        <div>
+                                            <h3 className="text-xl font-black text-slate-800 dark:text-white">Documento PDF Adjunto</h3>
+                                            <p className="text-slate-500 text-sm mt-2">Lee el documento para completar esta lección.</p>
+                                        </div>
+                                        <a href={activeLesson.media_url || "#"} target="_blank" rel="noreferrer" className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-blue-700 transition-colors">
+                                            Abrir Documento
+                                        </a>
+                                    </div>
+                                )}
+                                {activeLesson?.content_type === 'quiz' && (
+                                    <div className="w-full h-full flex flex-col items-center justify-center p-12 text-center bg-slate-50 dark:bg-black space-y-6">
+                                        <HelpCircle size={64} className="text-indigo-500" />
+                                        <div>
+                                            <h3 className="text-xl font-black text-slate-800 dark:text-white">Evaluación de Conocimiento</h3>
+                                            <p className="text-slate-500 text-sm mt-2">Responde las preguntas para avanzar a la siguiente etapa.</p>
+                                        </div>
+                                        <button onClick={handleLessonComplete} className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30">
+                                            Comenzar Cuestionario
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="space-y-10">

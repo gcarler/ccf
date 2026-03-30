@@ -15,7 +15,8 @@ import {
     ShieldCheck,
     Calendar,
     QrCode,
-    Settings
+    Settings,
+    BarChart3
 } from 'lucide-react';
 
 const SIDEBAR_SECTIONS = [
@@ -23,6 +24,7 @@ const SIDEBAR_SECTIONS = [
         title: 'Favoritos',
         items: [
             { id: 'dashboard', label: 'Inicio', href: '/crm', icon: LayoutDashboard },
+            { id: 'analytics', label: 'Analítica', href: '/crm/analytics', icon: BarChart3 },
             { id: 'messaging', label: 'Mensajería', href: '/crm/messaging', icon: Inbox },
             { id: 'projects', label: 'Proyectos', href: '/crm/pipeline', icon: Target },
         ]

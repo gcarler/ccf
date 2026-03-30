@@ -8,10 +8,8 @@ import {
     Plus,
     Hash,
     Layers,
-    MessageSquare,
     User,
     Search,
-    FolderKanban,
     MoreHorizontal,
     Layout,
     Clock,
@@ -22,231 +20,151 @@ import {
     Circle,
     Folder,
     Inbox,
-    Edit3,
-    Archive,
-    Trash2,
-    Settings2,
-    Copy,
-    ExternalLink
+    Home,
+    CheckSquare,
+    Calendar,
+    LayoutDashboard,
+    FileText,
+    Bell,
+    Users,
+    BookOpen,
+    Sparkles,
+    Settings2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
-interface SidebarItem {
-    id: string;
-    label: string;
-    href: string;
-    icon?: any;
-    count?: number;
-    status?: string | number;
-}
-
-const INICIO_ITEMS = [
-    { id: 'respuestas', label: 'Respuestas', href: '/projects/responses', icon: Inbox },
-    { id: 'comentarios', label: 'Comentarios asignados', href: '/projects/comments', icon: MessageCircle },
-    { id: 'tareas', label: 'Mis tareas', href: '/projects/tasks', icon: CheckCircle2 },
-    { id: 'mas', label: 'Más', href: '/projects/more', icon: MoreHorizontal }
-];
-
-const CANALES = [
-    { id: 'general', label: 'General / Carlos...', href: '/projects/general', icon: Hash },
-    { id: 'welcome', label: 'Welcome', href: '/projects/welcome', icon: Hash },
-];
-
-const MENSAJES = [
-    { id: 'dm1', label: 'gscarlos777@gmail.com', href: '#', icon: User },
-    { id: 'dm2', label: 'Carlos Ernesto Gómez', href: '#', icon: User, status: 'busy' },
-];
-
-function ContextMenuItem({ icon: Icon, label, color = "text-slate-600 dark:text-slate-300" }: { icon: any, label: string, color?: string }) {
-    return (
-        <div className={`flex items-center gap-3 px-2 py-1 hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer transition-colors group/menu`}>
-            <Icon size={12} className={`${color} group-hover/menu:scale-110 transition-transform`} />
-            <span className={`text-[10px] font-medium ${color}`}>{label}</span>
-        </div>
-    );
-}
-
 export default function WorkspaceMainSidebar({ title, sections, isMini }: { title: string, sections?: any[], isMini?: boolean }) {
     const pathname = usePathname();
-    const [expandedFolders, setExpandedFolders] = useState<string[]>(['espacios', 'proyectos', 'navigation']);
-    const [activeMenu, setActiveMenu] = useState<string | null>(null);
+    const [expandedFolders, setExpandedFolders] = useState<string[]>(['principal', 'herramientas', 'comunidad']);
 
     const toggleFolder = (id: string) => {
         setExpandedFolders(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
     };
 
-    const renderItem = (item: any, depth = 0) => {
-        const isActive = item.href === '/' || item.href === '/admin' || item.href === '/academy' || item.href === '/crm' || item.href === '/projects'
-            ? (pathname || '') === item.href
-            : (pathname || '').startsWith(item.href);
+    const navigationGroups = [
+        {
+            id: 'principal',
+            label: 'Principal',
+            items: [
+                { id: 'home', label: 'Inicio', href: '/', icon: Home },
+                { id: 'inbox', label: 'Inbox', href: '/inbox', icon: Inbox, count: 3 },
+                { id: 'tasks', label: 'Mis Tareas', href: '/tasks', icon: CheckSquare },
+                { id: 'projects', label: 'Portfolio', href: '/projects', icon: Folder },
+            ]
+        },
+        {
+            id: 'herramientas',
+            label: 'Herramientas',
+            items: [
+                { id: 'calendar', label: 'Calendario', href: '/calendar', icon: Calendar },
+                { id: 'whiteboard', label: 'Pizarra', href: '/whiteboard', icon: LayoutDashboard },
+                { id: 'documents', label: 'Documentos', href: '/documents', icon: FileText },
+                { id: 'reminders', label: 'Recordatorios', href: '/reminders', icon: Bell },
+            ]
+        },
+        {
+            id: 'comunidad',
+            label: 'Comunidad',
+            items: [
+                { id: 'crm', label: 'Comunidad (CRM)', href: '/crm', icon: Users },
+                { id: 'academy', label: 'Academia', href: '/academy', icon: BookOpen },
+                { id: 'comentarios', label: 'Comentarios', href: '/projects/comments', icon: MessageCircle },
+            ]
+        }
+    ];
+
+    const renderItem = (item: any) => {
+        const isActive = pathname === item.href || (item.href !== '/' && pathname?.startsWith(item.href));
         
         return (
-            <div key={item.id} className="relative">
-                <Link
-                    href={item.href}
-                    className={clsx(
-                        "flex items-center justify-between px-2 py-1 rounded-lg transition-all group cursor-pointer relative",
-                        isActive 
-                            ? "bg-blue-50/50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold" 
-                            : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
-                    )}
-                >
-                    {depth > 0 && <div className="absolute left-[-12px] top-[-8px] bottom-0 w-[1px] bg-slate-200 dark:bg-white/5" />}
-                    {depth > 0 && <div className="absolute left-[-12px] top-1/2 w-3 h-[1px] bg-slate-200 dark:bg-white/5" />}
-
-                    <div className="flex items-center gap-2 overflow-hidden justify-center w-full">
-                        {item.icon && <item.icon size={14} strokeWidth={isActive ? 2.5 : 2} className={isActive ? "text-blue-600 dark:text-blue-400" : "text-slate-400 group-hover:text-slate-500"} />}
-                        {!isMini && <span className="truncate text-[11px]">{item.label}</span>}
-                    </div>
-                    
+            <Link key={item.id} href={item.href}>
+                <div className={clsx(
+                    "flex items-center gap-3 px-3 py-2 mx-2 rounded-xl transition-all group cursor-pointer mb-0.5",
+                    isActive 
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                        : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
+                )}>
+                    <item.icon size={18} className={clsx(isActive ? "text-white" : "text-slate-400 group-hover:text-blue-500")} />
                     {!isMini && (
-                        <div className="flex items-center gap-1.5 shrink-0">
-                            {item.count !== undefined && (
-                                <span className="text-[9px] font-black bg-slate-200 dark:bg-white/10 px-1.5 py-0.5 rounded text-slate-500">{item.count}</span>
-                            )}
-                            <button 
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveMenu(activeMenu === item.id ? null : item.id); }}
-                                className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded transition-all text-slate-400"
-                            >
-                                <MoreHorizontal size={12} />
-                            </button>
-                            {item.status === 'busy' && <div className="w-1.5 h-1.5 rounded-full bg-slate-300 border border-slate-400" />}
-                        </div>
-                    )}
-                </Link>
-
-                <AnimatePresence>
-                    {activeMenu === item.id && (
                         <>
-                            <div className="fixed inset-0 z-[100]" onClick={() => setActiveMenu(null)} />
-                            <motion.div 
-                                initial={{ opacity: 0, scale: 0.95, y: -10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                                className="absolute right-0 top-10 w-48 bg-white dark:bg-[#2a2b2d] rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 py-1.5 z-[110] overflow-hidden"
-                            >
-                                <div className="px-3 py-1.5 mb-1 border-b border-slate-100 dark:border-white/5 flex items-center gap-2">
-                                     <div className="w-2 h-2 rounded-full bg-blue-500" />
-                                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">{item.label}</span>
-                                </div>
-                                <ContextMenuItem icon={Edit3} label="Renombrar" />
-                                <ContextMenuItem icon={Copy} label="Duplicar" />
-                                <ContextMenuItem icon={Star} label="Añadir a favoritos" />
-                                <div className="h-[1px] bg-slate-100 dark:bg-white/5 my-1" />
-                                <ContextMenuItem icon={Archive} label="Archivar" />
-                                <ContextMenuItem icon={Trash2} label="Borrar" color="text-rose-500" />
-                            </motion.div>
+                            <span className="text-[13px] font-bold flex-1 truncate leading-none">{item.label}</span>
+                            {item.count && (
+                                <span className={clsx(
+                                    "px-1.5 py-0.5 rounded-md text-[9px] font-black leading-none",
+                                    isActive ? "bg-white/20 text-white" : "bg-blue-100 text-blue-600"
+                                )}>
+                                    {item.count}
+                                </span>
+                            )}
                         </>
                     )}
-                </AnimatePresence>
-            </div>
+                </div>
+            </Link>
         );
     };
 
     return (
         <aside className={clsx(
-            "bg-[#f9fafb] dark:bg-[#18191b] flex flex-col z-40 shrink-0 shadow-[5px_0_15px_rgba(0,0,0,0.02)] dark:shadow-none transition-all duration-300 overflow-hidden h-full",
-            isMini ? "w-[52px]" : "w-[210px]"
+            "h-full flex flex-col bg-white dark:bg-[#1e1f21] border-r border-slate-100 dark:border-white/5 transition-all duration-300",
+            isMini ? "w-20" : "w-72"
         )}>
-            {/* Sidebar Header */}
-            <div className="h-10 flex items-center justify-between px-3 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-[#1e1f21] shrink-0">
-                <div className={clsx("flex items-center overflow-hidden cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 p-1 rounded-md transition-colors w-full", isMini ? "justify-center" : "gap-2")}>
-                    {isMini ? (
-                        <div className="w-5 h-5 rounded bg-slate-200 dark:bg-white/10 flex items-center justify-center text-[9px] font-bold text-slate-500">{title.charAt(0)}</div>
-                    ) : (
-                        <span className="text-[12px] font-black text-slate-800 dark:text-slate-100 truncate flex-1">{title}</span>
-                    )}
+            {/* Header: Dynamic Title */}
+            <div className="h-14 flex items-center px-6 border-b border-slate-100 dark:border-white/5">
+                <div className="flex items-center gap-3 truncate">
+                    <div className="size-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg">
+                        <Sparkles size={16} />
+                    </div>
+                    {!isMini && <h2 className="text-[15px] font-black text-slate-800 dark:text-white tracking-tight truncate">{title}</h2>}
                 </div>
             </div>
 
-            {/* Navigation Content */}
-            <div className="flex-1 overflow-y-auto py-4 px-2 space-y-6 scrollbar-thin">
-                
-                {/* Global Navigation (Start) */}
-                <div className="space-y-1">
-                    {!isMini && (
-                        <div className="flex items-center justify-between px-2 mb-2">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Inicio</span>
-                            <button className="p-1 hover:bg-slate-200 dark:hover:bg-white/10 rounded-md text-slate-400"><Plus size={10} /></button>
-                        </div>
-                    )}
-                    <div className="space-y-0.5">
-                        {INICIO_ITEMS.map((item) => renderItem(item))}
-                    </div>
-                </div>
-
-                <div className="h-[1px] bg-slate-200 dark:bg-white/5 mx-2" />
-
-                {/* Spaces Tree (ClickUp Style) */}
-                <div className="space-y-1">
-                    {!isMini && (
-                        <div className="flex items-center justify-between px-2 mb-2">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Espacios</span>
-                            <div className="flex items-center gap-1">
-                                <button className="p-1 hover:bg-slate-200 dark:hover:bg-white/10 rounded-md text-slate-400"><Search size={10} /></button>
-                                <button className="p-1 hover:bg-slate-200 dark:hover:bg-white/10 rounded-md text-slate-400"><Plus size={10} /></button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Espacio Root */}
-                    <div className="space-y-0.5" id="espacios">
-                        <div 
-                            className={clsx("flex items-center gap-1.5 px-2 py-1 text-[12px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg cursor-pointer transition-all group/space", isMini && "justify-center")}
-                            onClick={() => !isMini && toggleFolder('espacios')}
-                        >
-                            {!isMini && <ChevronDown size={12} className={clsx("text-slate-400 transition-transform", !expandedFolders.includes('espacios') && "-rotate-90")} />}
-                            <div className="w-5 h-5 rounded bg-purple-600 flex items-center justify-center text-[10px] text-white shadow-sm font-black shrink-0">E</div>
-                            {!isMini && <span className="flex-1 truncate">Espacio del equipo [ES]</span>}
-                            {!isMini && <MoreHorizontal size={12} className="text-slate-400 opacity-0 group-hover/space:opacity-100 transition-opacity shrink-0" />}
-                        </div>
-                        
-                        {!isMini && expandedFolders.includes('espacios') && (
-                            <div className="ml-5 pl-2 border-l border-slate-200 dark:border-white/5 space-y-0.5 mt-1 relative">
-                                {/* Folder: Proyectos */}
-                                <div 
-                                    className="flex items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg cursor-pointer transition-colors group/folder relative"
-                                    onClick={(e) => { e.stopPropagation(); toggleFolder('proyectos'); }}
-                                >
-                                    <div className="absolute left-[-8px] top-1/2 w-2 h-[1px] bg-slate-200 dark:bg-white/5" />
-                                    <ChevronDown size={12} className={clsx("text-slate-400 transition-transform", !expandedFolders.includes('proyectos') && "-rotate-90")} />
-                                    <Folder size={12} className="text-slate-400 fill-slate-200 dark:fill-white/5" />
-                                    <span className="flex-1 truncate">Proyectos</span>
-                                    <Plus size={10} className="text-slate-400 opacity-0 group-hover/folder:opacity-100" />
-                                </div>
-                                
-                                {/* Projects inside Folder */}
-                                {expandedFolders.includes('proyectos') && (
-                                    <div className="ml-5 pl-2 border-l border-slate-200 dark:border-white/5 space-y-0.5 mt-1 relative">
-                                        {renderItem({ id: 'p1', label: 'Proyecto 1', href: '/projects', icon: Layout, count: 5 }, 1)}
-                                        {renderItem({ id: 'p2', label: 'Diseño Web', href: '/projects/2', icon: Layout, count: 2 }, 1)}
-                                        {renderItem({ id: 'p3', label: 'Lanzamiento App', href: '/projects/3', icon: Layout }, 1)}
-                                    </div>
-                                )}
+            <div className="flex-1 overflow-y-auto scrollbar-hide py-4">
+                {navigationGroups.map(group => (
+                    <div key={group.id} className="mb-6">
+                        {!isMini && (
+                            <div 
+                                onClick={() => toggleFolder(group.id)}
+                                className="flex items-center justify-between px-6 mb-2 cursor-pointer group/header"
+                            >
+                                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 group-hover/header:text-slate-600 transition-colors">{group.label}</span>
+                                <ChevronDown size={12} className={clsx("text-slate-300 transition-transform", !expandedFolders.includes(group.id) && "-rotate-90")} />
                             </div>
                         )}
+                        <AnimatePresence initial={false}>
+                            {expandedFolders.includes(group.id) && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden"
+                                >
+                                    {group.items.map(renderItem)}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
-                </div>
+                ))}
 
-                <div className="h-[1px] bg-slate-200 dark:bg-white/5 mx-2" />
-
-                {/* Direct Messages */}
-                <div className="space-y-1">
-                    {!isMini && (
-                        <div className="flex items-center justify-between px-2 mb-2">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Mensajes Directos</span>
-                            <button className="p-1 hover:bg-slate-200 dark:hover:bg-white/10 rounded-md text-slate-400"><Plus size={10} /></button>
+                {/* Dinamic Sections (from Props) */}
+                {sections && sections.length > 0 && (
+                    <div className="pt-4 border-t border-slate-100 dark:border-white/5 mt-4">
+                        <div className="px-6 mb-4 flex items-center justify-between">
+                            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Personalizado</span>
                         </div>
-                    )}
-                    <div className="space-y-0.5">
-                        {MENSAJES.map((item) => renderItem(item))}
+                        {sections.map(section => (
+                            <div key={section.id || section.title} className="space-y-1">
+                                {section.items?.map(renderItem)}
+                            </div>
+                        ))}
                     </div>
-                </div>
+                )}
             </div>
 
-            {/* Footer Action */}
-            <div className="p-2 bg-white dark:bg-[#18191b] border-t border-slate-200 dark:border-white/5 mt-auto flex justify-center">
-                <button className="w-full flex items-center justify-center gap-1.5 p-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-lg">
-                    <Plus size={14} /> {!isMini && "Invitar al Equipo"}
+            {/* Footer */}
+            <div className="p-4 mt-auto border-t border-slate-100 dark:border-white/5">
+                <button className="w-full flex items-center justify-center gap-2 py-3 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-all border border-slate-200/50 dark:border-white/5 shadow-sm">
+                    <Settings2 size={14} /> {!isMini && "Configuración"}
                 </button>
             </div>
         </aside>

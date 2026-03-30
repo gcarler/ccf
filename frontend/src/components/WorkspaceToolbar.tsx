@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import ViewSwitcher, { ViewType } from './ViewSwitcher';
 import { motion } from 'framer-motion';
+import SplitDropdownButton from './ui/SplitDropdownButton';
+import Link from 'next/link';
 
 interface Breadcrumb {
     label: string;
@@ -33,6 +35,7 @@ interface WorkspaceToolbarProps {
     onSearch?: (query: string) => void;
     onFilter?: () => void;
     onAdd?: () => void;
+    onAddOption?: (type: 'task' | 'document' | 'reminder' | 'whiteboard' | 'panel') => void;
 }
 
 export default function WorkspaceToolbar({
@@ -43,7 +46,8 @@ export default function WorkspaceToolbar({
     rightActions,
     onSearch,
     onFilter,
-    onAdd
+    onAdd,
+    onAddOption
 }: WorkspaceToolbarProps) {
     return (
         <div className="h-11 bg-white dark:bg-[#1e1f21] border-b border-[#e8eaed] dark:border-white/5 flex items-center justify-between px-4 sticky top-0 z-50 shadow-sm transition-colors duration-300">
@@ -55,8 +59,8 @@ export default function WorkspaceToolbar({
                 </div>
                 
                 <nav className="flex items-center gap-1 overflow-hidden">
-                    {breadcrumbs.map((bc, idx) => (
-                        <div key={idx} className="flex items-center gap-1 shrink-0">
+                    {breadcrumbs.map((bc, idx) => {
+                        const content = (
                             <motion.div 
                                 initial={{ opacity: 0, x: -5 }}
                                 animate={{ opacity: 1, x: 0 }}
@@ -65,11 +69,17 @@ export default function WorkspaceToolbar({
                                 {bc.icon && <bc.icon size={13} className="text-slate-400 group-hover:text-blue-500" />}
                                 <span className="text-[12px] font-bold text-slate-700 dark:text-slate-300 tracking-tight">{bc.label}</span>
                             </motion.div>
-                            {idx < breadcrumbs.length - 1 && (
-                                <ChevronRight size={12} className="text-slate-300 dark:text-slate-600 shrink-0" />
-                            )}
-                        </div>
-                    ))}
+                        );
+
+                        return (
+                            <div key={idx} className="flex items-center gap-1 shrink-0">
+                                {bc.href ? <Link href={bc.href}>{content}</Link> : content}
+                                {idx < breadcrumbs.length - 1 && (
+                                    <ChevronRight size={12} className="text-slate-300 dark:text-slate-600 shrink-0" />
+                                )}
+                            </div>
+                        );
+                    })}
                 </nav>
 
                 <div className="w-[1px] h-4 bg-slate-200 dark:bg-white/10 mx-2 shrink-0" />
@@ -102,13 +112,12 @@ export default function WorkspaceToolbar({
                     
                     {rightActions}
                     
-                    <button 
-                        onClick={onAdd}
-                        className="ml-1 h-7 px-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-[11px] font-bold flex items-center gap-1.5 shadow-sm shadow-blue-500/20 active:scale-95 transition-all"
-                    >
-                        <Plus size={14} />
-                        <span>Nuevo</span>
-                    </button>
+                    {onAdd && (
+                        <SplitDropdownButton 
+                            onMainClick={onAdd}
+                            onOptionClick={onAddOption ? onAddOption : () => {}}
+                        />
+                    )}
 
                     <ToolbarButton icon={MoreHorizontal} tooltip="Más opciones" />
                 </div>

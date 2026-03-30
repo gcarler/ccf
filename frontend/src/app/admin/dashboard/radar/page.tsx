@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { 
     Users, 
     Waves, 
@@ -8,10 +8,18 @@ import {
     DollarSign, 
     TrendingUp, 
     Target,
-    Shield
+    Shield,
+    Zap,
+    Sparkles,
+    BarChart3,
+    Heart,
+    ArrowUpRight,
+    Loader2
 } from 'lucide-react';
-import { api } from '@/services/apiService';
-import { StatCard } from '@/components/StatCard';
+import { apiFetch } from '@/lib/http';
+import { useAuth } from '@/context/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
+import clsx from 'clsx';
 
 interface RadarData {
     membresia_viva: number;
@@ -24,120 +32,236 @@ export default function PastorRadarPage() {
     const [data, setData] = useState<RadarData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { token, isAuthenticated } = useAuth();
+
+    const fetchRadar = useCallback(async () => {
+        if (!token) return;
+        setLoading(true);
+        try {
+            // Sincronizado con el endpoint real del backend CRM
+            const res = await apiFetch<RadarData>('/crm/radar', { token });
+            setData(res);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    }, [token]);
 
     useEffect(() => {
-        api.get<RadarData>('/analytics/radar')
-            .then(setData)
-            .catch(err => setError(err.message))
-            .finally(() => setLoading(false));
-    }, []);
+        if (isAuthenticated) fetchRadar();
+    }, [isAuthenticated, fetchRadar]);
 
-    if (loading) return (
-        <div className="p-8 h-full flex items-center justify-center">
-            <div className="animate-pulse text-primary font-black tracking-[0.5em] uppercase italic">Iniciando Radar Ministerial...</div>
-        </div>
-    );
-
-    if (error) return (
-        <div className="p-8 text-rose-500 font-bold bg-rose-500/10 border border-rose-500/20 rounded-2xl">
-            Error de conexión: {error}
-        </div>
-    );
+    if (!isAuthenticated) return null;
 
     return (
-        <div className="p-8 space-y-8 animate-in fade-in duration-700">
-            <div className="flex flex-col gap-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-[0.2em] w-fit">
-                    <Shield size={12} /> Inteligencia Ministerial v3.9
+        <div className="p-8 lg:p-12 space-y-12 max-w-[1600px] mx-auto font-display overflow-hidden relative">
+            <style jsx global>{`
+                .radar-aura {
+                    position: relative;
+                }
+                .radar-aura::after {
+                    content: '';
+                    position: absolute;
+                    inset: -1px;
+                    background: linear-gradient(45deg, var(--aura-color, #3b82f620), transparent 60%);
+                    z-index: -1;
+                    border-radius: inherit;
+                    opacity: 0;
+                    transition: opacity 0.6s ease;
+                }
+                .radar-aura:hover::after {
+                    opacity: 1;
+                }
+                .shimmer-bar {
+                    position: relative;
+                    overflow: hidden;
+                }
+                .shimmer-bar::after {
+                    content: '';
+                    position: absolute;
+                    top: 0; left: -100%; width: 50%; height: 100%;
+                    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+                    animation: shimmer-radar 3s infinite;
+                }
+                @keyframes shimmer-radar {
+                    0% { left: -100%; }
+                    100% { left: 200%; }
+                }
+                .glass-card {
+                    background: rgba(255, 255, 255, 0.03);
+                    backdrop-filter: blur(20px);
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                }
+            `}</style>
+
+            {/* Background cinematic glow */}
+            <div className="absolute top-0 right-0 size-[600px] bg-blue-600/5 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
+
+            <header className="flex flex-col gap-4 relative z-10">
+                <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/10 text-blue-500 rounded-full text-[10px] font-black uppercase tracking-[0.3em] w-fit border border-blue-500/20"
+                >
+                    <Shield size={12} className="animate-pulse" /> Inteligencia Ministerial Optimus v3.9
+                </motion.div>
+                <motion.h1 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-5xl lg:text-6xl font-black tracking-tighter text-slate-900 dark:text-white uppercase leading-none"
+                >
+                    Radar <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-400">Pastoral</span>
+                </motion.h1>
+                <motion.p 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-slate-500 dark:text-slate-400 text-lg font-medium max-w-2xl leading-relaxed"
+                >
+                    Consola de mando ejecutiva. Análisis dinámico de membresía, formación académica e impacto financiero consolidado.
+                </motion.p>
+            </header>
+
+            {loading ? (
+                <div className="py-40 flex flex-col items-center justify-center gap-6">
+                    <Loader2 className="animate-spin text-blue-600" size={64} strokeWidth={1.5} />
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] animate-pulse">Iniciando Red Neuronal...</p>
                 </div>
-                <h1 className="text-4xl font-black tracking-tighter text-white uppercase italic">
-                    Radar del <span className="text-primary">Pastor</span>
-                </h1>
-                <p className="text-muted-foreground text-sm max-w-2xl">
-                    Monitoreo en tiempo real del impacto espiritual y financiero de la congregación basado en datos consolidados.
-                </p>
-            </div>
+            ) : error ? (
+                <div className="p-10 bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 rounded-[3rem] text-rose-600 text-center space-y-4">
+                    <Zap size={40} className="mx-auto" />
+                    <p className="font-black uppercase tracking-widest">Error de Sincronización: {error}</p>
+                    <button onClick={fetchRadar} className="px-8 py-3 bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl">Reintentar</button>
+                </div>
+            ) : (
+                <>
+                <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+                >
+                    <RadarStat label="Membresía Viva" value={data?.membresia_viva || 0} icon={Users} color="blue" trend="+5.2%" auraColor="rgba(37,99,235,0.15)" />
+                    <RadarStat label="Bautismos" value={data?.bautismos_este_anio || 0} icon={Waves} color="cyan" trend="+12%" auraColor="rgba(6,182,212,0.15)" />
+                    <RadarStat label="Estudiantes" value={data?.estudiantes_activos || 0} icon={BookOpen} color="emerald" trend="+8" auraColor="rgba(16,185,129,0.15)" />
+                    <RadarStat label="Recaudación" value={`$${(data?.recaudacion_mes || 0).toLocaleString()}`} icon={DollarSign} color="amber" trend="+15%" auraColor="rgba(245,158,11,0.15)" />
+                </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard 
-                    label="Membresía Viva" 
-                    value={data?.membresia_viva || 0} 
-                    icon={Users} color="text-blue-500" bg="bg-blue-500/10" 
-                    desc="Miembros activos" trend="+5%" 
-                />
-                <StatCard 
-                    label="Bautismos" 
-                    value={data?.bautismos_este_anio || 0} 
-                    icon={Waves} color="text-cyan-500" bg="bg-cyan-500/10" 
-                    desc="Hitos este año" trend="+12%" 
-                />
-                <StatCard 
-                    label="Estudiantes" 
-                    value={data?.estudiantes_activos || 0} 
-                    icon={BookOpen} color="text-emerald-500" bg="bg-emerald-500/10" 
-                    desc="Inscripciones activas" trend="+8" 
-                />
-                <StatCard 
-                    label="Recaudación" 
-                    value={`$${(data?.recaudacion_mes || 0).toLocaleString()}`} 
-                    icon={DollarSign} color="text-amber-500" bg="bg-amber-500/10" 
-                    desc="Últimos 30 días" trend="+15%" 
-                />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-[#1e1f21] border border-white/5 p-8 rounded-3xl space-y-6">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-black text-white tracking-tight uppercase italic flex items-center gap-2">
-                            <TrendingUp className="text-primary" /> Tendencias de Crecimiento
-                        </h2>
-                        <span className="text-[10px] text-primary font-bold tracking-widest bg-primary/10 px-2 py-1 rounded">MÉTRICAS MES A MES</span>
-                    </div>
-                    <div className="h-64 flex items-end justify-between gap-2 pt-8">
-                        {[40, 65, 45, 90, 80, 100].map((h, i) => (
-                            <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
-                                <div 
-                                    className="w-full bg-primary/20 rounded-t-lg group-hover:bg-primary/40 transition-all duration-500 relative"
-                                    style={{ height: `${h}%` }}
-                                >
-                                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity font-mono">
-                                        {h}%
-                                    </div>
-                                </div>
-                                <div className="text-[10px] font-black text-muted-foreground uppercase tracking-tighter">Mes {i+1}</div>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
+                    <motion.div 
+                        initial={{ opacity: 0, x: -30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="lg:col-span-7 bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 p-10 rounded-[3.5rem] shadow-xl space-y-10 group"
+                    >
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-1">
+                                <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase flex items-center gap-3">
+                                    <BarChart3 className="text-blue-600" /> Crecimiento Orgánico
+                                </h2>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Métricas consolidadas semestrales</p>
                             </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="bg-[#1e1f21] border border-white/5 p-8 rounded-3xl space-y-6">
-                    <h2 className="text-xl font-black text-white tracking-tight uppercase italic flex items-center gap-2">
-                        <Target className="text-primary" /> Objetivos Trimestrales
-                    </h2>
-                    <div className="space-y-6">
-                        {[
-                            { label: 'Bautismos Meta', target: 50, current: data?.bautismos_este_anio || 0, color: 'bg-blue-500' },
-                            { label: 'Nuevos Miembros', target: 200, current: 35, color: 'bg-emerald-500' },
-                            { label: 'Estudiantes Liderazgo', target: 80, current: 12, color: 'bg-amber-500' },
-                        ].map((goal, i) => {
-                            const pct = Math.min(100, (goal.current / goal.target) * 100);
-                            return (
-                                <div key={i} className="space-y-2">
-                                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
-                                        <span className="text-white">{goal.label}</span>
-                                        <span className="text-muted-foreground font-mono">{goal.current} / {goal.target}</span>
+                            <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-4 py-1.5 rounded-full tracking-[0.2em] border border-blue-100 uppercase">Live BI</span>
+                        </div>
+                        
+                        <div className="h-72 flex items-end justify-between gap-4 pt-10 px-4">
+                            {[45, 70, 55, 90, 85, 100].map((h, i) => (
+                                <div key={i} className="flex-1 flex flex-col items-center gap-4 group/bar">
+                                    <div 
+                                        className={clsx(
+                                            "w-full rounded-t-2xl transition-all duration-700 relative shimmer-bar",
+                                            i === 5 ? "bg-gradient-to-t from-blue-600 to-indigo-500 shadow-[0_0_30px_rgba(37,99,235,0.3)]" : "bg-slate-100 dark:bg-white/5 group-hover/bar:bg-slate-200"
+                                        )}
+                                        style={{ height: `${h}%` }}
+                                    >
+                                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-all transform scale-90 group-hover/bar:scale-100 bg-slate-900 text-white px-3 py-1.5 rounded-xl text-[10px] font-black shadow-2xl">
+                                            {h}%
+                                        </div>
                                     </div>
-                                    <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                                        <div 
-                                            className={`h-full ${goal.color} transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(0,0,0,0.5)]`}
-                                            style={{ width: `${pct}%` }}
-                                        />
-                                    </div>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">M0{i+1}</span>
                                 </div>
-                            );
-                        })}
-                    </div>
+                            ))}
+                        </div>
+                    </motion.div>
+
+                    <motion.div 
+                        initial={{ opacity: 0, x: 30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.4 }}
+                        className="lg:col-span-5 glass-card p-10 rounded-[3.5rem] shadow-2xl space-y-10 relative overflow-hidden"
+                    >
+                        <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:rotate-12 transition-transform duration-1000"><Sparkles size={120} /></div>
+                        
+                        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase flex items-center gap-3">
+                            <Target className="text-indigo-500" /> Metas Trimestrales
+                        </h2>
+                        <div className="space-y-8">
+                            <GoalItem label="Bautismos Meta" target={50} current={data?.bautismos_este_anio || 0} color="bg-blue-500" />
+                            <GoalItem label="Nuevos Miembros" target={200} current={35} color="bg-emerald-500" />
+                            <GoalItem label="Estudiantes Liderazgo" target={80} current={12} color="bg-amber-500" />
+                        </div>
+
+                        <div className="pt-8 border-t border-white/5 space-y-6">
+                            <div className="flex items-center gap-4">
+                                <div className="size-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-xl shadow-indigo-500/20"><Zap size={24} fill="currentColor" /></div>
+                                <div>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sugerencia IA</p>
+                                    <p className="text-[13px] font-bold text-slate-700 dark:text-slate-300 leading-tight">Potenciar el ministerio de Hospitalidad para el próximo servicio.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
                 </div>
+                </>
+            )}
+        </div>
+    );
+}
+
+function RadarStat({ label, value, icon: Icon, color, trend, auraColor }: any) {
+    const colorMap: any = {
+        blue: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-blue-100',
+        cyan: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-900/20 border-cyan-100',
+        emerald: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100',
+        amber: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-100'
+    };
+    return (
+        <div 
+            className="radar-aura p-8 bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 rounded-[2.5rem] shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
+            style={{ '--aura-color': auraColor } as any}
+        >
+            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-125 transition-transform duration-700"><Icon size={64} /></div>
+            <div className="space-y-6 relative z-10">
+                <div className="flex justify-between items-center">
+                    <div className={clsx("size-14 rounded-2xl flex items-center justify-center transition-transform group-hover:rotate-12", colorMap[color])}>
+                        <Icon size={28} />
+                    </div>
+                    <span className="px-3 py-1 bg-white/50 dark:bg-white/5 rounded-lg text-[9px] font-black text-emerald-500 border border-emerald-100 dark:border-emerald-900/30 uppercase">{trend}</span>
+                </div>
+                <div>
+                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{label}</p>
+                    <h4 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">{value}</h4>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function GoalItem({ label, target, current, color }: any) {
+    const pct = Math.min(100, (current / target) * 100);
+    return (
+        <div className="space-y-3 group/goal">
+            <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em]">
+                <span className="text-slate-500 dark:text-slate-400 group-hover/goal:text-blue-500 transition-colors">{label}</span>
+                <span className="text-slate-900 dark:text-white">{current} / {target}</span>
+            </div>
+            <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden shadow-inner">
+                <motion.div 
+                    initial={{ width: 0 }} 
+                    animate={{ width: `${pct}%` }} 
+                    transition={{ duration: 1.5, ease: "easeOut" }}
+                    className={clsx("h-full shimmer-bar relative", color)} 
+                />
             </div>
         </div>
     );

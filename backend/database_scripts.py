@@ -56,10 +56,62 @@ def create_stored_procedures(db: Session):
     $$ LANGUAGE plpgsql;
     """
 
+    # SP for summarizing project portfolio health
+    sp_project_portfolio_summary = """
+    CREATE OR REPLACE FUNCTION sp_project_portfolio_summary()
+    RETURNS TABLE (
+        project_status TEXT,
+        total_projects BIGINT,
+        total_tasks BIGINT,
+        completed_tasks BIGINT,
+        completion_ratio FLOAT
+    ) AS $$
+    BEGIN
+        RETURN QUERY
+        SELECT
+            p.status::TEXT,
+            COUNT(DISTINCT p.id)::BIGINT AS total_projects,
+            COUNT(t.id)::BIGINT AS total_tasks,
+            COUNT(CASE WHEN t.status = 'done' THEN 1 END)::BIGINT AS completed_tasks,
+            CASE
+                WHEN COUNT(t.id) = 0 THEN 0::FLOAT
+                ELSE (COUNT(CASE WHEN t.status = 'done' THEN 1 END)::FLOAT / COUNT(t.id)::FLOAT)
+            END AS completion_ratio
+        FROM projects p
+        LEFT JOIN project_tasks t ON t.project_id = p.id
+        GROUP BY p.status;
+    END;
+    $$ LANGUAGE plpgsql;
+    """
+
+    # SP for summarizing workload by assignee
+    sp_project_workload_summary = """
+    CREATE OR REPLACE FUNCTION sp_project_workload_summary()
+    RETURNS TABLE (
+        assignee_id INTEGER,
+        open_tasks BIGINT,
+        in_review BIGINT,
+        overdue_tasks BIGINT
+    ) AS $$
+    BEGIN
+        RETURN QUERY
+        SELECT
+            t.assignee_id,
+            COUNT(CASE WHEN t.status <> 'done' THEN 1 END)::BIGINT AS open_tasks,
+            COUNT(CASE WHEN t.status = 'review' THEN 1 END)::BIGINT AS in_review,
+            COUNT(CASE WHEN t.due_date IS NOT NULL AND t.due_date < NOW() AND t.status <> 'done' THEN 1 END)::BIGINT AS overdue_tasks
+        FROM project_tasks t
+        GROUP BY t.assignee_id;
+    END;
+    $$ LANGUAGE plpgsql;
+    """
+
     # Execute the SP creation
     try:
         db.execute(text(sp_calculate_student_status))
         db.execute(text(sp_generate_community_report))
+        db.execute(text(sp_project_portfolio_summary))
+        db.execute(text(sp_project_workload_summary))
         db.commit()
         print("Stored Procedures created successfully.")
     except Exception as e:

@@ -60,6 +60,12 @@ export default function AdminLayout({
 }) {
     const pathname = usePathname() ?? '';
 
+    // If a route manages its own deep layer, avoid double-rendering
+    const isDeepLayer = pathname.includes('/settings/system') || pathname.includes('/settings/roles') || pathname.includes('/members/');
+    if (isDeepLayer) {
+        return <div className="h-full w-full">{children}</div>;
+    }
+
     const getSidebarTitle = () => {
         if ((pathname || '') === '/admin') return 'Panel / Dashboard';
         const segments = (pathname || '').split('/');
@@ -71,6 +77,7 @@ export default function AdminLayout({
         <WorkspaceLayout 
             sidebarTitle={getSidebarTitle()} 
             sidebarSections={SIDEBAR_SECTIONS}
+            allowedRoles={['admin', 'coordinador', 'docente']}
         >
             <div className="h-full w-full">
                 {children}

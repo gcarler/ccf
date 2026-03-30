@@ -37,6 +37,35 @@ export default function EventsPage() {
     // Modal states
     const [isRegModalOpen, setIsRegModalOpen] = useState(false);
     const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
+    const [showScanner, setShowScanner] = useState(false);
+    const [scannerToken, setScannerToken] = useState('');
+    const [isScanning, setIsScanning] = useState(false);
+
+    const handleScanToken = async () => {
+        if (!scannerToken || !selectedEvent) return;
+        setIsScanning(true);
+        try {
+            const result = await apiFetch<any>(`/crm/scanner/validate/${scannerToken}`, {
+                method: 'POST',
+                token
+            });
+            
+            if (result.valid) {
+                const mid = result.member_id;
+                if (!attendedMemberIds.includes(mid)) {
+                    setAttendedMemberIds(prev => [...prev, mid]);
+                    addToast(`¡Bienvenido ${result.member_name}!`, "success");
+                } else {
+                    addToast(`${result.member_name} ya está marcado`, "info");
+                }
+                setScannerToken('');
+            }
+        } catch (err) {
+            addToast("Token de escaneo inválido", "error");
+        } finally {
+            setIsScanning(false);
+        }
+    };
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
     // Form states
@@ -114,30 +143,27 @@ export default function EventsPage() {
     const saveAttendance = async () => {
         if (!selectedEvent) return;
 
-        let successCount = 0;
-        let errorCount = 0;
-
-        for (const memberId of attendedMemberIds) {
-            try {
-                await apiFetch('/crm/attendance/', {
-                    method: 'POST',
-                    token,
-                    body: {
-                        member_id: memberId,
-                        event_id: selectedEvent.id,
-                        attendance_date: new Date(attendanceDate).toISOString()
-                    }
-                });
-                successCount++;
-            } catch (err) {
-                errorCount++;
+        try {
+            const result = await apiFetch<any>('/crm/attendance/bulk', {
+                method: 'POST',
+                token,
+                body: {
+                    event_id: selectedEvent.id,
+                    member_ids: attendedMemberIds,
+                    attendance_date: new Date(attendanceDate).toISOString()
+                }
+            });
+            
+            if (result.recorded > 0) {
+                addToast(`Registro de asistencia guardado (${result.recorded} presentes)`, "success");
+            } else {
+                addToast("No se registraron cambios nuevos", "info");
             }
+            setIsAttendanceModalOpen(false);
+            fetchData();
+        } catch (err) {
+            addToast("Error al guardar asistencia", "error");
         }
-
-        if (successCount > 0) addToast(`Registro de asistencia guardado (${successCount} presentes)`, "success");
-        if (errorCount > 0) addToast(`Hubo ${errorCount} errores al guardar`, "warning");
-
-        setIsAttendanceModalOpen(false);
     };
 
     const toggleAttendance = (id: number) => {
@@ -373,6 +399,12 @@ export default function EventsPage() {
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{selectedEvent.name}</p>
                             </div>
                             <div className="flex items-center gap-4">
+                                <button 
+                                    onClick={() => setShowScanner(!showScanner)}
+                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${showScanner ? 'bg-rose-500 text-white' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
+                                >
+                                    {showScanner ? 'Cerrar Escáner' : 'Modo Escáner'}
+                                </button>
                                 <div className="flex items-center gap-2 bg-white px-4 py-2 border border-slate-100 rounded-xl">
                                     <Calendar size={16} className="text-slate-400" />
                                     <input
@@ -387,6 +419,35 @@ export default function EventsPage() {
                                 </button>
                             </div>
                         </div>
+
+                        {showScanner && (
+                            <div className="p-8 bg-slate-900 border-b border-white/10 animate-in slide-in-from-top duration-300">
+                                <div className="max-w-md mx-auto space-y-4 text-center">
+                                    <div className="w-20 h-20 mx-auto border-2 border-dashed border-blue-500 rounded-2xl flex items-center justify-center text-blue-500 animate-pulse">
+                                        <Users size={32} />
+                                    </div>
+                                    <h3 className="text-white font-black uppercase tracking-widest text-xs">Simulador de Escáner Cámara</h3>
+                                    <p className="text-[10px] text-slate-400">Ingresa el token del carnet (formato: CCF-MBR-ID-TOKEN)</p>
+                                    <div className="flex gap-2">
+                                        <input 
+                                            type="text"
+                                            value={scannerToken}
+                                            onChange={(e) => setScannerToken(e.target.value)}
+                                            placeholder="CCF-MBR-1-XXXXXX"
+                                            className="flex-1 bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500"
+                                            onKeyDown={(e) => e.key === 'Enter' && handleScanToken()}
+                                        />
+                                        <button 
+                                            onClick={handleScanToken}
+                                            disabled={isScanning || !scannerToken}
+                                            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                                        >
+                                            {isScanning ? 'Validando...' : 'Validar'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="p-8 overflow-y-auto flex-1 bg-slate-50/30">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

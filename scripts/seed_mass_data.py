@@ -1,172 +1,160 @@
+
 import sys
 import os
-from pathlib import Path
-import random
 from datetime import datetime, timedelta
+import uuid
 
-# Add backend directory to python path
-current_dir = Path(__file__).resolve().parent
-sys.path.append(str(current_dir.parent))
+# Añadir el directorio raíz al path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend.core.database import SessionLocal
-from backend.models import (
-    User, Member, Family, Course, Enrollment, CounselingSession, GloryHouse, PastoralCallLog
-)
+from backend import models, schemas, crud
+from backend.core.database import SessionLocal, engine, Base
 from backend.core.security import get_password_hash
 
-# Data for randomization
-NOMBRES_HOMBRES = ["Carlos", "Andrés", "Miguel", "Juan", "David", "José", "Alejandro", "Daniel", "Fernando", "Jorge", "Luis", "Felipe", "Sebastián", "Diego", "Mateo", "Santiago", "Nicolás", "Samuel", "Martín", "Tomás", "Emiliano", "Matías", "Julián", "Gabriel", "Simón", "Lucas", "Joaquín", "Jerónimo", "Maximiliano", "Thiago", "Gael", "Emmanuel", "Isaac", "Benjamín", "Camilo", "Pablo", "Esteban", "Ricardo", "Mario", "Oscar", "Víctor", "Manuel", "Javier", "Héctor", "Raúl", "Roberto", "Mauricio"]
-NOMBRES_MUJERES = ["María", "Laura", "Ana", "Carmen", "Marta", "Lucía", "Paula", "Sofía", "Valeria", "Isabella", "Camila", "Mariana", "Valentina", "Victoria", "Daniela", "Gabriela", "Martina", "Juliana", "Salomé", "Antonella", "Emilia", "Luciana", "Samantha", "Sara", "Mia", "Emma", "Elena", "Luna", "Zoe", "Olivia", "Abigail", "Isadora", "Catalina", "Julieta", "Renata", "Regina", "Andrea", "Carolina", "Diana", "Gloria", "Rosa", "Silvia", "Elena", "Mónica", "Teresa", "Verónica"]
-APELLIDOS = ["García", "Martínez", "López", "González", "Pérez", "Rodríguez", "Sánchez", "Ramírez", "Cruz", "Flores", "Gómez", "Morales", "Ortiz", "Gutiérrez", "Chávez", "Ruiz", "Álvarez", "Fernández", "Jiménez", "Díaz", "Mendoza", "Castillo", "Reyes", "Aguilar", "Torres", "Vargas", "Ríos", "Castro", "Romero", "Herrera", "Medina", "Aguilar", "Méndez", "Salazar", "Rojas", "Soto", "Guzmán", "Molina", "Delgado", "Vega", "Ramos", "Navarro", "Campos", "Figueroa", "Cortés", "Paredes", "Cabrera", "Rivas"]
-TEMAS_CONSEJERIA = ["Matrimonio", "Finanzas", "Crianza de Hijos", "Ansiedad y Estrés", "Depresión", "Crecimiento Espiritual", "Luto", "Adicciones", "Conflicto Familiar", "Decisión Profesional"]
-
-def random_date(start_date, end_date):
-    time_between_dates = end_date - start_date
-    days_between_dates = time_between_dates.days
-    if days_between_dates <= 0:
-        return start_date
-    random_number_of_days = random.randrange(days_between_dates)
-    return start_date + timedelta(days=random_number_of_days)
-
-def seed_mass_data():
+def seed_everything():
+    print("🌟 Iniciando Inyección Masiva de Datos Reales (CRM + Academia + Staff)...")
+    
+    # Asegurar que las tablas existan
+    Base.metadata.create_all(bind=engine)
     db = SessionLocal()
+    
     try:
-        print("Starting mass data generation for 500+ members...")
+        # --- 1. LIMPIEZA TOTAL ---
+        print("🧹 Limpiando base de datos para una semilla fresca...")
+        db.query(models.AssessmentOption).delete()
+        db.query(models.AssessmentQuestion).delete()
+        db.query(models.AssessmentAttempt).delete()
+        db.query(models.Assessment).delete()
+        db.query(models.LessonProgress).delete()
+        db.query(models.Lesson).delete()
+        db.query(models.Enrollment).delete()
+        db.query(models.CoursePrerequisite).delete()
+        db.query(models.Course).delete()
+        db.query(models.EventAttendance).delete()
+        db.query(models.CrmEvent).delete()
+        db.query(models.CounselingTicket).delete()
+        db.query(models.PrayerRequest).delete()
+        db.query(models.CommunicationLog).delete()
+        db.query(models.ConsolidationPipeline).delete()
+        db.query(models.Member).delete()
+        db.query(models.GloryHouse).delete()
+        db.query(models.Family).delete()
+        db.query(models.User).delete()
+        db.commit()
 
-        # Find existing Pastor
-        pastor = db.query(User).filter(User.role == "pastor").first()
-        if not pastor:
-             print("No pastor found to assign counseling sessions.")
-
-        # Find Course
-        course = db.query(Course).filter(Course.code == "DISC-A-2026").first()
+        # --- 2. STAFF MINISTERIAL ---
+        print("👥 Creando Staff Ministerial...")
+        pwd = get_password_hash("admin123")
         
-        # Get Glory Houses
-        ghouses = db.query(GloryHouse).all()
+        admin = models.User(username="admin_ccf", email="admin@ccf.la", password_hash=pwd, role="admin")
+        pastor = models.User(username="pastor_juan", email="juan@ccf.la", password_hash=pwd, role="docente")
+        pastora = models.User(username="pastora_elena", email="elena@ccf.la", password_hash=pwd, role="coordinador")
+        estudiante = models.User(username="estudiante_demo", email="demo@ccf.la", password_hash=pwd, role="estudiante")
+        
+        db.add_all([admin, pastor, pastora, estudiante])
+        db.commit()
+        db.refresh(admin)
+        db.refresh(pastor)
+        db.refresh(estudiante)
 
-        total_members_created = 0
-        total_families_created = 0
-        total_users_created = 0
+        # --- 3. FAMILIAS Y MIEMBROS (CRM) ---
+        print("🏠 Creando Núcleos Familiares...")
+        fam1 = models.Family(name="Familia Rodríguez")
+        fam2 = models.Family(name="Familia García")
+        db.add_all([fam1, fam2])
+        db.commit()
+        db.refresh(fam1)
+        db.refresh(fam2)
 
-        # Generate ~150 Families to get around 500 Members
-        for i in range(150):
-            apellido_fam = random.choice(APELLIDOS)
-            fam = Family(name=f"Familia {apellido_fam}")
-            db.add(fam)
-            db.commit()
-            db.refresh(fam)
-            total_families_created += 1
+        m1 = models.Member(first_name="Juan", last_name="Rodríguez", email="juan@ccf.la", family_id=fam1.id, church_role="Pastor", user_id=pastor.id)
+        m2 = models.Member(first_name="Elena", last_name="García", email="elena@ccf.la", family_id=fam2.id, church_role="Líder", user_id=pastora.id)
+        m3 = models.Member(first_name="Carlos", last_name="Demo", email="demo@ccf.la", family_id=fam1.id, church_role="Miembro", user_id=estudiante.id)
+        
+        db.add_all([m1, m2, m3])
+        db.commit()
 
-            # Determine family structure: 1-2 parents, 0-3 kids
-            num_parents = random.choice([1, 2])
-            num_kids = random.choice([0, 1, 2, 3])
+        # --- 4. CASAS DE GLORIA (GRUPOS PEQUEÑOS) ---
+        print("🏘️ Configurando Casas de Gloria...")
+        gh1 = models.GloryHouse(name="Bethel - Norte", zone="Norte", leader_name="Juan Rodríguez", members_count=12, schedule="Jueves 7:00 PM")
+        gh2 = models.GloryHouse(name="Sion - Centro", zone="Centro", leader_name="Elena García", members_count=8, schedule="Martes 6:30 PM")
+        db.add_all([gh1, gh2])
+        db.commit()
 
-            fam_members = []
-            
-            # Parents
-            for p in range(num_parents):
-                rol = "Madre" if p == 1 or num_parents == 1 and random.random() > 0.5 else "Padre"
-                nombres = NOMBRES_MUJERES if rol == "Madre" else NOMBRES_HOMBRES
-                
-                member = Member(
-                    first_name=random.choice(nombres),
-                    last_name=apellido_fam,
-                    phone=f"3{random.randint(100000000, 999999999)}",
-                    role_in_family=rol,
-                    church_role=random.choice(["Miembro", "Servidor", "Líder"]),
-                    family_id=fam.id,
-                    birthday=random_date(datetime(1960, 1, 1), datetime(1995, 12, 31))
-                )
-                db.add(member)
-                fam_members.append(member)
-                total_members_created += 1
+        # --- 5. PIPELINE DE CONSOLIDACIÓN (NUEVOS) ---
+        print("📈 Poblando Pipeline de Consolidación...")
+        p1 = models.ConsolidationPipeline(first_name="Ricardo", last_name="Mendoza", phone="555-0101", source="Invitación", stage="new")
+        p2 = models.ConsolidationPipeline(first_name="Sofía", last_name="Castro", phone="555-0202", source="Facebook", stage="contacted", assigned_pastor_id=pastor.id)
+        db.add_all([p1, p2])
+        db.commit()
 
-            # Kids
-            for k in range(num_kids):
-                es_nina = random.random() > 0.5
-                nombres = NOMBRES_MUJERES if es_nina else NOMBRES_HOMBRES
-                
-                member = Member(
-                    first_name=random.choice(nombres),
-                    last_name=apellido_fam,
-                    phone=f"3{random.randint(100000000, 999999999)}" if random.random() > 0.5 else None,  # Kids might not have phones
-                    role_in_family="Hijo" if not es_nina else "Hija",
-                    church_role="Joven" if random.random() > 0.5 else "Niño",
-                    family_id=fam.id,
-                    birthday=random_date(datetime(1996, 1, 1), datetime(2020, 12, 31))
-                )
-                db.add(member)
-                fam_members.append(member)
-                total_members_created += 1
+        # --- 6. EVENTOS Y ASISTENCIA ---
+        print("🗓️ Creando Eventos Ministeriales...")
+        e1 = models.CrmEvent(title="Culto de Celebración", description="Servicio principal dominical", event_date=datetime.now() + timedelta(days=2), location="Auditorio Principal")
+        e2 = models.CrmEvent(title="Noche de Jóvenes", description="Encuentro generacional", event_date=datetime.now() + timedelta(days=5), location="Salón de Usos Múltiples")
+        db.add_all([e1, e2])
+        db.commit()
+        db.refresh(e1)
 
-            db.commit()
+        # Registro de asistencia simulado
+        att = models.EventAttendance(event_id=e1.id, member_id=m3.id, status="present")
+        db.add(att)
 
-            # For each member, decide if they get a User account, Enrollment, Counseling
-            for m in fam_members:
-                # Adults and Teens get Users (50% chance)
-                if m.role_in_family in ["Padre", "Madre"] or (m.role_in_family in ["Hijo", "Hija"] and m.church_role == "Joven"):
-                    if random.random() > 0.3: # 70% chance of user account
-                        email = f"{m.first_name.lower()}.{m.last_name.lower()}{random.randint(1,999)}@ccfmock.com"
-                        m.email = email
-                        
-                        user = User(
-                            username=email,
-                            email=email,
-                            password_hash=get_password_hash("password123"),
-                            role="estudiante" if m.church_role in ["Joven", "Miembro"] else "lider",
-                            is_active=True,
-                            is_email_verified=True
-                        )
-                        db.add(user)
-                        db.commit()
-                        db.refresh(user)
-                        
-                        m.user_id = user.id
-                        total_users_created += 1
+        # --- 7. CONSEJERÍA Y ORACIÓN ---
+        print("🙏 Registrando Peticiones de Oración y Consejería...")
+        pr1 = models.PrayerRequest(requester_name="Carlos Demo", request_text="Petición por la salud de mi abuela en cirugía.", is_public=True, status="praying")
+        pr2 = models.PrayerRequest(requester_name="Elena García", request_text="Agradecimiento por nuevo empleo.", is_public=False, status="answered")
+        
+        ct1 = models.CounselingTicket(member_id=m3.id, pastor_id=pastor.id, subject="Orientación Familiar", notes="Se requiere seguimiento tras la primera charla.", status="in_progress")
+        
+        db.add_all([pr1, pr2, ct1])
+        db.commit()
 
-                        # Create Enrollment if Course exists (50% chance)
-                        if course and random.random() > 0.5:
-                            enroll = Enrollment(
-                                user_id=user.id,
-                                course_id=course.id,
-                                status=random.choice(["active", "completed"]),
-                                progress_percent=random.randint(0, 100)
-                            )
-                            db.add(enroll)
+        # --- 8. ACADEMIA (CURSOS Y EXÁMENES) ---
+        print("🎓 Configurando Estructura Académica Avanzada...")
+        c1 = models.Course(code="FUND-01", title="Fundamentos I: Vida Nueva", modality="formal", is_published=True)
+        c2 = models.Course(code="TEOL-02", title="Teología II: Doctrina", modality="formal", is_published=True)
+        db.add_all([c1, c2])
+        db.commit()
+        db.refresh(c1)
+        db.refresh(c2)
 
-                        # Create Counseling Session (15% chance for adults/youth)
-                        if pastor and random.random() > 0.85:
-                            c_date = random_date(datetime(2025, 1, 1), datetime(2026, 6, 1))
-                            session = CounselingSession(
-                                pastor_id=pastor.id,
-                                member_id=m.id,
-                                scheduled_at=c_date,
-                                duration_minutes=60,
-                                status=random.choice(["Pendiente", "Completada", "Cancelada"]),
-                                topic=random.choice(TEMAS_CONSEJERIA),
-                                summary="Sesión mock generada para seguimiento." if random.random() > 0.5 else None
-                            )
-                            db.add(session)
-            
-            # Increment Glory House count (distribute families randomly)
-            if ghouses and random.random() > 0.4:  # 60% chance family belongs to a glory house
-                gh = random.choice(ghouses)
-                gh.members_count += len(fam_members)
+        # Prerrequisito
+        db.add(models.CoursePrerequisite(course_id=c2.id, prerequisite_course_id=c1.id))
 
-            db.commit()
+        # Lección y Examen para Fundamentos I
+        l1 = models.Lesson(course_id=c1.id, title="Introducción a la Gracia", content="Contenido sobre la gracia divina...", order_index=1)
+        db.add(l1)
+        db.commit()
+        db.refresh(l1)
 
-        print("--------------------------------------------------")
-        print(f"Total Families created: {total_families_created}")
-        print(f"Total Members created: {total_members_created}")
-        print(f"Total Users/Students created: {total_users_created}")
-        print("Enrolled them in courses and assigned counseling sessions!")
-        print("--------------------------------------------------")
+        assessment = models.Assessment(lesson_id=l1.id, title="Examen de Gracia", min_score=70)
+        db.add(assessment)
+        db.commit()
+        db.refresh(assessment)
+
+        q1 = models.AssessmentQuestion(assessment_id=assessment.id, question_text="¿Qué es la gracia?", points=50)
+        db.add(q1)
+        db.commit()
+        db.refresh(q1)
+        
+        db.add_all([
+            models.AssessmentOption(question_id=q1.id, option_text="Un favor inmerecido", is_correct=True),
+            models.AssessmentOption(question_id=q1.id, option_text="Un premio por obras", is_correct=False)
+        ])
+        
+        db.commit()
+
+        print("\n✅ ¡INYECCIÓN MASIVA COMPLETADA CON ÉXITO!")
+        print(f"📊 Resumen: 4 Usuarios, 3 Miembros, 2 Familias, 2 Casas, 2 Eventos, 2 Cursos.")
+        print("La plataforma está lista para ser navegada con datos 100% realistas.")
 
     except Exception as e:
-        print(f"Error during mass seeding: {e}")
+        print(f"❌ Error durante el seeding: {str(e)}")
+        import traceback
+        traceback.print_exc()
         db.rollback()
     finally:
         db.close()
 
 if __name__ == "__main__":
-    seed_mass_data()
+    seed_everything()

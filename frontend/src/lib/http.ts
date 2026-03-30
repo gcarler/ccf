@@ -47,8 +47,14 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
 
   const init: RequestInit = { method, headers: finalHeaders, cache, credentials: credentials ?? "include" };
 
-  if (token) {
-    finalHeaders.set("Authorization", `Bearer ${token}`);
+  // AUTO-INJECT TOKEN FROM LOCALSTORAGE
+  let activeToken = token;
+  if (!activeToken && typeof window !== 'undefined') {
+    activeToken = localStorage.getItem('ccf_token');
+  }
+
+  if (activeToken) {
+    finalHeaders.set("Authorization", `Bearer ${activeToken}`);
   }
 
   if (body instanceof FormData) {
@@ -71,6 +77,15 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   const response = await nativeFetch(url, init);
   const raw = await response.text();
   const parsed = raw ? safeJsonParse(raw) : undefined;
+
+  if (response.status === 401) {
+    // ONLY REDIRECT TO LOGIN IF /auth/me FAILS (CRITICAL AUTH PATH)
+    if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && path.includes('/auth/me')) {
+       localStorage.removeItem('ccf_token');
+       window.location.href = '/login?expired=true';
+    }
+    throw new ApiError("Session expired", 401, parsed);
+  }
 
   if (!response.ok) {
     throw new ApiError(response.statusText || "Request failed", response.status, parsed);

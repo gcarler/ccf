@@ -9,8 +9,8 @@ import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { GraduationCap } from 'lucide-react';
 
 export default function PublicCertificatePage() {
-    const params = useParams<{ code?: string }>();
-    const code = params?.code ?? null;
+    const params = useParams();
+    const code = (params?.code as string) ?? null;
     const [certificate, setCertificate] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
@@ -24,13 +24,8 @@ export default function PublicCertificatePage() {
             }
             try {
                 // Public endpoint, no token needed for validation
-                const res = await fetch(`http://localhost:8001/academy/certificates/validate/${code}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setCertificate(data);
-                } else {
-                    setError(true);
-                }
+                const data = await apiFetch(`/academy/certificates/validate/${code}`);
+                setCertificate(data);
             } catch (err) {
                 console.error("Error validating certificate:", err);
                 setError(true);

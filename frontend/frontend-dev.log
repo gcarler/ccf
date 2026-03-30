@@ -1,0 +1,782 @@
+
+> ccf-frontend@0.1.0 dev
+> next dev --hostname 0.0.0.0 --port 3000
+
+  ▲ Next.js 14.2.3
+  - Local:        http://localhost:3000
+  - Network:      http://0.0.0.0:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1458ms
+ ○ Compiling /admin ...
+ ✓ Compiled /admin in 6.1s (1656 modules)
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 3.6s (1650 modules)
+ GET /icons/icon-192x192.png 404 in 3698ms
+ GET /) 404 in 39ms
+ ○ Compiling /api/analytics/web-vitals ...
+ ✓ Compiled /api/analytics/web-vitals in 928ms (1566 modules)
+ POST /api/analytics/web-vitals 400 in 1155ms
+ POST /api/analytics/web-vitals 400 in 1154ms
+ POST /api/analytics/web-vitals 400 in 835ms
+ POST /api/analytics/web-vitals 400 in 1160ms
+ GET /icons/icon-192x192.png 404 in 1116ms
+ GET /) 404 in 28ms
+ POST /api/analytics/web-vitals 400 in 25ms
+ POST /api/analytics/web-vitals 400 in 25ms
+ POST /api/analytics/web-vitals 400 in 14ms
+ POST /api/analytics/web-vitals 400 in 12ms
+ POST /api/analytics/web-vitals 400 in 17ms
+ POST /api/analytics/web-vitals 400 in 15ms
+ GET /icons/icon-192x192.png 404 in 19ms
+ ✓ Compiled / in 400ms (1676 modules)
+ GET / 200 in 552ms
+ POST /api/analytics/web-vitals 400 in 26ms
+ POST /api/analytics/web-vitals 400 in 34ms
+ POST /api/analytics/web-vitals 400 in 10ms
+ POST /api/analytics/web-vitals 400 in 14ms
+ POST /api/analytics/web-vitals 400 in 13ms
+ POST /api/analytics/web-vitals 400 in 12ms
+ GET /icons/icon-192x192.png 404 in 13ms
+ POST /api/analytics/web-vitals 400 in 12ms
+ ○ Compiling /projects ...
+ ✓ Compiled /projects in 1345ms (1752 modules)
+ POST /api/analytics/web-vitals 400 in 1395ms
+projects fetch failed TypeError: fetch failed
+    at node:internal/deps/undici/undici:15845:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:25:22)
+    at async fetchProjects (webpack-internal:///(rsc)/./src/app/projects/page.tsx:20:22)
+    at async ProjectsPage (webpack-internal:///(rsc)/./src/app/projects/page.tsx:28:22) {
+  [cause]: AggregateError [ECONNREFUSED]: 
+      at internalConnectMultiple (node:net:1134:18)
+      at afterConnectMultiple (node:net:1715:7) {
+    code: 'ECONNREFUSED',
+    [errors]: [ [Error], [Error] ]
+  }
+}
+ GET /icons/icon-192x192.png 404 in 83ms
+ GET /icons/icon-192x192.png 404 in 67ms
+ ✓ Compiled /login in 463ms (1766 modules)
+ GET /icons/icon-192x192.png 404 in 100ms
+ ✓ Compiled in 550ms (856 modules)
+ ✓ Compiled in 299ms (856 modules)
+   Reload env: .env.local
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 922ms (1732 modules)
+ GET /login 200 in 638ms
+ ✓ Compiled /api/analytics/web-vitals in 188ms (1735 modules)
+ ✓ Compiled (1766 modules)
+ POST /api/analytics/web-vitals 400 in 451ms
+ POST /api/analytics/web-vitals 400 in 451ms
+ POST /api/analytics/web-vitals 400 in 451ms
+ POST /api/analytics/web-vitals 400 in 452ms
+ GET /icons/icon-192x192.png 404 in 532ms
+ ✓ Compiled in 555ms (856 modules)
+ ✓ Compiled in 1095ms (1746 modules)
+ ✓ Compiled in 457ms (856 modules)
+ ✓ Compiled in 375ms (856 modules)
+ ✓ Compiled in 317ms (856 modules)
+ ✓ Compiled in 1020ms (1732 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /login 200 in 141ms
+ ✓ Compiled /api/analytics/web-vitals in 110ms (921 modules)
+ POST /api/analytics/web-vitals 400 in 190ms
+ POST /api/analytics/web-vitals 400 in 191ms
+ POST /api/analytics/web-vitals 400 in 88ms
+ ✓ Compiled /_not-found in 210ms (1766 modules)
+ POST /api/analytics/web-vitals 400 in 274ms
+ POST /api/analytics/web-vitals 400 in 274ms
+ POST /api/analytics/web-vitals 400 in 274ms
+ GET /icons/icon-192x192.png 404 in 492ms
+ ✓ Compiled in 459ms (856 modules)
+ ✓ Compiled in 945ms (1746 modules)
+ ✓ Compiled in 510ms (1746 modules)
+ ✓ Compiled in 327ms (856 modules)
+ ✓ Compiled in 521ms (856 modules)
+ ✓ Compiled in 457ms (856 modules)
+ ✓ Compiled in 475ms (856 modules)
+ ✓ Compiled in 451ms (856 modules)
+ ✓ Compiled in 436ms (856 modules)
+ ✓ Compiled in 690ms (1746 modules)
+ ✓ Compiled in 604ms (1746 modules)
+ GET / 200 in 212ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1081ms (1766 modules)
+ POST /api/analytics/web-vitals 400 in 1261ms
+ POST /api/analytics/web-vitals 400 in 1258ms
+ POST /api/analytics/web-vitals 400 in 1258ms
+ POST /api/analytics/web-vitals 400 in 1262ms
+ GET /icons/icon-192x192.png 404 in 1246ms
+ POST /api/analytics/web-vitals 400 in 13ms
+ POST /api/analytics/web-vitals 400 in 13ms
+ GET /icons/icon-192x192.png 404 in 55ms
+ GET /login 200 in 81ms
+ POST /api/analytics/web-vitals 400 in 11ms
+ POST /api/analytics/web-vitals 400 in 16ms
+ POST /api/analytics/web-vitals 400 in 19ms
+ GET /icons/icon-192x192.png 404 in 20ms
+ POST /api/analytics/web-vitals 400 in 14ms
+ POST /api/analytics/web-vitals 400 in 7ms
+ POST /api/analytics/web-vitals 400 in 7ms
+ GET /login 200 in 80ms
+ POST /api/analytics/web-vitals 400 in 12ms
+ POST /api/analytics/web-vitals 400 in 12ms
+ POST /api/analytics/web-vitals 400 in 17ms
+ POST /api/analytics/web-vitals 400 in 17ms
+ GET /icons/icon-192x192.png 404 in 19ms
+ POST /api/analytics/web-vitals 400 in 11ms
+ POST /api/analytics/web-vitals 400 in 15ms
+ GET /login 200 in 47ms
+ POST /api/analytics/web-vitals 400 in 12ms
+ POST /api/analytics/web-vitals 400 in 20ms
+ POST /api/analytics/web-vitals 400 in 20ms
+ GET /icons/icon-192x192.png 404 in 15ms
+ POST /api/analytics/web-vitals 400 in 11ms
+ POST /api/analytics/web-vitals 400 in 11ms
+ POST /api/analytics/web-vitals 400 in 15ms
+ ✓ Compiled in 431ms (856 modules)
+ ✓ Compiled in 627ms (1746 modules)
+ ✓ Compiled in 287ms (856 modules)
+ ✓ Compiled in 751ms (1746 modules)
+ ✓ Compiled in 658ms (1746 modules)
+ ✓ Compiled in 628ms (1732 modules)
+ ✓ Compiled in 545ms (1732 modules)
+ ✓ Compiled in 608ms (1732 modules)
+ ✓ Compiled in 782ms (1746 modules)
+ GET /login 200 in 155ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1100ms (1780 modules)
+ POST /api/analytics/web-vitals 400 in 1261ms
+ POST /api/analytics/web-vitals 400 in 1260ms
+ POST /api/analytics/web-vitals 400 in 1260ms
+ POST /api/analytics/web-vitals 400 in 1261ms
+ GET /icons/icon-192x192.png 404 in 1257ms
+ POST /api/analytics/web-vitals 400 in 12ms
+ POST /api/analytics/web-vitals 400 in 15ms
+ ✓ Compiled in 1084ms (1746 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /login 200 in 154ms
+ GET /login 200 in 155ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled /api/analytics/web-vitals in 139ms (921 modules)
+ POST /api/analytics/web-vitals 400 in 355ms
+ POST /api/analytics/web-vitals 400 in 353ms
+ GET /login 200 in 427ms
+ ✓ Compiled /_not-found in 259ms (1766 modules)
+ POST /api/analytics/web-vitals 400 in 266ms
+ POST /api/analytics/web-vitals 400 in 266ms
+ POST /api/analytics/web-vitals 400 in 266ms
+ POST /api/analytics/web-vitals 400 in 266ms
+ POST /api/analytics/web-vitals 400 in 265ms
+ POST /api/analytics/web-vitals 400 in 267ms
+ GET /icons/icon-192x192.png 404 in 437ms
+ GET /icons/icon-192x192.png 404 in 304ms
+ GET /icons/icon-192x192.png 404 in 58ms
+ POST /api/analytics/web-vitals 400 in 7ms
+ POST /api/analytics/web-vitals 400 in 10ms
+ ✓ Compiled in 451ms (1780 modules)
+ GET /login 200 in 87ms
+ POST /api/analytics/web-vitals 400 in 17ms
+ POST /api/analytics/web-vitals 400 in 20ms
+ POST /api/analytics/web-vitals 400 in 22ms
+ POST /api/analytics/web-vitals 400 in 20ms
+ GET /icons/icon-192x192.png 404 in 66ms
+ POST /api/analytics/web-vitals 400 in 9ms
+ POST /api/analytics/web-vitals 400 in 10ms
+ ✓ Compiled /admin in 441ms (944 modules)
+ GET /icons/icon-192x192.png 404 in 51ms
+ GET /icons/icon-192x192.png 404 in 40ms
+ ✓ Compiled /inbox in 408ms (1795 modules)
+ GET /icons/icon-192x192.png 404 in 68ms
+ ○ Compiling /academy ...
+ ✓ Compiled /academy in 862ms (1866 modules)
+academy enrollments fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchInitialEnrollments (webpack-internal:///(rsc)/./src/app/academy/page.tsx:29:20)
+    at async Promise.all (index 1)
+    at async AcademyPage (webpack-internal:///(rsc)/./src/app/academy/page.tsx:39:36) {
+  detail: { detail: 'Not authenticated' }
+}
+ GET /icons/icon-192x192.png 404 in 44ms
+ GET /login?expired=true 200 in 12ms
+ GET /login?expired=true 200 in 4ms
+ GET /login?expired=true 200 in 27ms
+ POST /api/analytics/web-vitals 400 in 16ms
+ POST /api/analytics/web-vitals 400 in 26ms
+ POST /api/analytics/web-vitals 400 in 25ms
+ POST /api/analytics/web-vitals 400 in 25ms
+ GET /icons/icon-192x192.png 404 in 23ms
+ POST /api/analytics/web-vitals 400 in 10ms
+ POST /api/analytics/web-vitals 400 in 10ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 692ms (1866 modules)
+ GET /login 200 in 620ms
+ GET /login?expired=true 200 in 625ms
+ POST /api/analytics/web-vitals 400 in 34ms
+ POST /api/analytics/web-vitals 400 in 31ms
+ POST /api/analytics/web-vitals 400 in 15ms
+ GET /icons/icon-192x192.png 404 in 30ms
+ POST /api/analytics/web-vitals 400 in 21ms
+ POST /api/analytics/web-vitals 400 in 18ms
+ POST /api/analytics/web-vitals 400 in 19ms
+ GET /icons/icon-192x192.png 404 in 56ms
+ POST /api/analytics/web-vitals 400 in 10ms
+ POST /api/analytics/web-vitals 400 in 12ms
+ GET /icons/icon-192x192.png 404 in 67ms
+ GET /icons/icon-192x192.png 404 in 29ms
+academy enrollments fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchInitialEnrollments (webpack-internal:///(rsc)/./src/app/academy/page.tsx:29:20)
+    at async Promise.all (index 1)
+    at async AcademyPage (webpack-internal:///(rsc)/./src/app/academy/page.tsx:39:36) {
+  detail: { detail: 'Not authenticated' }
+}
+ GET /login?expired=true 200 in 16ms
+ GET /login?expired=true 200 in 8ms
+ GET /login?expired=true 200 in 4ms
+ GET /login?expired=true 200 in 6ms
+ GET /login?expired=true 200 in 3ms
+ GET /login?expired=true 200 in 74ms
+ POST /api/analytics/web-vitals 400 in 10ms
+ POST /api/analytics/web-vitals 400 in 17ms
+ POST /api/analytics/web-vitals 400 in 15ms
+ POST /api/analytics/web-vitals 400 in 15ms
+ GET /icons/icon-192x192.png 404 in 12ms
+ GET /login?expired=true 200 in 67ms
+ POST /api/analytics/web-vitals 400 in 15ms
+ POST /api/analytics/web-vitals 400 in 17ms
+ POST /api/analytics/web-vitals 400 in 15ms
+ POST /api/analytics/web-vitals 400 in 30ms
+ GET /icons/icon-192x192.png 404 in 26ms
+ POST /api/analytics/web-vitals 400 in 30ms
+ POST /api/analytics/web-vitals 400 in 29ms
+ POST /api/analytics/web-vitals 400 in 267ms
+ POST /api/analytics/web-vitals 400 in 267ms
+ ✓ Compiled in 444ms (892 modules)
+ ✓ Compiled in 1057ms (1869 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /login?expired=true 200 in 171ms
+ GET /login 200 in 176ms
+ POST /api/analytics/web-vitals 400 in 28ms
+ POST /api/analytics/web-vitals 400 in 35ms
+ POST /api/analytics/web-vitals 400 in 13ms
+ GET /icons/icon-192x192.png 404 in 25ms
+ POST /api/analytics/web-vitals 400 in 11ms
+ POST /api/analytics/web-vitals 400 in 10ms
+ POST /api/analytics/web-vitals 400 in 12ms
+ GET /icons/icon-192x192.png 404 in 50ms
+ POST /api/analytics/web-vitals 400 in 11ms
+ POST /api/analytics/web-vitals 400 in 10ms
+ ✓ Compiled in 754ms (1835 modules)
+ ✓ Compiled in 398ms (1821 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /login 200 in 211ms
+ GET /login?expired=true 200 in 231ms
+ ✓ Compiled /api/analytics/web-vitals in 168ms (976 modules)
+ POST /api/analytics/web-vitals 400 in 245ms
+ POST /api/analytics/web-vitals 400 in 246ms
+ POST /api/analytics/web-vitals 400 in 18ms
+ POST /api/analytics/web-vitals 400 in 11ms
+ POST /api/analytics/web-vitals 400 in 105ms
+ ✓ Compiled /_not-found in 266ms (1855 modules)
+ POST /api/analytics/web-vitals 400 in 400ms
+ POST /api/analytics/web-vitals 400 in 260ms
+ POST /api/analytics/web-vitals 400 in 259ms
+ GET /icons/icon-192x192.png 404 in 520ms
+ GET /icons/icon-192x192.png 404 in 348ms
+ POST /api/analytics/web-vitals 400 in 15ms
+ POST /api/analytics/web-vitals 400 in 16ms
+ GET /login 200 in 68ms
+ POST /api/analytics/web-vitals 400 in 19ms
+ POST /api/analytics/web-vitals 400 in 16ms
+ POST /api/analytics/web-vitals 400 in 24ms
+ GET /icons/icon-192x192.png 404 in 26ms
+ POST /api/analytics/web-vitals 400 in 14ms
+ POST /api/analytics/web-vitals 400 in 12ms
+ POST /api/analytics/web-vitals 400 in 12ms
+ GET /icons/icon-192x192.png 404 in 73ms
+academy enrollments fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchInitialEnrollments (webpack-internal:///(rsc)/./src/app/academy/page.tsx:29:20)
+    at async Promise.all (index 1)
+    at async AcademyPage (webpack-internal:///(rsc)/./src/app/academy/page.tsx:39:36) {
+  detail: { detail: 'Not authenticated' }
+}
+ GET /icons/icon-192x192.png 404 in 45ms
+ ○ Compiling /academy/enroll/[id] ...
+ ✓ Compiled /academy/enroll/[id] in 1402ms (1887 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+academy enrollments fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchInitialEnrollments (webpack-internal:///(rsc)/./src/app/academy/page.tsx:29:20)
+    at async Promise.all (index 1)
+    at async AcademyPage (webpack-internal:///(rsc)/./src/app/academy/page.tsx:39:36) {
+  detail: { detail: 'Not authenticated' }
+}
+ GET /academy 200 in 150ms
+ POST /api/analytics/web-vitals 400 in 13ms
+ POST /api/analytics/web-vitals 400 in 14ms
+ POST /api/analytics/web-vitals 400 in 10ms
+ POST /api/analytics/web-vitals 400 in 8ms
+ POST /api/analytics/web-vitals 400 in 9ms
+ POST /api/analytics/web-vitals 400 in 13ms
+ GET /icons/icon-192x192.png 404 in 56ms
+ GET /icons/icon-192x192.png 404 in 66ms
+academy enrollments fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchInitialEnrollments (webpack-internal:///(rsc)/./src/app/academy/page.tsx:29:20)
+    at async Promise.all (index 1)
+    at async AcademyPage (webpack-internal:///(rsc)/./src/app/academy/page.tsx:39:36) {
+  detail: { detail: 'Not authenticated' }
+}
+ GET /icons/icon-192x192.png 404 in 78ms
+ ✓ Compiled in 655ms (898 modules)
+academy enrollments fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchInitialEnrollments (webpack-internal:///(rsc)/./src/app/academy/page.tsx:29:20)
+    at async Promise.all (index 1)
+    at async AcademyPage (webpack-internal:///(rsc)/./src/app/academy/page.tsx:39:36) {
+  detail: { detail: 'Not authenticated' }
+}
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+academy enrollments fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchInitialEnrollments (webpack-internal:///(rsc)/./src/app/academy/page.tsx:29:20)
+    at async Promise.all (index 1)
+    at async AcademyPage (webpack-internal:///(rsc)/./src/app/academy/page.tsx:39:36) {
+  detail: { detail: 'Not authenticated' }
+}
+ GET /academy 200 in 65ms
+ POST /api/analytics/web-vitals 400 in 8ms
+ POST /api/analytics/web-vitals 400 in 11ms
+ POST /api/analytics/web-vitals 400 in 13ms
+ POST /api/analytics/web-vitals 400 in 15ms
+ ✓ Compiled /_not-found in 454ms (1855 modules)
+ GET /icons/icon-192x192.png 404 in 664ms
+ ✓ Compiled in 379ms (900 modules)
+academy enrollments fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchInitialEnrollments (webpack-internal:///(rsc)/./src/app/academy/page.tsx:29:20)
+    at async Promise.all (index 1)
+    at async AcademyPage (webpack-internal:///(rsc)/./src/app/academy/page.tsx:39:36) {
+  detail: { detail: 'Not authenticated' }
+}
+ ✓ Compiled in 381ms (900 modules)
+academy enrollments fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchInitialEnrollments (webpack-internal:///(rsc)/./src/app/academy/page.tsx:29:20)
+    at async Promise.all (index 1)
+    at async AcademyPage (webpack-internal:///(rsc)/./src/app/academy/page.tsx:39:36) {
+  detail: { detail: 'Not authenticated' }
+}
+ ✓ Compiled in 1607ms (1827 modules)
+academy enrollments fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchInitialEnrollments (webpack-internal:///(rsc)/./src/app/academy/page.tsx:29:20)
+    at async Promise.all (index 1)
+    at async AcademyPage (webpack-internal:///(rsc)/./src/app/academy/page.tsx:39:36) {
+  detail: { detail: 'Not authenticated' }
+}
+ ✓ Compiled in 399ms (894 modules)
+academy enrollments fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchInitialEnrollments (webpack-internal:///(rsc)/./src/app/academy/page.tsx:29:20)
+    at async Promise.all (index 1)
+    at async AcademyPage (webpack-internal:///(rsc)/./src/app/academy/page.tsx:39:36) {
+  detail: { detail: 'Not authenticated' }
+}
+ ✓ Compiled in 399ms (894 modules)
+academy enrollments fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchInitialEnrollments (webpack-internal:///(rsc)/./src/app/academy/page.tsx:29:20)
+    at async Promise.all (index 1)
+    at async AcademyPage (webpack-internal:///(rsc)/./src/app/academy/page.tsx:39:36) {
+  detail: { detail: 'Not authenticated' }
+}
+ ✓ Compiled in 674ms (894 modules)
+ ✓ Compiled in 412ms (894 modules)
+academy enrollments fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchInitialEnrollments (webpack-internal:///(rsc)/./src/app/academy/page.tsx:29:20)
+    at async Promise.all (index 1)
+    at async AcademyPage (webpack-internal:///(rsc)/./src/app/academy/page.tsx:39:36) {
+  detail: { detail: 'Not authenticated' }
+}
+academy enrollments fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchInitialEnrollments (webpack-internal:///(rsc)/./src/app/academy/page.tsx:29:20)
+    at async Promise.all (index 1)
+    at async AcademyPage (webpack-internal:///(rsc)/./src/app/academy/page.tsx:39:36) {
+  detail: { detail: 'Not authenticated' }
+}
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 703ms (1816 modules)
+ GET /icons/icon-192x192.png 404 in 930ms
+academy enrollments fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchInitialEnrollments (webpack-internal:///(rsc)/./src/app/academy/page.tsx:29:20)
+    at async Promise.all (index 1)
+    at async AcademyPage (webpack-internal:///(rsc)/./src/app/academy/page.tsx:39:36) {
+  detail: { detail: 'Not authenticated' }
+}
+ GET /icons/icon-192x192.png 404 in 34ms
+ ✓ Compiled /projects in 437ms (952 modules)
+projects fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchProjects (webpack-internal:///(rsc)/./src/app/projects/page.tsx:20:22)
+    at async ProjectsPage (webpack-internal:///(rsc)/./src/app/projects/page.tsx:28:22) {
+  detail: { detail: 'Not authenticated' }
+}
+ GET /projects 200 in 770ms
+ ✓ Compiled /api/analytics/web-vitals in 260ms (983 modules)
+ POST /api/analytics/web-vitals 400 in 458ms
+ POST /api/analytics/web-vitals 400 in 220ms
+ POST /api/analytics/web-vitals 400 in 462ms
+ POST /api/analytics/web-vitals 400 in 231ms
+ GET /icons/icon-192x192.png 404 in 226ms
+ POST /api/analytics/web-vitals 400 in 10ms
+ POST /api/analytics/web-vitals 400 in 18ms
+ ○ Compiling /projects/[id] ...
+ ✓ Compiled /projects/[id] in 1691ms (1894 modules)
+academy enrollments fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchInitialEnrollments (webpack-internal:///(rsc)/./src/app/academy/page.tsx:29:20)
+    at async Promise.all (index 1)
+    at async AcademyPage (webpack-internal:///(rsc)/./src/app/academy/page.tsx:39:36) {
+  detail: { detail: 'Not authenticated' }
+}
+ GET /icons/icon-192x192.png 404 in 115ms
+ ○ Compiling /crm ...
+ ✓ Compiled /crm in 596ms (1926 modules)
+CRM server fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchMembers (webpack-internal:///(rsc)/./src/app/crm/page.tsx:22:22)
+    at async CRMDashboardPage (webpack-internal:///(rsc)/./src/app/crm/page.tsx:30:21) {
+  detail: { detail: 'Not authenticated' }
+}
+ GET /icons/icon-192x192.png 404 in 83ms
+ ⨯ ./src/app/projects/[id]/page.tsx
+Error: 
+  [31mx[0m Unexpected token `WorkspaceLayout`. Expected jsx identifier
+    ,-[[36;1;4mD:\ccf\frontend\src\app\projects\[id]\page.tsx[0m:85:1]
+ [2m85[0m |     ) : null;
+ [2m86[0m | 
+ [2m87[0m |     return (
+ [2m88[0m |         <WorkspaceLayout 
+    : [31;1m         ^^^^^^^^^^^^^^^[0m
+ [2m89[0m |             sidebarTitle="Gestión de Proyecto"
+ [2m90[0m |             parentTitle="Portfolio CCF"
+ [2m91[0m |             depth={2}
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/projects/[id]/page.tsx
+ ○ Compiling /_error ...
+ ⨯ ./src/app/projects/[id]/page.tsx
+Error: 
+  [31mx[0m Unexpected token `WorkspaceLayout`. Expected jsx identifier
+    ,-[[36;1;4mD:\ccf\frontend\src\app\projects\[id]\page.tsx[0m:85:1]
+ [2m85[0m |     ) : null;
+ [2m86[0m | 
+ [2m87[0m |     return (
+ [2m88[0m |         <WorkspaceLayout 
+    : [31;1m         ^^^^^^^^^^^^^^^[0m
+ [2m89[0m |             sidebarTitle="Gestión de Proyecto"
+ [2m90[0m |             parentTitle="Portfolio CCF"
+ [2m91[0m |             depth={2}
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/projects/[id]/page.tsx
+ GET /crm 500 in 31ms
+ ⨯ ./src/app/projects/[id]/page.tsx
+Error: 
+  [31mx[0m Unexpected token `WorkspaceLayout`. Expected jsx identifier
+    ,-[[36;1;4mD:\ccf\frontend\src\app\projects\[id]\page.tsx[0m:85:1]
+ [2m85[0m |     ) : null;
+ [2m86[0m | 
+ [2m87[0m |     return (
+ [2m88[0m |         <WorkspaceLayout 
+    : [31;1m         ^^^^^^^^^^^^^^^[0m
+ [2m89[0m |             sidebarTitle="Gestión de Proyecto"
+ [2m90[0m |             parentTitle="Portfolio CCF"
+ [2m91[0m |             depth={2}
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/projects/[id]/page.tsx
+ GET /crm 200 in 1067ms
+ ⨯ ./src/app/projects/[id]/page.tsx
+Error: 
+  [31mx[0m Unexpected token `WorkspaceLayout`. Expected jsx identifier
+    ,-[[36;1;4mD:\ccf\frontend\src\app\projects\[id]\page.tsx[0m:85:1]
+ [2m85[0m |     ) : null;
+ [2m86[0m | 
+ [2m87[0m |     return (
+ [2m88[0m |         <WorkspaceLayout 
+    : [31;1m         ^^^^^^^^^^^^^^^[0m
+ [2m89[0m |             sidebarTitle="Gestión de Proyecto"
+ [2m90[0m |             parentTitle="Portfolio CCF"
+ [2m91[0m |             depth={2}
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/projects/[id]/page.tsx
+ GET /_next/static/webpack/fdda0e34dce66ce5.webpack.hot-update.json 500 in 1347ms
+ GET /crm 500 in 298ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /crm 500 in 11ms
+ ⨯ ./src/app/projects/[id]/page.tsx
+Error: 
+  [31mx[0m Unexpected token `WorkspaceLayout`. Expected jsx identifier
+    ,-[[36;1;4mD:\ccf\frontend\src\app\projects\[id]\page.tsx[0m:85:1]
+ [2m85[0m |     ) : null;
+ [2m86[0m | 
+ [2m87[0m |     return (
+ [2m88[0m |         <WorkspaceLayout 
+    : [31;1m         ^^^^^^^^^^^^^^^[0m
+ [2m89[0m |             sidebarTitle="Gestión de Proyecto"
+ [2m90[0m |             parentTitle="Portfolio CCF"
+ [2m91[0m |             depth={2}
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/projects/[id]/page.tsx
+ GET /crm 200 in 408ms
+ GET /_next/static/webpack/fdda0e34dce66ce5.webpack.hot-update.json 500 in 767ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /crm 500 in 8ms
+ ✓ Compiled /_error in 429ms (1103 modules)
+ GET /crm 500 in 14ms
+ ✓ Compiled in 397ms (1103 modules)
+ GET /crm 500 in 16ms
+ ✓ Compiled in 391ms (1101 modules)
+ GET /crm 500 in 10ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1170ms (2095 modules)
+ GET /crm 200 in 905ms
+CRM server fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchMembers (webpack-internal:///(rsc)/./src/app/crm/page.tsx:22:22)
+    at async CRMDashboardPage (webpack-internal:///(rsc)/./src/app/crm/page.tsx:30:21) {
+  detail: { detail: 'Not authenticated' }
+}
+ ✓ Compiled (2081 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /crm 200 in 36ms
+CRM server fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchMembers (webpack-internal:///(rsc)/./src/app/crm/page.tsx:22:22)
+    at async CRMDashboardPage (webpack-internal:///(rsc)/./src/app/crm/page.tsx:30:21) {
+  detail: { detail: 'Not authenticated' }
+}
+ GET /_next/static/webpack/fdda0e34dce66ce5.webpack.hot-update.json 404 in 1208ms
+CRM server fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchMembers (webpack-internal:///(rsc)/./src/app/crm/page.tsx:22:22)
+    at async CRMDashboardPage (webpack-internal:///(rsc)/./src/app/crm/page.tsx:30:21) {
+  detail: { detail: 'Not authenticated' }
+}
+ GET /crm 200 in 33ms
+ GET /icons/icon-192x192.png 404 in 28ms
+ ✓ Compiled /api/analytics/web-vitals in 430ms (1023 modules)
+ POST /api/analytics/web-vitals 400 in 491ms
+ POST /api/analytics/web-vitals 400 in 491ms
+CRM server fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchMembers (webpack-internal:///(rsc)/./src/app/crm/page.tsx:22:22)
+    at async CRMDashboardPage (webpack-internal:///(rsc)/./src/app/crm/page.tsx:30:21) {
+  detail: { detail: 'Not authenticated' }
+}
+ ✓ Compiled in 912ms (2110 modules)
+CRM server fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchMembers (webpack-internal:///(rsc)/./src/app/crm/page.tsx:22:22)
+    at async CRMDashboardPage (webpack-internal:///(rsc)/./src/app/crm/page.tsx:30:21) {
+  detail: { detail: 'Not authenticated' }
+}
+ ✓ Compiled in 793ms (2090 modules)
+CRM server fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchMembers (webpack-internal:///(rsc)/./src/app/crm/page.tsx:22:22)
+    at async CRMDashboardPage (webpack-internal:///(rsc)/./src/app/crm/page.tsx:30:21) {
+  detail: { detail: 'Not authenticated' }
+}
+ ✓ Compiled in 838ms (2090 modules)
+CRM server fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchMembers (webpack-internal:///(rsc)/./src/app/crm/page.tsx:22:22)
+    at async CRMDashboardPage (webpack-internal:///(rsc)/./src/app/crm/page.tsx:30:21) {
+  detail: { detail: 'Not authenticated' }
+}
+ ✓ Compiled in 374ms (1100 modules)
+CRM server fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchMembers (webpack-internal:///(rsc)/./src/app/crm/page.tsx:22:22)
+    at async CRMDashboardPage (webpack-internal:///(rsc)/./src/app/crm/page.tsx:30:21) {
+  detail: { detail: 'Not authenticated' }
+}
+ ✓ Compiled in 586ms (1100 modules)
+CRM server fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchMembers (webpack-internal:///(rsc)/./src/app/crm/page.tsx:22:22)
+    at async CRMDashboardPage (webpack-internal:///(rsc)/./src/app/crm/page.tsx:30:21) {
+  detail: { detail: 'Not authenticated' }
+}
+ ✓ Compiled in 383ms (1100 modules)
+CRM server fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchMembers (webpack-internal:///(rsc)/./src/app/crm/page.tsx:22:22)
+    at async CRMDashboardPage (webpack-internal:///(rsc)/./src/app/crm/page.tsx:30:21) {
+  detail: { detail: 'Not authenticated' }
+}
+ ✓ Compiled in 441ms (1100 modules)
+CRM server fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchMembers (webpack-internal:///(rsc)/./src/app/crm/page.tsx:22:22)
+    at async CRMDashboardPage (webpack-internal:///(rsc)/./src/app/crm/page.tsx:30:21) {
+  detail: { detail: 'Not authenticated' }
+}
+ ⨯ TypeError: Cannot read properties of undefined (reading 'clientModules')
+    at D:\ccf\frontend\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:24871
+    at D:\ccf\frontend\node_modules\next\dist\server\lib\trace\tracer.js:191:62
+    at D:\ccf\frontend\node_modules\next\dist\server\lib\trace\tracer.js:140:36
+    at NoopContextManager.with (D:\ccf\frontend\node_modules\@opentelemetry\api\build\src\context\NoopContextManager.js:14:19)
+    at ContextAPI.with (D:\ccf\frontend\node_modules\@opentelemetry\api\build\src\api\context.js:51:46)
+    at NoopTracer.startActiveSpan (D:\ccf\frontend\node_modules\@opentelemetry\api\build\src\trace\NoopTracer.js:54:31)
+    at ProxyTracer.startActiveSpan (D:\ccf\frontend\node_modules\@opentelemetry\api\build\src\trace\ProxyTracer.js:27:24)
+    at D:\ccf\frontend\node_modules\next\dist\server\lib\trace\tracer.js:122:103
+    at NoopContextManager.with (D:\ccf\frontend\node_modules\@opentelemetry\api\build\src\context\NoopContextManager.js:14:19)
+    at ContextAPI.with (D:\ccf\frontend\node_modules\@opentelemetry\api\build\src\api\context.js:51:46)
+    at NextTracerImpl.trace (D:\ccf\frontend\node_modules\next\dist\server\lib\trace\tracer.js:122:28)
+    at D:\ccf\frontend\node_modules\next\dist\server\lib\trace\tracer.js:191:31
+    at r2 (D:\ccf\frontend\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:41:1673)
+    at async doRender (D:\ccf\frontend\node_modules\next\dist\server\base-server.js:1438:30)
+    at async cacheEntry.responseCache.get.routeKind (D:\ccf\frontend\node_modules\next\dist\server\base-server.js:1599:28) {
+  page: '/academy'
+}
+ ✓ Compiled /_error in 431ms (2078 modules)
+ ⨯ Error: Cannot find module 'D:\ccf\frontend\.next\server\pages\_document.js'
+Require stack:
+- D:\ccf\frontend\node_modules\next\dist\server\require.js
+- D:\ccf\frontend\node_modules\next\dist\server\load-components.js
+- D:\ccf\frontend\node_modules\next\dist\build\utils.js
+- D:\ccf\frontend\node_modules\next\dist\server\dev\hot-middleware.js
+- D:\ccf\frontend\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- D:\ccf\frontend\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- D:\ccf\frontend\node_modules\next\dist\server\lib\router-server.js
+- D:\ccf\frontend\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1421:15)
+    at D:\ccf\frontend\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1059:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1064:22)
+    at Module._load (node:internal/modules/cjs/loader:1227:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1504:12)
+    at mod.require (D:\ccf\frontend\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at requirePage (D:\ccf\frontend\node_modules\next\dist\server\require.js:109:84)
+    at D:\ccf\frontend\node_modules\next\dist\server\load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (D:\ccf\frontend\node_modules\next\dist\server\load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (D:\ccf\frontend\node_modules\next\dist\server\next-server.js:710:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'D:\\ccf\\frontend\\node_modules\\next\\dist\\server\\require.js',
+    'D:\\ccf\\frontend\\node_modules\\next\\dist\\server\\load-components.js',
+    'D:\\ccf\\frontend\\node_modules\\next\\dist\\build\\utils.js',
+    'D:\\ccf\\frontend\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'D:\\ccf\\frontend\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'D:\\ccf\\frontend\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'D:\\ccf\\frontend\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'D:\\ccf\\frontend\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ GET /academy 500 in 730ms
+ ✓ Compiled /_not-found in 276ms (2081 modules)
+ GET /_next/static/chunks/fallback/webpack.js 404 in 450ms
+ GET /_next/static/chunks/fallback/react-refresh.js 404 in 447ms
+ GET /_next/static/chunks/fallback/main.js 404 in 452ms
+ GET /_next/static/chunks/fallback/pages/_app.js 404 in 17ms
+ GET /_next/static/chunks/fallback/pages/_error.js 404 in 16ms
+ ✓ Compiled / in 432ms (1004 modules)
+ GET / 200 in 597ms
+CRM server fetch failed Error: Server API request failed
+    at serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:32:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async fetchMembers (webpack-internal:///(rsc)/./src/app/crm/page.tsx:22:22)
+    at async CRMDashboardPage (webpack-internal:///(rsc)/./src/app/crm/page.tsx:30:21) {
+  detail: { detail: 'Not authenticated' }
+}
+ GET /_next/static/css/app/layout.css?v=1774707457341 404 in 22ms
+ GET /_next/static/chunks/main-app.js?v=1774707457341 404 in 29ms
+ GET /_next/static/css/app/layout.css?v=1774707457471 404 in 20ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 21ms
+ GET /_next/static/chunks/app/page.js 404 in 16ms
+ GET /_next/static/chunks/app/layout.js 404 in 52ms
+ GET /icons/icon-192x192.png 404 in 57ms
+ GET / 200 in 72ms
+ GET /_next/static/css/app/layout.css?v=1774707460994 404 in 19ms
+ GET /_next/static/chunks/main-app.js?v=1774707460994 404 in 54ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 46ms
+ GET /_next/static/chunks/app/page.js 404 in 44ms
+ GET /_next/static/chunks/app/layout.js 404 in 39ms
+ GET /icons/icon-192x192.png 404 in 41ms
+ GET / 200 in 88ms
+ GET /_next/static/css/app/layout.css?v=1774707463642 404 in 8ms
+ GET /_next/static/chunks/main-app.js?v=1774707463642 404 in 11ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 20ms
+ GET /_next/static/chunks/app/page.js 404 in 21ms
+ GET /_next/static/chunks/app/layout.js 404 in 12ms
+ GET /icons/icon-192x192.png 404 in 50ms

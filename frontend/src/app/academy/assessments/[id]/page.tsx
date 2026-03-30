@@ -26,8 +26,8 @@ interface Enrollment {
 }
 
 export default function AssessmentPage() {
-    const params = useParams<{ id: string }>();
-    const id = params?.id ?? '';
+    const params = useParams();
+    const id = (params?.id as string) ?? '';
     const { token, user } = useAuth();
     const router = useRouter();
     const [assessment, setAssessment] = useState<any>(null);
@@ -41,7 +41,7 @@ export default function AssessmentPage() {
         const fetchAssessment = async () => {
             if (!token || !id) return;
             try {
-                const data = await apiFetch(`/academy/assessments/${id}`, { token });
+                const data = await apiFetch<any>(`/academy/assessments/${id}`, { token });
                 setAssessment(data);
             } catch (err) {
                 console.error("Error fetching assessment:", err);
@@ -64,14 +64,14 @@ export default function AssessmentPage() {
         setIsSubmitting(true);
         try {
             const enrollments = await apiFetch<Enrollment[]>(`/users/${user.id}/enrollments`, { token });
-            const enrollment = enrollments.find((e) => e.course.id === assessment.course_id);
+            const enrollment = enrollments.find((e: Enrollment) => e.course.id === assessment.course_id);
             
             if (!enrollment) {
                 alert("No estás inscrito en este curso.");
                 return;
             }
 
-            const data = await apiFetch(`/academy/assessments/${id}/submit`, {
+            const data = await apiFetch<any>(`/academy/assessments/${id}/submit`, {
                 method: 'POST',
                 token,
                 body: {

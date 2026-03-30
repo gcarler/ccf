@@ -34,21 +34,36 @@ type AdminStats = {
     attendance: number;
 };
 
+type AcademyMetrics = {
+    active_students: number;
+    completion_rate: number;
+    certificates_issued: number;
+    formal_stats: { total: number, completed: number, rate: number, avg_grade: number };
+    no_formal_stats: { total: number, completed: number, rate: number, avg_grade: number };
+    top_courses: Array<{ title: string, count: number }>;
+};
+
 export default function AdminDashboard() {
     const { isAuthenticated, user, token } = useAuth();
     const router = useRouter();
     const [stats, setStats] = useState<AdminStats>({ users: 0, donations: 0, attendance: 24 });
+    const [academy, setAcademy] = useState<AcademyMetrics | null>(null);
     const [loading, setLoading] = useState(true);
 
     const fetchData = useCallback(async () => {
         if (!token) return;
         try {
-            const data = await apiFetch<AdminStats>('/auth/stats/summary', { token });
+            const [statsData, academyData] = await Promise.all([
+                apiFetch<AdminStats>('/auth/stats/summary', { token }),
+                apiFetch<AcademyMetrics>('/academy/dashboard/metrics', { token })
+            ]);
+            
             setStats({
-                users: data?.users ?? 0,
-                donations: data?.donations ?? 0,
-                attendance: data?.attendance ?? 0
+                users: statsData?.users ?? 0,
+                donations: statsData?.donations ?? 0,
+                attendance: statsData?.attendance ?? 0
             });
+            setAcademy(academyData);
         } catch (e) { console.error(e); }
         finally { setLoading(false); }
     }, [token]);
@@ -153,6 +168,53 @@ export default function AdminDashboard() {
                             ))}
                         </div>
                     </section>
+
+                    {/* ACADEMY PERFORMANCE SECTION - MVP-006 */}
+                    <section className="pt-10 space-y-8">
+                         <div className="flex items-center gap-4 px-4">
+                            <div className="size-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                                <Target size={20} />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-black tracking-tight uppercase tracking-widest">Rendimiento Académico</h3>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Desglose por Modalidad</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                             <ModalityCard 
+                                title="Ruta Formal" 
+                                stats={academy?.formal_stats} 
+                                icon={Layers}
+                                color="blue"
+                             />
+                             <ModalityCard 
+                                title="No Formal / Abierta" 
+                                stats={academy?.no_formal_stats} 
+                                icon={Zap}
+                                color="amber"
+                             />
+                        </div>
+
+                        {/* Top Courses List */}
+                        <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8">
+                             <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6 px-2">Cursos más Populares</h4>
+                             <div className="space-y-4">
+                                {academy?.top_courses.map((course, i) => (
+                                    <div key={i} className="flex items-center justify-between p-4 bg-white dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 group hover:border-blue-500/20 transition-all">
+                                        <div className="flex items-center gap-4">
+                                            <span className="text-[10px] font-black text-slate-300">0{i+1}</span>
+                                            <span className="text-sm font-black group-hover:text-blue-600 transition-colors">{course.title}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-black">{course.count}</span>
+                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Estudiantes</span>
+                                        </div>
+                                    </div>
+                                ))}
+                             </div>
+                        </div>
+                    </section>
                 </div>
 
                 {/* Sidebar Contextual BI */}
@@ -225,6 +287,57 @@ export default function AdminDashboard() {
                 </aside>
             </div>
         </AdminShell>
+    );
+}
+
+function ModalityCard({ title, stats, icon: Icon, color }: any) {
+    if (!stats) return <div className="h-48 bg-slate-50 dark:bg-white/5 rounded-[2rem] animate-pulse" />;
+    
+    const colorMap: any = {
+        blue: { text: 'text-blue-600', bg: 'bg-blue-50', bar: 'bg-blue-600', border: 'border-blue-100' },
+        amber: { text: 'text-amber-600', bg: 'bg-amber-50', bar: 'bg-amber-600', border: 'border-amber-100' }
+    };
+    const c = colorMap[color];
+
+    return (
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 space-y-6 shadow-sm group hover:shadow-xl transition-all">
+            <div className="flex justify-between items-start">
+                <div className={clsx("size-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110", c.bg, "dark:bg-white/10", c.text)}>
+                    <Icon size={24} />
+                </div>
+                <div className="text-right">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Éxito</span>
+                    <h5 className={clsx("text-xl font-black tracking-tight", c.text)}>{stats.rate}%</h5>
+                </div>
+            </div>
+            
+            <div>
+                <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">{title}</h4>
+                <div className="flex items-center gap-2 mt-1">
+                    <div className="size-1.5 rounded-full bg-emerald-500" />
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{stats.completed} de {stats.total} finalizados</p>
+                </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 dark:border-white/5 grid grid-cols-2 gap-4">
+                <div>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Promedio</span>
+                    <p className="text-lg font-black tracking-tighter">{stats.avg_grade}</p>
+                </div>
+                <div className="text-right">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Inscritos</span>
+                    <p className="text-lg font-black tracking-tighter">{stats.total}</p>
+                </div>
+            </div>
+            
+            <div className="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                <motion.div 
+                    initial={{ width: 0 }} 
+                    animate={{ width: `${stats.rate}%` }} 
+                    className={clsx("h-full", c.bar)} 
+                />
+            </div>
+        </div>
     );
 }
 

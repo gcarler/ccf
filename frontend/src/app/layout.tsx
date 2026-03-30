@@ -10,6 +10,7 @@ import { ClientBootstrap } from "./ClientBootstrap";
 import { Toaster } from "sonner";
 import { CommandCenter } from "@/components/ui/CommandCenter";
 import { CommandCenterProvider } from "@/context/CommandCenterContext";
+import { CreationProvider } from "@/context/CreationContext";
 
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
 
@@ -62,10 +63,12 @@ export default function RootLayout({
                         <ToastProvider>
                             <ThemeProvider>
                                 <CommandCenterProvider>
-                                    <ClientBootstrap />
-                                    <Toaster position="bottom-right" expand={false} richColors />
-                                    <CommandCenter />
-                                    {children}
+                                    <CreationProvider>
+                                        <ClientBootstrap />
+                                        <Toaster position="bottom-right" expand={false} richColors />
+                                        <CommandCenter />
+                                        {children}
+                                    </CreationProvider>
                                 </CommandCenterProvider>
                             </ThemeProvider>
                         </ToastProvider>

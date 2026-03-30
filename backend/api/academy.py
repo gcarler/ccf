@@ -81,7 +81,7 @@ class AssessmentSubmission(BaseModel):
 
 
 @router.post("/assessments/{assessment_id}/submit", response_model=schemas.AssessmentAttempt)
-def submit_assessment(
+def submit_assessment_direct(
     assessment_id: int,
     payload: AssessmentSubmission,
     db: Session = Depends(get_db),
@@ -89,8 +89,8 @@ def submit_assessment(
 ):
     try:
         return crud.submit_assessment_attempt(
-            db, 
-            assessment_id=assessment_id, 
+            db,
+            assessment_id=assessment_id,
             enrollment_id=payload.enrollment_id,
             answers=payload.answers
         )
@@ -123,15 +123,57 @@ def update_lesson_progress(
     current_user: models.User = Depends(require_active_user)
 ):
     return crud.update_lesson_progress(
-        db, 
-        user_id=current_user.id, 
-        lesson_id=lesson_id, 
+        db,
+        user_id=current_user.id,
+        lesson_id=lesson_id,
         progress_percent=payload.progress_percent,
         last_position=payload.last_position_seconds
     )
 
 
-@router.post("/enrollments/{enrollment_id}/issue-certificate", response_model=schemas.Certificate)
+@router.get("/courses/{course_id}/attendance", response_model=List[schemas.CourseAttendance])
+def list_course_attendance(course_id: int, db: Session = Depends(get_db)):
+    return db.query(models.CourseAttendance).join(models.Enrollment).filter(
+        models.Enrollment.course_id == course_id
+    ).all()
+
+
+@router.post("/courses/{course_id}/attendance/bulk", status_code=status.HTTP_201_CREATED)
+def record_bulk_attendance(
+    course_id: int,
+    payload: schemas.BulkAttendanceCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_staff_or_admin),
+):
+    # Verify course exists
+    course = db.query(models.Course).filter(models.Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    recorded_count = 0
+    for record in payload.records:
+        # Verify enrollment belongs to course
+        enrollment = db.query(models.Enrollment).filter(
+            models.Enrollment.id == record.enrollment_id,
+            models.Enrollment.course_id == course_id
+        ).first()
+
+        if enrollment:
+            db_attendance = models.CourseAttendance(
+                enrollment_id=record.enrollment_id,
+                status=record.status,
+                session_date=payload.session_date,
+                recorded_by_id=current_user.id
+            )
+            db.add(db_attendance)
+            recorded_count += 1
+
+    db.commit()
+    return {"message": f"Se registraron {recorded_count} asistencias con éxito"}
+
+
+@router.post("/enrollments/{enrollment_id}/request-certificate", response_model=schemas.Certificate)
+
 def request_certificate(
     enrollment_id: int,
     db: Session = Depends(get_db),
@@ -410,9 +452,9 @@ def get_my_academy_profile(
     user_id = str(current_user.user_id)
     enrollments = db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
     certificates = db.query(models.Certificate).join(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
-    
+
     total_progress = sum(float(e.progress_percent or 0) for e in enrollments) / len(enrollments) if enrollments else 0.0
-    
+
     return {
         "user_id": user_id,
         "username": getattr(current_user, "username", ""),
@@ -435,6 +477,80 @@ def get_academy_candidates(
 # -----------------
 # Forum API
 # -----------------
+@router.get("/members/{member_id}/profile")
+def get_member_academy_profile(
+    member_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_staff_or_admin)
+):
+    """Obtiene el perfil académico de un miembro del CRM."""
+    member = db.query(models.Member).filter(models.Member.id == member_id).first()
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    
+    if not member.user_id:
+        return {"is_linked": False, "message": "No tiene cuenta de academia vinculada"}
+    
+    user_id = member.user_id
+    enrollments = db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
+    certificates = db.query(models.Certificate).join(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
+    
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    
+    return {
+        "is_linked": True,
+        "user_id": user_id,
+        "username": user.username if user else "Unknown",
+        "enrollments": enrollments,
+        "certificates": certificates,
+        "total_progress": sum(float(e.progress_percent or 0) for e in enrollments) / len(enrollments) if enrollments else 0.0
+    }
+
+class CreateAcademyAccountRequest(BaseModel):
+    password: str
+
+@router.post("/members/{member_id}/create-account")
+def create_academy_account(
+    member_id: int,
+    payload: CreateAcademyAccountRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_staff_or_admin)
+):
+    """Crea una cuenta de usuario (Academia) para un miembro del CRM."""
+    member = db.query(models.Member).filter(models.Member.id == member_id).first()
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    
+    if member.user_id:
+        raise HTTPException(status_code=400, detail="El miembro ya tiene una cuenta vinculada")
+    
+    if not member.email:
+        raise HTTPException(status_code=400, detail="El miembro debe tener un email para crear cuenta")
+    
+    # Crear Usuario
+    from backend.core.security import get_password_hash
+    new_user = models.User(
+        username=member.email.split('@')[0],
+        email=member.email,
+        password_hash=get_password_hash(payload.password),
+        role="estudiante"
+    )
+    db.add(new_user)
+    db.flush() # Para obtener el ID
+    
+    member.user_id = new_user.id
+    db.commit()
+    
+    record_admin_action(
+        db, current_user, 
+        action="create_member_academy_account", 
+        resource_type="user", 
+        resource_id=str(new_user.id),
+        metadata={"member_id": member_id}
+    )
+    
+    return {"status": "success", "user_id": new_user.id, "username": new_user.username}
+
 @router.get("/forum/threads", response_model=List[schemas.ForumThread])
 def get_forum_threads(
     db: Session = Depends(get_db),

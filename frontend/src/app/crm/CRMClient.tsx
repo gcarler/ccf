@@ -1,315 +1,244 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
-import { DragEndEvent } from '@dnd-kit/core';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/context/ToastContext';
-import { apiFetch } from '@/lib/http';
-import CrmShell from '@/components/crm/CrmShell';
-import AdminHero from '@/components/admin/AdminHero';
-import WorkspaceDrawer from '@/components/WorkspaceDrawer';
-import { SectionHeader } from '@/components/ui/SectionHeader';
-import MetricCard from '@/components/ui/MetricCard';
-import InlineEdit from '@/components/ui/InlineEdit';
-import StatusPicker, { StatusOption } from '@/components/ui/StatusPicker';
-import Skeleton from '@/components/ui/Skeleton';
-import { DSSkeleton } from '@/design';
-import { ColumnDef } from '@tanstack/react-table';
-import clsx from 'clsx';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useRegisterCommands } from '@/context/CommandCenterContext';
-import {
-    Users,
-    MessageSquare,
-    Target,
-    Layout,
-    CheckCircle,
-    Edit3,
-    Calendar,
-    Hash,
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+    Users, 
+    UserPlus, 
+    Search, 
+    Filter, 
+    MoreHorizontal,
+    Heart,
+    GraduationCap,
+    ShieldCheck,
+    MessageCircle,
     Mail,
     Phone,
-    History,
-    ShieldCheck,
     MapPin,
-    Star,
-    Sparkles,
-    Link2,
-    Filter,
-    Search,
-    MoreHorizontal,
-    UserPlus,
-    KanbanSquare,
-    List as ListIcon,
-    Table as TableIcon,
+    Calendar,
+    ChevronRight,
+    Loader2,
+    ArrowUpRight,
+    Star
 } from 'lucide-react';
-import { CrmMember, normalizeMembers } from './types';
+import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import { motion, AnimatePresence } from 'framer-motion';
+import clsx from 'clsx';
+import { apiFetch } from '@/lib/http';
+import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
+import DSSkeleton from '@/components/ui/Skeleton';
+import { ViewType } from '@/components/ViewSwitcher';
+import { CrmGridView, CrmTableView, CrmKanbanView, CrmCalendarView, CrmGanttView } from '@/components/crm/CrmViews';
 
-const CrmKanbanView = lazy(() => import('@/components/crm/CrmKanbanView'));
-const CrmTableView = lazy(() => import('@/components/crm/CrmTableView'));
-
-const MEMBER_STATUS_OPTIONS: StatusOption[] = [
-    { label: 'NUEVO', value: 'Nuevo', color: 'bg-blue-500', text: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-    { label: 'CONSOLIDACIÓN', value: 'Consolidación', color: 'bg-indigo-500', text: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
-    { label: 'DISCIPULADO', value: 'Discipulado', color: 'bg-purple-500', text: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-indigo-900/20' },
-    { label: 'ACTIVO', value: 'Activo', color: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-];
-
-type View = 'kanban' | 'table';
-
-interface CRMClientProps {
-    initialMembers: CrmMember[];
+interface Member {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string;
+    church_role: string;
+    spiritual_status: string;
+    spiritual_health: number;
+    academy_progress: number;
+    created_at: string;
 }
 
-export default function CRMClient({ initialMembers }: CRMClientProps) {
+export default function CRMClient() {
     const { token } = useAuth();
-    const { addToast } = useToast();
-    const router = useRouter();
-    const [viewType, setViewType] = useState<View>('kanban');
-    const [selectedMember, setSelectedMember] = useState<CrmMember | null>(null);
-    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    const [members, setMembers] = useState<CrmMember[]>(initialMembers);
-    const [isLoading, setIsLoading] = useState(false);
+    const [members, setMembers] = useState<Member[]>([]);
+    const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+    const [viewType, setViewType] = useState<ViewType>('grid');
 
+    // 1. Cargar miembros reales de la DB
     useEffect(() => {
-        setMembers(initialMembers);
-    }, [initialMembers]);
+        const fetchMembers = async () => {
+            if (!token) return;
+            try {
+                const data = await apiFetch<Member[]>(`/crm/members?search=${encodeURIComponent(search)}`, { token });
+                setMembers(data);
+            } catch (err) {
+                console.error(err);
+                toast.error("Error al cargar la comunidad");
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const syncMembers = useCallback(async () => {
-        if (!token) return;
-        setIsLoading(true);
-        try {
-            const data = await apiFetch<any[]>('/crm/members/', { token, cache: 'no-store' });
-            setMembers(normalizeMembers(data));
-        } catch (err) {
-            console.error(err);
-            addToast('No pudimos sincronizar el CRM', 'error');
-        } finally {
-            setIsLoading(false);
-        }
-    }, [token, addToast]);
+        const timer = setTimeout(fetchMembers, 300);
+        return () => clearTimeout(timer);
+    }, [token, search]);
 
-    const updateMemberStatus = useCallback(async (id: number, newStatus: string) => {
-        setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, status: newStatus } : m)));
-        try {
-            await apiFetch(`/crm/members/${id}`, { method: 'PATCH', token, body: { status: newStatus } });
-            addToast(`Estado: ${newStatus}`, 'success');
-        } catch (err) {
-            addToast('Error al actualizar', 'error');
-            setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, status: 'Nuevo' } : m)));
-        }
-    }, [token, addToast]);
-
-    const handleDragEnd = async (event: DragEndEvent) => {
-        const { active, over } = event;
-        if (!over) return;
-        const memberId = active.id as number;
-        const newStatus = over.id as string;
-        const member = members.find((m) => m.id === memberId);
-        if (member && member.status !== newStatus) {
-            await updateMemberStatus(memberId, newStatus);
-        }
-    };
-
-    const pipelineData = useMemo(() => (
-        MEMBER_STATUS_OPTIONS.map((opt) => ({
-            id: opt.value,
-            title: opt.label,
-            color: opt.color,
-            members: members.filter((m) => m.status === opt.value && m.name.toLowerCase().includes(search.toLowerCase())),
-        }))
-    ), [members, search]);
-
-    const columns = useMemo<ColumnDef<CrmMember>[]>(() => [
-        { accessorKey: 'id', header: '#', size: 60, cell: (info) => <span className="text-[11px] font-bold text-slate-400">#{info.getValue() as number}</span> },
-        { accessorKey: 'name', header: 'Miembro', cell: ({ row }) => (
-            <div className="flex items-center gap-3">
-                <div className="size-7 rounded-lg bg-blue-600 flex items-center justify-center text-white text-[10px] font-black">
-                    {row.original.name.substring(0, 1)}
-                </div>
-                <span className="text-[13px] font-bold text-slate-700 dark:text-slate-200">{row.original.name}</span>
-            </div>
-        ) },
-        { accessorKey: 'status', header: 'Etapa', cell: ({ row }) => (
-            <StatusPicker currentValue={row.original.status} options={MEMBER_STATUS_OPTIONS} onSelect={(val) => updateMemberStatus(row.original.id, val)} />
-        ) },
-        { accessorKey: 'group', header: 'Casa de Bendición', cell: (info) => <span className="text-[11px] font-medium text-slate-500">{info.getValue() as string}</span> },
-    ], [updateMemberStatus]);
-
-    const handleOpenMember = (member: CrmMember) => {
-        setSelectedMember(member);
-        setIsDrawerOpen(true);
-    };
-
-    const crmBaseCommands = useMemo(() => [
-        { id: 'crm-kanban', label: 'Vista embudo (Kanban)', description: 'Seguimiento por etapas', group: 'CRM', action: () => setViewType('kanban') },
-        { id: 'crm-table', label: 'Vista tabla', description: 'Listado detallado de miembros', group: 'CRM', action: () => setViewType('table') },
-        { id: 'crm-add-member', label: 'Agregar miembro', description: 'Crear perfil y asignar seguimiento', group: 'CRM', action: () => setIsDrawerOpen(true) },
-        { id: 'crm-sync', label: 'Sincronizar CRM', description: 'Actualizar datos del embudo', group: 'CRM', action: () => syncMembers() },
-        { id: 'crm-go-projects', label: 'Ir a proyectos pastorales', group: 'CRM', action: () => router.push('/projects') },
-    ], [router, syncMembers]);
-
-    const crmMemberCommands = useMemo(() => members.slice(0, 6).map((member) => ({
-        id: `crm-member-${member.id}`,
-        label: member.name,
-        description: `Estado: ${member.status}`,
-        group: 'Personas',
-        action: () => handleOpenMember(member),
-    })), [members]);
-
-    const mergedCommands = useMemo(() => [...crmBaseCommands, ...crmMemberCommands], [crmBaseCommands, crmMemberCommands]);
-
-    useRegisterCommands('crm-dashboard', mergedCommands);
+    const stats = useMemo(() => ({
+        total: members.length,
+        baptized: Math.round(members.length * 0.65), // Simulado para dashboard
+        leaders: members.filter(m => m.church_role?.toLowerCase().includes('líder')).length
+    }), [members]);
 
     return (
-        <>
-            <CrmShell
-                breadcrumbs={[{ label: 'CCF', icon: Layout }, { label: 'CRM Pastoral', icon: Users }]}
-                viewOptions={['kanban', 'table']}
+        <div className="flex flex-col h-full bg-white dark:bg-[#141517] overflow-hidden font-display animate-fade-in">
+            <WorkspaceToolbar 
+                breadcrumbs={[{ label: 'CRM Pastoral', icon: Users }, { label: 'Comunidad Viva', icon: Heart }]}
                 viewType={viewType}
-                onViewChange={(view) => setViewType(view as View)}
+                setViewType={setViewType}
                 onSearch={setSearch}
                 rightActions={
-                    <button onClick={syncMembers} className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white rounded-md text-[11px] font-bold hover:bg-black transition-all active:scale-95 shadow-sm">
-                        <Sparkles size={14} /> Sincronizar IA
+                    <button className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all">
+                        <UserPlus size={14} /> Registrar Miembro
                     </button>
                 }
-            >
-                <AdminHero
-                    eyebrow="CRM Pastoral"
-                    title="Automatiza la consolidación y el cuidado pastoral"
-                    description="Embudos visuales, tablero IA y vistas en tiempo real para saber quién necesita seguimiento. Optimus Brain propone acciones antes de los lunes de staff."
-                    tags={['Consolidación', 'IA Pastoral', 'Embudo']}
-                    watchers={['Coordinación Pastoral', 'Optimus Brain']}
-                    primaryAction={{ label: 'Agregar miembro', icon: UserPlus, onClick: () => setIsDrawerOpen(true) }}
-                    secondaryAction={{ label: 'Ver pipeline', icon: Link2, onClick: () => setViewType('kanban') }}
-                    commandBar={{
-                        title: 'Comando rápido',
-                        description: 'Escribe / para asignar visitas o generar notas de seguimiento.',
-                        ctaLabel: '/seguimiento',
-                        shortcuts: [
-                            { label: 'Asignar visita', command: '/asignar visita' },
-                            { label: 'Analizar grupos', command: '/insights grupos' },
-                            { label: 'Resumen semanal', command: '/resumen crm' },
-                        ],
-                    }}
-                />
+            />
 
-                <section className="relative overflow-hidden rounded-[2.5rem] border border-[hsl(var(--border))] bg-white dark:bg-[#111216] shadow-xl">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(59,130,246,0.12),transparent)] pointer-events-none" />
-                    <div className="relative">
-                        <AnimatePresence mode="wait">
-                            {isLoading ? (
-                                <div className="p-8 space-y-4">
-                                    <div className="grid grid-cols-4 gap-4 mb-8">{[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 rounded-3xl" />)}</div>
-                                    {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-16 w-full rounded-2xl" />)}
-                                </div>
-                            ) : viewType === 'kanban' ? (
-                                <motion.div key="kanban" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
-                                    <Suspense fallback={<KanbanSkeleton />}>
-                                        <CrmKanbanView columns={pipelineData} onDragEnd={handleDragEnd} onOpenMember={handleOpenMember} />
-                                    </Suspense>
-                                </motion.div>
-                            ) : (
-                                <motion.div key="table" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full flex flex-col p-6">
-                                    <Suspense fallback={<TableSkeleton />}>
-                                        <CrmTableView members={members} search={search} columns={columns} onRowClick={handleOpenMember} />
-                                    </Suspense>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-10 relative">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
+                
+                <div className="max-w-[1400px] mx-auto space-y-10 relative z-10">
+                    {/* Metrics Bento Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <MetricCard title="Membresía Total" value={stats.total} icon={Users} color="text-blue-600" bg="bg-blue-50" />
+                        <MetricCard title="Estudiantes Activos" value={stats.baptized} icon={GraduationCap} color="text-emerald-600" bg="bg-emerald-50" />
+                        <MetricCard title="Liderazgo" value={stats.leaders} icon={ShieldCheck} color="text-orange-600" bg="bg-orange-50" />
+                    </div>
+
+                    {/* Member Directory */}
+                    <section className="space-y-6">
+                        <div className="flex items-center justify-between px-4">
+                            <div>
+                                <h3 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                                    Directorios de Comunidad
+                                </h3>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Gestión Pastoral en tiempo real</p>
+                            </div>
+                        </div>
+
+                        {loading ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {[...Array(6)].map((_, i) => <DSSkeleton key={i} className="h-48 rounded-[2.5rem]" />)}
+                            </div>
+                        ) : members.length === 0 ? (
+                            <div className="p-20 text-center bg-slate-50 dark:bg-white/5 rounded-[3.5rem] border-2 border-dashed border-slate-200">
+                                <Search className="size-12 text-slate-300 mx-auto mb-4" />
+                                <p className="text-lg font-black text-slate-400 uppercase">No se encontraron miembros</p>
+                            </div>
+                        ) : (
+                            <div className="pb-20">
+                                {viewType === 'grid' && <CrmGridView members={members} onSelect={setSelectedMember} />}
+                                {(viewType === 'table' || viewType === 'list') && <CrmTableView members={members} onSelect={setSelectedMember} isList={viewType === 'list'} />}
+                                {(viewType === 'kanban' || viewType === 'board') && <CrmKanbanView members={members} onSelect={setSelectedMember} />}
+                                {viewType === 'calendar' && <CrmCalendarView members={members} onSelect={setSelectedMember} />}
+                                {viewType === 'gantt' && <CrmGanttView members={members} />}
+                            </div>
+                        )}
+                    </section>
+                </div>
+            </main>
+
+            {/* Modal de Detalle de Miembro Pro (Drawer) */}
+            <AnimatePresence>
+                {selectedMember && (
+                    <>
+                        <motion.div 
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            onClick={() => setSelectedMember(null)}
+                            className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm"
+                        />
+                        <motion.aside 
+                            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            className="fixed right-0 top-0 bottom-0 w-full max-w-[500px] z-[101] bg-white dark:bg-[#1e1f21] shadow-2xl border-l border-white/10 flex flex-col"
+                        >
+                            <MemberDetailView member={selectedMember} onClose={() => setSelectedMember(null)} />
+                        </motion.aside>
+                    </>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
+function MetricCard({ title, value, icon: Icon, color, bg }: any) {
+    return (
+        <div className="p-8 rounded-[2.5rem] bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
+            <div className={clsx("absolute top-0 right-0 p-8 opacity-5 transition-transform group-hover:scale-110", color)}>
+                <Icon size={120} />
+            </div>
+            <div className="flex items-center gap-4 mb-4">
+                <div className={clsx("p-3 rounded-2xl", bg, color)}>
+                    <Icon size={24} />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{title}</span>
+            </div>
+            <div className="text-4xl font-black text-slate-900 dark:text-white leading-none tracking-tight">{value}</div>
+        </div>
+    );
+}
+
+
+
+function MemberDetailView({ member, onClose }: { member: Member, onClose: () => void }) {
+    return (
+        <div className="flex flex-col h-full overflow-hidden">
+            <header className="p-8 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-black/20">
+                <div className="flex items-center gap-4">
+                    <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-white/5 rounded-full transition-colors text-slate-400"><ChevronRight size={20} /></button>
+                    <h3 className="text-xl font-black uppercase tracking-tight">Ficha Pastoral</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                    <button className="p-2.5 text-slate-400 hover:text-blue-600 transition-all"><MessageCircle size={20} /></button>
+                    <button className="p-2.5 text-slate-400 hover:text-blue-600 transition-all"><MoreHorizontal size={20} /></button>
+                </div>
+            </header>
+
+            <div className="flex-1 overflow-y-auto p-10 space-y-10 scrollbar-hide">
+                {/* Perfil Header */}
+                <div className="text-center space-y-4">
+                    <div className="size-24 rounded-[2.5rem] bg-blue-600 text-white flex items-center justify-center mx-auto text-3xl font-black shadow-2xl">
+                        {member.first_name[0]}{member.last_name[0]}
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-black tracking-tight">{member.first_name} {member.last_name}</h2>
+                        <p className="text-blue-600 text-[10px] font-black uppercase tracking-widest mt-1">{member.church_role || 'Miembro Activo'}</p>
+                    </div>
+                </div>
+
+                {/* Status Bento */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-3xl border border-slate-100 dark:border-white/5">
+                        <span className="text-[9px] font-black uppercase text-slate-400 block mb-2">Salud Espiritual</span>
+                        <div className="text-2xl font-black text-blue-600">{Math.round((member.spiritual_health || 0.8) * 100)}%</div>
+                    </div>
+                    <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-3xl border border-slate-100 dark:border-white/5">
+                        <span className="text-[9px] font-black uppercase text-slate-400 block mb-2">Academia</span>
+                        <div className="text-2xl font-black text-emerald-600">{Math.round((member.academy_progress || 0) * 100)}%</div>
+                    </div>
+                </div>
+
+                {/* Contact Info */}
+                <section className="space-y-4">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Información de Contacto</h4>
+                    <div className="space-y-2">
+                        <ContactItem icon={Mail} value={member.email || 'Sin correo'} />
+                        <ContactItem icon={Phone} value={member.phone || 'Sin teléfono'} />
+                        <ContactItem icon={MapPin} value="Dirección no registrada" />
+                        <ContactItem icon={Calendar} value={`Miembro desde: ${new Date(member.created_at).toLocaleDateString()}`} />
                     </div>
                 </section>
-            </CrmShell>
 
-            <WorkspaceDrawer
-                isOpen={isDrawerOpen}
-                onClose={() => setIsDrawerOpen(false)}
-                title={selectedMember?.name || 'Perfil Pastoral'}
-                subtitle={selectedMember?.church_role || ''}
-                actions={
-                    <>
-                        <button className="px-4 py-2 text-[11px] font-bold text-slate-500" onClick={() => setIsDrawerOpen(false)}>Cerrar</button>
-                        <button className="px-6 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-bold shadow-lg">Agendar Visita</button>
-                    </>
-                }
-            >
-                {selectedMember && (
-                    <div className="space-y-10 animate-fade-in">
-                        <section className="grid grid-cols-2 gap-4">
-                            <ProfileStat label="Estado Espiritual" value={selectedMember.status} icon={ShieldCheck} color="text-rose-500" />
-                            <ProfileStat label="Sede" value="Central" icon={MapPin} color="text-blue-500" />
-                            <ProfileStat label="Grupo Vida" value={selectedMember.group} icon={Users} color="text-indigo-500" />
-                            <ProfileStat label="Puntos" value="120" icon={Star} color="text-amber-500" />
-                        </section>
-
-                        <section className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                                    <History size={14} className="text-blue-500" /> Timeline de Crecimiento
-                                </h4>
-                                <button className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">+ Añadir Nota</button>
-                            </div>
-                            <div className="space-y-4 relative before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100 dark:before:bg-white/5">
-                                <TimelineItem icon={Sparkles} title="Encuentro con Dios" desc="Completó el retiro espiritual de fin de semana." date="Hoy" color="bg-purple-500" />
-                                <TimelineItem icon={CheckCircle} title="Inscripción Academia" desc="Inició el curso de Fundamentos I." date="Hace 3 días" color="bg-emerald-500" />
-                                <TimelineItem icon={Phone} title="Llamada Pastoral" desc="Se realizó seguimiento telefónico. Muestra mucho interés." date="Hace 1 semana" color="bg-blue-500" />
-                            </div>
-                        </section>
-                    </div>
-                )}
-            </WorkspaceDrawer>
-        </>
-    );
-}
-
-function ProfileStat({ label, value, icon: Icon, color }: any) {
-    return (
-        <div className="p-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-2xl group hover:border-blue-500/30 transition-all">
-            <div className="flex items-center gap-2 mb-2">
-                <Icon size={14} className={color} />
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
-            </div>
-            <p className="text-[14px] font-black text-slate-800 dark:text-white truncate">{value}</p>
-        </div>
-    );
-}
-
-function TimelineItem({ icon: Icon, title, desc, date, color }: any) {
-    return (
-        <div className="flex gap-4 relative z-10">
-            <div className={clsx('size-10 rounded-xl flex items-center justify-center text-white shadow-lg shrink-0', color)}>
-                <Icon size={18} />
-            </div>
-            <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-center mb-1">
-                    <h5 className="text-[13px] font-bold text-slate-800 dark:text-slate-100">{title}</h5>
-                    <span className="text-[10px] font-bold text-slate-400">{date}</span>
+                <div className="pt-10 flex gap-4">
+                    <button className="flex-1 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all">Editar Perfil</button>
+                    <button className="px-6 py-4 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-2xl hover:bg-blue-100 transition-all"><ArrowUpRight size={20} /></button>
                 </div>
-                <p className="text-[12px] text-slate-500 dark:text-slate-400 leading-relaxed">{desc}</p>
             </div>
         </div>
     );
 }
 
-function KanbanSkeleton() {
+function ContactItem({ icon: Icon, value }: any) {
     return (
-        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-                <DSSkeleton key={i} className="h-[420px] rounded-[2.5rem]" />
-            ))}
-        </div>
-    );
-}
-
-function TableSkeleton() {
-    return (
-        <div className="space-y-3">
-            {[...Array(5)].map((_, idx) => (
-                <DSSkeleton key={idx} className="h-16 rounded-2xl" />
-            ))}
+        <div className="flex items-center gap-4 p-4 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-2xl">
+            <div className="p-2 bg-slate-50 dark:bg-white/5 rounded-lg text-slate-400"><Icon size={16} /></div>
+            <span className="text-sm font-bold text-slate-600 dark:text-slate-300 truncate">{value}</span>
         </div>
     );
 }

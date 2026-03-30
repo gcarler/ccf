@@ -63,6 +63,12 @@ export default function AcademyLayout({
 }) {
     const pathname = usePathname() ?? '';
 
+    // If the route manages its own deep layer (like course viewer), don't wrap it in the general layout.
+    const isDeepLayer = pathname.includes('/course/') || pathname.includes('/assessments/');
+    if (isDeepLayer) {
+        return <div className="h-full bg-[#f8f9fb]">{children}</div>;
+    }
+
     const getSidebarTitle = () => {
         if (pathname === '/academy') return 'Academia / Resumen';
         const segments = pathname.split('/');

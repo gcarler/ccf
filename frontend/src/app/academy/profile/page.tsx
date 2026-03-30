@@ -12,7 +12,6 @@ import {
     Edit3, 
     GraduationCap, 
     Heart, 
-    Layout, 
     ShieldCheck, 
     Sparkles, 
     Star, 
@@ -24,7 +23,7 @@ import {
     Target
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import type { AcademyStudentProfile, CertificateRecord, EnrollmentRecord } from '@/types/academy';
 import Skeleton from '@/components/ui/Skeleton';
@@ -67,7 +66,7 @@ export default function StudentProfilePage() {
 
     if (loading) {
         return (
-            <div className="flex flex-col h-full bg-slate-50/50 dark:bg-[#1e1f21] overflow-hidden font-display">
+            <div className="flex flex-col h-full bg-slate-50/50 dark:bg-[#0a0f16] overflow-hidden font-display">
                 <WorkspaceToolbar 
                     breadcrumbs={[
                         { label: 'Academia', icon: GraduationCap },
@@ -88,7 +87,41 @@ export default function StudentProfilePage() {
     }
 
     return (
-        <div className="flex flex-col h-full bg-slate-50/50 dark:bg-[#1e1f21] overflow-hidden font-display">
+        <div className="flex flex-col h-full bg-slate-50/50 dark:bg-[#0a0f16] overflow-hidden font-display">
+            <style jsx global>{`
+                .badge-3d {
+                    position: relative;
+                    transform-style: preserve-3d;
+                    transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+                }
+                .badge-3d:hover {
+                    transform: translateY(-5px) rotateX(10deg) rotateY(-10deg);
+                }
+                .badge-3d::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    border-radius: inherit;
+                    background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%, rgba(0,0,0,0.2) 100%);
+                    z-index: 10;
+                    pointer-events: none;
+                }
+                .badge-3d::after {
+                    content: '';
+                    position: absolute;
+                    inset: -2px;
+                    border-radius: inherit;
+                    background: linear-gradient(to bottom, rgba(255,255,255,0.8), transparent);
+                    z-index: -1;
+                    transform: translateZ(-5px);
+                    filter: blur(4px);
+                    opacity: 0.5;
+                }
+                .inner-glow {
+                    box-shadow: inset 0 0 20px rgba(255,255,255,0.3), 0 10px 30px rgba(0,0,0,0.2);
+                }
+            `}</style>
+
             <WorkspaceToolbar 
                 breadcrumbs={[
                     { label: 'Academia', icon: GraduationCap },
@@ -102,13 +135,16 @@ export default function StudentProfilePage() {
                 }
             />
 
-            <main className="flex-1 overflow-y-auto scrollbar-thin p-8 lg:p-12">
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-8 lg:p-12 relative">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-500/5 via-transparent to-transparent pointer-events-none" />
+                
                 {error && (
-                    <div className="mb-6 text-rose-500 text-sm font-semibold bg-rose-500/10 border border-rose-500/20 rounded-2xl px-4 py-3">
+                    <div className="mb-6 text-rose-500 text-sm font-semibold bg-rose-500/10 border border-rose-500/20 rounded-2xl px-4 py-3 relative z-10">
                         {error}
                     </div>
                 )}
-                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10">
+                
+                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 relative z-10">
                     
                     {/* Left Column: Identity Card */}
                     <aside className="lg:col-span-4 space-y-8">
@@ -118,11 +154,11 @@ export default function StudentProfilePage() {
                             <div className="relative z-10 flex flex-col items-center text-center space-y-6">
                                 <div className="relative">
                                     <div className="size-32 rounded-[2.5rem] bg-gradient-to-tr from-blue-600 to-indigo-600 p-1 shadow-2xl">
-                                        <div className="size-full rounded-[2.2rem] bg-white dark:bg-slate-900 flex items-center justify-center text-4xl font-black text-blue-600 uppercase border-4 border-white dark:border-slate-800">
+                                        <div className="size-full rounded-[2.2rem] bg-white dark:bg-[#0a0f16] flex items-center justify-center text-4xl font-black text-blue-600 uppercase border-4 border-white dark:border-[#0a0f16]">
                                             {user.username?.charAt(0)}
                                         </div>
                                     </div>
-                                    <div className="absolute -bottom-2 -right-2 size-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-lg border-4 border-white dark:border-slate-900">
+                                    <div className="absolute -bottom-2 -right-2 size-10 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center shadow-lg border-4 border-white dark:border-[#0a0f16]">
                                         <Zap size={18} fill="currentColor" />
                                     </div>
                                 </div>
@@ -134,7 +170,7 @@ export default function StudentProfilePage() {
 
                                 <div className="flex items-center gap-4 text-slate-500">
                                     <div className="flex items-center gap-1.5"><MapPin size={12} /><span className="text-[11px] font-bold">Sede Central</span></div>
-                                    <div className="size-1 rounded-full bg-slate-200" />
+                                    <div className="size-1 rounded-full bg-slate-200 dark:bg-slate-700" />
                                     <div className="flex items-center gap-1.5"><Calendar size={12} /><span className="text-[11px] font-bold">Unido en 2024</span></div>
                                 </div>
 
@@ -142,7 +178,7 @@ export default function StudentProfilePage() {
                                      <div className="flex justify-between items-end">
                                          <div className="text-left">
                                              <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Nivel Actual</p>
-                                             <h4 className="text-xl font-black">{profile?.active_courses.length ? 'Discípulo Maduro' : 'Nuevo estudiante'}</h4>
+                                             <h4 className="text-xl font-black dark:text-white">{profile?.active_courses.length ? 'Discípulo Maduro' : 'Nuevo estudiante'}</h4>
                                          </div>
                                          <span className="text-[11px] font-black text-slate-400 uppercase">Progreso total: {profile?.total_progress ?? 0}%</span>
                                      </div>
@@ -153,26 +189,37 @@ export default function StudentProfilePage() {
                             </div>
                         </section>
 
-                        <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] p-10 shadow-xl space-y-8">
-                            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Hitos Logrados</h3>
-                            <div className="grid grid-cols-3 gap-4">
-                                {[
-                                    { icon: Star, color: 'text-amber-500', bg: 'bg-amber-50' },
-                                    { icon: BookOpen, color: 'text-blue-500', bg: 'bg-blue-50' },
-                                    { icon: Heart, color: 'text-rose-500', bg: 'bg-rose-50' },
-                                    { icon: Zap, color: 'text-indigo-500', bg: 'bg-indigo-50' },
-                                    { icon: ShieldCheck, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-                                    { icon: Target, color: 'text-slate-400', bg: 'bg-slate-50', locked: true },
-                                ].map((badge, i) => (
-                                    <div key={i} className={clsx(
-                                        "aspect-square rounded-2xl flex items-center justify-center transition-all group cursor-help relative",
-                                        badge.locked ? "opacity-30 grayscale" : "shadow-sm hover:shadow-md hover:scale-110",
-                                        badge.bg, "dark:bg-white/5", badge.color
-                                    )}>
-                                        <badge.icon size={24} fill={badge.locked ? "none" : "currentColor"} className="fill-opacity-10" />
-                                        {badge.locked && <div className="absolute inset-0 flex items-center justify-center"><Clock size={12} className="text-slate-600" /></div>}
-                                    </div>
-                                ))}
+                        {/* GAMIFICATION 3D BADGES SECTION */}
+                        <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] p-10 shadow-xl space-y-8 relative overflow-hidden">
+                            <div className="absolute -right-10 -bottom-10 opacity-5"><Sparkles size={160} /></div>
+                            <div className="relative z-10">
+                                <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8">Vitrina de Logros MESH</h3>
+                                <div className="grid grid-cols-3 gap-6">
+                                    {[
+                                        { icon: Star, color: 'from-amber-400 to-orange-500', locked: false, title: 'Excelencia' },
+                                        { icon: BookOpen, color: 'from-blue-400 to-indigo-600', locked: false, title: 'Sabiduría' },
+                                        { icon: Heart, color: 'from-rose-400 to-pink-600', locked: false, title: 'Servicio' },
+                                        { icon: Zap, color: 'from-indigo-400 to-purple-600', locked: false, title: 'Poder' },
+                                        { icon: ShieldCheck, color: 'from-emerald-400 to-teal-600', locked: false, title: 'Fidelidad' },
+                                        { icon: Target, color: 'from-slate-400 to-slate-600', locked: true, title: 'Misiones' },
+                                    ].map((badge, i) => (
+                                        <div key={i} className="flex flex-col items-center gap-3">
+                                            <div className={clsx(
+                                                "aspect-square w-full rounded-2xl flex items-center justify-center relative badge-3d group cursor-crosshair",
+                                                badge.locked ? "bg-slate-100 dark:bg-white/5 opacity-50 grayscale" : `bg-gradient-to-br ${badge.color} inner-glow`
+                                            )}>
+                                                <badge.icon size={28} fill={badge.locked ? "none" : "rgba(255,255,255,0.5)"} className={clsx(badge.locked ? "text-slate-400" : "text-white")} />
+                                                {badge.locked && <div className="absolute inset-0 flex items-center justify-center"><Clock size={16} className="text-slate-600" /></div>}
+                                                
+                                                {/* Tooltip on hover */}
+                                                <div className="absolute -top-10 scale-0 group-hover:scale-100 transition-transform bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-lg whitespace-nowrap z-50">
+                                                    {badge.title}
+                                                </div>
+                                            </div>
+                                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{badge.title}</span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </section>
                     </aside>
@@ -190,7 +237,7 @@ export default function StudentProfilePage() {
                          <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] p-10 shadow-xl space-y-8">
                             <div className="flex items-center gap-3">
                                 <Sparkles size={20} className="text-blue-600" />
-                                <h3 className="text-lg font-black tracking-tight uppercase tracking-widest">Ruta de Crecimiento CCF</h3>
+                                <h3 className="text-lg font-black tracking-tight uppercase tracking-widest dark:text-white">Ruta de Crecimiento CCF</h3>
                             </div>
                             <div className="relative flex justify-between items-start pt-4">
                                 <div className="absolute top-10 left-0 right-0 h-1 bg-slate-100 dark:bg-white/5 z-0" />
@@ -202,9 +249,9 @@ export default function StudentProfilePage() {
                                 ].map((step, i) => (
                                     <div key={i} className="relative z-10 flex flex-col items-center gap-4 group cursor-pointer">
                                         <div className={clsx(
-                                            "size-12 rounded-2xl flex items-center justify-center transition-all border-4 border-white dark:border-slate-900",
+                                            "size-12 rounded-2xl flex items-center justify-center transition-all border-4 border-white dark:border-[#0a0f16]",
                                             step.done ? "bg-blue-600 text-white shadow-xl shadow-blue-500/20" : "bg-slate-100 dark:bg-white/5 text-slate-400 group-hover:bg-blue-100",
-                                            step.active && "ring-4 ring-blue-500/10 scale-110"
+                                            step.active && "ring-4 ring-blue-500/20 scale-110"
                                         )}>
                                             {step.done ? <CheckCircle2 size={20} /> : <span className="text-[11px] font-black">{i+1}</span>}
                                         </div>
@@ -217,19 +264,19 @@ export default function StudentProfilePage() {
                          {/* Active Courses Breakdown */}
                         {activeCourses.length > 0 && (
                             <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] p-8 shadow-xl space-y-6">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-lg font-black tracking-tight uppercase tracking-widest">Cursos activos</h3>
+                                <div className="flex items-center justify-between px-2">
+                                    <h3 className="text-lg font-black tracking-tight uppercase tracking-widest dark:text-white">Cursos activos</h3>
                                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{activeCourses.length} programas</span>
                                 </div>
                                 <div className="space-y-4">
                                     {activeCourses.map((enrollment: EnrollmentRecord) => (
-                                        <article key={enrollment.id} className="flex flex-col lg:flex-row lg:items-center gap-6 rounded-[2rem] border border-slate-100 dark:border-white/5 bg-slate-50/60 dark:bg-white/5 p-5">
+                                        <article key={enrollment.id} className="flex flex-col lg:flex-row lg:items-center gap-6 rounded-[2rem] border border-slate-100 dark:border-white/5 bg-slate-50/60 dark:bg-white/5 p-5 hover:border-blue-500/30 transition-colors">
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-1">{enrollment.course.modality === 'formal' ? 'Formal' : 'No formal'}</p>
-                                                <h4 className="text-base font-bold text-slate-900 dark:text-white mb-1 leading-tight">{enrollment.course.title}</h4>
-                                                <p className="text-[12px] text-slate-500">Asistencia {Math.round(enrollment.attendance_percent)}% • Nota {enrollment.final_grade ?? 'N/A'}</p>
+                                                <h4 className="text-base font-bold text-slate-900 dark:text-white mb-1 leading-tight truncate">{enrollment.course.title}</h4>
+                                                <p className="text-[12px] text-slate-500 font-medium">Asistencia {Math.round(enrollment.attendance_percent)}% • Nota {enrollment.final_grade ?? 'N/A'}</p>
                                             </div>
-                                            <div className="w-full lg:w-auto lg:min-w-[220px] flex flex-col gap-2">
+                                            <div className="w-full lg:w-auto lg:min-w-[220px] flex flex-col gap-3">
                                                 <ProgressPill label="Progreso" value={enrollment.progress_percent} tone="primary" />
                                                 <ProgressPill label="Asistencia" value={enrollment.attendance_percent} tone="emerald" />
                                             </div>
@@ -242,8 +289,8 @@ export default function StudentProfilePage() {
                          {/* Certificates Gallery */}
                         <section className="space-y-6">
                             <div className="flex justify-between items-center px-4">
-                                <h3 className="text-lg font-black tracking-tight uppercase tracking-widest">Certificados Verificables</h3>
-                                <button className="text-[11px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">Ver Galería <ChevronRight size={14} /></button>
+                                <h3 className="text-lg font-black tracking-tight uppercase tracking-widest dark:text-white">Certificados Verificables</h3>
+                                <button className="text-[11px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2 hover:underline">Ver Galería <ChevronRight size={14} /></button>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                  {certificates.length === 0 ? (
@@ -255,10 +302,10 @@ export default function StudentProfilePage() {
                                          <div key={i} className="group p-8 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[2.5rem] hover:border-blue-500/30 transition-all shadow-sm hover:shadow-xl flex flex-col justify-between h-[200px]">
                                              <div className="flex justify-between items-start">
                                                  <div className="size-12 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform"><Award size={24} /></div>
-                                                 <button className="p-3 bg-slate-50 dark:bg-white/10 rounded-xl text-slate-400 hover:text-blue-600 transition-colors"><Download size={18} /></button>
+                                                 <button className="p-3 bg-slate-50 dark:bg-white/10 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"><Download size={18} /></button>
                                              </div>
                                              <div>
-                                                 <h4 className="text-[13px] font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none mb-2">{cert.course_title || cert.certificate_type || 'Certificado'}</h4>
+                                                 <h4 className="text-[13px] font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none mb-2 line-clamp-2">{cert.course_title || cert.certificate_type || 'Certificado'}</h4>
                                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Expedido: {new Date(cert.issued_at).toLocaleDateString()}</p>
                                              </div>
                                          </div>
@@ -286,22 +333,22 @@ function StatBox({ icon: Icon, label, value, color }: any) {
             </div>
             <div>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 leading-none">{label}</p>
-                <h4 className="text-2xl font-black text-slate-900 dark:text-white leading-none">{value}</h4>
+                <h4 className="text-3xl font-black text-slate-900 dark:text-white leading-none tracking-tighter">{value}</h4>
             </div>
         </div>
     );
 }
 
 function ProgressPill({ label, value, tone }: { label: string; value: number; tone: 'primary' | 'emerald' }) {
-    const bg = tone === 'primary' ? 'from-blue-500 to-indigo-500' : 'from-emerald-500 to-teal-500';
+    const bg = tone === 'primary' ? 'from-blue-500 to-indigo-500 shadow-[0_0_10px_rgba(37,99,235,0.4)]' : 'from-emerald-500 to-teal-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]';
     return (
         <div className="w-full">
-            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">
+            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
                 <span>{label}</span>
-                <span>{Math.round(value)}%</span>
+                <span className={clsx(tone === 'primary' ? "text-blue-600" : "text-emerald-600")}>{Math.round(value)}%</span>
             </div>
             <div className="h-2 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
-                <div className={`h-full bg-gradient-to-r ${bg}`} style={{ width: `${Math.min(100, Math.round(value))}%` }} />
+                <div className={`h-full bg-gradient-to-r ${bg} transition-all duration-1000`} style={{ width: `${Math.min(100, Math.round(value))}%` }} />
             </div>
         </div>
     );

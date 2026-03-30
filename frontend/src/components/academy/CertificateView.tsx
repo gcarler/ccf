@@ -64,11 +64,12 @@ export default function CertificateView({ data }: CertificateProps) {
                     </div>
                     
                     <div className="flex flex-col items-center gap-2">
-                        <div className="size-16 border-2 border-slate-100 dark:border-white/10 rounded-lg flex items-center justify-center p-2">
-                            {/* Simple QR Placeholder */}
-                            <div className="grid grid-cols-3 gap-1 opacity-20">
-                                {[1,2,3,4,5,6,7,8,9].map(i => <div key={i} className="size-2 bg-slate-900 dark:bg-white rounded-[1px]" />)}
-                            </div>
+                        <div className="size-20 border-2 border-slate-100 dark:border-white/10 rounded-lg flex items-center justify-center p-1 bg-white">
+                            <img 
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : 'https://ccf.la')}/academy/certificates/${data.certificate_code}`} 
+                                alt="QR Code" 
+                                className="w-full h-full object-contain"
+                            />
                         </div>
                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Validar: {data.certificate_code}</p>
                     </div>

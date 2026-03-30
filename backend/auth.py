@@ -7,7 +7,6 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
-import os
 from backend import crud, schemas, database
 from backend.core.cache import get_redis
 from backend.core.config import get_settings
@@ -25,9 +24,12 @@ ROLE_ALIASES = {
     "student": "estudiante",
     "leader": "coordinador",
     "staff": "docente",
+    "pastor": "pastor",
 }
 
-VALID_ROLES = {"aspirante", "estudiante", "docente", "coordinador", "admin"}
+VALID_ROLES = {
+    "aspirante", "estudiante", "docente", "coordinador", "pastor", "admin"
+}
 
 
 def _utcnow() -> datetime:
@@ -42,6 +44,7 @@ def normalize_role(role: str) -> str:
 def role_in(user_role: str, allowed_roles: set[str]) -> bool:
     return normalize_role(user_role) in allowed_roles
 
+
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     now = _utcnow()
@@ -53,7 +56,11 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_user(db: Session = Depends(database.get_db), token: str = Depends(oauth2_scheme)):
+
+async def get_current_user(
+    db: Session = Depends(database.get_db),
+    token: str = Depends(oauth2_scheme)
+):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -90,15 +97,25 @@ def record_session(user_id: int, token: str) -> None:
     ttl = settings.access_token_expire_minutes * 60
     redis_client.setex(f"session:{user_id}:{token}", ttl, "active")
 
-async def get_current_active_user(current_user: schemas.User = Depends(get_current_user)):
+
+async def get_current_active_user(
+    current_user: schemas.User = Depends(get_current_user)
+):
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
-async def get_current_admin_user(current_user: schemas.User = Depends(get_current_active_user)):
+
+async def get_current_admin_user(
+    current_user: schemas.User = Depends(get_current_active_user)
+):
     if normalize_role(current_user.role) != "admin":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
     return current_user
+
 
 # Additional required by main.py
 def authenticate_user(db: Session, email: str, password: str):
@@ -110,10 +127,28 @@ def authenticate_user(db: Session, email: str, password: str):
         return False
     return user
 
+
 require_active_user = get_current_active_user
 require_admin = get_current_admin_user
 
-async def require_staff_or_admin(current_user: schemas.User = Depends(get_current_active_user)):
-    if not role_in(current_user.role, {"admin", "coordinador", "docente"}):
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+async def require_staff_or_admin(
+    current_user: schemas.User = Depends(get_current_active_user)
+):
+    if not role_in(current_user.role, {"admin", "staff"}):
+        raise HTTPException(
+            status_code=403,
+            detail="Acceso restringido a administradores y personal"
+        )
+    return current_user
+
+
+async def require_pastor_or_admin(
+    current_user: schemas.User = Depends(get_current_active_user)
+):
+    if not role_in(current_user.role, {"admin", "pastor"}):
+        raise HTTPException(
+            status_code=403,
+            detail="Acceso restringido a administradores y pastores"
+        )
     return current_user

@@ -303,7 +303,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
                                     const formData = new FormData();
                                     formData.append('file', file);
                                     formData.append('enrollment_id', viewingLessonsCourse.id.toString());
-                                    apiFetch(`/lessons/${selectedLesson.id}/submit-assignment`, {
+                                    apiFetch(`/academy/lessons/${selectedLesson.id}/submit-assignment`, {
                                       method: 'POST',
                                       token,
                                       body: formData

@@ -55,8 +55,13 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
     const dayWidth = 40; // Pixels per day
 
     const getTaskStyles = (task: any) => {
-        const startDate = task.dueDate ? subMonths(new Date(task.dueDate), 0) : new Date(); // Simple logic for mock
-        const duration = 3; // Mock duration 3 days
+        const startRaw = task.start_date || task.created_at || new Date().toISOString();
+        const endRaw = task.due_date;
+        
+        const startDate = new Date(startRaw);
+        const endDate = endRaw ? new Date(endRaw) : addDays(startDate, 3);
+        
+        const duration = Math.max(1, differenceInDays(endDate, startDate));
         
         const offsetDays = differenceInDays(startOfDay(startDate), startOfDay(days[0]));
         const left = offsetDays * dayWidth;

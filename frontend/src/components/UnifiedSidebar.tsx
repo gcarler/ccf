@@ -132,13 +132,12 @@ export default function UnifiedSidebar({
     };
 
     return (
-        <aside 
+        <aside
             className={clsx(
-                "h-[100dvh] bg-white dark:bg-[#18191b] border-r border-slate-200 dark:border-white/5 flex flex-col z-50 shrink-0 transition-all duration-300 relative font-sans",
+                "h-[100dvh] bg-white/80 dark:bg-[#18191b]/80 backdrop-blur-xl border-r border-slate-200 dark:border-white/5 flex flex-col z-50 shrink-0 transition-all duration-300 relative font-sans",
                 isMini ? "w-[72px]" : "w-[260px]"
             )}
-        >
-            {/* Toggle Button `< >` positioned absolutely on the right edge */}
+        >            {/* Toggle Button `< >` positioned absolutely on the right edge */}
             <div className="absolute right-0 translate-x-1/2 top-6 z-[60]">
                 <button 
                     onClick={toggleSidebar}

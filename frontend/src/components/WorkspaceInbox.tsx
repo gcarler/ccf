@@ -24,7 +24,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch('/notifications', { token });
+            const data = await apiFetch('/messaging/notifications', { token });
             if (Array.isArray(data)) setNotifications(data);
         } catch (err) { console.error(err); }
         finally { setLoading(false); }

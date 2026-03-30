@@ -1,228 +1,165 @@
 "use client";
 
-import React, { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import {
-    Calendar as CalendarIcon,
-    RefreshCw,
-    Clock4,
+import React, { useEffect, useState, useMemo } from 'react';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
+import { 
+    Calendar as CalendarIcon, 
+    ChevronLeft, 
+    ChevronRight, 
+    Plus, 
+    Filter,
     CheckCircle2,
-    ShieldCheck,
-    Link2,
-    ExternalLink
+    Clock,
+    Users,
+    Layers,
+    Bell
 } from 'lucide-react';
-import CommunityToolbarChip from '@/components/community/ToolbarChip';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+    format, 
+    startOfMonth, 
+    endOfMonth, 
+    startOfWeek, 
+    endOfWeek, 
+    eachDayOfInterval, 
+    isSameMonth, 
+    isSameDay, 
+    addMonths, 
+    subMonths 
+} from 'date-fns';
+import { es } from 'date-fns/locale';
+import clsx from 'clsx';
+import { apiFetch } from '@/lib/http';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
-type ConnectedAccount = {
-    id: string;
-    email: string;
-    calendarCount: number;
-    lastSync: string;
-    active: boolean;
-};
-
-type UpcomingEvent = {
-    id: string;
-    title: string;
-    date: string;
-    time: string;
-    location: string;
-    synced: boolean;
-};
-
-const defaultAccounts: ConnectedAccount[] = [
-    { id: '1', email: 'carlos@ccf.mx', calendarCount: 5, lastSync: 'Hace 2 h', active: true },
-    { id: '2', email: 'comunidad@ccf.mx', calendarCount: 3, lastSync: 'Ayer 21:00', active: true },
-    { id: '3', email: 'eventos@ccf.mx', calendarCount: 2, lastSync: 'Nunca', active: false }
-];
-
-const upcomingEvents: UpcomingEvent[] = [
-    { id: 'evt-1', title: 'Reunión Creativos', date: 'Vie, 21 Mar', time: '18:30', location: 'Campus Norte', synced: true },
-    { id: 'evt-2', title: 'Encuentro de Grupos Vida', date: 'Sáb, 22 Mar', time: '10:00', location: 'Hub Online', synced: true },
-    { id: 'evt-3', title: 'Lanzamiento campaña Generosidad', date: 'Lun, 24 Mar', time: '12:00', location: 'Sala War Room', synced: false }
-];
-
-export default function CalendarIntegrationPage() {
+export default function GlobalCalendarPage() {
+    const { token } = useAuth();
     const router = useRouter();
-    const [accounts, setAccounts] = useState(defaultAccounts);
-    const [isSyncing, setIsSyncing] = useState(false);
-    const [lastFullSync, setLastFullSync] = useState('Hace 6 minutos');
-    const activeAccounts = accounts.filter((account) => account.active);
-    const scopes = ['calendar.readonly', 'calendar.events', 'userinfo.email'];
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const [events, setEvents] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const coverage = useMemo(() => {
-        const totalCalendars = accounts.reduce((acc, account) => acc + account.calendarCount, 0);
-        return {
-            connectedCalendars: totalCalendars,
-            activeAccounts: activeAccounts.length
+    useEffect(() => {
+        const fetchEvents = async () => {
+            if (!token) return;
+            try {
+                const data = await apiFetch<any[]>('/system/calendar', { token });
+                setEvents(data);
+            } catch (err) { console.error(err); }
+            finally { setLoading(false); }
         };
-    }, [accounts, activeAccounts.length]);
+        fetchEvents();
+    }, [token]);
 
-    const handleSync = () => {
-        if (isSyncing) return;
-        setIsSyncing(true);
-        setTimeout(() => {
-            setIsSyncing(false);
-            setLastFullSync('Hace unos segundos');
-            setAccounts((prev) => prev.map((account) => ({ ...account, lastSync: 'Hace 0 min' })));
-        }, 2000);
-    };
+    const days = useMemo(() => {
+        const start = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 });
+        const end = endOfWeek(endOfMonth(currentDate), { weekStartsOn: 1 });
+        return eachDayOfInterval({ start, end });
+    }, [currentDate]);
 
-    const handleConnectGoogle = () => {
-        router.push('https://accounts.google.com/o/oauth2/v2/auth');
-    };
-
-    const toggleAccount = (accountId: string) => {
-        setAccounts((prev) =>
-            prev.map((account) =>
-                account.id === accountId ? { ...account, active: !account.active } : account
-            )
-        );
+    const getEventsForDay = (day: Date) => {
+        return events.filter(e => isSameDay(new Date(e.start), day));
     };
 
     return (
-        <div className="space-y-10 animate-in fade-in duration-500 px-4 sm:px-6 pb-16 max-w-5xl mx-auto">
-            <header className="rounded-[3rem] border border-[hsl(var(--border))] bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 p-8 space-y-6">
-                <div className="flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.35em] text-[hsl(var(--text-secondary))]">
-                    <span>Integraciones</span>
-                    <span className="opacity-40">/</span>
-                    <span className="text-[hsl(var(--primary))]">Google Calendar</span>
-                </div>
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-                    <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[hsl(var(--primary))]">Sincronización 2 vías</p>
-                        <h1 className="text-[28px] md:text-[32px] font-semibold text-[hsl(var(--text-primary))] tracking-tight leading-tight">Mantén tus eventos ClickUp y Google Calendar en perfecta sincronía.</h1>
-                        <p className="text-[13px] md:text-sm text-[hsl(var(--text-secondary))] font-medium mt-2 max-w-2xl">
-                            Conecta múltiples cuentas de Google Workspace, define qué calendarios se sincronizan y déjale a ClickUp la consolidación de recordatorios, permisos y disponibilidad.
-                        </p>
+        <WorkspaceLayout sidebarTitle="Herramientas / Calendario Maestro">
+            <div className="flex flex-col h-full bg-white dark:bg-[#141517] overflow-hidden font-display">
+                
+                {/* Header Profesional */}
+                <header className="px-10 py-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-black/20 shrink-0">
+                    <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2 bg-white dark:bg-[#1e1f21] p-1.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm">
+                            <button onClick={() => setCurrentDate(subMonths(currentDate, 1))} className="p-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl text-slate-400 transition-all"><ChevronLeft size={18} /></button>
+                            <button onClick={() => setCurrentDate(new Date())} className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-colors">Hoy</button>
+                            <button onClick={() => setCurrentDate(addMonths(currentDate, 1))} className="p-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl text-slate-400 transition-all"><ChevronRight size={18} /></button>
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-900 dark:text-white capitalize tracking-tight">
+                            {format(currentDate, 'MMMM yyyy', { locale: es })}
+                        </h2>
                     </div>
-                    <div className="flex flex-col gap-3">
-                        <button
-                            type="button"
-                            onClick={handleConnectGoogle}
-                            className="px-5 h-12 rounded-2xl border border-[hsl(var(--border))] bg-white text-[10px] font-semibold uppercase tracking-[0.35em] flex items-center gap-3 shadow-sm"
-                        >
-                            <span className="size-7 rounded-full bg-[#4285F4] text-white font-bold text-xs flex items-center justify-center">G</span>
-                            Conectar con Google
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleSync}
-                            disabled={isSyncing}
-                            className="px-5 h-12 rounded-2xl bg-[hsl(var(--text-primary))] text-white text-[10px] font-semibold uppercase tracking-[0.4em] flex items-center gap-3 disabled:opacity-50"
-                        >
-                            <RefreshCw size={16} className={isSyncing ? 'animate-spin' : ''} />
-                            {isSyncing ? 'Sincronizando…' : 'Sincronizar ahora'}
+
+                    <div className="flex items-center gap-3">
+                        <div className="flex gap-1 p-1 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
+                            <ViewBtn active label="Mes" />
+                            <ViewBtn active={false} label="Semana" />
+                            <ViewBtn active={false} label="Día" />
+                        </div>
+                        <button className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all">
+                            <Plus size={14} /> Nuevo Evento
                         </button>
                     </div>
-                </div>
-            </header>
+                </header>
 
-            <section className="rounded-[2.5rem] border border-[hsl(var(--border))] bg-white dark:bg-slate-900/80 p-6 space-y-6">
-                <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                        <CalendarIcon size={20} className="text-[hsl(var(--primary))]" />
-                        <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[hsl(var(--text-secondary))]">Calendarios conectados</p>
-                            <p className="text-xl font-semibold text-[hsl(var(--text-primary))]">{coverage.connectedCalendars}</p>
+                {/* Grid del Calendario */}
+                <div className="flex-1 overflow-hidden p-6 lg:p-10">
+                    <div className="h-full border border-slate-200 dark:border-white/10 rounded-[3rem] bg-white dark:bg-[#1e1f21] overflow-hidden flex flex-col shadow-2xl shadow-black/5">
+                        {/* Días de la semana */}
+                        <div className="grid grid-cols-7 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20">
+                            {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(d => (
+                                <div key={d} className="py-4 text-center text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">{d}</div>
+                            ))}
+                        </div>
+
+                        {/* Celdas de Días */}
+                        <div className="flex-1 grid grid-cols-7 overflow-y-auto scrollbar-hide">
+                            {days.map((day, idx) => {
+                                const dayEvents = getEventsForDay(day);
+                                return (
+                                    <div 
+                                        key={idx} 
+                                        className={clsx(
+                                            "min-h-[120px] p-4 border-r border-b border-slate-100 dark:border-white/5 relative group transition-colors hover:bg-slate-50/50 dark:hover:bg-white/[0.02]",
+                                            !isSameMonth(day, currentDate) && "bg-slate-50/30 dark:bg-black/10 opacity-40"
+                                        )}
+                                    >
+                                        <span className={clsx(
+                                            "inline-flex size-7 items-center justify-center rounded-lg text-[11px] font-black transition-all",
+                                            isSameDay(day, new Date()) ? "bg-blue-600 text-white shadow-lg shadow-blue-500/40 scale-110" : "text-slate-400 dark:text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white"
+                                        )}>
+                                            {format(day, 'd')}
+                                        </span>
+
+                                        <div className="mt-3 space-y-1.5 overflow-hidden">
+                                            {dayEvents.slice(0, 3).map((e: any) => (
+                                                <div 
+                                                    key={e.id}
+                                                    onClick={() => router.push(e.href)}
+                                                    className={clsx(
+                                                        "px-2 py-1.5 rounded-lg border text-[9px] font-black uppercase tracking-tight flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-95 transition-all truncate",
+                                                        e.type === 'task' ? "bg-blue-50 border-blue-100 text-blue-600 dark:bg-blue-900/20 dark:border-blue-800" :
+                                                        e.type === 'crm' ? "bg-emerald-50 border-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-800" :
+                                                        "bg-rose-50 border-rose-100 text-rose-600 dark:bg-rose-900/20 dark:border-rose-800"
+                                                    )}
+                                                >
+                                                    {e.type === 'task' ? <Layers size={10} /> : e.type === 'crm' ? <Users size={10} /> : <Bell size={10} />}
+                                                    <span className="truncate">{e.title}</span>
+                                                </div>
+                                            ))}
+                                            {dayEvents.length > 3 && (
+                                                <div className="text-[8px] font-black text-slate-400 pl-2 uppercase tracking-widest">
+                                                    + {dayEvents.length - 3} más
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-[hsl(var(--border))]">
-                        <CheckCircle2 size={20} className="text-emerald-500" />
-                        <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[hsl(var(--text-secondary))]">Cuentas activas</p>
-                            <p className="text-xl font-semibold text-[hsl(var(--text-primary))]">{coverage.activeAccounts}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-[hsl(var(--border))]">
-                        <Clock4 size={20} className="text-amber-500" />
-                        <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[hsl(var(--text-secondary))]">Última sincronización</p>
-                            <p className="text-xl font-semibold text-[hsl(var(--text-primary))]">{lastFullSync}</p>
-                        </div>
-                    </div>
                 </div>
+            </div>
+        </WorkspaceLayout>
+    );
+}
 
-                <div className="flex flex-wrap items-center gap-2">
-                    {scopes.map((scope) => (
-                        <CommunityToolbarChip key={scope} label={scope} size="sm" />
-                    ))}
-                    <CommunityToolbarChip label="Ver documentación" icon={ExternalLink} size="sm" onClick={() => router.push('https://developers.google.com/calendar')} />
-                </div>
-            </section>
-
-            <section className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div className="lg:col-span-3 space-y-4 rounded-[2.5rem] border border-[hsl(var(--border))] bg-white dark:bg-slate-900/70 p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-[hsl(var(--text-secondary))]">Cuentas conectadas</p>
-                            <h2 className="text-xl font-semibold text-[hsl(var(--text-primary))]">Google Workspace</h2>
-                        </div>
-                        <button className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[hsl(var(--primary))]" onClick={handleConnectGoogle}>
-                            + Añadir cuenta
-                        </button>
-                    </div>
-                    <div className="space-y-4">
-                        {accounts.map((account) => (
-                            <div
-                                key={account.id}
-                                className={`rounded-2xl border px-5 py-4 flex items-center justify-between ${account.active ? 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]' : 'border-dashed border-[hsl(var(--border))] bg-transparent'}`}
-                            >
-                                <div>
-                                    <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{account.email}</p>
-                                    <p className="text-[12px] text-[hsl(var(--text-secondary))]">{account.calendarCount} calendarios · Último sync {account.lastSync || '—'}</p>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => toggleAccount(account.id)}
-                                    className={`px-4 h-10 rounded-2xl text-[10px] font-semibold uppercase tracking-[0.3em] ${account.active ? 'bg-[hsl(var(--text-primary))] text-white' : 'border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]'}`}
-                                >
-                                    {account.active ? 'Activo' : 'Activar'}
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="lg:col-span-2 space-y-4 rounded-[2.5rem] border border-[hsl(var(--border))] bg-white dark:bg-slate-900/70 p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-[hsl(var(--text-secondary))]">Próximos eventos</p>
-                            <h2 className="text-xl font-semibold text-[hsl(var(--text-primary))]">Agenda sincronizada</h2>
-                        </div>
-                        <CommunityToolbarChip label="Semana" active variant="solid" size="sm" />
-                    </div>
-                    <div className="space-y-3">
-                        {upcomingEvents.map((event) => (
-                            <div key={event.id} className="rounded-2xl border border-[hsl(var(--border))] p-4 flex items-start gap-3">
-                                <div className="rounded-xl bg-[hsl(var(--surface-2))] px-3 py-2 text-[11px] font-semibold text-[hsl(var(--text-primary))]">
-                                    {event.date}
-                                </div>
-                                <div className="flex-1 space-y-1">
-                                    <p className="text-[15px] font-semibold text-[hsl(var(--text-primary))]">{event.title}</p>
-                                    <p className="text-[12px] text-[hsl(var(--text-secondary))]">{event.time} · {event.location}</p>
-                                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.3em] ${event.synced ? 'text-emerald-500' : 'text-amber-500'}`}>
-                                        <CheckCircle2 size={12} /> {event.synced ? 'Google actualizado' : 'Pendiente de enviar'}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            <section className="rounded-[3rem] border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] p-8 space-y-4 text-center">
-                <ShieldCheck size={36} className="mx-auto text-[hsl(var(--primary))]" />
-                <h3 className="text-2xl font-semibold text-[hsl(var(--text-primary))]">Autorizaciones OAuth confiables</h3>
-                <p className="text-[13px] text-[hsl(var(--text-secondary))] max-w-2xl mx-auto">
-                    ClickUp solo solicitará permisos de lectura/escritura para los calendarios seleccionados. Puedes revocar la autorización desde Google Security en cualquier momento.
-                </p>
-                <div className="flex flex-wrap justify-center gap-3 mt-4">
-                    <CommunityToolbarChip label="Ver auditoría" icon={Link2} size="sm" />
-                    <CommunityToolbarChip label="Política de privacidad" icon={ExternalLink} size="sm" onClick={() => router.push('/privacy')} />
-                </div>
-            </section>
-        </div>
+function ViewBtn({ active, label }: any) {
+    return (
+        <button className={clsx(
+            "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+            active ? "bg-white dark:bg-[#1e1f21] text-blue-600 shadow-md" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+        )}>
+            {label}
+        </button>
     );
 }

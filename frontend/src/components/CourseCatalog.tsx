@@ -19,6 +19,8 @@ interface Course {
   is_self_paced: boolean;
   cohort_name?: string | null;
   certificate_type?: string | null;
+  lesson_count: number;
+  total_minutes: number;
 }
 
 interface CourseCatalogProps {
@@ -134,13 +136,13 @@ export default function CourseCatalog({ userId, token, enrolledCourseIds = [], i
               </div>
               <div className="flex items-center gap-4 py-3 border-t border-b border-white/5">
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 flex items-center gap-1"><Clock size={10} /> Duración</span>
-                  <span className="text-xs font-bold text-white">{course.duration_hours}h</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 flex items-center gap-1"><Clock size={10} /> Tiempo</span>
+                  <span className="text-xs font-bold text-white">{course.total_minutes > 0 ? `${course.total_minutes}m` : `${course.duration_hours}h`}</span>
                 </div>
                 <div className="w-px h-6 bg-white/10"></div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 flex items-center gap-1"><School size={10} /> Tipo</span>
-                  <span className="text-xs font-bold text-white">{course.is_self_paced ? "Autoguiado" : "Cohorte"}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 flex items-center gap-1"><School size={10} /> Lecciones</span>
+                  <span className="text-xs font-bold text-white">{course.lesson_count} módulos</span>
                 </div>
               </div>
               <button

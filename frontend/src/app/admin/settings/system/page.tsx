@@ -29,11 +29,14 @@ import { apiFetch } from '@/lib/http';
 import { apiUrl } from '@/lib/api';
 import AdminShell from '@/components/admin/AdminShell';
 import AdminHero from '@/components/admin/AdminHero';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
 export default function SystemSettings() {
     const { token, isAuthenticated } = useAuth();
+    const router = useRouter();
     const { addToast } = useToast();
     const [config, setConfig] = useState<any>(null);
     const [auditEvents, setAuditEvents] = useState<any[]>([]);
@@ -569,13 +572,40 @@ export default function SystemSettings() {
 
     if (!isAuthenticated) return null;
 
+    const settingsSidebar = (
+        <div className="flex flex-col h-full overflow-hidden">
+            <div className="p-8 border-b border-slate-100 dark:border-white/5 space-y-4">
+                <div className="size-16 rounded-3xl bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 shadow-xl">
+                    <Zap size={32} />
+                </div>
+                <div>
+                    <h3 className="text-xl font-black tracking-tight text-slate-800 dark:text-white">Motor Core</h3>
+                    <p className="text-[10px] font-bold text-blue-500 uppercase tracking-[0.2em]">Configuración Global</p>
+                </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                <button className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-white/5 shadow-md border border-blue-500/20 rounded-2xl text-blue-600 dark:text-blue-400 font-bold text-xs"><div className="flex items-center gap-3"><Settings size={16} /> Sistema Base</div> <ChevronRight size={14} /></button>
+                <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 rounded-2xl text-slate-500 font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Shield size={16} /> Permisos y Roles</div></button>
+                <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 rounded-2xl text-slate-500 font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Database size={16} /> Respaldos</div></button>
+                <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 rounded-2xl text-slate-500 font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Activity size={16} /> Monitor de Salud</div></button>
+            </div>
+        </div>
+    );
+
     return (
-        <AdminShell
-            breadcrumbs={[
-                { label: 'Infraestructura', icon: Server },
-                { label: 'Configuración Maestra', icon: Shield }
-            ]}
+        <WorkspaceLayout 
+            sidebarTitle="Ajustes del Sistema"
+            parentTitle="Panel de Control"
+            depth={2}
+            onBack={() => router.push('/admin')}
+            customSidebar={settingsSidebar}
         >
+            <AdminShell
+                breadcrumbs={[
+                    { label: 'Infraestructura', icon: Server },
+                    { label: 'Configuración Maestra', icon: Shield }
+                ]}
+            >
             <AdminHero
                 eyebrow="System Core"
                 title="Consola de Administración Senior"

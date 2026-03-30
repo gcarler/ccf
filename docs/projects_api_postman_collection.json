@@ -1,0 +1,222 @@
+{
+  "info": {
+    "name": "CCF Projects API QA",
+    "_postman_id": "9a9dfef8-6266-4680-bf74-b95efaf214f8",
+    "description": "Functional QA collection for /api/projects endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000" },
+    { "key": "token", "value": "" },
+    { "key": "project_id", "value": "1" },
+    { "key": "task_id", "value": "1" },
+    { "key": "supply_id", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "Create project",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"QA Proyecto Integral\",\n  \"description\": \"Proyecto para validar flujos\",\n  \"status\": \"planning\",\n  \"color\": \"#2563eb\"\n}"
+            },
+            "url": "{{base_url}}/api/projects/"
+          }
+        },
+        {
+          "name": "List projects",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/projects/?limit=25"
+          }
+        },
+        {
+          "name": "Get project detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/projects/{{project_id}}"
+          }
+        },
+        {
+          "name": "Update project",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"active\"\n}" },
+            "url": "{{base_url}}/api/projects/{{project_id}}"
+          }
+        },
+        {
+          "name": "Delete project",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/projects/{{project_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "Create task in project",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Tarea QA principal\",\n  \"description\": \"Validar flujo\",\n  \"status\": \"todo\",\n  \"priority\": \"high\"\n}"
+            },
+            "url": "{{base_url}}/api/projects/{{project_id}}/tasks"
+          }
+        },
+        {
+          "name": "List tasks by project",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/projects/{{project_id}}/tasks"
+          }
+        },
+        {
+          "name": "List tasks global",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/projects/tasks?project_id={{project_id}}"
+          }
+        },
+        {
+          "name": "Get task",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/projects/tasks/{{task_id}}"
+          }
+        },
+        {
+          "name": "Update task",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"in_progress\"\n}" },
+            "url": "{{base_url}}/api/projects/tasks/{{task_id}}"
+          }
+        },
+        {
+          "name": "Delete task",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/projects/tasks/{{task_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Supplies",
+      "item": [
+        {
+          "name": "Create supply",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item_name\": \"Cable HDMI\",\n  \"quantity\": 2,\n  \"status\": \"pending\"\n}"
+            },
+            "url": "{{base_url}}/api/projects/tasks/{{task_id}}/supplies"
+          }
+        },
+        {
+          "name": "List supplies",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/projects/tasks/{{task_id}}/supplies"
+          }
+        },
+        {
+          "name": "Update supply",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"ready\",\n  \"quantity\": 3\n}" },
+            "url": "{{base_url}}/api/projects/tasks/{{task_id}}/supplies/{{supply_id}}"
+          }
+        },
+        {
+          "name": "Delete supply",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/projects/tasks/{{task_id}}/supplies/{{supply_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Feeds and Analytics",
+      "item": [
+        {
+          "name": "Inbox",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/projects/inbox?limit=20"
+          }
+        },
+        {
+          "name": "Activities",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/projects/activities?limit=20"
+          }
+        },
+        {
+          "name": "Portfolio summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/projects/summary"
+          }
+        },
+        {
+          "name": "Workload summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/api/projects/workload"
+          }
+        }
+      ]
+    }
+  ]
+}

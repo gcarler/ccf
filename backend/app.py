@@ -14,6 +14,7 @@ from backend.api import (
     analytics as analytics_router,
     auth as auth_router,
     crm,
+    dashboard,
     governance,
     messaging,
     system,
@@ -103,7 +104,7 @@ def create_application() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins,
+        allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -114,25 +115,26 @@ def create_application() -> FastAPI:
     app.mount("/static", StaticFiles(directory=uploads_dir), name="static")
 
     # Routers Ministerial v3.9 (Activos y Sincronizados)
-    app.include_router(system.router)
-    app.include_router(auth_router.router, tags=["auth"])
-    app.include_router(analytics_router.router, tags=["analytics"])
-    app.include_router(crm.router, prefix="/crm", tags=["crm"])
-    app.include_router(finance.router)
-    app.include_router(spiritual_life.router)
-    app.include_router(assets.router)
-    app.include_router(workspace.router)
+    app.include_router(system.router, prefix="/api/system")
+    app.include_router(auth_router.router, prefix="/api", tags=["auth"])
+    app.include_router(analytics_router.router, prefix="/api", tags=["analytics"])
+    app.include_router(dashboard.router, prefix="/api", tags=["dashboard"])
+    app.include_router(crm.router, prefix="/api", tags=["crm"])
+    app.include_router(finance.router, prefix="/api")
+    app.include_router(spiritual_life.router, prefix="/api")
+    app.include_router(assets.router, prefix="/api")
+    app.include_router(workspace.router, prefix="/api")
     
-    app.include_router(academy.router, tags=["academy"])
-    app.include_router(messaging.router, tags=["messaging"])
-    app.include_router(agents_router.router, tags=["agents"])
-    app.include_router(prayer.router, prefix="/prayer", tags=["prayer"])
-    app.include_router(support.router, prefix="/support", tags=["support"])
-    app.include_router(donations.router)
-    app.include_router(projects.router, prefix="/projects", tags=["projects"])
-    app.include_router(community.router)
-    app.include_router(governance.router)
-    app.include_router(graph.router)
+    app.include_router(academy.router, prefix="/api/academy", tags=["academy"])
+    app.include_router(messaging.router, prefix="/api/messaging", tags=["messaging"])
+    app.include_router(agents_router.router, prefix="/api", tags=["agents"])
+    app.include_router(prayer.router, prefix="/api/prayer", tags=["prayer"])
+    app.include_router(support.router, prefix="/api/support", tags=["support"])
+    app.include_router(donations.router, prefix="/api")
+    app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
+    app.include_router(community.router, prefix="/api")
+    app.include_router(governance.router, prefix="/api")
+    app.include_router(graph.router, prefix="/api")
 
     if settings.enable_otel:
         configure_telemetry(app, engine)

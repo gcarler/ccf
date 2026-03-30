@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 
 async function fetchInitialCourses() {
     try {
-        const data = await serverApiFetch<any[]>('/courses/');
+        const data = await serverApiFetch<any[]>('/academy/courses/');
         return Array.isArray(data) ? data : [];
     } catch (error) {
         console.error('academy courses fetch failed', error);

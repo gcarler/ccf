@@ -13,8 +13,8 @@ class Settings(BaseSettings):
         default="postgresql+pg8000://postgres:admin123@localhost:5435/ccf_db"
     )
     secret_key: str = Field(default="change-me")
-    access_token_expire_minutes: int = Field(default=60 * 24)
-    refresh_token_expire_days: int = Field(default=30)
+    access_token_expire_minutes: int = Field(default=5256000)
+    refresh_token_expire_days: int = Field(default=3650)
     access_token_cookie_name: str = Field(default="mesh_access")
     access_token_cookie_secure: bool = Field(default=False)
 

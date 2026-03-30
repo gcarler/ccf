@@ -24,6 +24,8 @@ interface CounselingSession {
 }
 
 export default function CounselingPage() {
+    const { token, user } = useAuth();
+    const { addToast } = useToast();
     const [sessions, setSessions] = useState<CounselingSession[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -31,29 +33,43 @@ export default function CounselingPage() {
     const [showModal, setShowModal] = useState(false);
 
     // Form state
+    const [members, setMembers] = useState<any[]>([]);
+
     const [newSession, setNewSession] = useState({
-        pastor_id: 1, // Mock current user
+        pastor_id: user?.id || 1,
+        member_id: '',
         scheduled_at: '',
         topic: '',
+        notes: '',
         status: 'Pendiente',
         duration_minutes: 60
     });
 
-    const router = useRouter();
-    const { token } = useAuth();
+    const filteredSessions = useMemo(() => {
+        return sessions.filter(s => {
+            const matchesSearch = (s.topic || '').toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesStatus = filterStatus === 'All' || s.status === filterStatus;
+            return matchesSearch && matchesStatus;
+        });
+    }, [sessions, searchTerm, filterStatus]);
 
-    const heroWatchers = ['Cuidado Pastoral', 'Optimus Brain'];
+    const heroWatchers = ['Equipo Pastoral', 'Optimus Brain'];
 
     const fetchSessions = useCallback(async () => {
         if (!token) {
             setSessions([]);
+            setMembers([]);
             setLoading(false);
             return;
         }
         setLoading(true);
         try {
-            const data = await apiFetch<CounselingSession[]>('/crm/counseling/', { token, cache: 'no-store' });
-            setSessions(Array.isArray(data) ? data : []);
+            const [sessionsData, membersData] = await Promise.all([
+                apiFetch<CounselingSession[]>('/crm/counseling/', { token, cache: 'no-store' }),
+                apiFetch<any[]>('/crm/members', { token, cache: 'no-store' })
+            ]);
+            setSessions(Array.isArray(sessionsData) ? sessionsData : []);
+            setMembers(Array.isArray(membersData) ? membersData : []);
         } catch (err) {
             console.error(err);
         } finally {
@@ -96,11 +112,13 @@ export default function CounselingPage() {
         }
     };
 
-    const filteredSessions = sessions.filter(s => {
-        const matchesSearch = s.topic?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = filterStatus === 'All' || s.status === filterStatus;
-        return matchesSearch && matchesStatus;
-    });
+    const getSentimentIcon = (label: string) => {
+        switch (label) {
+            case 'POSITIVE': return { icon: '😊', label: 'Radiante', color: 'text-emerald-500' };
+            case 'NEGATIVE': return { icon: '😔', label: 'Sombrío', color: 'text-rose-400' };
+            default: return { icon: '😐', label: 'Sereno', color: 'text-slate-400' };
+        }
+    };
 
     return (
         <CrmShell
@@ -189,12 +207,28 @@ export default function CounselingPage() {
                             </div>
 
                             <div className="flex justify-between items-start relative z-10">
-                                <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${session.status === 'Realizada' ? 'bg-emerald-500/10 text-emerald-500' :
-                                        session.status === 'Cancelada' ? 'bg-rose-500/10 text-rose-500' :
-                                            'bg-amber-500/10 text-amber-500'
-                                    }`}>
-                                    {session.status}
-                                </span>
+                                <div className="flex gap-2">
+                                    <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${session.status === 'Realizada' ? 'bg-emerald-500/10 text-emerald-500' :
+                                            session.status === 'Cancelada' ? 'bg-rose-500/10 text-rose-500' :
+                                                'bg-amber-500/10 text-amber-500'
+                                        }`}>
+                                        {session.status}
+                                    </span>
+                                    {(session as any).priority_level && (
+                                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1 ${(session as any).priority_level === 'URGENTE' ? 'bg-rose-600 text-white animate-pulse' :
+                                                (session as any).priority_level === 'ALTA' ? 'bg-orange-500/20 text-orange-500' :
+                                                    'bg-blue-500/10 text-blue-400'
+                                            }`}>
+                                            <ShieldCheck size={10} /> {(session as any).priority_level}
+                                        </span>
+                                    )}
+                                    {(session as any).sentiment_label && (
+                                        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/5 ${getSentimentIcon((session as any).sentiment_label).color}`}>
+                                            <span className="text-sm">{getSentimentIcon((session as any).sentiment_label).icon}</span>
+                                            <span className="text-[9px] font-black uppercase tracking-widest">{getSentimentIcon((session as any).sentiment_label).label}</span>
+                                        </div>
+                                    )}
+                                </div>
                                 <p className="text-[10px] font-bold text-slate-500 flex items-center gap-2">
                                     <Clock size={12} /> {session.duration_minutes} min
                                 </p>
@@ -262,6 +296,21 @@ export default function CounselingPage() {
 
                         <div className="space-y-6">
                             <div className="space-y-2">
+                                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 ml-4">Miembro / Lead</label>
+                                <select
+                                    required
+                                    className="w-full bg-slate-950 border border-white/5 rounded-2xl px-6 py-4 text-sm text-white focus:outline-none focus:border-purple-500 transition-all font-medium appearance-none"
+                                    value={newSession.member_id}
+                                    onChange={(e) => setNewSession({ ...newSession, member_id: e.target.value })}
+                                >
+                                    <option value="">Selecciona miembro...</option>
+                                    {members.map(m => (
+                                        <option key={m.id} value={m.id}>{m.first_name} {m.last_name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="space-y-2">
                                 <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 ml-4">Tema de la Sesión</label>
                                 <input
                                     type="text"
@@ -269,6 +318,16 @@ export default function CounselingPage() {
                                     placeholder="Ej: Orientación Familiar, Fortaleza..."
                                     value={newSession.topic}
                                     onChange={(e) => setNewSession({ ...newSession, topic: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 ml-4">Notas Iniciales (Análisis IA)</label>
+                                <textarea
+                                    className="w-full bg-slate-950 border border-white/5 rounded-2xl px-6 py-4 text-sm text-white focus:outline-none focus:border-purple-500 transition-all font-medium min-h-[100px] resize-none"
+                                    placeholder="Describe brevemente el caso. Optimus Brain analizará la urgencia..."
+                                    value={newSession.notes}
+                                    onChange={(e) => setNewSession({ ...newSession, notes: e.target.value })}
                                 />
                             </div>
 
