@@ -326,3 +326,32 @@ def create_donation_category(payload: Dict[str, Any], db: Session = Depends(get_
     db.add(cat)
     db.commit()
     return {"status": "success"}
+
+# --- CRM AUTOMATIONS ---
+
+@router.get("/automations", response_model=List[Dict[str, Any]])
+def list_automations(db: Session = Depends(get_db)):
+    """Lista reglas de automatización configuradas."""
+    rules = db.query(models.CrmAutomation).all()
+    return [{
+        "id": r.id,
+        "name": r.name,
+        "trigger": r.trigger_event,
+        "action": r.action_type,
+        "payload": r.action_payload or {},
+        "active": r.is_active
+    } for r in rules]
+
+@router.post("/automations")
+def create_automation(payload: Dict[str, Any], db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
+    """Crea una nueva regla de automatización pastoral."""
+    rule = models.CrmAutomation(
+        name=payload["name"],
+        trigger_event=payload["trigger"],
+        action_type=payload["action"],
+        action_payload=payload.get("payload", {})
+    )
+    db.add(rule)
+    db.commit()
+    return {"status": "success"}
+

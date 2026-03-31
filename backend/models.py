@@ -452,7 +452,7 @@ class ProjectTask(Base):
 
     status = Column(String(20), default="todo") # todo, in_progress, review, done
     priority = Column(String(20), default="normal") # urgent, high, normal, low
-    assignee_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    assignee_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     start_date = Column(DateTime, nullable=True)
     due_date = Column(DateTime, nullable=True)
     labels = Column(JSON, default=[]) # e.g. ["Alabanza", "Importante"]
@@ -782,6 +782,20 @@ class VolunteerShift(Base):
 
     member = relationship("Member")
 
+class VolunteerSkill(Base):
+    __tablename__ = "volunteer_skills"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, nullable=False)
+    category = Column(String(100)) # Musico, Tecnico, Administrativo, Servicio
+
+member_volunteer_skills = Table(
+    "member_volunteer_skills",
+    Base.metadata,
+    Column("member_id", Integer, ForeignKey("members.id", ondelete="CASCADE"), primary_key=True),
+    Column("skill_id", Integer, ForeignKey("volunteer_skills.id", ondelete="CASCADE"), primary_key=True),
+)
+
+
 class Announcement(Base):
     __tablename__ = "announcements"
     id = Column(Integer, primary_key=True, index=True)
@@ -802,5 +816,16 @@ class Testimonial(Base):
     show_on_home = Column(Boolean, default=False)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
+
+class CrmAutomation(Base):
+    __tablename__ = "crm_automations"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False)
+    trigger_event = Column(String(50), nullable=False) # birthday, new_member, inactivity
+    action_type = Column(String(50), nullable=False) # send_whatsapp, create_task
+    action_payload = Column(JSON, nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=_utcnow)
+
 
 

@@ -744,6 +744,9 @@ def get_pastor_radar(db: Session):
     }
 
 
+from backend.core.cache import cached
+
+@cached(ttl=600)
 def get_dashboard_metrics(db: Session):
     active_students = db.query(models.Enrollment).filter(models.Enrollment.status == "active").count()
     total_enrollments = db.query(models.Enrollment).count()

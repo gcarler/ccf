@@ -62,6 +62,23 @@ def get_team_workload(db: Session = Depends(get_db), current_user: models.User =
         })
     return result
 
+from backend.core.ai import generate_ministerial_content
+
+@router.post("/ai/generate")
+async def ai_generate(
+    payload: Dict[str, str],
+    current_user: models.User = Depends(require_active_user)
+):
+    """Genera contenido ministerial usando Llama 3 local."""
+    prompt = payload.get("prompt", "")
+    context = payload.get("context", "")
+    
+    if not prompt:
+        raise HTTPException(status_code=400, detail="Falta el prompt")
+        
+    response = await generate_ministerial_content(prompt, context)
+    return {"response": response}
+
 @router.get("/health")
 def get_system_health():
     return {"status": "ok", "version": "3.0.0-PRO"}

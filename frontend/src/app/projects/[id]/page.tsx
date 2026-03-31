@@ -39,7 +39,7 @@ import ProjectWhiteboard from '@/components/projects/ProjectWhiteboard';
 import type { ProjectRecord, ProjectTaskRecord } from '@/types/projects';
 import Skeleton from '@/components/ui/Skeleton';
 
-type ViewTab = 'dashboard' | 'kanban' | 'tabla' | 'calendario' | 'gantt' | 'wiki' | 'pizarra';
+type ViewTab = 'dashboard' | 'kanban' | 'tabla' | 'calendario' | 'gantt' | 'wiki';
 
 export default function ProjectDetailPage() {
     const params = useParams<{ id: string }>();
@@ -52,9 +52,10 @@ export default function ProjectDetailPage() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<ViewTab>('dashboard');
     
-    // Estado para el modal de detalle de tarea
+    // Estados para Ventanas de Desprendimiento (Capa 4)
     const [selectedTask, setSelectedTask] = useState<ProjectTaskRecord | null>(null);
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+    const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false);
 
     useEffect(() => {
         const fetchProject = async () => {
@@ -104,6 +105,14 @@ export default function ProjectDetailPage() {
                 availableViews={['grid']}
                 rightActions={
                     <div className="flex gap-2">
+                        {/* Disparador de Pizarra (Ventana Desprendible) */}
+                        <button 
+                            onClick={() => setIsWhiteboardOpen(true)}
+                            className="p-2.5 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-400 hover:text-orange-500 transition-all"
+                            title="Abrir Pizarra de Planificación"
+                        >
+                            <LayoutDashboard size={20} />
+                        </button>
                         <button className="p-2.5 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-400 hover:text-blue-600 transition-all">
                             <Settings size={20} />
                         </button>
@@ -161,7 +170,6 @@ export default function ProjectDetailPage() {
                         <TabButton active={activeTab === 'calendario'} onClick={() => setActiveTab('calendario')} label="Calendario" icon={CalendarIcon} />
                         <TabButton active={activeTab === 'gantt'} onClick={() => setActiveTab('gantt')} label="Gantt" icon={GanttChartSquare} />
                         <TabButton active={activeTab === 'wiki'} onClick={() => setActiveTab('wiki')} label="Wiki" icon={BookOpen} />
-                        <TabButton active={activeTab === 'pizarra'} onClick={() => setActiveTab('pizarra')} label="Pizarra" icon={LayoutDashboard} />
                     </nav>
 
                     <div className="flex-1 overflow-hidden p-8">
@@ -216,12 +224,6 @@ export default function ProjectDetailPage() {
                                         initialContent={project.description || ''} 
                                     />
                                 )}
-
-                                {activeTab === 'pizarra' && (
-                                    <ProjectWhiteboard 
-                                        project_id={project.id} 
-                                    />
-                                )}
                             </motion.div>
                         </AnimatePresence>
                     </div>
@@ -231,7 +233,9 @@ export default function ProjectDetailPage() {
                 <ProjectActivityFeed activities={project.activities || []} />
             </main>
 
-            {/* Modal de Detalle de Tarea Unificado */}
+            {/* CAPA 4: VENTANAS DESPRENDIBLES (Drawers) */}
+            
+            {/* 4.1 Modal de Detalle de Tarea */}
             <TaskDetailModal 
                 isOpen={isTaskModalOpen}
                 task={selectedTask}
@@ -239,6 +243,13 @@ export default function ProjectDetailPage() {
                 onUpdate={(updated) => {
                     setTasks(tasks.map(t => t.id === updated.id ? updated : t));
                 }}
+            />
+
+            {/* 4.2 Pizarra de Gran Formato (Nueva Capa) */}
+            <ProjectWhiteboard 
+                isOpen={isWhiteboardOpen}
+                project_id={project.id}
+                onClose={() => setIsWhiteboardOpen(false)}
             />
         </div>
     );

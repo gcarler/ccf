@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     X, CheckSquare, FileText, Bell, LayoutDashboard, 
     Plus, Hash, ChevronRight, Sparkles, Target, 
-    Flag, User, Calendar, Loader2, Search, Command, AlignLeft
+    Flag, User, Calendar, Loader2, Search, Command,
+    Wand2, Globe, Layers, Zap
 } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import clsx from 'clsx';
@@ -15,14 +16,6 @@ import { toast } from 'sonner';
 import type { ProjectRecord } from '@/types/projects';
 
 type CreationType = 'task' | 'doc' | 'reminder' | 'whiteboard' | 'panel';
-
-const TABS: { id: CreationType; label: string }[] = [
-    { id: 'task',       label: 'Tarea'        },
-    { id: 'doc',        label: 'Documento'    },
-    { id: 'reminder',   label: 'Recordatorio' },
-    { id: 'whiteboard', label: 'Pizarra'      },
-    { id: 'panel',      label: 'Panel'        },
-];
 
 interface Props {
     isOpen: boolean;
@@ -35,7 +28,9 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
     const [type, setType] = useState<CreationType>(initialType);
     const [projects, setProjects] = useState<ProjectRecord[]>([]);
     const [loading, setLoading] = useState(false);
+    const [isAiGenerating, setIsAiGenerating] = useState(false);
     
+    // Form States
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
@@ -63,6 +58,30 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
         } catch (err) { console.error(err); }
     };
 
+    const handleAiGenerate = async () => {
+        if (!title.trim()) {
+            toast.error("Escribe un título para que la IA tenga contexto.");
+            return;
+        }
+        setIsAiGenerating(true);
+        try {
+            const data = await apiFetch<{response: string}>('/system/ai/generate', {
+                method: 'POST',
+                token,
+                body: { 
+                    prompt: `Genera una descripción profesional para esta tarea ministerial: ${title}`,
+                    context: `Tipo: ${type}, Prioridad: ${priority}`
+                }
+            });
+            setDescription(data.response);
+            toast.success("IA: Sugerencia generada");
+        } catch (err) {
+            toast.error("IA local no disponible");
+        } finally {
+            setIsAiGenerating(false);
+        }
+    };
+
     const handleSubmit = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         if (!title.trim() || !selectedProjectId) return;
@@ -75,10 +94,10 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                     token,
                     body: { title: title.trim(), description, status: 'todo', priority }
                 });
-                toast.success(`Tarea lanzada exitosamente`);
+                toast.success(`Misión lanzada exitosamente`);
                 resetAndClose();
             } else {
-                toast.info(`La creación de ${type} se habilitará en la Fase 2.`);
+                toast.info(`La creación de ${type} estará disponible pronto.`);
             }
         } catch (err) {
             toast.error('Error al sincronizar creación.');
@@ -94,195 +113,173 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
     };
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <>
-                    {/* Backdrop */}
-                    <motion.div
-                        key="ucm-backdrop"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={onClose}
-                        className="fixed inset-0 z-[8999] bg-black/20 backdrop-blur-[2px]"
-                    />
+        <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <AnimatePresence>
+                {isOpen && (
+                    <Dialog.Portal forceMount>
+                        <Dialog.Overlay asChild>
+                            <motion.div 
+                                initial={{ opacity: 0 }} 
+                                animate={{ opacity: 1 }} 
+                                exit={{ opacity: 0 }} 
+                                className="fixed inset-0 z-[9000] bg-slate-900/20 backdrop-blur-[2px]" 
+                            />
+                        </Dialog.Overlay>
+                        <Dialog.Content asChild>
+                            <motion.div 
+                                initial={{ x: '100%' }} 
+                                animate={{ x: 0 }} 
+                                exit={{ x: '100%' }}
+                                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                                className="fixed right-0 top-0 z-[9001] h-screen w-full max-w-[850px] bg-white dark:bg-[#1e1f21] shadow-2xl border-l border-slate-200 dark:border-white/5 flex overflow-hidden font-display"
+                            >
+                                <Dialog.Title className="sr-only">Centro de Lanzamiento</Dialog.Title>
+                                
+                                <div className="flex w-full h-full">
+                                    {/* Sidebar Interno del Drawer: Herramientas (Estética Original) */}
+                                    <aside className="w-64 bg-slate-50 dark:bg-black/20 border-r border-slate-100 dark:border-white/5 p-8 flex flex-col gap-3 shrink-0">
+                                        <div className="mb-8 px-2 flex items-center gap-2 text-blue-600">
+                                            <Zap size={16} />
+                                            <h3 className="text-[10px] font-black uppercase tracking-[0.3em]">Operaciones</h3>
+                                        </div>
+                                        
+                                        <TypeTab active={type === 'task'} onClick={() => setType('task')} icon={CheckSquare} label="Nueva Tarea" color="text-blue-600" />
+                                        <TypeTab active={type === 'doc'} onClick={() => setType('doc')} icon={FileText} label="Documento" color="text-emerald-600" />
+                                        <TypeTab active={type === 'whiteboard'} onClick={() => setType('whiteboard')} icon={LayoutDashboard} label="Pizarra" color="text-orange-600" />
+                                        <TypeTab active={type === 'reminder'} onClick={() => setType('reminder')} icon={Bell} label="Recordatorio" color="text-rose-600" />
 
-                    {/* Floating panel */}
-                    <motion.div
-                        key="ucm-panel"
-                        initial={{ opacity: 0, scale: 0.96, y: 16 }}
-                        animate={{ opacity: 1, scale: 1,    y: 0  }}
-                        exit={{   opacity: 0, scale: 0.96, y:  8  }}
-                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                        className="fixed left-1/2 top-[10vh] -translate-x-1/2 z-[9000] w-full max-w-[680px] rounded-2xl bg-white dark:bg-[#1e1f21] shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col"
-                        style={{ maxHeight: '80vh' }}
-                    >
-                        {/* Tab bar — text only, no icons */}
-                        <header className="shrink-0 border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#1e1f21]">
-                            <div className="flex items-center px-5 pt-1">
-                                {TABS.map(tab => (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => setType(tab.id)}
-                                        className={clsx(
-                                            'relative px-4 py-3 text-[13px] font-semibold transition-colors whitespace-nowrap',
-                                            type === tab.id
-                                                ? 'text-slate-900 dark:text-white'
-                                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-                                        )}
-                                    >
-                                        {tab.label}
-                                        {type === tab.id && (
-                                            <motion.div
-                                                layoutId="ucm-underline"
-                                                className="absolute bottom-0 inset-x-2 h-[2px] bg-slate-900 dark:bg-white rounded-full"
-                                            />
-                                        )}
-                                    </button>
-                                ))}
-                                <button
-                                    onClick={resetAndClose}
-                                    className="ml-auto p-1.5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-400 transition-all hover:rotate-90 duration-200"
-                                >
-                                    <X size={16} />
-                                </button>
-                            </div>
-                        </header>
+                                        <div className="mt-auto relative group cursor-pointer" onClick={handleAiGenerate}>
+                                            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl blur opacity-20 group-hover:opacity-50 transition-opacity" />
+                                            <div className="relative p-5 bg-white dark:bg-black/40 rounded-3xl border border-blue-600/10 text-center">
+                                                {isAiGenerating ? <Loader2 size={24} className="animate-spin text-blue-600 mx-auto" /> : <Sparkles size={24} className="text-blue-600 mx-auto mb-2" />}
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 leading-none">Optimus IA</span>
+                                                <p className="text-[9px] font-bold text-slate-500 mt-2 uppercase tracking-tighter">Redactar con Llama 3</p>
+                                            </div>
+                                        </div>
+                                    </aside>
 
-                        {/* Content area */}
-                        <div className="flex-1 overflow-y-auto">
-                            <AnimatePresence mode="wait">
-                                {type === 'task' && (
-                                    <motion.div key="task" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                                        <form onSubmit={handleSubmit}>
-                                            <div className="px-6 pt-4 pb-2 space-y-3">
-                                                {/* Breadcrumb */}
-                                                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400">
-                                                    <select
-                                                        value={selectedProjectId ?? ''}
-                                                        onChange={e => setSelectedProjectId(Number(e.target.value))}
-                                                        className="appearance-none px-2 py-0.5 bg-slate-100 dark:bg-white/8 rounded-md text-[11px] font-semibold text-slate-600 dark:text-slate-300 cursor-pointer outline-none hover:bg-slate-200 transition-colors"
-                                                    >
-                                                        <option value="">Proyecto...</option>
-                                                        {projects.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-                                                    </select>
-                                                    <ChevronRight size={12} className="text-slate-300" />
-                                                    <span className="px-2 py-0.5 bg-slate-100 dark:bg-white/8 rounded-md">Tarea</span>
-                                                </div>
+                                    {/* Form Content */}
+                                    <main className="flex-1 flex flex-col min-w-0 bg-white dark:bg-transparent">
+                                        <header className="h-16 border-b border-slate-100 dark:border-white/5 flex items-center px-10 justify-between bg-slate-50/30">
+                                            <div className="flex items-center gap-3">
+                                                <Dialog.Close asChild>
+                                                    <button className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-xl transition-all text-slate-400">
+                                                        <ChevronRight size={20} className="rotate-180" />
+                                                    </button>
+                                                </Dialog.Close>
+                                                <div className="h-6 w-[1px] bg-slate-200 dark:bg-white/10 mx-1" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ventana de Creación</span>
+                                            </div>
+                                            <Dialog.Close asChild>
+                                                <button className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-all">
+                                                    <X size={20} />
+                                                </button>
+                                            </Dialog.Close>
+                                        </header>
 
-                                                <input
-                                                    ref={titleRef}
-                                                    value={title}
-                                                    onChange={e => setTitle(e.target.value)}
-                                                    placeholder="Escribe el nombre de Tarea o pulsa «/» para ver comandos"
-                                                    className="w-full bg-transparent text-[20px] font-semibold outline-none placeholder:text-slate-300 dark:placeholder:text-white/20 text-slate-800 dark:text-white leading-snug"
-                                                />
-
-                                                {!description ? (
-                                                    <div className="flex items-center gap-4">
-                                                        <button type="button" onClick={() => setDescription(' ')} className="flex items-center gap-1.5 text-[12px] text-slate-400 hover:text-slate-600 transition-colors">
-                                                            <AlignLeft size={13} /> Añadir descripción
-                                                        </button>
-                                                        <button type="button" className="flex items-center gap-1.5 text-[12px] font-semibold text-purple-500 hover:text-purple-700 transition-colors">
-                                                            <Sparkles size={13} /> Escribir con IA
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <textarea
-                                                        autoFocus={description === ' '}
-                                                        value={description.trim()}
-                                                        onChange={e => setDescription(e.target.value)}
-                                                        placeholder="Descripción..."
-                                                        rows={3}
-                                                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/8 rounded-xl px-4 py-3 text-[13px] outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 resize-none"
+                                        <form onSubmit={handleSubmit} className="flex-1 flex flex-col p-12 overflow-y-auto scrollbar-hide">
+                                            <div className="space-y-12">
+                                                {/* Title & Description Bento */}
+                                                <div className="space-y-6">
+                                                    <input 
+                                                        ref={titleRef}
+                                                        value={title}
+                                                        onChange={(e) => setTitle(e.target.value)}
+                                                        placeholder={`¿Cuál es la nueva misión?`}
+                                                        className="w-full bg-transparent text-5xl font-black outline-none placeholder:text-slate-100 dark:placeholder:text-slate-800 tracking-tight"
                                                     />
-                                                )}
+                                                    <textarea 
+                                                        value={description}
+                                                        onChange={(e) => setDescription(e.target.value)}
+                                                        placeholder="Establece los objetivos estratégicos..."
+                                                        className="w-full bg-transparent text-lg font-medium outline-none placeholder:text-slate-200 resize-none min-h-[150px] leading-relaxed"
+                                                    />
+                                                </div>
 
-                                                {/* Pills row */}
-                                                <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                                                    <span className="px-3 py-1.5 border border-slate-200 dark:border-white/10 rounded-full text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-white/5">
-                                                        PENDIENTE
-                                                    </span>
-                                                    <div className="relative">
-                                                        <select value={priority} onChange={e => setPriority(e.target.value)}
-                                                            className="appearance-none pl-6 pr-3 py-1.5 border border-slate-200 dark:border-white/10 rounded-full text-[11px] font-semibold text-slate-500 bg-white dark:bg-transparent cursor-pointer outline-none hover:bg-slate-50">
-                                                            <option value="normal">Prioridad</option>
-                                                            <option value="urgent">Urgente</option>
-                                                            <option value="high">Alta</option>
-                                                            <option value="low">Baja</option>
-                                                        </select>
-                                                        <Flag size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                                {type === 'task' && (
+                                                    <div className="grid grid-cols-1 gap-10 pt-10 border-t border-slate-100 dark:border-white/5">
+                                                        {/* Project Selection */}
+                                                        <div className="space-y-4">
+                                                            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Proyecto Destino</label>
+                                                            <div className="grid grid-cols-2 gap-3">
+                                                                {projects.slice(0, 4).map(p => (
+                                                                    <button 
+                                                                        key={p.id}
+                                                                        type="button"
+                                                                        onClick={() => setSelectedProjectId(p.id)}
+                                                                        className={clsx(
+                                                                            "flex items-center gap-3 p-4 rounded-[1.5rem] border transition-all text-left",
+                                                                            selectedProjectId === p.id 
+                                                                                ? "bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-500/20" 
+                                                                                : "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-blue-500/50"
+                                                                        )}
+                                                                    >
+                                                                        <div className="size-8 rounded-lg bg-white/20 flex items-center justify-center font-black text-[10px]">
+                                                                            {p.title.substring(0, 1)}
+                                                                        </div>
+                                                                        <span className="text-[12px] font-bold truncate">{p.title}</span>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Priority & Delivery */}
+                                                        <div className="flex gap-10">
+                                                            <div className="flex-1 space-y-4">
+                                                                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Urgencia</label>
+                                                                <div className="flex gap-2 p-1 bg-slate-50 dark:bg-black/20 rounded-2xl border border-slate-100 dark:border-white/5">
+                                                                    {['low', 'normal', 'high'].map(p => (
+                                                                        <button
+                                                                            key={p}
+                                                                            type="button"
+                                                                            onClick={() => setPriority(p)}
+                                                                            className={clsx(
+                                                                                "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                                                                priority === p 
+                                                                                    ? "bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-white/10" 
+                                                                                    : "text-slate-400 hover:text-slate-600"
+                                                                            )}
+                                                                        >
+                                                                            {p}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex-1 space-y-4">
+                                                                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Fecha Meta</label>
+                                                                <button type="button" className="w-full flex items-center justify-between px-6 py-4 bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5 rounded-2xl text-[11px] font-bold text-slate-500">
+                                                                    <span>Seleccionar...</span>
+                                                                    <Calendar size={16} />
+                                                                </button>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <button type="button" className="flex items-center gap-1.5 pl-2.5 pr-3 py-1.5 border border-slate-200 dark:border-white/10 rounded-full text-[11px] font-semibold text-slate-500 hover:bg-slate-50 transition-colors">
-                                                        <User size={11} /> Persona asignada
-                                                    </button>
-                                                    <button type="button" className="flex items-center gap-1.5 pl-2.5 pr-3 py-1.5 border border-slate-200 dark:border-white/10 rounded-full text-[11px] font-semibold text-slate-500 hover:bg-slate-50 transition-colors">
-                                                        <Calendar size={11} /> Fecha límite
-                                                    </button>
-                                                    <button type="button" className="flex items-center gap-1.5 pl-2.5 pr-3 py-1.5 border border-slate-200 dark:border-white/10 rounded-full text-[11px] font-semibold text-slate-500 hover:bg-slate-50 transition-colors">
-                                                        <Hash size={11} /> Etiquetas
-                                                    </button>
-                                                </div>
-
-                                                {/* Campos */}
-                                                <div className="pt-2">
-                                                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Campos</p>
-                                                    <button type="button" className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-400 hover:text-blue-600 transition-colors">
-                                                        <Plus size={13} /> Crear un campo
-                                                    </button>
-                                                </div>
+                                                )}
                                             </div>
 
-                                            {/* Footer */}
-                                            <footer className="px-6 py-3.5 border-t border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-black/10">
-                                                <button type="button" className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-white/10 rounded-lg text-[11px] font-semibold text-slate-500 hover:bg-white dark:hover:bg-white/5 transition-colors">
-                                                    <Sparkles size={13} /> Plantillas
-                                                </button>
-                                                <div className="flex items-center gap-2">
-                                                    <button type="button" className="p-2 text-slate-400 hover:text-blue-600 transition-colors">
-                                                        <Search size={15} />
-                                                    </button>
-                                                    <div className="flex rounded-xl overflow-hidden shadow-md">
-                                                        <button
-                                                            type="submit"
-                                                            disabled={loading || !title.trim()}
-                                                            className="bg-slate-900 dark:bg-white font-bold text-white dark:text-slate-900 px-5 py-2 text-[11px] uppercase tracking-widest flex items-center gap-2 disabled:opacity-40 hover:bg-slate-800 transition-colors"
-                                                        >
-                                                            {loading ? <Loader2 size={13} className="animate-spin" /> : 'Crear Tarea'}
-                                                        </button>
-                                                        <button type="button" className="bg-slate-900 dark:bg-white border-l border-white/10 dark:border-slate-200 px-2.5 text-white dark:text-slate-900 hover:bg-slate-800 transition-colors">
-                                                            <ChevronRight size={13} className="rotate-90" />
-                                                        </button>
-                                                    </div>
+                                            <div className="mt-auto pt-12 flex items-center justify-between border-t border-slate-100 dark:border-white/5">
+                                                <div className="flex gap-3">
+                                                    <ActionButton icon={User} label="Asignar" />
+                                                    <ActionButton icon={Hash} label="Etiquetas" />
                                                 </div>
-                                            </footer>
+                                                <button 
+                                                    type="submit"
+                                                    disabled={loading || isAiGenerating || !title.trim()}
+                                                    className="px-12 py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[2rem] text-[11px] font-black uppercase tracking-[0.4em] shadow-2xl hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-4 disabled:opacity-50"
+                                                >
+                                                    {loading ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />} 
+                                                    Lanzar {type === 'task' ? 'Misión' : type}
+                                                </button>
+                                            </div>
                                         </form>
-                                    </motion.div>
-                                )}
-                                {type !== 'task' && (
-                                    <motion.div key={type} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                                        className="px-6 py-8 flex flex-col gap-4 min-h-[280px]">
-                                        <input
-                                            ref={titleRef}
-                                            value={title}
-                                            onChange={e => setTitle(e.target.value)}
-                                            placeholder={`Ponle un nombre a este ${type === 'doc' ? 'documento' : type === 'whiteboard' ? 'pizarra' : type === 'reminder' ? 'recordatorio' : 'panel'}...`}
-                                            className="w-full bg-transparent text-[18px] font-semibold outline-none placeholder:text-slate-300 dark:placeholder:text-white/20 text-slate-800 dark:text-white"
-                                        />
-                                        <div className="mt-auto pt-4 border-t border-slate-100 dark:border-white/5 flex justify-between items-center">
-                                            <span className="text-[11px] text-slate-400">La creación de {type} estará disponible próximamente.</span>
-                                            <button onClick={resetAndClose} className="bg-slate-900 dark:bg-white font-bold text-white dark:text-slate-900 px-5 py-2 rounded-xl text-[11px] uppercase tracking-widest shadow-md hover:opacity-90 transition-all">
-                                                Cerrar
-                                            </button>
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
-                    </motion.div>
-                </>
-            )}
-        </AnimatePresence>
+                                    </main>
+                                </div>
+                            </motion.div>
+                        </Dialog.Content>
+                    </Dialog.Portal>
+                )}
+            </AnimatePresence>
+        </Dialog.Root>
     );
 }
 
@@ -291,13 +288,13 @@ function TypeTab({ active, onClick, icon: Icon, label, color }: any) {
         <button
             onClick={onClick}
             className={clsx(
-                "flex items-center gap-4 px-5 py-4 rounded-2xl transition-all group relative overflow-hidden",
+                "flex items-center gap-4 px-5 py-4 rounded-[1.5rem] transition-all group relative overflow-hidden",
                 active ? "bg-white dark:bg-white/10 shadow-xl border border-slate-100 dark:border-white/5" : "hover:bg-white/50 dark:hover:bg-white/5"
             )}
         >
             {active && <motion.div layoutId="activeCreationTab" className="absolute left-0 top-4 bottom-4 w-1 bg-blue-600 rounded-full" />}
             <Icon size={20} className={clsx("transition-transform group-hover:scale-110", active ? color : "text-slate-400 group-hover:text-slate-600")} />
-            <span className={clsx("text-sm font-black tracking-tight", active ? "text-slate-900 dark:text-white" : "text-slate-500")}>{label}</span>
+            <span className={clsx("text-[13px] font-black tracking-tight uppercase", active ? "text-slate-900 dark:text-white" : "text-slate-500")}>{label}</span>
         </button>
     );
 }

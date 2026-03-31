@@ -632,10 +632,10 @@ class GloryHouseCreate(BaseModel):
     capacity: int = 15
 
 class MemberCreate(BaseModel):
-    first_name: str
-    last_name: str
+    first_name: str = Field(..., min_length=2, max_length=100)
+    last_name: str = Field(..., min_length=2, max_length=100)
     email: Optional[str] = None
-    family_id: Optional[int] = None
+    family_id: int = Field(...)
     church_role: str = "Miembro"
     talents: Optional[str] = None
     spiritual_gifts: Optional[str] = None

@@ -25,7 +25,7 @@ from backend.core.database import get_db
 settings = get_settings()
 log = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/auth", tags=["Autenticacion"])
+router = APIRouter(tags=["Autenticacion"])
 
 
 @router.post("/login", response_model=schemas.Token)
