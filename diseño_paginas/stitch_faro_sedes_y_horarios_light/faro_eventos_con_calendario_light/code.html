@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;400;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed-variant": "#3e484f",
+              "surface-container-lowest": "#000d2a",
+              "surface-tint": "#a5c8ff",
+              "on-background": "#d9e2ff",
+              "inverse-primary": "#2c609d",
+              "on-surface": "#d9e2ff",
+              "secondary-fixed-dim": "#80d0ff",
+              "outline": "#8c919b",
+              "on-error-container": "#ffdad6",
+              "tertiary-fixed-dim": "#bdc8d0",
+              "on-surface-variant": "#c2c6d1",
+              "secondary-container": "#2b9ace",
+              "outline-variant": "#424750",
+              "primary-fixed-dim": "#a5c8ff",
+              "inverse-surface": "#d9e2ff",
+              "tertiary": "#bdc8d0",
+              "surface-container-high": "#102855",
+              "error-container": "#93000a",
+              "surface-dim": "#001134",
+              "on-primary-container": "#86b4f7",
+              "on-error": "#690005",
+              "background": "#001134",
+              "on-secondary": "#00344b",
+              "tertiary-fixed": "#d9e4ec",
+              "on-primary": "#00315e",
+              "surface-container-highest": "#1d3361",
+              "inverse-on-surface": "#182f5c",
+              "surface-variant": "#1d3361",
+              "surface": "#001134",
+              "primary-container": "#004581",
+              "on-primary-fixed-variant": "#054783",
+              "on-secondary-container": "#002d41",
+              "on-tertiary-fixed": "#131d23",
+              "on-primary-fixed": "#001c3a",
+              "secondary-fixed": "#c5e7ff",
+              "on-tertiary": "#273238",
+              "primary": "#a5c8ff",
+              "on-tertiary-container": "#a8b3bb",
+              "primary-fixed": "#d4e3ff",
+              "surface-container-low": "#001944",
+              "surface-bright": "#223865",
+              "error": "#ffb4ab",
+              "surface-container": "#021d4a",
+              "tertiary-container": "#3b464c",
+              "secondary": "#80d0ff",
+              "on-secondary-fixed-variant": "#004c6a",
+              "on-secondary-fixed": "#001e2d"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(2, 29, 74, 0.4);
+            backdrop-filter: blur(12px);
+        }
+        .text-glow {
+            text-shadow: 0 0 20px rgba(165, 200, 255, 0.4);
+        }
+        .beam-effect {
+            background: linear-gradient(135deg, #a5c8ff 0%, #004581 100%);
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface selection:bg-primary selection:text-on-primary">
+<nav class="fixed top-0 w-full z-50 bg-[#001134]/70 backdrop-blur-xl shadow-[0_20px_40px_rgba(0,17,52,0.4)] flex justify-between items-center px-8 h-20">
+<div class="text-2xl font-bold tracking-tighter text-[#a5c8ff]">FARO</div>
+<div class="hidden md:flex items-center space-x-8">
+<a class="font-manrope text-sm tracking-[0.05em] uppercase text-[#d9e2ff]/70 hover:text-[#80d0ff] transition-colors duration-300" href="#">Inicio</a>
+<a class="font-manrope text-sm tracking-[0.05em] uppercase text-[#a5c8ff] font-bold border-b-2 border-[#a5c8ff] pb-1" href="#">Eventos</a>
+<a class="font-manrope text-sm tracking-[0.05em] uppercase text-[#d9e2ff]/70 hover:text-[#80d0ff] transition-colors duration-300" href="#">Prédicas</a>
+<a class="font-manrope text-sm tracking-[0.05em] uppercase text-[#d9e2ff]/70 hover:text-[#80d0ff] transition-colors duration-300" href="#">Cursos</a>
+<a class="font-manrope text-sm tracking-[0.05em] uppercase text-[#d9e2ff]/70 hover:text-[#80d0ff] transition-colors duration-300" href="#">Sedes</a>
+</div>
+<div class="flex items-center space-x-4">
+<button class="material-symbols-outlined text-[#a5c8ff] transition-transform active:scale-90">search</button>
+<button class="material-symbols-outlined text-[#a5c8ff] transition-transform active:scale-90" data-weight="fill">account_circle</button>
+</div>
+</nav>
+<main class="pt-32 pb-20 px-6 md:px-12 max-w-7xl mx-auto">
+<header class="mb-16 md:grid md:grid-cols-12 gap-8 items-end">
+<div class="md:col-span-8">
+<span class="font-label text-xs tracking-[0.2em] uppercase text-secondary mb-4 block">Calendario de Comunidad</span>
+<h1 class="font-headline text-5xl md:text-7xl font-extrabold tracking-tighter text-on-surface leading-tight">Nuestra Agenda</h1>
+</div>
+<div class="md:col-span-4 mt-6 md:mt-0">
+<p class="text-on-surface-variant leading-relaxed opacity-80">
+                    Espacios diseñados para el crecimiento, la conexión y la guía espiritual. Únete a nuestras próximas actividades.
+                </p>
+</div>
+</header>
+<section class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+<div class="md:col-span-2 relative h-[500px] rounded-xl overflow-hidden group">
+<img alt="Gran Evento Destacado" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Modern worship event with bright stage lights, atmospheric blue haze, and a crowd of people in silhouette against a radiant background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlfe5nWlCY5n15IXPMDiT038q3Ub-A4sNfRFYcKcqqPor7XME2XkgXXK-Nd82oa3q3jNisTCpWTG5egEcodKp1GJ72Gd6TAuiWsIDpmw6FK8GS1rWDQbFamacLIxNqaT2-cEC_6PKmuFHXViCY1nJyIc_B8J08Rwbuuv4l6ZalNUlf4ja69TfZ_s2h0DXoG7t5KrnibidyhZgV48ahvkcKjoowTbYX52yeedKmgVHn-tPKkqteabjfC8prCR2GHeS8y_3SyHoG0_bi"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent"></div>
+<div class="absolute bottom-0 p-10 w-full">
+<div class="flex items-center gap-2 mb-4">
+<span class="bg-primary-container text-primary px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase">Destacado</span>
+<span class="text-on-surface/60 text-xs font-label">24 DE JUNIO, 2024</span>
+</div>
+<h2 class="font-headline text-4xl font-bold mb-4 text-glow">Noche de Iluminación: Adoración &amp; Palabra</h2>
+<div class="flex items-center gap-6">
+<button class="beam-effect text-on-primary px-8 py-3 rounded-full font-bold text-sm tracking-wide transition-transform active:scale-95">RESERVAR LUGAR</button>
+<span class="flex items-center gap-2 text-primary font-medium">
+<span class="material-symbols-outlined text-lg">location_on</span> Auditorio Central
+                        </span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-xl p-8 flex flex-col justify-between">
+<div>
+<h3 class="font-headline text-2xl font-bold mb-6">Filtros de Búsqueda</h3>
+<div class="space-y-4">
+<div class="bg-surface-container-highest p-4 rounded-xl flex items-center justify-between group cursor-pointer hover:bg-surface-bright transition-colors border border-transparent hover:border-primary/20">
+<span class="text-sm font-medium">Todos los Eventos</span>
+<span class="material-symbols-outlined text-primary">arrow_forward_ios</span>
+</div>
+<div class="bg-surface-container-highest p-4 rounded-xl flex items-center justify-between group cursor-pointer hover:bg-surface-bright transition-colors border border-transparent hover:border-primary/20">
+<span class="text-sm font-medium">Conferencias</span>
+<span class="material-symbols-outlined text-on-surface/40">arrow_forward_ios</span>
+</div>
+<div class="bg-surface-container-highest p-4 rounded-xl flex items-center justify-between group cursor-pointer hover:bg-surface-bright transition-colors border border-transparent hover:border-primary/20">
+<span class="text-sm font-medium">Grupos de Conexión</span>
+<span class="material-symbols-outlined text-on-surface/40">arrow_forward_ios</span>
+</div>
+<div class="bg-surface-container-highest p-4 rounded-xl flex items-center justify-between group cursor-pointer hover:bg-surface-bright transition-colors border border-transparent hover:border-primary/20">
+<span class="text-sm font-medium">Cursos &amp; Talleres</span>
+<span class="material-symbols-outlined text-on-surface/40">arrow_forward_ios</span>
+</div>
+</div>
+</div>
+<div class="mt-8 pt-8 border-t border-outline-variant/20">
+<p class="text-xs text-on-surface-variant uppercase tracking-widest mb-4">Próximo en 48 horas</p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold">12</div>
+<div>
+<p class="text-sm font-bold">Cena de Jóvenes</p>
+<p class="text-xs text-on-surface/60 italic">Sede Norte • 19:30 hrs</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 mb-20">
+<article class="bg-surface-container-low rounded-xl overflow-hidden group hover:bg-surface-container-high transition-all duration-300">
+<div class="h-56 relative overflow-hidden">
+<img alt="Evento de Jóvenes" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Large contemporary indoor auditorium with blue theatrical lighting and empty seats before a major community event" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlpHff3VgpF_WKWF2016_knUqMnVjEZbGVOE-KRCRIlLk4lfKp3tIHxjIYIZ37Wxu_Kwopc146QgNXA6EFqF89Q-__L_Ced7nnh7L5OwtW8DeehJ_M7cFRvZ7GHGCQXfemL2Ro0wCujsI9BQ0ccZrhuqK3Hg_FZLUKMaJabek5Ch-ELzdbIL8E0-ebJp4Wpk3o_hUfZtH6QgEetuxMBegJ6ixmd4Pte32bvJ6LdckubiLDjab8TBZYFtEJnoE7AWeC6s0mTau8S6eS"/>
+<div class="absolute top-4 right-4 bg-background/80 backdrop-blur-md p-3 rounded-xl text-center min-w-[60px]">
+<p class="text-xs font-label uppercase tracking-tighter">JUL</p>
+<p class="text-xl font-bold text-primary">05</p>
+</div>
+</div>
+<div class="p-8">
+<span class="font-label text-[10px] tracking-[0.15em] uppercase text-secondary font-semibold mb-2 block">Conferencia</span>
+<h4 class="font-headline text-xl font-bold mb-4 group-hover:text-primary transition-colors">Liderazgo Radiante</h4>
+<p class="text-sm text-on-surface-variant mb-6 line-clamp-2">Descubre las herramientas para guiar con propósito en un mundo en constante cambio.</p>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-3">
+<div class="w-8 h-8 rounded-full border-2 border-surface bg-surface-container-highest flex items-center justify-center text-[10px]">+12</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface bg-surface-container-highest"></div>
+<div class="w-8 h-8 rounded-full border-2 border-surface bg-surface-container-highest"></div>
+</div>
+<button class="text-primary text-sm font-bold flex items-center gap-1 group/btn">
+                            VER MÁS <span class="material-symbols-outlined text-sm group-hover/btn:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</div>
+</article>
+<article class="bg-surface-container-low rounded-xl overflow-hidden group hover:bg-surface-container-high transition-all duration-300">
+<div class="h-56 relative overflow-hidden">
+<img alt="Evento Musical" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Close up of a guitarist on stage under soft blue and purple lighting, atmospheric and intimate concert setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBW9z4SKaWBOdvIrWPAqBcSItdN-u6Wz_qRTcj7ELe_DrXAIjnd3ADxIccD3ijx0XnVmcf63O54WsljxF6QqIYhpT4BN1f3YNodKh7VI5I6KRj0xt4lgv3tBiXMWA5bV9r7sOuKSFBPGf-O-z-S-PH1bgFDKoiZJ5ve4Pl3pLSXodd9gMoDeDQxFBoX6uWCacA4knZd9T8MFqwu8UB_6JzMpbi09di76aHNAO68FQ1hQv3VB5I2374yhqqtKtYJ1ofF8sBq5adY4HwX"/>
+<div class="absolute top-4 right-4 bg-background/80 backdrop-blur-md p-3 rounded-xl text-center min-w-[60px]">
+<p class="text-xs font-label uppercase tracking-tighter">JUL</p>
+<p class="text-xl font-bold text-primary">12</p>
+</div>
+</div>
+<div class="p-8">
+<span class="font-label text-[10px] tracking-[0.15em] uppercase text-secondary font-semibold mb-2 block">Música</span>
+<h4 class="font-headline text-xl font-bold mb-4 group-hover:text-primary transition-colors">Festival FARO Sound</h4>
+<p class="text-sm text-on-surface-variant mb-6 line-clamp-2">Una tarde de música en vivo, arte y comunidad al aire libre en nuestra Sede Jardín.</p>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-3">
+<div class="w-8 h-8 rounded-full border-2 border-surface bg-surface-container-highest flex items-center justify-center text-[10px]">+45</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface bg-surface-container-highest"></div>
+<div class="w-8 h-8 rounded-full border-2 border-surface bg-surface-container-highest"></div>
+</div>
+<button class="text-primary text-sm font-bold flex items-center gap-1 group/btn">
+                            VER MÁS <span class="material-symbols-outlined text-sm group-hover/btn:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</div>
+</article>
+<article class="bg-surface-container-low rounded-xl overflow-hidden group hover:bg-surface-container-high transition-all duration-300">
+<div class="h-56 relative overflow-hidden">
+<img alt="Taller de Biblia" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Open bible on a rustic wooden table with a soft candle glowing nearby, warm and peaceful study atmosphere" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXGvzLetQpzZDwpJJfznGypLa6O6s41nfCR0WT4EQXcgxXHOChzcbijVVNgc3s2-jslZV581kELaQVH6CsXPfFN96aCMjONQGb_sTIdljH_GpQTcarfoagQaBTqCGm2G1ERp5tZHeWclYzfGuUGIJwRcC1ryur7sAZHC7w6om6cZCsmWu34hgUE9md2ryUTF6yYQpQctPffBjxV8AAHgrSq5OT_bLihUo3M0dvdBeKHi32rS0nCSMwzx1V-6GzsBwUi2n51HD3rYO2"/>
+<div class="absolute top-4 right-4 bg-background/80 backdrop-blur-md p-3 rounded-xl text-center min-w-[60px]">
+<p class="text-xs font-label uppercase tracking-tighter">AGO</p>
+<p class="text-xl font-bold text-primary">02</p>
+</div>
+</div>
+<div class="p-8">
+<span class="font-label text-[10px] tracking-[0.15em] uppercase text-secondary font-semibold mb-2 block">Estudio</span>
+<h4 class="font-headline text-xl font-bold mb-4 group-hover:text-primary transition-colors">Profundidad Teológica</h4>
+<p class="text-sm text-on-surface-variant mb-6 line-clamp-2">Taller intensivo sobre los Salmos y su aplicación en la vida moderna.</p>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-3">
+<div class="w-8 h-8 rounded-full border-2 border-surface bg-surface-container-highest flex items-center justify-center text-[10px]">+8</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface bg-surface-container-highest"></div>
+<div class="w-8 h-8 rounded-full border-2 border-surface bg-surface-container-highest"></div>
+</div>
+<button class="text-primary text-sm font-bold flex items-center gap-1 group/btn">
+                            VER MÁS <span class="material-symbols-outlined text-sm group-hover/btn:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</div>
+</article>
+</div>
+<!-- Interactive Event Calendar Section -->
+<section class="mb-32">
+<div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+<div>
+<h2 class="font-headline text-3xl font-extrabold tracking-tight text-on-surface">Explora nuestro Calendario</h2>
+<p class="text-on-surface-variant text-sm mt-1">Organiza tu tiempo con nuestras actividades comunitarias.</p>
+</div>
+<div class="inline-flex bg-surface-container-high p-1 rounded-full shadow-inner">
+<button class="px-6 py-2 rounded-full text-xs font-bold tracking-widest uppercase transition-all duration-300 hover:text-primary">Semanal</button>
+<button class="px-6 py-2 rounded-full text-xs font-bold tracking-widest uppercase bg-primary text-on-primary shadow-lg transition-all duration-300">Mensual</button>
+<button class="px-6 py-2 rounded-full text-xs font-bold tracking-widest uppercase transition-all duration-300 hover:text-primary">Anual</button>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Main Calendar UI -->
+<div class="lg:col-span-8 bg-surface-container-low rounded-2xl p-6 md:p-10 shadow-xl border border-outline-variant/10">
+<div class="flex items-center justify-between mb-8">
+<div class="flex items-center gap-4">
+<h3 class="font-headline text-2xl font-bold">Junio 2024</h3>
+<div class="flex gap-1">
+<button class="p-2 hover:bg-surface-container-highest rounded-full transition-colors">
+<span class="material-symbols-outlined text-xl">chevron_left</span>
+</button>
+<button class="p-2 hover:bg-surface-container-highest rounded-full transition-colors">
+<span class="material-symbols-outlined text-xl">chevron_right</span>
+</button>
+</div>
+</div>
+<button class="text-primary text-xs font-bold tracking-widest uppercase flex items-center gap-1">HOY</button>
+</div>
+<div class="calendar-grid gap-1 mb-2">
+<div class="text-center py-2 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Dom</div>
+<div class="text-center py-2 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Lun</div>
+<div class="text-center py-2 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Mar</div>
+<div class="text-center py-2 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Mié</div>
+<div class="text-center py-2 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Jue</div>
+<div class="text-center py-2 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Vie</div>
+<div class="text-center py-2 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Sáb</div>
+</div>
+<div class="calendar-grid gap-1">
+<!-- Row 1 -->
+<div class="aspect-square p-2 bg-surface-container-highest/20 rounded-lg flex items-start justify-center text-on-surface-variant/30 text-sm">26</div>
+<div class="aspect-square p-2 bg-surface-container-highest/20 rounded-lg flex items-start justify-center text-on-surface-variant/30 text-sm">27</div>
+<div class="aspect-square p-2 bg-surface-container-highest/20 rounded-lg flex items-start justify-center text-on-surface-variant/30 text-sm">28</div>
+<div class="aspect-square p-2 bg-surface-container-highest/20 rounded-lg flex items-start justify-center text-on-surface-variant/30 text-sm">29</div>
+<div class="aspect-square p-2 bg-surface-container-highest/20 rounded-lg flex items-start justify-center text-on-surface-variant/30 text-sm">30</div>
+<div class="aspect-square p-2 bg-surface-container-highest/20 rounded-lg flex items-start justify-center text-on-surface-variant/30 text-sm">31</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex flex-col items-center justify-between cursor-pointer border border-transparent hover:border-primary/30">
+<span class="text-sm">1</span>
+</div>
+<!-- Row 2 -->
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex flex-col items-center justify-between cursor-pointer">
+<span class="text-sm">2</span>
+<div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
+</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex flex-col items-center justify-between cursor-pointer">
+<span class="text-sm">3</span>
+</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex flex-col items-center justify-between cursor-pointer">
+<span class="text-sm">4</span>
+</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex flex-col items-center justify-between cursor-pointer border-2 border-primary/50">
+<span class="text-sm font-bold text-primary">5</span>
+<div class="flex gap-0.5">
+<div class="w-1 h-1 bg-secondary rounded-full"></div>
+<div class="w-1 h-1 bg-primary rounded-full"></div>
+</div>
+</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex flex-col items-center justify-between cursor-pointer">
+<span class="text-sm">6</span>
+</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex flex-col items-center justify-between cursor-pointer">
+<span class="text-sm">7</span>
+</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex flex-col items-center justify-between cursor-pointer">
+<span class="text-sm">8</span>
+</div>
+<!-- Row 3 -->
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex flex-col items-center justify-between cursor-pointer">
+<span class="text-sm">9</span>
+</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex flex-col items-center justify-between cursor-pointer">
+<span class="text-sm">10</span>
+</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex flex-col items-center justify-between cursor-pointer">
+<span class="text-sm">11</span>
+</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex flex-col items-center justify-between cursor-pointer">
+<span class="text-sm">12</span>
+<div class="w-1.5 h-1.5 bg-secondary rounded-full"></div>
+</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex flex-col items-center justify-between cursor-pointer">
+<span class="text-sm">13</span>
+</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex flex-col items-center justify-between cursor-pointer">
+<span class="text-sm">14</span>
+</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex flex-col items-center justify-between cursor-pointer">
+<span class="text-sm">15</span>
+</div>
+<!-- Simplified rows for visual representation -->
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex items-start justify-center text-sm">16</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex items-start justify-center text-sm">17</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex items-start justify-center text-sm">18</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex items-start justify-center text-sm">19</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex items-start justify-center text-sm">20</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex items-start justify-center text-sm">21</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex items-start justify-center text-sm">22</div>
+<!-- Day with featured event highlight style -->
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex flex-col items-center justify-between cursor-pointer">
+<span class="text-sm">23</span>
+</div>
+<div class="aspect-square p-2 bg-primary/20 rounded-lg flex flex-col items-center justify-between cursor-pointer border border-primary/40 relative overflow-hidden group/day">
+<div class="absolute inset-0 bg-primary/10 opacity-0 group-hover/day:opacity-100 transition-opacity"></div>
+<span class="text-sm font-bold text-primary relative z-10">24</span>
+<span class="material-symbols-outlined text-[10px] text-primary fill-1 relative z-10">star</span>
+</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex items-start justify-center text-sm">25</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex items-start justify-center text-sm">26</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex items-start justify-center text-sm">27</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex items-start justify-center text-sm">28</div>
+<div class="aspect-square p-2 hover:bg-surface-container-highest transition-colors rounded-lg flex items-start justify-center text-sm">29</div>
+</div>
+</div>
+<!-- Sidebar: Próximos Destacados -->
+<div class="lg:col-span-4 space-y-6">
+<div class="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10">
+<h3 class="font-headline text-xl font-bold mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">auto_awesome</span>
+                    Destacados de Junio
+                </h3>
+<div class="space-y-6">
+<div class="flex gap-4 group cursor-pointer">
+<div class="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden">
+<img alt="Event" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBW9z4SKaWBOdvIrWPAqBcSItdN-u6Wz_qRTcj7ELe_DrXAIjnd3ADxIccD3ijx0XnVmcf63O54WsljxF6QqIYhpT4BN1f3YNodKh7VI5I6KRj0xt4lgv3tBiXMWA5bV9r7sOuKSFBPGf-O-z-S-PH1bgFDKoiZJ5ve4Pl3pLSXodd9gMoDeDQxFBoX6uWCacA4knZd9T8MFqwu8UB_6JzMpbi09di76aHNAO68FQ1hQv3VB5I2374yhqqtKtYJ1ofF8sBq5adY4HwX"/>
+</div>
+<div>
+<p class="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Música • 12 JUN</p>
+<h4 class="text-sm font-bold group-hover:text-primary transition-colors">Festival FARO Sound</h4>
+<p class="text-xs text-on-surface-variant line-clamp-1">Música en vivo en Sede Jardín.</p>
+</div>
+</div>
+<div class="flex gap-4 group cursor-pointer">
+<div class="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden">
+<img alt="Event" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlfe5nWlCY5n15IXPMDiT038q3Ub-A4sNfRFYcKcqqPor7XME2XkgXXK-Nd82oa3q3jNisTCpWTG5egEcodKp1GJ72Gd6TAuiWsIDpmw6FK8GS1rWDQbFamacLIxNqaT2-cEC_6PKmuFHXViCY1nJyIc_B8J08Rwbuuv4l6ZalNUlf4ja69TfZ_s2h0DXoG7t5KrnibidyhZgV48ahvkcKjoowTbYX52yeedKmgVHn-tPKkqteabjfC8prCR2GHeS8y_3SyHoG0_bi"/>
+</div>
+<div>
+<p class="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Especial • 24 JUN</p>
+<h4 class="text-sm font-bold group-hover:text-primary transition-colors">Noche de Iluminación</h4>
+<p class="text-xs text-on-surface-variant line-clamp-1">Adoración y Palabra profética.</p>
+</div>
+</div>
+<div class="flex gap-4 group cursor-pointer">
+<div class="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border border-outline-variant/30 flex items-center justify-center bg-surface-container-highest">
+<span class="material-symbols-outlined text-on-surface/20">event_repeat</span>
+</div>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Semanal • Domingos</p>
+<h4 class="text-sm font-bold group-hover:text-primary transition-colors">Reuniones Generales</h4>
+<p class="text-xs text-on-surface-variant">09:00, 11:00 y 18:00 hrs.</p>
+</div>
+</div>
+</div>
+<button class="w-full mt-8 py-3 rounded-xl border border-primary/30 text-primary text-xs font-bold tracking-widest uppercase hover:bg-primary/5 transition-colors">
+                    Sincronizar Calendario
+                </button>
+</div>
+<div class="bg-primary-container/20 rounded-2xl p-6 border border-primary/20 flex items-center gap-4">
+<div class="bg-primary text-on-primary p-3 rounded-full">
+<span class="material-symbols-outlined">notifications_active</span>
+</div>
+<div>
+<h4 class="font-bold text-sm">¿Quieres recordatorios?</h4>
+<p class="text-xs text-on-surface-variant">Recibe avisos de tus eventos favoritos.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<div class="fixed bottom-0 left-0 w-full flex justify-center pb-8 z-50 md:hidden">
+<div class="bg-[#001134]/80 backdrop-blur-2xl w-[90%] max-w-md rounded-full px-6 py-3 shadow-[0_20px_40px_rgba(0,0,0,0.5)] flex justify-between items-center">
+<div class="flex flex-col items-center justify-center text-[#d9e2ff]/50">
+<span class="material-symbols-outlined">home</span>
+<span class="font-inter text-[10px] font-medium tracking-wide">Inicio</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#a5c8ff] bg-[#004581]/50 rounded-full p-2 shadow-[0_0_15px_rgba(128,208,255,0.3)]">
+<span class="material-symbols-outlined" data-weight="fill">calendar_today</span>
+<span class="font-inter text-[10px] font-medium tracking-wide">Eventos</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#d9e2ff]/50">
+<span class="material-symbols-outlined">play_circle</span>
+<span class="font-inter text-[10px] font-medium tracking-wide">Multimedia</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#d9e2ff]/50">
+<span class="material-symbols-outlined">location_on</span>
+<span class="font-inter text-[10px] font-medium tracking-wide">Sedes</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#d9e2ff]/50">
+<span class="material-symbols-outlined">menu</span>
+<span class="font-inter text-[10px] font-medium tracking-wide">Más</span>
+</div>
+</div>
+</div>
+</body></html>

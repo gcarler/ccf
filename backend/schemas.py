@@ -129,7 +129,6 @@ class ProjectBase(BaseModel):
     color: Optional[str] = None
     icon: Optional[str] = None
     whiteboard_data: Optional[str] = None
-    progress_percent: int = 0
 
 
 class ProjectCreate(ProjectBase):
@@ -164,7 +163,7 @@ class ProjectActivityLog(BaseModel):
     user_name: Optional[str] = "Sistema"
     action_type: str
     description: str
-    created_at: datetime
+    created_at: Optional[datetime] = None
     model_config = orm_config
 
 class Project(ProjectBase):
@@ -174,7 +173,17 @@ class Project(ProjectBase):
     tasks: List[ProjectTask] = Field(default_factory=list)
     milestones: List[ProjectMilestone] = Field(default_factory=list)
     activities: List[ProjectActivityLog] = Field(default_factory=list, alias="activity_logs")
+    progress_percent: int = 0
     model_config = orm_config
+
+    @classmethod
+    def model_validate(cls, obj, **kwargs):
+        instance = super().model_validate(obj, **kwargs)
+        # Calculate progress from tasks if not set on model
+        if hasattr(obj, 'tasks') and obj.tasks:
+            done = sum(1 for t in obj.tasks if getattr(t, 'status', '') == 'done')
+            instance.progress_percent = round((done / len(obj.tasks)) * 100)
+        return instance
 
 
 class ProjectInboxItem(BaseModel):

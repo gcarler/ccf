@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FARO | The Radiant Guide</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;400;500;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "outline-variant": "#424750",
+                        "surface-container-highest": "#1d3361",
+                        "on-tertiary": "#273238",
+                        "surface-bright": "#223865",
+                        "background": "#001134",
+                        "surface-variant": "#1d3361",
+                        "surface-tint": "#a5c8ff",
+                        "secondary-fixed-dim": "#80d0ff",
+                        "on-secondary": "#00344b",
+                        "on-primary": "#00315e",
+                        "surface-dim": "#001134",
+                        "on-background": "#d9e2ff",
+                        "inverse-on-surface": "#182f5c",
+                        "on-surface-variant": "#c2c6d1",
+                        "on-primary-container": "#86b4f7",
+                        "on-primary-fixed": "#001c3a",
+                        "inverse-surface": "#d9e2ff",
+                        "secondary-fixed": "#c5e7ff",
+                        "secondary-container": "#2b9ace",
+                        "primary": "#a5c8ff",
+                        "on-secondary-fixed-variant": "#004c6a",
+                        "inverse-primary": "#2c609d",
+                        "on-tertiary-fixed": "#131d23",
+                        "on-tertiary-container": "#a8b3bb",
+                        "on-error-container": "#ffdad6",
+                        "on-error": "#690005",
+                        "on-secondary-fixed": "#001e2d",
+                        "error-container": "#93000a",
+                        "surface": "#001134",
+                        "surface-container-lowest": "#000d2a",
+                        "surface-container-high": "#102855",
+                        "outline": "#8c919b",
+                        "on-tertiary-fixed-variant": "#3e484f",
+                        "error": "#ffb4ab",
+                        "tertiary-fixed": "#d9e4ec",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "on-primary-fixed-variant": "#054783",
+                        "secondary": "#80d0ff",
+                        "primary-fixed": "#d4e3ff",
+                        "tertiary": "#bdc8d0",
+                        "tertiary-container": "#3b464c",
+                        "tertiary-fixed-dim": "#bdc8d0",
+                        "surface-container": "#021d4a",
+                        "on-secondary-container": "#002d41",
+                        "primary-container": "#004581",
+                        "surface-container-low": "#001944",
+                        "on-surface": "#d9e2ff"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tonal-shift {
+            background: linear-gradient(to bottom, #001134, #00081a);
+        }
+        .glass-pill {
+            background: rgba(16, 40, 85, 0.7);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background selection:bg-primary selection:text-on-primary">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-3 rounded-full mt-4 mx-auto w-[95%] max-w-7xl bg-[#001134]/70 backdrop-blur-xl shadow-2xl shadow-blue-900/20 no-border">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-black text-white tracking-tighter font-['Manrope']">FARO</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-[#a5c8ff] font-bold relative after:content-[''] after:block after:h-1 after:w-full after:bg-gradient-to-r after:from-[#a5c8ff] after:to-[#004581] font-['Manrope'] tracking-tight" href="#">Home</a>
+<a class="text-slate-400 font-medium hover:text-white transition-colors font-['Manrope'] tracking-tight" href="#">Sermons</a>
+<a class="text-slate-400 font-medium hover:text-white transition-colors font-['Manrope'] tracking-tight" href="#">Events</a>
+<a class="text-slate-400 font-medium hover:text-white transition-colors font-['Manrope'] tracking-tight" href="#">Courses</a>
+<a class="text-slate-400 font-medium hover:text-white transition-colors font-['Manrope'] tracking-tight" href="#">Books</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:block bg-white/5 rounded-full px-4 py-1.5 border border-white/10">
+<span class="material-symbols-outlined text-primary text-sm align-middle">search</span>
+<span class="text-slate-400 text-sm ml-2">Search...</span>
+</div>
+<button class="material-symbols-outlined text-[#a5c8ff] hover:bg-white/5 transition-all duration-300 p-2 rounded-full">menu</button>
+</div>
+</header>
+<main class="relative">
+<!-- Section 1: Hero -->
+<section class="relative min-h-screen flex items-center pt-24 overflow-hidden">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover opacity-40 mix-blend-lighten" data-alt="cinematic wide shot of a majestic lighthouse standing on a rocky cliff during a serene golden sunrise with ethereal light rays" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgPsqh0qeJF4UqfIGCU_8faw_qA5SVbqYAGmK-VWOiRjOtaGW63xxEwILkb16nRHH1P6wpckn79BS7Y34yF5S7aGY3R3Mu5uIsVTUEdwexIhO3_NJ2S193Tkn2c63o9Df6RZRNrf27KKG3G1ul2sLJg2heOUtaJYeqMiTA5COOVhEsuOhh4J83YylQ0SIztMD4xcrD4GWgiA2-aL1lHgNeK3ZlPG8M33K4fJ7TyEtUc-vgRukoN3Box85Kh0aCRT_JGY6sb5GOBJJ-"/>
+<div class="absolute inset-0 bg-gradient-to-b from-transparent via-background/60 to-background"></div>
+<!-- Light Leak / Beam -->
+<div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/10 blur-[150px] rounded-full pointer-events-none"></div>
+</div>
+<div class="container mx-auto px-6 relative z-10 grid grid-cols-12 gap-6">
+<div class="col-span-12 lg:col-span-8">
+<span class="label-md uppercase tracking-[0.2em] text-primary font-semibold mb-4 block">The Radiant Guide</span>
+<h1 class="text-6xl md:text-8xl font-black text-white tracking-tighter leading-[0.9] mb-8">
+                        Iluminando<br/><span class="text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-primary-container">Tu Camino.</span>
+</h1>
+<p class="text-xl md:text-2xl text-slate-300 font-light max-w-xl leading-relaxed mb-10">
+                        Una editorial moderna, guiada por la luz eterna. Descubre contenido que transforma el espíritu y despierta el propósito.
+                    </p>
+<div class="flex flex-wrap gap-4">
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold px-10 py-4 rounded-full hover:scale-105 transition-transform">
+                            Explorar Prédicas
+                        </button>
+<button class="border border-white/20 backdrop-blur-md text-white font-semibold px-10 py-4 rounded-full hover:bg-white/5 transition-colors">
+                            Conócenos
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: About Us -->
+<section class="py-32 bg-surface-container-low relative">
+<div class="container mx-auto px-6 grid grid-cols-12 gap-12 items-center">
+<div class="col-span-12 lg:col-span-5 relative">
+<div class="aspect-[4/5] rounded-xl overflow-hidden shadow-2xl">
+<img class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" data-alt="professional editorial portrait of a diverse group of pastoral leaders smiling in a bright minimalist modern office space" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAM0mgiyUCI7ExnOlwypxl5OApnpJ6QiHaB1c13gdjSUDLbY7YialB7lVknijB65AqOIS_Xnh-DdjwQKXMzOR43mRzTCTiPyupyUshOQBfEHQyXELFBXRc5aRZrrB_VohAQEXorBwB9PUj0Awh585zIDSYVTLJXUaY3M5wePB5Waa_5Q0-MjR2geHW6H6sAX1DL5Yd-JS9eBW6QYKRDPohOfvEwLmPSNGrziWjypWxOb6Sik5ZVBl0ayZZ5dnVeQd0yMNPQWzMIPsT2"/>
+</div>
+<div class="absolute -bottom-8 -right-8 bg-primary-container p-8 rounded-xl shadow-2xl max-w-[240px]">
+<p class="text-primary font-bold text-lg mb-2">Visión FARO</p>
+<p class="text-slate-300 text-sm leading-relaxed italic">"No somos una institución, somos un punto de luz en la oscuridad del mundo."</p>
+</div>
+</div>
+<div class="col-span-12 lg:col-span-6 lg:ml-12">
+<h2 class="text-4xl md:text-5xl font-extrabold text-white mb-8">Nuestra Esencia</h2>
+<p class="text-lg text-slate-400 mb-6 leading-relaxed">
+                        FARO nace de la necesidad de un editorialismo cristiano que hable el lenguaje de hoy. Buscamos la excelencia estética tanto como la profundidad espiritual.
+                    </p>
+<div class="space-y-4 mb-10">
+<div class="flex items-center gap-4 text-on-surface">
+<span class="material-symbols-outlined text-primary">auto_awesome</span>
+<span>Contenido Curado con Excelencia</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface">
+<span class="material-symbols-outlined text-primary">public</span>
+<span>Impacto Global, Mensaje Local</span>
+</div>
+</div>
+<a class="inline-flex items-center gap-2 text-primary font-bold group" href="#">
+                        CONOCER A NUESTROS PASTORES 
+                        <span class="material-symbols-outlined group-hover:translate-x-2 transition-transform">arrow_right_alt</span>
+</a>
+</div>
+</div>
+</section>
+<!-- Section 3: Prédicas (Bento Grid) -->
+<section class="py-32">
+<div class="container mx-auto px-6 mb-16">
+<div class="flex justify-between items-end">
+<div>
+<span class="text-primary uppercase tracking-widest text-xs font-bold block mb-2">Mensajes Recientes</span>
+<h2 class="text-4xl font-black text-white">Prédicas &amp; Podcasts</h2>
+</div>
+<button class="hidden md:block px-8 py-3 border border-primary/30 rounded-full text-primary font-bold hover:bg-primary/5 transition-colors">
+                        Ver todo el archivo
+                    </button>
+</div>
+</div>
+<div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Featured -->
+<div class="md:col-span-2 relative group overflow-hidden rounded-xl bg-surface-container-highest min-h-[400px]">
+<img class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" data-alt="low angle shot of a wooden pulpit with a bible under a dramatic single spotlight in a dark church" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQDLZdx2YJ85nqiNZonFEVHu9lMUyBZKLLyVMesbjB8iR-i0JgZyzHo8SU4qo9O0qhPXS1xWwJ2ojHl4yJaHOtVVW_CnQEx6m8Xoj_3CA2NnMBTlXv6Qf7th9xnQ872vQ1dG0zo1280Ouhz5PHuVhzjqe6PCjqsTiH2jFFuJ5806zzn3Qof3k2EzjmiHzsqDIRw6ygNWOsbmypEMST0SOWN49l7qyp_iItFhnAHMbNoAxiMOmY_Yd6sUuRaCvxmYv-AGZOIPKMqi4M"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-10">
+<span class="bg-primary/20 text-primary text-[10px] uppercase tracking-widest px-3 py-1 rounded-full backdrop-blur-md mb-4 inline-block">Novedad</span>
+<h3 class="text-3xl font-bold text-white mb-4">Cruzando el Mar: El Silencio de Dios</h3>
+<p class="text-slate-300 max-w-md mb-6">Pastor David Soler • Serie "Desiertos"</p>
+<button class="flex items-center gap-2 bg-white text-background px-6 py-3 rounded-full font-bold">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                            Reproducir Ahora
+                        </button>
+</div>
+</div>
+<!-- Small Item 1 -->
+<div class="bg-surface-container-high rounded-xl p-8 flex flex-col justify-between hover:bg-surface-bright transition-colors">
+<div>
+<span class="material-symbols-outlined text-primary mb-6 text-4xl">podcasts</span>
+<h3 class="text-xl font-bold text-white mb-2">¿Cómo escuchar la voz?</h3>
+<p class="text-slate-400 text-sm">Mini-serie sobre oración activa y discernimiento espiritual.</p>
+</div>
+<div class="mt-8 flex items-center justify-between border-t border-white/5 pt-4">
+<span class="text-slate-500 text-xs uppercase">Podcast • 12 min</span>
+<span class="material-symbols-outlined text-primary">arrow_forward</span>
+</div>
+</div>
+<!-- Small Item 2 -->
+<div class="bg-surface-container-high rounded-xl p-8 flex flex-col justify-between hover:bg-surface-bright transition-colors">
+<div>
+<span class="material-symbols-outlined text-primary mb-6 text-4xl">movie</span>
+<h3 class="text-xl font-bold text-white mb-2">El Faro de la Esperanza</h3>
+<p class="text-slate-400 text-sm">Documental sobre el impacto social de nuestra iglesia.</p>
+</div>
+<div class="mt-8 flex items-center justify-between border-t border-white/5 pt-4">
+<span class="text-slate-500 text-xs uppercase">Vídeo • 45 min</span>
+<span class="material-symbols-outlined text-primary">arrow_forward</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 4: Testimonials (Editorial Style) -->
+<section class="py-32 bg-surface">
+<div class="container mx-auto px-6">
+<div class="grid grid-cols-12 gap-12 items-center">
+<div class="col-span-12 lg:col-span-4">
+<span class="text-primary text-6xl font-serif">“</span>
+<h2 class="text-4xl font-bold text-white mb-6">Testimonios de Gracia</h2>
+<p class="text-slate-400 mb-8 leading-relaxed">
+                            Historias reales de personas que encontraron una dirección, una familia y un propósito.
+                        </p>
+<a class="text-primary font-bold underline underline-offset-8" href="#">VER EL MURO DE GRACIA</a>
+</div>
+<div class="col-span-12 lg:col-span-8 bg-surface-container-low p-12 md:p-20 rounded-3xl relative">
+<div class="absolute -top-10 right-10 w-24 h-24 rounded-full overflow-hidden border-4 border-background">
+<img class="w-full h-full object-cover" data-alt="close up headshot portrait of a smiling middle-aged man with kind eyes and warm lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAoiBgByb9Q0yCCJHQoKYaNGaqbNbqkM9J-ZJwhsk0rRnfiAY_U9-_UoSBHQXsqdA8y7E6eybPs-rjGZEKnLM_zj3ty9aK8h8zMLAWrJJ3OqtYR6HriFfmwxgh-w_H6oKRh9k7e4NcuHwL0e_uFgB0q3kwVlkcUpainW39UL7jWBZeWuSdNGlgj0a0brIT92fVGTLMDSARc6kdYo24qRHgqxuF5Lr2q18ij-5HFOoS7DJz5yCr2ld431vKxwI6o1MOvEi2J5sJ4FaVo"/>
+</div>
+<p class="text-2xl md:text-3xl font-light text-white italic leading-snug mb-10">
+                            "Llegué a FARO sin brújula y encontré un puerto seguro. No solo escuché sermones, aprendí a vivir la fe de una manera que tiene sentido en mi trabajo y en mi familia. Mi vida se iluminó."
+                        </p>
+<div>
+<p class="text-white font-bold text-lg">Andrés Gutierrez</p>
+<p class="text-slate-500 uppercase tracking-widest text-xs">Empresario, 42 años</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 5 & 6: Agenda & Cursos (Side-by-Side Asymmetry) -->
+<section class="py-32 container mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12">
+<!-- Events -->
+<div class="lg:col-span-5">
+<div class="flex items-center justify-between mb-8">
+<h2 class="text-3xl font-black text-white">Próximos Eventos</h2>
+<span class="material-symbols-outlined text-slate-500">calendar_month</span>
+</div>
+<div class="space-y-6">
+<div class="flex gap-6 group cursor-pointer">
+<div class="flex-shrink-0 text-center py-2 px-4 bg-surface-container-highest rounded-xl border border-white/5 group-hover:border-primary/40 transition-colors">
+<span class="block text-primary font-bold text-xl leading-none">12</span>
+<span class="block text-slate-500 text-[10px] uppercase">OCT</span>
+</div>
+<div>
+<h4 class="text-white font-bold group-hover:text-primary transition-colors">Conferencia de Hombres "Valientes"</h4>
+<p class="text-slate-500 text-sm">09:00 AM • Auditorio Central</p>
+</div>
+</div>
+<div class="flex gap-6 group cursor-pointer">
+<div class="flex-shrink-0 text-center py-2 px-4 bg-surface-container-highest rounded-xl border border-white/5 group-hover:border-primary/40 transition-colors">
+<span class="block text-primary font-bold text-xl leading-none">25</span>
+<span class="block text-slate-500 text-[10px] uppercase">OCT</span>
+</div>
+<div>
+<h4 class="text-white font-bold group-hover:text-primary transition-colors">Noche de Adoración: Faro Worship</h4>
+<p class="text-slate-500 text-sm">07:30 PM • Streaming Global</p>
+</div>
+</div>
+<div class="flex gap-6 group cursor-pointer">
+<div class="flex-shrink-0 text-center py-2 px-4 bg-surface-container-highest rounded-xl border border-white/5 group-hover:border-primary/40 transition-colors">
+<span class="block text-primary font-bold text-xl leading-none">02</span>
+<span class="block text-slate-500 text-[10px] uppercase">NOV</span>
+</div>
+<div>
+<h4 class="text-white font-bold group-hover:text-primary transition-colors">Academia de Líderes - Mod 1</h4>
+<p class="text-slate-500 text-sm">Sábado • Sala de Cursos 3</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Courses -->
+<div class="lg:col-span-7 bg-gradient-to-br from-surface-container-highest to-surface-container-low rounded-3xl p-1 md:p-12 overflow-hidden relative">
+<div class="absolute top-0 right-0 p-12 opacity-10">
+<span class="material-symbols-outlined text-[160px]">school</span>
+</div>
+<div class="relative z-10">
+<span class="bg-secondary/20 text-secondary text-[10px] uppercase tracking-widest px-3 py-1 rounded-full mb-6 inline-block">Academia Faro</span>
+<h2 class="text-4xl font-black text-white mb-6">Fórmate en la Verdad</h2>
+<p class="text-slate-300 text-lg mb-8 max-w-md">
+                        Nuestro curso estrella "Fundamentos de la Fe" abre inscripciones. Descubre los pilares de tu caminar espiritual.
+                    </p>
+<div class="flex items-center gap-6 mb-10">
+<div class="flex -space-x-3">
+<img class="w-10 h-10 rounded-full border-2 border-surface-container-highest object-cover" data-alt="portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAW6nY90N8THKZVAkx08-1enWIwTXRXgkGrjXanmI-m2LRM3W1LokxIenaltRiB_IJ9uGU4xGsm7YIDFsulWE-WqwS3Nyw3C9SIGNLBDTU9x9i41YTaRaj5YLkctVNhvdWJHT0ZQ1Qa9SxWNKa9tyRKl5ZG8-QTXXaGJnb5UOQJtEoIMp6ooXJNCupbWi6-_HQn4mPFsYS8JBPzZ4ZmVQfyU-Op_6miwC758HB4s-aV7lsNbVFZLNkCb9HoB0JQPdnlv3o_LOFme7VH"/>
+<img class="w-10 h-10 rounded-full border-2 border-surface-container-highest object-cover" data-alt="portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXxwxAU_9TiLFi4PbqIIQ1xLe529Vf7bYHQApEFDTxyyaEfoixVSu08ZYbvjuRLby0SklJ7FjIgcaD1xyRlMS6e8ptp2kI-pE1OO1b2KCSf0gpumQi4d3IAza0zuBHQqhyFDZxBuwNc6jZDDGqirAdUI71vFXjiL9PHUM2PanszwIRXSwijqcASKYPqtgXkFN8EpyTFe5OFo7ExGPOhPSi58P6VskqHy8ze2YdYqkDPgR55ZZY4mShRPSuDiQnIjh64brRZzQjRpTP"/>
+<img class="w-10 h-10 rounded-full border-2 border-surface-container-highest object-cover" data-alt="portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDg48WxltlDFiHNqxTaNlXBxUNkHjHV3aHhgWTA0wPHyTSoksV4wkHPsDFN7W2hT3lCVslbniecxaa8giCft33E4Kz-uonHf8nTLQLmm-WIlFSYO-FNYwdi4gAF4Y2W8g0o1RiC_i0b8jua5EvKTA86Xj4axuhdE1fEqaC3Eq5s1Z7HTkYtATsI5F_04lmskWwIzrKFV3howDeM5P1tfdks0vtdLWmhE_MwHU3ii42uOt4IHY-ASb6Lr9CAox1GrtoofFw4hAipB8S9"/>
+</div>
+<span class="text-slate-400 text-sm">+400 estudiantes inscritos</span>
+</div>
+<button class="bg-primary text-on-primary font-bold px-8 py-4 rounded-full hover:shadow-lg hover:shadow-primary/20 transition-all">
+                        Inscribirme Ahora
+                    </button>
+</div>
+</div>
+</section>
+<!-- Section 7: Librería (Horizontal Scroll / Layout) -->
+<section class="py-32 bg-surface-container-lowest">
+<div class="container mx-auto px-6 mb-16 text-center">
+<h2 class="text-4xl font-black text-white mb-4">Editorial FARO</h2>
+<p class="text-slate-500 max-w-2xl mx-auto">Nuestra librería técnica y espiritual para profundizar en tu estudio personal.</p>
+</div>
+<div class="container mx-auto px-6 flex flex-wrap justify-center gap-12">
+<!-- Book Card -->
+<div class="w-64 group">
+<div class="aspect-[2/3] bg-surface-container-high rounded-lg shadow-2xl mb-6 overflow-hidden relative">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="a minimalist book cover with the title 'The Light Within' in gold typography on a navy blue background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgJBAtxTdtu6guV_pNla9k7hNAG0oyX_TgS9aQpcz0-SmZWw45L5SJQWLD2KYSfNuwc9h7pYIzkVWYgxO51gXUq2lycl1ymhQLV8hOu3lX7VIGB_VfW1_6xPElSX5rDI8VtBii2a-mzDskXBSO1EUgt0qt_jkKpAFoLRyUFIyNGvXog7ZXT08CPq9TWKhxuwxQ_uN1jBnyuVcDa3wNUE7u3FEz7vUpqqkklchfo5PcgU8W8uq-7wtq8obJiWuNBruq6HAviaGLg4Qy"/>
+</div>
+<h4 class="text-white font-bold text-lg mb-1">La Luz Interior</h4>
+<p class="text-slate-500 text-sm mb-4">Pastor Mateo Valera</p>
+<button class="w-full py-2 bg-white/5 border border-white/10 rounded-lg text-primary text-xs font-bold uppercase tracking-widest hover:bg-primary hover:text-on-primary transition-all">
+                        Comprar Libro
+                    </button>
+</div>
+<!-- Book Card 2 -->
+<div class="w-64 group">
+<div class="aspect-[2/3] bg-surface-container-high rounded-lg shadow-2xl mb-6 overflow-hidden relative">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="a stack of hardcover books with an antique open bible on top under soft warm light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCi1lAdfy0fTEIXZ86xndS-FDJMOcc8VpmyfKMFESUy6cweBscyMepkNZoOX-LJCtwG41LPzlWtXRV7QJhD9Td6KjLZCqEYfMriOW5cKbQq1or-9dBwlj84PCOQjmaU8j_m4uGcPjPHAIQGmmVt9a2s1TUXfWe4kL-h_eVBSZuo0WgqdxG0ynwGVcxbso_hhx-pCVvyYoa6t99WDjNbS1t5zLMww8IgEu5nsN5Iq2D25PrpQXZd-1zx_yOh6PAJkdZvAP6MiOOQT_1p"/>
+</div>
+<h4 class="text-white font-bold text-lg mb-1">Caminar sobre Aguas</h4>
+<p class="text-slate-500 text-sm mb-4">Serie de Devocionales</p>
+<button class="w-full py-2 bg-white/5 border border-white/10 rounded-lg text-primary text-xs font-bold uppercase tracking-widest hover:bg-primary hover:text-on-primary transition-all">
+                        Leer Online
+                    </button>
+</div>
+<!-- Book Card 3 -->
+<div class="w-64 group">
+<div class="aspect-[2/3] bg-surface-container-high rounded-lg shadow-2xl mb-6 overflow-hidden relative">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="open library with thousands of books blurred in the background representing knowledge and study" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4KQW169S_7h0Stw_u32NqOTFtVvFceDLCA2_XkuSYo0YMPBNKegaZY4GvY_5zpjq9J-pMfOxRCvOrZymXzhXP6p41bfqWjFD5jIiKf2VaJeesHHwz3ePDKGgVAoTrAD37ThefK9TMYAVY7V28bi0_F_6SLV9OhAu8yfzGJq1GpMklEqKuZjSb5rQWLlAJnkiNFVYhCsUwrN4ufO3ylpBwsYW_yCtjQA-NEny9spzCt5OBUPUsJ6SMK-hSwr8cg579r1I_1gb2CSaq"/>
+</div>
+<h4 class="text-white font-bold text-lg mb-1">Diccionario Teológico</h4>
+<p class="text-slate-500 text-sm mb-4">Edición Especial</p>
+<button class="w-full py-2 bg-white/5 border border-white/10 rounded-lg text-primary text-xs font-bold uppercase tracking-widest hover:bg-primary hover:text-on-primary transition-all">
+                        Comprar Libro
+                    </button>
+</div>
+</div>
+</section>
+<!-- Section 8: Sedes (Map Placeholder) -->
+<section class="py-32 relative overflow-hidden">
+<div class="container mx-auto px-6">
+<div class="bg-surface-container-high rounded-3xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
+<div class="p-12 md:p-20">
+<h2 class="text-4xl font-black text-white mb-6">Cerca de Ti</h2>
+<p class="text-slate-400 mb-10 text-lg">FARO está presente en las principales ciudades. Encuentra tu comunidad local y conéctate en persona.</p>
+<div class="space-y-6 mb-12">
+<div class="flex items-center justify-between border-b border-white/5 pb-4">
+<span class="text-white font-bold">Madrid Central</span>
+<span class="text-primary text-sm">Ver mapa</span>
+</div>
+<div class="flex items-center justify-between border-b border-white/5 pb-4">
+<span class="text-white font-bold">Barcelona Norte</span>
+<span class="text-primary text-sm">Ver mapa</span>
+</div>
+<div class="flex items-center justify-between border-b border-white/5 pb-4">
+<span class="text-white font-bold">Sevilla Aljarafe</span>
+<span class="text-primary text-sm">Ver mapa</span>
+</div>
+</div>
+<button class="text-primary font-bold flex items-center gap-2 group">
+                            BUSCAR MI IGLESIA MÁS CERCANA
+                            <span class="material-symbols-outlined group-hover:translate-x-2 transition-transform">location_on</span>
+</button>
+</div>
+<div class="relative min-h-[400px] grayscale contrast-125 brightness-75">
+<img class="w-full h-full object-cover" data-alt="abstract architectural black and white map pattern showing urban streets and intersections" data-location="Madrid" src="https://lh3.googleusercontent.com/aida-public/AB6AXuARIIBfWHQQN4oGdqSeSxed0IJA_YyoOKhV2MzuTnSHGZDPIeaCmlWKRJrFJkJgsCsHqC1R7RrU5-8l9kpwgEAc0FzlGSNIrC8XnmLsQJX7KfeJ8vBvuciL2V1pekke_hPxjbLKAfVIHfDYVSAJgqo1Kqx8tCPdIxs_cJWsbuQnxpm10RScDDZCZGDOd7lu9JKgN-0oUcafDG3Q_78OhwzNQltpMponaiBdmWrWiI98x-Jd4ZNwHqcNpxeiFDVPep2SqAIkHAslbNq0"/>
+<div class="absolute inset-0 bg-primary/20 mix-blend-overlay"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 9: Final CTA -->
+<section class="py-40 bg-gradient-to-b from-background to-surface-container-lowest text-center px-6">
+<div class="max-w-4xl mx-auto">
+<span class="material-symbols-outlined text-primary text-6xl mb-8" style="font-variation-settings: 'FILL' 1;">flare</span>
+<h2 class="text-5xl md:text-7xl font-black text-white tracking-tighter mb-10">Quiero conocer a Jesús</h2>
+<p class="text-xl md:text-2xl text-slate-400 mb-12 leading-relaxed">
+                    Si estás buscando respuestas o simplemente necesitas que alguien ore por ti, estamos aquí. No camines solo.
+                </p>
+<div class="flex flex-col md:flex-row items-center justify-center gap-6">
+<button class="w-full md:w-auto bg-white text-background font-black px-12 py-5 rounded-full hover:bg-primary transition-colors text-lg">
+                        Hablar con alguien
+                    </button>
+<button class="w-full md:w-auto border border-white/20 text-white font-bold px-12 py-5 rounded-full hover:bg-white/5 transition-colors text-lg">
+                        Recibir un devocional
+                    </button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full flex flex-col items-center justify-center border-t border-white/5 mt-20 bg-[#00081a] pt-20 pb-10">
+<div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+<div class="col-span-1 md:col-span-1">
+<span class="font-['Manrope'] font-black text-[#a5c8ff] text-2xl mb-6 block">FARO.</span>
+<p class="text-slate-600 font-['Inter'] text-sm leading-relaxed">The Illumination Editorial. Guided by the Lighthouse Beam.</p>
+</div>
+<div>
+<h5 class="text-white font-bold mb-6 text-sm uppercase tracking-widest">Connect</h5>
+<ul class="space-y-4">
+<li><a class="text-slate-600 hover:text-[#a5c8ff] transition-colors text-sm font-['Inter']" href="#">Giving</a></li>
+<li><a class="text-slate-600 hover:text-[#a5c8ff] transition-colors text-sm font-['Inter']" href="#">Contact Us</a></li>
+<li><a class="text-slate-600 hover:text-[#a5c8ff] transition-colors text-sm font-['Inter']" href="#">Locations</a></li>
+</ul>
+</div>
+<div>
+<h5 class="text-white font-bold mb-6 text-sm uppercase tracking-widest">Legal</h5>
+<ul class="space-y-4">
+<li><a class="text-slate-600 hover:text-[#a5c8ff] transition-colors text-sm font-['Inter']" href="#">Privacy</a></li>
+<li><a class="text-slate-600 hover:text-[#a5c8ff] transition-colors text-sm font-['Inter'] underline decoration-[#a5c8ff]/30" href="#">Terms</a></li>
+</ul>
+</div>
+<div>
+<h5 class="text-white font-bold mb-6 text-sm uppercase tracking-widest">Newsletter</h5>
+<div class="flex bg-white/5 rounded-full p-1 border border-white/10">
+<input class="bg-transparent border-none focus:ring-0 text-sm text-white px-4 py-2 w-full" placeholder="email@faro.org" type="email"/>
+<button class="bg-[#a5c8ff] text-[#001134] rounded-full p-2">
+<span class="material-symbols-outlined align-middle">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<p class="text-slate-600 font-['Inter'] text-xs opacity-80 hover:opacity-100 transition-opacity">
+            © 2024 FARO. The Illumination Editorial. Guided by the Lighthouse Beam.
+        </p>
+</footer>
+<!-- SideNavBar (Hidden by default, used for mobile/expanded menu) -->
+<aside class="fixed left-0 top-0 h-screen z-[60] py-12 px-6 bg-[#001134] w-80 translate-x-[-100%] transition-transform duration-500 ease-in-out tonal-shift border-r-0 shadow-[40px_0_80px_rgba(0,0,0,0.5)]">
+<div class="mb-12 flex items-center gap-4">
+<div class="w-10 h-10 bg-primary-container rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">flare</span>
+</div>
+<div>
+<h3 class="text-xl font-bold text-[#a5c8ff] font-['Manrope']">The Radiant Guide</h3>
+<p class="font-['Manrope'] uppercase tracking-widest text-[10px] text-slate-500">Modern Christian Editorial</p>
+</div>
+</div>
+<nav class="space-y-2">
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg bg-[#004581]/30 text-white border-l-4 border-[#a5c8ff] font-['Manrope'] uppercase tracking-widest text-[10px]" href="#">
+<span class="material-symbols-outlined">home</span> Home
+            </a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-slate-500 hover:text-[#80d0ff] hover:pl-2 transition-all duration-300 font-['Manrope'] uppercase tracking-widest text-[10px]" href="#">
+<span class="material-symbols-outlined">chat_bubble</span> Testimonials
+            </a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-slate-500 hover:text-[#80d0ff] hover:pl-2 transition-all duration-300 font-['Manrope'] uppercase tracking-widest text-[10px]" href="#">
+<span class="material-symbols-outlined">event</span> Agenda
+            </a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-slate-500 hover:text-[#80d0ff] hover:pl-2 transition-all duration-300 font-['Manrope'] uppercase tracking-widest text-[10px]" href="#">
+<span class="material-symbols-outlined">menu_book</span> Sermons
+            </a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-slate-500 hover:text-[#80d0ff] hover:pl-2 transition-all duration-300 font-['Manrope'] uppercase tracking-widest text-[10px]" href="#">
+<span class="material-symbols-outlined">school</span> Courses
+            </a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-slate-500 hover:text-[#80d0ff] hover:pl-2 transition-all duration-300 font-['Manrope'] uppercase tracking-widest text-[10px]" href="#">
+<span class="material-symbols-outlined">library_books</span> Books
+            </a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-slate-500 hover:text-[#80d0ff] hover:pl-2 transition-all duration-300 font-['Manrope'] uppercase tracking-widest text-[10px]" href="#">
+<span class="material-symbols-outlined">map</span> Locations
+            </a>
+</nav>
+<button class="mt-12 w-full py-4 bg-[#a5c8ff] text-[#001134] font-bold rounded-lg hover:scale-[1.02] transition-transform">
+            Quiero conocer a Jesús
+        </button>
+</aside>
+</body></html>

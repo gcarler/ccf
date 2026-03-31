@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { 
-    Check, Clock, Shield, X, Loader2, ArrowUpRight, FileText, CheckCircle2, TrendingUp, Users, Calendar, CheckSquare, 
+    Check, Clock, Shield, X, Loader2, ArrowUpRight, ArrowRight, FileText, CheckCircle2, TrendingUp, Users, Calendar, CheckSquare, 
     MessageSquare, ChevronRight, Search, Filter, MoreHorizontal, Plus, Bot, Sparkles, Layout, BarChart3, History, Target,
     DollarSign, Activity, AlertTriangle, Zap, Globe
 } from "lucide-react";

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FARO | The Radiant Guide</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;400;700;800&amp;family=Inter:wght@300;400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "outline-variant": "#424750",
+              "surface-container-highest": "#1d3361",
+              "on-tertiary": "#273238",
+              "surface-bright": "#223865",
+              "background": "#001134",
+              "surface-variant": "#1d3361",
+              "surface-tint": "#a5c8ff",
+              "secondary-fixed-dim": "#80d0ff",
+              "on-secondary": "#00344b",
+              "on-primary": "#00315e",
+              "surface-dim": "#001134",
+              "on-background": "#d9e2ff",
+              "inverse-on-surface": "#182f5c",
+              "on-surface-variant": "#c2c6d1",
+              "on-primary-container": "#86b4f7",
+              "on-primary-fixed": "#001c3a",
+              "inverse-surface": "#d9e2ff",
+              "secondary-fixed": "#c5e7ff",
+              "secondary-container": "#2b9ace",
+              "primary": "#a5c8ff",
+              "on-secondary-fixed-variant": "#004c6a",
+              "inverse-primary": "#2c609d",
+              "on-tertiary-fixed": "#131d23",
+              "on-tertiary-container": "#a8b3bb",
+              "on-error-container": "#ffdad6",
+              "on-error": "#690005",
+              "on-secondary-fixed": "#001e2d",
+              "error-container": "#93000a",
+              "surface": "#001134",
+              "surface-container-lowest": "#000d2a",
+              "surface-container-high": "#102855",
+              "outline": "#8c919b",
+              "on-tertiary-fixed-variant": "#3e484f",
+              "error": "#ffb4ab",
+              "tertiary-fixed": "#d9e4ec",
+              "primary-fixed-dim": "#a5c8ff",
+              "on-primary-fixed-variant": "#054783",
+              "secondary": "#80d0ff",
+              "primary-fixed": "#d4e3ff",
+              "tertiary": "#bdc8d0",
+              "tertiary-container": "#3b464c",
+              "tertiary-fixed-dim": "#bdc8d0",
+              "surface-container": "#021d4a",
+              "on-secondary-container": "#002d41",
+              "primary-container": "#004581",
+              "surface-container-low": "#001944",
+              "on-surface": "#d9e2ff"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+      .glass-nav { backdrop-filter: blur(20px); }
+      .light-beam-bg { background: radial-gradient(circle at 50% 0%, rgba(165, 200, 255, 0.15) 0%, rgba(0, 17, 52, 0) 70%); }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body selection:bg-primary selection:text-on-primary">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-3 bg-[#001134]/70 backdrop-blur-xl rounded-full mt-4 mx-auto w-[95%] max-w-7xl shadow-2xl shadow-blue-900/20 font-['Manrope'] tracking-tight">
+<div class="text-2xl font-black text-white tracking-tighter">FARO</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-[#a5c8ff] font-bold after:content-[''] after:block after:h-1 after:w-full after:bg-gradient-to-r after:from-[#a5c8ff] after:to-[#004581]" href="#">Sermons</a>
+<a class="text-slate-400 font-medium hover:text-white transition-colors" href="#">Events</a>
+<a class="text-slate-400 font-medium hover:text-white transition-colors" href="#">Courses</a>
+<a class="text-slate-400 font-medium hover:text-white transition-colors" href="#">Books</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-[#a5c8ff] hover:bg-white/5 transition-all duration-300 p-2 rounded-full">search</button>
+<button class="material-symbols-outlined text-[#a5c8ff] hover:bg-white/5 transition-all duration-300 p-2 rounded-full">menu</button>
+</div>
+</header>
+<main class="pt-24">
+<!-- Section 1: Hero -->
+<section class="relative min-h-[921px] flex items-center justify-center overflow-hidden px-6">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover opacity-40 mix-blend-lighten" data-alt="cinematic wide shot of a lone lighthouse on a rocky cliff at night with a powerful white beam cutting through deep navy atmosphere" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGqDsDQVi73sfYlO91iFUGZbkBcnRhNwAO4WZTDHt_42QeYbK7lzbcII-2DQrszXZKXSn5cvTigLmNAc4QOjPWFwhiD0K51DGT_kqbBNnx3T7KDqVzs9kyzn5N5gzWC2GDGpp1q1HRTDSdvtGBBHyYI0l-2FpiYP1fg6rZZ9VxMd6gtBeeGx5fhEJ-EQkPKPKzt64h0qTTlcoaRdPDJGKGLhvIhQciKkfso8h6dQhbXU5SDqfq2mP7OBn7DmQjkBcTw2Mm85ytgxvN"/>
+<div class="absolute inset-0 bg-gradient-to-b from-background/20 via-background/60 to-background"></div>
+</div>
+<div class="relative z-10 max-w-5xl text-center space-y-8">
+<span class="label-md tracking-[0.3em] uppercase text-primary font-semibold">The Illumination Editorial</span>
+<h1 class="font-headline text-5xl md:text-8xl font-extrabold tracking-tighter leading-tight">
+                    GUIADOS POR <br/>
+<span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">LA LUZ VERDADERA</span>
+</h1>
+<p class="max-w-2xl mx-auto text-lg md:text-xl text-slate-300 font-light leading-relaxed">
+                    Somos un faro en la ciudad, proclamando la esperanza y la verdad de Jesucristo a través de cada palabra, acción y encuentro.
+                </p>
+<div class="flex flex-col sm:flex-row gap-4 justify-center pt-8">
+<button class="px-8 py-4 bg-gradient-to-br from-primary to-primary-container font-bold rounded-full hover:scale-105 transition-transform text-white">
+                        Comenzar aquí
+                    </button>
+<button class="px-8 py-4 bg-surface-bright/30 backdrop-blur-md border border-primary/20 text-white font-bold rounded-full hover:bg-surface-bright/50 transition-all">
+                        Nuestra Visión
+                    </button>
+</div>
+</div>
+</section>
+<!-- Section 2: About Us Highlight (Bento-style layout) -->
+<section class="max-w-7xl mx-auto px-6 py-24">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<div class="md:col-span-7 bg-surface-container-low rounded-xl p-12 flex flex-col justify-between group overflow-hidden relative">
+<div class="relative z-10">
+<h2 class="font-headline text-4xl font-bold mb-6">Nuestra Esencia</h2>
+<p class="text-slate-300 text-lg leading-relaxed max-w-lg mb-8">
+                            Nacimos para ser una guía radiante en tiempos de incertidumbre. En FARO, creemos que cada vida es una historia de redención esperando ser escrita.
+                        </p>
+<a class="inline-flex items-center gap-2 text-primary font-bold group-hover:gap-4 transition-all" href="#">
+                            CONOCE A NUESTROS PASTORES <span class="material-symbols-outlined">arrow_forward</span>
+</a>
+</div>
+<div class="absolute right-0 bottom-0 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-[200px]" style="font-variation-settings: 'FILL' 1;">flare</span>
+</div>
+</div>
+<div class="md:col-span-5 relative h-[400px] md:h-auto rounded-xl overflow-hidden">
+<img class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" data-alt="portrait of a welcoming pastoral couple smiling warmly in a modern minimal office setting with soft natural window light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAB-tm3EmsANjM-YasgObU8Q_MQ8ryB6UjIvIYs0n8bvo3nSxUwnsNMoCLuSgevpfWuAKjKkKzJqaRksv2oYtoZ9lBI3o9sKsf3kjs-iHZtQVPkVUhT4lR3sS33rpZ66VNdiE0U10YKr_Dv5sH6S-5_SRvbYeNmFGwHlevBvXbcnGZurQTTwNG5QSzK59prurqujODemMwOdyBi4ncq0cIbmMGTccPSJsv5N7SrjpRzDZFFre9L9jOSZaAnu3b5bJiiamY9iFDbiLbN"/>
+</div>
+</div>
+</section>
+<!-- Section 3: Prédicas (Glassmorphism Featured Message) -->
+<section class="bg-surface-container-lowest py-32 px-6 overflow-hidden">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16">
+<div class="flex-1 space-y-6">
+<div class="flex items-center gap-4 text-secondary">
+<span class="h-px w-12 bg-secondary"></span>
+<span class="font-label uppercase tracking-widest text-xs">Mensaje Destacado</span>
+</div>
+<h2 class="font-headline text-5xl font-extrabold leading-tight">La Claridad <br/>en la Tormenta</h2>
+<p class="text-slate-400 text-lg">Descubre cómo mantener la fe cuando el horizonte parece oscurecerse. Un mensaje poderoso sobre la soberanía de Dios.</p>
+<button class="flex items-center gap-3 px-6 py-3 bg-white text-background font-black rounded-full hover:bg-primary transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+                        VER AHORA
+                    </button>
+</div>
+<div class="flex-1 relative">
+<div class="aspect-video w-full rounded-xl overflow-hidden shadow-2xl relative group">
+<img class="w-full h-full object-cover" data-alt="low angle shot of a charismatic speaker on a dark stage illuminated by a single overhead dramatic spotlight with dust particles in the air" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_VS6WFbis5IIYjM3sYAPKUvdsK_tanEJEhIzVsseroZXfHDTIUb44Wc8UWGIjZApfPhP8nvdB8Qa7PrmEkl2Un9PBqKXjk3mxeHggeZl0jLElZuzgs8SR5_eOgtGRhNVgWQgKH1ieQ-WmTd0GoZAXP2lj8Wpn94aja5sC95dNbVgTjLpQiEaNxANDpy5Ozz6ElUUXtD6sIyiZvX1vUQkdWq4-Qdt8vlCVBqnR11WOqyX484mUwKyXUt8xkd--NDEJ6OatV9GFE148"/>
+<div class="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/20 transition-all">
+<div class="w-20 h-20 bg-primary/90 rounded-full flex items-center justify-center scale-90 group-hover:scale-100 transition-transform">
+<span class="material-symbols-outlined text-background text-4xl" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</div>
+</div>
+</div>
+<!-- Abstract light element -->
+<div class="absolute -top-10 -right-10 w-40 h-40 bg-primary/20 blur-[80px] rounded-full"></div>
+</div>
+</div>
+</section>
+<!-- Section 4: Testimonials (Editorial Quote) -->
+<section class="max-w-4xl mx-auto py-32 px-6 text-center">
+<span class="material-symbols-outlined text-6xl text-primary/30 mb-8">format_quote</span>
+<blockquote class="font-headline text-2xl md:text-4xl font-light italic leading-relaxed text-on-background/90 mb-10">
+                "Encontré en FARO no solo una iglesia, sino una familia que me enseñó a ver la mano de Dios incluso en mis días más oscuros. Mi vida fue restaurada por completo."
+            </blockquote>
+<cite class="not-italic block font-bold text-primary tracking-widest uppercase text-sm">— Elena Martínez, Comunidad FARO</cite>
+<div class="mt-12">
+<a class="text-slate-500 hover:text-white underline underline-offset-8 transition-colors" href="#">LEER MÁS TESTIMONIOS</a>
+</div>
+</section>
+<!-- Section 5: Agenda/Events (Asymmetric Grid) -->
+<section class="py-24 px-6 bg-surface">
+<div class="max-w-7xl mx-auto">
+<div class="flex justify-between items-end mb-16">
+<div>
+<h2 class="font-headline text-4xl font-bold">Próximos Encuentros</h2>
+<p class="text-slate-400 mt-2">Sincroniza tu corazón con el ritmo de nuestra casa.</p>
+</div>
+<a class="hidden md:flex items-center gap-2 font-bold text-primary border-b border-primary/30 pb-1" href="#">CALENDARIO COMPLETO</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Event 1 -->
+<div class="group bg-surface-container-high p-8 rounded-xl hover:bg-primary-container/20 transition-all duration-500">
+<div class="text-primary font-black text-4xl mb-4">24 <span class="text-sm font-normal uppercase tracking-widest text-slate-400">OCT</span></div>
+<h3 class="text-xl font-bold mb-2">Noche de Adoración</h3>
+<p class="text-slate-400 mb-6 text-sm">Un tiempo íntimo para elevar nuestra voz y espíritu al unísono.</p>
+<div class="flex items-center justify-between text-xs text-slate-500 font-bold uppercase tracking-tighter">
+<span>19:00 HRS</span>
+<span class="material-symbols-outlined group-hover:translate-x-2 transition-transform">arrow_forward</span>
+</div>
+</div>
+<!-- Event 2 -->
+<div class="group bg-surface-container-high p-8 rounded-xl hover:bg-primary-container/20 transition-all duration-500">
+<div class="text-primary font-black text-4xl mb-4">02 <span class="text-sm font-normal uppercase tracking-widest text-slate-400">NOV</span></div>
+<h3 class="text-xl font-bold mb-2">Conferencia Jóvenes</h3>
+<p class="text-slate-400 mb-6 text-sm">Desafiando a una generación a brillar en la oscuridad actual.</p>
+<div class="flex items-center justify-between text-xs text-slate-500 font-bold uppercase tracking-tighter">
+<span>09:00 HRS</span>
+<span class="material-symbols-outlined group-hover:translate-x-2 transition-transform">arrow_forward</span>
+</div>
+</div>
+<!-- Event 3 -->
+<div class="group bg-surface-container-high p-8 rounded-xl hover:bg-primary-container/20 transition-all duration-500 border-t-4 border-primary">
+<div class="text-primary font-black text-4xl mb-4">05 <span class="text-sm font-normal uppercase tracking-widest text-slate-400">NOV</span></div>
+<h3 class="text-xl font-bold mb-2">Bautismos en Fe</h3>
+<p class="text-slate-400 mb-6 text-sm">Celebrando el inicio de nuevas vidas en Jesucristo.</p>
+<div class="flex items-center justify-between text-xs text-slate-500 font-bold uppercase tracking-tighter">
+<span>11:00 HRS</span>
+<span class="material-symbols-outlined group-hover:translate-x-2 transition-transform">arrow_forward</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 6 & 7: Courses & Library (Side-by-Side Dual Intent) -->
+<section class="py-24 px-6 bg-surface-container-low">
+<div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16">
+<!-- Courses -->
+<div>
+<h2 class="font-headline text-3xl font-bold mb-12">Academia de Formación</h2>
+<div class="bg-surface rounded-xl overflow-hidden shadow-xl border border-white/5 group">
+<div class="h-48 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="overhead shot of an open Bible with a notebook and a luxury pen on a dark wooden table in atmospheric lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJ9tRLQ3dyZG6oOVXmSOAdfXI-xpwWWxMuksJzTpPOODdN6SX3eozspY2jHRHrmMlnHdvf1ulijUeTWwwrfMX-2Wfwksbvh-0OnrZ6CiKDTHjJG2qMzZ1np9HnOttSqbH8UJjblvpw2lboQazKEUBVwvWTg5XO1bL9uKbTb1NBhIwalOazbexQugwg3cSTwlEhRlTEOZnhFlA3_2c7SO1tCIwoSLVmz8ee9MU2jurZmufli1U-SL4wylg4PrWkdUmbyFbP6aC6-T9p"/>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-4">
+<span class="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest rounded-full">Inscripciones Abiertas</span>
+<span class="text-slate-500 text-sm italic">12 semanas</span>
+</div>
+<h3 class="text-2xl font-bold mb-4">Fundamentos del Faro</h3>
+<p class="text-slate-400 mb-8">Un curso profundo sobre nuestra doctrina, visión y el llamado de Dios para tu vida.</p>
+<div class="space-y-4">
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-primary w-1/3 h-full"></div>
+</div>
+<button class="w-full py-4 bg-primary text-on-primary font-black rounded-xl hover:bg-secondary transition-colors uppercase tracking-widest text-xs">Inscribirme ahora</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Library -->
+<div>
+<h2 class="font-headline text-3xl font-bold mb-12">Librería El Faro</h2>
+<div class="space-y-8">
+<div class="flex gap-6 items-center group">
+<div class="w-24 h-32 bg-surface-container-highest rounded-lg flex-shrink-0 shadow-lg group-hover:-translate-y-2 transition-transform">
+<img class="w-full h-full object-cover rounded-lg" data-alt="minimalist book cover with bold typography titled THE LIGHT on a textured dark paper background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuARHZtgzfAhyV2hyv1fYUhG8IBdAftpT438Y5jMFAgEWjV-6xNy5rMCr66HY-fw8nMQiv1-n7OZBs8ZJCIl9iIXHA-iFSmf9rU_UEmFy1s4t5jn7k3D9Lg8yNzcMPgXuTtfYBc1joC0CD5ILUxH1WbGvkfSTGo9--mB1Aok5ER4Xs5LnDzm0PspuQ_jOTglzqsHD2QfVcgKBCVaZMWl5gOlF_c2TNNPbCGxe22PuWAb8QzF-Kk5DUDm5MAof0RqA8aswkSKea5_X-H1"/>
+</div>
+<div>
+<h4 class="font-bold text-lg">Caminando en Luz</h4>
+<p class="text-slate-500 text-sm mb-3">Escrito por Pastor David Silva</p>
+<button class="text-primary font-bold text-xs uppercase tracking-widest hover:text-white transition-colors">Detalles del libro</button>
+</div>
+</div>
+<div class="flex gap-6 items-center group">
+<div class="w-24 h-32 bg-surface-container-highest rounded-lg flex-shrink-0 shadow-lg group-hover:-translate-y-2 transition-transform">
+<img class="w-full h-full object-cover rounded-lg" data-alt="elegant dark blue book cover with gold foil accents of a stylized lighthouse" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCl1SvyvUxxh-3ecY4DX-pnr27ur9GZSWCldAepkinD8H71RqOO7KHaym_L58hqCnSwgZp6t3hASwqfMHc4Vofaz2Ug8FQrHMpUiC_NvC0StkC01kidorbRKP9y_mlEzFxC3xjZU3GGyyJ5OO3on3_agOA8xgpzbh7rcdu0iuaKv0Q7kHNNBqDiiw_zrERGMW-7SiVB0P_shib60uvSebom7W8Qd3awbmpEhnQpgSnEadwX-UTKPcgweRSj7EjU2bggJwnbC1xlUFQa"/>
+</div>
+<div>
+<h4 class="font-bold text-lg">Devocional: 365 Días</h4>
+<p class="text-slate-500 text-sm mb-3">Recursos Editorial FARO</p>
+<button class="text-primary font-bold text-xs uppercase tracking-widest hover:text-white transition-colors">Detalles del libro</button>
+</div>
+</div>
+<button class="w-full py-4 border border-primary/30 text-primary font-black rounded-xl hover:bg-primary/5 transition-colors uppercase tracking-widest text-xs">Visitar Tienda Completa</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 8: Sedes (Minimalist Map Focus) -->
+<section class="py-32 px-6">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row gap-16 items-center">
+<div class="w-full md:w-1/2 h-[400px] bg-surface-container rounded-3xl overflow-hidden relative grayscale opacity-60">
+<img class="w-full h-full object-cover" data-alt="stylized top-down view of a modern urban city map with glowing navy and neon blue accents" data-location="Madrid, Spain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8V8TTIH2JTUrLPngwTfglLYb8gaRLy4TuTMJCSBOh4fOTVdWfM8hJMcrUUFA3jGly0DKLuwJ07XRuEZyJxY6pjPrpffmiP7ShyO3yKJbnmLN_1igjn1W_SIHShoUOGLl0mHNqw4hsZL38Jj89LFtu-H2qEjXIKY1q2VvJGAZaJNc5zaTQhHRbArJU3vIO2FFU3ccOU_bBGckD-GjVsNPGyPjPi00AcltAv6aKE6U_Syqduq57xoj7-vqgRw_v3dC97x5gAoEfS2qK"/>
+<div class="absolute inset-0 bg-primary/10 mix-blend-overlay"></div>
+</div>
+<div class="w-full md:w-1/2 space-y-8">
+<h2 class="font-headline text-4xl font-bold">Encuéntranos Cerca de Ti</h2>
+<div class="grid grid-cols-1 gap-6">
+<div class="flex items-center justify-between p-6 bg-surface-container-high rounded-xl">
+<div>
+<div class="font-bold">Madrid Central</div>
+<div class="text-sm text-slate-500">Calle de la Luz, 12</div>
+</div>
+<span class="material-symbols-outlined text-primary">location_on</span>
+</div>
+<div class="flex items-center justify-between p-6 bg-surface-container-low border border-white/5 rounded-xl">
+<div>
+<div class="font-bold">Sede Barcelona</div>
+<div class="text-sm text-slate-500">Avenida del Mar, 45</div>
+</div>
+<span class="material-symbols-outlined text-slate-600">location_on</span>
+</div>
+</div>
+<button class="text-primary font-black flex items-center gap-2 group">
+                        BUSCAR IGLESIA CERCANA <span class="material-symbols-outlined group-hover:translate-x-2 transition-transform">east</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Section 9: Final CTA -->
+<section class="max-w-7xl mx-auto px-6 mb-24">
+<div class="relative rounded-[2.5rem] overflow-hidden bg-[#000d2a] p-12 md:p-24 text-center border border-white/5">
+<div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-64 bg-primary/20 blur-[120px] rounded-full pointer-events-none"></div>
+<div class="relative z-10 max-w-2xl mx-auto space-y-10">
+<h2 class="font-headline text-4xl md:text-6xl font-extrabold tracking-tighter italic">Quiero conocer a Jesús</h2>
+<p class="text-lg text-slate-300 leading-relaxed font-light">¿Sientes curiosidad? ¿Buscas propósito? No importa dónde estés en tu camino, queremos acompañarte en este descubrimiento.</p>
+<div class="pt-4 flex flex-col sm:flex-row gap-6 justify-center">
+<button class="px-12 py-5 bg-white text-background font-black rounded-full hover:scale-105 transition-all text-lg shadow-[0_0_40px_rgba(255,255,255,0.2)]">HABLAR CON ALGUIEN</button>
+<button class="px-12 py-5 border border-white/20 text-white font-black rounded-full hover:bg-white/10 transition-all text-lg">MÁS INFORMACIÓN</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full flex flex-col items-center justify-center border-t border-white/5 mt-20 bg-[#00081a] w-full pt-20 pb-10 font-['Inter'] text-sm leading-relaxed">
+<div class="max-w-7xl mx-auto px-8 w-full flex flex-col md:flex-row justify-between gap-12 mb-16">
+<div class="space-y-6">
+<div class="font-['Manrope'] font-black text-[#a5c8ff] text-3xl">FARO</div>
+<p class="max-w-xs text-slate-600">Llevando la luz de la verdad a cada rincón de la sociedad a través de medios editoriales y vida comunitaria.</p>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-12">
+<div class="space-y-4">
+<h5 class="font-bold text-white uppercase text-xs tracking-widest">Legal</h5>
+<ul class="space-y-2">
+<li><a class="text-slate-600 hover:text-[#a5c8ff] transition-colors" href="#">Privacy</a></li>
+<li><a class="text-slate-600 hover:text-[#a5c8ff] transition-colors" href="#">Terms</a></li>
+</ul>
+</div>
+<div class="space-y-4">
+<h5 class="font-bold text-white uppercase text-xs tracking-widest">Connect</h5>
+<ul class="space-y-2">
+<li><a class="text-slate-600 hover:text-[#a5c8ff] transition-colors" href="#">Giving</a></li>
+<li><a class="text-slate-600 hover:text-[#a5c8ff] transition-colors" href="#">Connect</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="text-slate-600 border-t border-white/5 pt-10 w-full text-center px-8">
+            © 2024 FARO. The Illumination Editorial. Guided by the Lighthouse Beam.
+        </div>
+</footer>
+<!-- SideNavBar (Mobile) -->
+<aside class="md:hidden fixed bottom-0 left-0 right-0 bg-[#001134]/90 backdrop-blur-xl flex justify-around items-center py-4 px-6 z-[60] border-t border-white/5">
+<a class="flex flex-col items-center gap-1 text-[#a5c8ff] font-bold" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[8px] uppercase tracking-widest">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="text-[8px] uppercase tracking-widest">Sermons</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">event</span>
+<span class="text-[8px] uppercase tracking-widest">Agenda</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">flare</span>
+<span class="text-[8px] uppercase tracking-widest">Jesus</span>
+</a>
+</aside>
+</body></html>

@@ -5,8 +5,8 @@ import * as fabric from 'fabric';
 import { 
     MousePointer2, Pencil, Square, Circle, Type, 
     Trash2, Undo, Redo, ZoomIn, ZoomOut, Maximize,
-    CloudCheck, Loader2, Grid3X3, Sparkles, Wand2,
-    X, Save, Download, Share2, Move, Layers
+    Cloud, Loader2, Grid3X3, Sparkles, Wand2,
+    X, Save, Download, Share2, Move, Layers, LayoutDashboard
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as Dialog from '@radix-ui/react-dialog';
@@ -132,7 +132,7 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
                                                 {saveStatus === 'saving' ? (
                                                     <><Loader2 size={10} className="animate-spin text-blue-500" /> <span className="text-[8px] font-black uppercase text-blue-500">Sincronizando...</span></>
                                                 ) : (
-                                                    <><CloudCheck size={10} className="text-emerald-500" /> <span className="text-[8px] font-black uppercase text-emerald-500">Persistido en DB</span></>
+                                                    <><Cloud size={10} className="text-emerald-500" /> <span className="text-[8px] font-black uppercase text-emerald-500">Persistido en DB</span></>
                                                 )}
                                             </div>
                                         </div>

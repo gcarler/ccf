@@ -92,7 +92,6 @@ def list_projects(
     query = db.query(models.Project).options(
         selectinload(models.Project.tasks),
         selectinload(models.Project.milestones),
-        selectinload(models.Project.activity_logs)
     )
     if status_filter:
         query = query.filter(models.Project.status == status_filter)
@@ -104,7 +103,6 @@ def list_projects(
         _normalize_dates(p)
         for m in p.milestones: _normalize_dates(m)
         for t in p.tasks: _normalize_dates(t)
-        for log in p.activity_logs: _normalize_dates(log)
     return projects
 
 

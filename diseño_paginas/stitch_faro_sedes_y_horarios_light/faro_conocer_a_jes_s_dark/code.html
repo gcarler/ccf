@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Conocer a Jesús | FARO</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed-variant": "#3e484f",
+              "surface-container-lowest": "#000d2a",
+              "surface-tint": "#a5c8ff",
+              "on-background": "#d9e2ff",
+              "inverse-primary": "#2c609d",
+              "on-surface": "#d9e2ff",
+              "secondary-fixed-dim": "#80d0ff",
+              "outline": "#8c919b",
+              "on-error-container": "#ffdad6",
+              "tertiary-fixed-dim": "#bdc8d0",
+              "on-surface-variant": "#c2c6d1",
+              "secondary-container": "#2b9ace",
+              "outline-variant": "#424750",
+              "primary-fixed-dim": "#a5c8ff",
+              "inverse-surface": "#d9e2ff",
+              "tertiary": "#bdc8d0",
+              "surface-container-high": "#102855",
+              "error-container": "#93000a",
+              "surface-dim": "#001134",
+              "on-primary-container": "#86b4f7",
+              "on-error": "#690005",
+              "background": "#001134",
+              "on-secondary": "#00344b",
+              "tertiary-fixed": "#d9e4ec",
+              "on-primary": "#00315e",
+              "surface-container-highest": "#1d3361",
+              "inverse-on-surface": "#182f5c",
+              "surface-variant": "#1d3361",
+              "surface": "#001134",
+              "primary-container": "#004581",
+              "on-primary-fixed-variant": "#054783",
+              "on-secondary-container": "#002d41",
+              "on-tertiary-fixed": "#131d23",
+              "on-primary-fixed": "#001c3a",
+              "secondary-fixed": "#c5e7ff",
+              "on-tertiary": "#273238",
+              "primary": "#a5c8ff",
+              "on-tertiary-container": "#a8b3bb",
+              "primary-fixed": "#d4e3ff",
+              "surface-container-low": "#001944",
+              "surface-bright": "#223865",
+              "error": "#ffb4ab",
+              "surface-container": "#021d4a",
+              "tertiary-container": "#3b464c",
+              "secondary": "#80d0ff",
+              "on-secondary-fixed-variant": "#004c6a",
+              "on-secondary-fixed": "#001e2d"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-beam-gradient {
+            background: radial-gradient(circle at 50% 0%, rgba(165, 200, 255, 0.15) 0%, rgba(0, 17, 52, 0) 70%);
+        }
+        .text-glow {
+            text-shadow: 0 0 20px rgba(165, 200, 255, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body selection:bg-primary/30">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#001134]/70 backdrop-blur-xl shadow-[0_20px_40px_rgba(0,17,52,0.4)] flex justify-between items-center px-8 h-20 w-full">
+<div class="text-2xl font-bold tracking-tighter text-[#a5c8ff] font-headline uppercase">FARO</div>
+<div class="hidden md:flex gap-8 items-center">
+<a class="font-manrope text-sm tracking-[0.05em] uppercase text-[#d9e2ff]/70 hover:text-[#80d0ff] transition-colors duration-300" href="#">Inicio</a>
+<a class="font-manrope text-sm tracking-[0.05em] uppercase text-[#d9e2ff]/70 hover:text-[#80d0ff] transition-colors duration-300" href="#">Eventos</a>
+<a class="font-manrope text-sm tracking-[0.05em] uppercase text-[#d9e2ff]/70 hover:text-[#80d0ff] transition-colors duration-300" href="#">Prédicas</a>
+<a class="font-manrope text-sm tracking-[0.05em] uppercase text-[#d9e2ff]/70 hover:text-[#80d0ff] transition-colors duration-300" href="#">Cursos</a>
+<a class="font-manrope text-sm tracking-[0.05em] uppercase text-[#d9e2ff]/70 hover:text-[#80d0ff] transition-colors duration-300" href="#">Sedes</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="scale-95 active:scale-90 transition-transform text-[#a5c8ff]">
+<span class="material-symbols-outlined text-3xl">account_circle</span>
+</button>
+</div>
+</nav>
+<!-- Hero Section -->
+<header class="relative min-h-[921px] flex items-center overflow-hidden pt-20">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover opacity-40 mix-blend-luminosity" data-alt="atmospheric cinematic view of a solitary lighthouse beam cutting through thick dark fog at night with subtle blue tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQhwRk_b-GuXRaYn_P7bJpoJrPaZG3GnLzeHBNCF0lM9F7Ol-6upcnnShsgBfx32AH8kPMddB2H9DcnU-Sx-v8Nq3YVA9n_3pibXvlgxAVR-rQVuD4mVSxclB6VomcSHZdTgh2-mWG2AFl4ldtzgWiFJz2GxQUd7_KUwocOlbeTCoI0IWVcoyYkHwtiTGr5TeHKcytTri8mDQl52Mk7B-U_MdU0ERMIhwo3YrTBN5jA9yXvwBd_tnsSeYm9Mpx0UFQ-1G4azXJ7VO0"/>
+<div class="absolute inset-0 bg-gradient-to-b from-background/20 via-background/80 to-background"></div>
+<div class="absolute inset-0 bg-beam-gradient"></div>
+</div>
+<div class="container mx-auto px-6 relative z-10 grid md:grid-cols-12 gap-8">
+<div class="md:col-span-8 lg:col-span-7">
+<span class="inline-block px-4 py-1 rounded-full border border-primary/30 text-primary text-xs font-label tracking-[0.2em] uppercase mb-6 bg-primary/5">Inicia Tu Camino</span>
+<h1 class="font-headline text-5xl md:text-7xl font-extrabold tracking-tight text-on-background leading-none mb-8 text-glow">
+                    La Luz que <br/><span class="text-primary italic">Guía</span> Tu Vida.
+                </h1>
+<p class="text-xl md:text-2xl text-on-surface-variant leading-relaxed mb-10 max-w-2xl font-light">
+                    Conocer a Jesús no es una religión, es el comienzo de una relación que transforma la oscuridad en un propósito eterno.
+                </p>
+<div class="flex flex-wrap gap-6">
+<button class="px-10 py-4 rounded-full bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold text-lg shadow-lg hover:shadow-primary/20 transition-all scale-100 active:scale-95">
+                        Quiero conocer a Jesús
+                    </button>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Area: Bento Grid Layout -->
+<main class="container mx-auto px-6 py-24">
+<!-- Section: Editorial Intro -->
+<section class="grid md:grid-cols-12 gap-12 mb-32 items-center">
+<div class="md:col-span-5 order-2 md:order-1">
+<div class="relative group">
+<div class="absolute -inset-4 bg-secondary/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<img class="rounded-xl relative z-10 grayscale hover:grayscale-0 transition-all duration-700" data-alt="close-up of hands holding a worn leather book in warm atmospheric lighting with soft particles in the air" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAPyQemSyzvAaX46girwSPwMxs1JXxl2H4VKkZxwQ-_heZevPCDhXZqRTwrJIch7_IKp_gJAB2ZYs-xDFLO0fQkBenh8AF_ojphRwscblz3GuzgtJ4YU591US6gpPBb6OMs0NgN_e8-futaqWiPJCddfjwoOsbU8I2_3NANVrvMq3gP82nlJR3WFOKy_ML_BLN9Kqcoy8vjtT_llG_zpKpkxb4TdeiC4_wJF9JWjEkpCZit-6xR1HTG87YZ1HEP7SbVUPbESXG6Gor"/>
+</div>
+</div>
+<div class="md:col-span-7 order-1 md:order-2">
+<h2 class="font-headline text-4xl font-bold mb-8 text-primary">Un Encuentro Personal</h2>
+<div class="space-y-6 text-on-surface-variant text-lg leading-relaxed">
+<p>En FARO, creemos que cada historia es única. No importa dónde hayas estado o qué hayas hecho, la invitación es la misma: <span class="text-on-surface font-semibold">Ven y ve.</span></p>
+<p>Descubre un espacio donde las preguntas son bienvenidas y la gracia es el lenguaje principal. Jesús ofrece descanso para el alma y una dirección clara para el futuro.</p>
+</div>
+</div>
+</section>
+<!-- Bento Grid: Stories that Illuminate -->
+<section class="mb-32">
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+<div class="max-w-xl">
+<h2 class="font-headline text-4xl font-black mb-4 uppercase tracking-tighter">Historias que <span class="text-secondary">Iluminan</span></h2>
+<p class="text-on-surface-variant text-lg">Testimonios reales de vidas transformadas por la luz de la esperanza.</p>
+</div>
+<a class="text-primary font-bold flex items-center gap-2 group" href="#">
+                    Ver todos los testimonios 
+                    <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Large Story Card -->
+<div class="md:col-span-2 md:row-span-2 rounded-xl bg-surface-container-low overflow-hidden relative group">
+<img class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" data-alt="young group of diverse friends laughing together in a modern sunlit interior with architectural shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDH5vRtH2qolIJPS8Fa6rttXsVZU4pLOO2sIyssH8XrACloBctjNYfhploQoBYWiGCp9bze9NC4YTjuBz9wVCnDOJSxvZ8XbU9viwde0iFpGw1-1INwyjvhxgqrdgzX6RdviDnVEBMLS0kUxbC5_3lgrl8G-9jJiUaPNgYtMut2YEWtB69N6gWDAdZq0VKuwLq7_MmYGLWSp0Ji9Tho7vZmSpCc9tiHbbMmYvYZoeHBGzo89RjQZLDn6OohTQOsQtS-Ljrzv8RtiCHf"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
+<div class="absolute bottom-0 p-10">
+<span class="material-symbols-outlined text-primary text-5xl mb-4" style="font-variation-settings: 'FILL' 1;">format_quote</span>
+<h3 class="font-headline text-3xl font-bold mb-4">"Encontré la paz que mi carrera no podía darme."</h3>
+<p class="text-on-surface-variant font-medium">Mateo R., Diseñador</p>
+</div>
+</div>
+<!-- Small Card 1 -->
+<div class="rounded-xl bg-surface-container-high p-8 flex flex-col justify-between border-b-2 border-transparent hover:border-secondary transition-all">
+<span class="material-symbols-outlined text-secondary text-4xl mb-6">auto_awesome</span>
+<p class="text-lg italic text-on-surface mb-6">"Llegué buscando respuestas y encontré una familia que me aceptó tal cual soy."</p>
+<p class="text-sm font-label uppercase tracking-widest text-on-surface-variant">— Lucía G.</p>
+</div>
+<!-- Small Card 2 -->
+<div class="rounded-xl bg-surface-container-high p-8 flex flex-col justify-between border-b-2 border-transparent hover:border-primary transition-all">
+<span class="material-symbols-outlined text-primary text-4xl mb-6">menu_book</span>
+<p class="text-lg italic text-on-surface mb-6">"El curso de fundamentos cambió mi perspectiva sobre el propósito de mi vida diaria."</p>
+<p class="text-sm font-label uppercase tracking-widest text-on-surface-variant">— Carlos M.</p>
+</div>
+</div>
+</section>
+<!-- Contact Form Section -->
+<section class="grid md:grid-cols-12 gap-16 items-start bg-surface-container-lowest p-8 md:p-16 rounded-3xl relative overflow-hidden">
+<div class="absolute top-0 right-0 w-96 h-96 bg-primary/5 blur-[120px] -translate-y-1/2 translate-x-1/2 rounded-full"></div>
+<div class="md:col-span-5">
+<h2 class="font-headline text-4xl font-bold mb-6">Hablemos de <br/>Tu Caminar</h2>
+<p class="text-on-surface-variant text-lg mb-10">¿Tienes dudas? ¿Quieres orar por algo específico? Nuestro equipo está aquí para acompañarte sin juicios.</p>
+<div class="space-y-6">
+<div class="flex items-center gap-4 text-on-surface-variant">
+<div class="w-10 h-10 rounded-full bg-primary-container/30 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-xl">schedule</span>
+</div>
+<span class="text-sm">Respuesta en menos de 24 horas</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<div class="w-10 h-10 rounded-full bg-primary-container/30 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-xl">mail</span>
+</div>
+<span class="text-sm">hola@comunidadfaro.org</span>
+</div>
+</div>
+</div>
+<div class="md:col-span-7 bg-surface-container p-8 md:p-12 rounded-2xl shadow-xl relative z-10">
+<form action="#" class="space-y-8">
+<div class="grid md:grid-cols-2 gap-8">
+<div>
+<label class="font-label text-xs uppercase tracking-[0.1em] text-on-surface-variant mb-3 block">Nombre completo</label>
+<input class="w-full bg-surface-container-highest border-none rounded-lg p-4 focus:ring-1 focus:ring-primary text-on-background placeholder:text-on-surface-variant/30 transition-all" placeholder="Tu nombre" type="text"/>
+</div>
+<div>
+<label class="font-label text-xs uppercase tracking-[0.1em] text-on-surface-variant mb-3 block">WhatsApp</label>
+<input class="w-full bg-surface-container-highest border-none rounded-lg p-4 focus:ring-1 focus:ring-primary text-on-background placeholder:text-on-surface-variant/30 transition-all" placeholder="+54 9..." type="tel"/>
+</div>
+</div>
+<div>
+<label class="font-label text-xs uppercase tracking-[0.1em] text-on-surface-variant mb-3 block">¿En qué podemos ayudarte?</label>
+<textarea class="w-full bg-surface-container-highest border-none rounded-lg p-4 focus:ring-1 focus:ring-primary text-on-background placeholder:text-on-surface-variant/30 transition-all" placeholder="Cuéntanos un poco sobre ti o tu petición de oración..." rows="4"></textarea>
+</div>
+<button class="w-full py-5 rounded-full bg-primary text-on-primary font-bold text-lg hover:bg-secondary transition-colors shadow-lg shadow-primary/10" type="submit">
+                        Enviar mensaje y conectar
+                    </button>
+</form>
+</div>
+</section>
+</main>
+<!-- Footer Space for Shell padding -->
+<div class="h-32"></div>
+<!-- BottomNavBar -->
+<div class="fixed bottom-0 left-0 w-full flex justify-center pb-8 z-50">
+<nav class="bg-[#001134]/80 backdrop-blur-2xl shadow-[0_20px_40px_rgba(0,0,0,0.5)] w-[90%] max-w-md rounded-full px-6 py-3 flex justify-between items-center border border-white/5">
+<button class="flex flex-col items-center justify-center text-[#d9e2ff]/50 hover:text-[#a5c8ff] transition-colors">
+<span class="material-symbols-outlined">home</span>
+<span class="font-inter text-[10px] font-medium tracking-wide">Inicio</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#d9e2ff]/50 hover:text-[#a5c8ff] transition-colors">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="font-inter text-[10px] font-medium tracking-wide">Eventos</span>
+</button>
+<!-- Active State: Multimedia (Multimedia often contains the 'Know Jesus' content) -->
+<button class="flex flex-col items-center justify-center text-[#a5c8ff] bg-[#004581]/50 rounded-full p-2 shadow-[0_0_15px_rgba(128,208,255,0.3)] scale-110">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+<span class="font-inter text-[10px] font-medium tracking-wide">Multimedia</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#d9e2ff]/50 hover:text-[#a5c8ff] transition-colors">
+<span class="material-symbols-outlined">location_on</span>
+<span class="font-inter text-[10px] font-medium tracking-wide">Sedes</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#d9e2ff]/50 hover:text-[#a5c8ff] transition-colors">
+<span class="material-symbols-outlined">menu</span>
+<span class="font-inter text-[10px] font-medium tracking-wide">Más</span>
+</button>
+</nav>
+</div>
+</body></html>

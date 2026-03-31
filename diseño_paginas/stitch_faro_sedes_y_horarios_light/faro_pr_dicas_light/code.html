@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-variant": "#1d3361",
+              "tertiary-container": "#3b464c",
+              "primary": "#a5c8ff",
+              "on-error-container": "#ffdad6",
+              "error-container": "#93000a",
+              "on-secondary": "#00344b",
+              "on-surface-variant": "#c2c6d1",
+              "on-background": "#d9e2ff",
+              "on-secondary-container": "#002d41",
+              "surface-container-low": "#001944",
+              "on-primary-fixed": "#001c3a",
+              "primary-fixed-dim": "#a5c8ff",
+              "on-tertiary-container": "#a8b3bb",
+              "secondary-fixed-dim": "#80d0ff",
+              "on-error": "#690005",
+              "surface-container-high": "#102855",
+              "on-primary-container": "#86b4f7",
+              "surface-container-highest": "#1d3361",
+              "secondary": "#80d0ff",
+              "on-tertiary-fixed": "#131d23",
+              "tertiary-fixed-dim": "#bdc8d0",
+              "on-primary-fixed-variant": "#054783",
+              "on-surface": "#d9e2ff",
+              "on-primary": "#00315e",
+              "primary-fixed": "#d4e3ff",
+              "tertiary-fixed": "#d9e4ec",
+              "surface-container": "#021d4a",
+              "outline-variant": "#424750",
+              "surface": "#001134",
+              "primary-container": "#004581",
+              "on-secondary-fixed": "#001e2d",
+              "inverse-on-surface": "#182f5c",
+              "inverse-primary": "#2c609d",
+              "on-secondary-fixed-variant": "#004c6a",
+              "background": "#001134",
+              "on-tertiary-fixed-variant": "#3e484f",
+              "inverse-surface": "#d9e2ff",
+              "surface-dim": "#001134",
+              "on-tertiary": "#273238",
+              "outline": "#8c919b",
+              "surface-container-lowest": "#000d2a",
+              "surface-tint": "#a5c8ff",
+              "error": "#ffb4ab",
+              "secondary-fixed": "#c5e7ff",
+              "secondary-container": "#2b9ace",
+              "surface-bright": "#223865",
+              "tertiary": "#bdc8d0"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-nav {
+            backdrop-filter: blur(20px);
+        }
+        body {
+            background-color: #001134;
+            color: #d9e2ff;
+        }
+    </style>
+</head>
+<body class="font-body selection:bg-primary/30 selection:text-primary">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-surface/70 dark:bg-[#001134]/70 backdrop-blur-xl shadow-[0_20px_40px_rgba(0,17,52,0.4)]">
+<div class="flex justify-between items-center px-12 py-6 max-w-[1440px] mx-auto">
+<div class="text-2xl font-black tracking-tighter text-[#a5c8ff]">FARO</div>
+<div class="hidden md:flex items-center space-x-8">
+<a class="font-['Manrope'] tracking-tight font-bold text-sm uppercase text-[#d9e2ff] opacity-80 hover:text-[#80d0ff] hover:opacity-100 transition-all duration-300" href="#">Sobre Nosotros</a>
+<a class="font-['Manrope'] tracking-tight font-bold text-sm uppercase text-[#d9e2ff] opacity-80 hover:text-[#80d0ff] hover:opacity-100 transition-all duration-300" href="#">Testimonios</a>
+<a class="font-['Manrope'] tracking-tight font-bold text-sm uppercase text-[#d9e2ff] opacity-80 hover:text-[#80d0ff] hover:opacity-100 transition-all duration-300" href="#">Eventos</a>
+<a class="font-['Manrope'] tracking-tight font-bold text-sm uppercase text-[#a5c8ff] border-b-2 border-[#a5c8ff] pb-1" href="#">Prédicas</a>
+<a class="font-['Manrope'] tracking-tight font-bold text-sm uppercase text-[#d9e2ff] opacity-80 hover:text-[#80d0ff] hover:opacity-100 transition-all duration-300" href="#">Cursos</a>
+<a class="font-['Manrope'] tracking-tight font-bold text-sm uppercase text-[#d9e2ff] opacity-80 hover:text-[#80d0ff] hover:opacity-100 transition-all duration-300" href="#">Libros</a>
+</div>
+<div class="flex items-center space-x-6">
+<div class="hidden lg:flex items-center space-x-4">
+<span class="material-symbols-outlined text-[#a5c8ff] cursor-pointer">location_on</span>
+<span class="material-symbols-outlined text-[#a5c8ff] cursor-pointer">dark_mode</span>
+</div>
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-6 py-2.5 rounded-full font-bold text-sm tracking-tight scale-95 active:scale-90 transition-transform">
+                    Quiero conocer a Jesús
+                </button>
+</div>
+</div>
+</nav>
+<main class="pt-32 pb-24">
+<!-- Hero Header -->
+<header class="max-w-[1440px] mx-auto px-12 mb-20 relative">
+<div class="absolute -top-40 -left-20 w-[600px] h-[600px] bg-secondary/5 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+<div class="lg:col-span-8">
+<span class="font-label text-primary tracking-[0.2em] uppercase text-xs mb-4 block">Recursos Espirituales</span>
+<h1 class="font-headline text-6xl md:text-7xl font-extrabold text-on-background tracking-tighter leading-[0.9] mb-8">
+                        Alimento para <br/> el Alma
+                    </h1>
+<p class="font-body text-xl text-on-surface-variant max-w-xl leading-relaxed">
+                        Explora nuestra biblioteca de mensajes diseñados para iluminar tu camino y fortalecer tu fe en cada temporada de la vida.
+                    </p>
+</div>
+</div>
+</header>
+<!-- Search & Filter Bar -->
+<section class="max-w-[1440px] mx-auto px-12 mb-16">
+<div class="bg-surface-container-high/40 backdrop-blur-md rounded-full p-2 flex flex-col md:flex-row items-center gap-4 shadow-2xl">
+<div class="flex-1 flex items-center px-6 gap-3 w-full">
+<span class="material-symbols-outlined text-primary">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-on-surface placeholder:text-outline w-full py-3 font-body" placeholder="Buscar por tema, orador o pasaje bíblico..." type="text"/>
+</div>
+<div class="flex items-center gap-2 p-1 w-full md:w-auto overflow-x-auto whitespace-nowrap">
+<button class="px-6 py-2.5 rounded-full bg-primary text-on-primary font-semibold text-sm">Todo</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-highest text-on-surface-variant hover:text-primary transition-colors font-semibold text-sm">Series</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-highest text-on-surface-variant hover:text-primary transition-colors font-semibold text-sm">Oradores</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-highest text-on-surface-variant hover:text-primary transition-colors font-semibold text-sm">Tópicos</button>
+<button class="ml-2 w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-highest text-primary">
+<span class="material-symbols-outlined">tune</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Featured Message (Bento Style) -->
+<section class="max-w-[1440px] mx-auto px-12 mb-20">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Large Feature Card -->
+<div class="lg:col-span-2 relative group overflow-hidden rounded-full aspect-[16/9] lg:aspect-auto h-[500px] bg-surface-container-low">
+<img alt="Featured Sermon" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-60" data-alt="Modern speaker with a microphone on a stage with dramatic blue lighting and soft haze, atmospheric and cinematic Christian worship setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD36y3-8SKN-ZM3vCU8nYuOJI1rFLlpzqdI1C6d9crQAVb4x2eTH6edrexZ0N1gtaVvUdxCjKE8TuX0D-9_K-bOnlhFypRAPjMFGwT_ny5UQVLPB1ST7AoQ6WpCGxjFFChNhr-IoXqGdZnJAcS--PX9lfLB5jhzYD67zPpyBH39ybtvCy6EI1NuV1aI5piptcGmE7YgLQPDNvjcl8RPxr1-flyWlqlqvSyAXetkXspkmVHPGAe_RfCNKEBRNKIaex35edSriYqjpHOI"/>
+<div class="absolute inset-0 bg-gradient-to-t from-[#001134] via-transparent to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-10 w-full">
+<div class="flex items-center gap-4 mb-4">
+<span class="bg-primary/20 backdrop-blur-md text-primary px-3 py-1 rounded-full text-xs font-bold tracking-widest uppercase">Última Prédica</span>
+<span class="text-on-surface-variant text-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">schedule</span> 45 min
+                            </span>
+</div>
+<h2 class="font-headline text-4xl font-bold text-on-background mb-4 leading-tight max-w-2xl">Caminando sobre las Aguas: Superando el Temor</h2>
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container overflow-hidden">
+<img alt="Pastor Profile" data-alt="Close up portrait of a middle-aged man with a friendly expression and glasses, professional church leader headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLZhcanI5oOLLlIJG0gJsUfVHF4miQi3nLTsYa_Ry9Oy2SQjZtTll6lwjLJaOMC-m_w4wJPvZSk8wLcA2632jcsTly93O19TZhoVQfsh4joOJ9_JLkZBB0PsQ2l_kDtiIIPhidFwb4oX1Ie4E3pVPwjAKZXDCrjDYOGIqomPA99z0M9ksWP3hGYUzEGOHJlDABt87rqZtQ_wR9wA7GSqz6tb9aKd-JtjTozjJ3BxDqhv14OchyWjPPs3k2ofz3DPmUfuJoI0mktI1c"/>
+</div>
+<span class="text-on-surface font-semibold">Pr. David Rossi</span>
+</div>
+<button class="flex items-center gap-2 text-primary font-bold hover:gap-4 transition-all">
+<span class="material-symbols-outlined" data-weight="fill">play_circle</span>
+                                VER AHORA
+                            </button>
+</div>
+</div>
+</div>
+<!-- Secondary Feature -->
+<div class="bg-surface-container-high rounded-full p-10 flex flex-col justify-between relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-8 opacity-10">
+<span class="material-symbols-outlined text-9xl">auto_stories</span>
+</div>
+<div>
+<span class="text-primary font-label text-xs tracking-widest uppercase mb-4 block">Serie Actual</span>
+<h3 class="font-headline text-3xl font-bold text-on-background mb-4 tracking-tight">Fundamentos de Luz</h3>
+<p class="text-on-surface-variant mb-6 leading-relaxed">Una exploración de 8 semanas sobre las verdades centrales del Evangelio según Juan.</p>
+<ul class="space-y-3">
+<li class="flex items-center gap-3 text-sm text-on-surface">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                El Verbo hecho Carne
+                            </li>
+<li class="flex items-center gap-3 text-sm text-on-surface">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                La Luz del Mundo
+                            </li>
+<li class="flex items-center gap-3 text-sm text-on-surface-variant opacity-60">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                                El Buen Pastor (Próximamente)
+                            </li>
+</ul>
+</div>
+<button class="mt-8 w-full py-4 rounded-full bg-primary-container/30 text-primary border border-primary/20 font-bold hover:bg-primary hover:text-on-primary transition-all">
+                        Ver Serie Completa
+                    </button>
+</div>
+</div>
+</section>
+<!-- Grid Section -->
+<section class="max-w-[1440px] mx-auto px-12">
+<div class="flex justify-between items-end mb-12">
+<h3 class="font-headline text-3xl font-bold text-on-background tracking-tight">Mensajes Recientes</h3>
+<div class="flex gap-2">
+<button class="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center text-outline hover:border-primary hover:text-primary transition-colors">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center text-outline hover:border-primary hover:text-primary transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+<!-- Card 1 -->
+<div class="group">
+<div class="relative rounded-xl overflow-hidden mb-6 aspect-video bg-surface-container-low">
+<img alt="Sermon thumbnail" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-80" data-alt="Beautiful sunrise over a calm ocean, symbolizing peace and new beginnings, soft pastel colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvX2rq_DSBUtXK64xuhMsfE58Ied-kP9C-9hongIb_6C0JiCCJbfpuPMgYJB4P6smhvgQ5R3h4JsE5iqyMQtJNqZZKpqeWpgGLrMbmVrP948nwjneCnoI0JYVjWsXCbboYv2tREIL5kcBD2FrlX2lLZLRi5-1Yp6uRQUIx8MYY5vRnpsWWPydLMpWnA7yQ5nO0Hgsuv4EbIRggTLrqoHkUZJC2SteLF1HECJ90YemniVrrboGXBLPTJeell23SRP-hzGzQHXwSrtPs"/>
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+<div class="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-white text-3xl" data-weight="fill">play_arrow</span>
+</div>
+</div>
+<div class="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md text-white text-xs px-2 py-1 rounded">
+                            38:12
+                        </div>
+</div>
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="text-secondary font-label text-[10px] tracking-widest uppercase px-2 py-1 bg-secondary/10 rounded">Esperanza</span>
+<span class="text-outline text-xs">May 12, 2024</span>
+</div>
+<h4 class="font-headline text-xl font-bold text-on-background mb-2 group-hover:text-primary transition-colors">Restaurando lo Quebrado</h4>
+<p class="text-on-surface-variant text-sm line-clamp-2 leading-relaxed">Cómo Dios utiliza nuestras cicatrices para contar su historia de redención y gracia en medio del caos.</p>
+<div class="mt-4 flex items-center gap-2 text-on-surface text-xs font-semibold">
+<span class="material-symbols-outlined text-sm">person</span>
+                            Dra. Elena Martínez
+                        </div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="group">
+<div class="relative rounded-xl overflow-hidden mb-6 aspect-video bg-surface-container-low">
+<img alt="Sermon thumbnail" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-80" data-alt="Crowd of people raising hands in worship at a concert or church service, soft stage lighting and bokeh effects" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9-nYOv0txL3Hy9wbCce12BTa2DkZ1flkUzRXcAptWMngJHxqp3QwFW6Nl0GRKJAgStRJkahMxyTEZ8xTnkiF80SI4H0mZ2pU0vZw71VFxvrc58W4m5znn4H0qb4z23j87FfgdH_1iiKP2hbGjg00s8vgdklGVfo9_KhBKMhfYdYWWk3P1XDxAgIMDdSBT3k-qODNasr4LpP5unmBn_zWtEtEoHXrfRWveoHY1ceTwYchjnZf0NMfi9PtLHfG1ioEzweyTiIeMktXA"/>
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+<div class="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-white text-3xl" data-weight="fill">play_arrow</span>
+</div>
+</div>
+<div class="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md text-white text-xs px-2 py-1 rounded">
+                            42:55
+                        </div>
+</div>
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="text-secondary font-label text-[10px] tracking-widest uppercase px-2 py-1 bg-secondary/10 rounded">Vida Interior</span>
+<span class="text-outline text-xs">May 05, 2024</span>
+</div>
+<h4 class="font-headline text-xl font-bold text-on-background mb-2 group-hover:text-primary transition-colors">El Poder de la Presencia</h4>
+<p class="text-on-surface-variant text-sm line-clamp-2 leading-relaxed">Descubriendo la paz que sobrepasa todo entendimiento a través de la oración contemplativa.</p>
+<div class="mt-4 flex items-center gap-2 text-on-surface text-xs font-semibold">
+<span class="material-symbols-outlined text-sm">person</span>
+                            Pastor Juan Carlos
+                        </div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="group">
+<div class="relative rounded-xl overflow-hidden mb-6 aspect-video bg-surface-container-low">
+<img alt="Sermon thumbnail" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-80" data-alt="Vast mountain range at sunset with a lonely figure standing on a peak, epic landscape photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD38O35hRcQef4oUkDP7L9GNZ_PLnxQL11rwt-__TPn2ix-UxEOQi3xKSG8W0SoerCHvl7lLhDqxPFIdYF_WbWpiNiqB6U-luhaXNmBnx9FK78sClQvNXOmPTmrn9f5V79cOLpZnwCfxpOP5lFa7syk-EUWSgCf3CID8EDP6KVqap44QNt1F4ZSHz101X9Jubmp5yNCt-22aRFWHUseiSXNGAaDA0Ef-kjpq7MH1ZcLoOuowH6MPH9PujDfnDTLNTSGonk8llEe1-JB"/>
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+<div class="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-white text-3xl" data-weight="fill">play_arrow</span>
+</div>
+</div>
+<div class="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md text-white text-xs px-2 py-1 rounded">
+                            51:04
+                        </div>
+</div>
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="text-secondary font-label text-[10px] tracking-widest uppercase px-2 py-1 bg-secondary/10 rounded">Liderazgo</span>
+<span class="text-outline text-xs">Abril 28, 2024</span>
+</div>
+<h4 class="font-headline text-xl font-bold text-on-background mb-2 group-hover:text-primary transition-colors">La Montaña del Sacrificio</h4>
+<p class="text-on-surface-variant text-sm line-clamp-2 leading-relaxed">Entendiendo el llamado de Abraham y lo que significa entregar nuestros 'Isaac' hoy en día.</p>
+<div class="mt-4 flex items-center gap-2 text-on-surface text-xs font-semibold">
+<span class="material-symbols-outlined text-sm">person</span>
+                            Misionero Samuel King
+                        </div>
+</div>
+</div>
+</div>
+<!-- More Pagination -->
+<div class="mt-20 flex justify-center">
+<button class="px-12 py-4 rounded-full border border-primary/30 text-primary font-bold hover:bg-primary hover:text-on-primary transition-all scale-95 hover:scale-100 active:scale-90">
+                    Cargar más prédicas
+                </button>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-[#001134] w-full rounded-none border-t border-[#a5c8ff]/10">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-12 px-12 py-20 max-w-[1440px] mx-auto">
+<div class="space-y-6">
+<div class="text-xl font-bold text-[#a5c8ff]">FARO</div>
+<p class="font-['Inter'] leading-relaxed text-sm text-[#d9e2ff]/60">Guiando corazones hacia la Verdad eterna a través de la enseñanza bíblica contemporánea.</p>
+</div>
+<div class="space-y-6">
+<h4 class="text-[#a5c8ff] font-bold text-sm tracking-widest uppercase">Redes</h4>
+<div class="flex flex-col space-y-3">
+<a class="font-['Inter'] text-sm text-[#d9e2ff]/60 hover:text-[#a5c8ff] underline-offset-4 hover:underline transition-all" href="#">Facebook</a>
+<a class="font-['Inter'] text-sm text-[#d9e2ff]/60 hover:text-[#a5c8ff] underline-offset-4 hover:underline transition-all" href="#">Instagram</a>
+<a class="font-['Inter'] text-sm text-[#d9e2ff]/60 hover:text-[#a5c8ff] underline-offset-4 hover:underline transition-all" href="#">YouTube</a>
+</div>
+</div>
+<div class="space-y-6">
+<h4 class="text-[#a5c8ff] font-bold text-sm tracking-widest uppercase">Comunidad</h4>
+<div class="flex flex-col space-y-3">
+<a class="font-['Inter'] text-sm text-[#d9e2ff]/60 hover:text-[#a5c8ff] underline-offset-4 hover:underline transition-all" href="#">Newsletter Signup</a>
+<a class="font-['Inter'] text-sm text-[#d9e2ff]/60 hover:text-[#a5c8ff] underline-offset-4 hover:underline transition-all" href="#">Contact Us</a>
+</div>
+</div>
+<div class="space-y-6">
+<h4 class="text-[#a5c8ff] font-bold text-sm tracking-widest uppercase">Legal</h4>
+<p class="font-['Inter'] text-sm text-[#d9e2ff]/60">© 2024 FARO. The Radiant Guide.</p>
+</div>
+</div>
+</footer>
+</body></html>

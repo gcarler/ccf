@@ -8,7 +8,7 @@ from backend.core.database import get_db
 from backend.auth import get_current_user, require_admin, require_pastor_or_admin
 from backend.core.audit import record_admin_action
 
-router = APIRouter(prefix="/crm", tags=["CRM"])
+router = APIRouter(tags=["CRM"])
 
 # --- MEMBERS ENDPOINTS ---
 

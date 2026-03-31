@@ -17,7 +17,7 @@ from backend.auth import require_active_user, require_admin
 from backend.core.rate_limit import rate_limiter
 
 
-router = APIRouter(prefix="/workspace", tags=["workspace"])
+router = APIRouter(tags=["workspace"])
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 FLAGS_FILE = DATA_DIR / "feature_flags.json"
