@@ -12,12 +12,40 @@ const BOOKS = [
 
 export default function CursosPage() {
     const { data: heroContent } = useContentBlock("faro_courses_hero");
+    const { data: coursesContent } = useContentBlock("faro_courses_feed");
+    
     const heroEyebrow = heroContent?.eyebrow || "Formación & Sabiduría";
     const heroTitleLead = heroContent?.title_lead || "El Camino";
     const heroAccent = heroContent?.title_accent || "del Faro";
-    const heroDescription =
-        heroContent?.description ||
-        "Explora nuestra academia de cursos especializados y sumérgete en una selección literaria para iluminar tu entendimiento.";
+    const heroDescription = heroContent?.description || "Explora nuestra academia de cursos especializados y sumérgete en una selección literaria para iluminar tu entendimiento.";
+
+    const fallbackCourses = [
+        {
+            tag: "Taller Práctico",
+            title: "Liderazgo Eclesial Efectivo",
+            desc: "Gestión y pastoreo para la nueva generación de líderes.",
+            cta: "Inscripciones Abiertas",
+        },
+        {
+            tag: "Seminario Online",
+            title: "Arqueología Bíblica Nivel I",
+            desc: "Hallazgos que dan contexto histórico a las escrituras.",
+            cta: "Inicio: Octubre 15",
+        },
+    ];
+
+    const courses = (Array.isArray(coursesContent?.parsed) && coursesContent.parsed.length > 0 
+        ? coursesContent.parsed 
+        : fallbackCourses) as any[];
+
+    const featuredCourse = courses[0] || {
+        title: "Fundamentos de Teología Contemporánea",
+        lessons: "12 Semanas",
+        modality: "Presencial",
+        excerpt: "Un recorrido profundo por las bases de la fe aplicadas al contexto social y cultural del siglo XXI."
+    };
+
+    const secondaryCourses = courses.slice(1);
 
     return (
         <main className="pt-[88px] pb-32">
@@ -136,14 +164,13 @@ export default function CursosPage() {
                                 className="text-3xl font-black mb-2"
                                 style={{ color: "var(--faro-on-surface)" }}
                             >
-                                Fundamentos de Teología Contemporánea
+                                {featuredCourse.title}
                             </h3>
                             <p
                                 className="max-w-lg mb-6 line-clamp-2"
                                 style={{ color: "var(--faro-on-surface-variant)" }}
                             >
-                                Un recorrido profundo por las bases de la fe aplicadas al
-                                contexto social y cultural del siglo XXI.
+                                {featuredCourse.excerpt}
                             </p>
                             <div className="flex items-center gap-6">
                                 <span
@@ -151,14 +178,14 @@ export default function CursosPage() {
                                     style={{ color: "var(--faro-primary)" }}
                                 >
                                     <span className="material-symbols-outlined text-sm">schedule</span>
-                                    12 Semanas
+                                    {featuredCourse.lessons} Semanas
                                 </span>
                                 <span
                                     className="flex items-center gap-2 text-xs font-bold"
                                     style={{ color: "var(--faro-primary)" }}
                                 >
                                     <span className="material-symbols-outlined text-sm">person</span>
-                                    Dr. Samuel Méndez
+                                    {featuredCourse.modality}
                                 </span>
                                 <button
                                     className="ml-auto px-8 py-3 rounded-2xl font-black text-sm text-white transition-all hover:scale-105"
@@ -175,22 +202,9 @@ export default function CursosPage() {
 
                     {/* Secondary courses */}
                     <div className="md:col-span-4 flex flex-col gap-5">
-                        {[
-                            {
-                                tag: "Taller Práctico",
-                                title: "Liderazgo Eclesial Efectivo",
-                                desc: "Gestión y pastoreo para la nueva generación de líderes.",
-                                cta: "Inscripciones Abiertas",
-                            },
-                            {
-                                tag: "Seminario Online",
-                                title: "Arqueología Bíblica Nivel I",
-                                desc: "Hallazgos que dan contexto histórico a las escrituras.",
-                                cta: "Inicio: Octubre 15",
-                            },
-                        ].map(({ tag, title, desc, cta }) => (
+                        {secondaryCourses.map((c: any, i: number) => (
                             <div
-                                key={title}
+                                key={i}
                                 className="flex-1 rounded-2xl p-8 group cursor-pointer transition-all hover:-translate-y-1"
                                 style={{
                                     background: "var(--faro-surface-container-high)",
@@ -201,26 +215,26 @@ export default function CursosPage() {
                                     className="text-[10px] font-black uppercase tracking-widest mb-4 block"
                                     style={{ color: "var(--faro-secondary)" }}
                                 >
-                                    {tag}
+                                    {c.modality || c.tag}
                                 </span>
                                 <h4
                                     className="text-xl font-black mb-3 group-hover:opacity-80 transition-opacity"
                                     style={{ color: "var(--faro-on-surface)" }}
                                 >
-                                    {title}
+                                    {c.title}
                                 </h4>
                                 <p
                                     className="text-sm leading-relaxed mb-6"
                                     style={{ color: "var(--faro-on-surface-variant)" }}
                                 >
-                                    {desc}
+                                    {c.excerpt || c.desc}
                                 </p>
                                 <div className="flex justify-between items-center">
                                     <span
                                         className="font-black text-sm"
                                         style={{ color: "var(--faro-primary)" }}
                                     >
-                                        {cta}
+                                        {c.cta || "Inscribirse"}
                                     </span>
                                     <span
                                         className="material-symbols-outlined group-hover:translate-x-2 transition-transform"

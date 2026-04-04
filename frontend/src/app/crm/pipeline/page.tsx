@@ -28,8 +28,8 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
+import CrmShell from '@/components/crm/CrmShell';
+import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import { DataTable } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
 import Skeleton from '@/components/ui/Skeleton';
@@ -51,7 +51,8 @@ export default function ConsolidationPipelinePage() {
     const [leads, setLeads] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
-    const [viewType, setViewType] = useState<any>('board');
+    const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_pipeline_view', 'board'));
+    const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar'];
     const [selectedLead, setSelectedLead] = useState<any>(null);
 
     const fetchPipeline = useCallback(async () => {
@@ -132,7 +133,25 @@ export default function ConsolidationPipelinePage() {
     if (loading && leads.length === 0) return <div className="p-20 text-center"><Skeleton className="h-12 w-48 mx-auto mb-8" /><div className="grid grid-cols-4 gap-6"><Skeleton className="h-64 rounded-[3rem]" /><Skeleton className="h-64 rounded-[3rem]" /><Skeleton className="h-64 rounded-[3rem]" /><Skeleton className="h-64 rounded-[3rem]" /></div></div>;
 
     return (
-        <div className="flex flex-col md:flex-row h-full w-full bg-slate-50 dark:bg-[#111213] overflow-hidden">
+        <CrmShell
+            breadcrumbs={[
+                { label: 'CRM Pastoral', icon: Users },
+                { label: 'Consolidación', icon: Target },
+                ...(selectedLead ? [{ label: `${selectedLead.first_name} ${selectedLead.last_name}`, icon: User }] : [])
+            ]}
+            viewOptions={ALL_VIEWS}
+            viewType={viewType}
+            onViewChange={setViewType}
+            rightActions={
+                <button
+                    onClick={() => {}}
+                    className="flex items-center gap-2 bg-blue-600 px-5 py-2 rounded-xl text-[11px] font-black text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-900/20 uppercase tracking-widest"
+                >
+                    <UserPlus size={14} /> Nuevo Lead
+                </button>
+            }
+        >
+        <div className="flex flex-col md:flex-row h-full w-full overflow-hidden">
             {/* INNER CONTEXTUAL SIDEBAR (Fixes double layout redundancy) */}
             <motion.div 
                 initial={false}
@@ -168,18 +187,9 @@ export default function ConsolidationPipelinePage() {
 
             {/* MAIN CONTENT BOARD */}
             <div className="flex-1 flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden relative">
-                <WorkspaceToolbar 
-                    breadcrumbs={[
-                        { label: 'CRM Pastoral', icon: Users },
-                        { label: 'Embudo de Consolidación', icon: Target },
-                        ...(selectedLead ? [{ label: `${selectedLead.first_name} ${selectedLead.last_name}`, icon: User }] : [])
-                    ]}
-                    viewType={viewType} setViewType={setViewType}
-                />
-
                 <main className="flex-1 overflow-hidden flex flex-col">
                     <AnimatePresence mode="wait">
-                        {viewType === 'board' ? (
+                        {viewType === 'board' || viewType === 'kanban' ? (
                             <motion.div 
                                 key="board" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
                                 className="flex-1 flex gap-6 p-6 overflow-x-auto bg-slate-50/50 dark:bg-black/10"
@@ -194,8 +204,29 @@ export default function ConsolidationPipelinePage() {
                                     />
                                 ))}
                             </motion.div>
+                        ) : viewType === 'grid' ? (
+                            <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-6 overflow-y-auto">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {leads.map((lead: any) => (
+                                        <div key={lead.id} onClick={() => setSelectedLead(lead)} className="p-6 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer">
+                                            <div className="flex items-center gap-4 mb-4">
+                                                <div className="size-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600 font-black">
+                                                    {lead.first_name[0]}{lead.last_name[0]}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-slate-800 dark:text-white">{lead.first_name} {lead.last_name}</p>
+                                                    <p className="text-[10px] text-slate-400 uppercase tracking-widest">{lead.phone}</p>
+                                                </div>
+                                            </div>
+                                            <span className={clsx('px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest', PIPELINE_STAGES.find(s => s.value === lead.stage)?.bg, PIPELINE_STAGES.find(s => s.value === lead.stage)?.text)}>
+                                                {PIPELINE_STAGES.find(s => s.value === lead.stage)?.label ?? lead.stage}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </motion.div>
                         ) : (
-                            <motion.div key="list" className="flex-1 p-6">
+                            <motion.div key="list" className="flex-1 p-6 overflow-y-auto">
                                 <DataTable data={leads} columns={columns} onRowClick={(l) => setSelectedLead(l)} />
                             </motion.div>
                         )}
@@ -203,6 +234,7 @@ export default function ConsolidationPipelinePage() {
                 </main>
             </div>
         </div>
+        </CrmShell>
     );
 }
 

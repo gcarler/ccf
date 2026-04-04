@@ -36,10 +36,22 @@ const LOCATIONS = [
 
 export default function SedesPage() {
     const { data: heroContent } = useContentBlock("faro_locations_hero");
-    const [selected, setSelected] = useState(LOCATIONS[0]);
+    const { data: locationsContent } = useContentBlock("faro_locations_feed");
+    
+    const locations = Array.isArray(locationsContent?.parsed) && locationsContent.parsed.length > 0 
+        ? locationsContent.parsed.map((loc: any, i: number) => ({
+            ...loc,
+            id: i + 1,
+            coordinates: i === 0 ? { x: "35%", y: "45%" } : { x: "65%", y: "30%" },
+            isMain: i === 0,
+            schedule: loc.services?.join(" • ") || "Domingos 9 AM",
+        })) 
+        : LOCATIONS;
+
+    const [selected, setSelected] = useState(locations[0] || LOCATIONS[0]);
     const [search, setSearch] = useState("");
 
-    const filtered = LOCATIONS.filter(l => 
+    const filtered = locations.filter((l: any) => 
         l.name.toLowerCase().includes(search.toLowerCase()) || 
         l.address.toLowerCase().includes(search.toLowerCase())
     );

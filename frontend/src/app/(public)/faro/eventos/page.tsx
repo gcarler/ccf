@@ -51,11 +51,22 @@ export default function EventosPage() {
         location: "Sede Norte • 19:30 hrs",
     };
 
-    const upcomingCards = [
+    const fallbackUpcomingCards = [
         { img: EVENT_IMGS[0], tag: "Conferencia", month: "JUL", day: "05", title: "Liderazgo Radiante", desc: "Herramientas para guiar con propósito en un mundo cambiante." },
         { img: EVENT_IMGS[1], tag: "Música", month: "JUL", day: "12", title: "Festival FARO Sound", desc: "Tarde de música en vivo y comunidad al aire libre." },
         { img: EVENT_IMGS[2], tag: "Estudio", month: "AGO", day: "02", title: "Profundidad Teológica", desc: "Taller intensivo sobre los Salmos y su aplicación hoy." },
     ];
+
+    const upcomingCards = parsedEvents.length > 0
+        ? parsedEvents.map((e) => ({
+              img: (e as any).img || EVENT_IMGS[0],
+              tag: e.category || "Evento",
+              month: (e.date || "").split(" ")[2] || "MÁS",
+              day: (e.date || "").split(" ")[0] || "*",
+              title: e.title || "",
+              desc: e.excerpt || "",
+          }))
+        : fallbackUpcomingCards;
 
     const calendarDays = [
         { n: 26, prev: true }, { n: 27, prev: true }, { n: 28, prev: true },

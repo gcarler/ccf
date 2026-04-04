@@ -435,6 +435,9 @@ export default function MembersPage() {
     return (
         <CrmShell
             breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'CRM Pastoral', icon: Users }, { label: 'Membresía', icon: Users }]}
+            viewOptions={['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar']}
+            viewType={viewType}
+            onViewChange={(v) => setViewType(v as ViewType)}
             rightActions={
                 activeTab === 'members'
                     ? (

@@ -9,11 +9,28 @@ import {
     CheckCircle2, Loader2, GitBranch, Home, FolderOpen
 } from 'lucide-react';
 import clsx from 'clsx';
-import { motion as m } from 'framer-motion';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import type { ProjectTaskRecord } from '@/types/projects';
+
+// Paleta de colores para etiquetas
+const LABEL_COLORS = [
+    { bg: 'bg-rose-100 dark:bg-rose-900/30',   text: 'text-rose-700 dark:text-rose-300',   border: 'border-rose-300/50 dark:border-rose-500/30',   dot: 'bg-rose-500' },
+    { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-300/50 dark:border-orange-500/30', dot: 'bg-orange-500' },
+    { bg: 'bg-amber-100 dark:bg-amber-900/30',  text: 'text-amber-700 dark:text-amber-300',  border: 'border-amber-300/50 dark:border-amber-500/30',  dot: 'bg-amber-500' },
+    { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-300/50 dark:border-emerald-500/30', dot: 'bg-emerald-500' },
+    { bg: 'bg-blue-100 dark:bg-blue-900/30',   text: 'text-blue-700 dark:text-blue-300',   border: 'border-blue-300/50 dark:border-blue-500/30',   dot: 'bg-blue-500' },
+    { bg: 'bg-violet-100 dark:bg-violet-900/30', text: 'text-violet-700 dark:text-violet-300', border: 'border-violet-300/50 dark:border-violet-500/30', dot: 'bg-violet-500' },
+    { bg: 'bg-pink-100 dark:bg-pink-900/30',   text: 'text-pink-700 dark:text-pink-300',   border: 'border-pink-300/50 dark:border-pink-500/30',   dot: 'bg-pink-500' },
+    { bg: 'bg-slate-100 dark:bg-slate-800/60', text: 'text-slate-600 dark:text-slate-300', border: 'border-slate-300/50 dark:border-slate-600/30', dot: 'bg-slate-400' },
+];
+
+function getLabelColor(label: string) {
+    let hash = 0;
+    for (let i = 0; i < label.length; i++) hash = label.charCodeAt(i) + ((hash << 5) - hash);
+    return LABEL_COLORS[Math.abs(hash) % LABEL_COLORS.length];
+}
 
 // ─────────────────────────────────────────────────────────────────
 // TYPES
@@ -300,17 +317,41 @@ export default function TaskDetailPanel({
     const [starred, setStarred]     = useState(false);
     const [saving, setSaving]       = useState(false);
 
+    // ── Labels / Etiquetas ─────────────────────────────────────────
+    const [labels, setLabels]         = useState<string[]>((task as any)?.labels ?? []);
+    const [labelPopoverOpen, setLabelPopoverOpen] = useState(false);
+    const [newLabelInput, setNewLabelInput] = useState('');
+    const labelInputRef = useRef<HTMLInputElement>(null);
+
+    const handleAddLabel = async () => {
+        if (!task) return;
+        const trimmed = newLabelInput.trim();
+        if (!trimmed || labels.includes(trimmed)) { setNewLabelInput(''); return; }
+        const nextLabels = [...labels, trimmed];
+        setLabels(nextLabels);
+        setNewLabelInput('');
+        setLabelPopoverOpen(false);
+        // Persistir en backend
+        try {
+            await apiFetch<ProjectTaskRecord>(`/projects/${task.project_id}/tasks/${task.id}`, {
+                method: 'PATCH', token, body: { labels: nextLabels }
+            });
+        } catch { /* optimistic — ignore */ }
+    };
+
+    const handleRemoveLabel = async (label: string) => {
+        if (!task) return;
+        const nextLabels = labels.filter(l => l !== label);
+        setLabels(nextLabels);
+        try {
+            await apiFetch<ProjectTaskRecord>(`/projects/${task.project_id}/tasks/${task.id}`, {
+                method: 'PATCH', token, body: { labels: nextLabels }
+            });
+        } catch { /* optimistic */ }
+    };
+
     // ── Activities ────────────────────────────────────────────────
-    const [activities, setActivities] = useState<Activity[]>([
-        {
-            id: uid(), title: 'Actividad 1: organizar agenda', completed: false,
-            assignee: { name: 'Admin', color: '#6366f1' },
-            children: [
-                { id: uid(), title: 'Revisar disponibilidad del equipo', completed: false, assignee: { name: 'Admin', color: '#6366f1' } },
-                { id: uid(), title: 'Preparar orden del día', completed: true, assignee: { name: 'Admin', color: '#6366f1' } },
-            ]
-        },
-    ]);
+    const [activities, setActivities] = useState<Activity[]>([]);
     const [newActivityTitle, setNewActivityTitle] = useState('');
 
     const handleToggle = (id: number) => setActivities(prev => toggleActivity(prev, id));
@@ -351,6 +392,11 @@ export default function TaskDetailPanel({
             setTitle(task.title ?? '');
             setDesc((task as any).description ?? '');
             setComments([]);
+            // Reset activities per-task (never show hardcoded data)
+            setActivities([]);
+            setNewActivityTitle('');
+            // Sync labels from task
+            setLabels((task as any).labels ?? []);
         }
     }, [task?.id]);
 
@@ -547,9 +593,90 @@ export default function TaskDetailPanel({
                         </MetaRow>
 
                         <MetaRow icon={<Tag size={13} className="text-slate-400" />} label="Etiquetas">
-                            <button className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] border border-dashed border-slate-300 dark:border-white/[0.1] transition-all">
-                                <Plus size={10} /> Añadir etiqueta
-                            </button>
+                            <div className="flex flex-wrap items-center gap-1.5 relative">
+                                {/* Chips de etiquetas activas */}
+                                {labels.map(label => {
+                                    const c = getLabelColor(label);
+                                    return (
+                                        <span key={label} className={clsx(
+                                            'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border',
+                                            c.bg, c.text, c.border
+                                        )}>
+                                            <span className={clsx('size-1.5 rounded-full', c.dot)} />
+                                            {label}
+                                            <button
+                                                onClick={() => handleRemoveLabel(label)}
+                                                className="ml-0.5 opacity-60 hover:opacity-100 transition-opacity"
+                                                title={`Quitar etiqueta "${label}"`}
+                                            >
+                                                <X size={9} strokeWidth={3} />
+                                            </button>
+                                        </span>
+                                    );
+                                })}
+
+                                {/* Botón añadir + popover inline */}
+                                <div className="relative">
+                                    <button
+                                        onClick={() => { setLabelPopoverOpen(v => !v); setTimeout(() => labelInputRef.current?.focus(), 50); }}
+                                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] border border-dashed border-slate-300 dark:border-white/[0.1] transition-all"
+                                    >
+                                        <Plus size={10} /> Añadir etiqueta
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {labelPopoverOpen && (
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                                                transition={{ duration: 0.12 }}
+                                                className="absolute top-full left-0 mt-1.5 z-50 w-56 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl p-3 space-y-2"
+                                            >
+                                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Nueva etiqueta</p>
+                                                <div className="flex gap-1.5">
+                                                    <input
+                                                        ref={labelInputRef}
+                                                        type="text"
+                                                        value={newLabelInput}
+                                                        onChange={e => setNewLabelInput(e.target.value)}
+                                                        onKeyDown={e => {
+                                                            if (e.key === 'Enter') handleAddLabel();
+                                                            if (e.key === 'Escape') { setLabelPopoverOpen(false); setNewLabelInput(''); }
+                                                        }}
+                                                        placeholder="Ej: Alabanza, Urgente..."
+                                                        className="flex-1 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+                                                    />
+                                                    <button
+                                                        onClick={handleAddLabel}
+                                                        disabled={!newLabelInput.trim()}
+                                                        className="px-2.5 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-bold hover:bg-blue-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    >
+                                                        <Check size={11} strokeWidth={3} />
+                                                    </button>
+                                                </div>
+                                                {/* Sugerencias predefinidas */}
+                                                <div className="flex flex-wrap gap-1 pt-1 border-t border-slate-100 dark:border-white/5">
+                                                    {['Alabanza', 'Urgente', 'Reunión', 'Pastoral', 'Admin', 'Diseño'].filter(s => !labels.includes(s)).map(s => (
+                                                        <button
+                                                            key={s}
+                                                            onClick={() => { setNewLabelInput(s); labelInputRef.current?.focus(); }}
+                                                            className={clsx('px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all hover:scale-105', getLabelColor(s).bg, getLabelColor(s).text, getLabelColor(s).border)}
+                                                        >
+                                                            {s}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+
+                                {/* Overlay para cerrar el popover */}
+                                {labelPopoverOpen && (
+                                    <div className="fixed inset-0 z-40" onClick={() => { setLabelPopoverOpen(false); setNewLabelInput(''); }} />
+                                )}
+                            </div>
                         </MetaRow>
                     </section>
 

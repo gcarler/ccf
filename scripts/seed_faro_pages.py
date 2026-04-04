@@ -10,7 +10,7 @@ from backend.core.database import SessionLocal
 from backend.models import PageContent
 
 def seed_faro_pages():
-    print("Iniciando Seed de Páginas Públicas de FARO...")
+    print("Iniciando Seed de Páginas Públicas de FARO (Actualización de Feeds)...")
     db: Session = SessionLocal()
 
     faro_blocks = [
@@ -96,6 +96,142 @@ def seed_faro_pages():
                 "title": "Cerca de Ti",
                 "search_placeholder": "Busca tu refugio más cercano..."
             })
+        },
+        # --- NEW FEEDS ---
+        {
+            "key": "faro_testimonials_feed",
+            "title": "Testimonios Feed",
+            "content": json.dumps([
+                {
+                    "id": 1,
+                    "content": "Mi matrimonio estaba destruído y aquí encontré el apoyo pastoral que nos enseñó a perdonar. Fue un verdadero hospital para nuestra familia.",
+                    "emotion": "Sanidad Restaurada",
+                    "author": {"username": "Andrés & Valeria"},
+                    "featured": True
+                },
+                {
+                    "id": 2,
+                    "content": "Llegué buscando respuestas. La gracia sin condenas que predican me dio esperanza real y paz sobre mi futuro.",
+                    "emotion": "Descanso",
+                    "author": {"username": "Camila G."}
+                },
+                {
+                    "id": 3,
+                    "content": "Llevaba mucho tiempo sintiendo soledad. En FARO hallé una comunidad que me cuidó y donde hoy también sirvo a otros.",
+                    "emotion": "Compañerismo Genuino",
+                    "author": {"username": "Esteban R."}
+                },
+                {
+                    "id": 4,
+                    "content": "Las enseñanzas de la Academia y cada sermón tienen un impacto práctico increíble. Hoy sé cuál es mi propósito.",
+                    "emotion": "Propósito Descubierto",
+                    "author": {"username": "Luisa F."}
+                }
+            ])
+        },
+        {
+            "key": "faro_public_events",
+            "title": "Eventos Feed",
+            "content": json.dumps([
+                {
+                    "title": "Noche de Iluminación: Adoración",
+                    "date": "24 DE AGOSTO, 2026",
+                    "location": "Auditorio Sede Central",
+                    "excerpt": "Una experiencia inmersiva de adoración donde la presencia de Dios es palpable.",
+                    "category": "Especiales",
+                    "featured": True,
+                    "img": "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&q=80"
+                },
+                {
+                    "title": "Jornada de Liderazgo",
+                    "date": "10 DE SEPTIEMBRE, 2026",
+                    "location": "Sede Norte",
+                    "excerpt": "Herramientas de servicio y excelencia para pastores, líderes de célula y voluntarios.",
+                    "category": "Conferencias",
+                    "featured": False,
+                    "img": "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=600&q=80"
+                },
+                {
+                    "title": "Reunión de Crecimiento",
+                    "date": "CADA MIÉRCOLES",
+                    "location": "Vía Zoom",
+                    "excerpt": "Profundidad teológica en grupos pequeños.",
+                    "category": "Grupos de Conexión",
+                    "featured": False,
+                    "img": "https://images.unsplash.com/photo-1447690709975-318628b14c57?w=600&q=80"
+                }
+            ])
+        },
+        {
+            "key": "faro_sermons_feed",
+            "title": "Prédicas Feed",
+            "content": json.dumps([
+                {
+                    "title": "Renacer: Luz en la oscuridad",
+                    "speaker": "Pr. David Mendoza",
+                    "duration": "45 min",
+                    "series": "Temporada de Cosecha",
+                    "thumbnail": "https://images.unsplash.com/photo-1542614482-eb06198f3b14?w=800&q=80",
+                    "category": "Fe",
+                    "featured": True
+                },
+                {
+                    "title": "La Paz que sobrepasa todo entendimiento",
+                    "speaker": "Pr. Sara Mendoza",
+                    "duration": "32 min",
+                    "series": "Salud Emocional",
+                    "thumbnail": "https://images.unsplash.com/photo-1483808161634-29aa1b1ecfc9?w=800&q=80",
+                    "category": "Sanidad"
+                },
+                {
+                    "title": "Una Comunidad Auténtica",
+                    "speaker": "Ps. Jóvenes",
+                    "duration": "28 min",
+                    "series": "Identidad FARO",
+                    "thumbnail": "https://images.unsplash.com/photo-1511895426328-dc8714191300?w=800&q=80",
+                    "category": "Relaciones"
+                }
+            ])
+        },
+        {
+            "key": "faro_courses_feed",
+            "title": "Cursos Feed",
+            "content": json.dumps([
+                {
+                    "title": "Fundamentos de la Fe",
+                    "lessons": 12,
+                    "modality": "Virtual",
+                    "excerpt": "Descubre los pilares de la fe cristiana y cómo aplicarlos en tu vida diaria.",
+                    "image": "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=500&q=80"
+                },
+                {
+                    "title": "Liderazgo y Servicio",
+                    "lessons": 8,
+                    "modality": "Presencial",
+                    "excerpt": "Aprende a servir con pasión y excelencia dentro del ecosistema de la iglesia.",
+                    "image": "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=500&q=80"
+                }
+            ])
+        },
+        {
+            "key": "faro_locations_feed",
+            "title": "Sedes Feed",
+            "content": json.dumps([
+                {
+                    "name": "Sede Central (Faro Principal)",
+                    "address": "Av. Esperanza 124, Centro Financiero",
+                    "services": ["Domingos 9 AM y 11 AM", "Lunes 7 PM"],
+                    "pastor": "David & Sara Mendoza",
+                    "phone": "+57 320 000 0000"
+                },
+                {
+                    "name": "Campus Norte",
+                    "address": "Calle 170 #54-12, Sector Universitario",
+                    "services": ["Sábados 6 PM (Jóvenes)", "Domingos 10 AM"],
+                    "pastor": "Sebastián Vargas",
+                    "phone": "+57 310 111 2222"
+                }
+            ])
         }
     ]
 
