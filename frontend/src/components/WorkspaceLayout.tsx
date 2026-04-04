@@ -251,11 +251,21 @@ function WorkspaceLayoutInner({
     const displaySections = manualSections || moduleContext.sections;
 
     // Toggle S2 through 3 states: full → mini → hidden → full
-    const [s2DetailMode, setS2DetailMode] = useState<'full' | 'mini' | 'hidden'>('full');
+    // Persist per-module in localStorage so navigation doesn't reset it
+    const s2LocalKey = `s2mode_${pathname?.split('/')[1] || 'default'}`;
+    const [s2DetailMode, setS2DetailMode] = useState<'full' | 'mini' | 'hidden'>(() => {
+        if (typeof window === 'undefined') return 'full';
+        const saved = localStorage.getItem(s2LocalKey);
+        return (saved as 'full' | 'mini' | 'hidden') || 'full';
+    });
 
     const cycleS2 = useCallback(() => {
-        setS2DetailMode(m => m === 'full' ? 'mini' : m === 'mini' ? 'hidden' : 'full');
-    }, []);
+        setS2DetailMode(m => {
+            const next = m === 'full' ? 'mini' : m === 'mini' ? 'hidden' : 'full';
+            localStorage.setItem(s2LocalKey, next);
+            return next;
+        });
+    }, [s2LocalKey]);
 
     const s2Width = s2DetailMode === 'full' ? 'w-72' : s2DetailMode === 'mini' ? 'w-16' : 'w-0';
 

@@ -2,12 +2,24 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import AdminHero from '@/components/admin/AdminHero';
 import CommunityToolbarChip from '@/components/community/ToolbarChip';
-import { LayoutDashboard, MessageCircle, Feather, Image as ImageIcon, CalendarRange, Link2, FileText } from 'lucide-react';
+import { LayoutDashboard, MessageCircle, Feather, CalendarRange, Link2, FileText, Globe, ChevronRight } from 'lucide-react';
 import { FARO_BLOCKS } from '@/lib/cms/blocks';
+import clsx from 'clsx';
+
+// ── Tabs de navegación del módulo CMS ────────────────────────────
+const CMS_TABS = [
+    { id: 'resumen',     label: 'Resumen',      href: '/cms',               icon: LayoutDashboard },
+    { id: 'paginas',     label: 'Páginas',      href: '/cms/pages',        icon: FileText },
+    { id: 'testimonios', label: 'Testimonios',  href: '/cms/testimonials', icon: MessageCircle },
+    { id: 'hero',        label: 'Landing Hero', href: '/cms/content',      icon: Feather },
+    { id: 'eventos',     label: 'Eventos',      href: '/cms/events',       icon: CalendarRange },
+    { id: 'menus',       label: 'Menús',        href: '/cms/menus',        icon: Link2 },
+] as const;
 
 interface CmsStats {
     testimonials: number;
@@ -28,10 +40,17 @@ interface TestimonialPreview {
 
 export default function CmsHomePage() {
     const { token, isAuthenticated } = useAuth();
+    const pathname = usePathname();
     const [stats, setStats] = useState<CmsStats | null>(null);
     const [recentTestimonials, setRecentTestimonials] = useState<TestimonialPreview[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState('Todos');
+
+    // Determine active tab from pathname
+    const activeTab = CMS_TABS.find(t => {
+        if (t.href === '/cms') return pathname === '/cms';
+        return pathname ? pathname.startsWith(t.href) : false;
+    })?.id ?? 'resumen';
 
     useEffect(() => {
         const fetchData = async () => {
@@ -89,7 +108,47 @@ export default function CmsHomePage() {
     }
 
     return (
-        <div className="space-y-8 px-4 py-8">
+        <div className="flex flex-col h-full">
+
+            {/* ── SUB-TOOLBAR: Breadcrumb + Tabs ─────────────────────── */}
+            <div className="shrink-0 border-b border-slate-100 dark:border-white/[0.05] bg-white dark:bg-[#141517]">
+                {/* Breadcrumbs row */}
+                <div className="flex items-center gap-1.5 px-5 pt-2.5 pb-0">
+                    <Globe size={11} className="text-slate-400" />
+                    <span className="text-[11px] text-slate-400">Sitio Web</span>
+                    <ChevronRight size={10} className="text-slate-300" />
+                    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-200">
+                        {CMS_TABS.find(t => t.id === activeTab)?.label ?? 'Resumen'}
+                    </span>
+                </div>
+
+                {/* Tabs row */}
+                <div className="flex items-center gap-0 px-4 pt-1">
+                    {CMS_TABS.map(tab => {
+                        const Icon = tab.icon;
+                        const isActive = tab.id === activeTab;
+                        return (
+                            <Link
+                                key={tab.id}
+                                href={tab.href}
+                                className={clsx(
+                                    'flex items-center gap-1.5 px-3 py-2.5 text-[12px] font-medium border-b-[2px] transition-all whitespace-nowrap',
+                                    isActive
+                                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                                        : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300'
+                                )}
+                            >
+                                <Icon size={13} />
+                                {tab.label}
+                            </Link>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* ── SCROLLABLE CONTENT ─────────────────────────────────── */}
+            <div className="flex-1 overflow-y-auto">
+            <div className="space-y-8 px-4 py-8">
             <AdminHero
                 eyebrow="CMS"
                 title="Centro de contenido"
@@ -163,6 +222,7 @@ export default function CmsHomePage() {
                 </div>
             </section>
 
+            {/* NEXT STEP SECTION */}
             <section className="rounded-[2.5rem] border border-dashed border-slate-200 dark:border-white/10 p-8 text-center space-y-3">
                 <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-slate-400">Próximo paso</p>
                 <h3 className="text-2xl font-black">Define la narrativa de la página principal</h3>
@@ -170,6 +230,9 @@ export default function CmsHomePage() {
                     Usa este hub para setear hero, testimonios y eventos que se muestran en el sitio público. Cada ajuste se propaga en segundos.
                 </p>
             </section>
+
+            </div>
+            </div>
         </div>
     );
 }

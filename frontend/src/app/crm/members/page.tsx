@@ -40,6 +40,7 @@ import { useToast } from '@/context/ToastContext';
 import ViewSwitcher, { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import CrmShell from '@/components/crm/CrmShell';
 import AdminHero from '@/components/admin/AdminHero';
+import UniversalTableView from '@/components/ui/UniversalTableView';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 

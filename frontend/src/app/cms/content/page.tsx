@@ -13,6 +13,33 @@ interface MediaItem {
   alt_text?: string;
 }
 
+interface ContentRecord {
+  title: string;
+  content: string;
+}
+
+interface ContentWorkflow {
+  status: string;
+  publish_at?: string;
+  expire_at?: string;
+}
+
+interface ContentVersion {
+  id: number;
+  created_at: string;
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  draft:         'Borrador',
+  in_review:     'En Revisión',
+  approved:      'Aprobado',
+  published:     'Publicado',
+  scheduled:     'Programado',
+  expired:       'Expirado',
+};
+
+
+
 export default function CmsContentPage() {
   const { token, isAuthenticated } = useAuth();
   const [selectedKey, setSelectedKey] = useState(FARO_BLOCKS[0]?.key ?? "");
