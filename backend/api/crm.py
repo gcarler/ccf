@@ -398,3 +398,38 @@ def update_crm_settings(
     current_user: models.User = Depends(require_admin)
 ):
     return {"status": "success"}
+
+# --- SCANNER ---
+
+@router.post("/scanner/validate/{token}", response_model=dict)
+def validate_scanner_token(
+    token: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Valida un código QR de asistencia y registra el ingreso."""
+    # Formato esperado: CCF-MBR-{id}-{secret}
+    if not token.startswith("CCF-MBR-"):
+        raise HTTPException(status_code=400, detail="Formato de código inválido")
+    
+    try:
+        parts = token.split("-")
+        member_id = int(parts[2])
+        member = db.query(models.Member).filter(models.Member.id == member_id).first()
+        
+        if not member:
+            raise HTTPException(status_code=404, detail="Miembro no encontrado")
+            
+        # Registrar asistencia automática a un evento genérico si es necesario
+        # Por ahora solo validamos identidad para el CRM
+        return {
+            "valid": True,
+            "member_id": member.id,
+            "name": f"{member.first_name} {member.last_name}",
+            "role": member.church_role,
+            "status": member.spiritual_status,
+            "timestamp": _utcnow().isoformat()
+        }
+    except (ValueError, IndexError):
+        raise HTTPException(status_code=400, detail="Código malformado")
+

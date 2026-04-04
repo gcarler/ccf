@@ -5,35 +5,13 @@ import { useAuth } from "@/context/AuthContext";
 import { ApiError, apiFetch } from "@/lib/http";
 import AdminHero from "@/components/admin/AdminHero";
 import { FARO_BLOCKS } from "@/lib/cms/blocks";
-import { CheckCircle2, Eye, FileText, RotateCcw, Save, Send, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Eye, FileText, RotateCcw, Save, Send, ShieldCheck, ImageIcon, Copy } from "lucide-react";
 
-interface ContentRecord {
-  page_key?: string;
-  title?: string;
-  content?: string;
-}
-
-interface ContentVersion {
+interface MediaItem {
   id: number;
-  created_at: string;
+  url: string;
+  alt_text?: string;
 }
-
-interface ContentWorkflow {
-  page_key: string;
-  status: "draft" | "in_review" | "approved" | "published" | "archived";
-  publish_at?: string | null;
-  expire_at?: string | null;
-  last_published_at?: string | null;
-  notes?: string | null;
-}
-
-const STATUS_LABEL: Record<ContentWorkflow["status"], string> = {
-  draft: "Borrador",
-  in_review: "En revision",
-  approved: "Aprobado",
-  published: "Publicado",
-  archived: "Archivado"
-};
 
 export default function CmsContentPage() {
   const { token, isAuthenticated } = useAuth();
@@ -47,11 +25,27 @@ export default function CmsContentPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  
+  // Quick Media Access
+  const [media, setMedia] = useState<MediaItem[]>([]);
+  const [showMedia, setShowMedia] = useState(false);
 
   const currentBlock = useMemo(
     () => FARO_BLOCKS.find((block) => block.key === selectedKey),
     [selectedKey]
   );
+
+  const loadMedia = async () => {
+    if (!token) return;
+    try {
+      const data = await apiFetch<MediaItem[]>("/cms/media", { token });
+      setMedia(Array.isArray(data) ? data : []);
+    } catch { console.error("Error loading media"); }
+  };
+
+  useEffect(() => {
+    if (showMedia) loadMedia();
+  }, [showMedia, token]);
 
   const parsedPreview = useMemo(() => {
     try {
@@ -239,30 +233,63 @@ export default function CmsContentPage() {
             <button onClick={() => transition("revert_draft")} className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-[0.2em]">
               Borrador
             </button>
-            <button onClick={() => transition("archive")} className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-rose-300 text-rose-500 text-xs font-black uppercase tracking-[0.2em]">
-              Archivar
+            <button 
+              onClick={() => setShowMedia(!showMedia)} 
+              className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-black uppercase tracking-[0.2em] transition-colors ${showMedia ? "bg-primary/10 border-primary text-primary" : "border-slate-200"}`}
+            >
+              <ImageIcon size={13} /> {showMedia ? "Cerrar biblioteca" : "Ver biblioteca"}
             </button>
           </div>
 
-          <label className="block space-y-2">
-            <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Titulo (opcional)</span>
-            <input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="Titulo editorial"
-              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-4 py-3 text-sm outline-none"
-            />
-          </label>
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div className="flex-1 space-y-5">
+              <label className="block space-y-2">
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Titulo (opcional)</span>
+                <input
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder="Titulo editorial"
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-4 py-3 text-sm outline-none"
+                />
+              </label>
 
-          <label className="block space-y-2">
-            <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Contenido JSON</span>
-            <textarea
-              value={content}
-              onChange={(event) => setContent(event.target.value)}
-              rows={16}
-              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-4 py-3 text-sm font-mono outline-none"
-            />
-          </label>
+              <label className="block space-y-2">
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Contenido JSON</span>
+                <textarea
+                  value={content}
+                  onChange={(event) => setContent(event.target.value)}
+                  rows={16}
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-4 py-3 text-sm font-mono outline-none"
+                />
+              </label>
+            </div>
+
+            {showMedia && (
+              <div className="lg:w-80 h-[600px] rounded-2xl border border-slate-200 dark:border-white/10 p-4 overflow-y-auto space-y-4 bg-slate-50 dark:bg-black/20">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Biblioteca de Medios</p>
+                {media.length === 0 ? (
+                  <p className="text-xs text-slate-500">No hay archivos. Súbelos en el Media Manager.</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {media.map((item) => (
+                      <div key={item.id} className="group relative aspect-square rounded-xl overflow-hidden border border-slate-200 bg-white shadow-sm">
+                        <img src={item.url} alt="" className="w-full h-full object-cover" />
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(item.url);
+                            alert("URL copiada al portapapeles");
+                          }}
+                          className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity text-white text-[10px] font-black uppercase"
+                        >
+                          <Copy size={12} className="mr-1" /> Copiar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="flex items-center gap-3">
             <button

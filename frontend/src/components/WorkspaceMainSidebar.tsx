@@ -1,95 +1,248 @@
 "use client";
 
+
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-    ChevronDown, 
-    ChevronRight,
-    Settings2
+import {
+    ChevronDown, Plus, Settings2,
+    Hash, PanelLeftClose, PanelLeftOpen, Circle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import Tooltip from '@/components/ui/Tooltip';
 
-export default function WorkspaceMainSidebar({ title, sections, isMini }: { title: string, sections?: any[], isMini?: boolean }) {
-    const pathname = usePathname();
-    const [expandedFolders, setExpandedFolders] = useState<string[]>(['Gestión', 'Operaciones', 'Inteligencia', 'Comunidad', 'Aprendizaje', 'Atención', 'General']);
+interface NavItem {
+    id: string;
+    label: string;
+    href: string;
+    icon?: React.ElementType;
+    count?: number;
+    color?: string;
+    suffix?: string;
+}
 
-    const toggleFolder = (title: string) => {
-        setExpandedFolders(prev => prev.includes(title) ? prev.filter(f => f !== title) : [...prev, title]);
-    };
+interface NavSection {
+    title?: string;
+    items: NavItem[];
+    canAdd?: boolean;
+}
 
-    const renderItem = (item: any) => {
-        const isActive = pathname === item.href || (item.href !== '/' && pathname?.startsWith(item.href));
-        const Icon = item.icon;
-        
-        return (
-            <Link key={item.id} href={item.href}>
-                <div className={clsx(
-                    "flex items-center gap-3 px-3 py-2 mx-2 rounded-xl transition-all group cursor-pointer mb-0.5",
-                    isActive 
-                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
-                        : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
-                )}>
-                    <Icon size={18} className={clsx(isActive ? "text-white" : "text-slate-400 group-hover:text-blue-500")} />
-                    {!isMini && (
-                        <>
-                            <span className="text-[13px] font-bold flex-1 truncate leading-none">{item.label}</span>
-                            {item.count && (
-                                <span className={clsx(
-                                    "px-1.5 py-0.5 rounded-md text-[9px] font-black leading-none",
-                                    isActive ? "bg-white/20 text-white" : "bg-blue-100 text-blue-600"
-                                )}>
-                                    {item.count}
-                                </span>
-                            )}
-                        </>
-                    )}
+interface Props {
+    title: string;
+    sections?: NavSection[];
+    isMini?: boolean;
+    onToggle?: () => void;    // callback para colapsar/expandir desde el footer
+    isCollapsed?: boolean;    // estado actual para el ícono del botón
+}
+
+// ─── Sección expandible genérica ──────────────────────────────────────────────
+function SidebarSection({
+    title,
+    children,
+    canAdd,
+    defaultOpen = true,
+    isMini,
+}: {
+    title?: string;
+    children: React.ReactNode;
+    canAdd?: boolean;
+    defaultOpen?: boolean;
+    isMini?: boolean;
+}) {
+    const [open, setOpen] = useState(defaultOpen);
+    if (isMini) return <div className="mb-1">{children}</div>;
+    return (
+        <div className="mb-1">
+            {title && (
+                <div
+                    onClick={() => setOpen(v => !v)}
+                    className="flex items-center justify-between px-4 py-1 cursor-pointer group/hdr"
+                >
+                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 group-hover/hdr:text-slate-600 dark:group-hover/hdr:text-slate-300 transition-colors select-none">
+                        {title}
+                    </span>
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover/hdr:opacity-100 transition-opacity">
+                        {canAdd && (
+                            <button
+                                onClick={e => { e.stopPropagation(); }}
+                                className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                            >
+                                <Plus size={12} />
+                            </button>
+                        )}
+                        <ChevronDown size={11} className={clsx('text-slate-300 transition-transform', !open && '-rotate-90')} />
+                    </div>
                 </div>
-            </Link>
-        );
-    };
+            )}
+            <AnimatePresence initial={false}>
+                {open && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="overflow-hidden"
+                    >
+                        {children}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
+// ─── Nav item ───────────────────────────────────────────────────────────────
+function NavRow({
+    item,
+    isActive,
+    isMini,
+}: {
+    item: NavItem;
+    isActive: boolean;
+    isMini?: boolean;
+}) {
+    const Icon = item.icon ?? Circle;
+    return (
+        <Link href={item.href}>
+            <div className={clsx(
+                'relative flex items-center gap-2.5 px-3 py-2 mx-2 rounded-lg transition-all duration-150 group cursor-pointer',
+                isActive
+                    ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-white'
+            )}>
+                {/* Active indicator bar */}
+                {isActive && (
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-blue-500 rounded-full -ml-2" />
+                )}
+                {item.color ? (
+                    <span
+                        className="size-4 rounded shrink-0 flex items-center justify-center text-[10px] font-black text-white"
+                        style={{ backgroundColor: item.color }}
+                    >
+                        {item.label.charAt(0)}
+                    </span>
+                ) : (
+                    <Icon size={15} className={clsx(
+                        'shrink-0 transition-colors',
+                        isActive ? 'text-blue-500' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'
+                    )} />
+                )}
+                {!isMini && (
+                    <>
+                        <span className={clsx(
+                            'text-[13px] flex-1 truncate leading-none',
+                            isActive ? 'font-semibold' : 'font-medium'
+                        )}>{item.label}</span>
+                        {item.suffix && (
+                            <span className="text-[10px] text-slate-400 shrink-0 truncate max-w-[80px]">{item.suffix}</span>
+                        )}
+                        {item.count !== undefined && item.count > 0 && (
+                            <span className={clsx(
+                                'px-1.5 py-0.5 rounded-md text-[9px] font-black leading-none shrink-0',
+                                isActive
+                                    ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300'
+                                    : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
+                            )}>
+                                {item.count}
+                            </span>
+                        )}
+                    </>
+                )}
+            </div>
+        </Link>
+    );
+}
+
+// ─── Main Sidebar (S2) ────────────────────────────────────────────────────────
+export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle, isCollapsed }: Props) {
+    const pathname = usePathname();
 
     return (
-        <aside className="h-full flex flex-col bg-white dark:bg-[#1e1f21] transition-all duration-300">
-            {/* Header: Dynamic Module Title */}
-            <div className="h-14 flex items-center px-6 border-b border-slate-100 dark:border-white/5 shrink-0">
-                {!isMini && <h2 className="text-[12px] font-black text-slate-400 dark:text-slate-500 tracking-[0.2em] uppercase truncate">{title}</h2>}
+        <aside className="h-full flex flex-col bg-white dark:bg-[#1e1f21] transition-colors duration-300 ease-in-out">
+            {/* Module title header */}
+            <div className="h-[50px] flex items-center px-4 border-b border-slate-100 dark:border-white/[0.05] shrink-0">
+                {!isMini && (
+                    <h2 className="text-[13px] font-bold text-slate-700 dark:text-slate-200 truncate tracking-tight">
+                        {title}
+                    </h2>
+                )}
             </div>
 
-            <div className="flex-1 overflow-y-auto scrollbar-hide py-4">
+            <div className="flex-1 overflow-y-auto scrollbar-hide py-3 space-y-0">
+                {/* ── Custom sections from parent ── */}
                 {sections && sections.length > 0 && sections.map((group, idx) => (
-                    <div key={group.title || idx} className="mb-6">
-                        {!isMini && group.title && (
-                            <div 
-                                onClick={() => toggleFolder(group.title)}
-                                className="flex items-center justify-between px-6 mb-2 cursor-pointer group/header"
-                            >
-                                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 group-hover/header:text-slate-600 transition-colors">{group.title}</span>
-                                <ChevronDown size={12} className={clsx("text-slate-300 transition-transform", !expandedFolders.includes(group.title) && "-rotate-90")} />
-                            </div>
-                        )}
-                        <AnimatePresence initial={false}>
-                            {(!group.title || expandedFolders.includes(group.title)) && (
-                                <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden"
-                                >
-                                    {group.items?.map(renderItem)}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
+                    <SidebarSection
+                        key={group.title ?? idx}
+                        title={group.title}
+                        canAdd={group.canAdd}
+                        isMini={isMini}
+                        defaultOpen
+                    >
+                        {group.items.map(item => {
+                            const isActive = pathname === item.href ||
+                                !!(item.href !== '/' && pathname?.startsWith(item.href));
+                            return (
+                                <NavRow key={item.id} item={item} isActive={isActive} isMini={isMini} />
+                            );
+                        })}
+                    </SidebarSection>
                 ))}
+
+                {/* ── ClickUp-style fallback ── */}
+                {!sections?.length && !isMini && (
+                    <>
+                        <SidebarSection title="Favoritos">
+                            <div className="px-4 py-3">
+                                <p className="text-[11px] text-slate-300 dark:text-slate-600">
+                                    Haz clic en ☆ para añadir favoritos.
+                                </p>
+                            </div>
+                        </SidebarSection>
+
+                        <SidebarSection title="Canales" canAdd>
+                            <NavRow
+                                item={{ id: 'ch-welcome', label: 'Welcome', href: '#', icon: Hash }}
+                                isActive={false}
+                            />
+                            <div className="flex items-center gap-2 px-5 py-1.5 text-[12px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer transition-colors">
+                                <Plus size={13} />
+                                Añadir canal
+                            </div>
+                        </SidebarSection>
+                    </>
+                )}
             </div>
 
-            {/* Footer */}
-            <div className="p-4 mt-auto border-t border-slate-100 dark:border-white/5">
-                <button className="w-full flex items-center justify-center gap-2 py-3 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-all border border-slate-200/50 dark:border-white/5 shadow-sm">
-                    <Settings2 size={14} /> {!isMini && "Ajustes"}
-                </button>
+            {/* ── Footer S2: solo Settings + Toggle Collapse (SIN ThemeToggle) ── */}
+            <div className="shrink-0 border-t border-slate-100 dark:border-white/5 p-2 flex items-center gap-1">
+                {/* Settings */}
+                <Tooltip content="Ajustes del módulo" side="top">
+                    <button className={clsx(
+                        "flex items-center gap-2 py-2 px-3 rounded-xl text-[11px] font-bold uppercase tracking-widest",
+                        "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-all duration-200",
+                        isMini ? "w-full justify-center" : "flex-1"
+                    )}>
+                        <Settings2 size={14} />
+                        {!isMini && <span>Ajustes</span>}
+                    </button>
+                </Tooltip>
+
+                {/* Collapse / Expand toggle */}
+                {onToggle && (
+                    <Tooltip content={isCollapsed ? 'Expandir panel' : 'Contraer panel'} side="top">
+                        <button
+                            onClick={onToggle}
+                            className="p-2 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all duration-200 shrink-0"
+                            aria-label={isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
+                        >
+                            {isCollapsed
+                                ? <PanelLeftOpen size={15} />
+                                : <PanelLeftClose size={15} />
+                            }
+                        </button>
+                    </Tooltip>
+                )}
             </div>
         </aside>
     );

@@ -43,6 +43,14 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
         return eachDayOfInterval({ start, end });
     }, [viewDate]);
 
+    // Auto-scroll to today on mount and when month changes
+    React.useEffect(() => {
+        if (!timelineRef.current || days.length === 0) return;
+        const todayOffset = differenceInDays(startOfDay(new Date()), startOfDay(days[0]));
+        const scrollX = Math.max(0, todayOffset * dayWidth - 200);
+        timelineRef.current.scrollTo({ left: scrollX, behavior: 'smooth' });
+    }, [days]);
+
     const months = useMemo(() => {
         const result: any[] = [];
         let current = startOfMonth(viewDate);
@@ -67,7 +75,21 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
         const left = offsetDays * dayWidth;
         const width = duration * dayWidth;
 
-        return { left, width };
+        // Color by status/priority
+        const colorMap: Record<string, string> = {
+            done:        'bg-emerald-500 shadow-emerald-500/25',
+            in_progress: 'bg-blue-600 shadow-blue-500/25',
+            blocked:     'bg-rose-500 shadow-rose-500/25',
+            review:      'bg-amber-500 shadow-amber-500/20',
+        };
+        const prioMap: Record<string, string> = {
+            urgent: 'bg-rose-600 shadow-rose-500/25',
+            high:   'bg-orange-500 shadow-orange-500/25',
+        };
+        const barColor = task.priority ? (prioMap[task.priority] ?? null) : null;
+        const barClass = barColor ?? colorMap[task.status ?? ''] ?? 'bg-blue-600 shadow-blue-500/20';
+
+        return { left, width, barClass };
     };
 
     return (
@@ -165,7 +187,7 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
                         {/* Bars */}
                         <div className="relative pt-0">
                             {tasks.map((task, idx) => {
-                                const { left, width } = getTaskStyles(task);
+                                const { left, width, barClass } = getTaskStyles(task);
                                 return (
                                     <div key={task.id} className="h-12 flex items-center relative border-b border-slate-50/50 dark:border-white/5">
                                         <motion.div
@@ -175,8 +197,8 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
                                             style={{ left, width }}
                                             onClick={() => onTaskClick(task)}
                                             className={clsx(
-                                                "absolute h-7 rounded-xl bg-blue-600 shadow-lg shadow-blue-500/20 cursor-pointer group/bar flex items-center px-3 gap-2 overflow-hidden",
-                                                task.status === 'COMPLETADA' && "bg-emerald-500 shadow-emerald-500/20"
+                                                'absolute h-7 rounded-xl shadow-lg cursor-pointer group/bar flex items-center px-3 gap-2 overflow-hidden',
+                                                barClass
                                             )}
                                         >
                                             {/* Progress Shimmer */}

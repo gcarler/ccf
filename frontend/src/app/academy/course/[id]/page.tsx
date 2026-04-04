@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
 import VideoPlayer from '@/components/academy/VideoPlayer';
 import Skeleton from '@/components/ui/Skeleton';
 import Tooltip from '@/components/ui/Tooltip';
@@ -290,6 +291,6 @@ export default function CourseViewPage() {
                     </AnimatePresence>
                 </main>
             </div>
-        </div>
+        </WorkspaceLayout>
     );
 }

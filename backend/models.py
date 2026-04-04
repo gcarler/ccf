@@ -150,6 +150,7 @@ class Assessment(Base):
     lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False)
     title = Column(String(200), nullable=False)
     min_score = Column(Numeric(5, 2), default=70)
+    weight = Column(Numeric(5, 2), default=1.0)
 
     lesson = relationship("Lesson", back_populates="assessments")
     questions = relationship("AssessmentQuestion", back_populates="assessment")

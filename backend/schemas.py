@@ -309,6 +309,7 @@ class Assessment(BaseModel):
     id: int
     title: str = "Assessment"
     min_score: float = 70
+    weight: float = 1.0
     questions: List[AssessmentQuestion] = Field(default_factory=list)
     model_config = orm_config
 
@@ -380,6 +381,7 @@ class DashboardMetrics(BaseModel):
     active_students: int = 0
     completion_rate: float = 0
     certificates_issued: int = 0
+    cards: List[Dict[str, Any]] = Field(default_factory=list)
     formal_stats: Dict[str, Any] = Field(default_factory=dict) # {total, completed, rate, avg_grade}
     no_formal_stats: Dict[str, Any] = Field(default_factory=dict)
     top_courses: List[Dict[str, Any]] = Field(default_factory=list)

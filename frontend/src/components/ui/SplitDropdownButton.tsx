@@ -33,18 +33,18 @@ export default function SplitDropdownButton({ onMainClick, onOptionClick }: Spli
             {/* Split Button Container */}
             <div className="flex items-center bg-[#1e272e] hover:bg-[#2f3640] text-white rounded-[7px] overflow-hidden transition-all shadow-sm">
                 
-                {/* Main Action (Add Tarea) */}
+                {/* Main Action (Añadir Tarea) */}
                 <button 
                     onClick={onMainClick}
-                    className="h-7 px-3 text-[11px] font-bold flex items-center gap-1.5 transition-colors border-r border-white/10 active:bg-white/10"
+                    className="h-9 px-3.5 text-[11px] font-bold flex items-center gap-1.5 transition-colors border-r border-white/10 active:bg-white/10 whitespace-nowrap"
                 >
-                    Add Tarea
+                    Añadir Tarea
                 </button>
 
                 {/* Dropdown Chevron */}
                 <button 
                     onClick={() => setIsOpen(!isOpen)}
-                    className="h-7 px-1.5 flex items-center justify-center transition-colors hover:bg-white/10 active:bg-white/20"
+                    className="h-9 w-9 flex items-center justify-center transition-colors hover:bg-white/10 active:bg-white/20"
                 >
                     <ChevronDown size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                 </button>

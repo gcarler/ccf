@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     Search,
     Filter,
@@ -147,6 +148,14 @@ export default function MembersPage() {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState<'name' | 'id' | 'health'>('name');
+    const router = useRouter();
+
+    // Helper: get family name by id
+    const getFamilyName = useCallback((familyId: number | null | undefined) => {
+        if (!familyId) return 'Sin familia';
+        const fam = families.find(f => f.id === familyId);
+        return fam ? fam.name : `Familia #${familyId}`;
+    }, [families]);
 
     const fetchData = useCallback(async () => {
         if (!token) return;
@@ -512,69 +521,53 @@ export default function MembersPage() {
                             <>
                             {/* TABLE VIEW */}
                             {viewType === 'table' && (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
-                                            <th className="px-6 py-4 text-xs font-black uppercase text-slate-400 tracking-widest cursor-pointer hover:text-blue-600" onClick={() => setSortBy('name')}>Miembro</th>
-                                            <th className="px-6 py-4 text-xs font-black uppercase text-slate-400 tracking-widest">Familia / Rol</th>
-                                            <th className="px-6 py-4 text-xs font-black uppercase text-slate-400 tracking-widest cursor-pointer hover:text-blue-600" onClick={() => setSortBy('health')}>Salud Espiritual</th>
-                                            <th className="px-6 py-4 text-xs font-black uppercase text-slate-400 tracking-widest text-center">Estado</th>
-                                            <th className="px-6 py-4 text-xs font-black uppercase text-slate-400 tracking-widest text-right">CV</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                                        {members.map((member: any) => (
-                                            <tr 
-                                                key={member.id} 
-                                                onClick={() => router.push(`/crm/members/${member.id}`)}
-                                                className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors group cursor-pointer"
-                                            >
-                                                <td className="px-6 py-5">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-50 flex items-center justify-center text-blue-600 font-bold border border-blue-50">
-                                                            {member.first_name.charAt(0)}
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="font-bold text-slate-800 dark:text-slate-100 group-hover:text-blue-600 transition-colors">{member.first_name} {member.last_name}</h4>
-                                                            <p className="text-[10px] uppercase font-black tracking-widest text-slate-400">#M{member.id.toString().padStart(4, '0')}</p>
-                                                        </div>
+                                <UniversalTableView
+                                    data={members}
+                                    columns={[
+                                        { 
+                                            key: 'first_name', 
+                                            label: 'Miembro', 
+                                            type: 'text', 
+                                            width: '300px',
+                                            render: (val, member) => (
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-50 flex items-center justify-center text-blue-600 font-bold border border-blue-50 shrink-0">
+                                                        {member.first_name.charAt(0)}
                                                     </div>
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                                                            <FamilyIcon size={14} className="text-slate-400" /> {getFamilyName(member.family_id)}
-                                                        </span>
-                                                        <span className="text-xs text-slate-400 mt-0.5">{member.role_in_family}</span>
+                                                    <div className="min-w-0">
+                                                        <h4 className="font-bold text-slate-800 dark:text-slate-100 group-hover:text-blue-600 transition-colors truncate">{member.first_name} {member.last_name}</h4>
+                                                        <p className="text-[10px] uppercase font-black tracking-widest text-slate-400">#M{member.id.toString().padStart(4, '0')}</p>
                                                     </div>
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                            <div 
-                                                                className={`h-full rounded-full transition-all ${member.spiritual_health > 0.7 ? 'bg-emerald-500' : member.spiritual_health > 0.4 ? 'bg-amber-500' : 'bg-rose-500'}`}
-                                                                style={{ width: `${member.spiritual_health * 100}%` }}
-                                                            />
-                                                        </div>
-                                                        <span className="text-[10px] font-black text-slate-400">{Math.round(member.spiritual_health * 100)}%</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-5 text-center">
-                                                    <span className="px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest">
-                                                        {member.status || 'Activo'}
+                                                </div>
+                                            )
+                                        },
+                                        { 
+                                            key: 'family_id', 
+                                            label: 'Familia / Rol', 
+                                            type: 'text',
+                                            render: (val, member) => (
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                                        <FamilyIcon size={14} className="text-slate-400" /> {getFamilyName(member.family_id)}
                                                     </span>
-                                                </td>
-                                                <td className="px-6 py-5 text-right">
-                                                    <button className="p-2 rounded-lg text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all">
-                                                        <ChevronRight size={18} />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                    <span className="text-xs text-slate-400 mt-0.5">{member.role_in_family}</span>
+                                                </div>
+                                            )
+                                        },
+                                        { 
+                                            key: 'spiritual_health', 
+                                            label: 'Salud Espiritual', 
+                                            type: 'progress' 
+                                        },
+                                        { 
+                                            key: 'status', 
+                                            label: 'Estado', 
+                                            type: 'status' 
+                                        }
+                                    ]}
+                                    groupBy="status"
+                                    onRowClick={(member) => router.push(`/crm/members/${member.id}`)}
+                                />
                             )}
 
                             {/* ... (Otras vistas List, Grid, Kanban se mantienen iguales) ... */}
@@ -645,7 +638,7 @@ export default function MembersPage() {
                             <div>
                                 <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-tight">{selectedMember.first_name} {selectedMember.last_name}</h2>
                                 <div className="flex items-center gap-2 mt-1">
-                                    <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[9px] font-black uppercase tracking-widest border border-blue-100">{selectedMember.church_role}</span>
+                                    <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[9px] font-black uppercase tracking-widest border border-blue-100">{selectedMember.role_in_family || 'Miembro'}</span>
                                     <span className="text-[10px] font-bold text-slate-400">#{selectedMember.spiritual_status}</span>
                                 </div>
                             </div>

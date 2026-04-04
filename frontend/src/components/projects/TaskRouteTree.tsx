@@ -1,0 +1,230 @@
+"use client";
+
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+    ChevronRight, ChevronDown, Folder, FolderOpen,
+    Target, FileText, CheckSquare, Home, ArrowRight
+} from 'lucide-react';
+import clsx from 'clsx';
+
+// ─────────────────────────────────────────────────────────────────
+// TYPES
+// ─────────────────────────────────────────────────────────────────
+export interface RouteNode {
+    id: string;
+    label: string;
+    type: 'workspace' | 'portfolio' | 'project' | 'section' | 'task';
+    href?: string;
+    active?: boolean;
+    children?: RouteNode[];
+}
+
+interface TaskRouteTreeProps {
+    /** La ruta activa desde raíz hasta la tarea actual */
+    breadcrumb: Array<{ label: string; type: RouteNode['type'] }>;
+    /** Árbol completo de nodos (portfolio → projects → tasks) */
+    tree: RouteNode[];
+    /** ID del nodo activo (la tarea abierta) */
+    activeId?: string;
+    onNavigate?: (node: RouteNode) => void;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// NODE ICONS
+// ─────────────────────────────────────────────────────────────────
+const TYPE_ICON: Record<RouteNode['type'], React.ElementType> = {
+    workspace: Home,
+    portfolio: Target,
+    project:   FolderOpen,
+    section:   FileText,
+    task:      CheckSquare,
+};
+
+const TYPE_COLOR: Record<RouteNode['type'], string> = {
+    workspace: 'text-slate-400',
+    portfolio: 'text-violet-500',
+    project:   'text-blue-500',
+    section:   'text-amber-500',
+    task:      'text-emerald-500',
+};
+
+// ─────────────────────────────────────────────────────────────────
+// RECURSIVE TREE NODE
+// ─────────────────────────────────────────────────────────────────
+function TreeNode({
+    node,
+    depth = 0,
+    activeId,
+    onNavigate,
+}: {
+    node: RouteNode;
+    depth?: number;
+    activeId?: string;
+    onNavigate?: (n: RouteNode) => void;
+}) {
+    const [open, setOpen] = useState(node.active || node.children?.some(c => c.active || c.id === activeId) || false);
+    const hasChildren = (node.children?.length ?? 0) > 0;
+    const isActive = node.id === activeId || node.active;
+    const Icon = TYPE_ICON[node.type] ?? FileText;
+
+    return (
+        <div>
+            <div
+                onClick={() => {
+                    if (hasChildren) setOpen(v => !v);
+                    onNavigate?.(node);
+                }}
+                className={clsx(
+                    'group relative flex items-center gap-1.5 py-1.5 px-2 rounded-lg cursor-pointer transition-all select-none',
+                    isActive
+                        ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] hover:text-slate-800 dark:hover:text-slate-200',
+                )}
+                style={{ paddingLeft: depth * 16 + 8 }}
+            >
+                {/* Guide line */}
+                {depth > 0 && (
+                    <div
+                        className="absolute top-0 bottom-0 w-px bg-slate-200/60 dark:bg-white/[0.06]"
+                        style={{ left: depth * 16 - 4 }}
+                    />
+                )}
+
+                {/* Expand arrow */}
+                <span className={clsx('shrink-0 transition-transform', !hasChildren && 'opacity-0 pointer-events-none')}>
+                    {open
+                        ? <ChevronDown size={11} />
+                        : <ChevronRight size={11} />
+                    }
+                </span>
+
+                {/* Node icon */}
+                <span className={clsx('shrink-0', TYPE_COLOR[node.type])}>
+                    <Icon size={12} />
+                </span>
+
+                {/* Label */}
+                <span className={clsx(
+                    'flex-1 text-[12px] truncate',
+                    isActive ? 'font-bold' : 'font-medium'
+                )}>
+                    {node.label}
+                </span>
+
+                {/* Active indicator */}
+                {isActive && (
+                    <span className="text-[9px] font-black px-1.5 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded">
+                        actual
+                    </span>
+                )}
+
+                {/* Navigate arrow on hover */}
+                {!isActive && node.href && (
+                    <ArrowRight size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                )}
+            </div>
+
+            {/* Children */}
+            <AnimatePresence initial={false}>
+                {open && hasChildren && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.16 }}
+                        className="overflow-hidden"
+                    >
+                        {node.children!.map(child => (
+                            <TreeNode
+                                key={child.id}
+                                node={child}
+                                depth={depth + 1}
+                                activeId={activeId}
+                                onNavigate={onNavigate}
+                            />
+                        ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// MAIN: TASK ROUTE TREE
+// ─────────────────────────────────────────────────────────────────
+export default function TaskRouteTree({
+    breadcrumb,
+    tree,
+    activeId,
+    onNavigate,
+}: TaskRouteTreeProps) {
+    return (
+        <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.06]">
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Ruta de la tarea</p>
+
+                {/* Breadcrumb path */}
+                <div className="flex flex-col gap-1">
+                    {breadcrumb.map((crumb, i) => {
+                        const CrumbIcon = TYPE_ICON[crumb.type] ?? FileText;
+                        const isLast = i === breadcrumb.length - 1;
+                        return (
+                            <div key={i} className="flex items-center gap-2" style={{ paddingLeft: i * 12 }}>
+                                {/* Connector line */}
+                                {i > 0 && (
+                                    <div className="w-px h-4 bg-slate-200 dark:bg-white/[0.08] shrink-0 -ml-px" />
+                                )}
+                                <div className={clsx(
+                                    'flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px]',
+                                    isLast
+                                        ? 'font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10'
+                                        : 'font-medium text-slate-500 dark:text-slate-400'
+                                )}>
+                                    <CrumbIcon size={11} className={TYPE_COLOR[crumb.type]} />
+                                    {crumb.label}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Legend */}
+            <div className="px-4 py-2 border-b border-slate-100 dark:border-white/[0.05]">
+                <div className="flex flex-wrap gap-2">
+                    {(Object.entries(TYPE_COLOR) as [RouteNode['type'], string][]).map(([type, color]) => {
+                        const Icon = TYPE_ICON[type];
+                        return (
+                            <span key={type} className={clsx('flex items-center gap-1 text-[10px] font-medium', color)}>
+                                <Icon size={10} />
+                                <span className="text-slate-400 capitalize">{type}</span>
+                            </span>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Tree */}
+            <div className="flex-1 overflow-y-auto py-2 px-2">
+                {tree.length === 0 ? (
+                    <p className="text-[11px] text-slate-400 text-center py-6">
+                        No hay datos de ruta disponibles.
+                    </p>
+                ) : (
+                    tree.map(node => (
+                        <TreeNode
+                            key={node.id}
+                            node={node}
+                            depth={0}
+                            activeId={activeId}
+                            onNavigate={onNavigate}
+                        />
+                    ))
+                )}
+            </div>
+        </div>
+    );
+}

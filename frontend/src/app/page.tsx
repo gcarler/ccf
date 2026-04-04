@@ -39,12 +39,43 @@ import Navbar from '@/components/Navbar';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import Skeleton from '@/components/ui/Skeleton';
 
+const DASHBOARD_SECTIONS = [
+    {
+        title: 'Favoritos',
+        items: [
+            { id: 'dash-home',     label: 'Inicio',        href: '/',         icon: Sparkles },
+            { id: 'dash-tasks',    label: 'Mis Tareas',    href: '/tasks',    icon: Target },
+            { id: 'dash-calendar', label: 'Calendario',    href: '/calendar', icon: Calendar },
+        ],
+    },
+    {
+        title: 'Módulos',
+        items: [
+            { id: 'dash-crm',      label: 'CRM Pastoral', href: '/crm',      icon: Users },
+            { id: 'dash-academy',  label: 'Academia',      href: '/academy',  icon: BookOpen },
+            { id: 'dash-projects', label: 'Proyectos',     href: '/projects', icon: FolderKanban },
+            { id: 'dash-inbox',    label: 'Bandeja',       href: '/inbox',    icon: Bell },
+        ],
+    },
+];
+
 export default function HomeRoot() {
     const { isAuthenticated, user, token } = useAuth();
     const [loading, setLoading] = useState(true);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+        const t = setTimeout(() => setLoading(false), 600);
+        return () => clearTimeout(t);
+    }, []);
+
+    // Prevent hydration mismatch: render nothing until client mounts
+    if (!isMounted) {
+        return <div className="h-screen w-full bg-[#f8fafc] dark:bg-[#0b0d11]" />;
+    }
 
     if (loading && isAuthenticated) {
-        setTimeout(() => setLoading(false), 600);
         return (
             <div className="h-screen w-full bg-[#f8fafc] dark:bg-[#0b0d11] flex flex-col items-center justify-center gap-4">
                 <div className="relative">
@@ -61,7 +92,7 @@ export default function HomeRoot() {
     }
 
     return (
-        <WorkspaceLayout sidebarTitle="Panel Principal">
+        <WorkspaceLayout sidebarTitle="Panel Principal" sidebarSections={DASHBOARD_SECTIONS}>
             <CommandCenterHome user={user} token={token} />
         </WorkspaceLayout>
     );
@@ -76,7 +107,6 @@ function CommandCenterHome({ user, token }: any) {
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                // Fetch data with a slight delay for smooth entry animation
                 await new Promise(r => setTimeout(r, 400));
                 const [metrics, taskData, insightRes] = await Promise.all([
                     apiFetch('/dashboard/metrics', { token }).catch(() => ({ cards: [] })),
@@ -86,8 +116,7 @@ function CommandCenterHome({ user, token }: any) {
                 
                 setInsights(Array.isArray(insightRes) ? insightRes : []);
                 
-                // Fallback metrics if API is empty
-                setStats(metrics?.cards?.length ? metrics : {
+                setStats((metrics as any)?.cards?.length ? metrics : {
                     cards: [
                         { title: 'Progreso Académico', value: '78%', trend: '+12% este mes' },
                         { title: 'Tareas Activas', value: '14', trend: '3 vencen hoy' },
@@ -96,7 +125,6 @@ function CommandCenterHome({ user, token }: any) {
                     ]
                 });
                 
-                // Fallback tasks if API is empty
                 setTasks(Array.isArray(taskData) && taskData.length ? taskData.slice(0, 4) : [
                     { id: 1, title: 'Revisar lección de Fundamentos I', priority: 'high', project: 'Academia' },
                     { id: 2, title: 'Actualizar pipeline de consolidación', priority: 'medium', project: 'CRM' },
@@ -108,12 +136,20 @@ function CommandCenterHome({ user, token }: any) {
         fetchDashboardData();
     }, [token]);
 
-    const greeting = () => {
+    const [greeting, setGreeting] = useState('Hola');
+
+    useEffect(() => {
+        // Client-only: avoids hydration mismatch con new Date()
         const hour = new Date().getHours();
-        if (hour < 12) return "Buenos días";
-        if (hour < 18) return "Buenas tardes";
-        return "Buenas noches";
-    };
+        if (hour < 12) setGreeting('Buenos días');
+        else if (hour < 18) setGreeting('Buenas tardes');
+        else setGreeting('Buenas noches');
+    }, []);
+
+    // Friendly display name: part before @ in username (full_name not in User type)
+    const displayName = user?.username?.includes('@')
+        ? user.username.split('@')[0]
+        : user?.username || 'Miembro';
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -134,7 +170,7 @@ function CommandCenterHome({ user, token }: any) {
             <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-600/5 rounded-full blur-[100px] pointer-events-none" />
 
-            <motion.div 
+            <motion.div
                 variants={containerVariants}
                 initial="hidden"
                 animate="show"
@@ -146,7 +182,7 @@ function CommandCenterHome({ user, token }: any) {
                         <Sparkles size={12} className="animate-pulse" /> MESH OS v2.1
                     </div>
                     <h1 className="text-4xl lg:text-5xl font-black text-slate-800 dark:text-white tracking-tighter">
-                        {greeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">{user?.username || 'Miembro'}</span>.
+                        {greeting}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">{displayName}</span>.
                     </h1>
                     <p className="text-base text-slate-500 dark:text-slate-400 font-medium max-w-2xl">
                         Este es tu centro de comando. Hemos organizado lo más importante para tu crecimiento y servicio hoy.
@@ -258,14 +294,12 @@ function CommandCenterHome({ user, token }: any) {
                                     </div>
                                     <div className="flex items-center gap-4 w-full max-w-md">
                                         <div className="h-2 flex-1 bg-white/10 rounded-full overflow-hidden">
-                                            <motion.div 
+                                            <motion.div
                                                 initial={{ width: 0 }}
                                                 animate={{ width: '65%' }}
                                                 transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
-                                                className="h-full bg-gradient-to-r from-blue-400 to-[#018abd] shadow-[0_0_15px_rgba(1,138,189,0.8)] relative"
-                                            >
-                                                <div className="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_2s_infinite]" />
-                                            </motion.div>
+                                                className="h-full bg-gradient-to-r from-blue-400 to-[#018abd] shadow-[0_0_15px_rgba(1,138,189,0.8)]"
+                                            />
                                         </div>
                                         <span className="text-sm font-black tracking-widest text-blue-100">65%</span>
                                     </div>
@@ -303,8 +337,8 @@ function CommandCenterHome({ user, token }: any) {
                                         </span>
                                     </div>
                                     <p className="text-[13px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed italic">
-                                        {insights.length > 0 
-                                            ? `“${insights[0].payload}”`
+                                        {insights.length > 0
+                                            ? `"${insights[0].payload}"`
                                             : 'Has mantenido un buen ritmo de estudio esta semana. Si dedicas 20 minutos hoy, podrías terminar el módulo actual antes del fin de semana.'}
                                     </p>
                                 </div>
@@ -350,13 +384,13 @@ function ActivityItem({ icon: Icon, title, desc, time, color, bg }: any) {
     );
 }
 
-// Keep the PublicLandingPage component as is for unauthenticated users
+// Keep the PublicLandingPage component for unauthenticated users
 function PublicLandingPage() {
     const linkCards = [
         {
             title: 'Página Web',
             description: 'Explora la experiencia pública y descubre testimonios, eventos y convocatorias.',
-            href: '/',
+            href: '/faro',
             label: 'Ir al sitio',
             icon: Layout
         },
@@ -394,6 +428,25 @@ function PublicLandingPage() {
                     <Link href="/login" className="px-10 py-5 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-600/20 hover:bg-blue-500 active:scale-95 transition-all flex items-center justify-center gap-2">
                         Acceso Interno <ArrowRight size={16} />
                     </Link>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 text-left">
+                    {linkCards.map((card) => (
+                        <Link
+                            key={card.href}
+                            href={card.href}
+                            className="p-8 rounded-[2rem] bg-white/5 border border-white/10 hover:border-blue-500/50 hover:bg-white/10 transition-all group"
+                        >
+                            <div className="size-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-6 group-hover:scale-110 transition-transform">
+                                <card.icon size={24} />
+                            </div>
+                            <h3 className="text-xl font-black text-white mb-2">{card.title}</h3>
+                            <p className="text-sm text-slate-400 leading-relaxed mb-6">{card.description}</p>
+                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-blue-400">
+                                {card.label} <ChevronRight size={14} />
+                            </div>
+                        </Link>
+                    ))}
                 </div>
             </div>
         </div>

@@ -10,8 +10,11 @@ import {
     Calendar, 
     User, 
     BookOpen,
-    CheckCircle2
+    CheckCircle2,
+    QrCode,
+    Verified
 } from 'lucide-react';
+import clsx from 'clsx';
 
 interface Certificate {
     id: number;
@@ -45,117 +48,171 @@ export default function CertificateModal({ certificate, enrollment, userName, on
         window.print();
     };
 
+    const handleDownloadImage = () => {
+        // En una implementación real usaríamos html2canvas o similar.
+        // Por ahora, sugerimos imprimir como PDF para máxima calidad.
+        window.print();
+    };
+
     return (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="relative w-full max-w-4xl bg-white rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-                {/* Close Button - Hidden on print */}
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-0 md:p-4 bg-slate-950/90 backdrop-blur-xl animate-in fade-in duration-300">
+            <div className="relative w-full max-w-6xl bg-white dark:bg-[#0b0d11] md:rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col md:flex-row h-full md:h-[min(90vh,800px)]">
+                
+                {/* Close Button - Premium Positioning */}
                 <button 
                     onClick={onClose}
-                    className="absolute top-6 right-6 p-2 bg-slate-100 text-slate-500 hover:text-slate-900 rounded-full transition-all z-20 print:hidden"
+                    className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 text-white backdrop-blur-md rounded-full transition-all z-50 border border-white/10 print:hidden"
                 >
                     <X size={24} />
                 </button>
 
-                <div className="flex flex-col md:flex-row h-full">
-                    {/* Preview Sidebar - Hidden on print */}
-                    <div className="w-full md:w-72 bg-slate-50 p-8 border-r border-slate-100 print:hidden flex flex-col">
-                        <div className="mb-8">
-                            <div className="size-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-4">
-                                <Award size={32} />
-                            </div>
-                            <h2 className="text-xl font-bold text-slate-900 leading-tight">Certificado de Logro</h2>
-                            <p className="text-sm text-slate-500 mt-2 font-medium">Este documento certifica la finalización exitosa de tu formación académica.</p>
+                {/* Sidebar - Control Panel */}
+                <div className="w-full md:w-80 bg-slate-50 dark:bg-[#15171c] p-8 border-r border-slate-100 dark:border-white/5 print:hidden flex flex-col shrink-0">
+                    <div className="mb-10">
+                        <div className="size-16 bg-blue-600 text-white rounded-[1.5rem] flex items-center justify-center mb-6 shadow-xl shadow-blue-600/20">
+                            <Award size={36} />
                         </div>
+                        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-tight">Certificado Oficial</h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-3 font-medium leading-relaxed">
+                            Este documento avala tu formación teológica y ministerial en la Comunidad Cristiana El Faro.
+                        </p>
+                    </div>
 
-                        <div className="space-y-4 mb-auto">
+                    <div className="space-y-6 mb-auto">
+                        <div className="p-5 bg-white dark:bg-black/20 rounded-2xl border border-slate-100 dark:border-white/5 space-y-4 shadow-sm">
                             <div className="flex items-start gap-3">
-                                <div className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-400">
-                                    <ShieldCheck size={16} />
+                                <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-xl text-blue-600">
+                                    <ShieldCheck size={18} />
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Código de Validación</p>
-                                    <p className="text-xs font-bold text-slate-900 truncate">{certificate.certificate_code}</p>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Validación</p>
+                                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{certificate.certificate_code}</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-3">
-                                <div className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-400">
-                                    <Calendar size={16} />
+                                <div className="p-2 bg-purple-50 dark:bg-purple-500/10 rounded-xl text-purple-600">
+                                    <Calendar size={18} />
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fecha de Emisión</p>
-                                    <p className="text-xs font-bold text-slate-900">{new Date(certificate.issued_at).toLocaleDateString()}</p>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Emisión</p>
+                                    <p className="text-sm font-bold text-slate-900 dark:text-white">
+                                        {new Date(certificate.issued_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                    </p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-3 mt-8">
-                            <button 
-                                onClick={handlePrint}
-                                className="w-full py-3 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10"
-                            >
-                                <Printer size={16} /> Imprimir / PDF
-                            </button>
-                            <button 
-                                onClick={() => window.alert("Descarga en proceso...")}
-                                className="w-full py-3 bg-white text-slate-900 border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
-                            >
-                                <Download size={16} /> Descargar Imagen
-                            </button>
+                        <div className="p-5 bg-amber-50 dark:bg-amber-500/5 rounded-2xl border border-amber-200/50 dark:border-amber-500/10 flex items-center gap-4">
+                            <Verified className="text-amber-500 shrink-0" size={24} />
+                            <p className="text-[11px] font-bold text-amber-800 dark:text-amber-200 leading-tight">
+                                Verificado por el motor de inteligencia ministerial Optimus Brain.
+                            </p>
                         </div>
                     </div>
 
-                    {/* Certificate Paper */}
-                    <div className="flex-1 p-8 md:p-16 flex items-center justify-center bg-white overflow-y-auto">
-                        <div className="certificate-paper w-full aspect-[1.414/1] max-w-[800px] border-[12px] border-double border-slate-200 p-8 md:p-12 relative flex flex-col items-center text-center">
-                            {/* Decorative corner */}
-                            <div className="absolute top-0 left-0 w-24 h-24 border-t-4 border-l-4 border-slate-300"></div>
-                            <div className="absolute top-0 right-0 w-24 h-24 border-t-4 border-r-4 border-slate-300"></div>
-                            <div className="absolute bottom-0 left-0 w-24 h-24 border-b-4 border-l-4 border-slate-300"></div>
-                            <div className="absolute bottom-0 right-0 w-24 h-24 border-b-4 border-r-4 border-slate-300"></div>
+                    <div className="grid grid-cols-1 gap-3 mt-10">
+                        <button 
+                            onClick={handlePrint}
+                            className="w-full py-4 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-500 active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-xl shadow-blue-600/20"
+                        >
+                            <Printer size={18} /> Imprimir / PDF
+                        </button>
+                        <button 
+                            onClick={handleDownloadImage}
+                            className="w-full py-4 bg-white dark:bg-white/5 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-white/10 transition-all flex items-center justify-center gap-3"
+                        >
+                            <Download size={18} /> Guardar Imagen
+                        </button>
+                    </div>
+                </div>
 
-                            <div className="mb-6 flex flex-col items-center">
-                                <div className="size-16 bg-slate-900 text-white rounded-full flex items-center justify-center mb-4 shadow-xl">
-                                    <Award size={36} />
-                                </div>
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Comunidad Cristiana El Faro</h3>
+                {/* Certificate Viewport */}
+                <div className="flex-1 p-4 md:p-12 flex items-center justify-center bg-[#f1f5f9] dark:bg-black overflow-y-auto">
+                    
+                    {/* The Actual Document */}
+                    <div id="certificate-to-print" className="certificate-paper w-full aspect-[1.414/1] max-w-[850px] bg-white border-[16px] border-double border-[#e2e8f0] p-10 md:p-16 relative flex flex-col items-center text-center shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] print:shadow-none">
+                        
+                        {/* Elegant Corner Motifs */}
+                        <div className="absolute top-4 left-4 size-32 border-t-4 border-l-4 border-amber-400/30 rounded-tl-[2rem]"></div>
+                        <div className="absolute top-4 right-4 size-32 border-t-4 border-r-4 border-amber-400/30 rounded-tr-[2rem]"></div>
+                        <div className="absolute bottom-4 left-4 size-32 border-b-4 border-l-4 border-amber-400/30 rounded-bl-[2rem]"></div>
+                        <div className="absolute bottom-4 right-4 size-32 border-b-4 border-r-4 border-amber-400/30 rounded-br-[2rem]"></div>
+
+                        {/* Background Watermark */}
+                        <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
+                            <Award size={500} strokeWidth={0.5} />
+                        </div>
+
+                        {/* Header */}
+                        <div className="mb-8 flex flex-col items-center relative z-10">
+                            <div className="size-20 bg-slate-900 text-white rounded-full flex items-center justify-center mb-6 shadow-2xl">
+                                <Award size={44} />
                             </div>
+                            <h3 className="text-xs font-black uppercase tracking-[0.5em] text-slate-400 mb-1">Comunidad Cristiana El Faro</h3>
+                            <div className="h-0.5 w-12 bg-amber-400 rounded-full"></div>
+                        </div>
 
-                            <h1 className="text-4xl md:text-5xl font-serif italic text-slate-900 mb-8">Certificado de Finalización</h1>
-                            
-                            <p className="text-slate-500 font-medium italic mb-2 uppercase tracking-widest text-xs">Se otorga el presente reconocimiento a:</p>
-                            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-8 border-b-2 border-slate-100 pb-2 px-12 inline-block">
+                        <h1 className="text-5xl md:text-6xl font-serif italic text-slate-900 mb-10 relative z-10">Diploma de Reconocimiento</h1>
+                        
+                        <p className="text-slate-500 font-bold italic mb-3 uppercase tracking-[0.2em] text-[10px] relative z-10">Se otorga con distinción a:</p>
+                        <div className="relative mb-10 px-12 z-10">
+                            <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
                                 {userName}
                             </h2>
+                            <div className="absolute -bottom-4 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
+                        </div>
 
-                            <p className="text-slate-600 max-w-lg leading-relaxed mb-10 text-lg">
-                                Por haber completado satisfactoriamente los requisitos académicos y evaluativos del curso:
-                                <br />
-                                <span className="font-black text-slate-900 mt-2 block">&quot;{enrollment.course.title}&quot;</span>
-                            </p>
+                        <p className="text-slate-600 max-w-xl leading-relaxed mb-12 text-xl font-medium relative z-10">
+                            Por haber culminado con excelencia académica todos los módulos, evaluaciones y requisitos prácticos del curso:
+                            <br />
+                            <span className="font-black text-2xl text-slate-900 mt-4 block tracking-tight uppercase">&quot;{enrollment.course.title}&quot;</span>
+                        </p>
 
-                            <div className="mt-auto w-full flex flex-col md:flex-row justify-between items-end pt-12">
-                                <div className="flex flex-col items-center">
-                                    <div className="w-48 border-t border-slate-300 pt-2">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Coordinación Académica</p>
-                                    </div>
+                        {/* Signatures & Seal Area */}
+                        <div className="mt-auto w-full grid grid-cols-3 items-end pt-12 relative z-10">
+                            <div className="flex flex-col items-center">
+                                <div className="w-full max-w-[180px] border-t-2 border-slate-900 pt-3">
+                                    <p className="text-[9px] font-black text-slate-900 uppercase tracking-widest">Coordinación Faro</p>
                                 </div>
+                            </div>
 
-                                <div className="mb-4 md:mb-0">
-                                    <div className="size-20 border-4 border-slate-100 rounded-full flex items-center justify-center text-slate-200">
-                                        <ShieldCheck size={40} />
+                            <div className="flex flex-col items-center justify-center relative">
+                                {/* Premium Gold Seal */}
+                                <div className="size-28 rounded-full bg-gradient-to-br from-amber-300 via-amber-500 to-amber-600 shadow-xl flex items-center justify-center relative group transform transition-transform hover:scale-105">
+                                    <div className="absolute inset-1 border-4 border-white/30 rounded-full border-dashed"></div>
+                                    <div className="flex flex-col items-center text-white">
+                                        <ShieldCheck size={40} className="drop-shadow-lg" />
+                                        <span className="text-[7px] font-black uppercase tracking-widest mt-1">Garantía MESH</span>
                                     </div>
-                                </div>
-
-                                <div className="flex flex-col items-center">
-                                    <div className="w-48 border-t border-slate-300 pt-2">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Dirección General</p>
+                                    {/* Ribbon effect */}
+                                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex gap-1">
+                                        <div className="w-4 h-12 bg-amber-600 origin-top -rotate-12 rounded-b-md shadow-lg"></div>
+                                        <div className="w-4 h-12 bg-amber-600 origin-top rotate-12 rounded-b-md shadow-lg"></div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="absolute bottom-4 left-0 right-0 text-center">
-                                <p className="text-[8px] font-bold text-slate-300 uppercase tracking-[0.2em]">Validación: {certificate.certificate_code}</p>
+                            <div className="flex flex-col items-center">
+                                <div className="w-full max-w-[180px] border-t-2 border-slate-900 pt-3">
+                                    <p className="text-[9px] font-black text-slate-900 uppercase tracking-widest">Dirección General</p>
+                                </div>
                             </div>
+                        </div>
+
+                        {/* Footer Info / QR Placeholder */}
+                        <div className="absolute bottom-6 left-10 flex items-center gap-3">
+                             <div className="size-12 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center text-slate-300">
+                                <QrCode size={32} strokeWidth={1.5} />
+                             </div>
+                             <div className="text-left">
+                                <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest leading-none">Validación Digital</p>
+                                <p className="text-[9px] font-bold text-slate-900 leading-tight mt-1">{certificate.certificate_code}</p>
+                             </div>
+                        </div>
+
+                        <div className="absolute bottom-6 right-10 text-right">
+                             <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest leading-none">Fecha de Emisión</p>
+                             <p className="text-[9px] font-bold text-slate-900 leading-tight mt-1">{new Date(certificate.issued_at).toLocaleDateString()}</p>
                         </div>
                     </div>
                 </div>
@@ -163,30 +220,36 @@ export default function CertificateModal({ certificate, enrollment, userName, on
 
             <style jsx global>{`
                 @media print {
-                    body * {
-                        visibility: hidden;
+                    @page {
+                        size: landscape;
+                        margin: 0;
                     }
-                    .fixed {
-                        position: absolute !important;
+                    body * {
+                        visibility: hidden !important;
+                    }
+                    #certificate-to-print, #certificate-to-print * {
+                        visibility: visible !important;
+                    }
+                    #certificate-to-print {
+                        position: fixed !important;
                         left: 0 !important;
                         top: 0 !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                        background: white !important;
-                        backdrop-filter: none !important;
-                    }
-                    .certificate-paper, .certificate-paper * {
-                        visibility: visible;
-                    }
-                    .certificate-paper {
-                        position: absolute;
-                        left: 50%;
-                        top: 50%;
-                        transform: translate(-50%, -50%) scale(1.2);
-                        border: 8px double #cbd5e1 !important;
-                        box-shadow: none !important;
-                        width: 90% !important;
+                        width: 100vw !important;
+                        height: 100vh !important;
                         max-width: none !important;
+                        border: none !important;
+                        padding: 2cm !important;
+                        margin: 0 !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        transform: none !important;
+                        background: white !important;
+                        box-shadow: none !important;
+                    }
+                    .md\\:rounded-\\[3rem\\] {
+                        border-radius: 0 !important;
                     }
                 }
             `}</style>

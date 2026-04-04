@@ -23,10 +23,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [token, setToken] = useState<string | null>(() => {
-        if (typeof window !== 'undefined') return localStorage.getItem('ccf_token');
-        return null;
-    });
+    // Always start with null for SSR/client consistency (prevents hydration mismatch).
+    // The actual token is read from localStorage inside useEffect (client-only).
+    const [token, setToken] = useState<string | null>(null);
     const [user, setUser] = useState<AuthContextType["user"]>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
@@ -50,11 +49,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const fetchUser = useCallback(async (tokenValue?: string) => {
         const activeToken = tokenValue || (typeof window !== 'undefined' ? localStorage.getItem('ccf_token') : null);
-        
+
         if (!activeToken) {
             setLoading(false);
             return null;
         }
+
+        // Safety net: if anything hangs (backend down), resolve loading after 6s
+        const safetyTimer = setTimeout(() => {
+            console.warn('[AUTH] fetchUser timeout — forcing loading=false');
+            setLoading(false);
+        }, 6000);
 
         try {
             const userData = await apiFetch<any>('/auth/me', {
@@ -68,15 +73,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
             return userData;
         } catch (error) {
-            console.error('[AUTH QUALITY] Error fetching user profile:', error);
-            // Only clear session if it's strictly a 401/Invalid Token
-            if ((error as any).status === 401) {
+            console.error('[AUTH] Error fetching user profile:', error);
+            // Only clear session on explicit 401 (not network errors)
+            const status = (error as any).status;
+            if (status === 401) {
                 if (typeof window !== 'undefined') localStorage.removeItem('ccf_token');
                 setUser(null);
                 setToken(null);
             }
+            // For status === 0 (network error/timeout): keep the token,
+            // don't log out — the user may just be offline temporarily.
             return null;
         } finally {
+            clearTimeout(safetyTimer);
             setLoading(false);
         }
     }, []);

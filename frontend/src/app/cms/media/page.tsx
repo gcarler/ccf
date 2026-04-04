@@ -209,25 +209,38 @@ export default function CmsMediaPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {items.map((item) => (
-              <div key={item.id} className="rounded-2xl border border-slate-100 dark:border-white/10 p-4 space-y-2">
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">{item.section}</p>
-                <p className="text-xs text-slate-500 break-all">{item.url}</p>
-                <p className="text-sm text-slate-700 dark:text-slate-300">{item.alt_text || "Sin alt"}</p>
-                <p className="text-[10px] text-slate-400">{(item.tags || []).join(", ") || "Sin tags"}</p>
-                <div className="flex items-center justify-between">
-                  <button onClick={() => pushItemToDraft(item)} className="text-xs font-black uppercase tracking-[0.2em] text-primary">
-                    Editar
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (!token) return;
-                      await apiFetch(`/cms/media/${item.id}`, { method: "DELETE", token });
-                      await load();
+              <div key={item.id} className="rounded-2xl border border-slate-100 dark:border-white/10 p-4 space-y-4 flex flex-col md:flex-row gap-4">
+                <div className="w-full md:w-32 h-32 shrink-0 rounded-xl overflow-hidden bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5">
+                  <img
+                    src={item.url}
+                    alt={item.alt_text || "Preview"}
+                    className="w-full h-full object-cover transition-transform hover:scale-110"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "https://placehold.co/400x400/111418/white?text=No+Preview";
                     }}
-                    className="inline-flex items-center gap-1 text-xs font-black uppercase tracking-[0.2em] text-rose-500"
-                  >
-                    <Trash2 size={12} /> Eliminar
-                  </button>
+                  />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{item.section}</p>
+                  <p className="text-xs text-slate-500 break-all">{item.url}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">{item.alt_text || "Sin alt"}</p>
+                  <p className="text-[10px] text-slate-400">{(item.tags || []).join(", ") || "Sin tags"}</p>
+                  <div className="flex items-center justify-between pt-2">
+                    <button onClick={() => pushItemToDraft(item)} className="text-xs font-black uppercase tracking-[0.2em] text-primary">
+                      Editar
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!token) return;
+                        if (!confirm("¿Eliminar este recurso?")) return;
+                        await apiFetch(`/cms/media/${item.id}`, { method: "DELETE", token });
+                        await load();
+                      }}
+                      className="inline-flex items-center gap-1 text-xs font-black uppercase tracking-[0.2em] text-rose-500"
+                    >
+                      <Trash2 size={12} /> Eliminar
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

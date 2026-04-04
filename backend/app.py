@@ -1,6 +1,9 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+import time
+import logging
 import os
 
 from backend.api import auth, projects, academy, crm, workspace, system, cms, content
@@ -8,9 +11,11 @@ from backend.core.config import get_settings
 from backend.core.database import engine, Base
 from backend.services.automation_engine import engine as automation_engine
 
-settings = get_settings()
+# Configuración de Logging Ministerial
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("CCF-Core")
 
-# Inicializar Base de Datos (SQLite)
+settings = get_settings()
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -19,35 +24,39 @@ app = FastAPI(
     version="3.0.0-PRO"
 )
 
-# Configuración CORS Pro
-cors_origins = settings.cors_origins or ["*"]
-if "*" in cors_origins:
-    cors_origins = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3001",
-    ]
+# 1. Calidad: Middleware de Rendimiento y Seguridad
+@app.middleware("http")
+async def quality_assurance_middleware(request: Request, call_next):
+    start_time = time.time()
+    try:
+        response = await call_next(request)
+        process_time = time.time() - start_time
+        response.headers["X-Process-Time"] = str(process_time)
+        return response
+    except Exception as e:
+        logger.error(f"CRITICAL ERROR: {str(e)}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": "Error interno en el servidor ministerial", "trace": str(e)}
+        )
 
+# 2. Configuración CORS Total para Desarrollo (Calidad de Conexión)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_origins=["*"], # Permitir todos los orígenes en desarrollo para asegurar conexión
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Servir archivos estáticos (Evidencias/Adjuntos)
+# Servir archivos estáticos
 uploads_dir = settings.uploads_dir
 if not os.path.exists(uploads_dir):
     os.makedirs(uploads_dir)
 app.mount("/api/static", StaticFiles(directory=uploads_dir), name="static")
 
-# Ciclo de Vida: Automatización
 @app.on_event("startup")
 async def startup_event():
-    # El motor de automatización despierta aquí
     automation_engine.start()
 
 @app.on_event("shutdown")
@@ -69,6 +78,6 @@ def read_root():
     return {
         "status": "online",
         "ministerio": "CCF El Faro",
-        "engine": "Optimus 3.0",
-        "active_automation": True
+        "engine": "Optimus 3.0-Quality",
+        "uptime": True
     }

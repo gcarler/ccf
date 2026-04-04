@@ -1,14 +1,25 @@
+"use client";
+
+
 import WorkspaceLayout from '@/components/WorkspaceLayout';
-import ProtectedRoute from '@/components/ProtectedRoute';
+import { Bell, AtSign, CheckCircle2, Bot } from 'lucide-react';
+
+const INBOX_SECTIONS = [
+    {
+        title: 'Módulos',
+        items: [
+            { id: 'inbox-all',      label: 'Todo',      href: '/inbox',           icon: Bell },
+            { id: 'inbox-mentions', label: 'Menciones', href: '/inbox#menciones', icon: AtSign },
+            { id: 'inbox-tasks',    label: 'Tareas',    href: '/inbox#tareas',    icon: CheckCircle2 },
+            { id: 'inbox-ai',       label: 'MESH AI',   href: '/inbox#ai',        icon: Bot },
+        ],
+    },
+];
 
 export default function InboxLayout({ children }: { children: React.ReactNode }) {
     return (
-        <ProtectedRoute>
-            <WorkspaceLayout sidebarTitle="Bandeja de Entrada">
-                <div className="bg-[#f8f9fb] dark:bg-[#141517] min-h-screen">
-                    {children}
-                </div>
-            </WorkspaceLayout>
-        </ProtectedRoute>
+        <WorkspaceLayout sidebarTitle="Bandeja de Entrada" sidebarSections={INBOX_SECTIONS}>
+            {children}
+        </WorkspaceLayout>
     );
 }

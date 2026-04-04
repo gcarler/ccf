@@ -29,7 +29,7 @@ export default function StudentCertificates() {
             setLoading(true);
             setError(null);
             try {
-                const data = await apiFetch<CertificateRecord[]>(`/users/${userId}/certificates`, {
+                const data = await apiFetch<CertificateRecord[]>(`/academy/users/${userId}/certificates`, {
                     token,
                     cache: 'no-store',
                 });

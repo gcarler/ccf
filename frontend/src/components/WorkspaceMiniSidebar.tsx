@@ -1,38 +1,72 @@
 "use client";
 
+
 import React from 'react';
-import { 
-    Layout, 
-    Users, 
-    GraduationCap, 
-    Globe, 
-    Settings, 
+import {
+    Layout,
+    Users,
+    GraduationCap,
+    Globe,
+    Settings,
     PanelLeftClose,
     Plus,
-    Target
+    Target,
+    DollarSign,
+    CalendarDays,
+    Inbox,
+    Heart,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Tooltip from '@/components/ui/Tooltip';
 import clsx from 'clsx';
 import { useCreation } from '@/context/CreationContext';
 
 export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void }) {
     const pathname = usePathname();
-    const router = useRouter();
     const { openModal } = useCreation();
 
-    const items = [
-        { id: 'projects', icon: Target, href: '/projects', label: 'Proyectos' },
-        { id: 'academy', icon: GraduationCap, href: '/academy', label: 'Academia' },
-        { id: 'crm', icon: Users, href: '/crm', label: 'Comunidad' },
-        { id: 'cms', icon: Globe, href: '/cms', label: 'Sitio Web' },
+    const primaryItems = [
+        { id: 'projects', icon: Target,       href: '/projects',  label: 'Proyectos' },
+        { id: 'tasks',    icon: Layout,        href: '/tasks',     label: 'Mis Tareas' },
+        { id: 'calendar', icon: CalendarDays,  href: '/calendar',  label: 'Calendario' },
     ];
 
+    const moduleItems = [
+        { id: 'academy',       icon: GraduationCap, href: '/academy',        label: 'Academia' },
+        { id: 'crm',           icon: Users,         href: '/crm',            label: 'Comunidad' },
+        { id: 'finances',      icon: DollarSign,    href: '/finances',       label: 'Finanzas' },
+        { id: 'cms',           icon: Globe,         href: '/cms',            label: 'Sitio Web' },
+        { id: 'spiritual-life',icon: Heart,         href: '/spiritual-life', label: 'Vida Espiritual' },
+    ];
+
+    const NavItem = ({ id, icon: Icon, href, label, badge }: any) => {
+        const isActive = pathname?.startsWith(href);
+        return (
+            <Tooltip key={id} content={label} side="right">
+                <Link href={href} className="relative">
+                    <div className={clsx(
+                        "size-10 rounded-2xl flex items-center justify-center transition-all duration-200 cursor-pointer",
+                        isActive
+                            ? "bg-blue-600/10 dark:bg-white/10 text-blue-600 dark:text-white shadow-inner"
+                            : "text-slate-400 dark:text-slate-500 hover:bg-black/5 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-300"
+                    )}>
+                        <Icon size={19} className={clsx(isActive && "text-blue-500")} />
+                        {badge && (
+                            <span className="absolute -top-0.5 -right-0.5 size-4 rounded-full bg-rose-500 text-white text-[8px] font-black flex items-center justify-center border-2 border-white dark:border-black">
+                                {badge}
+                            </span>
+                        )}
+                    </div>
+                </Link>
+            </Tooltip>
+        );
+    };
+
     return (
-        <aside className="w-16 h-full bg-slate-900 dark:bg-black rounded-[2rem] flex flex-col items-center py-6 gap-4 shadow-2xl relative border border-white/5">
+        <aside className="w-16 h-full bg-white dark:bg-black border-r border-slate-100 dark:border-white/5 rounded-[2rem] flex flex-col items-center py-5 gap-1 shadow-2xl relative overflow-hidden">
             {/* Global Add Button */}
-            <button 
+            <button
                 onClick={() => openModal('task')}
                 className="size-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg shadow-blue-500/40 group relative mb-4"
             >
@@ -42,37 +76,40 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
                 </div>
             </button>
 
-            {items.map((item) => {
-                const isActive = pathname?.startsWith(item.href);
-                return (
-                    <Tooltip key={item.id} content={item.label} position="right">
-                        <Link href={item.href}>
-                            <div className={clsx(
-                                "size-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer group mb-1",
-                                isActive 
-                                    ? "bg-white/10 text-white shadow-inner" 
-                                    : "text-slate-500 hover:bg-white/5 hover:text-slate-300"
-                            )}>
-                                <item.icon size={20} className={clsx(isActive && "text-blue-400")} />
-                            </div>
-                        </Link>
-                    </Tooltip>
-                );
-            })}
+            {/* Primary workspace items */}
+            {primaryItems.map(item => <NavItem key={item.id} {...item} />)}
 
-            <div className="mt-auto flex flex-col items-center gap-4">
-                <Tooltip content="Ajustes de Workspace" position="right">
-                    <div className="size-10 rounded-2xl flex items-center justify-center text-slate-500 hover:bg-white/5 hover:text-slate-300 transition-all cursor-pointer">
-                        <Settings size={20} />
-                    </div>
+            {/* Separator */}
+            <div className="w-6 h-px bg-slate-100 dark:bg-white/10 my-2" />
+
+            {/* Module items */}
+            {moduleItems.map(item => <NavItem key={item.id} {...item} />)}
+
+            {/* Separator */}
+            <div className="w-6 h-px bg-slate-100 dark:bg-white/10 my-2" />
+
+            {/* Inbox with badge */}
+            <NavItem id="inbox" icon={Inbox} href="/inbox" label="Bandeja" badge={3} />
+
+            {/* ── Footer: solo Settings + Collapse (SIN ThemeToggle — ya está en el header) */}
+            <div className="mt-auto flex flex-col items-center gap-1 pb-1">
+                <Tooltip content="Ajustes" side="right">
+                    <Link href="/settings">
+                        <div className="size-10 rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-black/5 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-300 transition-all duration-200 cursor-pointer">
+                            <Settings size={19} />
+                        </div>
+                    </Link>
                 </Tooltip>
-                
-                <button 
-                    onClick={onHide}
-                    className="size-10 rounded-2xl flex items-center justify-center text-slate-600 hover:text-rose-400 transition-all group"
-                >
-                    <PanelLeftClose size={20} />
-                </button>
+
+                <Tooltip content="Ocultar barra" side="right">
+                    <button
+                        onClick={onHide}
+                        className="size-10 rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-all duration-200 group"
+                        aria-label="Ocultar sidebar principal"
+                    >
+                        <PanelLeftClose size={19} />
+                    </button>
+                </Tooltip>
             </div>
         </aside>
     );

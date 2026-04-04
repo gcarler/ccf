@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    X, CheckSquare, FileText, Bell, LayoutDashboard, 
-    Plus, Hash, ChevronRight, Sparkles, Target, 
-    Flag, User, Calendar, Loader2, Search, Command,
-    Wand2, Globe, Layers, Zap
+import {
+    X, CheckSquare, FileText, Bell, LayoutDashboard, Layers,
+    Plus, User, Calendar, Flag, Tag, MoreHorizontal, Paperclip,
+    MessageSquare, ChevronDown, Sparkles, Loader2, ToggleLeft,
+    Table2, Columns, List, ArrowUpRight, ChevronRight
 } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import clsx from 'clsx';
@@ -23,26 +23,48 @@ interface Props {
     initialType?: CreationType;
 }
 
+// ── Tab config ─────────────────────────────────────────────────────────────
+const TABS: { id: CreationType; label: string; icon: React.ElementType; color?: string }[] = [
+    { id: 'task',       label: 'Tarea',        icon: CheckSquare,    color: 'text-violet-600' },
+    { id: 'doc',        label: 'Documento',    icon: FileText,       color: 'text-slate-500' },
+    { id: 'reminder',   label: 'Recordatorio', icon: Bell,           color: 'text-slate-500' },
+    { id: 'whiteboard', label: 'Pizarra',      icon: LayoutDashboard,color: 'text-slate-500' },
+    { id: 'panel',      label: 'Panel',        icon: Layers,         color: 'text-slate-500' },
+];
+
+const STATUS_OPTIONS = ['PENDIENTE', 'EN CURSO', 'COMPLETADO'];
+const STATUS_COLORS: Record<string, string> = {
+    'PENDIENTE':   'bg-slate-200 text-slate-600',
+    'EN CURSO':    'bg-violet-600 text-white',
+    'COMPLETADO':  'bg-emerald-100 text-emerald-700',
+};
+
 export default function UniversalCreationModal({ isOpen, onClose, initialType = 'task' }: Props) {
     const { token } = useAuth();
     const [type, setType] = useState<CreationType>(initialType);
     const [projects, setProjects] = useState<ProjectRecord[]>([]);
     const [loading, setLoading] = useState(false);
-    const [isAiGenerating, setIsAiGenerating] = useState(false);
-    
-    // Form States
+    const [isPrivate, setIsPrivate] = useState(false);
+
+    // Form state
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
+    const [status, setStatus] = useState('PENDIENTE');
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
     const [priority, setPriority] = useState('normal');
+    const [isGeneratingAi, setIsGeneratingAi] = useState(false);
 
-    const titleRef = useRef<HTMLInputElement>(null);
+    const titleRef = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
 
     useEffect(() => {
         if (isOpen) {
             setType(initialType);
+            setTitle('');
+            setDescription('');
+            setStatus('PENDIENTE');
+            setIsPrivate(false);
             fetchProjects();
-            setTimeout(() => titleRef.current?.focus(), 150);
+            setTimeout(() => titleRef.current?.focus(), 100);
         }
     }, [isOpen, initialType]);
 
@@ -52,227 +74,354 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
             const data = await apiFetch<ProjectRecord[]>('/projects', { token });
             setProjects(data);
             if (data.length > 0 && !selectedProjectId) {
-                const elFaro = data.find(p => p.id === 6);
-                setSelectedProjectId(elFaro ? elFaro.id : data[0].id);
+                setSelectedProjectId(data[0].id);
             }
-        } catch (err) { console.error(err); }
+        } catch { }
     };
 
-    const handleAiGenerate = async () => {
-        if (!title.trim()) {
-            toast.error("Escribe un título para que la IA tenga contexto.");
-            return;
-        }
-        setIsAiGenerating(true);
+    const handleAiWrite = async () => {
+        if (!title.trim()) { toast.error('Escribe un título primero'); return; }
+        setIsGeneratingAi(true);
         try {
-            const data = await apiFetch<{response: string}>('/system/ai/generate', {
-                method: 'POST',
-                token,
-                body: { 
-                    prompt: `Genera una descripción profesional para esta tarea ministerial: ${title}`,
-                    context: `Tipo: ${type}, Prioridad: ${priority}`
-                }
+            const data = await apiFetch<{ response: string }>('/system/ai/generate', {
+                method: 'POST', token,
+                body: { prompt: `Genera una descripción profesional para: ${title}`, context: `tipo: ${type}` }
             });
             setDescription(data.response);
-            toast.success("IA: Sugerencia generada");
-        } catch (err) {
-            toast.error("IA local no disponible");
-        } finally {
-            setIsAiGenerating(false);
-        }
+        } catch { toast.info('IA no disponible en este momento'); }
+        finally { setIsGeneratingAi(false); }
     };
 
-    const handleSubmit = async (e?: React.FormEvent) => {
-        if (e) e.preventDefault();
-        if (!title.trim() || !selectedProjectId) return;
-        
+    const handleSubmit = async () => {
+        if (!title.trim()) return;
         setLoading(true);
         try {
-            if (type === 'task') {
+            if (type === 'task' && selectedProjectId) {
                 await apiFetch(`/projects/${selectedProjectId}/tasks`, {
-                    method: 'POST',
-                    token,
+                    method: 'POST', token,
                     body: { title: title.trim(), description, status: 'todo', priority }
                 });
-                toast.success(`Misión lanzada exitosamente`);
-                resetAndClose();
+                toast.success('Tarea creada');
             } else {
-                toast.info(`La creación de ${type} estará disponible pronto.`);
+                toast.info(`Creación de ${type} próximamente`);
             }
-        } catch (err) {
-            toast.error('Error al sincronizar creación.');
-        } finally {
-            setLoading(false);
-        }
+            onClose();
+        } catch { toast.error('Error al crear'); }
+        finally { setLoading(false); }
     };
 
-    const resetAndClose = () => {
-        setTitle('');
-        setDescription('');
-        onClose();
-    };
+    const selectedProject = projects.find(p => p.id === selectedProjectId);
 
     return (
-        <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <Dialog.Root open={isOpen} onOpenChange={open => !open && onClose()}>
             <AnimatePresence>
                 {isOpen && (
                     <Dialog.Portal forceMount>
+                        {/* Overlay */}
                         <Dialog.Overlay asChild>
-                            <motion.div 
-                                initial={{ opacity: 0 }} 
-                                animate={{ opacity: 1 }} 
-                                exit={{ opacity: 0 }} 
-                                className="fixed inset-0 z-[9000] bg-slate-900/20 backdrop-blur-[2px]" 
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="fixed inset-0 z-[9000] bg-slate-900/30 backdrop-blur-sm"
                             />
                         </Dialog.Overlay>
+
+                        {/* Modal centered */}
                         <Dialog.Content asChild>
-                            <motion.div 
-                                initial={{ x: '100%' }} 
-                                animate={{ x: 0 }} 
-                                exit={{ x: '100%' }}
-                                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                                className="fixed right-0 top-0 z-[9001] h-screen w-full max-w-[850px] bg-white dark:bg-[#1e1f21] shadow-2xl border-l border-slate-200 dark:border-white/5 flex overflow-hidden font-display"
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                                transition={{ duration: 0.18, ease: 'easeOut' }}
+                                className="fixed inset-0 z-[9001] flex items-center justify-center p-6 pointer-events-none"
                             >
-                                <Dialog.Title className="sr-only">Centro de Lanzamiento</Dialog.Title>
-                                
-                                <div className="flex w-full h-full">
-                                    {/* Sidebar Interno del Drawer: Herramientas (Estética Original) */}
-                                    <aside className="w-64 bg-slate-50 dark:bg-black/20 border-r border-slate-100 dark:border-white/5 p-8 flex flex-col gap-3 shrink-0">
-                                        <div className="mb-8 px-2 flex items-center gap-2 text-blue-600">
-                                            <Zap size={16} />
-                                            <h3 className="text-[10px] font-black uppercase tracking-[0.3em]">Operaciones</h3>
-                                        </div>
-                                        
-                                        <TypeTab active={type === 'task'} onClick={() => setType('task')} icon={CheckSquare} label="Nueva Tarea" color="text-blue-600" />
-                                        <TypeTab active={type === 'doc'} onClick={() => setType('doc')} icon={FileText} label="Documento" color="text-emerald-600" />
-                                        <TypeTab active={type === 'whiteboard'} onClick={() => setType('whiteboard')} icon={LayoutDashboard} label="Pizarra" color="text-orange-600" />
-                                        <TypeTab active={type === 'reminder'} onClick={() => setType('reminder')} icon={Bell} label="Recordatorio" color="text-rose-600" />
+                                <div className="pointer-events-auto w-full max-w-[600px] bg-white dark:bg-[#1e1f21] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 flex flex-col overflow-hidden font-display">
+                                    <Dialog.Title className="sr-only">Crear elemento</Dialog.Title>
 
-                                        <div className="mt-auto relative group cursor-pointer" onClick={handleAiGenerate}>
-                                            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl blur opacity-20 group-hover:opacity-50 transition-opacity" />
-                                            <div className="relative p-5 bg-white dark:bg-black/40 rounded-3xl border border-blue-600/10 text-center">
-                                                {isAiGenerating ? <Loader2 size={24} className="animate-spin text-blue-600 mx-auto" /> : <Sparkles size={24} className="text-blue-600 mx-auto mb-2" />}
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 leading-none">Optimus IA</span>
-                                                <p className="text-[9px] font-bold text-slate-500 mt-2 uppercase tracking-tighter">Redactar con Llama 3</p>
-                                            </div>
-                                        </div>
-                                    </aside>
+                                    {/* ── TAB BAR ─────────────────────────────── */}
+                                    <div className="flex items-center border-b border-slate-100 dark:border-white/5 px-2">
+                                        {TABS.map(tab => (
+                                            <button
+                                                key={tab.id}
+                                                onClick={() => setType(tab.id)}
+                                                className={clsx(
+                                                    'flex items-center gap-1.5 px-3 py-3 text-[12px] font-medium transition-all relative whitespace-nowrap',
+                                                    type === tab.id
+                                                        ? 'text-slate-900 dark:text-white'
+                                                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                                                )}
+                                            >
+                                                <tab.icon size={13} className={type === tab.id ? (tab.color ?? 'text-slate-700') : 'text-slate-400'} />
+                                                {tab.label}
+                                                {type === tab.id && (
+                                                    <motion.div
+                                                        layoutId="modalActiveTab"
+                                                        className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 dark:bg-white"
+                                                    />
+                                                )}
+                                            </button>
+                                        ))}
+                                        <div className="flex-1" />
+                                        {/* Miniaturize + Close */}
+                                        <button className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                                            <ArrowUpRight size={15} />
+                                        </button>
+                                        <Dialog.Close asChild>
+                                            <button className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors ml-1">
+                                                <X size={15} />
+                                            </button>
+                                        </Dialog.Close>
+                                    </div>
 
-                                    {/* Form Content */}
-                                    <main className="flex-1 flex flex-col min-w-0 bg-white dark:bg-transparent">
-                                        <header className="h-16 border-b border-slate-100 dark:border-white/5 flex items-center px-10 justify-between bg-slate-50/30">
-                                            <div className="flex items-center gap-3">
-                                                <Dialog.Close asChild>
-                                                    <button className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-xl transition-all text-slate-400">
-                                                        <ChevronRight size={20} className="rotate-180" />
-                                                    </button>
-                                                </Dialog.Close>
-                                                <div className="h-6 w-[1px] bg-slate-200 dark:bg-white/10 mx-1" />
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ventana de Creación</span>
-                                            </div>
-                                            <Dialog.Close asChild>
-                                                <button className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-all">
-                                                    <X size={20} />
-                                                </button>
-                                            </Dialog.Close>
-                                        </header>
+                                    {/* ── BODY ─────────────────────────────────── */}
+                                    <AnimatePresence mode="wait">
+                                        <motion.div
+                                            key={type}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            transition={{ duration: 0.1 }}
+                                            className="flex-1"
+                                        >
+                                            {/* ─── TAREA ─── */}
+                                            {type === 'task' && (
+                                                <div className="flex flex-col">
+                                                    {/* Breadcrumb path */}
+                                                    <div className="flex items-center gap-1 px-5 pt-3 pb-1 text-[11px] text-slate-400">
+                                                        <span className="hover:text-slate-600 cursor-pointer">Espacio del equipo</span>
+                                                        <ChevronRight size={11} />
+                                                        <span className="hover:text-slate-600 cursor-pointer">Proyectos</span>
+                                                        <ChevronRight size={11} />
+                                                        <span className="font-medium text-slate-600 dark:text-slate-300">General</span>
+                                                    </div>
+                                                    {/* Project + type selectors */}
+                                                    <div className="flex items-center gap-2 px-5 pt-2 pb-2">
+                                                        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                                            <span className="size-3 rounded-sm inline-block"
+                                                                style={{ backgroundColor: selectedProject?.color || '#2563eb' }} />
+                                                            {selectedProject?.title || 'Proyecto 1'}
+                                                            <ChevronDown size={11} />
+                                                        </button>
+                                                        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                                            <CheckSquare size={12} />
+                                                            Tarea
+                                                            <ChevronDown size={11} />
+                                                        </button>
+                                                    </div>
 
-                                        <form onSubmit={handleSubmit} className="flex-1 flex flex-col p-12 overflow-y-auto scrollbar-hide">
-                                            <div className="space-y-12">
-                                                {/* Title & Description Bento */}
-                                                <div className="space-y-6">
-                                                    <input 
-                                                        ref={titleRef}
+                                                    {/* Title input */}
+                                                    <input
+                                                        ref={titleRef as React.RefObject<HTMLInputElement>}
                                                         value={title}
-                                                        onChange={(e) => setTitle(e.target.value)}
-                                                        placeholder={`¿Cuál es la nueva misión?`}
-                                                        className="w-full bg-transparent text-5xl font-black outline-none placeholder:text-slate-100 dark:placeholder:text-slate-800 tracking-tight"
+                                                        onChange={e => setTitle(e.target.value)}
+                                                        onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSubmit()}
+                                                        placeholder="Escribe el nombre de Tarea o pulsa «/» para ver comandos"
+                                                        className="px-5 py-2 text-[14px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
                                                     />
-                                                    <textarea 
-                                                        value={description}
-                                                        onChange={(e) => setDescription(e.target.value)}
-                                                        placeholder="Establece los objetivos estratégicos..."
-                                                        className="w-full bg-transparent text-lg font-medium outline-none placeholder:text-slate-200 resize-none min-h-[150px] leading-relaxed"
-                                                    />
+
+                                                    {/* Description links */}
+                                                    <div className="px-5 pb-3 space-y-1">
+                                                        <button className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                                                            <FileText size={13} />
+                                                            Añadir descripción
+                                                        </button>
+                                                        <button
+                                                            onClick={handleAiWrite}
+                                                            className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                                                        >
+                                                            {isGeneratingAi
+                                                                ? <Loader2 size={13} className="animate-spin" />
+                                                                : <Sparkles size={13} />
+                                                            }
+                                                            Escribir con IA
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Properties bar */}
+                                                    <div className="flex items-center gap-2 px-5 py-3 border-t border-slate-100 dark:border-white/5 flex-wrap">
+                                                        {/* Status */}
+                                                        <button className={clsx(
+                                                            'px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-wide',
+                                                            STATUS_COLORS[status] ?? 'bg-slate-100 text-slate-600'
+                                                        )}>
+                                                            {status}
+                                                        </button>
+                                                        <PropBtn icon={User} label="Persona asignada" />
+                                                        <PropBtn icon={Calendar} label="Fecha límite" />
+                                                        <PropBtn icon={Flag} label="Prioridad" />
+                                                        <PropBtn icon={Tag} label="Etiquetas" />
+                                                        <button className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+                                                            <MoreHorizontal size={13} />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Custom fields section */}
+                                                    <div className="px-5 py-3 border-t border-slate-100 dark:border-white/5">
+                                                        <p className="text-[11px] font-bold text-slate-400 mb-2">Campos</p>
+                                                        <button className="flex items-center gap-1.5 px-3 py-1.5 border border-dashed border-slate-200 dark:border-white/10 rounded-lg text-[11px] font-medium text-slate-400 hover:border-slate-300 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                                                            <Plus size={12} />
+                                                            Crear un campo
+                                                        </button>
+                                                    </div>
                                                 </div>
+                                            )}
 
-                                                {type === 'task' && (
-                                                    <div className="grid grid-cols-1 gap-10 pt-10 border-t border-slate-100 dark:border-white/5">
-                                                        {/* Project Selection */}
-                                                        <div className="space-y-4">
-                                                            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Proyecto Destino</label>
-                                                            <div className="grid grid-cols-2 gap-3">
-                                                                {projects.slice(0, 4).map(p => (
-                                                                    <button 
-                                                                        key={p.id}
-                                                                        type="button"
-                                                                        onClick={() => setSelectedProjectId(p.id)}
-                                                                        className={clsx(
-                                                                            "flex items-center gap-3 p-4 rounded-[1.5rem] border transition-all text-left",
-                                                                            selectedProjectId === p.id 
-                                                                                ? "bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-500/20" 
-                                                                                : "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-blue-500/50"
-                                                                        )}
-                                                                    >
-                                                                        <div className="size-8 rounded-lg bg-white/20 flex items-center justify-center font-black text-[10px]">
-                                                                            {p.title.substring(0, 1)}
-                                                                        </div>
-                                                                        <span className="text-[12px] font-bold truncate">{p.title}</span>
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Priority & Delivery */}
-                                                        <div className="flex gap-10">
-                                                            <div className="flex-1 space-y-4">
-                                                                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Urgencia</label>
-                                                                <div className="flex gap-2 p-1 bg-slate-50 dark:bg-black/20 rounded-2xl border border-slate-100 dark:border-white/5">
-                                                                    {['low', 'normal', 'high'].map(p => (
-                                                                        <button
-                                                                            key={p}
-                                                                            type="button"
-                                                                            onClick={() => setPriority(p)}
-                                                                            className={clsx(
-                                                                                "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                                                                                priority === p 
-                                                                                    ? "bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-white/10" 
-                                                                                    : "text-slate-400 hover:text-slate-600"
-                                                                            )}
-                                                                        >
-                                                                            {p}
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex-1 space-y-4">
-                                                                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Fecha Meta</label>
-                                                                <button type="button" className="w-full flex items-center justify-between px-6 py-4 bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5 rounded-2xl text-[11px] font-bold text-slate-500">
-                                                                    <span>Seleccionar...</span>
-                                                                    <Calendar size={16} />
-                                                                </button>
+                                            {/* ─── DOCUMENTO ─── */}
+                                            {type === 'doc' && (
+                                                <div className="flex flex-col py-2">
+                                                    <div className="flex items-center gap-2 px-5 pt-2 pb-3">
+                                                        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                                            <List size={12} />
+                                                            Mis documentos
+                                                            <ChevronDown size={11} />
+                                                        </button>
+                                                    </div>
+                                                    <input
+                                                        ref={titleRef as React.RefObject<HTMLInputElement>}
+                                                        value={title}
+                                                        onChange={e => setTitle(e.target.value)}
+                                                        placeholder="Ponle un nombre a este documento..."
+                                                        className="px-5 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
+                                                    />
+                                                    <div className="px-5 py-3 space-y-2 border-t border-slate-100 dark:border-white/5 mt-3">
+                                                        <button className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors w-full">
+                                                            <FileText size={13} />
+                                                            Empezar a escribir
+                                                        </button>
+                                                        <button onClick={handleAiWrite} className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors w-full">
+                                                            <Sparkles size={13} />
+                                                            Escribir con IA
+                                                        </button>
+                                                        <div className="pt-2">
+                                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Añadir nuevo</p>
+                                                            <div className="space-y-1">
+                                                                <DocAddBtn icon={Table2} label="Tabla" />
+                                                                <DocAddBtn icon={Columns} label="Columna" />
+                                                                <DocAddBtn icon={List} label="Lista de CCF" />
                                                             </div>
                                                         </div>
                                                     </div>
-                                                )}
-                                            </div>
-
-                                            <div className="mt-auto pt-12 flex items-center justify-between border-t border-slate-100 dark:border-white/5">
-                                                <div className="flex gap-3">
-                                                    <ActionButton icon={User} label="Asignar" />
-                                                    <ActionButton icon={Hash} label="Etiquetas" />
                                                 </div>
-                                                <button 
-                                                    type="submit"
-                                                    disabled={loading || isAiGenerating || !title.trim()}
-                                                    className="px-12 py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[2rem] text-[11px] font-black uppercase tracking-[0.4em] shadow-2xl hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-4 disabled:opacity-50"
+                                            )}
+
+                                            {/* ─── RECORDATORIO ─── */}
+                                            {type === 'reminder' && (
+                                                <div className="flex flex-col py-2">
+                                                    <input
+                                                        ref={titleRef as React.RefObject<HTMLInputElement>}
+                                                        value={title}
+                                                        onChange={e => setTitle(e.target.value)}
+                                                        placeholder="Escribe el nombre del recordatorio o pulsa «/» para ver comandos"
+                                                        className="px-5 py-4 text-[14px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
+                                                    />
+                                                    <div className="px-5 pb-3">
+                                                        <button className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                                                            <FileText size={13} />
+                                                            Añadir descripción
+                                                        </button>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 px-5 py-3 border-t border-slate-100 dark:border-white/5">
+                                                        <ReminderChip icon={Calendar} label="Hoy" />
+                                                        <ReminderChip label="Para mí" avatar />
+                                                        <ReminderChip icon={Bell} label="Notificarme" />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* ─── PIZARRA ─── */}
+                                            {type === 'whiteboard' && (
+                                                <div className="flex flex-col py-2">
+                                                    <div className="flex items-center gap-2 px-5 pt-2 pb-3">
+                                                        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-600 dark:text-slate-300">
+                                                            <List size={12} />
+                                                            Mis pizarras
+                                                            <ChevronDown size={11} />
+                                                        </button>
+                                                    </div>
+                                                    <input
+                                                        ref={titleRef as React.RefObject<HTMLInputElement>}
+                                                        value={title}
+                                                        onChange={e => setTitle(e.target.value)}
+                                                        placeholder="Ponle un nombre a esta pizarra..."
+                                                        className="px-5 py-4 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
+                                                    />
+                                                    <div className="h-20" /> {/* spacer */}
+                                                </div>
+                                            )}
+
+                                            {/* ─── PANEL ─── */}
+                                            {type === 'panel' && (
+                                                <div className="flex flex-col py-2">
+                                                    <input
+                                                        ref={titleRef as React.RefObject<HTMLInputElement>}
+                                                        value={title}
+                                                        onChange={e => setTitle(e.target.value)}
+                                                        placeholder="Nombre del panel..."
+                                                        className="px-5 py-4 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
+                                                    />
+                                                    <div className="h-20" />
+                                                </div>
+                                            )}
+                                        </motion.div>
+                                    </AnimatePresence>
+
+                                    {/* ── FOOTER ──────────────────────────────── */}
+                                    <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100 dark:border-white/5">
+                                        {/* Left actions */}
+                                        <div className="flex items-center gap-2">
+                                            {(type === 'doc' || type === 'whiteboard') && (
+                                                <button
+                                                    onClick={() => setIsPrivate(v => !v)}
+                                                    className="flex items-center gap-1.5 text-[12px] font-medium text-slate-500"
                                                 >
-                                                    {loading ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />} 
-                                                    Lanzar {type === 'task' ? 'Misión' : type}
+                                                    <div className={clsx(
+                                                        'relative w-8 h-4 rounded-full transition-colors',
+                                                        isPrivate ? 'bg-violet-600' : 'bg-slate-200 dark:bg-white/10'
+                                                    )}>
+                                                        <span className={clsx(
+                                                            'absolute top-0.5 size-3 bg-white rounded-full shadow transition-transform',
+                                                            isPrivate ? 'translate-x-4' : 'translate-x-0.5'
+                                                        )} />
+                                                    </div>
+                                                    Privado
                                                 </button>
-                                            </div>
-                                        </form>
-                                    </main>
+                                            )}
+                                            {type === 'task' && (
+                                                <>
+                                                    <button className="flex items-center gap-1 text-[11px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                                                        <Sparkles size={13} />
+                                                        Plantillas
+                                                    </button>
+                                                    <button className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                                                        <Paperclip size={14} />
+                                                    </button>
+                                                    <button className="flex items-center gap-1 p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                                                        <MessageSquare size={14} />
+                                                        <span className="text-[11px]">1</span>
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+
+                                        {/* Submit split button */}
+                                        <div className="flex items-center">
+                                            <button
+                                                onClick={handleSubmit}
+                                                disabled={loading || !title.trim()}
+                                                className="flex items-center gap-1.5 px-4 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12px] font-bold rounded-l-lg hover:bg-slate-700 dark:hover:bg-slate-100 disabled:opacity-40 transition-colors"
+                                            >
+                                                {loading ? <Loader2 size={12} className="animate-spin" /> : null}
+                                                {type === 'task' ? 'Crear Tarea' :
+                                                 type === 'doc' ? 'Crear documento' :
+                                                 type === 'reminder' ? 'Crear recordatorio' :
+                                                 type === 'whiteboard' ? 'Crear pizarra' : 'Crear panel'}
+                                            </button>
+                                            <button className="flex items-center px-2 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12px] font-bold rounded-r-lg border-l border-white/20 dark:border-slate-900/20 hover:bg-slate-700 dark:hover:bg-slate-100 transition-colors">
+                                                <ChevronDown size={13} />
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </motion.div>
                         </Dialog.Content>
@@ -283,26 +432,31 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
     );
 }
 
-function TypeTab({ active, onClick, icon: Icon, label, color }: any) {
+// ── Helper components ──────────────────────────────────────────────────────────
+function PropBtn({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
     return (
-        <button
-            onClick={onClick}
-            className={clsx(
-                "flex items-center gap-4 px-5 py-4 rounded-[1.5rem] transition-all group relative overflow-hidden",
-                active ? "bg-white dark:bg-white/10 shadow-xl border border-slate-100 dark:border-white/5" : "hover:bg-white/50 dark:hover:bg-white/5"
-            )}
-        >
-            {active && <motion.div layoutId="activeCreationTab" className="absolute left-0 top-4 bottom-4 w-1 bg-blue-600 rounded-full" />}
-            <Icon size={20} className={clsx("transition-transform group-hover:scale-110", active ? color : "text-slate-400 group-hover:text-slate-600")} />
-            <span className={clsx("text-[13px] font-black tracking-tight uppercase", active ? "text-slate-900 dark:text-white" : "text-slate-500")}>{label}</span>
+        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-slate-200 dark:border-white/10 text-[11px] font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+            <Icon size={12} />
+            {label}
         </button>
     );
 }
 
-function ActionButton({ icon: Icon, label }: any) {
+function ReminderChip({ icon: Icon, label, avatar }: { icon?: React.ElementType; label: string; avatar?: boolean }) {
     return (
-        <button type="button" className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-all">
-            <Icon size={14} /> {label}
+        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+            {avatar && <span className="size-4 rounded-full bg-violet-600 inline-block" />}
+            {Icon && <Icon size={12} />}
+            {label}
+        </button>
+    );
+}
+
+function DocAddBtn({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
+    return (
+        <button className="flex items-center gap-2 px-3 py-1.5 w-full text-left text-[12px] font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg transition-colors">
+            <Icon size={13} className="text-slate-400" />
+            {label}
         </button>
     );
 }

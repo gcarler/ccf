@@ -138,6 +138,7 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
             }),
         ],
         content: initialContent,
+        immediatelyRender: false,
         editorProps: { attributes: { class: 'prose dark:prose-invert max-w-none focus:outline-none min-h-[500px]' } },
         onUpdate: ({ editor }) => setContent(editor.getHTML())
     });

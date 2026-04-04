@@ -1193,7 +1193,7 @@ export default function SystemSettings() {
                                     </div>
                                 ))}
                             </div>
-                        )}
+                        </div>
                     </section>
                 </div>
 
@@ -1232,6 +1232,7 @@ export default function SystemSettings() {
                 </aside>
             </div>
         </AdminShell>
+    </WorkspaceLayout>
     );
 }
 
@@ -1293,79 +1294,6 @@ function DeltaMetric({ label, value, inverse }: { label: string; value: number |
         <div className={clsx('rounded-2xl border p-4', tone)}>
             <p className="text-[10px] font-black uppercase tracking-widest">{label}</p>
             <p className="text-xl font-black mt-1">{numeric == null ? '-' : `${numeric > 0 ? '+' : ''}${numeric}%`}</p>
-        </div>
-    );
-}
-
-function RolloutControl({ featureId, label, rule, selectedRole, onRoleChange, onSave, loading }: any) {
-    const [percent, setPercent] = useState<number>(typeof rule?.rollout_percent === 'number' ? rule.rollout_percent : 100);
-    const [usersAllowText, setUsersAllowText] = useState<string>((rule?.users_allow || []).join(','));
-    const [usersDenyText, setUsersDenyText] = useState<string>((rule?.users_deny || []).join(','));
-
-    useEffect(() => {
-        if (typeof rule?.rollout_percent === 'number') {
-            setPercent(rule.rollout_percent);
-        }
-        setUsersAllowText((rule?.users_allow || []).join(','));
-        setUsersDenyText((rule?.users_deny || []).join(','));
-    }, [rule]);
-
-    return (
-        <div className="rounded-3xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-5 space-y-4">
-            <div className="flex items-center justify-between gap-3">
-                <div>
-                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-800 dark:text-white">{label}</p>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{featureId}</p>
-                </div>
-                <span className="text-[11px] font-black text-blue-600">{percent}%</span>
-            </div>
-            <input
-                type="range"
-                min={0}
-                max={100}
-                value={percent}
-                onChange={(event) => setPercent(Number(event.target.value))}
-                className="w-full accent-blue-600"
-            />
-            <div className="flex items-center gap-3">
-                <select
-                    value={selectedRole}
-                    onChange={(event) => onRoleChange(event.target.value)}
-                    className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/30 px-3 text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-200"
-                >
-                    <option value="">Todos los roles</option>
-                    <option value="admin">Admin</option>
-                    <option value="coordinador">Coordinador</option>
-                    <option value="docente">Docente</option>
-                    <option value="estudiante">Estudiante</option>
-                </select>
-                <button
-                    onClick={() => onSave({
-                        role: selectedRole,
-                        percent,
-                        usersAllow: usersAllowText.split(',').map((v) => v.trim()).filter(Boolean),
-                        usersDeny: usersDenyText.split(',').map((v) => v.trim()).filter(Boolean),
-                    })}
-                    disabled={loading}
-                    className="h-10 rounded-xl bg-blue-600 px-4 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-60"
-                >
-                    {loading ? 'Guardando...' : 'Guardar regla'}
-                </button>
-            </div>
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                <input
-                    value={usersAllowText}
-                    onChange={(event) => setUsersAllowText(event.target.value)}
-                    placeholder="users_allow: 12,34"
-                    className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/30 px-3 text-xs font-bold text-slate-600 dark:text-slate-200"
-                />
-                <input
-                    value={usersDenyText}
-                    onChange={(event) => setUsersDenyText(event.target.value)}
-                    placeholder="users_deny: 99"
-                    className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/30 px-3 text-xs font-bold text-slate-600 dark:text-slate-200"
-                />
-            </div>
         </div>
     );
 }

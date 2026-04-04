@@ -24,7 +24,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch('/messaging/notifications', { token });
+            const data = await apiFetch<any[]>('/notifications', { token });
             if (Array.isArray(data)) setNotifications(data);
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
@@ -51,9 +51,13 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
     });
 
     const handleClear = async (id: number) => {
-        setNotifications(prev => prev.filter(n => n.id !== id));
-        toast.success("Notificación archivada");
-        // API call would go here
+        try {
+            await apiFetch(`/notifications/${id}`, { method: 'PATCH', token });
+            setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+            toast.success("Notificación marcada como leída");
+        } catch (err) {
+            toast.error("No se pudo actualizar");
+        }
     };
 
     return (

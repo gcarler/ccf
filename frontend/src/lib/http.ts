@@ -72,9 +72,27 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
     init.body = JSON.stringify(body);
   }
 
+  // AbortController: 5s timeout so loading never hangs when backend is down
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
   const nativeFetch: typeof fetch =
     (typeof globalThis !== "undefined" && (globalThis as any).__ccfOriginalFetch) || fetch;
-  const response = await nativeFetch(url, init);
+
+  let response: Response;
+  try {
+    response = await nativeFetch(url, { ...init, signal: controller.signal });
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    // Network error or abort — do NOT redirect to login, just throw
+    if (err.name === 'AbortError') {
+      throw new ApiError('Request timed out', 0, err);
+    }
+    throw new ApiError(err.message || 'Network error', 0, err);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
   const raw = await response.text();
   const parsed = raw ? safeJsonParse(raw) : undefined;
 

@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import AdminHero from '@/components/admin/AdminHero';
 import CommunityToolbarChip from '@/components/community/ToolbarChip';
-import { LayoutDashboard, MessageCircle, Feather, Image as ImageIcon, CalendarRange, Link2 } from 'lucide-react';
+import { LayoutDashboard, MessageCircle, Feather, Image as ImageIcon, CalendarRange, Link2, FileText } from 'lucide-react';
 import { FARO_BLOCKS } from '@/lib/cms/blocks';
 
 interface CmsStats {
@@ -71,10 +71,10 @@ export default function CmsHomePage() {
 
     const quickLinks = useMemo(
         () => [
+            { label: 'Páginas', href: '/cms/pages', description: 'Gestiona contenido dinámico', icon: FileText },
+            { label: 'Menús del sitio', href: '/cms/menus', description: 'Estructura la navegación', icon: Link2 },
             { label: 'Testimonios', href: '/cms/testimonials', description: 'Aprueba y publica historias', icon: MessageCircle },
             { label: 'Landing hero', href: '/cms/content', description: 'Actualiza copys y assets hero', icon: Feather },
-            { label: 'Galería', href: '/cms/media', description: 'Gestiona imágenes destacadas', icon: ImageIcon },
-            { label: 'Eventos públicos', href: '/cms/events', description: 'Publica eventos especiales', icon: CalendarRange }
         ],
         []
     );

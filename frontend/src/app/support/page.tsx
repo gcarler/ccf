@@ -31,8 +31,7 @@ import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { ViewType } from '@/components/ViewSwitcher';
 import StatusPicker, { StatusOption } from '@/components/ui/StatusPicker';
 import clsx from 'clsx';
-import { DataTable } from '@/components/ui/DataTable';
-import { ColumnDef } from '@tanstack/react-table';
+import UniversalTableView from '@/components/ui/UniversalTableView';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
 import { useRouter } from 'next/navigation';
 
@@ -234,9 +233,41 @@ export default function SupportPage() {
 
             <main className="flex-1 overflow-y-auto scrollbar-thin">
                 {isStaff && viewType === 'table' ? (
-                    <div className="h-full flex flex-col">
-                        <DataTable data={filteredTickets} columns={columns} onRowClick={handleOpenTicket} />
-                    </div>
+                    <UniversalTableView
+                        data={filteredTickets}
+                        columns={[
+                            { key: 'id', label: 'ID', type: 'id', width: '80px' },
+                            { 
+                                key: 'subject', 
+                                label: 'Asunto / Descripción', 
+                                type: 'text', 
+                                width: '400px',
+                                render: (val, ticket) => (
+                                    <div className="flex flex-col pr-4">
+                                        <span className="text-[13px] font-bold text-slate-700 dark:text-slate-200 truncate">{ticket.subject}</span>
+                                        <span className="text-[10px] text-slate-400 font-medium truncate">{ticket.description}</span>
+                                    </div>
+                                )
+                            },
+                            { 
+                                key: 'category', 
+                                label: 'Categoría', 
+                                type: 'text', 
+                                width: '150px',
+                                render: (val) => (
+                                    <span className="text-[11px] font-bold text-slate-500 flex items-center gap-2">
+                                        <Book size={12} className="text-slate-300" />
+                                        {val}
+                                    </span>
+                                )
+                            },
+                            { key: 'status', label: 'Estado', type: 'status', width: '150px' },
+                            { key: 'priority', label: 'Prioridad', type: 'priority', width: '120px' },
+                            { key: 'created_at', label: 'Fecha', type: 'date', width: '150px' },
+                        ]}
+                        groupBy="status"
+                        onRowClick={handleOpenTicket}
+                    />
                 ) : (
                     <div className="p-6 max-w-4xl mx-auto space-y-10">
                         {/* User View */}

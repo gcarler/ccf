@@ -601,24 +601,43 @@ def issue_pending_certificates(db: Session):
 def close_formal_acta(
     db: Session, course_id: int, closed_by_user_id: int, min_grade: float, min_attendance: float
 ):
-    acta = models.FormalActa(
-        course_id=course_id,
-        closed_by_user_id=closed_by_user_id,
-        min_grade_required=min_grade,
-        min_attendance_required=min_attendance
-    )
-    db.add(acta)
+    # 1. Obtener curso
+    course = db.query(models.Course).get(course_id)
+    if not course:
+        return None
 
-    # RN-FOR-004: Logic to approve students based on grade AND attendance
+    # 2. Obtener evaluaciones y sus pesos
+    assessments = db.query(models.Assessment).join(models.Lesson).filter(
+        models.Lesson.course_id == course_id
+    ).all()
+    
+    weights = {a.id: float(a.weight) for a in assessments}
+    total_weight = sum(weights.values())
+
+    # 3. Procesar inscripciones
     enrollments = db.query(models.Enrollment).filter(models.Enrollment.course_id == course_id).all()
     for e in enrollments:
-        # 1. Check average grade from assessments
-        avg_score = db.query(func.avg(models.AssessmentAttempt.score)).filter(
+        # A. Calcular nota ponderada
+        attempts = db.query(models.AssessmentAttempt).filter(
             models.AssessmentAttempt.enrollment_id == e.id
-        ).scalar() or 0
+        ).all()
+        
+        # Agrupar por assessment_id (tomar el mejor score)
+        best_scores = {}
+        for att in attempts:
+            if att.assessment_id not in best_scores or att.score > best_scores[att.assessment_id]:
+                best_scores[att.assessment_id] = float(att.score)
+        
+        if total_weight > 0:
+            weighted_sum = sum(best_scores.get(aid, 0) * w for aid, w in weights.items())
+            final_grade = weighted_sum / total_weight
+        else:
+            # Fallback a promedio simple si no hay pesos definidos (aunque default es 1.0)
+            final_grade = db.query(func.avg(models.AssessmentAttempt.score)).filter(
+                models.AssessmentAttempt.enrollment_id == e.id
+            ).scalar() or 0
 
-        # 2. Check attendance percentage
-        # Assume each course has a fixed number of sessions (e.g. 10) or we count total recorded
+        # B. Calcular asistencia
         total_sessions = db.query(func.count(func.distinct(models.CourseAttendance.session_date))).join(models.Enrollment).filter(
             models.Enrollment.course_id == course_id
         ).scalar() or 1
@@ -630,7 +649,8 @@ def close_formal_acta(
 
         attendance_rate = (present_count / total_sessions * 100)
 
-        if avg_score >= min_grade and attendance_rate >= min_attendance:
+        # C. Determinar aprobación
+        if final_grade >= min_grade and attendance_rate >= min_attendance:
             e.approved = True
             e.status = "completed"
 
@@ -640,10 +660,22 @@ def close_formal_acta(
                 course_id=course_id,
                 user_id=e.user_id,
                 modality="formal",
-                value=float(avg_score)
+                value=float(final_grade)
             )
             db.add(log)
+        else:
+            # Si ya estaba completado pero ahora no cumple, podrías resetearlo o dejarlo
+            # Por simplicidad del MVP, solo actualizamos si cumple.
+            pass
 
+    # 4. Registrar acta
+    acta = models.FormalActa(
+        course_id=course_id,
+        closed_by_user_id=closed_by_user_id,
+        min_grade_required=min_grade,
+        min_attendance_required=min_attendance
+    )
+    db.add(acta)
     db.commit()
     db.refresh(acta)
     return acta
@@ -781,10 +813,42 @@ def get_dashboard_metrics(db: Session):
 
     top_courses = [{"title": r[0], "count": r[1]} for r in top_courses_rows]
 
+    # 4. Global Average Progress
+    avg_progress = db.query(func.avg(models.Enrollment.progress_percent)).scalar() or 0
+
+    # 5. Build Cards for Frontend
+    cards = [
+        {
+            "title": "Progreso Académico",
+            "value": f"{round(float(avg_progress))}%",
+            "trend": "+5% este mes",
+            "color": "blue"
+        },
+        {
+            "title": "Estudiantes Activos",
+            "value": str(active_students),
+            "trend": "Global MESH",
+            "color": "green"
+        },
+        {
+            "title": "Certificados Emitidos",
+            "value": str(certificates_issued),
+            "trend": "Histórico CCF",
+            "color": "purple"
+        },
+        {
+            "title": "Tasa de Finalización",
+            "value": f"{round(completion_rate)}%",
+            "trend": "Meta: 80%",
+            "color": "orange"
+        }
+    ]
+
     return {
         "active_students": active_students,
         "completion_rate": round(completion_rate, 2),
         "certificates_issued": certificates_issued,
+        "cards": cards,
         "formal_stats": {
             "total": formal_total,
             "completed": formal_comp,

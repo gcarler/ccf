@@ -12,20 +12,20 @@ import {
     ArrowRight
 } from 'lucide-react';
 import clsx from 'clsx';
-import type { ProjectActivityLog } from '@/types/projects';
+import type { ProjectActivityItem } from '@/types/projects';
 
 interface Props {
-    activities: ProjectActivityLog[];
+    activities: ProjectActivityItem[];
 }
 
 export default function ProjectActivityFeed({ activities }: Props) {
-    const sorted = [...activities].sort((a, b) => 
+    const sorted = [...activities].sort((a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] border-l border-slate-100 dark:border-white/5 w-80 shrink-0 overflow-hidden font-display">
-            <header className="p-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
+        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden font-display">
+            <header className="p-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
                 <div>
                     <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-slate-400">Actividad Reciente</h3>
                     <p className="text-[9px] font-bold text-blue-600 uppercase mt-1">Pulso del Equipo</p>
@@ -46,7 +46,7 @@ export default function ProjectActivityFeed({ activities }: Props) {
                     </div>
                 ) : (
                     sorted.map((log, idx) => (
-                        <motion.div 
+                        <motion.div
                             key={log.id}
                             initial={{ opacity: 0, x: 10 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -55,15 +55,15 @@ export default function ProjectActivityFeed({ activities }: Props) {
                         >
                             <div className={clsx(
                                 "size-9 rounded-xl flex items-center justify-center z-10 shadow-sm transition-transform group-hover:scale-110",
-                                getIconBg(log.action_type)
+                                getIconBg(log.kind)
                             )}>
-                                {getIcon(log.action_type)}
+                                {getIcon(log.kind)}
                             </div>
                             
                             <div className="flex-1 min-w-0 space-y-1">
                                 <div className="flex items-center justify-between gap-2">
                                     <span className="text-[11px] font-black text-slate-900 dark:text-white truncate">
-                                        {log.user_name || "Sistema"}
+                                        {log.task_title || log.project_title || 'Sistema'}
                                     </span>
                                     <span className="text-[9px] font-bold text-slate-400 whitespace-nowrap">
                                         {formatRelative(log.created_at)}

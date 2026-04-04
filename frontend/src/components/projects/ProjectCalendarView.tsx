@@ -31,10 +31,13 @@ import clsx from 'clsx';
 interface CalendarProps {
     tasks: any[];
     onTaskClick: (task: any) => void;
+    onAddTask?: (status: string, date?: string, title?: string) => void;
 }
 
-export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProps) {
+export default function ProjectCalendarView({ tasks, onTaskClick, onAddTask }: CalendarProps) {
     const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [addingForDay, setAddingForDay] = useState<Date | null>(null);
+    const [newTaskTitle, setNewTaskTitle] = useState('');
 
     const days = useMemo(() => {
         const start = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 });
@@ -96,19 +99,29 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
                                 )}>
                                     {format(day, 'd')}
                                 </span>
-                                <button className="opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400 transition-all"><Plus size={12} /></button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setAddingForDay(day);
+                                        setNewTaskTitle('');
+                                    }}
+                                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400 transition-all"
+                                    aria-label={`Add task on ${format(day, 'd MMM')}`}
+                                >
+                                    <Plus size={12} />
+                                </button>
                             </header>
 
                             <div className="space-y-1 overflow-y-auto max-h-[80px] scrollbar-none">
                                 {dayTasks.map(task => (
-                                    <motion.div 
+                                    <motion.div
                                         key={task.id}
                                         initial={{ opacity: 0, scale: 0.95 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         onClick={() => onTaskClick(task)}
                                         className={clsx(
                                             "px-2 py-1 rounded-lg text-[10px] font-bold border cursor-pointer transition-all truncate shadow-sm",
-                                            task.status === 'COMPLETADA' 
+                                            task.status === 'COMPLETADA'
                                                 ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400"
                                                 : "bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-900/30 text-blue-600 dark:text-blue-400"
                                         )}
@@ -119,6 +132,34 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
                                         </div>
                                     </motion.div>
                                 ))}
+
+                                {/* Inline add for this day */}
+                                {addingForDay && isSameDay(addingForDay, day) && (
+                                    <div
+                                        className="mt-1"
+                                        onClick={e => e.stopPropagation()}
+                                    >
+                                        <input
+                                            autoFocus
+                                            type="text"
+                                            value={newTaskTitle}
+                                            onChange={e => setNewTaskTitle(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter' && newTaskTitle.trim()) {
+                                                    onAddTask?.('todo', format(day, 'yyyy-MM-dd'), newTaskTitle);
+                                                    setAddingForDay(null);
+                                                    setNewTaskTitle('');
+                                                }
+                                                if (e.key === 'Escape') {
+                                                    setAddingForDay(null);
+                                                    setNewTaskTitle('');
+                                                }
+                                            }}
+                                            placeholder="Nueva tarea..."
+                                            className="w-full text-[10px] px-1.5 py-1 rounded-md border border-blue-300 dark:border-blue-700 bg-white dark:bg-[#1e1f21] text-slate-800 dark:text-slate-200 outline-none placeholder:text-slate-400"
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );

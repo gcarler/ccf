@@ -2,12 +2,11 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    X, CheckCircle2, Clock, Flag, User, Calendar, 
-    MoreHorizontal, MessageSquare, Send, Trash2, 
-    ChevronRight, Paperclip, Bell, Hash, File, 
-    ExternalLink, Loader2, Image as ImageIcon,
-    UploadCloud, Download, Check
+import {
+    X, Flag, User, Calendar, MoreHorizontal, MessageSquare, Send,
+    Trash2, Paperclip, Bell, File, ExternalLink, Loader2,
+    Image as ImageIcon, Check, ChevronDown, Sparkles, Tag,
+    Circle, CheckCircle2, Clock, Plus, Link2, Maximize2
 } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as Popover from '@radix-ui/react-popover';
@@ -24,16 +23,43 @@ interface Props {
     onUpdate: (updated: ProjectTaskRecord) => void;
 }
 
+// ── Status config ──────────────────────────────────────────────────────────
+const STATUS_LIST = [
+    { value: 'todo',        label: 'PENDIENTE',   pill: 'bg-slate-100 dark:bg-white/5 text-slate-500 border border-slate-200 dark:border-white/10' },
+    { value: 'in_progress', label: 'EN CURSO',    pill: 'bg-violet-600 text-white' },
+    { value: 'review',      label: 'REVISIÓN',    pill: 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' },
+    { value: 'done',        label: 'COMPLETADO',  pill: 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' },
+    { value: 'blocked',     label: 'BLOQUEADO',   pill: 'bg-rose-100 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400' },
+];
+
+const PRIORITY_LIST = [
+    { value: 'urgent', label: 'Urgente',  color: 'text-rose-500',   bg: 'bg-rose-50 dark:bg-rose-900/10' },
+    { value: 'high',   label: 'Alta',     color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/10' },
+    { value: 'normal', label: 'Normal',   color: 'text-blue-500',   bg: 'bg-blue-50 dark:bg-blue-900/10' },
+    { value: 'low',    label: 'Baja',     color: 'text-slate-400',  bg: 'bg-slate-50 dark:bg-white/5' },
+];
+
+function getStatusCfg(value: string) {
+    return STATUS_LIST.find(s => s.value === value) ?? STATUS_LIST[0];
+}
+function getPrioCfg(value: string) {
+    return PRIORITY_LIST.find(p => p.value === value) ?? PRIORITY_LIST[2];
+}
+
 export default function TaskDetailModal({ task, isOpen, onClose, onUpdate }: Props) {
     const { token, user } = useAuth();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [comments, setComments] = useState<ProjectCommentItem[]>([]);
     const [newComment, setNewComment] = useState('');
     const [isUploading, setIsUploading] = useState(false);
-    const [isDragging, setIsDragging] = useState(false);
+    const [isSendingComment, setIsSendingComment] = useState(false);
+    const [editingTitle, setEditingTitle] = useState(false);
+    const [localTitle, setLocalTitle] = useState('');
+    const titleRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
         if (isOpen && task && token) {
+            setLocalTitle(task.title);
             fetchComments();
         }
     }, [isOpen, task, token]);
@@ -41,24 +67,38 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdate }: Pro
     const fetchComments = async () => {
         if (!task) return;
         try {
-            const data = await apiFetch<ProjectCommentItem[]>(`/projects/comments?project_id=${task.project_id}&task_id=${task.id}`, { token });
+            const data = await apiFetch<ProjectCommentItem[]>(
+                `/projects/comments?project_id=${task.project_id}&task_id=${task.id}`,
+                { token }
+            );
             setComments(data);
-        } catch (err) { console.error(err); }
+        } catch { }
     };
 
     const handleUpdateField = async (field: string, value: any) => {
         if (!task || !token) return;
         try {
             const updated = await apiFetch<ProjectTaskRecord>(`/projects/${task.project_id}/tasks/${task.id}`, {
-                method: 'PATCH',
-                token,
+                method: 'PATCH', token,
                 body: { [field]: value }
             });
             onUpdate(updated);
-            toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} actualizado`);
-        } catch (err) {
-            toast.error("Error al actualizar campo");
-        }
+            toast.success('Actualizado');
+        } catch { toast.error('Error al actualizar'); }
+    };
+
+    const handleSendComment = async () => {
+        if (!newComment.trim() || !task) return;
+        setIsSendingComment(true);
+        try {
+            await apiFetch(`/projects/comments`, {
+                method: 'POST', token,
+                body: { project_id: task.project_id, task_id: task.id, content: newComment.trim() }
+            });
+            setNewComment('');
+            fetchComments();
+        } catch { toast.error('Error al comentar'); }
+        finally { setIsSendingComment(false); }
     };
 
     const handleFileUpload = async (file: File) => {
@@ -67,109 +107,291 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdate }: Pro
         const formData = new FormData();
         formData.append('file', file);
         try {
-            const response = await fetch(`http://localhost:8000/api/projects/${task.project_id}/tasks/${task.id}/attachments`, {
+            const res = await fetch(`http://localhost:8000/api/projects/${task.project_id}/tasks/${task.id}/attachments`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
-            if (!response.ok) throw new Error('Error al subir');
-            const updatedTask = await response.json();
-            onUpdate(updatedTask);
-            toast.success(`Evidencia sincronizada`);
-        } catch (err) { toast.error("Fallo al subir evidencia"); }
+            if (!res.ok) throw new Error();
+            const updated = await res.json();
+            onUpdate(updated);
+            toast.success('Adjunto subido');
+        } catch { toast.error('Error al subir'); }
         finally { setIsUploading(false); }
     };
 
     if (!task) return null;
 
+    const statusCfg = getStatusCfg(task.status);
+    const prioCfg = getPrioCfg(task.priority ?? 'normal');
+
     return (
-        <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <Dialog.Root open={isOpen} onOpenChange={open => !open && onClose()}>
             <AnimatePresence>
                 {isOpen && (
                     <Dialog.Portal forceMount>
+                        {/* Overlay */}
                         <Dialog.Overlay asChild>
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[9000] bg-slate-900/40 backdrop-blur-sm" />
+                            <motion.div
+                                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                                className="fixed inset-0 z-[9000] bg-slate-900/30 backdrop-blur-sm"
+                            />
                         </Dialog.Overlay>
-                        <Dialog.Content asChild>
-                            <motion.div 
-                                initial={{ opacity: 0, x: 100 }} 
-                                animate={{ opacity: 1, x: 0 }} 
-                                exit={{ opacity: 0, x: 100 }}
-                                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                                onDragLeave={() => setIsDragging(false)}
-                                onDrop={(e) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files?.[0]) handleFileUpload(e.dataTransfer.files[0]); }}
-                                className="fixed right-0 top-0 z-[9001] h-screen w-full max-w-[750px] bg-white dark:bg-[#1e1f21] shadow-2xl border-l border-white/10 flex flex-col overflow-hidden font-display"
-                            >
-                                <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])} />
 
-                                {/* Header Ministerial */}
-                                <header className="px-8 py-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/5 shrink-0">
+                        {/* Drawer lateral derecho */}
+                        <Dialog.Content asChild>
+                            <motion.div
+                                initial={{ x: '100%' }}
+                                animate={{ x: 0 }}
+                                exit={{ x: '100%' }}
+                                transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+                                onDragOver={e => e.preventDefault()}
+                                onDrop={e => { e.preventDefault(); if (e.dataTransfer.files?.[0]) handleFileUpload(e.dataTransfer.files[0]); }}
+                                className="fixed right-0 top-0 z-[9001] h-screen w-full max-w-[680px] bg-white dark:bg-[#1e1f21] shadow-2xl border-l border-slate-200 dark:border-white/5 flex flex-col overflow-hidden font-display"
+                            >
+                                <Dialog.Title className="sr-only">Detalle de tarea</Dialog.Title>
+                                <input type="file" ref={fileInputRef} className="hidden"
+                                    onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0])} />
+
+                                {/* ── HEADER ──────────────────────────────────── */}
+                                <header className="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-white/5 shrink-0">
+                                    {/* Left: status + breadcrumb */}
                                     <div className="flex items-center gap-2">
-                                        <Hash size={14} className="text-slate-400" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Misión #{task.id}</span>
-                                        <ChevronRight size={12} className="text-slate-300" />
-                                        <StatusPicker value={task.status} onChange={(v) => handleUpdateField('status', v)} />
+                                        {/* Status picker pill */}
+                                        <Popover.Root>
+                                            <Popover.Trigger asChild>
+                                                <button className={clsx(
+                                                    'px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wide transition-colors',
+                                                    statusCfg.pill
+                                                )}>
+                                                    {statusCfg.label}
+                                                </button>
+                                            </Popover.Trigger>
+                                            <Popover.Portal>
+                                                <Popover.Content sideOffset={6} className="z-[10000] w-44 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl p-1.5">
+                                                    {STATUS_LIST.map(s => (
+                                                        <button key={s.value} onClick={() => handleUpdateField('status', s.value)}
+                                                            className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-bold uppercase rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                                            <span className={clsx('px-2 py-0.5 rounded-md text-[10px]', s.pill)}>{s.label}</span>
+                                                            {task.status === s.value && <Check size={11} className="text-violet-600" />}
+                                                        </button>
+                                                    ))}
+                                                </Popover.Content>
+                                            </Popover.Portal>
+                                        </Popover.Root>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        {isUploading && <Loader2 size={18} className="animate-spin text-blue-600" />}
-                                        <button onClick={() => fileInputRef.current?.click()} className="p-2 text-slate-400 hover:text-blue-600 transition-all hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl"><Paperclip size={18} /></button>
-                                        <button className="p-2 text-slate-400 hover:text-rose-600 transition-colors"><Trash2 size={18} /></button>
-                                        <div className="w-[1px] h-4 bg-slate-200 dark:bg-white/10 mx-1" />
-                                        <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-all"><X size={20} /></button>
+
+                                    {/* Right: actions */}
+                                    <div className="flex items-center gap-1">
+                                        {isUploading && <Loader2 size={16} className="animate-spin text-violet-600 mr-1" />}
+                                        <button onClick={() => fileInputRef.current?.click()}
+                                            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors">
+                                            <Paperclip size={16} />
+                                        </button>
+                                        <button className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 rounded-lg transition-colors">
+                                            <Sparkles size={16} />
+                                        </button>
+                                        <button className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors">
+                                            <Maximize2 size={16} />
+                                        </button>
+                                        <button className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors">
+                                            <Trash2 size={16} />
+                                        </button>
+                                        <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
+                                        <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors">
+                                            <X size={17} />
+                                        </button>
                                     </div>
                                 </header>
 
-                                <div className="flex-1 overflow-y-auto scrollbar-thin p-10 space-y-12">
-                                    {/* Title Section */}
-                                    <div className="space-y-8">
-                                        <h2 className="text-4xl font-black text-slate-900 dark:text-white leading-tight tracking-tight outline-none" contentEditable suppressContentEditableWarning onBlur={(e) => handleUpdateField('title', e.currentTarget.textContent)}>
-                                            {task.title}
-                                        </h2>
-                                        <div className="flex flex-wrap gap-3">
-                                            <PriorityPicker value={task.priority} onChange={(v) => handleUpdateField('priority', v)} />
-                                            <PropertyBadge label="Entrega" value={task.due_date ? new Date(task.due_date).toLocaleDateString() : 'Sin fecha'} icon={Calendar} color="text-blue-500" bg="bg-blue-50 dark:bg-blue-900/20" />
-                                            <PropertyBadge label="Responsable" value="Sin asignar" icon={User} color="text-slate-400" bg="bg-slate-50 dark:bg-white/5" />
-                                        </div>
-                                    </div>
+                                {/* ── BODY ────────────────────────────────────── */}
+                                <div className="flex-1 overflow-y-auto scrollbar-thin">
+                                    <div className="px-7 py-5 space-y-5">
 
-                                    {/* Description Pro */}
-                                    <section className="space-y-4">
-                                        <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Descripción de la Misión</h4>
-                                        <div className="p-8 rounded-[2.5rem] bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5 min-h-[150px]">
-                                            <p className="text-[14px] font-medium text-slate-600 dark:text-slate-300 leading-relaxed outline-none" contentEditable suppressContentEditableWarning onBlur={(e) => handleUpdateField('description', e.currentTarget.textContent)}>
-                                                {task.description || "Haz clic para añadir el alcance detallado de esta tarea."}
-                                            </p>
+                                        {/* Title */}
+                                        <div>
+                                            <textarea
+                                                ref={titleRef}
+                                                value={localTitle}
+                                                onChange={e => setLocalTitle(e.target.value)}
+                                                onBlur={() => { if (localTitle.trim() !== task.title) handleUpdateField('title', localTitle.trim()); }}
+                                                rows={2}
+                                                className="w-full text-[22px] font-bold text-slate-900 dark:text-white bg-transparent outline-none resize-none leading-snug placeholder:text-slate-300"
+                                                placeholder="Nombre de la tarea"
+                                            />
                                         </div>
-                                    </section>
 
-                                    {/* Evidencias List */}
-                                    <section className="space-y-4">
-                                        <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Evidencias ({task.attachments?.length || 0})</h4>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            {task.attachments?.map((file) => (
-                                                <div key={file.id} className="flex items-center gap-4 p-4 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-3xl hover:shadow-xl transition-all">
-                                                    <div className="size-12 rounded-2xl bg-slate-50 dark:bg-black/20 flex items-center justify-center text-slate-400"><ImageIcon size={24} /></div>
-                                                    <div className="min-w-0 flex-1">
-                                                        <p className="text-[12px] font-black truncate text-slate-800 dark:text-white">{file.filename}</p>
-                                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{(file.file_size || 0 / 1024).toFixed(1)} KB</p>
+                                        {/* Properties grid — ClickUp style */}
+                                        <div className="space-y-0 border border-slate-100 dark:border-white/5 rounded-xl overflow-hidden text-[12px]">
+                                            {/* Assigned */}
+                                            <PropertyRow label="Persona asignada" icon={User}>
+                                                <button className="flex items-center gap-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                                                    <div className="size-5 rounded-full bg-slate-200 dark:bg-white/10 flex items-center justify-center">
+                                                        <User size={11} />
                                                     </div>
-                                                    <a href={`http://localhost:8000${file.file_url}`} target="_blank" className="p-1.5 text-slate-300 hover:text-blue-600 transition-colors"><ExternalLink size={14} /></a>
-                                                </div>
-                                            ))}
-                                            <div onClick={() => fileInputRef.current?.click()} className="p-4 border-2 border-dashed border-slate-100 dark:border-white/5 rounded-3xl flex items-center justify-center text-slate-300 hover:text-blue-500 cursor-pointer bg-slate-50/30 group">
-                                                <Plus size={20} className="group-hover:scale-110 transition-transform" />
+                                                    Sin asignar
+                                                </button>
+                                            </PropertyRow>
+
+                                            {/* Due date */}
+                                            <PropertyRow label="Fecha límite" icon={Calendar}>
+                                                <button className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors flex items-center gap-1.5">
+                                                    <Calendar size={13} />
+                                                    {task.due_date
+                                                        ? new Date(task.due_date).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' })
+                                                        : 'Sin fecha límite'
+                                                    }
+                                                </button>
+                                            </PropertyRow>
+
+                                            {/* Priority */}
+                                            <PropertyRow label="Prioridad" icon={Flag}>
+                                                <Popover.Root>
+                                                    <Popover.Trigger asChild>
+                                                        <button className={clsx('flex items-center gap-1.5 transition-colors', prioCfg.color)}>
+                                                            <Flag size={13} />
+                                                            {prioCfg.label}
+                                                            <ChevronDown size={11} />
+                                                        </button>
+                                                    </Popover.Trigger>
+                                                    <Popover.Portal>
+                                                        <Popover.Content sideOffset={6} className="z-[10000] w-40 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl p-1.5">
+                                                            {PRIORITY_LIST.map(p => (
+                                                                <button key={p.value} onClick={() => handleUpdateField('priority', p.value)}
+                                                                    className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                                                    <span className={clsx('flex items-center gap-1.5', p.color)}>
+                                                                        <Flag size={11} />{p.label}
+                                                                    </span>
+                                                                    {(task.priority ?? 'normal') === p.value && <Check size={11} className="text-violet-600" />}
+                                                                </button>
+                                                            ))}
+                                                        </Popover.Content>
+                                                    </Popover.Portal>
+                                                </Popover.Root>
+                                            </PropertyRow>
+
+                                            {/* Tags */}
+                                            <PropertyRow label="Etiquetas" icon={Tag}>
+                                                <button className="flex items-center gap-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                                                    <Plus size={12} />
+                                                    Añadir etiqueta
+                                                </button>
+                                            </PropertyRow>
+                                        </div>
+
+                                        {/* Description */}
+                                        <div className="space-y-2">
+                                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Descripción</p>
+                                            <div className="min-h-[80px] px-4 py-3 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+                                                <p
+                                                    contentEditable
+                                                    suppressContentEditableWarning
+                                                    onBlur={e => handleUpdateField('description', e.currentTarget.textContent)}
+                                                    className="text-[13px] font-medium text-slate-600 dark:text-slate-300 leading-relaxed outline-none min-h-[60px]"
+                                                >
+                                                    {task.description || ''}
+                                                </p>
+                                                {!task.description && (
+                                                    <p className="text-[12px] text-slate-300 dark:text-slate-600 pointer-events-none select-none -mt-5">
+                                                        Añadir descripción...
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
-                                    </section>
 
-                                    {/* Comments Placeholder */}
-                                    <section className="pt-10 border-t border-slate-100 dark:border-white/5">
-                                        <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6">Conversación</h4>
-                                        <div className="flex gap-4">
-                                            <div className="size-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black text-xs shadow-lg uppercase">{user?.username?.substring(0, 2)}</div>
-                                            <textarea placeholder="Escribe un comentario..." className="flex-1 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-2xl px-6 py-4 text-sm font-medium outline-none resize-none" rows={2} />
+                                        {/* Attachments */}
+                                        {(task.attachments?.length ?? 0) > 0 && (
+                                            <div className="space-y-2">
+                                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                                    Adjuntos ({task.attachments?.length})
+                                                </p>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    {task.attachments?.map(file => (
+                                                        <div key={file.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5 hover:shadow-md transition-all">
+                                                            <div className="size-9 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-400 shrink-0">
+                                                                <ImageIcon size={16} />
+                                                            </div>
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="text-[11px] font-bold truncate text-slate-700 dark:text-slate-200">{file.filename}</p>
+                                                                <p className="text-[9px] text-slate-400">{((file.file_size ?? 0) / 1024).toFixed(1)} KB</p>
+                                                            </div>
+                                                            <a href={`http://localhost:8000${file.file_url}`} target="_blank"
+                                                                className="p-1 text-slate-300 hover:text-violet-600 transition-colors">
+                                                                <ExternalLink size={13} />
+                                                            </a>
+                                                        </div>
+                                                    ))}
+                                                    <button onClick={() => fileInputRef.current?.click()}
+                                                        className="p-3 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl flex items-center justify-center text-slate-300 hover:text-violet-500 hover:border-violet-300 cursor-pointer transition-all">
+                                                        <Plus size={18} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Comments */}
+                                        <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-white/5">
+                                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-4">
+                                                Actividad
+                                            </p>
+
+                                            {/* Existing comments */}
+                                            {comments.map(c => (
+                                                <div key={c.id} className="flex gap-3">
+                                                    <div className="size-7 rounded-full bg-violet-600 text-white flex items-center justify-center text-[10px] font-black shrink-0">
+                                                        {(c.author || 'U').substring(0, 2).toUpperCase()}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="text-[11px] font-bold text-slate-700 dark:text-slate-200">{c.author}</p>
+                                                        <p className="text-[12px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">{c.content}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            {/* New comment composer */}
+                                            <div className="flex gap-3">
+                                                <div className="size-7 rounded-full bg-violet-600 text-white flex items-center justify-center text-[10px] font-black shrink-0">
+                                                    {(user?.username || 'U').substring(0, 2).toUpperCase()}
+                                                </div>
+                                                <div className="flex-1 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
+                                                    <textarea
+                                                        value={newComment}
+                                                        onChange={e => setNewComment(e.target.value)}
+                                                        placeholder="Menciona @Brain para crear, encontrar y preguntar lo que quieras"
+                                                        rows={2}
+                                                        className="w-full px-3 py-2 text-[12px] text-slate-700 dark:text-slate-200 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none resize-none"
+                                                    />
+                                                    <div className="flex items-center gap-1 px-3 pb-2 border-t border-slate-100 dark:border-white/5 pt-1">
+                                                        <button className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+                                                            <Plus size={12} />
+                                                        </button>
+                                                        <button className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+                                                            Comentario <ChevronDown size={11} />
+                                                        </button>
+                                                        <div className="flex-1" />
+                                                        <button
+                                                            onClick={handleSendComment}
+                                                            disabled={!newComment.trim() || isSendingComment}
+                                                            className={clsx(
+                                                                'size-6 rounded-lg flex items-center justify-center transition-all',
+                                                                newComment.trim()
+                                                                    ? 'bg-violet-600 text-white hover:bg-violet-700'
+                                                                    : 'text-slate-300 cursor-not-allowed'
+                                                            )}
+                                                        >
+                                                            {isSendingComment
+                                                                ? <Loader2 size={12} className="animate-spin" />
+                                                                : <Send size={12} />
+                                                            }
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </section>
+
+                                        {/* Bottom spacer */}
+                                        <div className="h-8" />
+                                    </div>
                                 </div>
                             </motion.div>
                         </Dialog.Content>
@@ -180,62 +402,20 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdate }: Pro
     );
 }
 
-function StatusPicker({ value, onChange }: { value: string, onChange: (v: string) => void }) {
-    const statuses = ['todo', 'in_progress', 'review', 'done'];
+// ── Helper components ──────────────────────────────────────────────────────────
+function PropertyRow({ label, icon: Icon, children }: {
+    label: string;
+    icon: React.ElementType;
+    children: React.ReactNode;
+}) {
     return (
-        <Popover.Root>
-            <Popover.Trigger asChild>
-                <button className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-lg group hover:bg-blue-600 transition-all">
-                    <span className="text-[9px] font-black text-blue-600 uppercase group-hover:text-white transition-colors">{value}</span>
-                    <ChevronRight size={10} className="text-blue-400 group-hover:text-white transition-colors rotate-90" />
-                </button>
-            </Popover.Trigger>
-            <Popover.Portal>
-                <Popover.Content sideOffset={5} className="z-[10000] w-48 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-2 animate-in fade-in zoom-in-95">
-                    {statuses.map(s => (
-                        <button key={s} onClick={() => onChange(s)} className="w-full flex items-center justify-between px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl transition-colors">
-                            {s} {value === s && <Check size={12} className="text-blue-600" />}
-                        </button>
-                    ))}
-                </Popover.Content>
-            </Popover.Portal>
-        </Popover.Root>
-    );
-}
-
-function PriorityPicker({ value, onChange }: { value: string, onChange: (v: string) => void }) {
-    const priorities = ['low', 'normal', 'high', 'urgent'];
-    return (
-        <Popover.Root>
-            <Popover.Trigger asChild>
-                <div className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 px-4 py-2.5 rounded-2xl border border-slate-100 dark:border-white/5 cursor-pointer hover:bg-slate-100 transition-colors group">
-                    <Flag size={14} className={value === 'high' || value === 'urgent' ? 'text-rose-500' : 'text-slate-400'} />
-                    <div className="flex flex-col">
-                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Prioridad</span>
-                        <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 leading-none uppercase">{value}</span>
-                    </div>
-                </div>
-            </Popover.Trigger>
-            <Popover.Portal>
-                <Popover.Content sideOffset={5} className="z-[10000] w-48 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-2">
-                    {priorities.map(p => (
-                        <button key={p} onClick={() => onChange(p)} className="w-full flex items-center justify-between px-4 py-2 text-[10px] font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl">
-                            {p} {value === p && <Check size={12} className="text-blue-600" />}
-                        </button>
-                    ))}
-                </Popover.Content>
-            </Popover.Portal>
-        </Popover.Root>
-    );
-}
-
-function PropertyBadge({ label, value, icon: Icon, color, bg }: any) {
-    return (
-        <div className={clsx("flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-slate-100 dark:border-white/5", bg)}>
-            <Icon size={14} className={color} />
-            <div className="flex flex-col">
-                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{label}</span>
-                <span className={clsx("text-[11px] font-black uppercase leading-none text-slate-700 dark:text-slate-200")}>{value}</span>
+        <div className="flex items-center border-b border-slate-100 dark:border-white/5 last:border-0">
+            <div className="w-36 shrink-0 flex items-center gap-2 px-3 py-2.5 text-[11px] font-medium text-slate-400">
+                <Icon size={13} />
+                {label}
+            </div>
+            <div className="flex-1 px-3 py-2.5 text-[12px] font-medium text-slate-600 dark:text-slate-300">
+                {children}
             </div>
         </div>
     );

@@ -132,7 +132,12 @@ export default function AcademyClient({ initialCourses, initialEnrollments }: Ac
                                         Forjando <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-[#018abd]">Carácter.</span>
                                     </h2>
                                     <p className="text-blue-100/70 text-lg font-medium leading-relaxed">
-                                        {pageContents.academy_hero?.content || `Hola, ${user?.username}. Estás a un paso de completar tu próximo nivel. Continúa aprendiendo y descubre el propósito que Dios tiene para ti.`}
+                                        {(() => {
+                                            const raw = pageContents.academy_hero?.content || '';
+                                            // Strip encoding artifacts: replacement chars, double-question-marks, etc.
+                                            const clean = raw.replace(/\uFFFD/g, '').replace(/\?\?/g, 'ú').trim();
+                                            return clean || `Continúa aprendiendo y descubre el propósito que Dios tiene para ti, ${user?.username || 'estudiante'}.`;
+                                        })()}
                                     </p>
                                 </div>
 
