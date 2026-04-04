@@ -35,6 +35,18 @@ export default function AcademyClient({ initialCourses, initialEnrollments }: Ac
     const { insights: graphInsights } = useGraphInsights({ types: ['course'], limit: 4, enabled: isAuthenticated });
 
     useEffect(() => {
+        if (isAuthenticated && user) {
+            const role = (user.role || '').toLowerCase();
+            if (['docente'].includes(role)) {
+                router.replace('/academy/teacher');
+            } else if (['coordinador', 'admin', 'staff'].includes(role)) {
+                // If it's a staff member but they came to /academy, maybe they want the student view? 
+                // Or maybe we should provide a toggle. For now, let's keep them here but add a floating action to switch.
+            }
+        }
+    }, [user, isAuthenticated, router]);
+
+    useEffect(() => {
         const fetchData = async () => {
             if (!isAuthenticated || !user) return;
             try {
@@ -142,10 +154,16 @@ export default function AcademyClient({ initialCourses, initialEnrollments }: Ac
                                 </div>
 
                                 <div className="flex items-center gap-4 pt-4">
-                                    <button className="px-8 py-5 bg-white text-[#001b48] rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-blue-50 active:scale-95 transition-all shadow-xl flex items-center gap-3">
-                                        Ir al curso actual <PlayCircle size={18} className="fill-[#001b48] text-white" />
+                                    <button 
+                                        onClick={() => router.push('/academy/profile/progress')}
+                                        className="px-8 py-5 bg-white text-[#001b48] rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-blue-50 active:scale-95 transition-all shadow-xl flex items-center gap-3"
+                                    >
+                                        Ver mi progreso <BarChart3 size={18} className="text-[#001b48]" />
                                     </button>
-                                    <button className="px-8 py-5 bg-white/10 text-white border border-white/20 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-white/20 active:scale-95 transition-all">
+                                    <button 
+                                        onClick={() => router.push('/academy/curriculum')}
+                                        className="px-8 py-5 bg-white/10 text-white border border-white/20 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-white/20 active:scale-95 transition-all"
+                                    >
                                         Ver Pénsum
                                     </button>
                                 </div>

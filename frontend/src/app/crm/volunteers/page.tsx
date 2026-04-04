@@ -13,6 +13,7 @@ import {
     Baby,
     Heart,
     Shield,
+    ShieldCheck,
     Camera,
     Coffee,
     ArrowUpRight,
@@ -26,7 +27,8 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import CrmShell from '@/components/crm/CrmShell';
+import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -57,7 +59,16 @@ export default function VolunteerCalendar() {
     const { addToast } = useToast();
     const [shifts, setShifts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [viewMode, setViewMode] = useState<'week' | 'list'>('week');
+    const [viewMode, setViewMode] = useState<'week' | 'list'>(
+        () => (getStoredView('crm_volunteers_view', 'grid') === 'list' ? 'list' : 'week')
+    );
+    const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar'];
+
+    // Map CrmShell ViewType -> internal view mode
+    const crmViewType: ViewType = viewMode === 'list' ? 'list' : 'grid';
+    const handleViewChange = (v: ViewType) => {
+        setViewMode(v === 'list' ? 'list' : 'week');
+    };
 
     const fetchShifts = useCallback(async () => {
         if (!token) return;
@@ -95,23 +106,23 @@ export default function VolunteerCalendar() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="flex flex-col h-full bg-slate-50/50 dark:bg-[#1e1f21] overflow-hidden font-display">
-            <WorkspaceToolbar 
-                breadcrumbs={[
-                    { label: 'Servicio', icon: Heart },
-                    { label: 'Calendario de Voluntariado', icon: Calendar }
-                ]}
-                viewType={viewMode === 'list' ? 'list' : 'grid'} 
-                setViewType={(v: any) => setViewMode(v === 'grid' ? 'week' : 'list')}
-                rightActions={
-                    <button className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
-                        <Plus size={14} /> Postularme
-                    </button>
-                }
-            />
-
-            <main className="flex-1 overflow-hidden flex flex-col p-8 lg:p-12">
-                <div className="max-w-[1600px] mx-auto w-full flex-1 flex flex-col gap-8">
+        <CrmShell
+            breadcrumbs={[
+                { label: 'CCF', icon: Heart },
+                { label: 'CRM Pastoral', icon: Users },
+                { label: 'Servidores', icon: ShieldCheck }
+            ]}
+            viewOptions={ALL_VIEWS}
+            viewType={crmViewType}
+            onViewChange={handleViewChange}
+            rightActions={
+                <button className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                    <Plus size={14} /> Postularme
+                </button>
+            }
+        >
+        <main className="flex-1 overflow-hidden flex flex-col p-4 lg:p-6">
+            <div className="max-w-[1600px] mx-auto w-full flex-1 flex flex-col gap-8">
                     
                     {/* Header Controls */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 shrink-0">
@@ -229,6 +240,6 @@ export default function VolunteerCalendar() {
                     </AnimatePresence>
                 </div>
             </main>
-        </div>
+        </CrmShell>
     );
 }

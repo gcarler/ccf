@@ -1,17 +1,19 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { apiFetch } from '@/lib/http';
 import type { CourseSummary, DashboardMetrics, PilotReadiness } from '@/types/academy';
-import { GraduationCap, Target, AlertTriangle, BarChart3, Loader2, Users, ShieldCheck, Download, Filter } from 'lucide-react';
+import { GraduationCap, Target, AlertTriangle, BarChart3, Loader2, Users, ShieldCheck, Download, Filter, Plus } from 'lucide-react';
 import clsx from 'clsx';
 import { toast } from 'sonner';
 import { DSMetric, DSCard, DSBadge } from '@/design';
 
 export default function CoordinationConsole() {
     const { token, user, isAuthenticated } = useAuth();
+    const router = useRouter();
     const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
     const [readiness, setReadiness] = useState<PilotReadiness | null>(null);
     const [courses, setCourses] = useState<CourseSummary[]>([]);
@@ -78,9 +80,17 @@ export default function CoordinationConsole() {
                 viewType="grid"
                 setViewType={() => {}}
                 rightActions={
-                    <span className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500">
-                        Estado general: {readinessPerc}%
-                    </span>
+                    <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => router.push('/academy/coordination/courses/new')}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-105 transition-all"
+                        >
+                            <Plus size={14} /> Crear Programa
+                        </button>
+                        <span className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500">
+                            Estado general: {readinessPerc}%
+                        </span>
+                    </div>
                 }
             />
 

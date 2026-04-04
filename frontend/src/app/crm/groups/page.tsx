@@ -9,6 +9,7 @@ import CrmShell from '@/components/crm/CrmShell';
 import AdminHero from '@/components/admin/AdminHero';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 
 interface GloryHouse {
     id: number;
@@ -27,7 +28,16 @@ interface GloryHouse {
 export default function GroupsPage() {
     const [groups, setGroups] = useState<GloryHouse[]>([]);
     const [loading, setLoading] = useState(true);
-    const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
+    const [viewMode, setViewMode] = useState<'grid' | 'map'>(
+        () => (getStoredView('crm_groups_view', 'grid') === 'grid' ? 'grid' : 'map')
+    );
+    const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar'];
+
+    // Map CrmShell ViewType -> internal mode
+    const crmViewType: ViewType = viewMode === 'grid' ? 'grid' : 'board';
+    const handleViewChange = (v: ViewType) => {
+        setViewMode(v === 'grid' ? 'grid' : 'map');
+    };
     const [showCreateModal, setShowCreateModal] = useState(false);
     const { token } = useAuth();
     const { addToast } = useToast();
@@ -94,6 +104,17 @@ export default function GroupsPage() {
     return (
         <CrmShell
             breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'CRM Pastoral', icon: Users }, { label: 'Casas de Gloria', icon: Home }]}
+            viewOptions={ALL_VIEWS}
+            viewType={crmViewType}
+            onViewChange={handleViewChange}
+            rightActions={
+                <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="flex items-center gap-2 bg-blue-600 px-5 py-2 rounded-xl text-[11px] font-black text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-900/20 uppercase tracking-widest"
+                >
+                    <Plus size={14} /> Nueva Casa
+                </button>
+            }
         >
         <style jsx global>{`
             .house-card-aura {

@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Users, Filter, Plus, Calendar, Clock, Heart, Search, Video, MoreVertical, X as CloseIcon, ShieldCheck, CheckCircle2, XCircle, Loader2, ArrowLeft, MessageSquare, History, Link2 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
-import { toast } from 'react-toastify';
+import { useToast } from '@/context/ToastContext';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import CrmShell from '@/components/crm/CrmShell';
 import AdminHero from '@/components/admin/AdminHero';
+import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 
 interface CounselingSession {
     id: number;
@@ -31,6 +32,8 @@ export default function CounselingPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('All');
     const [showModal, setShowModal] = useState(false);
+    const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar'];
+    const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_counseling_view', 'grid'));
 
     // Form state
     const [members, setMembers] = useState<any[]>([]);
@@ -89,11 +92,11 @@ export default function CounselingPage() {
                 token,
                 body: newSession,
             });
-            toast.success('Sesión agendada correctamente');
+            addToast('Sesión agendada correctamente', 'success');
             setShowModal(false);
             fetchSessions();
         } catch (err) {
-            toast.error('Error al agendar sesión');
+            addToast('Error al agendar sesión', 'error');
         }
     };
 
@@ -105,10 +108,10 @@ export default function CounselingPage() {
                 token,
                 body: { status }
             });
-            toast.success(`Estado actualizado a ${status}`);
+            addToast(`Estado actualizado a ${status}`, 'success');
             fetchSessions();
         } catch (err) {
-            toast.error('Error al actualizar estado');
+            addToast('Error al actualizar estado', 'error');
         }
     };
 
@@ -123,6 +126,9 @@ export default function CounselingPage() {
     return (
         <CrmShell
             breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'CRM Pastoral', icon: Users }, { label: 'Consejería', icon: Heart }]}
+            viewOptions={ALL_VIEWS}
+            viewType={viewType}
+            onViewChange={setViewType}
             rightActions={
                 <button
                     onClick={() => setShowModal(true)}

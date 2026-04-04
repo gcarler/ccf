@@ -4,10 +4,18 @@ import React, { useState, useEffect } from 'react';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { Plus, Calendar, Check, X as CloseIcon, Link2, Users } from 'lucide-react';
+import { Plus, Calendar, Check, X as CloseIcon, Link2, Users, Clock, MoreHorizontal } from 'lucide-react';
 import ViewSwitcher, { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import CrmShell from '@/components/crm/CrmShell';
 import AdminHero from '@/components/admin/AdminHero';
+
+const EVENT_TYPE_LABEL: Record<string, string> = {
+    PERMANENT: 'Semanal',
+    ANNUAL: 'Anual',
+    ONCE: 'Única Vez',
+};
+
+const DAY_LABELS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 interface Event {
     id: number;
@@ -30,6 +38,7 @@ export default function EventsPage() {
     const { token } = useAuth();
     const { addToast } = useToast();
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_events_view', 'grid'));
+    const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar'];
     const [events, setEvents] = useState<Event[]>([]);
     const [members, setMembers] = useState<Member[]>([]);
     const [loading, setLoading] = useState(true);
@@ -179,7 +188,7 @@ export default function EventsPage() {
     return (
         <CrmShell
             breadcrumbs={[{ label: 'CCF', icon: Calendar }, { label: 'CRM Pastoral', icon: Users }, { label: 'Eventos', icon: Calendar }]}
-            viewOptions={['grid', 'list', 'kanban']}
+            viewOptions={ALL_VIEWS}
             viewType={viewType}
             onViewChange={(view) => setViewType(view as ViewType)}
             rightActions={
@@ -202,12 +211,12 @@ export default function EventsPage() {
         />
         <div className="space-y-8">
 
-            {/* Toolbar: View Switcher */}
+            {/* Toolbar: View Switcher (inline secondary) */}
             <div className="flex items-center justify-end">
                 <ViewSwitcher
                     viewType={viewType}
                     setViewType={setViewType}
-                    availableViews={['grid', 'list', 'kanban']}
+                    availableViews={ALL_VIEWS}
                     storageKey="crm_events_view"
                 />
             </div>
@@ -296,6 +305,198 @@ export default function EventsPage() {
                     ))}
                 </div>
             )}
+
+            {/* TABLE VIEW */}
+            {viewType === 'table' && (
+                <div className="bg-white dark:bg-[#1e1f21] rounded-[2rem] border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm">
+                    <table className="w-full">
+                        <thead>
+                            <tr className="border-b border-slate-100 dark:border-white/5">
+                                {['#', 'Nombre', 'Tipo', 'Frecuencia', 'Descripción', 'Acciones'].map(col => (
+                                    <th key={col} className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">{col}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50 dark:divide-white/5">
+                            {events.map((ev, i) => (
+                                <tr key={ev.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+                                    <td className="px-5 py-3.5 text-xs font-bold text-slate-400">{i + 1}</td>
+                                    <td className="px-5 py-3.5">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                                                <Calendar size={13} className="text-blue-600" />
+                                            </div>
+                                            <span className="text-sm font-bold text-slate-800 dark:text-white">{ev.name}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-5 py-3.5">
+                                        <span className="px-2.5 py-1 rounded-full bg-slate-50 dark:bg-white/10 text-slate-500 text-[10px] font-black uppercase">
+                                            {EVENT_TYPE_LABEL[ev.event_type] ?? ev.event_type}
+                                        </span>
+                                    </td>
+                                    <td className="px-5 py-3.5 text-xs font-medium text-slate-500">
+                                        {ev.event_type === 'PERMANENT' && ev.day_of_week !== undefined ? DAY_LABELS[ev.day_of_week] : '—'}
+                                    </td>
+                                    <td className="px-5 py-3.5 text-xs text-slate-400 max-w-[240px] truncate">{ev.description || '—'}</td>
+                                    <td className="px-5 py-3.5">
+                                        <button onClick={() => openAttendance(ev)} className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                                            Asistencia
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {events.length === 0 && (
+                                <tr><td colSpan={6} className="px-5 py-16 text-center text-slate-400 text-sm">No hay eventos registrados</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {/* BOARD VIEW — agrupado por tipo */}
+            {viewType === 'board' && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {(['PERMANENT', 'ANNUAL', 'ONCE'] as const).map(type => {
+                        const typeEvents = events.filter(e => e.event_type === type);
+                        return (
+                            <div key={type} className="bg-white dark:bg-[#1e1f21] rounded-[2rem] border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm">
+                                <div className="px-5 py-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+                                    <div>
+                                        <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">{EVENT_TYPE_LABEL[type]}</span>
+                                    </div>
+                                    <span className="size-5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-[10px] font-black flex items-center justify-center">{typeEvents.length}</span>
+                                </div>
+                                <div className="p-3 space-y-2 min-h-[200px]">
+                                    {typeEvents.map(ev => (
+                                        <div key={ev.id} className="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-transparent hover:border-blue-100 dark:hover:border-white/10 transition-all group cursor-pointer">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <p className="font-bold text-sm text-slate-800 dark:text-white line-clamp-1">{ev.name}</p>
+                                                <button onClick={() => openAttendance(ev)} className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <MoreHorizontal size={14} className="text-slate-400" />
+                                                </button>
+                                            </div>
+                                            {ev.description && <p className="text-xs text-slate-400 mt-1 line-clamp-2">{ev.description}</p>}
+                                            {ev.day_of_week !== undefined && (
+                                                <div className="flex items-center gap-1 mt-2">
+                                                    <Clock size={10} className="text-blue-500" />
+                                                    <span className="text-[10px] font-bold text-slate-400">{DAY_LABELS[ev.day_of_week]}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                    {typeEvents.length === 0 && (
+                                        <div className="flex items-center justify-center h-24 text-slate-300 text-xs">Sin eventos</div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* GANTT VIEW — línea de tiempo por día de la semana */}
+            {viewType === 'gantt' && (
+                <div className="bg-white dark:bg-[#1e1f21] rounded-[2rem] border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm">
+                    <div className="p-5 border-b border-slate-100 dark:border-white/5">
+                        <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Línea de tiempo semanal — eventos recurrentes</p>
+                    </div>
+                    <div className="p-5 overflow-x-auto">
+                        {/* Day headers */}
+                        <div className="grid grid-cols-7 gap-2 mb-4">
+                            {DAY_LABELS.map(d => (
+                                <div key={d} className="text-center text-[9px] font-black uppercase tracking-widest text-slate-400 py-2 bg-slate-50 dark:bg-white/5 rounded-lg">{d.slice(0, 3)}</div>
+                            ))}
+                        </div>
+                        {/* Event rows */}
+                        <div className="space-y-2">
+                            {events.filter(e => e.event_type === 'PERMANENT').map(ev => (
+                                <div key={ev.id} className="grid grid-cols-7 gap-2 items-center min-h-[48px]">
+                                    {DAY_LABELS.map((_, idx) => (
+                                        <div key={idx} className={`rounded-xl p-2 transition-all ${
+                                            ev.day_of_week === idx
+                                                ? 'bg-blue-600 shadow-lg shadow-blue-500/20'
+                                                : 'bg-slate-50 dark:bg-white/5'
+                                        }`}>
+                                            {ev.day_of_week === idx && (
+                                                <div>
+                                                    <p className="text-[10px] font-black text-white leading-none truncate">{ev.name}</p>
+                                                    <p className="text-[8px] text-blue-100 mt-0.5 uppercase tracking-widest">Semanal</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+                            {events.filter(e => e.event_type !== 'PERMANENT').map(ev => (
+                                <div key={ev.id} className="grid grid-cols-7 gap-2 items-center min-h-[48px]">
+                                    <div className="col-span-7 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl px-4 py-2 flex items-center justify-between">
+                                        <p className="text-sm font-bold text-indigo-800 dark:text-indigo-200">{ev.name}</p>
+                                        <span className="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-800/30 text-indigo-600 text-[9px] font-black uppercase">{EVENT_TYPE_LABEL[ev.event_type]}</span>
+                                    </div>
+                                </div>
+                            ))}
+                            {events.length === 0 && (
+                                <div className="py-16 text-center text-slate-400 text-sm">Sin eventos para mostrar en el timeline</div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* CALENDAR VIEW — vista semanal de eventos fijos */}
+            {viewType === 'calendar' && (
+                <div className="bg-white dark:bg-[#1e1f21] rounded-[2rem] border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm">
+                    <div className="p-5 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+                        <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Calendario semanal de eventos</p>
+                        <div className="flex items-center gap-2">
+                            <span className="size-2 rounded-full bg-blue-500" />
+                            <span className="text-[10px] font-bold text-slate-400">Semanal</span>
+                            <span className="size-2 rounded-full bg-indigo-400 ml-3" />
+                            <span className="text-[10px] font-bold text-slate-400">Puntual</span>
+                        </div>
+                    </div>
+                    <div className="p-5">
+                        <div className="grid grid-cols-7 gap-3">
+                            {DAY_LABELS.map((day, idx) => {
+                                const dayEvents = events.filter(e => e.event_type === 'PERMANENT' && e.day_of_week === idx);
+                                return (
+                                    <div key={day} className="flex flex-col gap-2">
+                                        <div className={`text-center py-3 rounded-xl text-[10px] font-black uppercase tracking-widest ${
+                                            idx === 0 || idx === 6 ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20' : 'bg-slate-50 dark:bg-white/5 text-slate-500'
+                                        }`}>{day.slice(0, 3)}</div>
+                                        <div className="space-y-1.5 min-h-[120px]">
+                                            {dayEvents.map(ev => (
+                                                <button
+                                                    key={ev.id}
+                                                    onClick={() => openAttendance(ev)}
+                                                    className="w-full text-left p-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 transition-colors shadow-sm shadow-blue-500/20 group"
+                                                >
+                                                    <p className="text-[10px] font-black text-white leading-tight line-clamp-2">{ev.name}</p>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        {/* Eventos no recurrentes */}
+                        {events.filter(e => e.event_type !== 'PERMANENT').length > 0 && (
+                            <div className="mt-6 pt-5 border-t border-slate-100 dark:border-white/5">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Eventos Puntuales</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {events.filter(e => e.event_type !== 'PERMANENT').map(ev => (
+                                        <div key={ev.id} className="px-4 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/20">
+                                            <p className="text-sm font-bold text-indigo-800 dark:text-indigo-200">{ev.name}</p>
+                                            <p className="text-[10px] text-indigo-400 mt-0.5">{EVENT_TYPE_LABEL[ev.event_type]}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             </>
             )}
 

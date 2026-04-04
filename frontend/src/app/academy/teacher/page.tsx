@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { apiFetch } from '@/lib/http';
 import { AssignmentSubmissionReview } from '@/types/academy';
@@ -16,33 +17,41 @@ import {
     Award,
     Shield,
     MessageCircle,
+    Users,
+    BookOpen,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { toast } from 'sonner';
 
 export default function TeacherWorkspace() {
     const { token, user, isAuthenticated } = useAuth();
+    const router = useRouter();
     const [submissions, setSubmissions] = useState<AssignmentSubmissionReview[]>([]);
+    const [courses, setCourses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [gradingId, setGradingId] = useState<number | null>(null);
-    const [viewMode, setViewMode] = useState<'pending' | 'history'>('pending');
+    const [viewMode, setViewMode] = useState<'pending' | 'history' | 'courses'>('courses');
 
     const isStaff = useMemo(() => {
         const role = (user?.role || '').toLowerCase();
         return ['admin', 'coordinador', 'docente', 'staff'].includes(role);
     }, [user?.role]);
 
-    const loadSubmissions = useCallback(async () => {
+    const loadData = useCallback(async () => {
         try {
             setLoading(true);
-            const data = await apiFetch<AssignmentSubmissionReview[]>(`/academy/admin/submissions?limit=50`, {
-                token,
-                cache: 'no-store',
-            });
-            setSubmissions(Array.isArray(data) ? data : []);
+            const [subRes, courseRes] = await Promise.all([
+                apiFetch<AssignmentSubmissionReview[]>(`/academy/admin/submissions?limit=50`, {
+                    token,
+                    cache: 'no-store',
+                }),
+                apiFetch<any[]>(`/academy/courses/`, { token }) // In a real scenario, this would be filtered by teacher_id
+            ]);
+            setSubmissions(Array.isArray(subRes) ? subRes : []);
+            setCourses(Array.isArray(courseRes) ? courseRes : []);
         } catch (err) {
             console.error(err);
-            toast.error('No pudimos cargar las entregas pendientes');
+            toast.error('No pudimos cargar los datos del panel');
         } finally {
             setLoading(false);
         }
@@ -50,8 +59,8 @@ export default function TeacherWorkspace() {
 
     useEffect(() => {
         if (!token || !isAuthenticated) return;
-        loadSubmissions();
-    }, [token, isAuthenticated, loadSubmissions]);
+        loadData();
+    }, [token, isAuthenticated, loadData]);
 
 
 
@@ -116,16 +125,17 @@ export default function TeacherWorkspace() {
                              <h2 className="text-2xl font-black text-slate-800 dark:text-white">Entregas de estudiantes</h2>
                          </div>
                         <div className="flex items-center gap-3">
-                            <div className="rounded-2xl bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-1 flex gap-1">
+                            <div className="rounded-2xl bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-1 flex gap-1">    
                                 {[
+                                    { id: 'courses', label: 'Mis Cursos' },
                                     { id: 'pending', label: 'Pendientes' },
                                     { id: 'history', label: 'Historial' },
                                 ].map((option) => (
                                     <button
                                         key={option.id}
-                                        onClick={() => setViewMode(option.id as 'pending' | 'history')}
+                                        onClick={() => setViewMode(option.id as any)}
                                         className={`px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-[0.3em] ${
-                                            viewMode === option.id ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white' : 'text-slate-400'
+                                            viewMode === option.id ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white' : 'text-slate-400'     
                                         }`}
                                     >
                                         {option.label}
@@ -133,22 +143,55 @@ export default function TeacherWorkspace() {
                                 ))}
                             </div>
                             <button
-                                onClick={loadSubmissions}
+                                onClick={loadData}
                                 className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.3em] px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5"
                             >
                                 Actualizar
                                 <ArrowRight size={14} />
                             </button>
                         </div>
-                     </header>
-                    <div className="divide-y divide-slate-100 dark:divide-white/5">
+                        </header>
+                        <div className="divide-y divide-slate-100 dark:divide-white/5">
                         {loading && (
                             <div className="flex items-center gap-3 px-6 py-8 text-slate-500">
                                 <Loader2 className="animate-spin" size={18} /> Sincronizando con el LMS...
                             </div>
                         )}
-                        {!loading && viewMode === 'pending' && pending.length === 0 && (
-                            <div className="px-6 py-12 text-center text-slate-500 text-sm">
+
+                        {viewMode === 'courses' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 p-6 gap-6">
+                                {courses.length === 0 && !loading && (
+                                    <div className="col-span-full py-12 text-center text-slate-500">
+                                        No tienes cursos asignados actualmente.
+                                    </div>
+                                )}
+                                {courses.map(course => (
+                                    <div key={course.id} className="p-6 rounded-[2rem] border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 group hover:border-blue-500 transition-all">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">{course.code}</span>
+                                            <span className="px-2 py-1 bg-white dark:bg-slate-900 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-400 border border-slate-100 dark:border-white/5">{course.modality}</span>
+                                        </div>
+                                        <h4 className="text-xl font-black text-slate-800 dark:text-white mb-2">{course.title}</h4>
+                                        <div className="flex items-center gap-4 mb-6">
+                                            <div className="flex items-center gap-1.5 text-slate-500 text-xs">
+                                                <Users size={14} /> {course.students_count || 0}
+                                            </div>
+                                            <div className="flex items-center gap-1.5 text-slate-500 text-xs">
+                                                <BookOpen size={14} /> {course.lessons_count || 0}
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={() => router.push(`/academy/courses/${course.id}/manage`)}
+                                            className="w-full py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all"
+                                        >
+                                            Gestionar Curso
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {!loading && viewMode === 'pending' && pending.length === 0 && (                            <div className="px-6 py-12 text-center text-slate-500 text-sm">
                                 No hay entregas pendientes por ahora. Disfruta un café ☕
                             </div>
                         )}

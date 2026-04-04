@@ -13,11 +13,14 @@ import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
+import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 
 export default function CrmAnalyticsPage() {
     const { token } = useAuth();
     const [loading, setLoading] = useState(true);
     const [timeframe, setTimeframe] = useState('Este Mes');
+    const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar'];
+    const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_analytics_view', 'grid'));
 
     useEffect(() => {
         // Simular carga de datos masivos
@@ -41,6 +44,9 @@ export default function CrmAnalyticsPage() {
                 { label: 'CRM Pastoral', icon: Users },
                 { label: 'Analítica Avanzada', icon: BarChart3 }
             ]}
+            viewOptions={ALL_VIEWS}
+            viewType={viewType}
+            onViewChange={setViewType}
             rightActions={
                 <div className="flex items-center gap-3">
                     <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-all">
