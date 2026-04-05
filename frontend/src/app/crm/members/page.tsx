@@ -12,6 +12,7 @@ import {
     Users as FamilyIcon,
     User,
     X as CloseIcon,
+    Home,
     Calendar,
     Check,
     History,
@@ -41,6 +42,7 @@ import ViewSwitcher, { ViewType, getStoredView } from '@/components/ViewSwitcher
 import CrmShell from '@/components/crm/CrmShell';
 import AdminHero from '@/components/admin/AdminHero';
 import UniversalTableView from '@/components/ui/UniversalTableView';
+import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -110,9 +112,9 @@ export default function MembersPage() {
     const [loadingTasks, setLoadingTasks] = useState(false);
     const [modalTab, setModalTab] = useState<'timeline' | 'profile' | 'messages' | 'finance' | 'tasks'>('timeline');
 
-    // Registration States
-    const [isRegModalOpen, setIsRegModalOpen] = useState(false);
-    const [isFamilyRegModalOpen, setIsFamilyRegModalOpen] = useState(false);
+    // Registration States — Drawers (NO modals)
+    const [isRegDrawerOpen, setIsRegDrawerOpen] = useState(false);
+    const [isFamilyRegDrawerOpen, setIsFamilyRegDrawerOpen] = useState(false);
 
     // Profile Management State
     const [editMode, setEditMode] = useState(false);
@@ -219,7 +221,7 @@ export default function MembersPage() {
             });
 
             addToast("Miembro registrado exitosamente", "success");
-            setIsRegModalOpen(false);
+            setIsRegDrawerOpen(false);
             setNewMember({ first_name: '', last_name: '', email: '', phone: '', family_id: '', role_in_family: 'Miembro', birthday: '', talents: '', spiritual_gifts: '', pastoral_notes: '' });
             fetchData();
         } catch (err) {
@@ -265,7 +267,7 @@ export default function MembersPage() {
             });
 
             addToast("Familia registrada exitosamente", "success");
-            setIsFamilyRegModalOpen(false);
+            setIsFamilyRegDrawerOpen(false);
             setNewFamily({ name: '' });
             fetchData();
         } catch (err) {
@@ -442,14 +444,14 @@ export default function MembersPage() {
                 activeTab === 'members'
                     ? (
                         <button
-                            onClick={() => setIsRegModalOpen(true)}
+                            onClick={() => setIsRegDrawerOpen(true)}
                             className="flex items-center gap-2 bg-blue-600 px-5 py-2 rounded-2xl text-xs font-black text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-900/20 uppercase tracking-widest print:hidden"
                         >
                             <Plus size={14} /> Registrar miembro
                         </button>
                     ) : (
                         <button
-                            onClick={() => setIsFamilyRegModalOpen(true)}
+                            onClick={() => setIsFamilyRegDrawerOpen(true)}
                             className="flex items-center gap-2 bg-slate-900 px-5 py-2 rounded-2xl text-xs font-black text-white hover:bg-black transition-all shadow-lg uppercase tracking-widest print:hidden"
                         >
                             <Plus size={14} /> Registrar familia
@@ -467,8 +469,8 @@ export default function MembersPage() {
                         description="Administra personas, familias y su avance pastoral desde un solo panel."
                         tags={['Familias', 'Academia', 'IA']}
                         watchers={heroWatchers}
-                        primaryAction={{ label: 'Registrar miembro', icon: Plus, onClick: () => setIsRegModalOpen(true) }}
-                        secondaryAction={{ label: 'Registrar familia', icon: Plus, onClick: () => setIsFamilyRegModalOpen(true) }}
+                        primaryAction={{ label: 'Registrar miembro', icon: Plus, onClick: () => setIsRegDrawerOpen(true) }}
+                        secondaryAction={{ label: 'Registrar familia', icon: Plus, onClick: () => setIsFamilyRegDrawerOpen(true) }}
                     />
                 </div>
                 
@@ -801,8 +803,107 @@ export default function MembersPage() {
                 )}
             </aside>
 
-            {/* Registration Modals (Omitidos para brevedad pero siguen funcionales) */}
-            {isRegModalOpen && ( <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/20 backdrop-blur-md"> {/* ... Contenido anterior ... */} </div> )}
+            {/* ─── Drawer: Registrar Miembro ─── */}
+            <WorkspaceDrawer
+                isOpen={isRegDrawerOpen}
+                onClose={() => setIsRegDrawerOpen(false)}
+                title="Registrar Miembro"
+                subtitle="Nuevo integrante de la comunidad"
+                actions={
+                    <>
+                        <button type="button" onClick={() => setIsRegDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors">
+                            Cancelar
+                        </button>
+                        <button
+                            form="member-reg-form"
+                            type="submit"
+                            className="px-8 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all"
+                        >
+                            Registrar
+                        </button>
+                    </>
+                }
+            >
+                <form id="member-reg-form" onSubmit={handleRegister} className="space-y-5">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre *</label>
+                            <input required value={newMember.first_name} onChange={e => setNewMember({ ...newMember, first_name: e.target.value })} className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white" placeholder="Nombre" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Apellido *</label>
+                            <input required value={newMember.last_name} onChange={e => setNewMember({ ...newMember, last_name: e.target.value })} className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white" placeholder="Apellido" />
+                        </div>
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Correo electrónico</label>
+                        <input type="email" value={newMember.email} onChange={e => setNewMember({ ...newMember, email: e.target.value })} className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white" placeholder="correo@ejemplo.com" />
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Teléfono</label>
+                        <input value={newMember.phone} onChange={e => setNewMember({ ...newMember, phone: e.target.value })} className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white" placeholder="+57 300 000 0000" />
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Familia *</label>
+                        <select required value={newMember.family_id} onChange={e => setNewMember({ ...newMember, family_id: e.target.value })} className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white appearance-none">
+                            <option value="">Selecciona una familia...</option>
+                            {families.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                        </select>
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rol en la familia</label>
+                        <select value={newMember.role_in_family} onChange={e => setNewMember({ ...newMember, role_in_family: e.target.value })} className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white appearance-none">
+                            <option>Miembro</option><option>Cabeza de familia</option><option>Cónyuge</option><option>Hijo/a</option>
+                        </select>
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha de nacimiento</label>
+                        <input type="date" value={newMember.birthday} onChange={e => setNewMember({ ...newMember, birthday: e.target.value })} className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white" />
+                    </div>
+                </form>
+            </WorkspaceDrawer>
+
+            {/* ─── Drawer: Registrar Familia ─── */}
+            <WorkspaceDrawer
+                isOpen={isFamilyRegDrawerOpen}
+                onClose={() => setIsFamilyRegDrawerOpen(false)}
+                title="Registrar Familia"
+                subtitle="Nueva unidad familiar en la comunidad"
+                actions={
+                    <>
+                        <button type="button" onClick={() => setIsFamilyRegDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors">
+                            Cancelar
+                        </button>
+                        <button
+                            form="family-reg-form"
+                            type="submit"
+                            className="px-8 py-2 bg-slate-900 dark:bg-white dark:text-slate-900 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all"
+                        >
+                            Registrar Familia
+                        </button>
+                    </>
+                }
+            >
+                <form id="family-reg-form" onSubmit={handleRegisterFamily} className="space-y-5">
+                    <div className="flex flex-col items-center justify-center py-8 gap-4">
+                        <div className="size-16 rounded-3xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center">
+                            <Home size={28} />
+                        </div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 text-center">Las familias agrupan a los miembros de la congregación en unidades pastorales.</p>
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Apellido familiar *</label>
+                        <input
+                            required
+                            value={newFamily.name}
+                            onChange={e => setNewFamily({ name: e.target.value })}
+                            className="w-full px-4 py-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 focus:ring-2 focus:ring-indigo-500/20 outline-none font-black text-lg dark:text-white"
+                            placeholder="Ej: García, Rodríguez..."
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1 ml-1">Se registrará como &ldquo;Familia García&rdquo;</p>
+                    </div>
+                </form>
+            </WorkspaceDrawer>
         </div>
         </CrmShell>
     );

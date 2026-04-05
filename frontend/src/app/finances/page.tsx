@@ -12,6 +12,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+function daysAgo(n: number) {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    return d.toISOString().slice(0, 10);
+}
+
 // ─── Mock data ─────────────────────────────────────────────────────────────────
 const SUMMARY = {
     ingresos: 48_250_000,
@@ -21,14 +28,14 @@ const SUMMARY = {
 };
 
 const TRANSACTIONS = [
-    { id: 1,  type: 'ingreso', category: 'Diezmos',      description: 'Ofrenda dominical — Sede Norte',    amount: 4_200_000, date: '2026-04-06', icon: HeartHandshake, color: 'emerald' },
-    { id: 2,  type: 'egreso',  category: 'Operacional',  description: 'Pago arriendo sede principal',        amount: 5_800_000, date: '2026-04-05', icon: Landmark,       color: 'rose' },
-    { id: 3,  type: 'ingreso', category: 'Ofrendas',     description: 'Ofrenda especial — Misiones',         amount: 1_540_000, date: '2026-04-05', icon: Gift,           color: 'emerald' },
-    { id: 4,  type: 'egreso',  category: 'Ministerio',   description: 'Material didáctico Academia Digital', amount: 820_000,   date: '2026-04-04', icon: BookOpen,       color: 'rose' },
-    { id: 5,  type: 'ingreso', category: 'Donaciones',   description: 'Donación corporativa anónima',        amount: 10_000_000,date: '2026-04-03', icon: HeartHandshake, color: 'emerald' },
-    { id: 6,  type: 'egreso',  category: 'Tecnología',   description: 'Suscripción servicios digitales',     amount: 450_000,   date: '2026-04-02', icon: Zap,            color: 'rose' },
-    { id: 7,  type: 'ingreso', category: 'Diezmos',      description: 'Ofrenda dominical — Sede Sur',        amount: 3_800_000, date: '2026-04-01', icon: HeartHandshake, color: 'emerald' },
-    { id: 8,  type: 'egreso',  category: 'Salarios',     description: 'Liquidación staff pastoral',           amount: 18_000_000,date: '2026-03-31', icon: CreditCard,     color: 'rose' },
+    { id: 1,  type: 'ingreso', category: 'Diezmos',      description: 'Ofrenda dominical — Sede Norte',    amount: 4_200_000, date: daysAgo(0), icon: HeartHandshake, color: 'emerald' },
+    { id: 2,  type: 'egreso',  category: 'Operacional',  description: 'Pago arriendo sede principal',        amount: 5_800_000, date: daysAgo(0), icon: Landmark,       color: 'rose' },
+    { id: 3,  type: 'ingreso', category: 'Ofrendas',     description: 'Ofrenda especial — Misiones',         amount: 1_540_000, date: daysAgo(1), icon: Gift,           color: 'emerald' },
+    { id: 4,  type: 'egreso',  category: 'Ministerio',   description: 'Material didáctico Academia Digital', amount: 820_000,   date: daysAgo(1), icon: BookOpen,       color: 'rose' },
+    { id: 5,  type: 'ingreso', category: 'Donaciones',   description: 'Donación corporativa anónima',        amount: 10_000_000,date: daysAgo(2), icon: HeartHandshake, color: 'emerald' },
+    { id: 6,  type: 'egreso',  category: 'Tecnología',   description: 'Suscripción servicios digitales',     amount: 450_000,   date: daysAgo(3), icon: Zap,            color: 'rose' },
+    { id: 7,  type: 'ingreso', category: 'Diezmos',      description: 'Ofrenda dominical — Sede Sur',        amount: 3_800_000, date: daysAgo(4), icon: HeartHandshake, color: 'emerald' },
+    { id: 8,  type: 'egreso',  category: 'Salarios',     description: 'Liquidación staff pastoral',           amount: 18_000_000,date: daysAgo(5), icon: CreditCard,     color: 'rose' },
 ];
 
 const CATEGORIES = [

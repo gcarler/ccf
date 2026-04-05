@@ -7,20 +7,17 @@ import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import {
     ArrowLeft,
-    Search,
     Church,
     MapPin,
     Edit2,
     PlusCircle,
-    User,
     Building2,
     DoorOpen,
     Loader2,
-    Check,
-    X
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import clsx from 'clsx';
+import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 
 interface Location {
     id: number;
@@ -38,7 +35,7 @@ export default function LocationManagement() {
 
     const [locations, setLocations] = useState<Location[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [newLoc, setNewLoc] = useState({ name: '', address: '', pastor: '', type: 'Sede' });
 
     const fetchLocations = useCallback(async () => {
@@ -62,16 +59,12 @@ export default function LocationManagement() {
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await apiFetch('/admin/locations', {
-                method: 'POST',
-                token,
-                body: newLoc
-            });
+            await apiFetch('/admin/locations', { method: 'POST', token, body: newLoc });
             addToast("Sede registrada", "success");
-            setIsModalOpen(false);
+            setIsDrawerOpen(false);
             setNewLoc({ name: '', address: '', pastor: '', type: 'Sede' });
             fetchLocations();
-        } catch (err) {
+        } catch {
             addToast("Error al registrar sede", "error");
         }
     };
@@ -91,8 +84,8 @@ export default function LocationManagement() {
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Nodos Ministeriales CCF</p>
                     </div>
                 </div>
-                <button 
-                    onClick={() => setIsModalOpen(true)}
+                <button
+                    onClick={() => setIsDrawerOpen(true)}
                     className="flex items-center gap-3 px-8 py-4 bg-blue-600 text-white rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
                 >
                     <PlusCircle size={18} /> Añadir Nueva Sede
@@ -156,55 +149,51 @@ export default function LocationManagement() {
                 )}
             </main>
 
-            {/* Creation Modal Cinematic */}
-            <AnimatePresence>
-                {isModalOpen && (
-                    <motion.div 
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-xl"
-                    >
-                        <motion.div 
-                            initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-                            className="w-full max-w-xl bg-white dark:bg-[#1e1f21] rounded-[3rem] shadow-2xl overflow-hidden border border-white/20 dark:border-white/5"
+            <WorkspaceDrawer
+                isOpen={isDrawerOpen}
+                onClose={() => setIsDrawerOpen(false)}
+                title="Aperturar Sede"
+                subtitle="Configuración de nuevo nodo ministerial"
+                actions={
+                    <>
+                        <button type="button" onClick={() => setIsDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors">
+                            Cancelar
+                        </button>
+                        <button
+                            form="location-create-form"
+                            type="submit"
+                            className="px-8 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all"
                         >
-                            <div className="p-10 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-slate-50/50 dark:bg-black/20">
-                                <div>
-                                    <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Aperturar Sede</h2>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Configuración de Nuevo Nodo</p>
-                                </div>
-                                <button onClick={() => setIsModalOpen(false)} className="p-3 hover:bg-white dark:hover:bg-white/5 rounded-full transition-all text-slate-400 hover:text-slate-900"><X size={24} /></button>
-                            </div>
-                            <form onSubmit={handleCreate} className="p-10 space-y-6">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Nombre de la Sede</label>
-                                    <input required value={newLoc.name} onChange={e => setNewLoc({...newLoc, name: e.target.value})} className="w-full px-6 py-4 bg-slate-100 dark:bg-white/5 border-transparent focus:border-blue-500 rounded-2xl text-sm font-bold outline-none transition-all" placeholder="Ej: Sede Norte" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Dirección</label>
-                                    <input value={newLoc.address} onChange={e => setNewLoc({...newLoc, address: e.target.value})} className="w-full px-6 py-4 bg-slate-100 dark:bg-white/5 border-transparent focus:border-blue-500 rounded-2xl text-sm font-bold outline-none transition-all" placeholder="Calle #, Barrio..." />
-                                </div>
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Pastor Encargado</label>
-                                        <input value={newLoc.pastor} onChange={e => setNewLoc({...newLoc, pastor: e.target.value})} className="w-full px-6 py-4 bg-slate-100 dark:bg-white/5 border-transparent focus:border-blue-500 rounded-2xl text-sm font-bold outline-none transition-all" placeholder="Nombre" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Tipo</label>
-                                        <select value={newLoc.type} onChange={e => setNewLoc({...newLoc, type: e.target.value})} className="w-full px-6 py-4 bg-slate-100 dark:bg-white/5 border-transparent focus:border-blue-500 rounded-2xl text-sm font-bold outline-none transition-all appearance-none">
-                                            <option value="Central">Central</option>
-                                            <option value="Sede">Sede</option>
-                                            <option value="Anexo">Anexo</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <button type="submit" className="w-full py-5 bg-blue-600 text-white rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-2xl shadow-blue-500/30 hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-3">
-                                    Confirmar Apertura <Check size={18} />
-                                </button>
-                            </form>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                            Confirmar Apertura
+                        </button>
+                    </>
+                }
+            >
+                <form id="location-create-form" onSubmit={handleCreate} className="space-y-6">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nombre de la Sede *</label>
+                        <input required value={newLoc.name} onChange={e => setNewLoc({...newLoc, name: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white transition-all" placeholder="Ej: Sede Norte" />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Dirección</label>
+                        <input value={newLoc.address} onChange={e => setNewLoc({...newLoc, address: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white transition-all" placeholder="Calle #, Barrio..." />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pastor Encargado</label>
+                            <input value={newLoc.pastor} onChange={e => setNewLoc({...newLoc, pastor: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white transition-all" placeholder="Nombre" />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tipo</label>
+                            <select value={newLoc.type} onChange={e => setNewLoc({...newLoc, type: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-bold outline-none transition-all appearance-none dark:text-white">
+                                <option value="Central">Central</option>
+                                <option value="Sede">Sede</option>
+                                <option value="Anexo">Anexo</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </WorkspaceDrawer>
         </div>
     );
 }

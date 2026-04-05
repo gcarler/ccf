@@ -33,8 +33,8 @@ export default function CrmShell({
         <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in">
             <WorkspaceToolbar
                 breadcrumbs={breadcrumbs}
-                viewType={viewType as any}
-                setViewType={onViewChange as any}
+                viewType={viewType}
+                setViewType={onViewChange}
                 availableViews={viewOptions}
                 onSearch={onSearch}
                 rightActions={rightActions}

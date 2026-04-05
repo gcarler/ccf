@@ -325,13 +325,39 @@ export default function UserTasksPage() {
                             </div>
                         ) : filtered.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
-                                <div className="size-16 rounded-3xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
-                                    <CheckCircle2 size={28} className="text-emerald-500" />
-                                </div>
-                                <div>
-                                    <p className="text-lg font-black text-slate-700 dark:text-white">¡Todo al día!</p>
-                                    <p className="text-sm text-slate-400 mt-1">No hay tareas pendientes en esta vista.</p>
-                                </div>
+                                {query || filterPriority !== 'all' ? (
+                                    // Filtro activo sin resultados
+                                    <>
+                                        <div className="size-16 rounded-3xl bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+                                            <Search size={28} className="text-slate-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-lg font-black text-slate-700 dark:text-white">Sin resultados</p>
+                                            <p className="text-sm text-slate-400 mt-1">No hay tareas que coincidan con tu búsqueda.</p>
+                                        </div>
+                                        <button onClick={() => { setQuery(''); setFilterPriority('all'); }}
+                                            className="text-[11px] font-black text-blue-600 hover:text-blue-700 uppercase tracking-widest">
+                                            Limpiar filtros
+                                        </button>
+                                    </>
+                                ) : (
+                                    // Sin tareas asignadas
+                                    <>
+                                        <div className="size-16 rounded-3xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
+                                            <CheckCircle2 size={28} className="text-emerald-500" />
+                                        </div>
+                                        <div>
+                                            <p className="text-lg font-black text-slate-700 dark:text-white">Sin tareas pendientes</p>
+                                            <p className="text-sm text-slate-400 mt-1 max-w-xs">
+                                                No tienes tareas asignadas. Ve a un proyecto y asígnate tareas para verlas aquí.
+                                            </p>
+                                        </div>
+                                        <Link href="/projects"
+                                            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-500/20">
+                                            <FolderOpen size={13} /> Ver proyectos
+                                        </Link>
+                                    </>
+                                )}
                             </div>
                         ) : (
                             <AnimatePresence mode="popLayout">

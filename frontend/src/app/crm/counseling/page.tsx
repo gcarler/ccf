@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Users, Filter, Plus, Calendar, Clock, Heart, Search, Video, MoreVertical, X as CloseIcon, ShieldCheck, CheckCircle2, XCircle, Loader2, ArrowLeft, MessageSquare, History, Link2 } from 'lucide-react';
+import { Users, Plus, Calendar, Clock, Heart, Search, MessageSquare, History, Link2, ShieldCheck, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { useToast } from '@/context/ToastContext';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import CrmShell from '@/components/crm/CrmShell';
 import AdminHero from '@/components/admin/AdminHero';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
+import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 
 interface CounselingSession {
     id: number;
@@ -31,13 +31,12 @@ export default function CounselingPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('All');
-    const [showModal, setShowModal] = useState(false);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);   // ← Drawer, NO modal
+    const [isSaving, setIsSaving] = useState(false);
     const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar'];
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_counseling_view', 'grid'));
 
-    // Form state
     const [members, setMembers] = useState<any[]>([]);
-
     const [newSession, setNewSession] = useState({
         pastor_id: user?.id || 1,
         member_id: '',
@@ -86,6 +85,7 @@ export default function CounselingPage() {
 
     const handleCreateSession = async () => {
         if (!token) return;
+        setIsSaving(true);
         try {
             await apiFetch('/crm/counseling/', {
                 method: 'POST',
@@ -93,24 +93,23 @@ export default function CounselingPage() {
                 body: newSession,
             });
             addToast('Sesión agendada correctamente', 'success');
-            setShowModal(false);
+            setIsDrawerOpen(false);
+            setNewSession({ pastor_id: user?.id || 1, member_id: '', scheduled_at: '', topic: '', notes: '', status: 'Pendiente', duration_minutes: 60 });
             fetchSessions();
-        } catch (err) {
+        } catch {
             addToast('Error al agendar sesión', 'error');
+        } finally {
+            setIsSaving(false);
         }
     };
 
     const handleUpdateStatus = async (id: number, status: string) => {
         if (!token) return;
         try {
-            await apiFetch(`/crm/counseling/${id}`, {
-                method: 'PATCH',
-                token,
-                body: { status }
-            });
+            await apiFetch(`/crm/counseling/${id}`, { method: 'PATCH', token, body: { status } });
             addToast(`Estado actualizado a ${status}`, 'success');
             fetchSessions();
-        } catch (err) {
+        } catch {
             addToast('Error al actualizar estado', 'error');
         }
     };
@@ -131,7 +130,7 @@ export default function CounselingPage() {
             onViewChange={setViewType}
             rightActions={
                 <button
-                    onClick={() => setShowModal(true)}
+                    onClick={() => setIsDrawerOpen(true)}
                     className="px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-xl shadow-purple-900/20 transition-all flex items-center gap-2"
                 >
                     <Plus size={16} /> Agendar sesión
@@ -144,17 +143,11 @@ export default function CounselingPage() {
             description="Coordina sesiones pastorales y seguimiento espiritual por estado con IA que prioriza casos urgentes."
             tags={['Consejería', 'Seguimiento', 'IA']}
             watchers={heroWatchers}
-            primaryAction={{ label: 'Agendar sesión', icon: Plus, onClick: () => setShowModal(true) }}
+            primaryAction={{ label: 'Agendar sesión', icon: Plus, onClick: () => setIsDrawerOpen(true) }}
             secondaryAction={{ label: 'Ver políticas', icon: Link2, onClick: () => {} }}
         />
-        {/* Header */}
-            <div className="flex justify-between items-end shrink-0">
-                <div>
-                    <p className="text-slate-500 mt-1 uppercase text-[10px] font-black tracking-[0.2em]">Cuidado pastoral y acompañamiento espiritual</p>
-                </div>
-            </div>
 
-            <div className="space-y-8">
+        <div className="space-y-8">
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[
@@ -162,10 +155,10 @@ export default function CounselingPage() {
                     { label: 'Completadas', val: sessions.filter(s => s.status === 'Realizada').length, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
                     { label: 'Total Histórico', val: sessions.length, color: 'text-blue-500', bg: 'bg-blue-500/10' },
                 ].map((stat, i) => (
-                    <div key={i} className="bg-slate-900/40 border border-white/5 p-6 rounded-3xl flex items-center justify-between">
+                    <div key={i} className="bg-slate-900/40 dark:bg-white/5 border border-white/5 p-6 rounded-3xl flex items-center justify-between">
                         <div>
                             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-2">{stat.label}</p>
-                            <p className="text-3xl font-black text-white">{stat.val}</p>
+                            <p className="text-3xl font-black text-white dark:text-slate-100">{stat.val}</p>
                         </div>
                         <div className={`p-4 rounded-2xl ${stat.bg} ${stat.color}`}>
                             <History size={24} />
@@ -175,13 +168,13 @@ export default function CounselingPage() {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-900/20 p-4 rounded-2xl border border-white/5">
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-900/20 dark:bg-white/5 p-4 rounded-2xl border border-white/5">
                 <div className="relative w-full md:w-96">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                     <input
                         type="text"
                         placeholder="Buscar por tema..."
-                        className="w-full bg-slate-900 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-purple-500 transition-all"
+                        className="w-full bg-slate-900 dark:bg-black/30 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-purple-500 transition-all"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -199,7 +192,7 @@ export default function CounselingPage() {
                 </div>
             </div>
 
-            {/* Sessions List */}
+            {/* Sessions Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {loading ? (
                     Array.from({ length: 6 }).map((_, i) => (
@@ -207,24 +200,18 @@ export default function CounselingPage() {
                     ))
                 ) : filteredSessions.length > 0 ? (
                     filteredSessions.map(session => (
-                        <div key={session.id} className="bg-slate-900/40 border border-white/5 rounded-[40px] p-8 space-y-6 hover:border-purple-500/30 transition-all group relative overflow-hidden">
+                        <div key={session.id} className="bg-slate-900/40 dark:bg-white/5 border border-white/5 rounded-[40px] p-8 space-y-6 hover:border-purple-500/30 transition-all group relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                                 <MessageSquare size={80} />
                             </div>
 
                             <div className="flex justify-between items-start relative z-10">
-                                <div className="flex gap-2">
-                                    <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${session.status === 'Realizada' ? 'bg-emerald-500/10 text-emerald-500' :
-                                            session.status === 'Cancelada' ? 'bg-rose-500/10 text-rose-500' :
-                                                'bg-amber-500/10 text-amber-500'
-                                        }`}>
+                                <div className="flex gap-2 flex-wrap">
+                                    <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${session.status === 'Realizada' ? 'bg-emerald-500/10 text-emerald-500' : session.status === 'Cancelada' ? 'bg-rose-500/10 text-rose-500' : 'bg-amber-500/10 text-amber-500'}`}>
                                         {session.status}
                                     </span>
                                     {(session as any).priority_level && (
-                                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1 ${(session as any).priority_level === 'URGENTE' ? 'bg-rose-600 text-white animate-pulse' :
-                                                (session as any).priority_level === 'ALTA' ? 'bg-orange-500/20 text-orange-500' :
-                                                    'bg-blue-500/10 text-blue-400'
-                                            }`}>
+                                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1 ${(session as any).priority_level === 'URGENTE' ? 'bg-rose-600 text-white animate-pulse' : (session as any).priority_level === 'ALTA' ? 'bg-orange-500/20 text-orange-500' : 'bg-blue-500/10 text-blue-400'}`}>
                                             <ShieldCheck size={10} /> {(session as any).priority_level}
                                         </span>
                                     )}
@@ -235,29 +222,17 @@ export default function CounselingPage() {
                                         </div>
                                     )}
                                 </div>
-                                <p className="text-[10px] font-bold text-slate-500 flex items-center gap-2">
+                                <p className="text-[10px] font-bold text-slate-500 flex items-center gap-2 shrink-0">
                                     <Clock size={12} /> {session.duration_minutes} min
                                 </p>
                             </div>
 
                             <div className="space-y-2 relative z-10">
-                                <h3 className="text-xl font-bold text-white leading-tight">{session.topic || 'Sin tema definido'}</h3>
+                                <h3 className="text-xl font-bold text-white dark:text-white leading-tight">{session.topic || 'Sin tema definido'}</h3>
                                 <p className="text-xs text-slate-400 flex items-center gap-2">
                                     <Calendar size={14} className="text-purple-500" />
                                     {new Date(session.scheduled_at).toLocaleString()}
                                 </p>
-                            </div>
-
-                            <div className="pt-4 border-t border-white/5 flex items-center justify-between relative z-10">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-2xl bg-purple-600/20 text-purple-500 flex items-center justify-center font-bold">
-                                        P
-                                    </div>
-                                    <div>
-                                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Pastor Asignado</p>
-                                        <p className="text-xs font-bold text-white">Pr. Demo</p>
-                                    </div>
-                                </div>
                             </div>
 
                             {session.status === 'Pendiente' && (
@@ -285,103 +260,95 @@ export default function CounselingPage() {
                     </div>
                 )}
             </div>
+        </div>
 
-            {/* Create Modal */}
-            {showModal && (
-                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
-                    <div className="bg-slate-900 w-full max-w-lg rounded-[40px] shadow-2xl border border-white/10 p-10 space-y-8 animate-in zoom-in-95 duration-200">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h2 className="text-2xl font-black text-white tracking-tight">Agendar Consejería</h2>
-                                <p className="text-[10px] font-black text-purple-500 uppercase tracking-widest mt-1">Nuevo acompañamiento espiritual</p>
-                            </div>
-                            <button onClick={() => setShowModal(false)} className="text-slate-500 hover:text-white transition-colors">
-                                <XCircle size={24} />
-                            </button>
-                        </div>
+        {/* ─── Drawer: Agendar Sesión ─── (NO modal) */}
+        <WorkspaceDrawer
+            isOpen={isDrawerOpen}
+            onClose={() => setIsDrawerOpen(false)}
+            title="Agendar Consejería"
+            subtitle="Nuevo acompañamiento espiritual"
+            actions={
+                <>
+                    <button onClick={() => setIsDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors">
+                        Descartar
+                    </button>
+                    <button
+                        onClick={handleCreateSession}
+                        disabled={isSaving}
+                        className="px-8 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-60 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-purple-500/20 active:scale-95 transition-all flex items-center gap-2"
+                    >
+                        {isSaving ? <Loader2 size={14} className="animate-spin" /> : null}
+                        Agendar Ahora
+                    </button>
+                </>
+            }
+        >
+            <div className="space-y-6">
+                <div className="space-y-2">
+                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Miembro / Lead</label>
+                    <select
+                        required
+                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-purple-500 transition-all font-medium appearance-none"
+                        value={newSession.member_id}
+                        onChange={(e) => setNewSession({ ...newSession, member_id: e.target.value })}
+                    >
+                        <option value="">Selecciona miembro...</option>
+                        {members.map(m => (
+                            <option key={m.id} value={m.id}>{m.first_name} {m.last_name}</option>
+                        ))}
+                    </select>
+                </div>
 
-                        <div className="space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 ml-4">Miembro / Lead</label>
-                                <select
-                                    required
-                                    className="w-full bg-slate-950 border border-white/5 rounded-2xl px-6 py-4 text-sm text-white focus:outline-none focus:border-purple-500 transition-all font-medium appearance-none"
-                                    value={newSession.member_id}
-                                    onChange={(e) => setNewSession({ ...newSession, member_id: e.target.value })}
-                                >
-                                    <option value="">Selecciona miembro...</option>
-                                    {members.map(m => (
-                                        <option key={m.id} value={m.id}>{m.first_name} {m.last_name}</option>
-                                    ))}
-                                </select>
-                            </div>
+                <div className="space-y-2">
+                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Tema de la Sesión</label>
+                    <input
+                        type="text"
+                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-purple-500 transition-all font-medium"
+                        placeholder="Ej: Orientación Familiar, Fortaleza..."
+                        value={newSession.topic}
+                        onChange={(e) => setNewSession({ ...newSession, topic: e.target.value })}
+                    />
+                </div>
 
-                            <div className="space-y-2">
-                                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 ml-4">Tema de la Sesión</label>
-                                <input
-                                    type="text"
-                                    className="w-full bg-slate-950 border border-white/5 rounded-2xl px-6 py-4 text-sm text-white focus:outline-none focus:border-purple-500 transition-all font-medium"
-                                    placeholder="Ej: Orientación Familiar, Fortaleza..."
-                                    value={newSession.topic}
-                                    onChange={(e) => setNewSession({ ...newSession, topic: e.target.value })}
-                                />
-                            </div>
+                <div className="space-y-2">
+                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Notas Iniciales</label>
+                    <textarea
+                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-purple-500 transition-all font-medium min-h-[100px] resize-none"
+                        placeholder="Describe brevemente el caso..."
+                        value={newSession.notes}
+                        onChange={(e) => setNewSession({ ...newSession, notes: e.target.value })}
+                    />
+                </div>
 
-                            <div className="space-y-2">
-                                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 ml-4">Notas Iniciales (Análisis IA)</label>
-                                <textarea
-                                    className="w-full bg-slate-950 border border-white/5 rounded-2xl px-6 py-4 text-sm text-white focus:outline-none focus:border-purple-500 transition-all font-medium min-h-[100px] resize-none"
-                                    placeholder="Describe brevemente el caso. Optimus Brain analizará la urgencia..."
-                                    value={newSession.notes}
-                                    onChange={(e) => setNewSession({ ...newSession, notes: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 ml-4">Fecha y Hora</label>
-                                    <input
-                                        type="datetime-local"
-                                        className="w-full bg-slate-950 border border-white/5 rounded-2xl px-6 py-4 text-sm text-white focus:outline-none focus:border-purple-500 transition-all font-medium color-scheme-dark"
-                                        style={{ colorScheme: 'dark' }}
-                                        value={newSession.scheduled_at}
-                                        onChange={(e) => setNewSession({ ...newSession, scheduled_at: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 ml-4">Duración (min)</label>
-                                    <select
-                                        className="w-full bg-slate-950 border border-white/5 rounded-2xl px-6 py-4 text-sm text-white focus:outline-none focus:border-purple-500 transition-all font-medium appearance-none"
-                                        value={newSession.duration_minutes}
-                                        onChange={(e) => setNewSession({ ...newSession, duration_minutes: parseInt(e.target.value) })}
-                                    >
-                                        <option value={30}>30 min</option>
-                                        <option value={60}>1 hora</option>
-                                        <option value={90}>1.5 horas</option>
-                                        <option value={120}>2 horas</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex gap-4 pt-4">
-                            <button
-                                onClick={() => setShowModal(false)}
-                                className="flex-1 py-4 bg-white/5 hover:bg-white/10 text-slate-400 font-black uppercase tracking-widest text-[10px] rounded-2xl transition-all"
-                            >
-                                Descartar
-                            </button>
-                            <button
-                                onClick={handleCreateSession}
-                                className="flex-1 py-4 bg-purple-600 hover:bg-purple-500 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-2xl shadow-purple-900/40 transition-all"
-                            >
-                                Agendar Ahora
-                            </button>
-                        </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Fecha y Hora</label>
+                        <input
+                            type="datetime-local"
+                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-4 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-purple-500 transition-all font-medium"
+                            style={{ colorScheme: 'dark' }}
+                            value={newSession.scheduled_at}
+                            onChange={(e) => setNewSession({ ...newSession, scheduled_at: e.target.value })}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Duración (min)</label>
+                        <select
+                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-4 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-purple-500 transition-all font-medium appearance-none"
+                            value={newSession.duration_minutes}
+                            onChange={(e) => setNewSession({ ...newSession, duration_minutes: parseInt(e.target.value) })}
+                        >
+                            <option value={30}>30 min</option>
+                            <option value={60}>1 hora</option>
+                            <option value={90}>1.5 horas</option>
+                            <option value={120}>2 horas</option>
+                        </select>
                     </div>
                 </div>
-            )}
             </div>
+        </WorkspaceDrawer>
+
         </CrmShell>
     );
 }

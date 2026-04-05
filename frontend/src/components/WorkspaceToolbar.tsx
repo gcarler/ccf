@@ -28,8 +28,8 @@ interface Breadcrumb {
 
 interface WorkspaceToolbarProps {
     breadcrumbs: Breadcrumb[];
-    viewType: ViewType;
-    setViewType: (v: ViewType) => void;
+    viewType?: ViewType;
+    setViewType?: (v: ViewType) => void;
     availableViews?: ViewType[];
     rightActions?: React.ReactNode;
     onSearch?: (query: string) => void;
@@ -86,11 +86,13 @@ export default function WorkspaceToolbar({
 
                 <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1.5 shrink-0" />
                 
-                <ViewSwitcher 
-                    viewType={viewType} 
-                    setViewType={setViewType} 
-                    availableViews={availableViews} 
-                />
+                {setViewType && viewType && (
+                    <ViewSwitcher
+                        viewType={viewType}
+                        setViewType={setViewType}
+                        availableViews={availableViews}
+                    />
+                )}
             </div>
 
             {/* Right: Search, Filter, Actions */}
