@@ -191,7 +191,7 @@ export default function GroupsPage() {
                                 value={loading ? '...' : `${avgOccupancyPct}%`}
                                 trend={saturatedCount > 0 ? `${saturatedCount} saturadas` : 'Sin saturación'}
                                 icon={TrendingUp}
-                                tone={avgOccupancyPct >= 90 ? 'rose' : avgOccupancyPct >= 70 ? 'amber' : 'emerald'}
+                                tone={avgOccupancyPct >= 90 ? 'pink' : avgOccupancyPct >= 70 ? 'amber' : 'emerald'}
                             />
                         </section>
 

@@ -541,10 +541,10 @@ function WorkspaceLayoutInner({
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         onClick={() => openLayer('S1')}
-                        className="fixed left-6 bottom-[88px] z-[60] size-10 bg-slate-900 text-white rounded-xl shadow-xl hover:bg-slate-800 hover:scale-110 active:scale-95 transition-all flex items-center justify-center border border-white/10 dark:border-[#111213]"
+                        className="fixed left-8 bottom-[88px] z-[60] size-8 bg-slate-900 text-white rounded-xl shadow-md hover:bg-slate-800 hover:scale-110 active:scale-95 transition-all flex items-center justify-center border border-white/10 dark:border-[#111213]"
                         aria-label="Mostrar navegación principal"
                     >
-                        <ChevronRight size={18} strokeWidth={2.5} />
+                        <ChevronRight size={16} strokeWidth={2.5} />
                     </motion.button>
                 )}
 
@@ -555,10 +555,10 @@ function WorkspaceLayoutInner({
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             onClick={cycleS2}
-                            className="fixed left-6 bottom-6 z-[60] size-10 bg-slate-900 text-white rounded-xl shadow-xl hover:bg-slate-800 hover:-translate-y-1 active:scale-95 active:translate-y-0 transition-all flex items-center justify-center border border-white/10 dark:border-[#111213]"
+                            className="fixed left-8 bottom-6 z-[60] size-8 bg-slate-900 text-white rounded-xl shadow-md hover:bg-slate-800 hover:-translate-y-1 active:scale-95 active:translate-y-0 transition-all flex items-center justify-center border border-white/10 dark:border-[#111213]"
                             aria-label="Mostrar panel de módulo"
                         >
-                            <ChevronRight size={18} strokeWidth={2.5} />
+                            <ChevronRight size={16} strokeWidth={2.5} />
                         </motion.button>
                     </Tooltip>
                 )}

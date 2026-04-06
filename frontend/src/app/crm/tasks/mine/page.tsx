@@ -238,7 +238,7 @@ export default function MyTasks() {
                                                 <td className="px-8 py-5">
                                                     <div className="flex items-center gap-2">
                                                         <div className="size-7 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500">
-                                                            <User size={14} />
+                                                            <Users size={14} />
                                                         </div>
                                                         <span className="text-[11px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-tight">{task.contact_name}</span>
                                                     </div>

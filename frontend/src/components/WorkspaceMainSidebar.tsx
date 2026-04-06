@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
     ChevronDown, Plus, Settings2,
-    Hash, PanelLeftClose, PanelLeftOpen, Circle
+    Hash, ChevronLeft, ChevronRight, Circle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -227,8 +227,8 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
                             aria-label={isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
                         >
                             {isCollapsed
-                                ? <PanelLeftOpen size={16} />
-                                : <PanelLeftClose size={16} />
+                                ? <ChevronRight size={16} />
+                                : <ChevronLeft size={16} />
                             }
                         </button>
                     </Tooltip>

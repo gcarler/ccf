@@ -8,7 +8,7 @@ import {
     GraduationCap,
     Globe,
     Settings,
-    PanelLeftClose,
+    ChevronLeft,
     Plus,
     Target,
     DollarSign,
@@ -107,7 +107,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
                         className="size-10 rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-all duration-200 group"
                         aria-label="Ocultar sidebar principal"
                     >
-                        <PanelLeftClose size={19} />
+                        <ChevronLeft size={19} />
                     </button>
                 </Tooltip>
             </div>

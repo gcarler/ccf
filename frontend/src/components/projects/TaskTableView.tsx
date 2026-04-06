@@ -387,8 +387,13 @@ function QuickAddRow({ onConfirm, onCancel }: { onConfirm: (title: string) => vo
 interface Props {
     tasks: ProjectTaskRecord[];
     onOpenTask: (task: ProjectTaskRecord) => void;
-    onAddTask: (status: string) => void;
+    onAddTask: (status: string, dueDate?: string, title?: string) => Promise<void> | void;
     onTaskUpdated?: (taskId: number, field: string, value: any) => void;
+    quickAddStatus?: string | null;
+    quickAddTitle?: string;
+    onQuickAddTitleChange?: (title: string) => void;
+    onQuickAddConfirm?: () => void;
+    onQuickAddCancel?: () => void;
 }
 
 type SortKey = 'title' | 'status' | 'priority' | 'due_date';

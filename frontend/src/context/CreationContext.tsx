@@ -4,26 +4,32 @@ import React, { createContext, useContext, useState } from 'react';
 
 interface CreationContextType {
     isModalOpen: boolean;
-    openModal: (type?: 'task' | 'doc' | 'reminder' | 'whiteboard' | 'panel') => void;
+    openModal: (type?: 'task' | 'event' | 'doc' | 'reminder' | 'whiteboard' | 'panel', initialData?: any) => void;
     closeModal: () => void;
-    defaultType: 'task' | 'doc' | 'reminder' | 'whiteboard' | 'panel';
+    defaultType: 'task' | 'event' | 'doc' | 'reminder' | 'whiteboard' | 'panel';
+    initialData?: any;
 }
 
 const CreationContext = createContext<CreationContextType | undefined>(undefined);
 
 export function CreationProvider({ children }: { children: React.ReactNode }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [defaultType, setDefaultType] = useState<'task' | 'doc' | 'reminder' | 'whiteboard' | 'panel'>('task');
+    const [defaultType, setDefaultType] = useState<'task' | 'event' | 'doc' | 'reminder' | 'whiteboard' | 'panel'>('task');
+    const [initialData, setInitialData] = useState<any>(undefined);
 
-    const openModal = (type: 'task' | 'doc' | 'reminder' | 'whiteboard' | 'panel' = 'task') => {
+    const openModal = (type: 'task' | 'event' | 'doc' | 'reminder' | 'whiteboard' | 'panel' = 'task', data?: any) => {
         setDefaultType(type);
+        setInitialData(data);
         setIsModalOpen(true);
     };
 
-    const closeModal = () => setIsModalOpen(false);
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setInitialData(undefined);
+    };
 
     return (
-        <CreationContext.Provider value={{ isModalOpen, openModal, closeModal, defaultType }}>
+        <CreationContext.Provider value={{ isModalOpen, openModal, closeModal, defaultType, initialData }}>
             {children}
         </CreationContext.Provider>
     );

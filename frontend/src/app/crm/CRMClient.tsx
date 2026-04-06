@@ -36,6 +36,7 @@ import { ViewType } from '@/components/ViewSwitcher';
 import { CrmGridView, CrmTableView, CrmKanbanView, CrmCalendarView, CrmGanttView } from '@/components/crm/CrmViews';
 import RightPanel from '@/components/ui/RightPanel';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
+import { CrmMember } from './types';
 
 interface Member {
     id: number;
@@ -50,7 +51,11 @@ interface Member {
     created_at: string;
 }
 
-export default function CRMClient() {
+interface CrmClientProps {
+    initialMembers?: CrmMember[];
+}
+
+export default function CRMClient({ initialMembers: _initialMembers = [] }: CrmClientProps) {
     const { token } = useAuth();
     const router = useRouter();
     const { openLayer, closeLayer, setRightMode, layers } = useSidebarLayers();

@@ -19,7 +19,9 @@ import { es } from 'date-fns/locale';
 import clsx from 'clsx';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
+import { useCreation } from '@/context/CreationContext';
 import type { ProjectTaskRecord } from '@/types/projects';
+import InlineEventPopover from '@/components/calendar/InlineEventPopover';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const HOURS = Array.from({ length: 24 }, (_, i) => i);   // 0..23
@@ -51,6 +53,7 @@ function formatHour(h: number) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function PlanificadorPage() {
     const { token } = useAuth();
+    const { openModal } = useCreation();
     const [viewMode, setViewMode] = useState<ViewMode>('semana');
     const [currentDate, setCurrentDate] = useState(new Date());
     const [events, setEvents] = useState<CalEvent[]>([]);
@@ -296,7 +299,10 @@ export default function PlanificadorPage() {
                                 </AnimatePresence>
                             </div>
 
-                            <button className="flex items-center gap-1.5 px-3 py-1.5 ml-1 rounded-lg text-[11px] font-bold bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all">
+                            <button 
+                                onClick={() => openModal('event')}
+                                className="flex items-center gap-1.5 px-3 py-1.5 ml-1 rounded-lg text-[11px] font-bold bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all"
+                            >
                                 <Plus size={13} /> Evento
                             </button>
                         </div>
@@ -508,6 +514,9 @@ export default function PlanificadorPage() {
 
 // ── Month View ────────────────────────────────────────────────────────────────
 function MonthView({ currentDate, events }: { currentDate: Date; events: CalEvent[] }) {
+    const { openModal } = useCreation();
+    const [openPopoverDay, setOpenPopoverDay] = useState<string | null>(null);
+
     const days = useMemo(() => {
         const start = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 0 });
         const end = endOfWeek(endOfMonth(currentDate), { weekStartsOn: 0 });
@@ -529,11 +538,20 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: CalEven
                 {days.map((day, idx) => {
                     const dayEvents = events.filter(e => isSameDay(e.start, day));
                     const inMonth = isSameMonth(day, currentDate);
+                    const dayKey = format(day, 'yyyy-MM-dd');
                     return (
-                        <div key={idx} className={clsx(
-                            'min-h-[100px] p-2 border-r border-b border-slate-100 dark:border-white/5 group transition-colors cursor-pointer hover:bg-slate-50/50 dark:hover:bg-white/[0.02]',
-                            !inMonth && 'opacity-30'
-                        )}>
+                        <InlineEventPopover 
+                            key={idx}
+                            open={openPopoverDay === dayKey}
+                            onOpenChange={(open) => setOpenPopoverDay(open ? dayKey : null)}
+                            day={day}
+                        >
+                            <div 
+                                className={clsx(
+                                'min-h-[100px] p-2 border-r border-b border-slate-100 dark:border-white/5 group transition-colors cursor-pointer hover:bg-slate-50/50 dark:hover:bg-white/[0.02]',
+                                !inMonth && 'opacity-30',
+                                openPopoverDay === dayKey && "ring-2 ring-inset ring-blue-500/50"
+                            )}>
                             <span className={clsx(
                                 'inline-flex size-6 items-center justify-center rounded-full text-[11px] font-bold transition-all',
                                 isToday(day)
@@ -554,6 +572,7 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: CalEven
                                 )}
                             </div>
                         </div>
+                        </InlineEventPopover>
                     );
                 })}
             </div>
