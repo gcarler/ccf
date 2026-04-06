@@ -18,8 +18,8 @@ export default function PublicHomePage() {
     const heroPrimaryCta = heroContent?.primary_cta || "Empezar mi viaje";
     const heroSecondaryCta = heroContent?.secondary_cta || "Ver Prédicas";
 
-    const publicEvents = Array.isArray(eventsContent?.parsed)
-        ? eventsContent?.parsed
+    const publicEvents: any[] = Array.isArray(eventsContent?.parsed)
+        ? (eventsContent?.parsed as any[])
         : [
             {
                 img: "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&q=80",

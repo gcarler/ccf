@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import WorkspaceMiniSidebar from '@/components/WorkspaceMiniSidebar';
 import WorkspaceMainSidebar from '@/components/WorkspaceMainSidebar';
 import WorkspaceInbox from '@/components/WorkspaceInbox';
@@ -15,7 +15,7 @@ import {
     ChevronLeft, Target, GraduationCap, Users, Globe,
     Home, Inbox, CheckSquare, Folder, Calendar, LayoutDashboard,
     FileText, MessageCircle, Settings2, ShieldCheck, Zap, Bot, Settings,
-    BookOpen, Link2, UserPlus, Heart, Scan, PieChart, Contact, KanbanSquare, Mail
+    BookOpen, Link2, UserPlus, Heart, Scan, PieChart, Contact, KanbanSquare, Mail, ChevronRight
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useTheme } from '@/app/theme/ThemeContext';
@@ -263,7 +263,7 @@ function WorkspaceLayoutInner({
 
     // S1 visibility is controlled by layers.S1 (always true, but kept in sync)
     const s1Visible = layers.S1;
-    const s2Mode = layers.S2 ? 'full' : 'hidden'; // simplified: no mini in S2 for now
+    const s2Mode = layers.S2 ? 'full' : 'hidden';
 
     useEffect(() => {
         setIsReady(true);
@@ -277,24 +277,83 @@ function WorkspaceLayoutInner({
     const displayTitle = manualTitle || moduleContext.title;
     const displaySections = manualSections || moduleContext.sections;
 
-    // Toggle S2 through 3 states: full → mini → hidden → full
-    // Persist per-module in localStorage so navigation doesn't reset it
+    // Toggle S2 between full and hidden. Mini mode is now managed manually via dragging.
     const s2LocalKey = `s2mode_${pathname?.split('/')[1] || 'default'}`;
-    const [s2DetailMode, setS2DetailMode] = useState<'full' | 'mini' | 'hidden'>(() => {
+    const [s2DetailMode, setS2DetailMode] = useState<'full' | 'hidden'>(() => {
         if (typeof window === 'undefined') return 'full';
         const saved = localStorage.getItem(s2LocalKey);
-        return (saved as 'full' | 'mini' | 'hidden') || 'full';
+        return (saved === 'hidden' ? 'hidden' : 'full');
     });
 
     const cycleS2 = useCallback(() => {
         setS2DetailMode(m => {
-            const next = m === 'full' ? 'mini' : m === 'mini' ? 'hidden' : 'full';
+            const next = m === 'full' ? 'hidden' : 'full';
             localStorage.setItem(s2LocalKey, next);
             return next;
         });
     }, [s2LocalKey]);
 
-    const s2Width = s2DetailMode === 'full' ? 'w-72' : s2DetailMode === 'mini' ? 'w-16' : 'w-0';
+    // Resizing logic for S2
+    const minS2Width = 64; // Permite reducirse a sólo los iconos (64px)
+    const snapThreshold = 130; // Debajo de esto se 'snappea' a 64px
+    const maxS2Width = 480;
+
+    const [s2WidthNum, setS2WidthNum] = useState<number>(() => {
+        if (typeof window === 'undefined') return 280;
+        const saved = localStorage.getItem('s2Width');
+        return saved ? parseInt(saved, 10) : 280;
+    });
+    const [isDraggingS2, setIsDraggingS2] = useState(false);
+    const startPosRef = useRef<number>(0);
+    const startWidthRef = useRef<number>(0);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('s2Width', s2WidthNum.toString());
+        }
+    }, [s2WidthNum]);
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isDraggingS2) return;
+            const delta = e.clientX - startPosRef.current;
+            let newWidth = startWidthRef.current + delta;
+            
+            if (newWidth < snapThreshold) {
+                newWidth = minS2Width;
+            }
+
+            if (newWidth > maxS2Width) newWidth = maxS2Width;
+            setS2WidthNum(newWidth);
+        };
+        const handleMouseUp = () => setIsDraggingS2(false);
+
+        if (isDraggingS2) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+        } else {
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        };
+    }, [isDraggingS2]);
+
+    const handleMouseDownS2 = (e: React.MouseEvent) => {
+        setIsDraggingS2(true);
+        startPosRef.current = e.clientX;
+        startWidthRef.current = s2WidthNum;
+        e.preventDefault();
+    };
+
+    const isMiniSidebar = s2DetailMode === 'full' && s2WidthNum <= snapThreshold;
+    const currentS2Width = s2DetailMode === 'full' ? `${s2WidthNum}px` : '0px';
 
     if (!isMounted) return <div className="h-screen w-full bg-white dark:bg-[#111213]" />;
 
@@ -354,24 +413,41 @@ function WorkspaceLayoutInner({
                         ═══════════════════════════════════════════════════ */}
                         <div
                             className={clsx(
-                                "h-full shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out relative",
-                                s2Width
+                                "h-full shrink-0 relative flex",
+                                !isDraggingS2 && "transition-[width] duration-300 ease-in-out"
                             )}
                             style={{
                                 zIndex: 40,
+                                width: currentS2Width,
+                            }}
+                        >
+                            <div className="w-full h-full overflow-hidden" style={{
                                 boxShadow: s2DetailMode !== 'hidden'
                                     ? '4px 0 16px rgba(0,0,0,0.06), 1px 0 4px rgba(0,0,0,0.04)'
                                     : 'none',
-                            }}
-                        >
-                            {customSidebar || (
+                            }}>
+                                {customSidebar || (
                                 <WorkspaceMainSidebar
-                                    title={displayTitle}
-                                    sections={displaySections}
-                                    isMini={s2DetailMode === 'mini'}
-                                    onToggle={cycleS2}
-                                    isCollapsed={s2DetailMode !== 'full'}
-                                />
+                                        title={displayTitle}
+                                        sections={displaySections}
+                                        isMini={isMiniSidebar}
+                                        onToggle={cycleS2}
+                                        isCollapsed={s2DetailMode !== 'full'}
+                                    />
+                                )}
+                            </div>
+
+                            {/* Drag handle */}
+                            {s2DetailMode === 'full' && (
+                                <div
+                                    className="absolute top-0 right-[-3px] w-1.5 h-full cursor-col-resize z-50 group flex items-center justify-center"
+                                    onMouseDown={handleMouseDownS2}
+                                >
+                                    <div className={clsx(
+                                        "w-[2px] h-full bg-blue-500 opacity-0 transition-opacity",
+                                        isDraggingS2 ? "opacity-100" : "group-hover:opacity-100"
+                                    )} />
+                                </div>
                             )}
                         </div>
 
@@ -405,26 +481,6 @@ function WorkspaceLayoutInner({
 
                                 {/* ── Right toolbar actions ──────────────── */}
                                 <div className="flex items-center gap-0.5">
-                                    {/* S2 Toggle */}
-                                    <Tooltip content={
-                                        s2DetailMode === 'hidden' ? 'Mostrar panel'
-                                        : s2DetailMode === 'mini' ? 'Expandir panel'
-                                        : 'Contraer panel'
-                                    }>
-                                        <button
-                                            onClick={cycleS2}
-                                            className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
-                                            aria-label="Toggle sidebar de módulo"
-                                        >
-                                            {s2DetailMode === 'hidden'
-                                                ? <PanelLeftOpen size={17} />
-                                                : s2DetailMode === 'mini'
-                                                    ? <PanelLeft size={17} />
-                                                    : <PanelLeftClose size={17} />
-                                            }
-                                        </button>
-                                    </Tooltip>
-
                                     <ThemeToggle variant="pill" />
 
                                     <button
@@ -454,6 +510,7 @@ function WorkspaceLayoutInner({
                             <div className="flex-1 overflow-hidden relative">
                                 {children}
                             </div>
+
                         </div>
                     </div>
 
@@ -484,11 +541,26 @@ function WorkspaceLayoutInner({
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         onClick={() => openLayer('S1')}
-                        className="fixed left-4 bottom-10 z-[60] p-3 bg-slate-900 text-white rounded-2xl shadow-2xl hover:scale-110 active:scale-95 transition-all"
+                        className="fixed left-6 bottom-[88px] z-[60] size-10 bg-slate-900 text-white rounded-xl shadow-xl hover:bg-slate-800 hover:scale-110 active:scale-95 transition-all flex items-center justify-center border border-white/10 dark:border-[#111213]"
                         aria-label="Mostrar navegación principal"
                     >
-                        <PanelLeftOpen size={20} />
+                        <ChevronRight size={18} strokeWidth={2.5} />
                     </motion.button>
+                )}
+
+                {/* S2 restore button (under S1) */}
+                {s2DetailMode === 'hidden' && (
+                    <Tooltip content="Mostrar panel de módulo" side="right">
+                        <motion.button
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            onClick={cycleS2}
+                            className="fixed left-6 bottom-6 z-[60] size-10 bg-slate-900 text-white rounded-xl shadow-xl hover:bg-slate-800 hover:-translate-y-1 active:scale-95 active:translate-y-0 transition-all flex items-center justify-center border border-white/10 dark:border-[#111213]"
+                            aria-label="Mostrar panel de módulo"
+                        >
+                            <ChevronRight size={18} strokeWidth={2.5} />
+                        </motion.button>
+                    </Tooltip>
                 )}
             </div>
         </ProtectedRoute>

@@ -9,7 +9,8 @@ import { useAuth } from '@/context/AuthContext';
 import WikiEditor from '@/components/wiki/WikiEditor';
 
 export default function WikiDocEditPage() {
-    const { page_key } = useParams();
+    const params = useParams();
+    const page_key = params ? (params.page_key as string) : null;
     const router = useRouter();
     const { token } = useAuth();
     const [doc, setDoc] = useState<any>(null);

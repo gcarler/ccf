@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MapPin, Menu, X, ChevronRight, Sun, Moon } from "lucide-react";
+import { MapPin, Menu, X, ChevronRight, Sun, Moon, Zap } from "lucide-react";
 import { useFaroTheme } from "./FaroThemeProvider";
 import { useContentBlock } from "@/hooks/useContent";
 
@@ -67,7 +67,7 @@ export default function FaroNavbar() {
                     {/* Desktop Nav */}
                     <div className="hidden lg:flex items-center gap-1 flex-1 justify-center">
                         {navLinks.map(({ href, label }: any) => {
-                            const active = pathname === href || (href !== "/faro" && pathname.startsWith(href));
+                            const active = pathname === href || (href !== "/faro" && pathname?.startsWith(href));
                             return (
                                 <Link
                                     key={href}

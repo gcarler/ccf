@@ -80,7 +80,7 @@ export default function TeacherWorkspace() {
                 { method: 'PATCH', token }
             );
             toast.success(decision === 'approve' ? 'Calificación registrada' : 'Solicitud de ajustes enviada');
-            await loadSubmissions();
+            await loadData();
         } catch (err) {
             console.error(err);
             toast.error('No se pudo registrar la calificación');

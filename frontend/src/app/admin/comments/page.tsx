@@ -121,7 +121,7 @@ export default function CommentModeration() {
                         key={f} onClick={() => setActiveFilter(f)}
                         className={clsx(
                             "px-8 py-6 text-[11px] font-black uppercase tracking-[0.3em] transition-all relative border-b-2 shrink-0",
-                            activeTab === f ? "text-blue-600 border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600"
+                            activeFilter === f ? "text-blue-600 border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600"
                         )}
                     >
                         {f}

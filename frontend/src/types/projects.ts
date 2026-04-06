@@ -10,6 +10,8 @@ export interface ProjectRecord {
   updated_at?: string | null;
   tasks?: ProjectTaskRecord[];
   milestones?: ProjectMilestoneRecord[];
+  progress_percent?: number;
+  comments_count?: number;
 }
 
 export interface ProjectMilestoneRecord {
@@ -19,6 +21,17 @@ export interface ProjectMilestoneRecord {
   description?: string | null;
   target_date?: string | null;
   is_completed: boolean;
+}
+
+export interface ProjectAttachment {
+  id: number;
+  task_id: number;
+  filename: string;
+  file_url: string;
+  file_size?: number | null;
+  content_type?: string | null;
+  uploaded_by?: number | null;
+  created_at: string;
 }
 
 export interface ProjectTaskRecord {
@@ -36,6 +49,8 @@ export interface ProjectTaskRecord {
   order_index?: number;
   supplies?: TaskSupplyRecord[];
   subtasks?: ProjectTaskRecord[];
+  attachments?: ProjectAttachment[];
+  comments_count?: number;
 }
 
 export interface TaskSupplyRecord {
@@ -77,6 +92,7 @@ export interface ProjectCommentItem {
   content: string;
   author_id: number;
   author_name: string;
+  author: string;       // alias de author_name para compatibilidad
   is_resolved: boolean;
   created_at: string;
   updated_at: string;

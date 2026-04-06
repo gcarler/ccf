@@ -154,7 +154,6 @@ function NavRow({
     );
 }
 
-// ─── Main Sidebar (S2) ────────────────────────────────────────────────────────
 export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle, isCollapsed }: Props) {
     const pathname = usePathname();
 
@@ -214,31 +213,22 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
                 )}
             </div>
 
-            {/* ── Footer S2: solo Settings + Toggle Collapse (SIN ThemeToggle) ── */}
-            <div className="shrink-0 border-t border-slate-100 dark:border-white/5 p-2 flex items-center gap-1">
-                {/* Settings */}
-                <Tooltip content="Ajustes del módulo" side="top">
-                    <button className={clsx(
-                        "flex items-center gap-2 py-2 px-3 rounded-xl text-[11px] font-bold uppercase tracking-widest",
-                        "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-all duration-200",
-                        isMini ? "w-full justify-center" : "flex-1"
-                    )}>
-                        <Settings2 size={14} />
-                        {!isMini && <span>Ajustes</span>}
-                    </button>
-                </Tooltip>
-
+            {/* ── Footer S2: Expand/Collapse toggle ── */}
+            <div className={clsx(
+                "shrink-0 border-t border-slate-100 dark:border-white/5 p-2 flex items-center",
+                isMini ? "flex-col gap-2 justify-center" : "justify-end"
+            )}>
                 {/* Collapse / Expand toggle */}
                 {onToggle && (
-                    <Tooltip content={isCollapsed ? 'Expandir panel' : 'Contraer panel'} side="top">
+                    <Tooltip content={isCollapsed ? 'Expandir panel' : 'Contraer panel'} side="right">
                         <button
                             onClick={onToggle}
                             className="p-2 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all duration-200 shrink-0"
                             aria-label={isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
                         >
                             {isCollapsed
-                                ? <PanelLeftOpen size={15} />
-                                : <PanelLeftClose size={15} />
+                                ? <PanelLeftOpen size={16} />
+                                : <PanelLeftClose size={16} />
                             }
                         </button>
                     </Tooltip>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 
 
 export type ThemeMode = 'day' | 'night';
@@ -41,40 +41,48 @@ const themeTokens: Record<ThemeMode, Record<string, string>> = {
 const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-    const [theme, setTheme] = useState<ThemeMode>('day');
+    const [theme, setThemeState] = useState<ThemeMode>('day');
+    const [isMounted, setIsMounted] = useState(false);
 
-    // Load saved theme preference and fall back to OS hint
+    // ── Step 1: Read saved preference once on mount ─────────────────
     useEffect(() => {
-        const savedTheme = localStorage.getItem('theme-mode') as ThemeMode | null;
-        if (savedTheme && themeTokens[savedTheme]) {
-            setTheme(savedTheme);
-        } else if (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            setTheme('night');
+        const saved = localStorage.getItem('theme-mode') as ThemeMode | null;
+        if (saved && themeTokens[saved]) {
+            setThemeState(saved);
+        } else if (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            setThemeState('night');
         }
+        // Mark as mounted on next render cycle with the correct initial theme
+        setIsMounted(true);
     }, []);
 
-    // Apply theme attribute
+    // ── Step 2: Apply class + data-attr to <html> on every theme change ─
     useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme === 'night' ? 'night' : 'day');
-        if (theme === 'night') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-        localStorage.setItem('theme-mode', theme);
-    }, [theme]);
+        if (!isMounted) return; // Do not apply or save until hydration is complete
 
-    // Apply palette CSS variables
+        const root = document.documentElement;
+        root.setAttribute('data-theme', theme === 'night' ? 'night' : 'day');
+        if (theme === 'night') {
+            root.classList.add('dark');
+        } else {
+            root.classList.remove('dark');
+        }
+        
+        localStorage.setItem('theme-mode', theme);
+    }, [theme, isMounted]);
+
+    // ── Step 3: Apply CSS custom properties ─────────────────────────
     useEffect(() => {
+        if (!isMounted) return;
+        
         const vars = themeTokens[theme];
         Object.entries(vars).forEach(([key, value]) => {
             document.documentElement.style.setProperty(key, value);
         });
-    }, [theme]);
+    }, [theme, isMounted]);
 
-    const toggleTheme = () => {
-        setTheme(prev => (prev === 'day' ? 'night' : 'day'));
-    };
+    const setTheme = (mode: ThemeMode) => setThemeState(mode);
+    const toggleTheme = () => setThemeState(prev => (prev === 'day' ? 'night' : 'day'));
 
     return (
         <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>

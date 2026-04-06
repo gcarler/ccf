@@ -31,6 +31,7 @@ interface WorkspaceToolbarProps {
     viewType?: ViewType;
     setViewType?: (v: ViewType) => void;
     availableViews?: ViewType[];
+    leftActions?: React.ReactNode;
     rightActions?: React.ReactNode;
     onSearch?: (query: string) => void;
     onFilter?: () => void;
@@ -43,6 +44,7 @@ export default function WorkspaceToolbar({
     viewType,
     setViewType,
     availableViews,
+    leftActions,
     rightActions,
     onSearch,
     onFilter,
@@ -51,8 +53,9 @@ export default function WorkspaceToolbar({
 }: WorkspaceToolbarProps) {
     return (
         <div className="h-12 bg-white dark:bg-[#1e1f21] border-b border-[#e8eaed] dark:border-white/[0.06] flex items-center justify-between px-4 sticky top-0 z-50 transition-colors duration-300">
-            {/* Left: Breadcrumbs & View Switcher */}
+            {/* Left: leftActions + Breadcrumbs + View Switcher */}
             <div className="flex items-center gap-2 overflow-hidden">
+                {leftActions && <>{leftActions}<div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-0.5 shrink-0" /></>}
                 <div className="flex items-center gap-1 px-1.5 py-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md cursor-pointer text-slate-300 dark:text-slate-600 transition-colors shrink-0">
                     <Home size={13} />
                     <ChevronRight size={11} />

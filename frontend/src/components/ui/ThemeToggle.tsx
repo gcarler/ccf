@@ -60,24 +60,26 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
                 } ${className}`}
             >
                 <button
-                    onClick={() => !isNight && toggleTheme()}
+                    onClick={() => isNight && toggleTheme()}
                     className={`size-6 rounded-lg flex items-center justify-center transition-all ${
                         !isNight
                             ? "bg-white text-amber-500 shadow-sm"
                             : "text-slate-500 hover:text-slate-300"
                     }`}
-                    title="Modo Claro"
+                    title="Cambiar a modo claro"
+                    aria-label="Modo claro"
                 >
                     <Sun size={13} />
                 </button>
                 <button
-                    onClick={() => isNight && toggleTheme()}
+                    onClick={() => !isNight && toggleTheme()}
                     className={`size-6 rounded-lg flex items-center justify-center transition-all ${
                         isNight
                             ? "bg-white/10 text-blue-400"
                             : "text-slate-400 hover:text-slate-600"
                     }`}
-                    title="Modo Oscuro"
+                    title="Cambiar a modo oscuro"
+                    aria-label="Modo oscuro"
                 >
                     <Moon size={13} />
                 </button>

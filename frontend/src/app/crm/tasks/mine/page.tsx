@@ -4,7 +4,7 @@ import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { Search, Calendar, History, Link2, Plus, Users, CheckCircle2, Clock, AlertCircle, Loader2 } from 'lucide-react';
+import { Search, Calendar, History, Link2, Plus, Users, CheckCircle2, Clock, AlertCircle, Loader2, MoreHorizontal } from 'lucide-react';
 import CrmShell from '@/components/crm/CrmShell';
 import AdminHero from '@/components/admin/AdminHero';
 import CommunityToolbarChip from '@/components/community/ToolbarChip';

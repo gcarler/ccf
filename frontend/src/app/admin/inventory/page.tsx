@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { 
     Package, Search, Filter, Plus, CheckCircle2, Wrench, AlertTriangle, ChevronRight,
-    Box, Tool, Cog, History, ShieldCheck, Zap, Sparkles, BarChart3, Tag, QrCode, ExternalLink
+    Box, Cog, History, ShieldCheck, Zap, Sparkles, BarChart3, Tag, QrCode, ExternalLink
 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';

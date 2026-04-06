@@ -165,51 +165,61 @@ function CommandCenterHome({ user, token }: any) {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-y-auto scrollbar-thin p-6 lg:p-10 font-sans relative">
-            {/* Ambient Background */}
-            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-600/5 rounded-full blur-[100px] pointer-events-none" />
-
+        <div className="flex flex-col h-full bg-slate-50 dark:bg-transparent overflow-y-auto scrollbar-thin p-6 lg:p-8 font-sans relative">
             <motion.div
                 variants={containerVariants}
                 initial="hidden"
                 animate="show"
-                className="max-w-[1600px] mx-auto w-full space-y-10 relative z-10"
+                className="max-w-[1600px] w-full space-y-8 relative z-10"
             >
                 {/* 1. Header & Greeting */}
-                <motion.header variants={itemVariants} className="space-y-3">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.3em] shadow-sm">
-                        <Sparkles size={12} className="animate-pulse" /> MESH OS v2.1
+                <motion.header variants={itemVariants} className="flex items-start justify-between gap-4">
+                    <div>
+                        <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                            {greeting}, {displayName}
+                        </h1>
+                        <p className="text-[13px] text-slate-500 dark:text-slate-400 font-medium mt-1">
+                            Este es tu centro de comando. Resumen de actividad reciente.
+                        </p>
                     </div>
-                    <h1 className="text-4xl lg:text-5xl font-black text-slate-800 dark:text-white tracking-tighter">
-                        {greeting}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">{displayName}</span>.
-                    </h1>
-                    <p className="text-base text-slate-500 dark:text-slate-400 font-medium max-w-2xl">
-                        Este es tu centro de comando. Hemos organizado lo más importante para tu crecimiento y servicio hoy.
-                    </p>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                        <Sparkles size={12} /> MESH OS v2.1
+                    </div>
                 </motion.header>
 
-                {/* 2. Key Metrics - Premium Grid */}
-                <motion.section variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                {/* 2. Key Metrics */}
+                <motion.section variants={itemVariants} className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {loading ? (
-                        [1,2,3,4].map(i => <div key={i} className="h-32 bg-slate-200 dark:bg-white/5 rounded-3xl animate-pulse" />)
+                        [1,2,3,4].map(i => <div key={i} className="h-28 bg-white dark:bg-[#252528] rounded-2xl border border-slate-100 dark:border-white/5 animate-pulse" />)
                     ) : (
                         (stats?.cards || []).map((card: any, idx: number) => (
-                            <div key={idx} className="p-6 bg-white dark:bg-[#15171c] rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/20 dark:shadow-none group hover:-translate-y-1 hover:shadow-2xl hover:border-blue-500/30 transition-all duration-300 cursor-pointer relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-bl-full" />
-                                <div className="flex items-center justify-between mb-4 relative z-10">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{card.title}</p>
-                                    <div className="size-8 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-blue-500 group-hover:bg-blue-50 dark:group-hover:bg-blue-500/10 transition-colors">
-                                        {idx === 0 && <TrendingUp size={16} />}
-                                        {idx === 1 && <FolderKanban size={16} />}
-                                        {idx === 2 && <Bell size={16} />}
-                                        {idx === 3 && <Zap size={16} />}
+                            <div key={idx} className="group relative bg-white dark:bg-[#252528] rounded-2xl border border-slate-200/70 dark:border-white/5 p-5 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99]">
+                                {/* Top accent bar */}
+                                <div className={clsx(
+                                    "absolute top-0 left-0 right-0 h-[3px]",
+                                    idx === 0 ? "bg-gradient-to-r from-emerald-400 to-emerald-500" :
+                                    idx === 1 ? "bg-gradient-to-r from-blue-400 to-blue-500" :
+                                    idx === 2 ? "bg-gradient-to-r from-violet-400 to-violet-500" :
+                                    "bg-gradient-to-r from-amber-400 to-amber-500"
+                                )} />
+                                <div className="flex items-center justify-between mb-3 mt-1">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">{card.title}</p>
+                                    <div className="text-slate-400">
+                                        {idx === 0 && <TrendingUp size={14} />}
+                                        {idx === 1 && <FolderKanban size={14} />}
+                                        {idx === 2 && <Bell size={14} />}
+                                        {idx === 3 && <Zap size={14} />}
                                     </div>
                                 </div>
-                                <div className="flex items-end justify-between relative z-10">
-                                    <span className="text-4xl font-black text-slate-800 dark:text-white tracking-tighter">{card.value}</span>
-                                    <span className="text-[10px] font-bold px-2 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg flex items-center gap-1">
-                                        <ArrowUpRight size={10} strokeWidth={3} /> {card.trend}
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter">{card.value}</span>
+                                    <span className={clsx(
+                                        "text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5",
+                                        card.trend.includes('-') 
+                                            ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                                            : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                    )}>
+                                        <ArrowUpRight size={10} strokeWidth={3} className={card.trend.includes('-') ? "rotate-90" : ""} /> {card.trend}
                                     </span>
                                 </div>
                             </div>
@@ -217,150 +227,140 @@ function CommandCenterHome({ user, token }: any) {
                     )}
                 </motion.section>
 
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-                    {/* 3. Main Content: Tasks & Academy */}
-                    <div className="xl:col-span-8 space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* 3. Main Content: Tasks */}
+                    <div className="lg:col-span-2 space-y-6">
                         
-                        {/* Tasks LineUp */}
-                        <motion.div variants={itemVariants} className="space-y-5">
-                            <div className="flex items-center justify-between px-2">
-                                <h2 className="text-lg font-black tracking-tight text-slate-800 dark:text-white flex items-center gap-2">
-                                    <Target size={20} className="text-blue-600" /> Foco de Hoy
+                        {/* Focus / Tasks */}
+                        <motion.div variants={itemVariants} className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                                    <Target size={16} className="text-blue-500" /> Foco de Hoy
                                 </h2>
-                                <Link href="/projects" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-blue-600 transition-colors flex items-center gap-1 group">
-                                    Ver Agenda <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                                <Link href="/projects" className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1">
+                                    Ver Agenda <ChevronRight size={12} />
                                 </Link>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {loading ? (
-                                    [1,2].map(i => <div key={i} className="h-44 bg-slate-200 dark:bg-white/5 rounded-[2.5rem] animate-pulse" />)
+                                    [1,2].map(i => <div key={i} className="h-32 bg-white dark:bg-[#252528] rounded-2xl border border-slate-100 dark:border-white/5 animate-pulse" />)
                                 ) : tasks.length > 0 ? (
                                     tasks.map((task, i) => (
-                                        <div key={task.id} className="p-6 bg-white dark:bg-[#15171c] border border-slate-100 dark:border-white/5 rounded-[2.5rem] shadow-lg shadow-slate-200/20 dark:shadow-none hover:border-blue-500/30 hover:shadow-xl transition-all group cursor-pointer flex flex-col justify-between min-h-[160px]">
-                                            <div className="space-y-3">
+                                        <div key={task.id} className="p-5 bg-white dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 rounded-2xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/10 transition-all group cursor-pointer flex flex-col justify-between min-h-[140px] active:scale-[0.99]">
+                                            <div className="space-y-2.5">
                                                 <div className="flex items-start justify-between gap-4">
-                                                    <div className="px-2.5 py-1 bg-slate-100 dark:bg-white/5 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-500">
+                                                    <div className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded flex text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 max-w-fit">
                                                         {task.project || 'General'}
                                                     </div>
                                                     {task.priority === 'high' && (
-                                                        <div className="size-6 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0">
-                                                            <Activity size={12} strokeWidth={3} />
+                                                        <div className="size-5 rounded bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                                                            <Activity size={10} strokeWidth={3} />
                                                         </div>
                                                     )}
                                                 </div>
-                                                <h3 className="text-[15px] font-bold text-slate-800 dark:text-white leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                                <h3 className="text-[13px] font-semibold text-slate-800 dark:text-slate-200 leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
                                                     {task.title}
                                                 </h3>
                                             </div>
-                                            <div className="flex items-center justify-between pt-4 mt-2 border-t border-slate-100 dark:border-white/5">
-                                                <div className="flex items-center gap-1.5 text-slate-400">
-                                                    <Clock size={14} />
-                                                    <span className="text-[11px] font-bold">Vence pronto</span>
+                                            <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100 dark:border-white/5">
+                                                <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                                                    <Clock size={12} />
+                                                    <span className="text-[11px] font-medium">Vence pronto</span>
                                                 </div>
-                                                <div className="flex items-center">
-                                                    <div className="size-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-[9px] font-black text-white shadow-md border-2 border-white dark:border-[#15171c]">
-                                                        {user?.username ? user.username.substring(0, 2).toUpperCase() : 'ME'}
-                                                    </div>
+                                                <div className="size-6 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 flex items-center justify-center text-[9px] font-black">
+                                                    {user?.username ? user.username.substring(0, 2).toUpperCase() : 'ME'}
                                                 </div>
                                             </div>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="col-span-full p-12 text-center bg-white dark:bg-[#15171c] border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[2.5rem]">
-                                        <div className="size-16 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                                            <CheckCircle2 size={24} className="text-emerald-500" />
+                                    <div className="col-span-full py-10 text-center bg-white dark:bg-[#252528] border border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
+                                        <div className="size-10 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                            <CheckCircle2 size={16} className="text-emerald-500" />
                                         </div>
-                                        <p className="text-slate-800 dark:text-white font-bold text-sm mb-1">Todo al día</p>
-                                        <p className="text-slate-400 font-medium text-xs">No tienes tareas urgentes pendientes.</p>
+                                        <p className="text-slate-800 dark:text-slate-200 font-semibold text-[13px] mb-1">Todo al día</p>
+                                        <p className="text-slate-400 font-medium text-[12px]">No tienes tareas urgentes pendientes.</p>
                                     </div>
                                 )}
                             </div>
                         </motion.div>
 
                         {/* Academy Progress Banner */}
-                        <motion.div variants={itemVariants} className="p-8 md:p-10 rounded-[3rem] bg-[#001b48] border border-[#018abd]/30 text-white relative overflow-hidden group shadow-2xl">
-                            <div className="absolute top-[-20%] right-[-10%] w-[80%] h-[150%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#018abd]/40 via-[#004581]/10 to-transparent blur-2xl transition-transform duration-700 group-hover:scale-110" />
-                            <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-10 mix-blend-overlay" />
-                            
-                            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
-                                <div className="space-y-5 flex-1 w-full">
-                                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-blue-200 border border-white/10">
-                                        <BookOpen size={14} /> Academia Digital
-                                    </div>
-                                    <div>
-                                        <h3 className="text-3xl md:text-4xl font-black tracking-tight mb-2">Fundamentos de la Fe I</h3>
-                                        <p className="text-blue-200/70 text-sm font-medium">Módulo 3: La Gracia · 2 lecciones restantes</p>
-                                    </div>
-                                    <div className="flex items-center gap-4 w-full max-w-md">
-                                        <div className="h-2 flex-1 bg-white/10 rounded-full overflow-hidden">
-                                            <motion.div
-                                                initial={{ width: 0 }}
-                                                animate={{ width: '65%' }}
-                                                transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
-                                                className="h-full bg-gradient-to-r from-blue-400 to-[#018abd] shadow-[0_0_15px_rgba(1,138,189,0.8)]"
-                                            />
-                                        </div>
-                                        <span className="text-sm font-black tracking-widest text-blue-100">65%</span>
-                                    </div>
+                        <motion.div variants={itemVariants} className="p-6 rounded-2xl bg-white dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 shadow-sm relative overflow-hidden flex flex-col sm:flex-row items-center gap-6">
+                            <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500" />
+                            <div className="flex-1 space-y-3">
+                                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 rounded text-[10px] font-black uppercase tracking-[0.15em] text-blue-600 dark:text-blue-400">
+                                    <BookOpen size={12} /> Academia
                                 </div>
-                                <Link href="/academy" className="shrink-0 px-8 py-5 bg-white text-[#001b48] rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-blue-50 active:scale-95 transition-all shadow-xl shadow-black/20 flex items-center gap-3">
-                                    Continuar <PlayCircle size={18} className="fill-[#001b48] text-white" />
-                                </Link>
+                                <div>
+                                    <h3 className="text-[15px] font-bold text-slate-800 dark:text-white">Fundamentos de la Fe I</h3>
+                                    <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">Módulo 3: La Gracia · 2 lecciones restantes</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="h-1.5 flex-1 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: '65%' }}
+                                            transition={{ duration: 1, delay: 0.2 }}
+                                            className="h-full bg-blue-500 rounded-full"
+                                        />
+                                    </div>
+                                    <span className="text-[11px] font-black text-slate-600 dark:text-slate-300">65%</span>
+                                </div>
                             </div>
+                            <Link href="/academy" className="shrink-0 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[11px] font-bold hover:bg-slate-800 dark:hover:bg-slate-100 active:scale-95 transition-all flex items-center gap-2">
+                                Continuar <PlayCircle size={14} />
+                            </Link>
                         </motion.div>
                     </div>
 
                     {/* 4. Right Panel: Intelligence & Activity */}
-                    <motion.aside variants={itemVariants} className="xl:col-span-4 space-y-6">
+                    <div className="space-y-6">
                         
-                        {/* Optimus Brain AI Widget */}
-                        <div className="p-8 bg-white dark:bg-[#15171c] border border-slate-100 dark:border-white/5 rounded-[2.5rem] shadow-xl shadow-slate-200/20 dark:shadow-none relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-bl-[100px] transition-transform duration-500 group-hover:scale-125" />
-                            
-                            <div className="relative z-10 space-y-6">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-lg font-black tracking-tight text-slate-800 dark:text-white flex items-center gap-2">
-                                        <Bot size={20} className="text-purple-500" /> MESH AI
-                                    </h3>
-                                    <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-lg">
-                                        <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                        <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">En línea</span>
-                                    </div>
+                        {/* MESH AI Widget */}
+                        <motion.div variants={itemVariants} className="p-5 bg-white dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 rounded-2xl shadow-sm">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                                    <Bot size={16} className="text-violet-500" /> MESH AI
+                                </h3>
+                                <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
+                                    <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    En línea
                                 </div>
-                                
-                                <div className="p-5 bg-slate-50 dark:bg-black/20 rounded-2xl border border-slate-100 dark:border-white/5 space-y-3">
-                                    <div className="flex items-center gap-2">
-                                        <Sparkles size={12} className="text-purple-500" />
-                                        <span className="text-[9px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-[0.2em]">
-                                            {insights.length > 0 ? insights[0].title : 'Insight del día'}
-                                        </span>
-                                    </div>
-                                    <p className="text-[13px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed italic">
-                                        {insights.length > 0
-                                            ? `"${insights[0].payload}"`
-                                            : 'Has mantenido un buen ritmo de estudio esta semana. Si dedicas 20 minutos hoy, podrías terminar el módulo actual antes del fin de semana.'}
-                                    </p>
-                                </div>
-
-                                <button className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 dark:hover:bg-slate-100 active:scale-95 transition-all flex items-center justify-center gap-2">
-                                    Preguntar a MESH <ArrowRight size={14} />
-                                </button>
                             </div>
-                        </div>
+                            
+                            <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-100 dark:border-white/5 space-y-2 mb-4">
+                                <div className="flex items-center gap-1.5">
+                                    <Sparkles size={12} className="text-violet-500" />
+                                    <span className="text-[9px] font-black text-violet-600 dark:text-violet-400 uppercase tracking-[0.15em]">
+                                        {insights.length > 0 ? insights[0].title : 'Insight del día'}
+                                    </span>
+                                </div>
+                                <p className="text-[12px] text-slate-600 dark:text-slate-300 font-medium italic">
+                                    {insights.length > 0
+                                        ? `"${insights[0].payload}"`
+                                        : 'Has mantenido un buen ritmo de estudio esta semana. Si dedicas 20 minutos hoy, podrías terminar el módulo.'}
+                                </p>
+                            </div>
+
+                            <button className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-lg text-[11px] font-bold hover:opacity-90 active:scale-95 transition-all">
+                                Consultar <ArrowRight size={12} />
+                            </button>
+                        </motion.div>
 
                         {/* Recent Activity */}
-                        <div className="bg-white dark:bg-[#15171c] border border-slate-100 dark:border-white/5 rounded-[2.5rem] p-8 shadow-sm">
-                            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6 flex items-center gap-2">
-                                <Activity size={14} /> Feed de Actividad
+                        <motion.div variants={itemVariants} className="p-5 bg-white dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 rounded-2xl shadow-sm">
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2">
+                                <Activity size={12} /> Actividad Reciente
                             </h3>
-                            <div className="space-y-5">
-                                <ActivityItem icon={CheckCircle2} title="Lección Finalizada" desc="Completaste 'La Naturaleza de Dios'." time="Hace 2h" color="text-emerald-500" bg="bg-emerald-50 dark:bg-emerald-500/10" />
-                                <ActivityItem icon={MessageSquare} title="Comentario en Tarea" desc="El líder respondió a tu reporte." time="Hace 5h" color="text-blue-500" bg="bg-blue-50 dark:bg-blue-500/10" />
-                                <ActivityItem icon={Star} title="Nueva Insignia" desc="Alcanzaste 1,000 XP acumulados." time="Ayer" color="text-amber-500" bg="bg-amber-50 dark:bg-amber-500/10" />
+                            <div className="space-y-4">
+                                <ActivityItem icon={CheckCircle2} title="Lección Finalizada" desc="Completaste 'La Naturaleza de Dios'." time="2h" color="text-emerald-500" bg="bg-emerald-50 dark:bg-emerald-500/10" />
+                                <ActivityItem icon={MessageSquare} title="Comentario en Tarea" desc="El líder respondió a tu reporte." time="5h" color="text-blue-500" bg="bg-blue-50 dark:bg-blue-500/10" />
+                                <ActivityItem icon={Star} title="Nueva Insignia" desc="Alcanzaste 1,000 XP." time="Ayer" color="text-amber-500" bg="bg-amber-50 dark:bg-amber-500/10" />
                             </div>
-                        </div>
-                    </motion.aside>
+                        </motion.div>
+                    </div>
                 </div>
             </motion.div>
         </div>

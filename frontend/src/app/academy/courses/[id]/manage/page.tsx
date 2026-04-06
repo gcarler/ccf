@@ -47,7 +47,8 @@ interface CourseDetails {
 }
 
 export default function CourseManagementPage() {
-    const { id } = useParams();
+    const params = useParams();
+    const id = params ? (params.id as string) : null;
     const router = useRouter();
     const { token, user, isAuthenticated } = useAuth();
     

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -30,6 +30,7 @@ import {
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import Skeleton from '@/components/ui/Skeleton';
 
 interface Category {
     id: number;
@@ -259,3 +260,4 @@ function PaymentMethodItem({ icon: Icon, label, active }: any) {
         </div>
     );
 }
+

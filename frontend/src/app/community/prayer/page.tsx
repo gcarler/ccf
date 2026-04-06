@@ -112,7 +112,7 @@ export default function PrayerWall() {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     whileHover={{ scale: 1.05 }}
-                    whileActive={{ scale: 0.95 }}
+                    whileTap={{ scale: 0.95 }}
                 >
                     <Link href="/community/prayer/request" className="h-16 px-10 bg-primary text-white rounded-[2rem] text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/40 hover:shadow-primary/50 transition-all flex items-center gap-4 group">
                         <PlusCircle size={24} strokeWidth={2.5} className="group-hover:rotate-90 transition-transform duration-500" />

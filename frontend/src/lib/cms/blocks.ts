@@ -3,7 +3,7 @@ export interface CmsBlockDefinition {
   label: string;
   description: string;
   page: string;
-  sample: Record<string, unknown>;
+  sample: Record<string, unknown> | unknown[];
 }
 
 export const FARO_BLOCKS: CmsBlockDefinition[] = [

@@ -1342,3 +1342,55 @@ function ClusterNode({ label, status, load }: any) {
         </div>
     );
 }
+
+interface RolloutControlProps {
+    featureId: string;
+    label: string;
+    rule?: { roles_allow?: string[]; rollout_percent?: number; users_allow?: string[]; users_deny?: string[] } | null;
+    selectedRole: string;
+    onRoleChange: (value: string) => void;
+    onSave: (opts: { role: string; percent: number; usersAllow: string[]; usersDeny: string[] }) => void;
+    loading?: boolean;
+}
+
+function RolloutControl({ featureId, label, rule, selectedRole, onRoleChange, onSave, loading }: RolloutControlProps) {
+    const [percent, setPercent] = React.useState(rule?.rollout_percent ?? 100);
+    return (
+        <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 space-y-4">
+            <div className="flex items-center justify-between">
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">{label}</span>
+                <span className="text-[9px] font-black bg-blue-100 dark:bg-blue-900/30 text-blue-600 px-2 py-0.5 rounded-full uppercase">{featureId}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                    <label className="text-[9px] uppercase font-black text-slate-400 tracking-widest">Rol</label>
+                    <select
+                        value={selectedRole}
+                        onChange={(e) => onRoleChange(e.target.value)}
+                        className="w-full text-[11px] font-bold bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 outline-none"
+                    >
+                        <option value="">Todos</option>
+                        <option value="admin">Admin</option>
+                        <option value="pastor">Pastor</option>
+                        <option value="staff">Staff</option>
+                    </select>
+                </div>
+                <div className="space-y-1">
+                    <label className="text-[9px] uppercase font-black text-slate-400 tracking-widest">Rollout {percent}%</label>
+                    <input
+                        type="range" min={0} max={100} value={percent}
+                        onChange={(e) => setPercent(Number(e.target.value))}
+                        className="w-full accent-blue-600"
+                    />
+                </div>
+            </div>
+            <button
+                onClick={() => onSave({ role: selectedRole, percent, usersAllow: rule?.users_allow || [], usersDeny: rule?.users_deny || [] })}
+                disabled={loading}
+                className="w-full py-3 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all disabled:opacity-50"
+            >
+                {loading ? 'Guardando...' : 'Aplicar Regla'}
+            </button>
+        </div>
+    );
+}

@@ -7,7 +7,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Save, CloudCheck, CloudOff, Loader2 } from 'lucide-react';
+import { Save, Cloud, CloudOff, Loader2 } from 'lucide-react';
 
 interface WikiEditorProps {
     initialContent: string;
@@ -79,7 +79,7 @@ export default function WikiEditor({
                             )}
                             {status === 'saved' && (
                                 <>
-                                    <CloudCheck size={14} className="text-emerald-500" />
+                                    <Cloud size={14} className="text-emerald-500" />
                                     <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Guardado</span>
                                 </>
                             )}

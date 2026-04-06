@@ -15,7 +15,8 @@ import {
     Loader2,
     Check,
     History,
-    ArrowUpRight
+    ArrowUpRight,
+    FileText
 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';

@@ -17,7 +17,8 @@ import {
     ShieldCheck,
     ArrowUpRight,
     Target,
-    Loader2
+    Loader2,
+    Clock
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -225,3 +226,4 @@ function CandidateStat({ label, value, icon: Icon, color, auraColor }: any) {
         </div>
     );
 }
+

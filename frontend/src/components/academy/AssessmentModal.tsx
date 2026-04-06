@@ -12,7 +12,7 @@ import clsx from 'clsx';
 
 interface Option {
     id: number;
-    option_text: str;
+    option_text: string;
 }
 
 interface Question {
