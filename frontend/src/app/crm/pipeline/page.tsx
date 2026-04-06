@@ -23,7 +23,8 @@ import {
     Zap,
     Clock,
     CheckCircle2,
-    User
+    User,
+    Mail
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -34,6 +35,7 @@ import { DataTable } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
 import Skeleton from '@/components/ui/Skeleton';
 import StatusPicker, { StatusOption } from '@/components/ui/StatusPicker';
+import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -143,12 +145,16 @@ export default function ConsolidationPipelinePage() {
             viewType={viewType}
             onViewChange={setViewType}
             rightActions={
-                <button
-                    onClick={() => {}}
-                    className="flex items-center gap-2 bg-blue-600 px-5 py-2 rounded-xl text-[11px] font-black text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-900/20 uppercase tracking-widest"
-                >
-                    <UserPlus size={14} /> Nuevo Lead
-                </button>
+                <SplitDropdownButton 
+                    mainLabel="Nuevo"
+                    icon={UserPlus}
+                    onMainClick={() => {}}
+                    options={[
+                        { id: 'lead', label: 'Lead', icon: UserPlus, onClick: () => {} },
+                        { id: 'call', label: 'Llamada', icon: Phone, onClick: () => {} },
+                        { id: 'mail', label: 'Email', icon: Mail, onClick: () => {} }
+                    ]}
+                />
             }
         >
         <div className="flex flex-col md:flex-row h-full w-full overflow-hidden">

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
 import {
     Search,
     Filter,
@@ -321,7 +322,7 @@ export default function MembersPage() {
         if(!token) return;
         setLoadingTasks(true);
         try {
-            const data = await apiFetch<CrmTask[]>(`/crm/tasks/all?member_id=${id}`, { token });
+            const data = await apiFetch<CrmTask[]>(`/crm/tasks?assignee_id=${id}`, { token });
             setTasks(Array.isArray(data) ? data : []);
         } catch(e) { console.error(e); }
         finally { setLoadingTasks(false); }
@@ -441,22 +442,15 @@ export default function MembersPage() {
             viewType={viewType}
             onViewChange={(v) => setViewType(v as ViewType)}
             rightActions={
-                activeTab === 'members'
-                    ? (
-                        <button
-                            onClick={() => setIsRegDrawerOpen(true)}
-                            className="flex items-center gap-2 bg-blue-600 px-5 py-2 rounded-2xl text-xs font-black text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-900/20 uppercase tracking-widest print:hidden"
-                        >
-                            <Plus size={14} /> Registrar miembro
-                        </button>
-                    ) : (
-                        <button
-                            onClick={() => setIsFamilyRegDrawerOpen(true)}
-                            className="flex items-center gap-2 bg-slate-900 px-5 py-2 rounded-2xl text-xs font-black text-white hover:bg-black transition-all shadow-lg uppercase tracking-widest print:hidden"
-                        >
-                            <Plus size={14} /> Registrar familia
-                        </button>
-                    )
+                <SplitDropdownButton
+                    mainLabel="Nuevo"
+                    icon={activeTab === 'members' ? Plus : FamilyIcon}
+                    onMainClick={() => activeTab === 'members' ? setIsRegDrawerOpen(true) : setIsFamilyRegDrawerOpen(true)}
+                    options={[
+                        { id: 'member', label: 'Miembro', icon: User, onClick: () => setIsRegDrawerOpen(true) },
+                        { id: 'family', label: 'Familia', icon: FamilyIcon, onClick: () => setIsFamilyRegDrawerOpen(true) }
+                    ]}
+                />
             }
         >
         <div className="flex flex-1 relative overflow-hidden h-full">

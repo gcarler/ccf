@@ -1193,7 +1193,7 @@ export default function SystemSettings() {
                                     </div>
                                 ))}
                             </div>
-                        </div>
+                        )}
                     </section>
                 </div>
 

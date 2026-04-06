@@ -337,32 +337,116 @@ async def send_crm_message(
 
 # --- TASKS ---
 
-@router.get("/tasks/mine", response_model=List[dict])
-def list_my_crm_tasks(
+@router.get("/tasks", response_model=List[dict])
+@router.get("/tasks/", response_model=List[dict])
+def list_crm_tasks(
+    status: Optional[str] = None,
+    assignee_id: Optional[int] = None,
+    member_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    tasks = crud.get_crm_tasks(db, assignee_id=current_user.id)
-    return [{"id": t.id, "title": t.title, "status": t.status, "due_date": t.due_date} for t in tasks]
+    """Lista todas las tareas pastorales. Filtra por status, assignee_id o member_id."""
+    try:
+        q = db.query(models.CrmTask)
+        if assignee_id:
+            q = q.filter(models.CrmTask.member_id == assignee_id)
+        if member_id:
+            q = q.filter(models.CrmTask.member_id == member_id)
+        tasks = q.all()
+        result = []
+        for t in tasks:
+            member_name = None
+            if hasattr(t, 'member_id') and t.member_id:
+                member = db.query(models.Member).filter(models.Member.id == t.member_id).first()
+                if member:
+                    member_name = f"{member.first_name} {member.last_name}"
+            result.append({
+                "id": t.id,
+                "title": t.title,
+                "description": getattr(t, 'description', None),
+                "status": t.status,
+                "priority": getattr(t, 'priority', 'medium'),
+                "category": getattr(t, 'category', 'Pastoral'),
+                "due_date": t.due_date.isoformat() if t.due_date else None,
+                "member_id": getattr(t, 'member_id', None),
+                "member_name": member_name,
+                "assigned_to": getattr(t, 'assignee_id', None),
+                "created_at": t.created_at.isoformat() if hasattr(t, 'created_at') and t.created_at else datetime.utcnow().isoformat(),
+            })
+        if status:
+            result = [r for r in result if r["status"] == status]
+        return result
+    except Exception as e:
+        return []
 
-@router.post("/tasks/", response_model=schemas.CrmTask)
+@router.post("/tasks/", response_model=dict)
 def create_crm_task(
-    payload: schemas.CrmTaskCreate,
+    payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin)
+    current_user: models.User = Depends(get_current_user)
 ):
-    return crud.create_crm_task(db, payload)
+    """Crea una nueva tarea pastoral. Accesible a todos los usuarios autenticados."""
+    try:
+        task = models.CrmTask(
+            title=payload.get("title", ""),
+            description=payload.get("description"),
+            status=payload.get("status", "pending"),
+            priority=payload.get("priority", "medium"),
+            category=payload.get("category", "Pastoral"),
+            assignee_id=current_user.id,
+            member_id=int(payload["member_id"]) if payload.get("member_id") else None,
+            due_date=datetime.fromisoformat(payload["due_date"]) if payload.get("due_date") else None,
+            created_at=datetime.utcnow(),
+        )
+        db.add(task)
+        db.commit()
+        db.refresh(task)
+        return {
+            "id": task.id,
+            "title": task.title,
+            "description": getattr(task, 'description', None),
+            "status": task.status,
+            "priority": getattr(task, 'priority', 'medium'),
+            "category": getattr(task, 'category', 'Pastoral'),
+            "due_date": task.due_date.isoformat() if task.due_date else None,
+            "member_id": getattr(task, 'member_id', None),
+            "member_name": None,
+            "created_at": task.created_at.isoformat(),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-@router.patch("/tasks/{task_id}", response_model=schemas.CrmTask)
+@router.patch("/tasks/{task_id}", response_model=dict)
 def update_crm_task(
     task_id: int,
-    payload: schemas.CrmTaskUpdate,
+    payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    task = crud.update_crm_task(db, task_id=task_id, payload=payload)
-    if not task: raise HTTPException(404, "Task not found")
-    return task
+    task = db.query(models.CrmTask).filter(models.CrmTask.id == task_id).first()
+    if not task:
+        raise HTTPException(404, "Task not found")
+    for field in ["title", "description", "status", "priority", "category", "due_date", "member_id"]:
+        if field in payload:
+            if field == "due_date" and payload[field]:
+                setattr(task, field, datetime.fromisoformat(payload[field]))
+            elif field == "member_id" and payload[field]:
+                setattr(task, field, int(payload[field]))
+            else:
+                setattr(task, field, payload[field])
+    db.commit()
+    db.refresh(task)
+    return {
+        "id": task.id,
+        "title": task.title,
+        "status": task.status,
+        "priority": getattr(task, 'priority', 'medium'),
+        "category": getattr(task, 'category', 'Pastoral'),
+        "due_date": task.due_date.isoformat() if task.due_date else None,
+        "created_at": task.created_at.isoformat() if hasattr(task, 'created_at') and task.created_at else None,
+    }
+
 
 # --- VOLUNTEERS ---
 
@@ -420,16 +504,134 @@ def validate_scanner_token(
         if not member:
             raise HTTPException(status_code=404, detail="Miembro no encontrado")
             
-        # Registrar asistencia automática a un evento genérico si es necesario
-        # Por ahora solo validamos identidad para el CRM
         return {
             "valid": True,
             "member_id": member.id,
             "name": f"{member.first_name} {member.last_name}",
             "role": member.church_role,
             "status": member.spiritual_status,
-            "timestamp": _utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat()
         }
     except (ValueError, IndexError):
         raise HTTPException(status_code=400, detail="Código malformado")
+
+
+# ─── ROUTE ALIASES ──────────────────────────────────────────────────────────
+# Short-path aliases so frontend can call simpler URLs without the sub-prefix.
+
+@router.get("/pipeline", response_model=list)
+def pipeline_alias(
+    stage: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """Alias de /consolidation/pipeline para compatibilidad de frontend."""
+    return get_pipeline(stage=stage, db=db, current_user=current_user)
+
+
+@router.get("/groups", response_model=list)
+def groups_alias(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """Alias de /glory-houses para compatibilidad de frontend."""
+    houses = list_glory_houses(db=db, current_user=current_user)
+    return [
+        {
+            "id": h.id,
+            "name": h.name,
+            "zone": h.zone,
+            "address": h.address,
+            "latitude": h.latitude,
+            "longitude": h.longitude,
+            "leader_name": h.leader_name,
+            "members_count": h.members_count,
+            "capacity": h.capacity,
+            "status": h.status,
+            "created_at": h.created_at.isoformat() if h.created_at else None,
+        }
+        for h in houses
+    ]
+
+
+@router.get("/volunteers", response_model=list)
+def volunteers_alias(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """Alias de /volunteers/shifts para compatibilidad de frontend."""
+    return list_volunteer_shifts(member_id=None, db=db, current_user=current_user)
+
+
+@router.get("/prayers", response_model=list)
+def prayers_alias(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """Alias de /prayer-requests/ para compatibilidad de frontend."""
+    requests_list = list_prayer_requests(status=None, db=db, current_user=current_user)
+    return [
+        {
+            "id": p.id,
+            "requester_name": p.requester_name,
+            "request_text": p.request_text,
+            "is_public": p.is_public,
+            "status": p.status,
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+        }
+        for p in requests_list
+    ]
+
+
+@router.get("/analytics", response_model=dict)
+def crm_analytics(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """Métricas agregadas del CRM para el dashboard de analíticas."""
+    from sqlalchemy import func as sqlfunc
+
+    total_members = db.query(models.Member).count()
+    active_members = db.query(models.Member).filter(
+        models.Member.spiritual_status.in_(["Activo", "active", "Miembro Activo"])
+    ).count()
+
+    # Pipeline por etapa
+    pipeline_rows = (
+        db.query(models.ConsolidationPipeline.stage, sqlfunc.count(models.ConsolidationPipeline.id))
+        .group_by(models.ConsolidationPipeline.stage)
+        .all()
+    )
+    pipeline_by_stage = {stage: count for stage, count in pipeline_rows}
+    total_leads = sum(pipeline_by_stage.values())
+
+    # Consejería
+    open_counseling = db.query(models.CounselingTicket).filter(
+        models.CounselingTicket.status == "open"
+    ).count()
+
+    # Eventos del mes
+    from datetime import timezone
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=None)
+    events_this_month = db.query(models.CrmEvent).filter(
+        models.CrmEvent.event_date >= month_start
+    ).count()
+
+    # Glory houses / grupos
+    total_groups = db.query(models.GloryHouse).count()
+
+    # Familia
+    total_families = db.query(models.Family).count()
+
+    return {
+        "total_members": total_members,
+        "active_members": active_members,
+        "total_leads": total_leads,
+        "pipeline_by_stage": pipeline_by_stage,
+        "open_counseling": open_counseling,
+        "events_this_month": events_this_month,
+        "total_groups": total_groups,
+        "total_families": total_families,
+    }
 

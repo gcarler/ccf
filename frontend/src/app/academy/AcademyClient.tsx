@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { useContentBlocks } from '@/hooks/useContent';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { ViewType } from '@/components/ViewSwitcher';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
@@ -107,12 +106,22 @@ export default function AcademyClient({ initialCourses, initialEnrollments }: Ac
 
     return (
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden font-sans relative">
-            <WorkspaceToolbar
-                breadcrumbs={[{ label: 'Academia Digital', icon: GraduationCap }]}
-                viewType={viewType}
-                setViewType={setViewType}
-                availableViews={['grid', 'table']}
-            />
+            <div className="shrink-0 h-12 border-b border-slate-100 dark:border-white/5 flex items-center px-6 gap-2 bg-white/50 dark:bg-black/20 backdrop-blur-md relative z-20">
+                <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
+                    {(['grid', 'table'] as ViewType[]).map((vt) => (
+                        <button
+                            key={vt}
+                            onClick={() => setViewType(vt)}
+                            className={clsx(
+                                'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all',
+                                viewType === vt ? 'bg-white dark:bg-[#1a1b1e] text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white'
+                            )}
+                        >
+                            {vt}
+                        </button>
+                    ))}
+                </div>
+            </div>
 
             {/* Ambient Background */}
             <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-600/5 rounded-full blur-[150px] pointer-events-none" />
@@ -126,12 +135,12 @@ export default function AcademyClient({ initialCourses, initialEnrollments }: Ac
                     className="max-w-[1600px] mx-auto space-y-10"
                 >
                     {/* Hero Section Premium */}
-                    <motion.section variants={itemVariants} className="relative w-full rounded-[3.5rem] shadow-2xl group border border-white/10 overflow-hidden bg-[#001b48]">
+                    <motion.section variants={itemVariants} className="relative w-full rounded-[2.5rem] shadow-xl group border border-white/10 overflow-hidden bg-[#001b48]">
                         <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.05] mix-blend-overlay" />
                         <div className="absolute top-[-50%] right-[-10%] w-[80%] h-[200%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#018abd]/30 via-[#004581]/10 to-transparent blur-3xl transition-transform duration-1000 group-hover:scale-110 pointer-events-none" />
                         
-                        <div className="relative h-full flex flex-col md:flex-row items-center justify-between p-12 lg:p-16 gap-10">
-                            <div className="space-y-6 max-w-2xl">
+                        <div className="relative h-full flex flex-col md:flex-row items-center justify-between p-8 lg:p-10 gap-8">
+                            <div className="space-y-4 max-w-2xl">
                                 <motion.div
                                     initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                                     className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-xl rounded-full text-[10px] font-black uppercase tracking-[0.3em] text-blue-100 border border-white/20 shadow-inner"
@@ -140,10 +149,10 @@ export default function AcademyClient({ initialCourses, initialEnrollments }: Ac
                                 </motion.div>
                                 
                                 <div>
-                                    <h2 className="text-5xl lg:text-7xl font-black text-white tracking-tighter leading-[0.95] mb-4">
+                                    <h2 className="text-3xl lg:text-4xl font-black text-white tracking-tight leading-[1.1] mb-2">
                                         Forjando <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-[#018abd]">Carácter.</span>
                                     </h2>
-                                    <p className="text-blue-100/70 text-lg font-medium leading-relaxed">
+                                    <p className="text-blue-100/70 text-sm font-medium leading-relaxed">
                                         {(() => {
                                             const raw = pageContents.academy_hero?.content || '';
                                             // Strip encoding artifacts: replacement chars, double-question-marks, etc.
@@ -153,16 +162,16 @@ export default function AcademyClient({ initialCourses, initialEnrollments }: Ac
                                     </p>
                                 </div>
 
-                                <div className="flex items-center gap-4 pt-4">
+                                <div className="flex items-center gap-3 pt-2">
                                     <button 
                                         onClick={() => router.push('/academy/profile/progress')}
-                                        className="px-8 py-5 bg-white text-[#001b48] rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-blue-50 active:scale-95 transition-all shadow-xl flex items-center gap-3"
+                                        className="px-6 py-3 bg-white text-[#001b48] rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] hover:bg-blue-50 active:scale-95 transition-all shadow-xl flex items-center gap-2"
                                     >
-                                        Ver mi progreso <BarChart3 size={18} className="text-[#001b48]" />
+                                        Ver mi progreso <BarChart3 size={16} className="text-[#001b48]" />
                                     </button>
                                     <button 
                                         onClick={() => router.push('/academy/curriculum')}
-                                        className="px-8 py-5 bg-white/10 text-white border border-white/20 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-white/20 active:scale-95 transition-all"
+                                        className="px-6 py-3 bg-white/10 text-white border border-white/20 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] hover:bg-white/20 active:scale-95 transition-all"
                                     >
                                         Ver Pénsum
                                     </button>

@@ -811,7 +811,7 @@ function StatusGroup({
                                 className="flex items-center gap-2 px-4 py-2.5 text-[12px] font-medium text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-50 dark:hover:bg-white/[0.02] w-full transition-colors border-b border-slate-100 dark:border-white/[0.04] min-h-[40px]"
                             >
                                 <Plus size={13} />
-                                Añadir Tarea
+                                Nuevo
                             </button>
                         )}
                     </motion.div>
@@ -933,7 +933,7 @@ export default function ProjectListView({
                     </div>
                     <div className="text-center">
                         <p className="text-sm font-bold text-slate-500">Sin tareas en este proyecto</p>
-                        <p className="text-xs text-slate-400 mt-1">Haz clic en &quot;+ Añadir Tarea&quot; para empezar</p>
+                        <p className="text-xs text-slate-400 mt-1">Haz clic en &quot;+ Nuevo&quot; para empezar</p>
                     </div>
                 </div>
             )}

@@ -33,17 +33,17 @@ export default function AdminDashboardPage() {
       if (!token) return;
       setLoading(true);
       try {
-        const [testRes, taskRes, insightRes, analyticsRes] = await Promise.all([
+        const [testRes, taskRes, insightRes, analyticsRes] = await Promise.allSettled([
           apiFetch<any[]>("/admin/testimonials", { token, cache: 'no-store' }),
           apiFetch<any[]>("/agents/tasks", { token, cache: 'no-store' }),
           apiFetch<any[]>("/agents/insights", { token, cache: 'no-store' }),
           apiFetch<any>("/analytics/summary", { token, cache: 'no-store' })
         ]);
 
-        setTestimonials(Array.isArray(testRes) ? testRes : []);
-        setAgentTasks(Array.isArray(taskRes) ? taskRes : []);
-        setAgentInsights(Array.isArray(insightRes) ? insightRes : []);
-        setAnalytics(analyticsRes);
+        setTestimonials(testRes.status === 'fulfilled' && Array.isArray(testRes.value) ? testRes.value : []);
+        setAgentTasks(taskRes.status === 'fulfilled' && Array.isArray(taskRes.value) ? taskRes.value : []);
+        setAgentInsights(insightRes.status === 'fulfilled' && Array.isArray(insightRes.value) ? insightRes.value : []);
+        setAnalytics(analyticsRes.status === 'fulfilled' ? analyticsRes.value : null);
       } catch (e) {
         console.error("Error fetching admin data", e);
       } finally {

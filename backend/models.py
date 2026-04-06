@@ -757,17 +757,19 @@ class CrmTask(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
+    category = Column(String(100), default="Pastoral", nullable=True, index=True)
     member_id = Column(Integer, ForeignKey("members.id"), nullable=True, index=True)
     lead_id = Column(Integer, ForeignKey("consolidation_pipeline.id"), nullable=True, index=True)
-    assignee_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    assignee_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     due_date = Column(DateTime, nullable=True)
-    status = Column(String(20), default="todo") # todo, done
-    priority = Column(String(20), default="normal") # urgent, high, normal, low
+    status = Column(String(20), default="pending") # pending, in_progress, done, urgent
+    priority = Column(String(20), default="medium") # urgent, high, medium, low
     created_at = Column(DateTime, default=_utcnow, index=True)
     
     member = relationship("Member", back_populates="tasks")
     lead = relationship("ConsolidationPipeline")
     assignee = relationship("User")
+
 
 class VolunteerShift(Base):
     __tablename__ = "volunteer_shifts"

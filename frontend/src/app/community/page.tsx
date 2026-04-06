@@ -716,7 +716,7 @@ export default function CommunityHubPage() {
                             <span className="px-2 py-0.5 rounded-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[10px] font-medium">{column.items.length}</span>
                         </div>
                         <button className="text-[10px] font-medium uppercase tracking-[0.25em] text-[hsl(var(--primary))] flex items-center gap-2">
-                            <Plus size={12} /> Añadir tarea
+                            <Plus size={12} /> Nuevo
                         </button>
                     </div>
 

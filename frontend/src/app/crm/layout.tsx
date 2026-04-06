@@ -16,41 +16,47 @@ import {
     Calendar,
     QrCode,
     Settings,
-    BarChart3
+    PieChart,
+    UserPlus,
+    KanbanSquare,
+    MessageCircle,
+    Mail,
+    Contact,
+    Scan
 } from 'lucide-react';
 
 const SIDEBAR_SECTIONS = [
     {
-        title: 'Favoritos',
+        title: 'Actividad y Métricas',
         items: [
-            { id: 'dashboard', label: 'Inicio', href: '/crm', icon: LayoutDashboard },
-            { id: 'analytics', label: 'Analítica', href: '/crm/analytics', icon: BarChart3 },
-            { id: 'messaging', label: 'Mensajería', href: '/crm/messaging', icon: Inbox },
-            { id: 'projects', label: 'Proyectos', href: '/crm/pipeline', icon: Target },
+            { id: 'analytics', label: 'Panel Analítico', href: '/crm/analytics', icon: PieChart },
         ]
     },
     {
-        title: 'Ministerio',
-        canAdd: true,
-        items: [
-            { id: 'pipeline', label: 'Consolidación', href: '/crm/pipeline', icon: Layers },
-            { id: 'counseling', label: 'Consejería', href: '/crm/counseling', icon: Heart },
-            { id: 'groups', label: 'Casas de Gloria', href: '/crm/groups', icon: HouseIcon },
-        ]
-    },
-    {
-        title: 'Comunidad',
-        canAdd: true,
+        title: 'Directorio Pastoral',
         items: [
             { id: 'members', label: 'Miembros', href: '/crm/members', icon: Users },
-            { id: 'volunteers', label: 'Servidores', href: '/crm/volunteers', icon: ShieldCheck },
-            { id: 'events', label: 'Eventos', href: '/crm/events', icon: Calendar },
+            { id: 'groups', label: 'Casas de Gloria', href: '/crm/groups', icon: HouseIcon },
+            { id: 'contacts', label: 'Contactos/Leads', href: '/crm/contacts', icon: UserPlus },
+            { id: 'volunteers', label: 'Voluntariado', href: '/crm/volunteers', icon: ShieldCheck },
         ]
     },
     {
-        title: 'Personal',
+        title: 'Consolidación',
         items: [
-            { id: 'card', label: 'Mi Carnet', href: '/crm/my-card', icon: QrCode },
+            { id: 'pipeline', label: 'Pipeline pastoral', href: '/crm/pipeline', icon: KanbanSquare },
+            { id: 'counseling', label: 'Consejería', href: '/crm/counseling', icon: Heart },
+            { id: 'prayers', label: 'Muro de Oración', href: '/crm/prayers', icon: MessageCircle },
+            { id: 'tasks', label: 'Tareas Asignadas', href: '/crm/tasks', icon: CheckCircle2 },
+        ]
+    },
+    {
+        title: 'Herramientas',
+        items: [
+            { id: 'events', label: 'Eventos', href: '/crm/events', icon: Calendar },
+            { id: 'scanner', label: 'Escáner ASST', href: '/crm/scanner', icon: Scan },
+            { id: 'messaging', label: 'Mensajería', href: '/crm/messaging', icon: Mail },
+            { id: 'card', label: 'Mi Carnet', href: '/crm/my-card', icon: Contact },
             { id: 'settings', label: 'Configuración', href: '/crm/settings', icon: Settings },
         ]
     }

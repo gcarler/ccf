@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from backend import crud, schemas
+from backend import crud, schemas, models
 from backend.auth import (
     create_access_token,
     create_refresh_token,

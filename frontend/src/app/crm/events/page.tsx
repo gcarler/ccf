@@ -9,6 +9,7 @@ import ViewSwitcher, { ViewType, getStoredView } from '@/components/ViewSwitcher
 import CrmShell from '@/components/crm/CrmShell';
 import AdminHero from '@/components/admin/AdminHero';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
 
 const EVENT_TYPE_LABEL: Record<string, string> = {
     PERMANENT: 'Semanal',
@@ -186,12 +187,15 @@ export default function EventsPage() {
             viewType={viewType}
             onViewChange={(view) => setViewType(view as ViewType)}
             rightActions={
-                <button
-                    onClick={() => setIsCreateDrawerOpen(true)}
-                    className="flex items-center gap-2 bg-blue-600 px-5 py-2 rounded-2xl text-[11px] font-black text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-900/20 uppercase tracking-widest"
-                >
-                    <Plus size={16} /> Nuevo evento
-                </button>
+                <SplitDropdownButton
+                    mainLabel="Nuevo"
+                    icon={Plus}
+                    onMainClick={() => setIsCreateDrawerOpen(true)}
+                    options={[
+                        { id: 'event', label: 'Evento', icon: Calendar, onClick: () => setIsCreateDrawerOpen(true) },
+                        { id: 'attendance', label: 'Pasar Asistencia', icon: Check, onClick: () => setViewType('table') }
+                    ]}
+                />
             }
         >
         <AdminHero

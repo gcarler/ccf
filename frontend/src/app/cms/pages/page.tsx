@@ -187,7 +187,7 @@ export default function CmsPagesManagement() {
                                         <div className="size-1 bg-slate-200 dark:bg-white/10 rounded-full" />
                                         <div className="flex items-center gap-1 text-[11px] text-slate-400">
                                             <Calendar size={12} />
-                                            <span>Actualizado {new Date(page.updated_at).toLocaleDateString()}</span>
+                                            <span>Actualizado {(() => { try { const d = new Date((page.updated_at || '').replace(' ', 'T')); return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }); } catch { return '—'; } })()}</span>
                                         </div>
                                     </div>
                                 </div>

@@ -15,7 +15,7 @@ import {
     ChevronLeft, Target, GraduationCap, Users, Globe,
     Home, Inbox, CheckSquare, Folder, Calendar, LayoutDashboard,
     FileText, MessageCircle, Settings2, ShieldCheck, Zap, Bot, Settings,
-    BookOpen, Link2
+    BookOpen, Link2, UserPlus, Heart, Scan, PieChart, Contact, KanbanSquare, Mail
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useTheme } from '@/app/theme/ThemeContext';
@@ -75,13 +75,40 @@ const MODULE_CONFIGS: Record<string, any> = {
         ]
     },
     crm: {
-        title: "Comunidad",
+        title: "Comunidad CRM",
         sections: [
             {
-                title: "Directorios",
+                title: "Actividad y Métricas",
                 items: [
-                    { id: 'crm-home',   label: 'Miembros',       href: '/crm',        icon: Users },
-                    { id: 'crm-groups', label: 'Casas de Gloria', href: '/crm/groups', icon: Home },
+                    { id: 'crm-analytics', label: 'Panel Analítico', href: '/crm/analytics', icon: PieChart }
+                ]
+            },
+            {
+                title: "Directorio Pastoral",
+                items: [
+                    { id: 'crm-members',    label: 'Miembros',          href: '/crm/members',    icon: Users },
+                    { id: 'crm-groups',     label: 'Casas de Gloria',   href: '/crm/groups',     icon: Home },
+                    { id: 'crm-contacts',   label: 'Contactos/Leads',   href: '/crm/contacts',   icon: UserPlus },
+                    { id: 'crm-volunteers', label: 'Voluntariado',      href: '/crm/volunteers', icon: ShieldCheck },
+                ]
+            },
+            {
+                title: "Consolidación",
+                items: [
+                    { id: 'crm-pipeline',   label: 'Pipeline pastoral', href: '/crm/pipeline',   icon: KanbanSquare },
+                    { id: 'crm-counseling', label: 'Consejería',        href: '/crm/counseling', icon: Heart },
+                    { id: 'crm-prayers',    label: 'Muro de Oración',   href: '/crm/prayers',    icon: MessageCircle },
+                    { id: 'crm-tasks',      label: 'Tareas Asignadas',  href: '/crm/tasks',      icon: CheckSquare },
+                ]
+            },
+            {
+                title: "Herramientas",
+                items: [
+                    { id: 'crm-events',    label: 'Eventos',       href: '/crm/events',    icon: Calendar },
+                    { id: 'crm-scanner',   label: 'Escáner ASST',  href: '/crm/scanner',   icon: Scan },
+                    { id: 'crm-messaging', label: 'Mensajería',    href: '/crm/messaging', icon: Mail },
+                    { id: 'crm-mycard',    label: 'Mi Carnet',     href: '/crm/my-card',   icon: Contact },
+                    { id: 'crm-settings',  label: 'Configuración', href: '/crm/settings',  icon: Settings },
                 ]
             }
         ]

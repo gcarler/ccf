@@ -92,7 +92,7 @@ class ProjectTaskBase(BaseModel):
     start_date: Optional[datetime] = None
     due_date: Optional[datetime] = None
     labels: List[str] = Field(default_factory=list)
-    attachments: List[dict] = Field(default_factory=list)
+    attachments: List[Any] = Field(default_factory=list)
 
 
 class ProjectTaskCreate(ProjectTaskBase):
@@ -172,12 +172,15 @@ class Project(ProjectBase):
     updated_at: Optional[datetime] = None
     tasks: List[ProjectTask] = Field(default_factory=list)
     milestones: List[ProjectMilestone] = Field(default_factory=list)
-    activities: List[ProjectActivityLog] = Field(default_factory=list, alias="activity_logs")
+    activities: List[ProjectActivityLog] = Field(default_factory=list)
     progress_percent: int = 0
-    model_config = orm_config
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     @classmethod
     def model_validate(cls, obj, **kwargs):
+        # Map ORM activity_logs relationship -> activities field
+        if hasattr(obj, 'activity_logs') and not isinstance(obj, dict):
+            obj.__dict__.setdefault('activities', list(obj.activity_logs or []))
         instance = super().model_validate(obj, **kwargs)
         # Calculate progress from tasks if not set on model
         if hasattr(obj, 'tasks') and obj.tasks:

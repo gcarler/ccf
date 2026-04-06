@@ -19,17 +19,23 @@ import {
     Loader2,
     ArrowUpRight,
     Star,
-    Sparkles
+    Sparkles,
+    User,
+    Users as FamilyIcon
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import DSSkeleton from '@/components/ui/Skeleton';
 import { ViewType } from '@/components/ViewSwitcher';
 import { CrmGridView, CrmTableView, CrmKanbanView, CrmCalendarView, CrmGanttView } from '@/components/crm/CrmViews';
+import RightPanel from '@/components/ui/RightPanel';
+import { useSidebarLayers } from '@/context/SidebarLayerContext';
 
 interface Member {
     id: number;
@@ -46,11 +52,19 @@ interface Member {
 
 export default function CRMClient() {
     const { token } = useAuth();
+    const router = useRouter();
+    const { openLayer, closeLayer, setRightMode, layers } = useSidebarLayers();
     const [members, setMembers] = useState<Member[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [selectedMember, setSelectedMember] = useState<Member | null>(null);
     const [viewType, setViewType] = useState<ViewType>('grid');
+
+    useEffect(() => {
+        if (!layers?.RIGHT && selectedMember) {
+            setSelectedMember(null);
+        }
+    }, [layers?.RIGHT]);
 
     // 1. Cargar miembros reales de la DB
     useEffect(() => {
@@ -85,9 +99,19 @@ export default function CRMClient() {
                 setViewType={setViewType}
                 onSearch={setSearch}
                 rightActions={
-                    <button className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all">
-                        <UserPlus size={13} /> Registrar Miembro
-                    </button>
+                    <SplitDropdownButton
+                        mainLabel="Nuevo"
+                        icon={UserPlus}
+                        onMainClick={() => router.push('/crm/members')}
+                        options={[
+                            { id: 'member', label: 'Miembro', icon: User, onClick: () => router.push('/crm/members') },
+                            { id: 'family', label: 'Familia', icon: FamilyIcon, onClick: () => router.push('/crm/members') },
+                            { id: 'appointment', label: 'Cita', icon: Calendar, onClick: () => router.push('/crm/counseling') },
+                            { id: 'call', label: 'Llamada', icon: Phone, onClick: () => router.push('/crm/pipeline') },
+                            { id: 'mail', label: 'Email', icon: Mail, onClick: () => router.push('/crm/pipeline') },
+                            { id: 'sms', label: 'SMS', icon: MessageCircle, onClick: () => router.push('/crm/pipeline') }
+                        ]}
+                    />
                 }
             />
 
@@ -125,10 +149,10 @@ export default function CRMClient() {
                             </div>
                         ) : (
                             <div className="pb-20">
-                                {viewType === 'grid' && <CrmGridView members={members} onSelect={setSelectedMember} />}
-                                {(viewType === 'table' || viewType === 'list') && <CrmTableView members={members} onSelect={setSelectedMember} isList={viewType === 'list'} />}
-                                {(viewType === 'kanban' || viewType === 'board') && <CrmKanbanView members={members} onSelect={setSelectedMember} />}
-                                {viewType === 'calendar' && <CrmCalendarView members={members} onSelect={setSelectedMember} />}
+                                {viewType === 'grid' && <CrmGridView members={members} onSelect={(m) => { setSelectedMember(m); setRightMode('overlay'); openLayer('RIGHT'); }} />}
+                                {(viewType === 'table' || viewType === 'list') && <CrmTableView members={members} onSelect={(m) => { setSelectedMember(m); setRightMode('overlay'); openLayer('RIGHT'); }} isList={viewType === 'list'} />}
+                                {(viewType === 'kanban' || viewType === 'board') && <CrmKanbanView members={members} onSelect={(m) => { setSelectedMember(m); setRightMode('overlay'); openLayer('RIGHT'); }} />}
+                                {viewType === 'calendar' && <CrmCalendarView members={members} onSelect={(m) => { setSelectedMember(m); setRightMode('overlay'); openLayer('RIGHT'); }} />}
                                 {viewType === 'gantt' && <CrmGanttView members={members} />}
                             </div>
                         )}
@@ -136,25 +160,15 @@ export default function CRMClient() {
                 </div>
             </main>
 
-            {/* Modal de Detalle de Miembro Pro (Drawer) */}
-            <AnimatePresence>
-                {selectedMember && (
-                    <>
-                        <motion.div 
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            onClick={() => setSelectedMember(null)}
-                            className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm"
-                        />
-                        <motion.aside 
-                            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className="fixed right-0 top-0 bottom-0 w-full max-w-[500px] z-[101] bg-white dark:bg-[#1e1f21] shadow-2xl border-l border-white/10 flex flex-col"
-                        >
-                            <MemberDetailView member={selectedMember} onClose={() => setSelectedMember(null)} />
-                        </motion.aside>
-                    </>
-                )}
-            </AnimatePresence>
+            {/* Panel lateral sin modales usando RightPanel (Estándar Clean Productivity) */}
+            {selectedMember && (
+                <RightPanel title="Ficha Pastoral" width={500}>
+                    <MemberDetailView member={selectedMember} onClose={() => {
+                        setSelectedMember(null);
+                        closeLayer('RIGHT');
+                    }} />
+                </RightPanel>
+            )}
         </div>
     );
 }

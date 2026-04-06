@@ -246,7 +246,7 @@ type UserRecord = { id: number; username: string; email?: string };
 
 function InlineUserCell({ value, token, onChange }: {
     value?: number | null;
-    token: string;
+    token: string | null;
     onChange: (userId: number | null, name: string | null) => void;
 }) {
     const [open, setOpen]     = useState(false);
@@ -258,7 +258,7 @@ function InlineUserCell({ value, token, onChange }: {
     useEffect(() => {
         if (!open) return;
         setLoading(true);
-        apiFetch('/admin/members/', { method: 'GET' }, token)
+        apiFetch('/crm/members/', { method: 'GET', token: token ?? undefined })
             .then((data: any) => {
                 const list: UserRecord[] = Array.isArray(data)
                     ? data.map((m: any) => ({ id: m.user?.id ?? m.id, username: m.user?.username ?? m.username ?? `#${m.id}`, email: m.user?.email ?? m.email }))
@@ -467,7 +467,7 @@ export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpda
     const applyChange = useCallback(async (taskId: number, field: string, value: any) => {
         setOverrides(prev => ({ ...prev, [taskId]: { ...prev[taskId], [field]: value } }));
         try {
-            await apiFetch(`/projects/tasks/${taskId}/`, { method: 'PATCH', body: JSON.stringify({ [field]: value }) }, token);
+            await apiFetch(`/projects/tasks/${taskId}`, { method: 'PATCH', body: JSON.stringify({ [field]: value }), token: token ?? undefined });
             onTaskUpdated?.(taskId, field, value);
         } catch {
             setOverrides(prev => {
@@ -484,8 +484,9 @@ export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpda
         try {
             await apiFetch('/projects/tasks/', {
                 method: 'POST',
-                body: JSON.stringify({ title, status, priority: 'normal' })
-            }, token);
+                body: JSON.stringify({ title, status, priority: 'normal' }),
+                token: token ?? undefined
+            });
             onAddTask(status);
         } catch { /* silently fail */ }
         finally { setQuickAddLoading(false); setQuickAddGroup(null); }

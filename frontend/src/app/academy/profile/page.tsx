@@ -44,7 +44,7 @@ export default function StudentProfilePage() {
                 setError(null);
                 const [profileData, certsData] = await Promise.all([
                     apiFetch<AcademyStudentProfile>(`/academy/me/profile`, { token, cache: 'no-store' }),
-                    apiFetch<CertificateRecord[]>(`/users/${user.id}/certificates`, { token, cache: 'no-store' })
+                    apiFetch<CertificateRecord[]>(`/academy/users/${user.id}/certificates`, { token, cache: 'no-store' })
                 ]);
                 setProfile(profileData);
                 setCertificates(Array.isArray(certsData) ? certsData : []);

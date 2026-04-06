@@ -68,11 +68,11 @@ export default function LoginPage() {
                     width: 100%;
                     background-color: #f8fafc;
                     border: 2px solid transparent;
-                    border-radius: 9999px;
-                    padding: 20px 32px;
+                    border-radius: 1rem;
+                    padding: 18px 24px;
                     color: var(--ccf-blue-dark);
-                    font-weight: 700;
-                    font-size: 1rem;
+                    font-weight: 600;
+                    font-size: 0.95rem;
                     font-family: 'Inter', sans-serif;
                     transition: all 0.3s ease;
                     box-sizing: border-box;
@@ -87,7 +87,7 @@ export default function LoginPage() {
 
                 .btn-pill {
                     background-color: var(--ccf-blue-light);
-                    border-radius: 9999px;
+                    border-radius: 1rem;
                     transition: all 0.3s ease;
                     border: none;
                     cursor: pointer;
@@ -110,12 +110,11 @@ export default function LoginPage() {
                     gap: 12px;
                     border: 2px solid #e5e7eb;
                     padding: 16px 24px;
-                    border-radius: 9999px;
-                    font-weight: 800;
+                    border-radius: 1rem;
+                    font-weight: 700;
                     color: #4b5563;
-                    font-size: 11px;
-                    letter-spacing: 0.15em;
-                    text-transform: uppercase;
+                    font-size: 13px;
+                    letter-spacing: 0.05em;
                     background: white;
                     cursor: pointer;
                     transition: all 0.2s;
@@ -188,16 +187,16 @@ export default function LoginPage() {
                     >
                         <h1 className="title-heavy" style={{
                             color: 'white',
-                            fontSize: 'clamp(5rem, 10vw, 8rem)',
+                            fontSize: 'clamp(3rem, 6vw, 4.5rem)',
                             margin: 0,
                         }}>
                             EL <br /> FARO
                         </h1>
                         <p style={{
                             color: 'var(--ccf-blue-light)',
-                            fontSize: 'clamp(1rem, 2vw, 1.5rem)',
+                            fontSize: 'clamp(1rem, 2vw, 1.25rem)',
                             fontWeight: 900,
-                            letterSpacing: '0.4em',
+                            letterSpacing: '0.2em',
                             textTransform: 'uppercase',
                             marginTop: '24px',
                             lineHeight: 1.4,
@@ -215,12 +214,11 @@ export default function LoginPage() {
                         style={{ position: 'relative', zIndex: 10 }}
                     >
                         <p style={{
-                            color: 'rgba(221, 232, 240, 0.5)',
-                            fontSize: '0.875rem',
-                            fontWeight: 700,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.1em',
-                            lineHeight: 1.9,
+                            color: 'rgba(255, 255, 255, 0.9)',
+                            fontSize: '1.125rem',
+                            fontWeight: 500,
+                            letterSpacing: '0.02em',
+                            lineHeight: 1.6,
                         }}>
                             Guiando a las naciones <br /> hacia la luz de la verdad.
                         </p>
@@ -262,10 +260,10 @@ export default function LoginPage() {
                             style={{ marginBottom: '56px' }}
                         >
                             <h2 style={{
-                                fontSize: 'clamp(2.5rem, 5vw, 3.5rem)',
-                                fontWeight: 900,
+                                fontSize: 'clamp(2rem, 4vw, 2.75rem)',
+                                fontWeight: 800,
                                 color: 'var(--ccf-blue-dark)',
-                                letterSpacing: '-0.04em',
+                                letterSpacing: '-0.02em',
                                 lineHeight: 1,
                                 margin: 0,
                                 marginBottom: '16px',

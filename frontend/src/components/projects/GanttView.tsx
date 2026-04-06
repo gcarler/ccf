@@ -131,7 +131,7 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
                             </div>
                         ))}
                         <button className="w-full h-12 flex items-center gap-2 px-6 text-slate-400 hover:text-blue-600 transition-colors text-[11px] font-black uppercase tracking-widest">
-                            <Plus size={14} /> Añadir Tarea
+                            <Plus size={14} /> Nuevo
                         </button>
                     </div>
                 </aside>

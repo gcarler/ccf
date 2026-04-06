@@ -128,7 +128,9 @@ function TableCell<T>({ column, value, item }: { column: TableColumn<T>; value: 
             </div>
         );
         case 'progress': {
-            const pct = Number(value || 0);
+            const raw = Number(value || 0);
+            // Backend can return fractions (0.83) or percentages (83). Normalize:
+            const pct = Math.round(raw <= 1 ? raw * 100 : raw);
             return (
                 <div className="flex items-center gap-2 w-full max-w-[120px]">
                     <div className="flex-1 h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">

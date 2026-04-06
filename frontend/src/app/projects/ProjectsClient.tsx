@@ -12,6 +12,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ViewType } from '@/components/ViewSwitcher';
 import type { ProjectRecord } from '@/types/projects';
@@ -150,13 +151,12 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                 onSearch={setSearch}
                 rightActions={
                     <div className="flex items-center gap-2">
-                        <button 
-                            onClick={handleCreateProject}
-                            disabled={isCreating}
-                            className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                            <Plus size={14} /> {isCreating ? 'Creando...' : 'Nuevo Proyecto'}
-                        </button>
+                        <SplitDropdownButton
+                            mainLabel={isCreating ? 'Creando...' : 'Nuevo'}
+                            icon={Plus}
+                            onMainClick={handleCreateProject}
+                            onOptionClick={() => {}}
+                        />
                     </div>
                 }
             />

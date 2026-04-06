@@ -1,4 +1,5 @@
 from typing import List, Optional
+import json
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -10,6 +11,41 @@ from backend.core.database import get_db
 
 
 router = APIRouter(prefix="/agents", tags=["agents"])
+analytics_router = APIRouter(prefix="/analytics", tags=["analytics"])
+
+
+@analytics_router.get("/summary")
+def analytics_summary(
+    db=Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Resumen global para el Dashboard de Administración."""
+    total_members = db.query(models.Member).count()
+    total_projects = db.query(models.Project).count()
+    total_enrollments = db.query(models.Enrollment).count()
+    total_certificates = db.query(models.Certificate).count()
+    pending_tasks = db.query(models.AgentTask).filter(models.AgentTask.status == "pending").count()
+    unread_insights = db.query(models.AgentInsight).filter(models.AgentInsight.acknowledged == False).count()
+
+    pending_testimonials = 0
+    try:
+        block = crud.get_or_create_page_content(db, "faro_testimonials_feed")
+        if block and block.content:
+            items = json.loads(block.content)
+            if isinstance(items, list):
+                pending_testimonials = sum(1 for t in items if not t.get("is_approved"))
+    except Exception:
+        pass
+
+    return {
+        "total_members": total_members,
+        "total_projects": total_projects,
+        "total_enrollments": total_enrollments,
+        "total_certificates": total_certificates,
+        "pending_agent_tasks": pending_tasks,
+        "unread_insights": unread_insights,
+        "pending_testimonials": pending_testimonials,
+    }
 
 
 @router.post("/tasks", response_model=schemas.AgentTask)

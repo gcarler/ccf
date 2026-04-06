@@ -43,6 +43,7 @@ import { useToast } from "@/context/ToastContext";
 import { useMeshSocket } from "@/hooks/useMeshSocket";
 import CertificateModal from "./CertificateModal";
 import AssessmentModal from "./academy/AssessmentModal";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface Lesson {
   id: number;
@@ -317,10 +318,11 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
       )}
 
       {enrollments.length === 0 ? (
-        <div className="p-10 text-center rounded-2xl border border-dashed border-white/10 bg-slate-900/30 backdrop-blur-md mx-2">
-          <Info className="mx-auto text-slate-500 mb-4" size={32} />
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-loose">No tienes cursos activos.</p>
-        </div>
+        <EmptyState 
+            icon={BookOpen}
+            title="No tienes cursos activos."
+            description="Explora el Catálogo Formativo y encuentra tu próxima lección para continuar tu crecimiento."
+        />
       ) : (
         <div className="flex flex-col gap-2">
           {enrollments.map((item) => {

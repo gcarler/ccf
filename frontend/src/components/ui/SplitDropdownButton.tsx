@@ -4,12 +4,22 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus, FileText, Bell, LayoutDashboard, Layout } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface SplitDropdownButtonProps {
-    onMainClick: () => void;
-    onOptionClick: (type: 'task' | 'document' | 'reminder' | 'whiteboard' | 'panel') => void;
+interface DropdownOption {
+    id: string;
+    label: string;
+    icon?: any;
+    onClick?: () => void;
 }
 
-export default function SplitDropdownButton({ onMainClick, onOptionClick }: SplitDropdownButtonProps) {
+interface SplitDropdownButtonProps {
+    onMainClick: () => void;
+    onOptionClick?: (id: string) => void;
+    mainLabel?: string;
+    icon?: any;
+    options?: DropdownOption[];
+}
+
+export default function SplitDropdownButton({ onMainClick, onOptionClick, mainLabel = "Nuevo", icon: Icon, options }: SplitDropdownButtonProps) {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -23,30 +33,43 @@ export default function SplitDropdownButton({ onMainClick, onOptionClick }: Spli
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleOption = (type: 'task' | 'document' | 'reminder' | 'whiteboard' | 'panel') => {
+    const handleOption = (id: string, customClick?: () => void) => {
         setIsOpen(false);
-        onOptionClick(type);
+        if (customClick) customClick();
+        if (onOptionClick) onOptionClick(id);
     };
+
+    // Default project options if none provided
+    const defaultOptions: DropdownOption[] = [
+        { id: 'task', label: 'Tarea', icon: Plus },
+        { id: 'document', label: 'Documento', icon: FileText },
+        { id: 'reminder', label: 'Recordatorio', icon: Bell },
+        { id: 'whiteboard', label: 'Pizarra', icon: LayoutDashboard },
+        { id: 'panel', label: 'Panel', icon: Layout }
+    ];
+
+    const displayOptions = options || defaultOptions;
 
     return (
         <div className="relative inline-flex items-center ml-2" ref={dropdownRef}>
             {/* Split Button Container */}
             <div className="flex items-center bg-[#1e272e] hover:bg-[#2f3640] text-white rounded-[7px] overflow-hidden transition-all shadow-sm">
                 
-                {/* Main Action (Añadir Tarea) */}
+                {/* Main Action */}
                 <button 
                     onClick={onMainClick}
-                    className="h-9 px-3.5 text-[11px] font-bold flex items-center gap-1.5 transition-colors border-r border-white/10 active:bg-white/10 whitespace-nowrap"
+                    className="h-7 px-3 text-[11px] font-bold flex items-center gap-1.5 transition-colors border-r border-white/10 active:bg-white/10 whitespace-nowrap"
                 >
-                    Añadir Tarea
+                    {Icon && <Icon size={12} />}
+                    {mainLabel}
                 </button>
 
                 {/* Dropdown Chevron */}
                 <button 
                     onClick={() => setIsOpen(!isOpen)}
-                    className="h-9 w-9 flex items-center justify-center transition-colors hover:bg-white/10 active:bg-white/20"
+                    className="h-7 w-7 flex items-center justify-center transition-colors hover:bg-white/10 active:bg-white/20"
                 >
-                    <ChevronDown size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown size={13} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
 
             </div>
@@ -67,18 +90,15 @@ export default function SplitDropdownButton({ onMainClick, onOptionClick }: Spli
                         </div>
 
                         <div className="px-1.5 flex flex-col gap-0.5">
-                            <DropdownItem icon={Plus} label="Tarea" onClick={() => handleOption('task')} selected />
-                            <DropdownItem icon={FileText} label="Documento" onClick={() => handleOption('document')} />
-                            <DropdownItem icon={Bell} label="Recordatorio" onClick={() => handleOption('reminder')} />
-                            <DropdownItem icon={LayoutDashboard} label="Pizarra" onClick={() => handleOption('whiteboard')} />
-                            <DropdownItem icon={Layout} label="Panel" onClick={() => handleOption('panel')} />
-                        </div>
-
-                        <div className="h-[1px] bg-slate-100 dark:bg-white/5 my-1.5" />
-                        
-                        <div className="px-1.5 flex flex-col gap-0.5">
-                            <DropdownItem label="Crear tipo de tarea" />
-                            <DropdownItem label="Tarea de otra lista" />
+                            {displayOptions.map((opt, idx) => (
+                                <DropdownItem 
+                                    key={opt.id} 
+                                    icon={opt.icon} 
+                                    label={opt.label} 
+                                    onClick={() => handleOption(opt.id, opt.onClick)} 
+                                    selected={idx === 0} 
+                                />
+                            ))}
                         </div>
                     </motion.div>
                 )}

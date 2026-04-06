@@ -286,12 +286,12 @@ export default function ProjectDetailPage() {
                                             handleAddTask('todo');
                                             setPopoverOpen(false);
                                         }}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[11px] font-bold rounded-l-lg hover:bg-slate-700 dark:hover:bg-slate-100 transition-colors"
+                                        className="h-7 flex items-center gap-1.5 px-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[11px] font-bold rounded-l-lg hover:bg-slate-700 dark:hover:bg-slate-100 transition-colors"
                                     >
-                                        Añadir Tarea
+                                        Nuevo
                                     </button>
                                     <Popover.Trigger asChild>
-                                        <button className="flex items-center px-1.5 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[11px] font-bold rounded-r-lg border-l border-white/20 dark:border-slate-900/20 hover:bg-slate-700 dark:hover:bg-slate-100 transition-colors">
+                                        <button className="h-7 w-7 flex items-center justify-center bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[11px] font-bold rounded-r-lg border-l border-white/20 dark:border-slate-900/20 hover:bg-slate-700 dark:hover:bg-slate-100 transition-colors">
                                             <ChevronDown size={13} />
                                         </button>
                                     </Popover.Trigger>

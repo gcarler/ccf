@@ -72,7 +72,7 @@ export default function TaskCreationModal({ isOpen, defaultStatus = 'todo', onCl
                                                 <CheckSquare size={20} className="fill-blue-600/20" />
                                             </div>
                                             <div>
-                                                <h3 className="text-xl font-black text-slate-900 dark:text-white leading-none">Añadir Tarea</h3>
+                                                <h3 className="text-xl font-black text-slate-900 dark:text-white leading-none">Nueva Tarea</h3>
                                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Definición de Acción</p>
                                             </div>
                                         </div>

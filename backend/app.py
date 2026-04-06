@@ -6,7 +6,7 @@ import time
 import logging
 import os
 
-from backend.api import auth, projects, academy, crm, workspace, system, cms, content
+from backend.api import auth, projects, academy, crm, workspace, system, cms, content, agents, admin, finance, donations, governance, messaging, support, spiritual_life, graph
 from backend.core.config import get_settings
 from backend.core.database import engine, Base
 from backend.services.automation_engine import engine as automation_engine
@@ -58,6 +58,33 @@ app.mount("/api/static", StaticFiles(directory=uploads_dir), name="static")
 @app.on_event("startup")
 async def startup_event():
     automation_engine.start()
+    # Run safe schema migrations (ADD COLUMN IF NOT EXISTS)
+    _run_startup_migrations()
+
+def _run_startup_migrations():
+    """Applies incremental schema changes without Alembic."""
+    from sqlalchemy import text
+    from backend.core.database import SessionLocal
+    db = SessionLocal()
+    try:
+        migrations = [
+            # crm_tasks: add category column for pastoral task categorization
+            "ALTER TABLE crm_tasks ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'Pastoral'",
+            # crm_tasks: normalize old status values for frontend compatibility
+            "UPDATE crm_tasks SET status = 'pending' WHERE status = 'todo'",
+            "UPDATE crm_tasks SET priority = 'medium' WHERE priority = 'normal'",
+        ]
+        for sql in migrations:
+            try:
+                db.execute(text(sql))
+            except Exception as e:
+                logger.warning(f"Migration skipped: {sql[:60]}... — {e}")
+        db.commit()
+        logger.info("✅ Startup migrations applied.")
+    except Exception as e:
+        logger.error(f"Migration error: {e}")
+    finally:
+        db.close()
 
 @app.on_event("shutdown")
 def shutdown_event():
@@ -72,6 +99,17 @@ app.include_router(workspace.router, prefix="/api/workspace", tags=["workspace"]
 app.include_router(system.router, prefix="/api/system", tags=["system"])
 app.include_router(cms.router, prefix="/api")
 app.include_router(content.router, prefix="/api")
+app.include_router(agents.router, prefix="/api")
+app.include_router(agents.analytics_router, prefix="/api")
+app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+app.include_router(finance.router, prefix="/api", tags=["finance"])
+app.include_router(donations.router, prefix="/api", tags=["donations"])
+app.include_router(governance.router, prefix="/api", tags=["governance"])
+app.include_router(messaging.router, prefix="/api", tags=["messaging"])
+app.include_router(support.router, prefix="/api/support", tags=["support"])
+app.include_router(spiritual_life.router, prefix="/api", tags=["spiritual_life"])
+app.include_router(graph.router, prefix="/api", tags=["graph"])
+
 
 @app.get("/")
 def read_root():

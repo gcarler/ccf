@@ -297,3 +297,69 @@ def get_cms_metrics(
         announcements_total=len(announcements),
         announcements_active=sum(1 for row in announcements if row.get("is_active", True)),
     )
+
+
+# ─── CMS PAGES (PageContent CRUD) ───────────────────────────────────────────
+
+@router.get("/cms/pages", response_model=list[schemas.PageContentRead])
+def list_cms_pages(
+    limit: int = 200,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_active_user),
+):
+    """Lista todos los bloques de contenido del CMS (useados como paginas)."""
+    return crud.list_page_contents(db, limit=limit)
+
+
+@router.get("/cms/pages/{page_key}", response_model=schemas.PageContentRead)
+def get_cms_page(
+    page_key: str,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_active_user),
+):
+    return crud.get_or_create_page_content(db, page_key)
+
+
+@router.post("/cms/pages", response_model=schemas.PageContentRead, status_code=201)
+def create_cms_page(
+    payload: dict[str, Any],
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Crea una nueva pagina en el CMS. El page_key se autogenera desde el titulo si no se provee."""
+    title = str(payload.get("title") or "").strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="title is required")
+    page_key = str(payload.get("page_key") or "").strip()
+    if not page_key:
+        import re
+        page_key = re.sub(r"[^\w-]", "", title.lower().replace(" ", "-"))
+    content = str(payload.get("content") or f"# {title}\n\nNueva pagina creada.")
+    row = crud.get_or_create_page_content(db, page_key)
+    row.title = title
+    row.content = content
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+@router.patch("/cms/pages/{page_key}", response_model=schemas.PageContentRead)
+def patch_cms_page(
+    page_key: str,
+    payload: schemas.PageContentUpdate,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_active_user),
+):
+    return crud.update_page_content(db, page_key, payload)
+
+
+@router.delete("/cms/pages/{page_key}", status_code=204)
+def delete_cms_page(
+    page_key: str,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_active_user),
+):
+    row = crud.get_or_create_page_content(db, page_key)
+    if row:
+        db.delete(row)
+        db.commit()

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
@@ -78,10 +78,10 @@ export default function UserTasksPage() {
         const loadTasks = async () => {
             if (!token) { setLoading(false); return; }
             try {
-                // Fast path: dedicated endpoint (if available)
+                // Endpoint real disponible en el backend
                 let allTasks: Task[] = [];
                 try {
-                    const direct = await apiFetch<any[]>('/projects/tasks/me', { token, cache: 'no-store' });
+                    const direct = await apiFetch<any[]>('/projects/tasks', { token, cache: 'no-store' });
                     if (Array.isArray(direct)) {
                         allTasks = direct.slice(0, 50);
                     }
@@ -153,7 +153,7 @@ export default function UserTasksPage() {
                 rightActions={
                     <SplitDropdownButton
                         onMainClick={() => {}}
-                        onOptionClick={(type) => console.log('create:', type)}
+                        onOptionClick={() => {}}
                     />
                 }
             />

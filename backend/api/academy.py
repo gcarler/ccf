@@ -578,3 +578,36 @@ def create_thread(
 ):
     thread_data = schemas.ForumThreadCreate(**thread.model_dump(), author_id=current_user.id)
     return crud.create_forum_thread(db, thread_data)
+
+
+# ─── SCHEDULE ────────────────────────────────────────────────────────────────
+
+@router.get("/schedule", response_model=list)
+def get_academy_schedule(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """
+    Retorna el cronograma de cursos activos para el panel de academia.
+    Incluye datos de inscripcion y capacidad para el calendario.
+    """
+    courses = crud.get_courses(db, skip=0, limit=100, published_only=True)
+    schedule = []
+    for course in courses:
+        enrollments = db.query(models.Enrollment).filter(
+            models.Enrollment.course_id == course.id,
+            models.Enrollment.status == "active",
+        ).count()
+        schedule.append({
+            "id": course.id,
+            "code": course.code,
+            "title": course.title,
+            "description": course.description,
+            "modality": course.modality,
+            "enrolled": enrollments,
+            "lesson_count": course.lesson_count,
+            "total_minutes": course.total_minutes,
+            "created_at": course.created_at.isoformat() if course.created_at else None,
+        })
+    return schedule
+

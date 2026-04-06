@@ -90,7 +90,7 @@ def list_projects(
     db: Session = Depends(get_db),
 ):
     query = db.query(models.Project).options(
-        selectinload(models.Project.tasks),
+        selectinload(models.Project.tasks).selectinload(models.ProjectTask.attachments),
         selectinload(models.Project.milestones),
     )
     if status_filter:
@@ -102,8 +102,25 @@ def list_projects(
     for p in projects:
         _normalize_dates(p)
         for m in p.milestones: _normalize_dates(m)
-        for t in p.tasks: _normalize_dates(t)
+        for t in p.tasks:
+            _normalize_dates(t)
+            # Normalize attachments from ORM objects to dicts for Pydantic serialization
+            if hasattr(t, 'attachments') and t.attachments:
+                t.__dict__['attachments'] = [
+                    {
+                        "id": a.id,
+                        "task_id": a.task_id,
+                        "filename": a.filename,
+                        "file_url": a.file_url,
+                        "file_type": a.file_type,
+                        "file_size": a.file_size,
+                    }
+                    for a in t.attachments
+                ]
+            else:
+                t.__dict__.setdefault('attachments', [])
     return projects
+
 
 
 @router.post("/", response_model=schemas.Project, status_code=status.HTTP_201_CREATED)
@@ -273,3 +290,171 @@ def update_project_task(
     db.commit()
     db.refresh(task)
     return task
+
+
+# ── COMMENTS ──────────────────────────────────────────────────────────────────
+
+@router.get("/comments", response_model=List[schemas.ProjectCommentItem])
+def list_all_comments(
+    unresolved_only: bool = False,
+    limit: int = Query(120, le=500),
+    project_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Lista todos los comentarios de proyectos con filtros opcionales."""
+    q = db.query(models.ProjectComment)
+    if unresolved_only:
+        q = q.filter(models.ProjectComment.is_resolved == False)
+    if project_id:
+        q = q.filter(models.ProjectComment.project_id == project_id)
+    rows = q.order_by(models.ProjectComment.created_at.desc()).limit(limit).all()
+    result = []
+    for row in rows:
+        author = db.query(models.User).filter(models.User.id == row.author_id).first()
+        result.append(schemas.ProjectCommentItem(
+            id=row.id,
+            project_id=row.project_id,
+            task_id=row.task_id,
+            content=row.content,
+            author_id=row.author_id,
+            author_name=f"{author.first_name} {author.last_name}" if author else "Usuario",
+            is_resolved=row.is_resolved,
+            created_at=row.created_at,
+            updated_at=row.updated_at,
+        ))
+    return result
+
+
+@router.post("/{project_id}/comments", response_model=schemas.ProjectCommentItem)
+def create_project_comment(
+    project_id: int,
+    payload: schemas.ProjectCommentCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Crea un comentario en un proyecto."""
+    _ensure_project(db, project_id)
+    comment = models.ProjectComment(
+        project_id=project_id,
+        task_id=payload.task_id,
+        author_id=current_user.id,
+        content=payload.content,
+    )
+    db.add(comment)
+    db.commit()
+    db.refresh(comment)
+    return schemas.ProjectCommentItem(
+        id=comment.id,
+        project_id=comment.project_id,
+        task_id=comment.task_id,
+        content=comment.content,
+        author_id=comment.author_id,
+        author_name=f"{current_user.first_name} {current_user.last_name}",
+        is_resolved=comment.is_resolved,
+        created_at=comment.created_at,
+        updated_at=comment.updated_at,
+    )
+
+
+@router.patch("/comments/{comment_id}", response_model=schemas.ProjectCommentItem)
+def update_project_comment(
+    comment_id: int,
+    payload: schemas.ProjectCommentUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Actualiza un comentario (contenido o estado de resolución)."""
+    comment = db.query(models.ProjectComment).filter(models.ProjectComment.id == comment_id).first()
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    if payload.content is not None:
+        comment.content = payload.content
+    if payload.is_resolved is not None:
+        comment.is_resolved = payload.is_resolved
+    db.commit()
+    db.refresh(comment)
+    author = db.query(models.User).filter(models.User.id == comment.author_id).first()
+    return schemas.ProjectCommentItem(
+        id=comment.id,
+        project_id=comment.project_id,
+        task_id=comment.task_id,
+        content=comment.content,
+        author_id=comment.author_id,
+        author_name=f"{author.first_name} {author.last_name}" if author else "Usuario",
+        is_resolved=comment.is_resolved,
+        created_at=comment.created_at,
+        updated_at=comment.updated_at,
+    )
+
+
+# ── INBOX ──────────────────────────────────────────────────────────────────────
+
+@router.get("/inbox", response_model=List[schemas.ProjectInboxItem])
+def list_inbox(
+    limit: int = Query(50, le=200),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Bandeja de entrada: tareas recién asignadas y comentarios no leídos."""
+    inbox_items: list[schemas.ProjectInboxItem] = []
+
+    # Comentarios no leídos en proyectos del usuario
+    unread_comments = (
+        db.query(models.ProjectComment, models.Project)
+        .join(models.Project, models.Project.id == models.ProjectComment.project_id)
+        .filter(
+            models.ProjectComment.is_resolved == False,
+            models.ProjectComment.author_id != current_user.id,
+        )
+        .order_by(models.ProjectComment.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+    for comment, project in unread_comments:
+        # Verificar si ya fue leído por el usuario
+        state = db.query(models.ProjectInboxState).filter(
+            models.ProjectInboxState.user_id == current_user.id,
+            models.ProjectInboxState.item_id == f"comment-{comment.id}",
+        ).first()
+        is_read = state.is_read if state else False
+
+        author = db.query(models.User).filter(models.User.id == comment.author_id).first()
+        inbox_items.append(schemas.ProjectInboxItem(
+            id=f"comment-{comment.id}",
+            type="comment",
+            user=f"{author.first_name} {author.last_name}" if author else "Usuario",
+            content=comment.content[:120],
+            project=project.title,
+            project_id=project.id,
+            task_id=comment.task_id,
+            is_read=is_read,
+            created_at=comment.created_at,
+        ))
+
+    return inbox_items[:limit]
+
+
+@router.post("/inbox/{item_id}/read", response_model=dict)
+def mark_inbox_read(
+    item_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Marca un item del inbox como leído."""
+    state = db.query(models.ProjectInboxState).filter(
+        models.ProjectInboxState.user_id == current_user.id,
+        models.ProjectInboxState.item_id == item_id,
+    ).first()
+    if state:
+        state.is_read = True
+    else:
+        state = models.ProjectInboxState(
+            user_id=current_user.id,
+            item_id=item_id,
+            is_read=True,
+        )
+        db.add(state)
+    db.commit()
+    return {"ok": True, "item_id": item_id}

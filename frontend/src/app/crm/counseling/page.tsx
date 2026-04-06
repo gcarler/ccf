@@ -9,6 +9,7 @@ import CrmShell from '@/components/crm/CrmShell';
 import AdminHero from '@/components/admin/AdminHero';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
 
 interface CounselingSession {
     id: number;
@@ -129,12 +130,15 @@ export default function CounselingPage() {
             viewType={viewType}
             onViewChange={setViewType}
             rightActions={
-                <button
-                    onClick={() => setIsDrawerOpen(true)}
-                    className="px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-xl shadow-purple-900/20 transition-all flex items-center gap-2"
-                >
-                    <Plus size={16} /> Agendar sesión
-                </button>
+                <SplitDropdownButton
+                    mainLabel="Nuevo"
+                    icon={Plus}
+                    onMainClick={() => setIsDrawerOpen(true)}
+                    options={[
+                        { id: 'counseling', label: 'Sesión', icon: Heart, onClick: () => setIsDrawerOpen(true) },
+                        { id: 'followup', label: 'Seguimiento', icon: MessageSquare, onClick: () => setIsDrawerOpen(true) }
+                    ]}
+                />
             }
         >
         <AdminHero

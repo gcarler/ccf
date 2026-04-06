@@ -1,82 +1,150 @@
 "use client";
 
-import React from 'react';
-import { 
-    Download, 
-    FileCheck, 
-    Award, 
-    ShieldCheck, 
-    ExternalLink,
-    Waves
+import React, { useEffect, useState } from 'react';
+import {
+    Award, Download, ShieldCheck, ExternalLink, Waves, FileCheck,
+    Loader2, BookOpen
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/http';
+import { motion } from 'framer-motion';
+import clsx from 'clsx';
+import EmptyState from '@/components/ui/EmptyState';
+import Skeleton from '@/components/ui/Skeleton';
+
+interface Certificate {
+    id: number;
+    certificate_code: string;
+    certificate_type: string | null;
+    issued_at: string;
+    enrollment_id: number;
+    course_title?: string;
+}
 
 export default function DigitalCertificatesPage() {
+    const { token, user } = useAuth();
+    const [certificates, setCertificates] = useState<Certificate[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!token || !user?.id) { setLoading(false); return; }
+        apiFetch<Certificate[]>(`/academy/users/${user.id}/certificates`, { token, cache: 'no-store' })
+            .then(data => setCertificates(Array.isArray(data) ? data : []))
+            .catch(() => setCertificates([]))
+            .finally(() => setLoading(false));
+    }, [token, user]);
+
     return (
-        <div className="p-8 space-y-12 animate-in fade-in duration-1000">
-            <div className="flex flex-col gap-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-cyan-500/10 text-cyan-500 rounded-full text-[10px] font-black uppercase tracking-[0.2em] w-fit">
-                    <ShieldCheck size={12} /> Certificacion Digital Oficial
-                </div>
-                <h1 className="text-4xl font-black tracking-tighter text-white uppercase italic">
-                    Mis <span className="text-cyan-500">Certificados</span>
-                </h1>
-                <p className="text-muted-foreground text-sm max-w-2xl">
-                    Descarga tus actas de bautismo y reconocimientos ministeriales con validez digital dentro del ecosistema CCF.
-                </p>
-            </div>
+        <div className="flex flex-col h-full bg-slate-50 dark:bg-[#0f1012] overflow-y-auto font-display">
+            <div className="max-w-5xl mx-auto w-full p-6 space-y-6 pb-20">
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {[
-                    { title: 'Acta de Bautismo en Aguas', date: '15 de Mayo, 2025', id: 'CCF-B-2025-001', type: 'Sacramento' },
-                    { title: 'Diploma Fundamentos de la Fe', date: '10 de Marzo, 2026', id: 'CCF-A-2026-442', type: 'Academia' },
-                ].map((cert, i) => (
-                    <div key={i} className="group bg-[#1e1f21] border border-white/5 p-8 rounded-[2rem] hover:border-cyan-500/30 transition-all duration-500 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:opacity-10 group-hover:rotate-12 transition-all duration-700">
-                            <Award size={150} />
+                {/* Sub-header */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <div className="size-7 rounded-lg bg-cyan-50 dark:bg-cyan-900/30 flex items-center justify-center">
+                                <ShieldCheck size={14} className="text-cyan-600" />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-600">Certificación Oficial</span>
                         </div>
-                        
-                        <div className="space-y-6 relative z-10">
-                            <div className="flex items-start justify-between">
-                                <div className="w-16 h-16 bg-cyan-500/10 rounded-2xl flex items-center justify-center text-cyan-500">
-                                    {cert.type === 'Sacramento' ? <Waves size={32} /> : <FileCheck size={32} />}
-                                </div>
-                                <span className="text-[10px] font-black text-cyan-500 uppercase tracking-widest bg-cyan-500/5 px-3 py-1 rounded-full border border-cyan-500/20">
-                                    {cert.type}
-                                </span>
-                            </div>
-
-                            <div>
-                                <h3 className="text-2xl font-black text-white italic uppercase tracking-tight mb-1">{cert.title}</h3>
-                                <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">{cert.date}</p>
-                            </div>
-
-                            <div className="pt-6 border-t border-white/5 flex items-center justify-between">
-                                <div className="text-[10px] text-muted-foreground font-mono uppercase">ID: {cert.id}</div>
-                                <div className="flex items-center gap-2">
-                                    <button className="flex items-center gap-2 px-4 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-cyan-500 transition-colors">
-                                        <Download size={14} /> PDF
-                                    </button>
-                                    <button className="p-2 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-all">
-                                        <ExternalLink size={16} />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white leading-none">
+                            Mis Certificados
+                        </h1>
+                        <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                            Descarga tus actas y diplomas con validez digital dentro del ecosistema CCF.
+                        </p>
                     </div>
-                ))}
-            </div>
+                </div>
 
-            <div className="bg-cyan-500/5 border border-cyan-500/10 p-8 rounded-3xl flex flex-col md:flex-row items-center gap-6">
-                <div className="w-16 h-16 bg-cyan-500 text-black rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.4)]">
-                    <ShieldCheck size={32} />
+                {/* Certificates Grid */}
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-48 rounded-2xl" />)}
+                    </div>
+                ) : certificates.length === 0 ? (
+                    <EmptyState
+                        icon={Award}
+                        title="Aún no tienes certificados"
+                        description="Cuando completes y apruebes un curso en la Academia CCF, tu certificado digital aparecerá aquí."
+                        onAction={() => window.location.href = '/academy'}
+                        actionLabel="Explorar Academia"
+                    />
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {certificates.map((cert, i) => {
+                            const isSacramento = cert.certificate_type?.toLowerCase().includes('bautismo') || cert.certificate_type?.toLowerCase().includes('sacramento');
+                            return (
+                                <motion.div
+                                    key={cert.id}
+                                    initial={{ opacity: 0, y: 12 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: i * 0.07 }}
+                                    className="group bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-2xl p-6 hover:border-cyan-300 dark:hover:border-cyan-500/30 hover:shadow-lg transition-all relative overflow-hidden"
+                                >
+                                    {/* Decorative watermark */}
+                                    <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.07] transition-all duration-700">
+                                        <Award size={120} />
+                                    </div>
+
+                                    <div className="relative z-10 space-y-4">
+                                        <div className="flex items-start justify-between">
+                                            <div className="size-12 rounded-2xl bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-100 dark:border-cyan-500/20 flex items-center justify-center text-cyan-600">
+                                                {isSacramento ? <Waves size={24} /> : <FileCheck size={24} />}
+                                            </div>
+                                            <span className={clsx(
+                                                "text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border",
+                                                isSacramento
+                                                    ? "bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 border-cyan-200 dark:border-cyan-500/20"
+                                                    : "bg-blue-50 dark:bg-blue-900/20 text-blue-600 border-blue-200 dark:border-blue-500/20"
+                                            )}>
+                                                {cert.certificate_type ?? 'Academia'}
+                                            </span>
+                                        </div>
+
+                                        <div>
+                                            <h3 className="text-[15px] font-bold text-slate-900 dark:text-white leading-tight">
+                                                {cert.course_title ?? cert.certificate_type ?? 'Certificado'}
+                                            </h3>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                                                {new Date(cert.issued_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                            </p>
+                                        </div>
+
+                                        <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                                            <code className="text-[9px] font-mono text-slate-400 dark:text-slate-500">
+                                                {cert.certificate_code}
+                                            </code>
+                                            <div className="flex items-center gap-2">
+                                                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-lg active:scale-95 transition-all shadow-sm shadow-blue-500/20">
+                                                    <Download size={12} /> PDF
+                                                </button>
+                                                <button className="p-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 rounded-lg transition-all">
+                                                    <ExternalLink size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {/* Verification Banner */}
+                <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-2xl p-5 flex flex-col md:flex-row items-center gap-4 shadow-sm">
+                    <div className="size-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-500/20 flex items-center justify-center text-emerald-600 shrink-0">
+                        <ShieldCheck size={20} />
+                    </div>
+                    <div className="flex-1 text-center md:text-left">
+                        <p className="text-[13px] font-bold text-slate-800 dark:text-white">Verificación de Autenticidad</p>
+                        <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            Cada certificado contiene un código único y token QR para validar su veracidad ante autoridades eclesiásticas.
+                        </p>
+                    </div>
+                    <button className="shrink-0 px-4 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-[11px] font-black uppercase tracking-widest rounded-lg transition-all active:scale-95">
+                        Validar Código
+                    </button>
                 </div>
-                <div className="flex-1 text-center md:text-left space-y-1">
-                    <h4 className="text-white font-bold uppercase tracking-tight">Verificación de Autenticidad</h4>
-                    <p className="text-sm text-muted-foreground">Cada certificado contiene un código único y un token QR para validar su veracidad ante autoridades eclesiásticas.</p>
-                </div>
-                <button className="px-6 py-3 bg-white/5 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-white/10 transition-all border border-white/5">
-                    Validar Código
-                </button>
             </div>
         </div>
     );

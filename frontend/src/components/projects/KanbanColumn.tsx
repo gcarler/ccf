@@ -76,7 +76,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                 <button
                     onClick={handleStartAdd}
                     className="size-6 rounded-md flex items-center justify-center text-slate-400 hover:text-white hover:bg-blue-500 transition-all"
-                    title="Añadir tarea"
+                    title="Nuevo"
                 >
                     <Plus size={13} />
                 </button>
@@ -166,7 +166,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                     onClick={handleStartAdd}
                     className="w-full flex items-center gap-2 py-2 px-3 text-slate-400 hover:text-blue-500 hover:bg-white dark:hover:bg-white/5 rounded-lg border border-dashed border-slate-200 dark:border-white/10 transition-all text-[12px] font-bold"
                 >
-                    <Plus size={13} /> Añadir Tarea
+                    <Plus size={13} /> Nuevo
                 </button>
             )}
         </div>

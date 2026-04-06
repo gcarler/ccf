@@ -41,7 +41,7 @@ export default function SubmissionsPage() {
 
     const fetchSubmissions = useCallback(async () => {
         try {
-            const response = await apiFetch<Submission[]>('/admin/submissions', {
+            const response = await apiFetch<Submission[]>('/academy/admin/submissions?limit=100', {
                 token,
                 cache: 'no-store'
             });
@@ -59,13 +59,9 @@ export default function SubmissionsPage() {
 
     const handleGrade = async (id: number) => {
         try {
-            await apiFetch(`/admin/submissions/${id}/grade`, {
+            await apiFetch(`/academy/admin/submissions/${id}/grade?grade=${grade}&feedback=${encodeURIComponent(feedback)}`, {
                 method: "PATCH",
                 token,
-                query: {
-                    grade,
-                    feedback,
-                }
             });
             addToast("Calificación guardada", "success");
             setGradingId(null);
