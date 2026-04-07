@@ -6,7 +6,8 @@ import {
     Plus, Flag, Calendar, User, X, CheckCircle2, Circle,
     ChevronDown, ChevronRight, MoreHorizontal, AlertCircle,
     ArrowUp, ArrowDown, ChevronsUpDown, Check, Search, Loader2,
-    ChevronLeft, Trash2, MessageSquare,
+    ChevronLeft, Trash2, MessageSquare, Settings2, SlidersHorizontal,
+    Layers, Eye, EyeOff, GripVertical, Filter,
 } from 'lucide-react';
 import * as Popover from '@radix-ui/react-popover';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -398,11 +399,24 @@ interface Props {
 
 type SortKey = 'title' | 'status' | 'priority' | 'due_date';
 type SortDir = 'asc' | 'desc';
+type GroupKey = 'status' | 'priority' | 'none';
 
 const STATUS_ORDER: Record<string, number> = {
     urgent:0, in_progress:1, todo:2, pending:2, blocked:3, done:4
 };
 const PRIORITY_ORDER: Record<string, number> = { urgent:0, high:1, normal:2, low:3 };
+
+type ColumnId = 'title' | 'status' | 'priority' | 'assignee' | 'due_date' | 'comments';
+const ALL_COLUMNS: { id: ColumnId; label: string }[] = [
+    { id: 'title',    label: 'Nombre' },
+    { id: 'status',   label: 'Estado' },
+    { id: 'priority', label: 'Prioridad' },
+    { id: 'assignee', label: 'Asignado' },
+    { id: 'due_date', label: 'Fecha límite' },
+    { id: 'comments', label: 'Comentarios' },
+];
+
+type ActiveFilter = { field: 'status' | 'priority'; value: string; label: string };
 
 export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpdated }: Props) {
     const { token } = useAuth();
@@ -413,9 +427,17 @@ export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpda
     const [selected, setSelected]   = useState<Set<number>>(new Set());
     const [sortKey, setSortKey]      = useState<SortKey | null>(null);
     const [sortDir, setSortDir]      = useState<SortDir>('asc');
+    const [groupBy, setGroupBy]      = useState<GroupKey>('status');
     const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
     const [quickAddGroup, setQuickAddGroup] = useState<string | null>(null);
     const [quickAddLoading, setQuickAddLoading] = useState(false);
+    const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
+    const [visibleCols, setVisibleCols]     = useState<Set<ColumnId>>(new Set<ColumnId>(['title','status','priority','assignee','due_date','comments']));
+    // Toolbar popover states
+    const [cfgOpen,    setCfgOpen]    = useState(false);
+    const [filterOpen, setFilterOpen] = useState(false);
+    const [sortOpen,   setSortOpen]   = useState(false);
+    const [groupOpen,  setGroupOpen]  = useState(false);
 
     const resolveTask = (t: ProjectTaskRecord): ProjectTaskRecord => ({
         ...t,
@@ -438,9 +460,17 @@ export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpda
         return sortDir === 'asc' ? <ArrowUp size={12} className="text-violet-500" /> : <ArrowDown size={12} className="text-violet-500" />;
     };
 
-    // ─ Process and group
+    // ─ Process: filter + sort
     const processed = useMemo(() => {
         let list = tasks.map(resolveTask);
+        // Apply active filters
+        for (const f of activeFilters) {
+            list = list.filter(t => {
+                if (f.field === 'status')   return t.status   === f.value;
+                if (f.field === 'priority') return t.priority === f.value;
+                return true;
+            });
+        }
         if (sortKey) {
             list = [...list].sort((a, b) => {
                 let cmp = 0;
@@ -456,17 +486,20 @@ export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpda
             });
         }
         return list;
-    }, [tasks, overrides, sortKey, sortDir]);
+    }, [tasks, overrides, sortKey, sortDir, activeFilters])
 
     const groups = useMemo(() => {
         const grouped: Record<string, ProjectTaskRecord[]> = {};
         processed.forEach(t => {
-            const key = t.status ?? 'todo';
+            let key: string;
+            if (groupBy === 'none')     key = 'all';
+            else if (groupBy === 'priority') key = t.priority ?? 'normal';
+            else key = t.status ?? 'todo';
             if (!grouped[key]) grouped[key] = [];
             grouped[key].push(t);
         });
         return grouped;
-    }, [processed]);
+    }, [processed, groupBy]);
 
     // ─ Optimistic update helper
     const applyChange = useCallback(async (taskId: number, field: string, value: any) => {
@@ -525,6 +558,201 @@ export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpda
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] font-sans overflow-hidden">
 
+            {/* ── TOOLBAR ──────────────────────────────────────────────────── */}
+            <div className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 border-b border-slate-100 dark:border-white/[0.06] bg-slate-50/60 dark:bg-black/10">
+
+                {/* ── Config: column visibility ── */}
+                <Popover.Root open={cfgOpen} onOpenChange={setCfgOpen}>
+                    <Popover.Trigger asChild>
+                        <button className={clsx(
+                            'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all',
+                            cfgOpen ? 'bg-violet-50 dark:bg-violet-500/10 text-violet-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
+                        )}>
+                            <Settings2 size={12} /> Config
+                        </button>
+                    </Popover.Trigger>
+                    <Popover.Portal>
+                        <Popover.Content sideOffset={6} align="start"
+                            className="z-[500] w-56 bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl border border-slate-200/80 dark:border-white/10 p-2">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 py-1.5">Columnas visibles</p>
+                            {ALL_COLUMNS.map(col => (
+                                <button key={col.id}
+                                    onClick={() => setVisibleCols(prev => {
+                                        const next = new Set(prev);
+                                        if (next.has(col.id)) { if (col.id !== 'title') next.delete(col.id); }
+                                        else next.add(col.id);
+                                        return next;
+                                    })}
+                                    className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                    {visibleCols.has(col.id)
+                                        ? <Eye size={13} className="text-violet-500 shrink-0" />
+                                        : <EyeOff size={13} className="text-slate-300 shrink-0" />}
+                                    <span className={clsx('text-[12px] font-medium flex-1 text-left', visibleCols.has(col.id) ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400')}>{col.label}</span>
+                                    {col.id === 'title' && <span className="text-[9px] text-slate-300">fijo</span>}
+                                </button>
+                            ))}
+                        </Popover.Content>
+                    </Popover.Portal>
+                </Popover.Root>
+
+                <div className="w-px h-4 bg-slate-200 dark:bg-white/10" />
+
+                {/* ── Group by ── */}
+                <Popover.Root open={groupOpen} onOpenChange={setGroupOpen}>
+                    <Popover.Trigger asChild>
+                        <button className={clsx(
+                            'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all',
+                            groupBy !== 'status' ? 'bg-violet-50 dark:bg-violet-500/10 text-violet-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
+                        )}>
+                            <Layers size={12} />
+                            Agrupar{groupBy !== 'none' ? `: ${groupBy === 'status' ? 'Estado' : 'Prioridad'}` : ''}
+                        </button>
+                    </Popover.Trigger>
+                    <Popover.Portal>
+                        <Popover.Content sideOffset={6} align="start"
+                            className="z-[500] w-52 bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 pt-1 pb-2">Agrupar por</p>
+                            {([['status','Estado'],['priority','Prioridad'],['none','Sin agrupación']] as const).map(([k, lbl]) => (
+                                <button key={k} onClick={() => { setGroupBy(k); setGroupOpen(false); }}
+                                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                    <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 flex-1 text-left">{lbl}</span>
+                                    {groupBy === k && <Check size={12} className="text-violet-500" />}
+                                </button>
+                            ))}
+                        </Popover.Content>
+                    </Popover.Portal>
+                </Popover.Root>
+
+                {/* ── Filter ── */}
+                <Popover.Root open={filterOpen} onOpenChange={setFilterOpen}>
+                    <Popover.Trigger asChild>
+                        <button className={clsx(
+                            'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all',
+                            activeFilters.length > 0 ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
+                        )}>
+                            <Filter size={12} />
+                            Filtrar{activeFilters.length > 0 ? ` (${activeFilters.length})` : ''}
+                        </button>
+                    </Popover.Trigger>
+                    <Popover.Portal>
+                        <Popover.Content sideOffset={6} align="start"
+                            className="z-[500] w-64 bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl border border-slate-200/80 dark:border-white/10 p-2">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 py-1.5">Filtrar por Estado</p>
+                            <div className="flex flex-wrap gap-1.5 px-2 pb-2">
+                                {STATUS_OPTIONS.filter((s,i,a) => a.findIndex(x => x.value === s.value) === i && s.value !== 'pending').map(s => {
+                                    const active = activeFilters.some(f => f.field === 'status' && f.value === s.value);
+                                    return (
+                                        <button key={s.value}
+                                            onClick={() => setActiveFilters(prev => active
+                                                ? prev.filter(f => !(f.field==='status' && f.value===s.value))
+                                                : [...prev, { field: 'status', value: s.value, label: s.label }]
+                                            )}
+                                            className={clsx('flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all',
+                                                active ? `${s.bg} ${s.text} ${s.border} ring-2 ring-violet-500/30` : `${s.bg} ${s.text} ${s.border} opacity-60 hover:opacity-100`)}>
+                                            <div className={clsx('size-1.5 rounded-full', s.dot)} />{s.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 py-1.5 border-t border-slate-100 dark:border-white/5">Filtrar por Prioridad</p>
+                            <div className="flex flex-wrap gap-1.5 px-2 pb-2">
+                                {PRIORITY_OPTIONS.map(p => {
+                                    const active = activeFilters.some(f => f.field === 'priority' && f.value === p.value);
+                                    return (
+                                        <button key={p.value}
+                                            onClick={() => setActiveFilters(prev => active
+                                                ? prev.filter(f => !(f.field==='priority' && f.value===p.value))
+                                                : [...prev, { field: 'priority', value: p.value, label: p.label }]
+                                            )}
+                                            className={clsx('flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all',
+                                                active ? 'bg-slate-100 dark:bg-white/10 border-slate-300 ring-2 ring-violet-500/30' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 opacity-60 hover:opacity-100',
+                                                p.color)}>
+                                            <FlagIcon fill={p.fill} size={11} />{p.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            {activeFilters.length > 0 && (
+                                <button onClick={() => setActiveFilters([])}
+                                    className="w-full text-[11px] font-bold text-rose-500 py-1.5 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors border-t border-slate-100 dark:border-white/5 mt-1">
+                                    Limpiar filtros
+                                </button>
+                            )}
+                        </Popover.Content>
+                    </Popover.Portal>
+                </Popover.Root>
+
+                {/* ── Sort ── */}
+                <Popover.Root open={sortOpen} onOpenChange={setSortOpen}>
+                    <Popover.Trigger asChild>
+                        <button className={clsx(
+                            'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all',
+                            sortKey ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
+                        )}>
+                            <SlidersHorizontal size={12} />
+                            Ordenar{sortKey ? `: ${sortKey === 'due_date' ? 'Fecha' : sortKey === 'title' ? 'Nombre' : sortKey === 'status' ? 'Estado' : 'Prioridad'} ${sortDir === 'asc' ? '↑' : '↓'}` : ''}
+                        </button>
+                    </Popover.Trigger>
+                    <Popover.Portal>
+                        <Popover.Content sideOffset={6} align="start"
+                            className="z-[500] w-56 bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl border border-slate-200/80 dark:border-white/10 p-2">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 py-1.5">Columna</p>
+                            {([['title','Nombre'],['status','Estado'],['priority','Prioridad'],['due_date','Fecha límite']] as [SortKey, string][]).map(([k, lbl]) => (
+                                <button key={k} onClick={() => handleSortToggle(k)}
+                                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                    <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 flex-1 text-left">{lbl}</span>
+                                    {sortKey === k && (sortDir === 'asc' ? <ArrowUp size={12} className="text-violet-500" /> : <ArrowDown size={12} className="text-violet-500" />)}
+                                </button>
+                            ))}
+                            {sortKey && (
+                                <>
+                                    <div className="border-t border-slate-100 dark:border-white/5 my-1" />
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 py-1.5">Dirección</p>
+                                    <div className="flex gap-1.5 px-2 pb-1">
+                                        {([['asc','Ascendente'],['desc','Descendente']] as const).map(([d, lbl]) => (
+                                            <button key={d} onClick={() => setSortDir(d)}
+                                                className={clsx('flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all',
+                                                    sortDir === d ? 'bg-violet-600 text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-slate-200')}>
+                                                {lbl}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <button onClick={() => { setSortKey(null); setSortDir('asc'); setSortOpen(false); }}
+                                        className="w-full text-[11px] font-bold text-rose-500 py-1.5 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors mt-1">
+                                        Quitar ordenación
+                                    </button>
+                                </>
+                            )}
+                        </Popover.Content>
+                    </Popover.Portal>
+                </Popover.Root>
+
+                {/* Active filter chips */}
+                {activeFilters.length > 0 && (
+                    <div className="flex items-center gap-1 ml-1 flex-wrap">
+                        {activeFilters.map((f, i) => (
+                            <span key={i} className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-full text-[11px] font-semibold text-blue-600 dark:text-blue-400">
+                                {f.label}
+                                <button onClick={() => setActiveFilters(prev => prev.filter((_, j) => j !== i))}
+                                    className="size-4 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-full transition-colors">
+                                    <X size={9} />
+                                </button>
+                            </span>
+                        ))}
+                        <button onClick={() => setActiveFilters([])}
+                            className="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors ml-0.5">
+                            Limpiar
+                        </button>
+                    </div>
+                )}
+
+                <div className="ml-auto flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold text-slate-400">
+                        {processed.length} fila{processed.length !== 1 ? 's' : ''}
+                    </span>
+                </div>
+            </div>
+
             {/* ── Bulk action bar ── */}
             <AnimatePresence>
                 {totalSelected > 0 && (
@@ -576,24 +804,37 @@ export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpda
                                     <SortIcon k="title" />
                                 </button>
                             </th>
-                            <ColHeader label="Estado"      k="status"   width="160px" />
-                            <ColHeader label="Prioridad"   k="priority" width="140px" />
-                            <th className="px-4 py-2.5 text-left border-r border-slate-100 dark:border-white/5" style={{ width: '160px' }}>
-                                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Asignado</span>
-                            </th>
-                            <ColHeader label="Fecha límite" k="due_date" width="150px" />
-                            <th className="w-10 px-3 py-2.5 text-left">
-                                <MessageSquare size={13} className="text-slate-300" />
-                            </th>
+                            {visibleCols.has('status')   && <ColHeader label="Estado"       k="status"   width="160px" />}
+                            {visibleCols.has('priority') && <ColHeader label="Prioridad"    k="priority" width="140px" />}
+                            {visibleCols.has('assignee') && (
+                                <th className="px-4 py-2.5 text-left border-r border-slate-100 dark:border-white/5" style={{ width: '160px' }}>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Asignado</span>
+                                </th>
+                            )}
+                            {visibleCols.has('due_date') && <ColHeader label="Fecha límite" k="due_date" width="150px" />}
+                            {visibleCols.has('comments') && (
+                                <th className="w-10 px-3 py-2.5 text-left">
+                                    <MessageSquare size={13} className="text-slate-300" />
+                                </th>
+                            )}
                         </tr>
                     </thead>
 
                     <tbody className="divide-y divide-slate-100 dark:divide-white/[0.03]">
                         {Object.entries(groups).map(([groupName, groupTasks]) => {
-                            const st   = getStatus(groupName);
+                            // ── Dynamic group header depending on groupBy ──
+                            const st = groupBy === 'priority'
+                                ? (() => {
+                                    const p = PRIORITY_OPTIONS.find(p => p.value === groupName);
+                                    return p
+                                        ? { label: p.label, bg: 'bg-slate-100 dark:bg-white/5', text: p.color, border: 'border-slate-200 dark:border-white/10', dot: 'bg-slate-400' }
+                                        : getStatus(groupName);
+                                })()
+                                : getStatus(groupName);
                             const isCollapsed = collapsedGroups[groupName];
                             const groupIds = groupTasks.map(t => Number(t.id));
                             const allGroupSelected = groupIds.length > 0 && groupIds.every(id => selected.has(id));
+
 
                             return (
                                 <React.Fragment key={groupName}>
@@ -680,39 +921,49 @@ export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpda
                                                     </td>
 
                                                     {/* Status */}
-                                                    <td className="px-4 py-2 border-r border-slate-100 dark:border-white/5" style={{ width: '160px' }} onClick={e => e.stopPropagation()}>
-                                                        <InlineStatusCell value={t.status ?? 'todo'} onChange={v => applyChange(Number(t.id), 'status', v)} />
-                                                    </td>
+                                                    {visibleCols.has('status') && (
+                                                        <td className="px-4 py-2 border-r border-slate-100 dark:border-white/5" style={{ width: '160px' }} onClick={e => e.stopPropagation()}>
+                                                            <InlineStatusCell value={t.status ?? 'todo'} onChange={v => applyChange(Number(t.id), 'status', v)} />
+                                                        </td>
+                                                    )}
 
                                                     {/* Priority */}
-                                                    <td className="px-4 py-2 border-r border-slate-100 dark:border-white/5" style={{ width: '140px' }} onClick={e => e.stopPropagation()}>
-                                                        <InlinePriorityCell value={t.priority ?? 'normal'} onChange={v => applyChange(Number(t.id), 'priority', v)} />
-                                                    </td>
+                                                    {visibleCols.has('priority') && (
+                                                        <td className="px-4 py-2 border-r border-slate-100 dark:border-white/5" style={{ width: '140px' }} onClick={e => e.stopPropagation()}>
+                                                            <InlinePriorityCell value={t.priority ?? 'normal'} onChange={v => applyChange(Number(t.id), 'priority', v)} />
+                                                        </td>
+                                                    )}
 
                                                     {/* Assignee */}
-                                                    <td className="px-4 py-2 border-r border-slate-100 dark:border-white/5" style={{ width: '160px' }} onClick={e => e.stopPropagation()}>
-                                                        <InlineUserCell
-                                                            value={t.assignee_id}
-                                                            token={token}
-                                                            onChange={(userId, name) => applyChange(Number(t.id), 'assignee_id', userId)}
-                                                        />
-                                                    </td>
+                                                    {visibleCols.has('assignee') && (
+                                                        <td className="px-4 py-2 border-r border-slate-100 dark:border-white/5" style={{ width: '160px' }} onClick={e => e.stopPropagation()}>
+                                                            <InlineUserCell
+                                                                value={t.assignee_id}
+                                                                token={token}
+                                                                onChange={(userId) => applyChange(Number(t.id), 'assignee_id', userId)}
+                                                            />
+                                                        </td>
+                                                    )}
 
                                                     {/* Due date */}
-                                                    <td className="px-4 py-2 border-r border-slate-100 dark:border-white/5" style={{ width: '150px' }} onClick={e => e.stopPropagation()}>
-                                                        <InlineDateCell
-                                                            value={t.due_date}
-                                                            onChange={v => applyChange(Number(t.id), 'due_date', v)}
-                                                        />
-                                                    </td>
+                                                    {visibleCols.has('due_date') && (
+                                                        <td className="px-4 py-2 border-r border-slate-100 dark:border-white/5" style={{ width: '150px' }} onClick={e => e.stopPropagation()}>
+                                                            <InlineDateCell
+                                                                value={t.due_date}
+                                                                onChange={v => applyChange(Number(t.id), 'due_date', v)}
+                                                            />
+                                                        </td>
+                                                    )}
 
                                                     {/* Comments */}
-                                                    <td className="w-10 px-3 py-2.5" onClick={e => e.stopPropagation()}>
-                                                        <button onClick={() => openLayer('RIGHT')}
-                                                            className="p-1.5 rounded-lg text-slate-300 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-all opacity-0 group-hover:opacity-100">
-                                                            <MessageSquare size={13} />
-                                                        </button>
-                                                    </td>
+                                                    {visibleCols.has('comments') && (
+                                                        <td className="w-10 px-3 py-2.5" onClick={e => e.stopPropagation()}>
+                                                            <button onClick={() => openLayer('RIGHT')}
+                                                                className="p-1.5 rounded-lg text-slate-300 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-all opacity-0 group-hover:opacity-100">
+                                                                <MessageSquare size={13} />
+                                                            </button>
+                                                        </td>
+                                                    )}
                                                 </motion.tr>
                                             );
                                         })}

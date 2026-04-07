@@ -103,7 +103,11 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
         if (!title.trim()) return;
         setLoading(true);
         try {
-            if (type === 'task' && selectedProjectId) {
+            if (type === 'task') {
+                if (!selectedProjectId) {
+                    toast.info('Se requiere un proyecto para crear una tarea');
+                    return;
+                }
                 await apiFetch(`/projects/${selectedProjectId}/tasks`, {
                     method: 'POST', token,
                     body: { title: title.trim(), description, status: 'todo', priority }

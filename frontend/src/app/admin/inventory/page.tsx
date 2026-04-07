@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { 
-    Package, Search, Filter, Plus, CheckCircle2, Wrench, AlertTriangle, ChevronRight,
-    Box, Cog, History, ShieldCheck, Zap, Sparkles, BarChart3, Tag, QrCode, ExternalLink
+    Package, Plus, CheckCircle2, Wrench, AlertTriangle, ChevronRight,
+    Box, Cog, History, ShieldCheck, Zap, Sparkles, Tag, QrCode
 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';

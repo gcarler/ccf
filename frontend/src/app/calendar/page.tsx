@@ -22,6 +22,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useCreation } from '@/context/CreationContext';
 import type { ProjectTaskRecord } from '@/types/projects';
 import InlineEventPopover from '@/components/calendar/InlineEventPopover';
+import { toast } from 'sonner';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const HOURS = Array.from({ length: 24 }, (_, i) => i);   // 0..23
@@ -60,34 +61,76 @@ export default function PlanificadorPage() {
     const [tasks, setTasks] = useState<ProjectTaskRecord[]>([]);
     const [nowLine, setNowLine] = useState<number>(minutesToTop(new Date()));
     const [showViewDropdown, setShowViewDropdown] = useState(false);
+    const [openPopoverDay, setOpenPopoverDay] = useState<string | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    const fetchSystemCalendar = useCallback(async () => {
+        if (!token) return;
+        try {
+            const sysCal = await apiFetch<any[]>('/system/calendar', { token }).catch(() => []);
+            if (Array.isArray(sysCal)) {
+                setEvents(sysCal.map(e => ({
+                    id: e.id,
+                    title: e.title,
+                    start: new Date(e.start),
+                    end: e.end ? new Date(e.end) : undefined,
+                    color: e.type === 'task' ? '#7c3aed' : e.type === 'crm' ? '#10b981' : '#ef4444',
+                    type: e.type,
+                    allDay: e.allDay ?? false,
+                })));
+            }
+        } catch { }
+    }, [token]);
+
+    const fetchTasks = useCallback(async () => {
+        if (!token) return;
+        try {
+            const taskData = await apiFetch<ProjectTaskRecord[]>('/projects/tasks', { token }).catch(() => []);
+            if (Array.isArray(taskData)) setTasks(taskData.slice(0, 30));
+        } catch { }
+    }, [token]);
+
+    const handleSaveInlineEvent = async (data: { title: string; type: 'event'|'task'; description: string; guests: string; date: Date }) => {
+        try {
+            if (data.type === 'task') {
+                const projs = await apiFetch<any[]>('/projects', { token }).catch(() => []);
+                if (!projs || projs.length === 0) {
+                    toast.error('Se requiere un proyecto para crear una tarea');
+                    return;
+                }
+                await apiFetch(`/projects/${projs[0].id}/tasks`, {
+                    method: 'POST', token,
+                    body: { title: data.title, description: data.description, status: 'todo', priority: 'normal', due_date: data.date.toISOString() }
+                });
+            } else {
+                await apiFetch('/crm/events/', {
+                    method: 'POST', token,
+                    body: { 
+                        title: data.title, 
+                        description: data.description, 
+                        event_date: data.date.toISOString(), 
+                        location: data.guests 
+                    }
+                });
+            }
+
+            // Refetch to get real IDs and synced data
+            await fetchSystemCalendar();
+            if (data.type === 'task') await fetchTasks();
+            
+            toast.success(data.type === 'task' ? 'Tarea creada' : 'Evento creado', {
+                description: data.title
+            });
+        } catch (e: any) {
+            toast.error('Error al guardar', { description: e.message || 'Error desconocido' });
+        }
+    };
 
     // Fetch tasks for pending list and calendar events
     useEffect(() => {
-        const load = async () => {
-            if (!token) return;
-            try {
-                const sysCal = await apiFetch<any[]>('/system/calendar', { token }).catch(() => []);
-                if (Array.isArray(sysCal)) {
-                    setEvents(sysCal.map(e => ({
-                        id: e.id,
-                        title: e.title,
-                        start: new Date(e.start),
-                        end: e.end ? new Date(e.end) : undefined,
-                        color: e.type === 'task' ? '#7c3aed' : e.type === 'crm' ? '#10b981' : '#ef4444',
-                        type: e.type,
-                        allDay: e.allDay ?? false,
-                    })));
-                }
-            } catch { }
-            // Tasks: try my-tasks or fallback to empty
-            try {
-                const taskData = await apiFetch<ProjectTaskRecord[]>('/projects/tasks', { token }).catch(() => []);
-                if (Array.isArray(taskData)) setTasks(taskData.slice(0, 30));
-            } catch { }
-        };
-        load();
-    }, [token]);
+        fetchSystemCalendar();
+        fetchTasks();
+    }, [fetchSystemCalendar, fetchTasks]);
 
     // Live clock line
     useEffect(() => {
@@ -374,65 +417,65 @@ export default function PlanificadorPage() {
                                         ))}
                                     </div>
 
-                                    {/* Plus icon column */}
-                                    <div className="w-[40px] shrink-0 relative" style={{ height: HOUR_HEIGHT * 24 }}>
-                                        {HOURS.map(h => (
-                                            <div key={h} className="absolute left-0 right-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
-                                                style={{ top: h * HOUR_HEIGHT, height: HOUR_HEIGHT }}>
-                                                <button className="size-5 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-sm hover:scale-110 transition-transform">
-                                                    <Plus size={11} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
+
 
                                     {/* Day columns */}
                                     {weekDays.map((day, colIdx) => {
                                         const dayEvents = getEventsForDay(day);
                                         const today = isToday(day);
+                                        const dayKey = format(day, 'yyyy-MM-dd');
                                         return (
-                                            <div key={colIdx} className="flex-1 min-w-0 relative border-l border-slate-100 dark:border-white/5 first:border-l-0"
-                                                style={{ height: HOUR_HEIGHT * 24 }}>
-                                                {/* Hour lines */}
-                                                {HOURS.map(h => (
-                                                    <div key={h} className="absolute left-0 right-0 border-t border-slate-100 dark:border-white/[0.04]"
-                                                        style={{ top: h * HOUR_HEIGHT }} />
-                                                ))}
+                                            <InlineEventPopover 
+                                                key={colIdx}
+                                                open={openPopoverDay === dayKey}
+                                                onOpenChange={(open) => setOpenPopoverDay(open ? dayKey : null)}
+                                                day={day}
+                                                onSave={handleSaveInlineEvent}
+                                            >
+                                                <div className="flex-1 min-w-0 relative border-l border-slate-100 dark:border-white/5 first:border-l-0 cursor-pointer group"
+                                                    style={{ height: HOUR_HEIGHT * 24 }}>
+                                                    {/* Hour lines */}
+                                                    {HOURS.map(h => (
+                                                        <div key={h} className="absolute left-0 right-0 border-t border-slate-100 dark:border-white/[0.04]"
+                                                            style={{ top: h * HOUR_HEIGHT }} />
+                                                    ))}
 
-                                                {/* Today highlight column */}
-                                                {today && (
-                                                    <div className="absolute inset-0 bg-blue-50/30 dark:bg-blue-500/[0.03] pointer-events-none" />
-                                                )}
+                                                    {/* Today highlight column */}
+                                                    {today && (
+                                                        <div className="absolute inset-0 bg-blue-50/30 dark:bg-blue-500/[0.03] pointer-events-none" />
+                                                    )}
 
-                                                {/* Now line */}
-                                                {today && (
-                                                    <div className="absolute left-0 right-0 z-10 pointer-events-none" style={{ top: nowLine }}>
-                                                        <div className="relative flex items-center">
-                                                            <div className="size-2.5 rounded-full bg-red-500 shadow-sm shadow-red-400 -ml-1.5 shrink-0" />
-                                                            <div className="flex-1 h-px bg-red-500 opacity-70" />
+                                                    {/* Now line */}
+                                                    {today && (
+                                                        <div className="absolute left-0 right-0 z-10 pointer-events-none" style={{ top: nowLine }}>
+                                                            <div className="relative flex items-center">
+                                                                <div className="size-2.5 rounded-full bg-red-500 shadow-sm shadow-red-400 -ml-1.5 shrink-0" />
+                                                                <div className="flex-1 h-px bg-red-500 opacity-70" />
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                )}
+                                                    )}
 
-                                                {/* Events */}
-                                                {dayEvents.map(e => {
-                                                    const top = minutesToTop(e.start);
-                                                    const durationMins = e.end
-                                                        ? (e.end.getTime() - e.start.getTime()) / 60000
-                                                        : 60;
-                                                    const height = Math.max(20, durationMins * (HOUR_HEIGHT / 60));
-                                                    return (
-                                                        <div key={e.id}
-                                                            className="absolute left-1 right-1 rounded-lg px-2 py-1 overflow-hidden cursor-pointer hover:brightness-95 transition-all z-20 shadow-sm"
-                                                            style={{ top, height, backgroundColor: e.color + '22', borderLeft: `3px solid ${e.color}` }}
-                                                        >
-                                                            <p className="text-[10px] font-bold truncate" style={{ color: e.color }}>
-                                                                {format(e.start, 'h:mm a')} · {e.title}
-                                                            </p>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
+                                                    {/* Events */}
+                                                    {dayEvents.map(e => {
+                                                        const top = minutesToTop(e.start);
+                                                        const durationMins = e.end
+                                                            ? (e.end.getTime() - e.start.getTime()) / 60000
+                                                            : 60;
+                                                        const height = Math.max(20, durationMins * (HOUR_HEIGHT / 60));
+                                                        return (
+                                                            <div key={e.id}
+                                                                onClick={(evt) => evt.stopPropagation()}
+                                                                className="absolute left-1 right-1 rounded-lg px-2 py-1 overflow-hidden cursor-pointer hover:brightness-95 transition-all z-20 shadow-sm"
+                                                                style={{ top, height, backgroundColor: e.color + '22', borderLeft: `3px solid ${e.color}` }}
+                                                            >
+                                                                <p className="text-[10px] font-bold truncate" style={{ color: e.color }}>
+                                                                    {format(e.start, 'h:mm a')} · {e.title}
+                                                                </p>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </InlineEventPopover>
                                         );
                                     })}
                                 </div>
@@ -441,7 +484,7 @@ export default function PlanificadorPage() {
                     )}
 
                     {/* ── MONTH VIEW ─────────────────────────────────────────────── */}
-                    {viewMode === 'mes' && <MonthView currentDate={currentDate} events={events} />}
+                    {viewMode === 'mes' && <MonthView currentDate={currentDate} events={events} onSave={handleSaveInlineEvent} />}
 
                     {/* ── DAY VIEW ───────────────────────────────────────────────── */}
                     {viewMode === 'dia' && (
@@ -463,31 +506,40 @@ export default function PlanificadorPage() {
                                             </div>
                                         ))}
                                     </div>
-                                    <div className="flex-1 relative">
-                                        {HOURS.map(h => (
-                                            <div key={h} className="absolute left-0 right-0 border-t border-slate-100 dark:border-white/[0.04]"
-                                                style={{ top: h * HOUR_HEIGHT }} />
-                                        ))}
-                                        {isToday(currentDate) && (
-                                            <div className="absolute left-0 right-0 z-10" style={{ top: nowLine }}>
-                                                <div className="flex items-center">
-                                                    <div className="size-2.5 rounded-full bg-red-500 -ml-1.5 shrink-0" />
-                                                    <div className="flex-1 h-px bg-red-500" />
+                                    <InlineEventPopover 
+                                        open={openPopoverDay === format(currentDate, 'yyyy-MM-dd')}
+                                        onOpenChange={(open) => setOpenPopoverDay(open ? format(currentDate, 'yyyy-MM-dd') : null)}
+                                        day={currentDate}
+                                        onSave={handleSaveInlineEvent}
+                                    >
+                                        <div className="flex-1 relative cursor-pointer">
+                                            {HOURS.map(h => (
+                                                <div key={h} className="absolute left-0 right-0 border-t border-slate-100 dark:border-white/[0.04]"
+                                                    style={{ top: h * HOUR_HEIGHT }} />
+                                            ))}
+                                            {isToday(currentDate) && (
+                                                <div className="absolute left-0 right-0 z-10 pointer-events-none" style={{ top: nowLine }}>
+                                                    <div className="flex items-center">
+                                                        <div className="size-2.5 rounded-full bg-red-500 -ml-1.5 shrink-0" />
+                                                        <div className="flex-1 h-px bg-red-500" />
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
-                                        {getEventsForDay(currentDate).map(e => {
-                                            const top = minutesToTop(e.start);
-                                            const h = Math.max(24, ((e.end?.getTime() ?? e.start.getTime() + 3600000) - e.start.getTime()) / 60000 * (HOUR_HEIGHT / 60));
-                                            return (
-                                                <div key={e.id} className="absolute left-1 right-4 rounded-xl px-3 py-2 shadow-md cursor-pointer"
-                                                    style={{ top, height: h, backgroundColor: e.color + '20', borderLeft: `4px solid ${e.color}` }}>
-                                                    <p className="text-[11px] font-bold" style={{ color: e.color }}>{e.title}</p>
-                                                    <p className="text-[10px] text-slate-400">{format(e.start, 'h:mm a')}</p>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                                            )}
+                                            {getEventsForDay(currentDate).map(e => {
+                                                const top = minutesToTop(e.start);
+                                                const h = Math.max(24, ((e.end?.getTime() ?? e.start.getTime() + 3600000) - e.start.getTime()) / 60000 * (HOUR_HEIGHT / 60));
+                                                return (
+                                                    <div key={e.id} 
+                                                        onClick={(evt) => evt.stopPropagation()}
+                                                        className="absolute left-1 right-4 rounded-xl px-3 py-2 shadow-md cursor-pointer hover:brightness-95 transition-all"
+                                                        style={{ top, height: h, backgroundColor: e.color + '20', borderLeft: `4px solid ${e.color}` }}>
+                                                        <p className="text-[11px] font-bold" style={{ color: e.color }}>{e.title}</p>
+                                                        <p className="text-[10px] text-slate-400">{format(e.start, 'h:mm a')}</p>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </InlineEventPopover>
                                 </div>
                             </div>
                         </div>
@@ -513,7 +565,7 @@ export default function PlanificadorPage() {
 }
 
 // ── Month View ────────────────────────────────────────────────────────────────
-function MonthView({ currentDate, events }: { currentDate: Date; events: CalEvent[] }) {
+function MonthView({ currentDate, events, onSave }: { currentDate: Date; events: CalEvent[]; onSave?: (data: any) => void }) {
     const { openModal } = useCreation();
     const [openPopoverDay, setOpenPopoverDay] = useState<string | null>(null);
 
@@ -545,6 +597,7 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: CalEven
                             open={openPopoverDay === dayKey}
                             onOpenChange={(open) => setOpenPopoverDay(open ? dayKey : null)}
                             day={day}
+                            onSave={onSave}
                         >
                             <div 
                                 className={clsx(

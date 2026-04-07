@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     X, Flag, User, Calendar, MoreHorizontal, MessageSquare, Send,
-    Trash2, Paperclip, Bell, File, ExternalLink, Loader2,
+    Trash2, Paperclip, Bell, File as FileIcon, ExternalLink, Loader2,
     Image as ImageIcon, Check, ChevronDown, Sparkles, Tag,
     Circle, CheckCircle2, Clock, Plus, Link2, Maximize2
 } from 'lucide-react';
