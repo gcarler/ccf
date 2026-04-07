@@ -113,7 +113,7 @@ export default function ActaManagementPage() {
             { id: 102, user_id: 8, student_name: "Elena Rodriguez", progress_percent: 100 },
             { id: 103, user_id: 12, student_name: "Julian Castro", progress_percent: 40 },
         ];
-    }, [selectedCourse]);
+    }, []);
 
     const handleSaveAttendance = async () => {
         if (!selectedCourse || !token) return;

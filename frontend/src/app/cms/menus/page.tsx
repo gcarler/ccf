@@ -34,6 +34,7 @@ export default function CmsMenusManagement() {
 
     useEffect(() => {
         fetchNav();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token]);
 
     const fetchNav = async () => {

@@ -138,7 +138,10 @@ export default function GroupsPage() {
         }
     };
 
-    useEffect(() => { fetchHouses(); }, [token]);
+    useEffect(() => { 
+        fetchHouses(); 
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [token]);
 
     return (
         <CrmShell

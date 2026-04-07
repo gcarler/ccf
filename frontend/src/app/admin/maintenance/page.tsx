@@ -208,7 +208,7 @@ export default function AdminMaintenancePage() {
                                 <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:rotate-12 transition-transform duration-1000"><Database size={80} /></div>
                                 <h3 className="text-xs font-black uppercase tracking-[0.3em] relative z-10">Data Integrity</h3>
                                 <p className="text-[13px] text-slate-400 font-medium leading-relaxed relative z-10 italic">
-                                    "El mantenimiento preventivo ahorra un 40% en costos de reposición anual."
+                                    &quot;El mantenimiento preventivo ahorra un 40% en costos de reposición anual.&quot;
                                 </p>
                                 <button className="w-full py-4 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all border border-white/10 relative z-10">
                                     Descargar Reporte Anual

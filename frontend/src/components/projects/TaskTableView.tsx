@@ -272,7 +272,7 @@ function InlineUserCell({ value, token, onChange }: {
             })
             .catch(() => setUsers([]))
             .finally(() => setLoading(false));
-    }, [open]);
+    }, [open, token, value]);
 
     const filtered = query
         ? users.filter(u => u.username.toLowerCase().includes(query.toLowerCase()))
@@ -439,10 +439,10 @@ export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpda
     const [sortOpen,   setSortOpen]   = useState(false);
     const [groupOpen,  setGroupOpen]  = useState(false);
 
-    const resolveTask = (t: ProjectTaskRecord): ProjectTaskRecord => ({
+    const resolveTask = useCallback((t: ProjectTaskRecord): ProjectTaskRecord => ({
         ...t,
         ...(overrides[Number(t.id)] ?? {}),
-    });
+    }), [overrides]);
 
     // ─ Sort toggle
     const handleSortToggle = (key: SortKey) => {
@@ -486,7 +486,7 @@ export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpda
             });
         }
         return list;
-    }, [tasks, overrides, sortKey, sortDir, activeFilters])
+    }, [tasks, sortKey, sortDir, activeFilters, resolveTask])
 
     const groups = useMemo(() => {
         const grouped: Record<string, ProjectTaskRecord[]> = {};

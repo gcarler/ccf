@@ -2,6 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { PlayCircle, Clock, ChevronRight, Bookmark, Share2, Play } from "lucide-react";
 import { useContentBlock } from "@/hooks/useContent";
 
@@ -37,10 +38,11 @@ export default function PredicasPage() {
             {/* ── HERO CINEMATOGRÁFICO ─────────────────────────── */}
             <section className="relative min-h-[80vh] flex items-end overflow-hidden">
                 <div className="absolute inset-0">
-                    <img 
+                    <Image 
                         src="https://images.unsplash.com/photo-1507692049790-de58290a4334?w=1600&q=80" 
                         alt="Background"
-                        className="w-full h-full object-cover scale-105"
+                        fill
+                        className="object-cover scale-105"
                         style={{ filter: "brightness(0.3) saturate(0.8)" }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-faro-surface via-transparent to-transparent" />
@@ -134,10 +136,11 @@ export default function PredicasPage() {
                             style={{ background: "var(--faro-surface-container)" }}
                         >
                             <div className="aspect-video relative overflow-hidden">
-                                <img 
+                                <Image 
                                     src="https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=1000&q=80" 
-                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                    className="object-cover transition-transform duration-700 group-hover:scale-105"
                                     alt="Video thumbnail"
+                                    fill
                                 />
                                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500">
@@ -171,7 +174,7 @@ export default function PredicasPage() {
                                     }}
                                 >
                                     <div className="aspect-video relative">
-                                        <img src={v.thumbnail || v.img} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                        <Image src={v.thumbnail || v.img || "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=1000&q=80"} alt="Thumbnail" fill className="object-cover group-hover:scale-105 transition-transform" />
                                         <div className="absolute inset-0 bg-black/20" />
                                         <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md text-[10px] px-2 py-1 rounded text-white font-black">{v.duration || "45:00"}</div>
                                     </div>

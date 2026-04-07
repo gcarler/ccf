@@ -230,7 +230,7 @@ export default function ConocerAJesusPage() {
                                     className="text-lg italic leading-relaxed mb-6"
                                     style={{ color: "var(--faro-on-surface)" }}
                                 >
-                                    "{q}"
+                                    &quot;{q}&quot;
                                 </p>
                                 <p
                                     className="text-xs font-black uppercase tracking-widest"

@@ -398,6 +398,7 @@ export default function TaskDetailPanel({
             // Sync labels from task
             setLabels((task as any).labels ?? []);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [task?.id]);
 
     // ── Save ──────────────────────────────────────────────────────

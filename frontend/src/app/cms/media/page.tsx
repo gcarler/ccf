@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import AdminHero from "@/components/admin/AdminHero";
@@ -210,13 +211,17 @@ export default function CmsMediaPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {items.map((item) => (
               <div key={item.id} className="rounded-2xl border border-slate-100 dark:border-white/10 p-4 space-y-4 flex flex-col md:flex-row gap-4">
-                <div className="w-full md:w-32 h-32 shrink-0 rounded-xl overflow-hidden bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5">
-                  <img
+                <div className="relative w-full md:w-32 h-32 shrink-0 rounded-xl overflow-hidden bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5">
+                  <Image
                     src={item.url}
                     alt={item.alt_text || "Preview"}
-                    className="w-full h-full object-cover transition-transform hover:scale-110"
+                    fill
+                    unoptimized
+                    className="object-cover transition-transform hover:scale-110"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = "https://placehold.co/400x400/111418/white?text=No+Preview";
+                      const target = e.target as HTMLImageElement;
+                      target.src = "https://placehold.co/400x400/111418/white?text=No+Preview";
+                      target.srcset = "";
                     }}
                   />
                 </div>

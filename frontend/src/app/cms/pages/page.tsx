@@ -29,6 +29,7 @@ export default function CmsPagesManagement() {
 
     useEffect(() => {
         fetchPages();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token]);
 
     const fetchPages = async () => {

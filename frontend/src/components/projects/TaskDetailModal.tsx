@@ -62,6 +62,7 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdate }: Pro
             setLocalTitle(task.title);
             fetchComments();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, task, token]);
 
     const fetchComments = async () => {
@@ -102,18 +103,15 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdate }: Pro
     };
 
     const handleFileUpload = async (file: File) => {
-        if (!task) return;
+        if (!task || !token) return;
         setIsUploading(true);
         const formData = new FormData();
         formData.append('file', file);
         try {
-            const res = await fetch(`http://localhost:8000/api/projects/${task.project_id}/tasks/${task.id}/attachments`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
+            const updated = await apiFetch<ProjectTaskRecord>(`/projects/${task.project_id}/tasks/${task.id}/attachments`, {
+                method: 'POST', token,
                 body: formData
             });
-            if (!res.ok) throw new Error();
-            const updated = await res.json();
             onUpdate(updated);
             toast.success('Adjunto subido');
         } catch { toast.error('Error al subir'); }

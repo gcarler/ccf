@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { MapPin, Bell, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { useContentBlock } from "@/hooks/useContent";
 import { FARO_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
@@ -107,10 +108,11 @@ export default function EventosPage() {
                     className="md:col-span-2 relative h-[440px] rounded-3xl overflow-hidden group"
                     style={{ background: "var(--faro-surface-container)" }}
                 >
-                    <img
+                    <Image
                         src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=900&q=80"
                         alt="Gran Evento Destacado"
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
                         style={{ opacity: 0.5 }}
                     />
                     <div
@@ -249,10 +251,11 @@ export default function EventosPage() {
                         style={{ background: "var(--faro-surface-container-low)" }}
                     >
                         <div className="h-52 relative overflow-hidden">
-                            <img
-                                src={img}
-                                alt={title}
-                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            <Image
+                                src={img || "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&q=80"}
+                                alt={title || "Evento"}
+                                fill
+                                className="object-cover transition-transform duration-500 group-hover:scale-110"
                             />
                             <div
                                 className="absolute top-4 right-4 p-3 rounded-2xl text-center min-w-[64px]"

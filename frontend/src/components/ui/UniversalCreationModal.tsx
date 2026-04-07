@@ -73,6 +73,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
             fetchProjects();
             setTimeout(() => titleRef.current?.focus(), 100);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, initialType]);
 
     const fetchProjects = async () => {

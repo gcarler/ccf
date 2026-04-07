@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ApiError, apiFetch } from "@/lib/http";
 import AdminHero from "@/components/admin/AdminHero";
 import { FARO_BLOCKS } from "@/lib/cms/blocks";
+import Image from "next/image";
 import { CheckCircle2, Eye, FileText, RotateCcw, Save, Send, ShieldCheck, ImageIcon, Copy } from "lucide-react";
 
 interface MediaItem {
@@ -72,6 +73,7 @@ export default function CmsContentPage() {
 
   useEffect(() => {
     if (showMedia) loadMedia();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showMedia, token]);
 
   const parsedPreview = useMemo(() => {
@@ -300,7 +302,7 @@ export default function CmsContentPage() {
                   <div className="grid grid-cols-2 gap-3">
                     {media.map((item) => (
                       <div key={item.id} className="group relative aspect-square rounded-xl overflow-hidden border border-slate-200 bg-white shadow-sm">
-                        <img src={item.url} alt="" className="w-full h-full object-cover" />
+                        <Image src={item.url} alt="" fill unoptimized className="object-cover" />
                         <button 
                           onClick={() => {
                             navigator.clipboard.writeText(item.url);

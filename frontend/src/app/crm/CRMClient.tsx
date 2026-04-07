@@ -69,6 +69,7 @@ export default function CRMClient({ initialMembers: _initialMembers = [] }: CrmC
         if (!layers?.RIGHT && selectedMember) {
             setSelectedMember(null);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [layers?.RIGHT]);
 
     // 1. Cargar miembros reales de la DB
@@ -273,7 +274,7 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
                                     className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5 text-left w-full"
                                 >
                                     <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium italic">
-                                        "{aiInsight}"
+                                        &quot;{aiInsight}&quot;
                                     </p>
                                 </motion.div>
                             )}

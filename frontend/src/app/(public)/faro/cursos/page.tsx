@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { useContentBlock } from "@/hooks/useContent";
 
 const BOOKS = [
@@ -54,10 +55,11 @@ export default function CursosPage() {
                 className="relative h-[560px] flex items-center px-8 md:px-20 overflow-hidden"
             >
                 <div className="absolute inset-0 z-0">
-                    <img
+                    <Image
                         src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1600&q=80"
                         alt="Librería"
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                         style={{ filter: "brightness(0.3) saturate(0.5)" }}
                     />
                     <div
@@ -137,10 +139,11 @@ export default function CursosPage() {
                         className="md:col-span-8 group relative rounded-3xl overflow-hidden min-h-[400px]"
                         style={{ background: "var(--faro-surface-container-low)" }}
                     >
-                        <img
+                        <Image
                             src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=900&q=80"
                             alt="Fundamentos de Teología"
-                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                            fill
+                            className="object-cover transition-transform duration-700 group-hover:scale-105"
                             style={{ opacity: 0.45 }}
                         />
                         <div
@@ -270,10 +273,11 @@ export default function CursosPage() {
                     {BOOKS.map(({ title, author, price, img, desc }) => (
                         <div key={title} className="flex-none w-64 snap-start group">
                             <div className="relative aspect-[2/3] rounded-2xl mb-5 overflow-hidden shadow-2xl transition-transform duration-500 group-hover:-rotate-2 group-hover:scale-105">
-                                <img
+                                <Image
                                     src={img}
                                     alt={title}
-                                    className="w-full h-full object-cover"
+                                    fill
+                                    className="object-cover"
                                 />
                                 <div className="absolute inset-0 bg-black/15 group-hover:bg-transparent transition-colors" />
                             </div>
@@ -372,24 +376,26 @@ export default function CursosPage() {
                         </div>
                         <div className="hidden md:grid grid-cols-2 gap-4">
                             <div
-                                className="aspect-square rounded-2xl overflow-hidden"
+                                className="relative aspect-square rounded-2xl overflow-hidden"
                                 style={{ background: "var(--faro-surface)" }}
                             >
-                                <img
+                                <Image
                                     src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&q=80"
                                     alt="Estudio"
-                                    className="w-full h-full object-cover"
+                                    fill
+                                    className="object-cover"
                                     style={{ opacity: 0.8 }}
                                 />
                             </div>
                             <div
-                                className="aspect-square rounded-2xl overflow-hidden mt-8"
+                                className="relative aspect-square rounded-2xl overflow-hidden mt-8"
                                 style={{ background: "var(--faro-surface)" }}
                             >
-                                <img
+                                <Image
                                     src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&q=80"
                                     alt="Librería"
-                                    className="w-full h-full object-cover"
+                                    fill
+                                    className="object-cover"
                                     style={{ opacity: 0.8 }}
                                 />
                             </div>

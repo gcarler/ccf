@@ -189,7 +189,7 @@ export default function CommentModeration() {
                                                     <div>
                                                         <h4 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none group-hover:text-blue-600 transition-colors">{comment.author}</h4>
                                                         <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mt-2 flex items-center gap-2">
-                                                            <Globe size={10} /> En: <span className="text-slate-400 italic">"{comment.context}"</span>
+                                                            <Globe size={10} /> En: <span className="text-slate-400 italic">&quot;{comment.context}&quot;</span>
                                                         </p>
                                                     </div>
                                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{new Date(comment.created_at).toLocaleDateString('es-ES', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>

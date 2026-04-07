@@ -127,7 +127,7 @@ export function CommandCenter() {
                                         <div className="size-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center mx-auto mb-4">
                                             <Search className="text-slate-300" />
                                         </div>
-                                        <p className="text-sm font-black text-slate-900 dark:text-white">Sin resultados para "{search}"</p>
+                                        <p className="text-sm font-black text-slate-900 dark:text-white">Sin resultados para &quot;{search}&quot;</p>
                                         <p className="text-xs text-slate-400 mt-1">Intenta con otros términos o filtros.</p>
                                     </Command.Empty>
                                 )}

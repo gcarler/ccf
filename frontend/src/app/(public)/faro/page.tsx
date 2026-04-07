@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import React from "react";
+import Image from "next/image";
 import { ArrowRight, Play, Calendar, MapPin, BookOpen } from "lucide-react";
 import { useContentBlock } from "@/hooks/useContent";
 import { FARO_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
@@ -249,7 +250,7 @@ export default function PublicHomePage() {
                                 className="text-sm italic leading-relaxed mb-6"
                                 style={{ color: "var(--faro-on-surface-variant)" }}
                             >
-                                "Encontré una familia y un propósito cuando más lo necesitaba."
+                                &quot;Encontré una familia y un propósito cuando más lo necesitaba.&quot;
                             </p>
                             <span
                                 className="font-black text-sm"
@@ -335,13 +336,14 @@ export default function PublicHomePage() {
                         {publicEvents.slice(0, 3).map(({ img, tag, date, title, desc }: any) => (
                             <div key={title} className="group cursor-pointer">
                                 <div
-                                    className="aspect-video rounded-2xl overflow-hidden mb-6"
+                                    className="relative aspect-video rounded-2xl overflow-hidden mb-6"
                                     style={{ background: "var(--faro-surface-container-high)" }}
                                 >
-                                    <img
+                                    <Image
                                         src={img || "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80"}
-                                        alt={title}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                        alt={title || "Image"}
+                                        fill
+                                        className="object-cover group-hover:scale-105 transition-transform duration-700"
                                     />
                                 </div>
                                 <div className="flex gap-3 mb-3 items-center">

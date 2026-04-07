@@ -148,7 +148,7 @@ export default function TestimoniosPage() {
                                 className="text-2xl font-bold leading-snug mb-6"
                                 style={{ color: "var(--faro-on-surface)" }}
                             >
-                                "{featured?.content ?? FALLBACK[0].content}"
+                                &quot;{featured?.content ?? FALLBACK[0].content}&quot;
                             </p>
                         </div>
                     </div>
@@ -207,7 +207,7 @@ export default function TestimoniosPage() {
                                 className="text-base italic leading-relaxed mb-6"
                                 style={{ color: "var(--faro-on-surface-variant)" }}
                             >
-                                "{t.content}"
+                                &quot;{t.content}&quot;
                             </p>
                             <div className="flex items-center gap-3">
                                 <div
@@ -284,7 +284,7 @@ export default function TestimoniosPage() {
                         className="text-8xl font-black block mb-6 leading-none"
                         style={{ color: "var(--faro-primary)", opacity: 0.15 }}
                     >
-                        "
+                        &quot;
                     </span>
                     <blockquote
                         className="text-3xl md:text-4xl font-black leading-tight italic mb-10"

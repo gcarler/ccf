@@ -443,7 +443,7 @@ export default function TaskEditDrawer({
                                             ) : (
                                                 <motion.p key="ai-placeholder" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                                                     className="text-[12px] text-violet-400/70 dark:text-violet-400/50 font-medium">
-                                                    Haz clic en "Sugerir" para recibir orientación contextual de MESH sobre esta tarea.
+                                                    Haz clic en &quot;Sugerir&quot; para recibir orientación contextual de MESH sobre esta tarea.
                                                 </motion.p>
                                             )}
                                         </AnimatePresence>

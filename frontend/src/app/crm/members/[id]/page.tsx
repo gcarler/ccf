@@ -152,6 +152,7 @@ export default function MemberDetailPage() {
                 .catch(() => setHistory([]))
                 .finally(() => setLoadingHistory(false));
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab, id, token]);
 
     // Fetch donations when financial tab activated
@@ -163,6 +164,7 @@ export default function MemberDetailPage() {
                 .catch(() => setDonations([]))
                 .finally(() => setLoadingDonations(false));
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab, id, token]);
 
     if (loading) return (

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import React from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight, Target, Users, Heart, Star, Sparkles, Quote } from "lucide-react";
 import { useContentBlock } from "@/hooks/useContent";
@@ -112,10 +113,11 @@ export default function NosotrosPage() {
                 <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-20">
                     <div className="w-full lg:w-1/2 relative">
                         <div className="relative z-10 aspect-[4/5] rounded-[3rem] overflow-hidden shadow-2xl">
-                            <img 
-                                className="w-full h-full object-cover" 
+                            <Image 
+                                className="object-cover" 
                                 alt="David & Sara Mendoza"
                                 src="https://images.unsplash.com/photo-1516585424602-c210be8163f5?w=800&q=80"
+                                fill
                             />
                         </div>
                         <div 

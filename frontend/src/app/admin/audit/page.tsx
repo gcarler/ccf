@@ -38,6 +38,7 @@ export default function SecurityAuditPage() {
 
     useEffect(() => {
         if (isAuthenticated) fetchLogs();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAuthenticated, token]);
 
     if (!isAuthenticated) return null;

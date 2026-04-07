@@ -29,6 +29,7 @@ export default function WikiHomePage() {
 
     useEffect(() => {
         fetchDocs();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token]);
 
     const fetchDocs = async () => {

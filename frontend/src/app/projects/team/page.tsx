@@ -32,6 +32,7 @@ export default function TeamPage() {
 
     useEffect(() => {
         if (!layers.RIGHT && selectedMember) setSelectedMember(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [layers.RIGHT]);
 
     useEffect(() => {

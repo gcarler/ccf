@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 import { Award, CheckCircle2, Download, Share2, ShieldCheck, Calendar, User, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -64,11 +65,13 @@ export default function CertificateView({ data }: CertificateProps) {
                     </div>
                     
                     <div className="flex flex-col items-center gap-2">
-                        <div className="size-20 border-2 border-slate-100 dark:border-white/10 rounded-lg flex items-center justify-center p-1 bg-white">
-                            <img 
+                        <div className="relative size-20 border-2 border-slate-100 dark:border-white/10 rounded-lg overflow-hidden bg-white p-1">
+                            <Image 
                                 src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : 'https://ccf.la')}/academy/certificates/${data.certificate_code}`} 
                                 alt="QR Code" 
-                                className="w-full h-full object-contain"
+                                fill
+                                unoptimized
+                                className="object-contain p-1"
                             />
                         </div>
                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Validar: {data.certificate_code}</p>

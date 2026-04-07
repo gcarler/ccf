@@ -4,8 +4,7 @@ import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import {
     ChevronLeft, ChevronRight, Plus, Search, Settings2,
-    Star, Flag, Clock, Users, Bell, Layers, RefreshCw,
-    StickyNote, CalendarDays, ChevronDown, X, Workflow,
+    Flag, RefreshCw, StickyNote, ChevronDown, Workflow,
     Circle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -566,7 +565,6 @@ export default function PlanificadorPage() {
 
 // ── Month View ────────────────────────────────────────────────────────────────
 function MonthView({ currentDate, events, onSave }: { currentDate: Date; events: CalEvent[]; onSave?: (data: any) => void }) {
-    const { openModal } = useCreation();
     const [openPopoverDay, setOpenPopoverDay] = useState<string | null>(null);
 
     const days = useMemo(() => {
