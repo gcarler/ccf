@@ -1,24 +1,63 @@
 name: Deploy
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+concurrency:
+  group: deploy-${{ github.event.workflow_run.head_branch || github.ref }}
+  cancel-in-progress: true
 
 env:
   REGISTRY: ghcr.io
   IMAGE_BACKEND: ghcr.io/${{ github.repository }}/backend
   IMAGE_FRONTEND: ghcr.io/${{ github.repository }}/frontend
+  COMMIT_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
 
 jobs:
-  docker:
+  changes:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should_deploy: ${{ steps.filter.outputs.should_deploy }}
+    steps:
+      - name: Checkout commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.COMMIT_SHA }}
+          fetch-depth: 2
+
+      - name: Detect deploy-relevant changes
+        id: filter
+        run: |
+          set -euo pipefail
+          changed_files="$(git diff-tree --no-commit-id --name-only -r "${COMMIT_SHA}")"
+          echo "Changed files in commit ${COMMIT_SHA}:"
+          echo "${changed_files}"
+          if echo "${changed_files}" | grep -Eq '^(backend/|frontend/|deploy/|backend\.Dockerfile|frontend/Dockerfile|\.github/workflows/(ci|deploy)\.yml)'; then
+            echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+            echo "Deploy relevant changes detected."
+          else
+            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+            echo "No deploy relevant changes detected; skipping docker/deploy jobs."
+          fi
+
+  docker:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && needs.changes.outputs.should_deploy == 'true' }}
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
     permissions:
       contents: read
       packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.COMMIT_SHA }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -36,7 +75,9 @@ jobs:
           context: .
           file: backend.Dockerfile
           push: true
-          tags: ${{ env.IMAGE_BACKEND }}:${{ github.sha }}
+          tags: ${{ env.IMAGE_BACKEND }}:${{ env.COMMIT_SHA }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
 
       - name: Build & Push Frontend
         uses: docker/build-push-action@v6
@@ -44,15 +85,21 @@ jobs:
           context: ./frontend
           file: frontend/Dockerfile
           push: true
-          tags: ${{ env.IMAGE_FRONTEND }}:${{ github.sha }}
+          tags: ${{ env.IMAGE_FRONTEND }}:${{ env.COMMIT_SHA }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
 
   deploy:
-    needs: docker
+    needs: [changes, docker]
+    if: ${{ github.event.workflow_run.conclusion == 'success' && needs.changes.outputs.should_deploy == 'true' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.COMMIT_SHA }}
 
       - name: Setup kubectl
         uses: azure/setup-kubectl@v4
@@ -68,6 +115,12 @@ jobs:
         run: |
           helm upgrade --install ccf ./deploy/helm/ccf \
             --namespace ccf --create-namespace \
-            --set backend.image=${{ env.IMAGE_BACKEND }}:${{ github.sha }} \
-            --set frontend.image=${{ env.IMAGE_FRONTEND }}:${{ github.sha }} \
+            --atomic --wait --timeout 10m \
+            --set backend.image=${{ env.IMAGE_BACKEND }}:${{ env.COMMIT_SHA }} \
+            --set frontend.image=${{ env.IMAGE_FRONTEND }}:${{ env.COMMIT_SHA }} \
             ${{ secrets.HELM_EXTRA_ARGS }}
+
+      - name: Verify rollout status
+        run: |
+          kubectl rollout status deployment/ccf-ccf-backend -n ccf --timeout=300s
+          kubectl rollout status deployment/ccf-ccf-frontend -n ccf --timeout=300s

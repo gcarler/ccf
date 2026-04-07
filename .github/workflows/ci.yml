@@ -5,12 +5,16 @@ on:
     branches: ["main", "master"]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
       DATABASE_URL: sqlite:///./test.db
-      SECRET_KEY: super-secret
+      SECRET_KEY: ${{ vars.CI_TEST_SECRET_KEY || 'ci-test-only-key' }}
       REDIS_URL: redis://localhost:6379/0
       KAFKA_BOOTSTRAP_SERVERS: localhost:9092
     steps:
@@ -19,6 +23,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: requirements.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -33,6 +39,7 @@ jobs:
 
   frontend-quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     defaults:
       run:
         working-directory: frontend

@@ -34,11 +34,15 @@ NEXT_PUBLIC_GRAPHQL_URL=https://api.example.com/graphql
 
 ## GitHub Actions
 
-`.github/workflows/deploy.yml` builds both images, pushes to GHCR and performs a `helm upgrade`. Required secrets:
+`.github/workflows/deploy.yml` runs after `CI` succeeds on `main`, builds both images, pushes to GHCR and performs a `helm upgrade` with rollout verification. Required secrets:
 
-- `GHCR_USERNAME`, `GHCR_TOKEN`
 - `KUBE_CONFIG` (base64 kubeconfig)
-- Optional `HELM_ARGS`
+- Optional `HELM_EXTRA_ARGS`
+
+Notes:
+
+- GHCR auth uses GitHub Actions `GITHUB_TOKEN` with `packages: write` permission.
+- Deploy jobs are skipped automatically when commits do not touch deploy-relevant paths.
 
 ## Helm Chart
 
