@@ -28,17 +28,37 @@ interface CourseCatalogProps {
   token: string;
   enrolledCourseIds?: number[];
   initialCourses?: Course[];
+  viewType?: ViewType;
+  onViewTypeChange?: (view: ViewType) => void;
+  showViewSwitcher?: boolean;
 }
 
 
-export default function CourseCatalog({ userId, token, enrolledCourseIds = [], initialCourses }: CourseCatalogProps) {
+export default function CourseCatalog({
+  userId,
+  token,
+  enrolledCourseIds = [],
+  initialCourses,
+  viewType,
+  onViewTypeChange,
+  showViewSwitcher = true,
+}: CourseCatalogProps) {
   const { addToast } = useToast();
   const router = useRouter();
 
   const [courses, setCourses] = useState<Course[]>(initialCourses ?? []);
   const [loading, setLoading] = useState(!initialCourses);
   const [filterModality, setFilterModality] = useState<Modality | "all">("all");
-  const [viewType, setViewType] = useState<ViewType>(() => getStoredView('academy_catalog_view', 'grid'));
+  const [internalViewType, setInternalViewType] = useState<ViewType>(() => getStoredView('academy_catalog_view', 'grid'));
+  const resolvedViewType = viewType ?? internalViewType;
+
+  const handleViewTypeChange = (nextView: ViewType) => {
+    if (onViewTypeChange) {
+      onViewTypeChange(nextView);
+      return;
+    }
+    setInternalViewType(nextView);
+  };
 
   useEffect(() => {
     if (initialCourses && filterModality === 'all') {
@@ -101,12 +121,14 @@ export default function CourseCatalog({ userId, token, enrolledCourseIds = [], i
           Liderazgo
         </button>
         </div>
-        <ViewSwitcher
-          viewType={viewType}
-          setViewType={setViewType}
-          availableViews={['grid', 'list', 'table']}
-          storageKey="academy_catalog_view"
-        />
+        {showViewSwitcher && (
+          <ViewSwitcher
+            viewType={resolvedViewType}
+            setViewType={handleViewTypeChange}
+            availableViews={['grid', 'list', 'table']}
+            storageKey="academy_catalog_view"
+          />
+        )}
       </div>
 
       {loading ? (
@@ -116,7 +138,7 @@ export default function CourseCatalog({ userId, token, enrolledCourseIds = [], i
       ) : (
         <>
         {/* GRID VIEW */}
-        {viewType === 'grid' && (
+        {resolvedViewType === 'grid' && (
         <div className="flex flex-col gap-4 px-4">
           {courses.map((course) => (
             <div key={course.id} className="glass p-5 rounded-3xl flex flex-col gap-4 transition-transform active:scale-[0.98]">
@@ -162,7 +184,7 @@ export default function CourseCatalog({ userId, token, enrolledCourseIds = [], i
         )}
 
         {/* LIST VIEW */}
-        {viewType === 'list' && (
+        {resolvedViewType === 'list' && (
         <div className="flex flex-col gap-2 px-4">
           {courses.map((course) => (
             <div key={course.id} className="glass flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-white/10 transition-colors group">
@@ -185,7 +207,7 @@ export default function CourseCatalog({ userId, token, enrolledCourseIds = [], i
         )}
 
         {/* TABLE VIEW */}
-        {viewType === 'table' && (
+        {resolvedViewType === 'table' && (
         <div className="px-4 overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>

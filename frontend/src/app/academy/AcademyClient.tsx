@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { useContentBlocks } from '@/hooks/useContent';
-import { ViewType } from '@/components/ViewSwitcher';
+import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import { DSToolbarChip, DSSectionHeader } from '@/design';
@@ -26,7 +26,7 @@ interface AcademyClientProps {
 export default function AcademyClient({ initialCourses, initialEnrollments }: AcademyClientProps) {
     const { user, token, isAuthenticated } = useAuth();
     const router = useRouter();
-    const [viewType, setViewType] = useState<ViewType>('grid');
+    const [viewType, setViewType] = useState<ViewType>(() => getStoredView('academy_dashboard_view', 'grid'));
     const [enrolledCourseIds, setEnrolledCourseIds] = useState<number[]>(() => (initialEnrollments || []).map((e: any) => e.course?.id).filter(Boolean));
     const [loading, setLoading] = useState(initialEnrollments.length === 0);
     const [aiInsights, setAiInsights] = useState<any[]>([]);
@@ -44,6 +44,12 @@ export default function AcademyClient({ initialCourses, initialEnrollments }: Ac
             }
         }
     }, [user, isAuthenticated, router]);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem('academy_dashboard_view', viewType);
+        }
+    }, [viewType]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -108,7 +114,7 @@ export default function AcademyClient({ initialCourses, initialEnrollments }: Ac
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden font-sans relative">
             <div className="shrink-0 h-12 border-b border-slate-100 dark:border-white/5 flex items-center px-6 gap-2 bg-white/50 dark:bg-black/20 backdrop-blur-md relative z-20">
                 <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
-                    {(['grid', 'table'] as ViewType[]).map((vt) => (
+                    {(['grid', 'list', 'table'] as ViewType[]).map((vt) => (
                         <button
                             key={vt}
                             onClick={() => setViewType(vt)}
@@ -234,6 +240,9 @@ export default function AcademyClient({ initialCourses, initialEnrollments }: Ac
                                         token={token || ''}
                                         enrolledCourseIds={enrolledCourseIds}
                                         initialCourses={initialCourses}
+                                        viewType={viewType}
+                                        onViewTypeChange={setViewType}
+                                        showViewSwitcher={false}
                                     />
                                 </div>
                             </motion.section>
