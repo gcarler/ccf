@@ -23,11 +23,16 @@ export default function FaroNavbar() {
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [menuItemsV2, setMenuItemsV2] = useState<Array<{ href: string; label: string }>>([]);
+    const [menuItemsV2, setMenuItemsV2] = useState<Array<{ id?: number; href: string; label: string; children?: Array<{ id?: number; href: string; label: string }> }>>([]);
 
     // Dinamización vía CMS
     const { data: navContent } = useContentBlock("faro_nav_items");
-    const legacyLinks = Array.isArray(navContent?.items) ? navContent.items : DEFAULT_NAV_LINKS;
+    const legacyLinks = (Array.isArray(navContent?.items) ? navContent.items : DEFAULT_NAV_LINKS).map((item: any, index: number) => ({
+        id: index,
+        href: item.href,
+        label: item.label,
+        children: [],
+    }));
     const navLinks = menuItemsV2.length > 0 ? menuItemsV2 : legacyLinks;
 
     useEffect(() => {
@@ -35,10 +40,27 @@ export default function FaroNavbar() {
         const loadMenu = async () => {
             try {
                 const data = await getCmsPublicMenu("faro", "main");
-                const next = (data?.items || [])
+                const all = (data?.items || [])
                     .filter((item) => item.visibility !== "hidden")
-                    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-                    .map((item) => ({ href: item.href, label: item.label }));
+                    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+
+                const mapByParent = new Map<number | null, typeof all>();
+                all.forEach((item) => {
+                    const key = item.parent_id ?? null;
+                    const current = mapByParent.get(key) || [];
+                    current.push(item);
+                    mapByParent.set(key, current);
+                });
+
+                const roots = mapByParent.get(null) || [];
+                const next = roots.map((item) => {
+                    const children = (mapByParent.get(item.id) || []).map((child) => ({
+                        id: child.id,
+                        href: child.href,
+                        label: child.label,
+                    }));
+                    return { id: item.id, href: item.href, label: item.label, children };
+                });
                 if (mounted && next.length > 0) {
                     setMenuItemsV2(next);
                 }
@@ -91,9 +113,10 @@ export default function FaroNavbar() {
 
                     {/* Desktop Nav */}
                     <div className="hidden lg:flex items-center gap-1 flex-1 justify-center">
-                        {navLinks.map(({ href, label }: any) => {
-                            const active = pathname === href || (href !== "/faro" && pathname?.startsWith(href));
+                        {navLinks.map(({ href, label, children }: any) => {
+                            const active = pathname === href || (href !== "/faro" && pathname?.startsWith(href)) || (children || []).some((child: any) => pathname === child.href || pathname?.startsWith(child.href));
                             return (
+                                <div key={href} className="relative group">
                                 <Link
                                     key={href}
                                     href={href}
@@ -107,6 +130,7 @@ export default function FaroNavbar() {
                                     onMouseLeave={(e) => (e.currentTarget.style.color = active ? "var(--faro-primary)" : "var(--faro-on-surface-variant)")}
                                 >
                                     {label}
+                                    {(children || []).length > 0 && <span className="ml-1 text-[10px]">▾</span>}
                                     {active && (
                                         <span
                                             className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full"
@@ -114,6 +138,21 @@ export default function FaroNavbar() {
                                         />
                                     )}
                                 </Link>
+                                {(children || []).length > 0 && (
+                                    <div className="absolute left-0 top-full mt-2 hidden group-hover:block min-w-[220px] rounded-2xl border border-white/10 bg-[#0a1630]/95 backdrop-blur-xl shadow-2xl p-2">
+                                        {(children || []).map((child: any) => (
+                                            <Link
+                                                key={`${href}-${child.href}`}
+                                                href={child.href}
+                                                className="block rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-white/10"
+                                                style={{ color: "var(--faro-on-background)" }}
+                                            >
+                                                {child.label}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
+                                </div>
                             );
                         })}
                     </div>
@@ -181,16 +220,32 @@ export default function FaroNavbar() {
                     }}
                 >
                     <div className="flex flex-col items-center justify-center flex-1 gap-6 p-8">
-                        {navLinks.map(({ href, label }: any) => (
-                            <Link
-                                key={href}
-                                href={href}
-                                onClick={() => setMobileOpen(false)}
-                                className="text-2xl font-black uppercase tracking-widest transition-colors"
-                                style={{ color: pathname === href ? "var(--faro-primary)" : "var(--faro-on-background)" }}
-                            >
-                                {label}
-                            </Link>
+                        {navLinks.map(({ href, label, children }: any) => (
+                            <div key={href} className="text-center space-y-2">
+                                <Link
+                                    href={href}
+                                    onClick={() => setMobileOpen(false)}
+                                    className="text-2xl font-black uppercase tracking-widest transition-colors"
+                                    style={{ color: pathname === href ? "var(--faro-primary)" : "var(--faro-on-background)" }}
+                                >
+                                    {label}
+                                </Link>
+                                {(children || []).length > 0 && (
+                                    <div className="space-y-2">
+                                        {(children || []).map((child: any) => (
+                                            <Link
+                                                key={`${href}-${child.href}`}
+                                                href={child.href}
+                                                onClick={() => setMobileOpen(false)}
+                                                className="block text-sm font-bold uppercase tracking-widest"
+                                                style={{ color: "var(--faro-on-surface-variant)" }}
+                                            >
+                                                {child.label}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         ))}
                         <Link
                             href="/faro/conocer-a-jesus"

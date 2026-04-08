@@ -7,13 +7,21 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import require_active_user
+from backend.auth import normalize_role, require_active_user
 from backend.core.database import get_db
 
 
 router = APIRouter(prefix="/cms/v2", tags=["cms_v2"])
 
 ALLOWED_SECTION_TYPES = {"hero", "rich_text", "cards", "cta_banner", "gallery", "faq", "embed"}
+CMS_EDITOR_ROLES = {"admin", "coordinador", "docente", "pastor"}
+CMS_PUBLISHER_ROLES = {"admin", "coordinador", "pastor"}
+
+
+def _assert_role(user: models.User, allowed_roles: set[str], detail: str = "Not enough permissions") -> None:
+    role = normalize_role(getattr(user, "role", ""))
+    if role not in allowed_roles:
+        raise HTTPException(status_code=403, detail=detail)
 
 
 def _slugify(value: str) -> str:
@@ -57,8 +65,9 @@ def list_sites(
 def create_site(
     payload: schemas.CmsSiteCreate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_PUBLISHER_ROLES)
     if not payload.site_key.strip():
         raise HTTPException(status_code=422, detail="site_key is required")
     if not payload.base_path.strip().startswith("/"):
@@ -82,8 +91,9 @@ def patch_site(
     site_key: str,
     payload: schemas.CmsSiteUpdate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_PUBLISHER_ROLES)
     row = _get_site_or_404(db, site_key)
     return crud.update_cms_site(db, row, payload)
 
@@ -105,6 +115,9 @@ def create_theme(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    if payload.is_active:
+        _assert_role(current_user, CMS_PUBLISHER_ROLES, detail="Only publishers can activate a theme")
     site = _get_site_or_404(db, site_key)
     return crud.create_cms_theme(db, site.id, payload, created_by=current_user.id)
 
@@ -115,8 +128,11 @@ def patch_theme(
     theme_id: int,
     payload: schemas.CmsThemeUpdate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    if payload.is_active:
+        _assert_role(current_user, CMS_PUBLISHER_ROLES, detail="Only publishers can activate a theme")
     site = _get_site_or_404(db, site_key)
     row = crud.get_cms_theme(db, site.id, theme_id)
     if not row:
@@ -129,8 +145,9 @@ def activate_theme(
     site_key: str,
     theme_id: int,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_PUBLISHER_ROLES)
     site = _get_site_or_404(db, site_key)
     row = crud.activate_cms_theme(db, site.id, theme_id)
     if not row:
@@ -153,8 +170,9 @@ def create_menu(
     site_key: str,
     payload: schemas.CmsMenuCreate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
     if crud.get_cms_menu(db, site.id, payload.menu_key.strip().lower()):
         raise HTTPException(status_code=409, detail="menu_key already exists")
@@ -178,8 +196,9 @@ def patch_menu(
     menu_key: str,
     payload: schemas.CmsMenuUpdate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
     row = _get_menu_or_404(db, site.id, menu_key)
     return crud.update_cms_menu(db, row, payload)
@@ -190,8 +209,9 @@ def delete_menu(
     site_key: str,
     menu_key: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
     row = _get_menu_or_404(db, site.id, menu_key)
     crud.delete_cms_menu(db, row)
@@ -215,8 +235,9 @@ def create_menu_item(
     menu_key: str,
     payload: schemas.CmsMenuItemCreate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
     menu = _get_menu_or_404(db, site.id, menu_key)
     return crud.create_cms_menu_item(db, menu.id, payload)
@@ -229,8 +250,9 @@ def patch_menu_item(
     item_id: int,
     payload: schemas.CmsMenuItemUpdate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
     menu = _get_menu_or_404(db, site.id, menu_key)
     item = crud.get_cms_menu_item(db, menu.id, item_id)
@@ -245,8 +267,9 @@ def delete_menu_item(
     menu_key: str,
     item_id: int,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
     menu = _get_menu_or_404(db, site.id, menu_key)
     item = crud.get_cms_menu_item(db, menu.id, item_id)
@@ -261,8 +284,9 @@ def reorder_menu_items(
     menu_key: str,
     payload: schemas.CmsMenuItemReorderPayload,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
     menu = _get_menu_or_404(db, site.id, menu_key)
     return crud.reorder_cms_menu_items(db, menu.id, payload.items)
@@ -285,6 +309,9 @@ def create_page(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    if payload.status.strip().lower() != "draft":
+        raise HTTPException(status_code=422, detail="new pages must start in draft")
     site = _get_site_or_404(db, site_key)
     payload.slug = _slugify(payload.slug)
     if not payload.slug:
@@ -313,6 +340,9 @@ def patch_page(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    if payload.status is not None:
+        raise HTTPException(status_code=422, detail="use workflow endpoint to change status")
     site = _get_site_or_404(db, site_key)
     row = _get_page_or_404(db, site.id, slug)
     return crud.update_cms_page(db, row, payload, current_user.id)
@@ -323,8 +353,9 @@ def delete_page(
     site_key: str,
     slug: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
     row = _get_page_or_404(db, site.id, slug)
     crud.delete_cms_page(db, row)
@@ -348,8 +379,9 @@ def create_section(
     slug: str,
     payload: schemas.CmsSectionCreate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
     if payload.type not in ALLOWED_SECTION_TYPES:
         raise HTTPException(status_code=422, detail="unsupported section type")
     site = _get_site_or_404(db, site_key)
@@ -364,8 +396,9 @@ def patch_section(
     section_id: int,
     payload: schemas.CmsSectionUpdate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
     if payload.type is not None and payload.type not in ALLOWED_SECTION_TYPES:
         raise HTTPException(status_code=422, detail="unsupported section type")
     site = _get_site_or_404(db, site_key)
@@ -382,8 +415,9 @@ def delete_section(
     slug: str,
     section_id: int,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
     page = _get_page_or_404(db, site.id, slug)
     row = crud.get_cms_section(db, page.id, section_id)
@@ -398,8 +432,9 @@ def reorder_sections(
     slug: str,
     payload: schemas.CmsSectionReorderPayload,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
     page = _get_page_or_404(db, site.id, slug)
     return crud.reorder_cms_sections(db, page.id, payload.items)
@@ -425,6 +460,7 @@ def rollback_page(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
+    _assert_role(current_user, CMS_PUBLISHER_ROLES)
     site = _get_site_or_404(db, site_key)
     page = _get_page_or_404(db, site.id, slug)
     version = crud.get_cms_page_version(db, page.id, version_id)
@@ -441,6 +477,11 @@ def workflow_page(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
+    action = payload.action.strip().lower()
+    if action in {"approve", "publish", "archive"}:
+        _assert_role(current_user, CMS_PUBLISHER_ROLES)
+    else:
+        _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
     page = _get_page_or_404(db, site.id, slug)
     row = crud.transition_cms_page_status(db, page, payload.action, current_user.id, notes=payload.notes)

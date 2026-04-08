@@ -59,3 +59,45 @@ export interface CmsPublicMenu {
     meta_json: Record<string, unknown>;
   }>;
 }
+
+export interface CmsPage {
+  id: number;
+  site_id: number;
+  slug: string;
+  title: string;
+  status: "draft" | "in_review" | "approved" | "published" | "archived" | string;
+  seo_json: Record<string, unknown>;
+  published_version_id: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CmsSection {
+  id: number;
+  page_id: number;
+  section_key: string;
+  type: string;
+  props_json: Record<string, unknown>;
+  sort_order: number;
+  is_visible: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CmsPageVersion {
+  id: number;
+  page_id: number;
+  version_number: number;
+  snapshot_json: Record<string, unknown>;
+  notes: string | null;
+  created_by: number | null;
+  created_at: string;
+}
+
+export interface CmsPublicPage {
+  site_key: string;
+  slug: string;
+  title: string;
+  seo_json: Record<string, unknown>;
+  sections: CmsSection[];
+}

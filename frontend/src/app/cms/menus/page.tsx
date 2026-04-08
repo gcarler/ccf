@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Link2, Search, Plus, Trash2, 
@@ -10,12 +10,14 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import SidePanel from '@/components/ui/SidePanel';
 import clsx from 'clsx';
-import { createCmsMenu, createCmsMenuItem, deleteCmsMenuItem, listCmsMenuItems, patchCmsMenuItem } from '@/lib/cms/v2';
+import { createCmsMenu, createCmsMenuItem, deleteCmsMenuItem, listCmsMenuItems, patchCmsMenuItem, reorderCmsMenuItems } from '@/lib/cms/v2';
 import { CmsMenuItem } from '@/types/cms-v2';
 import { ApiError } from '@/lib/http';
+import { canEditCms } from '@/lib/cms/permissions';
 
 interface MenuItem {
     id: number;
+    parent_id?: number | null;
     label: string;
     href: string;
     is_external?: boolean;
@@ -29,7 +31,7 @@ interface NavConfig {
 }
 
 export default function CmsMenusManagement() {
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const SITE_KEY = 'faro';
     const MENU_KEY = 'main';
     const [navConfig, setNavConfig] = useState<NavConfig>({ items: [] });
@@ -39,6 +41,45 @@ export default function CmsMenusManagement() {
     const [newItemHref, setNewItemHref] = useState("");
     const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+    const [draggedId, setDraggedId] = useState<number | null>(null);
+    const canEdit = canEditCms(user?.role);
+
+    const wouldCreateCycle = (itemId: number, parentId: number | null) => {
+        if (parentId == null) return false;
+        if (itemId === parentId) return true;
+        const byId = new Map(navConfig.items.map((item) => [item.id, item]));
+        let cursor = byId.get(parentId);
+        const visited = new Set<number>();
+        while (cursor) {
+            if (visited.has(cursor.id)) return true;
+            visited.add(cursor.id);
+            if (cursor.id === itemId) return true;
+            cursor = cursor.parent_id ? byId.get(cursor.parent_id) : undefined;
+        }
+        return false;
+    };
+
+    const displayedItems = useMemo(() => {
+        const byParent = new Map<number | null, MenuItem[]>();
+        navConfig.items.forEach((item) => {
+            const key = item.parent_id ?? null;
+            const arr = byParent.get(key) || [];
+            arr.push(item);
+            byParent.set(key, arr);
+        });
+        byParent.forEach((items) => items.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)));
+
+        const result: Array<{ item: MenuItem; depth: number }> = [];
+        const walk = (parentId: number | null, depth: number) => {
+            const children = byParent.get(parentId) || [];
+            children.forEach((child) => {
+                result.push({ item: child, depth });
+                walk(child.id, depth + 1);
+            });
+        };
+        walk(null, 0);
+        return result;
+    }, [navConfig.items]);
 
     useEffect(() => {
         fetchNav();
@@ -53,6 +94,7 @@ export default function CmsMenusManagement() {
                 .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
                 .map((item: CmsMenuItem) => ({
                     id: item.id,
+                    parent_id: item.parent_id,
                     label: item.label,
                     href: item.href,
                     is_external: item.is_external,
@@ -70,6 +112,7 @@ export default function CmsMenusManagement() {
                         .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
                         .map((item: CmsMenuItem) => ({
                             id: item.id,
+                            parent_id: item.parent_id,
                             label: item.label,
                             href: item.href,
                             is_external: item.is_external,
@@ -91,7 +134,7 @@ export default function CmsMenusManagement() {
 
     const handleAddItem = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
-        if (!newItemLabel.trim() || !newItemHref.trim()) return;
+        if (!newItemLabel.trim() || !newItemHref.trim() || !canEdit) return;
 
         try {
             await createCmsMenuItem(
@@ -102,6 +145,7 @@ export default function CmsMenusManagement() {
                     href: newItemHref,
                     is_external: newItemHref.startsWith('http'),
                     sort_order: navConfig.items.length,
+                    parent_id: null,
                 },
                 token,
             );
@@ -115,6 +159,7 @@ export default function CmsMenusManagement() {
     };
 
     const handleDeleteItem = async (index: number) => {
+        if (!canEdit) return;
         const target = navConfig.items[index];
         if (!target) return;
         try {
@@ -130,6 +175,7 @@ export default function CmsMenusManagement() {
     };
 
     const handleUpdateItem = async (index: number, updatedItem: MenuItem) => {
+        if (!canEdit) return;
         const target = navConfig.items[index];
         if (!target) return;
         try {
@@ -141,6 +187,8 @@ export default function CmsMenusManagement() {
                     label: updatedItem.label,
                     href: updatedItem.href,
                     is_external: !!updatedItem.is_external,
+                    parent_id: updatedItem.parent_id ?? null,
+                    sort_order: updatedItem.sort_order,
                 },
                 token,
             );
@@ -149,6 +197,83 @@ export default function CmsMenusManagement() {
         } catch (error) {
             console.error('Error updating menu item:', error);
         }
+    };
+
+    const moveItem = async (index: number, direction: 'up' | 'down') => {
+        if (!canEdit) return;
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= navConfig.items.length) return;
+        const reordered = [...navConfig.items];
+        const current = reordered[index];
+        reordered[index] = reordered[targetIndex];
+        reordered[targetIndex] = current;
+        const normalized = reordered.map((item, idx) => ({ ...item, sort_order: idx }));
+        setNavConfig({ items: normalized });
+        try {
+            await reorderCmsMenuItems(
+                SITE_KEY,
+                MENU_KEY,
+                normalized.map((item) => ({ id: item.id, parent_id: item.parent_id ?? null, sort_order: item.sort_order ?? 0 })),
+                token,
+            );
+            fetchNav();
+        } catch (error) {
+            console.error('Error reordering menu items:', error);
+        }
+    };
+
+    const applyMenuReorder = async (items: MenuItem[]) => {
+        if (!canEdit) return;
+        const normalized = items.map((item, index) => ({ ...item, sort_order: index }));
+        setNavConfig({ items: normalized });
+        try {
+            await reorderCmsMenuItems(
+                SITE_KEY,
+                MENU_KEY,
+                normalized.map((item) => ({ id: item.id, parent_id: item.parent_id ?? null, sort_order: item.sort_order ?? 0 })),
+                token,
+            );
+            fetchNav();
+        } catch (error) {
+            console.error('Error applying menu reorder:', error);
+        }
+    };
+
+    const moveToRoot = async (itemId: number) => {
+        if (!canEdit) return;
+        const next = navConfig.items.map((item) => item.id === itemId ? { ...item, parent_id: null } : item);
+        await applyMenuReorder(next);
+    };
+
+    const makeChildOf = async (itemId: number, parentId: number) => {
+        if (!canEdit) return;
+        if (itemId === parentId) return;
+        if (wouldCreateCycle(itemId, parentId)) return;
+        const next = navConfig.items.map((item) => item.id === itemId ? { ...item, parent_id: parentId } : item);
+        await applyMenuReorder(next);
+    };
+
+    const moveRelativeTo = async (itemId: number, targetId: number, position: 'before' | 'after') => {
+        if (!canEdit) return;
+        if (itemId === targetId) return;
+        const current = navConfig.items.find((item) => item.id === itemId);
+        const target = navConfig.items.find((item) => item.id === targetId);
+        if (!current || !target) return;
+
+        const parentId = target.parent_id ?? null;
+        if (wouldCreateCycle(itemId, parentId)) return;
+
+        const withoutCurrent = navConfig.items.filter((item) => item.id !== itemId);
+        const targetIndex = withoutCurrent.findIndex((item) => item.id === targetId);
+        if (targetIndex < 0) return;
+        const nextCurrent = { ...current, parent_id: parentId };
+        const insertIndex = position === 'before' ? targetIndex : targetIndex + 1;
+        const next = [
+            ...withoutCurrent.slice(0, insertIndex),
+            nextCurrent,
+            ...withoutCurrent.slice(insertIndex),
+        ];
+        await applyMenuReorder(next);
     };
 
     return (
@@ -165,7 +290,8 @@ export default function CmsMenusManagement() {
                 <div className="flex items-center gap-2">
                     <button 
                         onClick={() => setIsQuickAddOpen(!isQuickAddOpen)}
-                        className="bg-violet-600 text-white px-4 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-violet-500/20 hover:bg-violet-700 active:scale-95 transition-all flex items-center gap-2"
+                        disabled={!canEdit}
+                        className="bg-violet-600 text-white px-4 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-violet-500/20 hover:bg-violet-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
                     >
                         <Plus size={14} />
                         Añadir Enlace
@@ -195,19 +321,22 @@ export default function CmsMenusManagement() {
                                     value={newItemLabel}
                                     onChange={(e) => setNewItemLabel(e.target.value)}
                                     placeholder="Nombre del enlace..."
+                                    disabled={!canEdit}
                                     className="flex-1 bg-transparent border-none text-[15px] font-bold text-violet-900 dark:text-violet-200 placeholder:text-violet-400 focus:ring-0"
                                 />
                                 <input 
                                     value={newItemHref}
                                     onChange={(e) => setNewItemHref(e.target.value)}
                                     placeholder="URL (ej: /contacto o https://...)"
+                                    disabled={!canEdit}
                                     className="flex-1 bg-transparent border-none text-[15px] font-medium text-violet-700 dark:text-violet-300 placeholder:text-violet-400 focus:ring-0"
                                 />
                             </div>
                             <div className="flex items-center gap-2">
                                 <button 
                                     type="submit"
-                                    className="bg-violet-600 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest"
+                                    disabled={!canEdit}
+                                    className="bg-violet-600 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
                                 >
                                     GUARDAR
                                 </button>
@@ -244,50 +373,119 @@ export default function CmsMenusManagement() {
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {navConfig.items.map((item, index) => (
-                            <motion.div
-                                key={index}
-                                initial={{ opacity: 0, x: -16 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: index * 0.04 }}
-                                onClick={() => {
-                                    setSelectedItem(item);
-                                    setSelectedIndex(index);
-                                }}
-                                className="group bg-white dark:bg-[#252528] rounded-2xl border border-slate-200/70 dark:border-white/5 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center gap-4"
-                            >
-                                <div className="p-2 text-slate-300 group-hover:text-slate-500 transition-colors">
-                                    <GripVertical size={16} />
-                                </div>
-                                
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="text-[13px] font-bold text-slate-900 dark:text-white">
-                                        {item.label}
-                                    </h3>
-                                    <p className="text-[11px] text-slate-400 font-medium">
-                                        {item.href}
-                                    </p>
-                                </div>
+                        <div
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={async () => {
+                                if (!draggedId) return;
+                                await moveToRoot(draggedId);
+                                setDraggedId(null);
+                            }}
+                            className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400"
+                        >
+                            Soltar aquí para mover a nivel raíz
+                        </div>
+                        {displayedItems.map(({ item, depth }, index) => (
+                            <React.Fragment key={item.id}>
+                                <div
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={async () => {
+                                        if (!draggedId || draggedId === item.id) return;
+                                        await moveRelativeTo(draggedId, item.id, 'before');
+                                        setDraggedId(null);
+                                    }}
+                                    className="h-2 rounded-md border border-dashed border-transparent hover:border-violet-300 dark:hover:border-violet-500/40"
+                                    style={{ marginLeft: `${depth * 16}px` }}
+                                />
+                                <motion.div
+                                    initial={{ opacity: 0, x: -16 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.04 }}
+                                    onClick={() => {
+                                        const sourceIndex = navConfig.items.findIndex((entry) => entry.id === item.id);
+                                        setSelectedItem(item);
+                                        setSelectedIndex(sourceIndex);
+                                    }}
+                                    draggable={canEdit}
+                                    onDragStart={() => setDraggedId(item.id)}
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={async () => {
+                                        if (!draggedId || draggedId === item.id) return;
+                                        await makeChildOf(draggedId, item.id);
+                                        setDraggedId(null);
+                                    }}
+                                    onDragEnd={() => setDraggedId(null)}
+                                    className="group bg-white dark:bg-[#252528] rounded-2xl border border-slate-200/70 dark:border-white/5 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center gap-4"
+                                    style={{ marginLeft: `${depth * 16}px` }}
+                                >
+                                    <div className="p-2 text-slate-300 group-hover:text-slate-500 transition-colors">
+                                        <GripVertical size={16} />
+                                    </div>
+                                    
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-[13px] font-bold text-slate-900 dark:text-white">
+                                            {item.label}
+                                        </h3>
+                                        <p className="text-[11px] text-slate-400 font-medium">
+                                            {item.href}
+                                        </p>
+                                    </div>
 
-                                {item.is_external && (
-                                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-slate-100 dark:bg-white/5 text-slate-500 uppercase tracking-widest">
-                                        EXTERNO
-                                    </span>
-                                )}
+                                    {item.is_external && (
+                                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-slate-100 dark:bg-white/5 text-slate-500 uppercase tracking-widest">
+                                            EXTERNO
+                                        </span>
+                                    )}
 
-                                <div className="opacity-0 group-hover:opacity-100 transition-all flex items-center gap-1">
-                                    <button 
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteItem(index);
-                                        }}
-                                        className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl text-slate-400 hover:text-rose-600 transition-all"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
-                                <ChevronRight size={16} className="text-slate-300" />
-                            </motion.div>
+                                    <div className="opacity-0 group-hover:opacity-100 transition-all flex items-center gap-1">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const sourceIndex = navConfig.items.findIndex((entry) => entry.id === item.id);
+                                                moveItem(sourceIndex, 'up');
+                                            }}
+                                            disabled={!canEdit}
+                                            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl text-slate-400 hover:text-slate-600 transition-all"
+                                            title="Subir"
+                                        >
+                                            <ChevronRight size={14} className="-rotate-90" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const sourceIndex = navConfig.items.findIndex((entry) => entry.id === item.id);
+                                                moveItem(sourceIndex, 'down');
+                                            }}
+                                            disabled={!canEdit}
+                                            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl text-slate-400 hover:text-slate-600 transition-all"
+                                            title="Bajar"
+                                        >
+                                            <ChevronRight size={14} className="rotate-90" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const sourceIndex = navConfig.items.findIndex((entry) => entry.id === item.id);
+                                                handleDeleteItem(sourceIndex);
+                                            }}
+                                            disabled={!canEdit}
+                                            className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl text-slate-400 hover:text-rose-600 transition-all"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                    <ChevronRight size={16} className="text-slate-300" />
+                                </motion.div>
+                                <div
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={async () => {
+                                        if (!draggedId || draggedId === item.id) return;
+                                        await moveRelativeTo(draggedId, item.id, 'after');
+                                        setDraggedId(null);
+                                    }}
+                                    className="h-2 rounded-md border border-dashed border-transparent hover:border-violet-300 dark:hover:border-violet-500/40"
+                                    style={{ marginLeft: `${depth * 16}px` }}
+                                />
+                            </React.Fragment>
                         ))}
                     </div>
                 )}
@@ -314,6 +512,7 @@ export default function CmsMenusManagement() {
                                     type="text"
                                     value={selectedItem.label}
                                     onChange={(e) => handleUpdateItem(selectedIndex, { ...selectedItem, label: e.target.value })}
+                                    disabled={!canEdit}
                                     className="w-full px-3 py-2.5 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-violet-500/30 transition-all font-bold"
                                 />
                             </div>
@@ -326,14 +525,40 @@ export default function CmsMenusManagement() {
                                     type="text"
                                     value={selectedItem.href}
                                     onChange={(e) => handleUpdateItem(selectedIndex, { ...selectedItem, href: e.target.value })}
+                                    disabled={!canEdit}
                                     className="w-full px-3 py-2.5 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-violet-500/30 transition-all"
                                 />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+                                    PADRE (SUBMENÚ)
+                                </label>
+                                <select
+                                    value={selectedItem.parent_id ?? ''}
+                                    onChange={(e) => handleUpdateItem(selectedIndex, {
+                                        ...selectedItem,
+                                        parent_id: e.target.value && !wouldCreateCycle(selectedItem.id, Number(e.target.value))
+                                            ? Number(e.target.value)
+                                            : null,
+                                    })}
+                                    disabled={!canEdit}
+                                    className="w-full px-3 py-2.5 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-violet-500/30 transition-all"
+                                >
+                                    <option value="">Sin padre (nivel raíz)</option>
+                                    {navConfig.items
+                                        .filter((item) => item.id !== selectedItem.id)
+                                        .map((item) => (
+                                            <option key={item.id} value={item.id}>{item.label}</option>
+                                        ))}
+                                </select>
                             </div>
                         </section>
 
                         <section className="pt-6 border-t border-slate-100 dark:border-white/5">
                             <button 
                                 onClick={() => handleUpdateItem(selectedIndex, { ...selectedItem, is_external: !selectedItem.is_external })}
+                                disabled={!canEdit}
                                 className={clsx(
                                     "w-full flex items-center justify-between p-4 rounded-2xl border transition-all",
                                     selectedItem.is_external 

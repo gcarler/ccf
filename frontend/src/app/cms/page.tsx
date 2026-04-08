@@ -10,6 +10,7 @@ import CommunityToolbarChip from '@/components/community/ToolbarChip';
 import { LayoutDashboard, MessageCircle, Feather, CalendarRange, Link2, FileText, Globe, ChevronRight, Palette, PanelsTopLeft } from 'lucide-react';
 import { FARO_BLOCKS } from '@/lib/cms/blocks';
 import clsx from 'clsx';
+import { canEditCms, canManageSites } from '@/lib/cms/permissions';
 
 // ── Tabs de navegación del módulo CMS ────────────────────────────
 const CMS_TABS = [
@@ -21,6 +22,7 @@ const CMS_TABS = [
     { id: 'menus',       label: 'Menús',        href: '/cms/menus',        icon: Link2 },
     { id: 'builder',     label: 'Builder',      href: '/cms/builder',      icon: PanelsTopLeft },
     { id: 'themes',      label: 'Temas',        href: '/cms/themes',       icon: Palette },
+    { id: 'sites',       label: 'Sitios',       href: '/cms/sites',        icon: Globe },
 ] as const;
 
 interface CmsStats {
@@ -41,15 +43,27 @@ interface TestimonialPreview {
 }
 
 export default function CmsHomePage() {
-    const { token, isAuthenticated } = useAuth();
+    const { token, isAuthenticated, user } = useAuth();
     const pathname = usePathname();
     const [stats, setStats] = useState<CmsStats | null>(null);
     const [recentTestimonials, setRecentTestimonials] = useState<TestimonialPreview[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState('Todos');
 
+    const canEdit = canEditCms(user?.role);
+    const canManage = canManageSites(user?.role);
+
+    const availableTabs = useMemo(
+        () => CMS_TABS.filter((tab) => {
+            if (tab.id === 'sites') return canManage;
+            if (['paginas', 'hero', 'eventos', 'menus', 'builder', 'themes', 'testimonios'].includes(tab.id)) return canEdit;
+            return true;
+        }),
+        [canEdit, canManage]
+    );
+
     // Determine active tab from pathname
-    const activeTab = CMS_TABS.find(t => {
+    const activeTab = availableTabs.find(t => {
         if (t.href === '/cms') return pathname === '/cms';
         return pathname ? pathname.startsWith(t.href) : false;
     })?.id ?? 'resumen';
@@ -98,8 +112,13 @@ export default function CmsHomePage() {
             { label: 'Landing hero', href: '/cms/content', description: 'Actualiza copys y assets hero', icon: Feather },
             { label: 'Builder visual', href: '/cms/builder', description: 'Arma páginas por secciones', icon: PanelsTopLeft },
             { label: 'Temas multisitio', href: '/cms/themes', description: 'Edita paletas por sitio', icon: Palette },
-        ],
-        []
+            { label: 'Sitios', href: '/cms/sites', description: 'Crea y administra portales', icon: Globe },
+        ].filter((link) => {
+            if (link.href === '/cms/sites') return canManage;
+            if (link.href === '/cms') return true;
+            return canEdit;
+        }),
+        [canEdit, canManage]
     );
 
     if (!isAuthenticated) {
@@ -128,7 +147,7 @@ export default function CmsHomePage() {
 
                 {/* Tabs row */}
                 <div className="flex items-center gap-0 px-4 pt-1">
-                    {CMS_TABS.map(tab => {
+                    {availableTabs.map(tab => {
                         const Icon = tab.icon;
                         const isActive = tab.id === activeTab;
                         return (
