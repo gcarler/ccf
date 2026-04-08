@@ -28,6 +28,8 @@ import { ColumnDef } from '@tanstack/react-table';
 import Skeleton from '@/components/ui/Skeleton';
 import StatusPicker, { StatusOption } from '@/components/ui/StatusPicker';
 import clsx from 'clsx';
+import { ViewType, getStoredView } from '@/components/ViewSwitcher';
+import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
 
 const PRAYER_STATUS_OPTIONS: StatusOption[] = [
     { label: 'ACTIVA', value: 'active', color: 'bg-rose-500', text: 'text-rose-600', bg: 'bg-rose-50' },
@@ -36,6 +38,7 @@ const PRAYER_STATUS_OPTIONS: StatusOption[] = [
 ];
 
 const CATEGORIES = ['Salud', 'Familia', 'Trabajo', 'Espiritual', 'Finanzas', 'Otra'];
+const PRAYER_PROGRESS: Record<string, number> = { pending: 20, active: 40, praying: 70, answered: 100 };
 
 export default function PrayerSupportCenter() {
     const { token } = useAuth();
@@ -48,6 +51,8 @@ export default function PrayerSupportCenter() {
     const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [newPrayer, setNewPrayer] = useState({ name: '', request: '', category: 'General', is_urgent: false });
+    const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_prayers_view', 'table'));
+    const [wikiNotes, setWikiNotes] = useState('');
 
     const fetchRequests = useCallback(async () => {
         if (!token) return;
@@ -70,6 +75,15 @@ export default function PrayerSupportCenter() {
     }, [token]);
 
     useEffect(() => { fetchRequests(); }, [fetchRequests]);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('crm_prayers_wiki_notes');
+        if (saved) setWikiNotes(saved);
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('crm_prayers_wiki_notes', wikiNotes);
+    }, [wikiNotes]);
 
     const updateRequestStatus = useCallback(async (id: number, newStatus: string) => {
         setRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
@@ -171,11 +185,36 @@ export default function PrayerSupportCenter() {
         [requests, search]
     );
 
+    const groupedByDate = useMemo(() => {
+        const map: Record<string, { label: string; items: any[] }> = {};
+        for (const req of filtered) {
+            const raw = req.time ? new Date(req.time) : new Date();
+            const date = Number.isNaN(raw.getTime()) ? new Date() : raw;
+            const key = date.toISOString().slice(0, 10);
+            const label = date.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+            if (!map[key]) map[key] = { label, items: [] };
+            map[key].items.push(req);
+        }
+        return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
+    }, [filtered]);
+
+    const statusColumns = useMemo(() => {
+        const ordered = ['pending', 'active', 'praying', 'answered'];
+        return ordered.map(status => ({
+            status,
+            label: PRAYER_STATUS_OPTIONS.find(o => o.value === status)?.label ?? status.toUpperCase(),
+            items: filtered.filter(r => r.status === status),
+        }));
+    }, [filtered]);
+
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <WorkspaceToolbar
                 breadcrumbs={[{ label: 'CRM Pastoral', icon: Users }, { label: 'Muro de Intercesión', icon: Heart }]}
-                viewType="table" setViewType={() => {}} onSearch={setSearch}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki']}
+                onSearch={setSearch}
                 rightActions={
                     <button
                         onClick={() => setIsCreateDrawerOpen(true)}
@@ -237,8 +276,94 @@ export default function PrayerSupportCenter() {
                         <div className="p-8 space-y-4">
                             {[1, 2, 3].map(i => <Skeleton key={i} className="h-14 w-full rounded-2xl" />)}
                         </div>
-                    ) : (
+                    ) : viewType === 'table' ? (
                         <DataTable data={filtered} columns={columns} onRowClick={handleOpenRequest} />
+                    ) : viewType === 'list' || viewType === 'grid' ? (
+                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {filtered.map(req => (
+                                <button key={req.id} onClick={() => handleOpenRequest(req)} className="text-left rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 hover:border-rose-300 dark:hover:border-rose-700 transition-all">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p className="text-sm font-black text-slate-800 dark:text-slate-100">{req.name}</p>
+                                            <p className="text-[10px] text-slate-400 uppercase tracking-widest">{req.category}</p>
+                                        </div>
+                                        {req.is_urgent && <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[9px] font-black uppercase">Urgente</span>}
+                                    </div>
+                                    <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 line-clamp-2">{req.request}</p>
+                                </button>
+                            ))}
+                            {filtered.length === 0 && <div className="col-span-full py-10 text-center text-slate-400 text-sm">Sin peticiones</div>}
+                        </div>
+                    ) : viewType === 'board' || viewType === 'kanban' ? (
+                        <div className="p-6 grid grid-cols-1 lg:grid-cols-4 gap-4">
+                            {statusColumns.map(col => (
+                                <div key={col.status} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3">
+                                    <div className="mb-3 flex items-center justify-between">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{col.label}</p>
+                                        <span className="text-[10px] font-black text-slate-400">{col.items.length}</span>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {col.items.map(req => (
+                                            <button key={req.id} onClick={() => handleOpenRequest(req)} className="w-full text-left rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                                                <p className="text-xs font-black text-slate-800 dark:text-slate-100">{req.name}</p>
+                                                <p className="text-[10px] text-slate-400 line-clamp-2">{req.request}</p>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : viewType === 'calendar' ? (
+                        <div className="p-6 space-y-4">
+                            {groupedByDate.length === 0 ? (
+                                <div className="py-10 text-center text-slate-400 text-sm">Sin actividad</div>
+                            ) : groupedByDate.map(([key, payload]) => (
+                                <div key={key} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                                    <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">{payload.label}</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {payload.items.map(req => (
+                                            <button key={req.id} onClick={() => handleOpenRequest(req)} className="rounded-xl border border-slate-200 dark:border-white/10 p-3 text-left">
+                                                <p className="text-sm font-black text-slate-800 dark:text-slate-100">{req.name}</p>
+                                                <p className="text-[10px] text-slate-400">{req.category}</p>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : viewType === 'gantt' ? (
+                        <div className="p-6">
+                            <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Avance de intercesión</p>
+                                {filtered.map(req => (
+                                    <div key={req.id} className="space-y-1">
+                                        <div className="flex items-center justify-between text-[11px]">
+                                            <span className="font-bold text-slate-700 dark:text-slate-300">{req.name}</span>
+                                            <span className="font-black text-slate-400">{PRAYER_PROGRESS[req.status] ?? 0}%</span>
+                                        </div>
+                                        <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                                            <div className="h-full bg-rose-600" style={{ width: `${PRAYER_PROGRESS[req.status] ?? 0}%` }} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : viewType === 'wiki' ? (
+                        <div className="p-6">
+                            <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Wiki de intercesión</p>
+                                <textarea
+                                    value={wikiNotes}
+                                    onChange={(e) => setWikiNotes(e.target.value)}
+                                    placeholder="Documenta protocolos de atención, escalamiento por urgencia y guías pastorales..."
+                                    className="w-full min-h-[320px] rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-rose-500/20"
+                                />
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="p-6">
+                            <CrmViewPlaceholder moduleName="Muro de Intercesion" viewType={viewType} />
+                        </div>
                     )}
                 </div>
             </main>

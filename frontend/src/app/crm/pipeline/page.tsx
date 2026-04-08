@@ -46,7 +46,7 @@ import clsx from 'clsx';
 
 // ─── Stage definitions ────────────────────────────────────────
 const PIPELINE_STAGES: (StatusOption & { dot: string; colBg: string; emptyIcon: any })[] = [
-    { label: 'NUEVO', value: 'new', color: 'bg-blue-500', dot: 'bg-blue-500', text: 'text-blue-600', bg: 'bg-blue-50', colBg: 'bg-blue-500/5' },
+    { label: 'NUEVO', value: 'new', color: 'bg-blue-500', dot: 'bg-blue-500', text: 'text-blue-600', bg: 'bg-blue-50', colBg: 'bg-blue-500/5', emptyIcon: UserPlus },
     { label: 'POR LLAMAR', value: 'call', color: 'bg-amber-500', dot: 'bg-amber-500', text: 'text-amber-600', bg: 'bg-amber-50', colBg: 'bg-amber-500/5', emptyIcon: Phone },
     { label: 'VISITA', value: 'visit', color: 'bg-purple-500', dot: 'bg-purple-500', text: 'text-purple-600', bg: 'bg-purple-50', colBg: 'bg-purple-500/5', emptyIcon: Calendar },
     { label: 'DISCIPULADO', value: 'discipleship', color: 'bg-indigo-500', dot: 'bg-indigo-500', text: 'text-indigo-600', bg: 'bg-indigo-50', colBg: 'bg-indigo-500/5', emptyIcon: Sparkles },
@@ -63,6 +63,7 @@ const SOURCES: Record<string, string> = {
     Visitante: '🧑‍🤝‍🧑', Referido: '🤝', Web: '🌐',
     'Redes Sociales': '📱', Evento: '🎯', Otro: '📌',
 };
+const STAGE_PROGRESS: Record<string, number> = { new: 20, call: 40, visit: 60, discipleship: 80, consolidated: 100 };
 
 export default function ConsolidationPipelinePage() {
     const { token } = useAuth();
@@ -73,8 +74,9 @@ export default function ConsolidationPipelinePage() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_pipeline_view', 'board'));
-    const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban'];
+    const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'];
     const [selectedLead, setSelectedLead] = useState<any>(null);
+    const [wikiNotes, setWikiNotes] = useState('');
 
     // New Lead drawer
     const [isNewLeadDrawerOpen, setIsNewLeadDrawerOpen] = useState(false);
@@ -97,6 +99,15 @@ export default function ConsolidationPipelinePage() {
     }, [token]);
 
     useEffect(() => { fetchPipeline(); }, [fetchPipeline]);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('crm_pipeline_wiki_notes');
+        if (saved) setWikiNotes(saved);
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('crm_pipeline_wiki_notes', wikiNotes);
+    }, [wikiNotes]);
 
     const handleCreateLead = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -222,6 +233,18 @@ export default function ConsolidationPipelinePage() {
         consolidated: leads.filter(l => l.stage === 'consolidated').length,
         conversion: leads.length > 0 ? Math.round((leads.filter(l => l.stage === 'consolidated').length / leads.length) * 100) : 0,
     }), [leads]);
+
+    const groupedByDate = useMemo(() => {
+        const map: Record<string, { label: string; items: any[] }> = {};
+        for (const lead of filteredLeads) {
+            const date = lead.created_at ? new Date(lead.created_at) : new Date();
+            const isoKey = date.toISOString().slice(0, 10);
+            const label = date.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+            if (!map[isoKey]) map[isoKey] = { label, items: [] };
+            map[isoKey].items.push(lead);
+        }
+        return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
+    }, [filteredLeads]);
 
     const leadSidebarContent = selectedLead ? (
         <div className="flex flex-col h-full overflow-hidden">
@@ -456,7 +479,55 @@ export default function ConsolidationPipelinePage() {
                                         })}
                                     </div>
                                 </motion.div>
-                            ) : (
+                            ) : viewType === 'calendar' ? (
+                                <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-6 overflow-y-auto space-y-4">
+                                    {groupedByDate.length === 0 ? (
+                                        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 p-10 text-center text-slate-400">Sin actividad de pipeline</div>
+                                    ) : groupedByDate.map(([key, payload]) => (
+                                        <div key={key} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                                            <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">{payload.label}</p>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                {payload.items.map((lead: any) => (
+                                                    <button key={lead.id} onClick={() => setSelectedLead(lead)} className="rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
+                                                        <p className="text-sm font-black text-slate-800 dark:text-slate-100">{lead.first_name} {lead.last_name}</p>
+                                                        <p className="text-[10px] text-slate-400">{STAGE_LABEL[lead.stage] ?? lead.stage}</p>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </motion.div>
+                            ) : viewType === 'gantt' ? (
+                                <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-6 overflow-y-auto">
+                                    <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Evolucion de prospectos</p>
+                                        {filteredLeads.map((lead: any) => (
+                                            <div key={lead.id} className="space-y-1">
+                                                <div className="flex items-center justify-between text-[11px]">
+                                                    <span className="font-bold text-slate-700 dark:text-slate-300">{lead.first_name} {lead.last_name}</span>
+                                                    <span className="font-black text-slate-400">{STAGE_PROGRESS[lead.stage] ?? 0}%</span>
+                                                </div>
+                                                <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                                                    <div className="h-full bg-blue-600" style={{ width: `${STAGE_PROGRESS[lead.stage] ?? 0}%` }} />
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {filteredLeads.length === 0 && <div className="py-8 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">Sin prospectos</div>}
+                                    </div>
+                                </motion.div>
+                            ) : viewType === 'wiki' ? (
+                                <motion.div key="wiki" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-6 overflow-y-auto">
+                                    <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Wiki del pipeline</p>
+                                        <textarea
+                                            value={wikiNotes}
+                                            onChange={(e) => setWikiNotes(e.target.value)}
+                                            placeholder="Documenta playbooks de contacto, criterios de cambio de etapa y SLA pastoral..."
+                                            className="w-full min-h-[360px] rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20"
+                                        />
+                                    </div>
+                                </motion.div>
+                            ) : viewType === 'table' || viewType === 'list' ? (
                                 <motion.div key="list" className="flex-1 overflow-y-auto bg-white dark:bg-[#1e1f21]">
                                     <DataTable
                                         data={filteredLeads}
@@ -464,7 +535,7 @@ export default function ConsolidationPipelinePage() {
                                         onRowClick={(l) => setSelectedLead(l)}
                                     />
                                 </motion.div>
-                            )}
+                            ) : null}
                         </AnimatePresence>
                     </main>
                 </div>

@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { LayoutGrid, List, Kanban, Table2, GanttChart, CalendarDays } from "lucide-react";
+import { LayoutGrid, List, Kanban, Table2, GanttChart, CalendarDays, BookOpen } from "lucide-react";
 import clsx from "clsx";
 
-export type ViewType = "grid" | "list" | "kanban" | "table" | "gantt" | "calendar" | "board";
+export type ViewType = "grid" | "list" | "kanban" | "table" | "gantt" | "calendar" | "board" | "wiki";
 
 interface ViewOption {
     id: ViewType;
@@ -20,6 +20,7 @@ const ALL_VIEWS: ViewOption[] = [
     { id: "kanban", label: "Kanban", icon: Kanban },
     { id: "gantt", label: "Gantt", icon: GanttChart },
     { id: "calendar", label: "Calendario", icon: CalendarDays },
+    { id: "wiki", label: "Wiki", icon: BookOpen },
 ];
 
 interface ViewSwitcherProps {
@@ -33,7 +34,7 @@ interface ViewSwitcherProps {
 export default function ViewSwitcher({
     viewType,
     setViewType,
-    availableViews = ["table", "list", "grid", "kanban", "board", "gantt", "calendar"],
+    availableViews = ["table", "list", "grid", "kanban", "board", "gantt", "calendar", "wiki"],
     storageKey,
 }: ViewSwitcherProps) {
     // Persist preference

@@ -14,19 +14,37 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
+import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
+
+const KPI_ROWS = [
+    { label: 'Nuevos Miembros', value: '128', trend: '+14.2%' },
+    { label: 'Retención', value: '94.5%', trend: '+2.1%' },
+    { label: 'Conversión', value: '18.2%', trend: '-3.5%' },
+    { label: 'Servidores Activos', value: '245', trend: '+8.0%' },
+];
 
 export default function CrmAnalyticsPage() {
     const { token } = useAuth();
     const [loading, setLoading] = useState(true);
     const [timeframe, setTimeframe] = useState('Este Mes');
-    const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar'];
+    const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'];
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_analytics_view', 'grid'));
+    const [wikiNotes, setWikiNotes] = useState('');
 
     useEffect(() => {
         // Simular carga de datos masivos
         const timer = setTimeout(() => setLoading(false), 800);
         return () => clearTimeout(timer);
     }, []);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('crm_analytics_wiki_notes');
+        if (saved) setWikiNotes(saved);
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('crm_analytics_wiki_notes', wikiNotes);
+    }, [wikiNotes]);
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -58,6 +76,109 @@ export default function CrmAnalyticsPage() {
                 </div>
             }
         >
+            {viewType === 'list' && (
+                <div className="space-y-3">
+                    {KPI_ROWS.map((kpi) => (
+                        <div key={kpi.label} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 flex items-center justify-between">
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{kpi.label}</p>
+                                <p className="text-xl font-black text-slate-800 dark:text-slate-100">{kpi.value}</p>
+                            </div>
+                            <span className={clsx("text-[10px] font-black uppercase tracking-widest", kpi.trend.startsWith('-') ? 'text-rose-500' : 'text-emerald-500')}>{kpi.trend}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {viewType === 'table' && (
+                <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+                    <table className="w-full text-left">
+                        <thead className="bg-slate-50 dark:bg-white/5">
+                            <tr>
+                                <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Métrica</th>
+                                <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Valor</th>
+                                <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Tendencia</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {KPI_ROWS.map((kpi) => (
+                                <tr key={kpi.label} className="border-t border-slate-100 dark:border-white/5">
+                                    <td className="px-4 py-3 text-sm font-bold text-slate-800 dark:text-slate-100">{kpi.label}</td>
+                                    <td className="px-4 py-3 text-xs text-slate-500">{kpi.value}</td>
+                                    <td className={clsx("px-4 py-3 text-xs font-black uppercase", kpi.trend.startsWith('-') ? 'text-rose-500' : 'text-emerald-500')}>{kpi.trend}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {(viewType === 'board' || viewType === 'kanban') && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    {[
+                        { title: 'Crecimiento', items: KPI_ROWS.slice(0, 1) },
+                        { title: 'Retención', items: KPI_ROWS.slice(1, 2) },
+                        { title: 'Compromiso', items: KPI_ROWS.slice(2) },
+                    ].map((col) => (
+                        <div key={col.title} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3">
+                            <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">{col.title}</p>
+                            <div className="space-y-2">
+                                {col.items.map((item) => (
+                                    <div key={item.label} className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                                        <p className="text-xs font-black text-slate-800 dark:text-slate-100">{item.label}</p>
+                                        <p className="text-[10px] text-slate-400">{item.value} · {item.trend}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {viewType === 'calendar' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((day, idx) => (
+                        <div key={day} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                            <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-slate-500">{day}</p>
+                            <p className="text-sm font-black text-slate-800 dark:text-slate-100">Actividad estimada: {Math.max(10, 85 - idx * 8)}%</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {viewType === 'gantt' && (
+                <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Roadmap de objetivos trimestrales</p>
+                    {[
+                        { name: 'Consolidación nuevos', progress: 72 },
+                        { name: 'Retención líderes', progress: 58 },
+                        { name: 'Activación servidores', progress: 81 },
+                    ].map((row) => (
+                        <div key={row.name} className="space-y-1">
+                            <div className="flex items-center justify-between text-[11px]"><span className="font-bold text-slate-700 dark:text-slate-300">{row.name}</span><span className="font-black text-slate-400">{row.progress}%</span></div>
+                            <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden"><div className="h-full bg-blue-600" style={{ width: `${row.progress}%` }} /></div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {viewType === 'wiki' && (
+                <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Wiki analítica CRM</p>
+                    <textarea
+                        value={wikiNotes}
+                        onChange={(e) => setWikiNotes(e.target.value)}
+                        placeholder="Documenta definiciones de métricas, fuentes de datos, supuestos y acuerdos de interpretación para liderazgo pastoral..."
+                        className="w-full min-h-[320px] rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20"
+                    />
+                </div>
+            )}
+
+            {!['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) && (
+                <CrmViewPlaceholder moduleName="Analitica CRM" viewType={viewType} />
+            )}
+
+            {viewType === 'grid' && (
             <div className="space-y-10 pb-20 font-sans relative">
                 
                 {/* 1. Header & Quick Filters */}
@@ -270,6 +391,7 @@ export default function CrmAnalyticsPage() {
 
                 </div>
             </div>
+            )}
         </CrmShell>
     );
 }

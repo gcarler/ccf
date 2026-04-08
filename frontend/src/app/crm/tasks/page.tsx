@@ -33,6 +33,9 @@ import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
+
+const STATUS_PROGRESS: Record<string, number> = { urgent: 15, pending: 35, in_progress: 70, done: 100 };
 
 // ─── Types ───────────────────────────────────────────────
 interface PastoralTask {
@@ -128,6 +131,7 @@ export default function CrmTasksPage() {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [members, setMembers] = useState<any[]>([]);
+    const [wikiNotes, setWikiNotes] = useState('');
     const [newTask, setNewTask] = useState({
         title: '', description: '', category: 'Pastoral',
         priority: 'medium', status: 'pending', due_date: '', member_id: ''
@@ -158,6 +162,15 @@ export default function CrmTasksPage() {
         fetchTasks();
         fetchMembers();
     }, [fetchTasks, fetchMembers]);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('crm_tasks_wiki_notes');
+        if (saved) setWikiNotes(saved);
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('crm_tasks_wiki_notes', wikiNotes);
+    }, [wikiNotes]);
 
     const updateTaskStatus = useCallback(async (id: number, status: string) => {
         setTasks(prev => prev.map(t => t.id === id ? { ...t, status: status as any } : t));
@@ -202,6 +215,18 @@ export default function CrmTasksPage() {
         done: tasks.filter(t => t.status === 'done').length,
     }), [tasks]);
 
+    const dueBuckets = useMemo(() => {
+        const map: Record<string, PastoralTask[]> = {};
+        for (const task of tasks) {
+            if (!task.due_date) continue;
+            const date = new Date(task.due_date);
+            const key = date.toISOString().slice(0, 10);
+            if (!map[key]) map[key] = [];
+            map[key].push(task);
+        }
+        return Object.entries(map).sort((a, b) => a[0].localeCompare(b[0]));
+    }, [tasks]);
+
     if (loading) return (
         <CrmShell breadcrumbs={[{ label: 'CRM', icon: Heart }, { label: 'Tareas Pastorales', icon: CheckSquare }]}>
             <div className="p-6 space-y-3">
@@ -217,7 +242,7 @@ export default function CrmTasksPage() {
                 { label: 'CRM Pastoral', icon: Users },
                 { label: 'Tareas Pastorales', icon: CheckSquare }
             ]}
-            viewOptions={['board', 'list', 'table']}
+            viewOptions={['board', 'list', 'table', 'grid', 'kanban', 'calendar', 'gantt', 'wiki']}
             viewType={viewType}
             onViewChange={setViewType}
             rightActions={
@@ -242,7 +267,7 @@ export default function CrmTasksPage() {
 
             {/* ─── Kanban View ─── */}
             <AnimatePresence mode="wait">
-                {viewType === 'board' && (
+                {(viewType === 'board' || viewType === 'kanban' || viewType === 'grid') && (
                     <motion.div
                         key="kanban"
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -383,6 +408,66 @@ export default function CrmTasksPage() {
                         {tasks.length === 0 && (
                             <div className="py-20 text-center text-slate-400 font-black uppercase text-sm">Sin tareas</div>
                         )}
+                    </motion.div>
+                )}
+
+                {viewType === 'calendar' && (
+                    <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-6 space-y-4">
+                        {dueBuckets.length === 0 ? (
+                            <div className="py-20 text-center text-slate-400 font-black uppercase text-sm">Sin tareas con fecha</div>
+                        ) : dueBuckets.map(([isoDate, bucket]) => (
+                            <div key={isoDate} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                                <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">{new Date(`${isoDate}T00:00:00`).toLocaleDateString()}</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {bucket.map(task => (
+                                        <button key={task.id} onClick={() => { setSelectedTask(task); setIsDetailOpen(true); }} className="rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
+                                            <p className="text-sm font-black text-slate-800 dark:text-slate-100">{task.title}</p>
+                                            <p className="text-[10px] text-slate-400">{task.member_name || 'Sin miembro asignado'}</p>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </motion.div>
+                )}
+
+                {viewType === 'gantt' && (
+                    <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-6">
+                        <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Timeline de avance</p>
+                            {tasks.map(task => (
+                                <div key={task.id} className="space-y-1">
+                                    <div className="flex items-center justify-between text-[11px]">
+                                        <span className="font-bold text-slate-700 dark:text-slate-300">{task.title}</span>
+                                        <span className="font-black text-slate-400">{STATUS_PROGRESS[task.status] ?? 0}%</span>
+                                    </div>
+                                    <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                                        <div className="h-full bg-blue-600" style={{ width: `${STATUS_PROGRESS[task.status] ?? 0}%` }} />
+                                    </div>
+                                </div>
+                            ))}
+                            {tasks.length === 0 && <div className="py-8 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">Sin tareas</div>}
+                        </div>
+                    </motion.div>
+                )}
+
+                {viewType === 'wiki' && (
+                    <motion.div key="wiki" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-6">
+                        <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Wiki de tareas pastorales</p>
+                            <textarea
+                                value={wikiNotes}
+                                onChange={(e) => setWikiNotes(e.target.value)}
+                                placeholder="Define criterios de prioridad, protocolos de seguimiento y acuerdos del equipo..."
+                                className="w-full min-h-[360px] rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20"
+                            />
+                        </div>
+                    </motion.div>
+                )}
+
+                {!['board', 'kanban', 'grid', 'list', 'table', 'calendar', 'gantt', 'wiki'].includes(viewType) && (
+                    <motion.div key="pending-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6">
+                        <CrmViewPlaceholder moduleName="Tareas pastorales" viewType={viewType} />
                     </motion.div>
                 )}
             </AnimatePresence>

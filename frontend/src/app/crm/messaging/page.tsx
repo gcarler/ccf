@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
     Send, 
     MessageSquare, 
@@ -32,8 +32,11 @@ import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import { ViewType, getStoredView } from '@/components/ViewSwitcher';
+import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
 
 type Channel = 'whatsapp' | 'email' | 'sms';
+const STATUS_PROGRESS: Record<string, number> = { failed: 20, sent: 75, delivered: 100 };
 
 export default function MessagingCampaignCenter() {
     const { token } = useAuth();
@@ -45,6 +48,8 @@ export default function MessagingCampaignCenter() {
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isSending, setIsSending] = useState(false);
+    const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_messaging_view', 'grid'));
+    const [wikiNotes, setWikiNotes] = useState('');
 
     const fetchHistory = useCallback(async () => {
         if (!token) return;
@@ -65,6 +70,15 @@ export default function MessagingCampaignCenter() {
     }, [token]);
 
     useEffect(() => { fetchHistory(); }, [fetchHistory]);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('crm_messaging_wiki_notes');
+        if (saved) setWikiNotes(saved);
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('crm_messaging_wiki_notes', wikiNotes);
+    }, [wikiNotes]);
 
     const handleSendCampaign = async () => {
         if (!message || !campaignName || segments.length === 0) {
@@ -98,6 +112,25 @@ export default function MessagingCampaignCenter() {
         setSegments(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
     };
 
+    const groupedByChannel = useMemo(() => {
+        const channels: Channel[] = ['whatsapp', 'email', 'sms'];
+        return channels.map(ch => ({
+            key: ch,
+            label: ch === 'whatsapp' ? 'WhatsApp' : ch === 'email' ? 'Email' : 'SMS',
+            items: history.filter((h: any) => h.channel === ch),
+        }));
+    }, [history]);
+
+    const groupedByDate = useMemo(() => {
+        const map: Record<string, any[]> = {};
+        for (const item of history) {
+            const key = item.date || 'Sin fecha';
+            if (!map[key]) map[key] = [];
+            map[key].push(item);
+        }
+        return Object.entries(map);
+    }, [history]);
+
     return (
         <div className="flex flex-col h-full bg-slate-50/50 dark:bg-[#1e1f21] overflow-hidden font-display">
             <WorkspaceToolbar 
@@ -105,7 +138,9 @@ export default function MessagingCampaignCenter() {
                     { label: 'CRM Pastoral', icon: Users },
                     { label: 'Centro de Mensajería', icon: Send }
                 ]}
-                viewType="grid" setViewType={() => {}}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki']}
                 rightActions={
                     <button className="flex items-center gap-2 px-6 py-2 bg-white dark:bg-white/5 hover:bg-slate-50 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 shadow-sm transition-all active:scale-95">
                         <History size={14} /> Historial Detallado
@@ -114,6 +149,117 @@ export default function MessagingCampaignCenter() {
             />
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-8 lg:p-12">
+                {viewType === 'list' && (
+                    <div className="max-w-5xl mx-auto space-y-3">
+                        {history.map((item) => (
+                            <div key={item.id} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-black text-slate-800 dark:text-slate-100">{item.name}</p>
+                                    <p className="text-[11px] text-slate-500">{item.channel} · {item.date}</p>
+                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{item.status}</span>
+                            </div>
+                        ))}
+                        {history.length === 0 && <div className="py-10 text-center text-slate-400 text-sm">Sin campañas recientes</div>}
+                    </div>
+                )}
+
+                {viewType === 'table' && (
+                    <div className="max-w-6xl mx-auto rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+                        <table className="w-full text-left">
+                            <thead className="bg-slate-50 dark:bg-white/5">
+                                <tr>
+                                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Campaña</th>
+                                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Canal</th>
+                                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Fecha</th>
+                                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Estado</th>
+                                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Volumen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {history.map((item) => (
+                                    <tr key={item.id} className="border-t border-slate-100 dark:border-white/5">
+                                        <td className="px-4 py-3 text-sm font-bold text-slate-800 dark:text-slate-100">{item.name}</td>
+                                        <td className="px-4 py-3 text-xs text-slate-500 uppercase">{item.channel}</td>
+                                        <td className="px-4 py-3 text-xs text-slate-500">{item.date}</td>
+                                        <td className="px-4 py-3 text-xs font-black uppercase text-slate-500">{item.status}</td>
+                                        <td className="px-4 py-3 text-xs text-slate-500">{item.count}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {(viewType === 'board' || viewType === 'kanban') && (
+                    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        {groupedByChannel.map(col => (
+                            <div key={col.key} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3">
+                                <div className="mb-3 flex items-center justify-between">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{col.label}</p>
+                                    <span className="text-[10px] font-black text-slate-400">{col.items.length}</span>
+                                </div>
+                                <div className="space-y-2">
+                                    {col.items.map((item: any) => (
+                                        <div key={item.id} className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                                            <p className="text-xs font-black text-slate-800 dark:text-slate-100">{item.name}</p>
+                                            <p className="text-[10px] text-slate-400">{item.date} · {item.count} envíos</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {viewType === 'calendar' && (
+                    <div className="max-w-6xl mx-auto space-y-4">
+                        {groupedByDate.map(([label, items]) => (
+                            <div key={label} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                                <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {items.map((item: any) => (
+                                        <div key={item.id} className="rounded-xl border border-slate-200 dark:border-white/10 p-3">
+                                            <p className="text-sm font-black text-slate-800 dark:text-slate-100">{item.name}</p>
+                                            <p className="text-[10px] text-slate-400">{item.channel} · {item.status}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {viewType === 'gantt' && (
+                    <div className="max-w-5xl mx-auto rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Avance de entrega</p>
+                        {history.map((item) => (
+                            <div key={item.id} className="space-y-1">
+                                <div className="flex items-center justify-between text-[11px]">
+                                    <span className="font-bold text-slate-700 dark:text-slate-300">{item.name}</span>
+                                    <span className="font-black text-slate-400">{STATUS_PROGRESS[item.status] ?? 0}%</span>
+                                </div>
+                                <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                                    <div className="h-full bg-blue-600" style={{ width: `${STATUS_PROGRESS[item.status] ?? 0}%` }} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {viewType === 'wiki' && (
+                    <div className="max-w-5xl mx-auto rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Wiki de mensajería</p>
+                        <textarea
+                            value={wikiNotes}
+                            onChange={(e) => setWikiNotes(e.target.value)}
+                            placeholder="Documenta políticas por canal, horarios recomendados, segmentación y compliance..."
+                            className="w-full min-h-[320px] rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20"
+                        />
+                    </div>
+                )}
+
+                {viewType === 'grid' && (
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10">
                     
                     {/* Left Column: Composer */}
@@ -252,6 +398,11 @@ export default function MessagingCampaignCenter() {
                         </section>
                     </div>
                 </div>
+                )}
+
+                {!['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) && (
+                    <CrmViewPlaceholder moduleName="Centro de Mensajeria" viewType={viewType} />
+                )}
             </main>
         </div>
     );

@@ -68,16 +68,26 @@ export default function VolunteerCalendar() {
     const [shifts, setShifts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [weekOffset, setWeekOffset] = useState(0);
-    const [viewMode, setViewMode] = useState<'week' | 'list'>(
-        () => (getStoredView('crm_volunteers_view', 'grid') === 'list' ? 'list' : 'week')
+    const [viewMode, setViewMode] = useState<'week' | 'list' | 'table' | 'calendar' | 'gantt' | 'wiki' | 'board'>(
+        () => {
+            const saved = getStoredView('crm_volunteers_view', 'grid');
+            if (saved === 'list' || saved === 'table' || saved === 'calendar' || saved === 'gantt' || saved === 'wiki' || saved === 'board') return saved as any;
+            return 'week';
+        }
     );
     const [isApplyDrawerOpen, setIsApplyDrawerOpen] = useState(false);
     const [applyForm, setApplyForm] = useState({ team: '', availability: '', notes: '' });
     const [isSaving, setIsSaving] = useState(false);
 
-    const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid'];
-    const crmViewType: ViewType = viewMode === 'list' ? 'list' : 'grid';
-    const handleViewChange = (v: ViewType) => setViewMode(v === 'list' ? 'list' : 'week');
+    const [wikiNotes, setWikiNotes] = useState('');
+    const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'];
+    const crmViewType: ViewType = viewMode === 'week' ? 'grid' : viewMode === 'board' ? 'board' : viewMode;
+    const handleViewChange = (v: ViewType) => {
+        if (v === 'grid') setViewMode('week');
+        else if (v === 'kanban' || v === 'board') setViewMode('board');
+        else if (v === 'list' || v === 'table' || v === 'calendar' || v === 'gantt' || v === 'wiki') setViewMode(v);
+        else setViewMode('week');
+    };
 
     const monday = useMemo(() => getWeekMonday(weekOffset), [weekOffset]);
 
@@ -117,6 +127,15 @@ export default function VolunteerCalendar() {
     useEffect(() => {
         if (isAuthenticated) fetchShifts();
     }, [isAuthenticated, fetchShifts]);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('crm_volunteers_wiki_notes');
+        if (saved) setWikiNotes(saved);
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('crm_volunteers_wiki_notes', wikiNotes);
+    }, [wikiNotes]);
 
     const handleApply = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -263,7 +282,7 @@ export default function VolunteerCalendar() {
                                 );
                             })}
                         </motion.div>
-                    ) : (
+                    ) : viewMode === 'list' ? (
                         <motion.div
                             key="list-view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
                             className="flex-1 space-y-4 overflow-y-auto scrollbar-thin pr-4 pb-20"
@@ -297,6 +316,87 @@ export default function VolunteerCalendar() {
                                     </button>
                                 </div>
                             )}
+                        </motion.div>
+                    ) : viewMode === 'table' ? (
+                        <motion.div key="table-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto">
+                            <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+                                <table className="w-full text-left">
+                                    <thead className="bg-slate-50 dark:bg-white/5">
+                                        <tr>
+                                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Rol</th>
+                                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Equipo</th>
+                                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Fecha</th>
+                                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Hora</th>
+                                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {shifts.map(shift => (
+                                            <tr key={shift.id} className="border-t border-slate-100 dark:border-white/5">
+                                                <td className="px-4 py-3 text-sm font-bold text-slate-800 dark:text-slate-100">{shift.role_name}</td>
+                                                <td className="px-4 py-3 text-xs text-slate-500">{shift.team_name}</td>
+                                                <td className="px-4 py-3 text-xs text-slate-500">{new Date(shift.shift_start).toLocaleDateString()}</td>
+                                                <td className="px-4 py-3 text-xs text-slate-500">{shift.time}</td>
+                                                <td className="px-4 py-3 text-xs font-black uppercase text-slate-500">{shift.status}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </motion.div>
+                    ) : viewMode === 'board' ? (
+                        <motion.div key="board-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 overflow-y-auto">
+                            {['confirmed', 'pending', 'open'].map(status => (
+                                <div key={status} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3">
+                                    <div className="mb-3 flex items-center justify-between"><p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{status}</p><span className="text-[10px] font-black text-slate-400">{shifts.filter(s => (s.status || 'open') === status).length}</span></div>
+                                    <div className="space-y-2">
+                                        {shifts.filter(s => (s.status || 'open') === status).map(shift => (
+                                            <div key={shift.id} className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                                                <p className="text-xs font-black text-slate-800 dark:text-slate-100">{shift.role_name}</p>
+                                                <p className="text-[10px] text-slate-400">{shift.team_name} · {shift.time}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </motion.div>
+                    ) : viewMode === 'calendar' ? (
+                        <motion.div key="calendar-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 space-y-4 overflow-y-auto pb-10">
+                            {DAYS.map((day, idx) => (
+                                <div key={day} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                                    <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">{day}</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {shifts.filter(s => s.dayIndex === idx).map(shift => (
+                                            <div key={shift.id} className="rounded-xl border border-slate-200 dark:border-white/10 p-3">
+                                                <p className="text-sm font-black text-slate-800 dark:text-slate-100">{shift.role_name}</p>
+                                                <p className="text-[10px] text-slate-400">{shift.team_name} · {shift.time}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </motion.div>
+                    ) : viewMode === 'gantt' ? (
+                        <motion.div key="gantt-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto">
+                            <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Cobertura por turno</p>
+                                {shifts.map(shift => {
+                                    const progress = shift.status === 'confirmed' ? 100 : shift.status === 'pending' ? 60 : 25;
+                                    return (
+                                        <div key={shift.id} className="space-y-1">
+                                            <div className="flex items-center justify-between text-[11px]"><span className="font-bold text-slate-700 dark:text-slate-300">{shift.role_name}</span><span className="font-black text-slate-400">{progress}%</span></div>
+                                            <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden"><div className="h-full bg-blue-600" style={{ width: `${progress}%` }} /></div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </motion.div>
+                    ) : (
+                        <motion.div key="wiki-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto">
+                            <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Wiki de servidores</p>
+                                <textarea value={wikiNotes} onChange={(e) => setWikiNotes(e.target.value)} placeholder="Documenta protocolos de servicio, horarios y estándares por equipo..." className="w-full min-h-[320px] rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20" />
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>

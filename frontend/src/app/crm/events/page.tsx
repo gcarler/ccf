@@ -10,6 +10,7 @@ import CrmShell from '@/components/crm/CrmShell';
 import AdminHero from '@/components/admin/AdminHero';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
+import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
 
 const EVENT_TYPE_LABEL: Record<string, string> = {
     PERMANENT: 'Semanal',
@@ -40,10 +41,11 @@ export default function EventsPage() {
     const { token } = useAuth();
     const { addToast } = useToast();
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_events_view', 'grid'));
-    const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar'];
+    const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'];
     const [events, setEvents] = useState<Event[]>([]);
     const [members, setMembers] = useState<Member[]>([]);
     const [loading, setLoading] = useState(true);
+    const [wikiNotes, setWikiNotes] = useState('');
 
     // Drawer states (NO modals)
     const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
@@ -114,6 +116,15 @@ export default function EventsPage() {
         fetchData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token]);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('crm_events_wiki_notes');
+        if (saved) setWikiNotes(saved);
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('crm_events_wiki_notes', wikiNotes);
+    }, [wikiNotes]);
 
     const handleCreateEvent = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -456,6 +467,20 @@ export default function EventsPage() {
                                 );
                             })}
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {viewType === 'wiki' && (
+                <div className="p-2">
+                    <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Wiki de eventos</p>
+                        <textarea
+                            value={wikiNotes}
+                            onChange={(e) => setWikiNotes(e.target.value)}
+                            placeholder="Documenta protocolos de asistencia, formatos de evento y criterios de planeación semanal/anual..."
+                            className="w-full min-h-[320px] rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20"
+                        />
                     </div>
                 </div>
             )}

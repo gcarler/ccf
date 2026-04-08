@@ -10,6 +10,10 @@ import AdminHero from '@/components/admin/AdminHero';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
+import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
+
+const STATUS_ORDER = ['Pendiente', 'Realizada', 'Cancelada'];
+const STATUS_PROGRESS: Record<string, number> = { Pendiente: 30, Realizada: 100, Cancelada: 0 };
 
 interface CounselingSession {
     id: number;
@@ -34,8 +38,9 @@ export default function CounselingPage() {
     const [filterStatus, setFilterStatus] = useState('All');
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);   // ← Drawer, NO modal
     const [isSaving, setIsSaving] = useState(false);
-    const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar'];
+    const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'];
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_counseling_view', 'grid'));
+    const [wikiNotes, setWikiNotes] = useState('');
 
     const [members, setMembers] = useState<any[]>([]);
     const [newSession, setNewSession] = useState({
@@ -84,6 +89,15 @@ export default function CounselingPage() {
         fetchSessions();
     }, [fetchSessions]);
 
+    useEffect(() => {
+        const saved = localStorage.getItem('crm_counseling_wiki_notes');
+        if (saved) setWikiNotes(saved);
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('crm_counseling_wiki_notes', wikiNotes);
+    }, [wikiNotes]);
+
     const handleCreateSession = async () => {
         if (!token) return;
         setIsSaving(true);
@@ -123,6 +137,18 @@ export default function CounselingPage() {
         }
     };
 
+    const groupedByDate = useMemo(() => {
+        const map: Record<string, { label: string; items: CounselingSession[] }> = {};
+        for (const session of filteredSessions) {
+            const date = new Date(session.scheduled_at);
+            const key = date.toISOString().slice(0, 10);
+            const label = date.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+            if (!map[key]) map[key] = { label, items: [] };
+            map[key].items.push(session);
+        }
+        return Object.entries(map).sort((a, b) => a[0].localeCompare(b[0]));
+    }, [filteredSessions]);
+
     return (
         <CrmShell
             breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'CRM Pastoral', icon: Users }, { label: 'Consejería', icon: Heart }]}
@@ -151,6 +177,7 @@ export default function CounselingPage() {
             secondaryAction={{ label: 'Ver políticas', icon: Link2, onClick: () => {} }}
         />
 
+        {viewType === 'grid' && (
         <div className="space-y-8">
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -265,6 +292,123 @@ export default function CounselingPage() {
                 )}
             </div>
         </div>
+        )}
+
+        {viewType === 'list' && (
+            <div className="space-y-3">
+                {filteredSessions.map(session => (
+                    <div key={session.id} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-black text-slate-800 dark:text-slate-100">{session.topic || 'Sin tema definido'}</p>
+                            <p className="text-[11px] text-slate-500">{new Date(session.scheduled_at).toLocaleString()}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{session.status}</span>
+                            {session.status === 'Pendiente' && <button onClick={() => handleUpdateStatus(session.id, 'Realizada')} className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-[10px] font-black uppercase">Completar</button>}
+                        </div>
+                    </div>
+                ))}
+                {filteredSessions.length === 0 && <div className="py-10 text-center text-slate-400 text-sm">Sin sesiones</div>}
+            </div>
+        )}
+
+        {viewType === 'table' && (
+            <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+                <table className="w-full text-left">
+                    <thead className="bg-slate-50 dark:bg-white/5">
+                        <tr>
+                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Tema</th>
+                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Fecha</th>
+                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Duración</th>
+                            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filteredSessions.map(session => (
+                            <tr key={session.id} className="border-t border-slate-100 dark:border-white/5">
+                                <td className="px-4 py-3 text-sm font-bold text-slate-800 dark:text-slate-100">{session.topic || 'Sin tema'}</td>
+                                <td className="px-4 py-3 text-xs text-slate-500">{new Date(session.scheduled_at).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-xs text-slate-500">{session.duration_minutes} min</td>
+                                <td className="px-4 py-3 text-xs font-black text-slate-500 uppercase">{session.status}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        )}
+
+        {(viewType === 'board' || viewType === 'kanban') && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {STATUS_ORDER.map(status => (
+                    <div key={status} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3">
+                        <div className="mb-3 flex items-center justify-between">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{status}</p>
+                            <span className="text-[10px] font-black text-slate-400">{filteredSessions.filter(s => s.status === status).length}</span>
+                        </div>
+                        <div className="space-y-2">
+                            {filteredSessions.filter(s => s.status === status).map(session => (
+                                <div key={session.id} className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                                    <p className="text-sm font-black text-slate-800 dark:text-slate-100">{session.topic || 'Sin tema'}</p>
+                                    <p className="text-[10px] text-slate-400">{new Date(session.scheduled_at).toLocaleString()}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        )}
+
+        {viewType === 'calendar' && (
+            <div className="space-y-4">
+                {groupedByDate.map(([dateKey, payload]) => (
+                    <div key={dateKey} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                        <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">{payload.label}</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {payload.items.map(session => (
+                                <div key={session.id} className="rounded-xl border border-slate-200 dark:border-white/10 p-3">
+                                    <p className="text-sm font-black text-slate-800 dark:text-slate-100">{session.topic || 'Sin tema'}</p>
+                                    <p className="text-[10px] text-slate-400">{new Date(session.scheduled_at).toLocaleTimeString()}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+                {groupedByDate.length === 0 && <div className="py-10 text-center text-slate-400 text-sm">Sin agenda de sesiones</div>}
+            </div>
+        )}
+
+        {viewType === 'gantt' && (
+            <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Progreso de sesiones</p>
+                {filteredSessions.map(session => (
+                    <div key={session.id} className="space-y-1">
+                        <div className="flex items-center justify-between text-[11px]">
+                            <span className="font-bold text-slate-700 dark:text-slate-300">{session.topic || 'Sin tema'}</span>
+                            <span className="font-black text-slate-400">{STATUS_PROGRESS[session.status] ?? 0}%</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                            <div className="h-full bg-purple-600" style={{ width: `${STATUS_PROGRESS[session.status] ?? 0}%` }} />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        )}
+
+        {viewType === 'wiki' && (
+            <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Wiki de consejería</p>
+                <textarea
+                    value={wikiNotes}
+                    onChange={(e) => setWikiNotes(e.target.value)}
+                    placeholder="Documenta protocolos de confidencialidad, criterios de urgencia y rutas de derivación..."
+                    className="w-full min-h-[360px] rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-purple-500/20"
+                />
+            </div>
+        )}
+
+        {!['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) && (
+            <CrmViewPlaceholder moduleName="Consejeria" viewType={viewType} />
+        )}
 
         {/* ─── Drawer: Agendar Sesión ─── (NO modal) */}
         <WorkspaceDrawer

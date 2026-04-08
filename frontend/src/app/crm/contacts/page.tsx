@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
-import { Search, UserPlus, Phone, MessageSquare, Link2, Users, Plus, Loader2, Send, X } from 'lucide-react';
+import { Search, UserPlus, Phone, MessageSquare, Link2, Users, Plus, Loader2, Send, Calendar, BarChart3, BookOpen } from 'lucide-react';
 import CrmShell from '@/components/crm/CrmShell';
 import Skeleton from '@/components/ui/Skeleton';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import { ViewType, getStoredView } from '@/components/ViewSwitcher';
+import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
 
 const PIPELINE_STAGES = ['new', 'call', 'visit', 'discipleship', 'consolidated'];
 const STAGE_LABELS: Record<string, string> = {
@@ -19,6 +21,7 @@ const STAGE_LABELS: Record<string, string> = {
     consolidated: 'Consolidado',
 };
 const SOURCE_OPTS = ['Visitante', 'Formulario Web', 'Redes Sociales', 'Invitado Directo', 'Evento', 'Referido'];
+const STAGE_PROGRESS: Record<string, number> = { new: 20, call: 40, visit: 60, discipleship: 80, consolidated: 100 };
 
 function getStatusStyles(stage: string) {
     switch (stage) {
@@ -48,8 +51,10 @@ export default function ContactsPage() {
 
     const [leads, setLeads] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_contacts_view', 'list'));
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
+    const [wikiNotes, setWikiNotes] = useState('');
 
     // Create drawer
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -72,6 +77,15 @@ export default function ContactsPage() {
     }, [token, addToast]);
 
     useEffect(() => { fetchLeads(); }, [fetchLeads]);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('crm_contacts_wiki_notes');
+        if (saved) setWikiNotes(saved);
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('crm_contacts_wiki_notes', wikiNotes);
+    }, [wikiNotes]);
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -107,12 +121,36 @@ export default function ContactsPage() {
         return matchesSearch && matchesFilter;
     });
 
+    const groupedByStage = useMemo(() => {
+        const map: Record<string, any[]> = { new: [], call: [], visit: [], discipleship: [], consolidated: [] };
+        for (const lead of filtered) {
+            if (!map[lead.stage]) map[lead.stage] = [];
+            map[lead.stage].push(lead);
+        }
+        return map;
+    }, [filtered]);
+
+    const groupedByDate = useMemo(() => {
+        const map: Record<string, { label: string; items: any[] }> = {};
+        for (const lead of filtered) {
+            const date = lead.created_at ? new Date(lead.created_at) : new Date();
+            const isoKey = date.toISOString().slice(0, 10);
+            const label = date.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+            if (!map[isoKey]) map[isoKey] = { label, items: [] };
+            map[isoKey].items.push(lead);
+        }
+        return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
+    }, [filtered]);
+
     return (
         <CrmShell
             breadcrumbs={[
                 { label: 'CRM Pastoral', icon: Users },
                 { label: 'Contactos / Leads', icon: UserPlus }
             ]}
+            viewOptions={['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki']}
+            viewType={viewType}
+            onViewChange={setViewType}
             rightActions={
                 <button
                     onClick={() => setIsCreateOpen(true)}
@@ -172,7 +210,7 @@ export default function ContactsPage() {
                                 Agregar Contacto
                             </button>
                         </div>
-                    ) : filtered.map(lead => (
+                    ) : ['list', 'grid'].includes(viewType) ? filtered.map(lead => (
                         <div
                             key={lead.id}
                             onClick={() => router.push(`/crm/contacts/${lead.id}`)}
@@ -228,7 +266,101 @@ export default function ContactsPage() {
                                 </div>
                             </div>
                         </div>
-                    ))}
+                    )) : ['board', 'kanban'].includes(viewType) ? (
+                        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+                            {PIPELINE_STAGES.map(stage => (
+                                <div key={stage} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.03] p-3">
+                                    <div className="mb-3 flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{STAGE_LABELS[stage]}</span>
+                                        <span className="text-[10px] font-black text-slate-400">{groupedByStage[stage]?.length ?? 0}</span>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {(groupedByStage[stage] ?? []).map(lead => (
+                                            <button key={lead.id} onClick={() => router.push(`/crm/contacts/${lead.id}`)} className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
+                                                <p className="text-xs font-black text-slate-800 dark:text-slate-100">{lead.first_name} {lead.last_name}</p>
+                                                <p className="text-[10px] text-slate-400">{lead.phone || 'Sin teléfono'}</p>
+                                            </button>
+                                        ))}
+                                        {(groupedByStage[stage] ?? []).length === 0 && (
+                                            <div className="py-6 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">Vacío</div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : viewType === 'calendar' ? (
+                        <div className="space-y-4">
+                            {groupedByDate.length === 0 ? (
+                                <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 p-10 text-center text-slate-400">
+                                    <Calendar size={24} className="mx-auto mb-2" />
+                                    Sin actividad para mostrar
+                                </div>
+                            ) : groupedByDate.map(([dateKey, payload]) => (
+                                <div key={dateKey} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                                    <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">{payload.label}</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {payload.items.map(lead => (
+                                            <button key={lead.id} onClick={() => router.push(`/crm/contacts/${lead.id}`)} className="rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
+                                                <p className="text-sm font-black text-slate-800 dark:text-slate-100">{lead.first_name} {lead.last_name}</p>
+                                                <p className="text-[10px] text-slate-400">{STAGE_LABELS[lead.stage] || lead.stage}</p>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : viewType === 'gantt' ? (
+                        <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500"><BarChart3 size={12} /> Progreso por contacto</div>
+                            {filtered.map(lead => (
+                                <div key={lead.id} className="space-y-1">
+                                    <div className="flex items-center justify-between text-[11px]">
+                                        <span className="font-bold text-slate-700 dark:text-slate-300">{lead.first_name} {lead.last_name}</span>
+                                        <span className="font-black text-slate-400">{STAGE_PROGRESS[lead.stage] ?? 0}%</span>
+                                    </div>
+                                    <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                                        <div className="h-full bg-blue-600" style={{ width: `${STAGE_PROGRESS[lead.stage] ?? 0}%` }} />
+                                    </div>
+                                </div>
+                            ))}
+                            {filtered.length === 0 && <div className="py-8 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">Sin datos</div>}
+                        </div>
+                    ) : viewType === 'table' ? (
+                        <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-50 dark:bg-white/5">
+                                    <tr>
+                                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Nombre</th>
+                                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Fuente</th>
+                                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Telefono</th>
+                                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Etapa</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filtered.map(lead => (
+                                        <tr key={lead.id} onClick={() => router.push(`/crm/contacts/${lead.id}`)} className="cursor-pointer border-t border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02]">
+                                            <td className="px-4 py-3 text-sm font-bold text-slate-800 dark:text-slate-100">{lead.first_name} {lead.last_name}</td>
+                                            <td className="px-4 py-3 text-xs text-slate-500">{lead.source || 'Sin fuente'}</td>
+                                            <td className="px-4 py-3 text-xs text-slate-500">{lead.phone || 'Sin telefono'}</td>
+                                            <td className="px-4 py-3 text-xs text-slate-500">{STAGE_LABELS[lead.stage] || lead.stage}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : viewType === 'wiki' ? (
+                        <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500"><BookOpen size={12} /> Wiki de contactos</div>
+                            <textarea
+                                value={wikiNotes}
+                                onChange={(e) => setWikiNotes(e.target.value)}
+                                placeholder="Documenta políticas de seguimiento, guiones de llamada y estándares de consolidación..."
+                                className="w-full min-h-[360px] rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20"
+                            />
+                        </div>
+                    ) : (
+                        <CrmViewPlaceholder moduleName="Contactos / Leads" viewType={viewType} />
+                    )}
                 </div>
             </div>
 
