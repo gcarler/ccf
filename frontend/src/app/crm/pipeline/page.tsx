@@ -34,6 +34,8 @@ import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import { useRouter } from 'next/navigation';
 import CrmShell from '@/components/crm/CrmShell';
+import Sidebar3 from '@/components/ui/Sidebar3';
+import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import { DataTable } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
@@ -76,6 +78,13 @@ export default function ConsolidationPipelinePage() {
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_pipeline_view', 'board'));
     const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'];
     const [selectedLead, setSelectedLead] = useState<any>(null);
+  const { openLayer, closeLayer } = useSidebarLayers();
+
+  const handleLeadSelect = (lead: any) => {
+    setSelectedLead(lead);
+    openLayer('S3');
+    closeLayer('S2');
+  };
     const [wikiNotes, setWikiNotes] = useState('');
 
     // New Lead drawer
@@ -206,7 +215,7 @@ export default function ConsolidationPipelinePage() {
             size: 60,
             cell: ({ row }) => (
                 <button
-                    onClick={(e) => { e.stopPropagation(); router.push(`/crm/contacts/${row.original.id}`); }}
+                    onClick={(e) => { e.stopPropagation(); handleLeadSelect(row.original); }}
                     className="p-1.5 rounded-lg text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all"
                 >
                     <ArrowRight size={14} />
@@ -451,7 +460,7 @@ export default function ConsolidationPipelinePage() {
                                             return (
                                                 <div
                                                     key={lead.id}
-                                                    onClick={() => setSelectedLead(lead)}
+                                                    onClick={() => handleLeadSelect(lead)}
                                                     className="p-5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer group"
                                                 >
                                                     <div className="flex items-center gap-3 mb-3">
@@ -532,7 +541,7 @@ export default function ConsolidationPipelinePage() {
                                     <DataTable
                                         data={filteredLeads}
                                         columns={columns}
-                                        onRowClick={(l) => setSelectedLead(l)}
+                                        onRowClick={(l) => handleLeadSelect(l)}
                                     />
                                 </motion.div>
                             ) : null}
