@@ -6,7 +6,7 @@ import time
 import logging
 import os
 
-from backend.api import auth, projects, academy, crm, workspace, system, cms, content, agents, admin, finance, donations, governance, messaging, support, spiritual_life, graph
+from backend.api import auth, projects, academy, crm, workspace, system, cms, content, agents, admin, finance, donations, governance, messaging, support, spiritual_life, graph, cms_v2
 from backend.core.config import get_settings
 from backend.core.database import engine, Base
 from backend.services.automation_engine import engine as automation_engine
@@ -73,6 +73,9 @@ def _run_startup_migrations():
             # crm_tasks: normalize old status values for frontend compatibility
             "UPDATE crm_tasks SET status = 'pending' WHERE status = 'todo'",
             "UPDATE crm_tasks SET priority = 'medium' WHERE priority = 'normal'",
+            # cms v2 bootstrap: create default FARO site and main menu
+            "INSERT INTO cms_sites (site_key, name, base_path, is_active, created_at, updated_at) SELECT 'faro', 'FARO', '/faro', true, NOW(), NOW() WHERE NOT EXISTS (SELECT 1 FROM cms_sites WHERE site_key = 'faro')",
+            "INSERT INTO cms_menus (site_id, menu_key, name, is_active, created_at, updated_at) SELECT id, 'main', 'Menu principal', true, NOW(), NOW() FROM cms_sites WHERE site_key = 'faro' AND NOT EXISTS (SELECT 1 FROM cms_menus m WHERE m.site_id = cms_sites.id AND m.menu_key = 'main')",
         ]
         for sql in migrations:
             try:
@@ -98,6 +101,7 @@ app.include_router(crm.router, prefix="/api/crm", tags=["crm"])
 app.include_router(workspace.router, prefix="/api/workspace", tags=["workspace"])
 app.include_router(system.router, prefix="/api/system", tags=["system"])
 app.include_router(cms.router, prefix="/api")
+app.include_router(cms_v2.router, prefix="/api")
 app.include_router(content.router, prefix="/api")
 app.include_router(agents.router, prefix="/api")
 app.include_router(agents.analytics_router, prefix="/api")

@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import AdminHero from '@/components/admin/AdminHero';
 import CommunityToolbarChip from '@/components/community/ToolbarChip';
-import { LayoutDashboard, MessageCircle, Feather, CalendarRange, Link2, FileText, Globe, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, MessageCircle, Feather, CalendarRange, Link2, FileText, Globe, ChevronRight, Palette, PanelsTopLeft } from 'lucide-react';
 import { FARO_BLOCKS } from '@/lib/cms/blocks';
 import clsx from 'clsx';
 
@@ -19,6 +19,8 @@ const CMS_TABS = [
     { id: 'hero',        label: 'Landing Hero', href: '/cms/content',      icon: Feather },
     { id: 'eventos',     label: 'Eventos',      href: '/cms/events',       icon: CalendarRange },
     { id: 'menus',       label: 'Menús',        href: '/cms/menus',        icon: Link2 },
+    { id: 'builder',     label: 'Builder',      href: '/cms/builder',      icon: PanelsTopLeft },
+    { id: 'themes',      label: 'Temas',        href: '/cms/themes',       icon: Palette },
 ] as const;
 
 interface CmsStats {
@@ -94,6 +96,8 @@ export default function CmsHomePage() {
             { label: 'Menús del sitio', href: '/cms/menus', description: 'Estructura la navegación', icon: Link2 },
             { label: 'Testimonios', href: '/cms/testimonials', description: 'Aprueba y publica historias', icon: MessageCircle },
             { label: 'Landing hero', href: '/cms/content', description: 'Actualiza copys y assets hero', icon: Feather },
+            { label: 'Builder visual', href: '/cms/builder', description: 'Arma páginas por secciones', icon: PanelsTopLeft },
+            { label: 'Temas multisitio', href: '/cms/themes', description: 'Edita paletas por sitio', icon: Palette },
         ],
         []
     );

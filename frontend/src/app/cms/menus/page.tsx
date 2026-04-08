@@ -2,20 +2,26 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
     Link2, Search, Plus, Trash2, 
     ExternalLink, ChevronRight, Zap,
     GripVertical, Settings2, Save
 } from 'lucide-react';
-import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import SidePanel from '@/components/ui/SidePanel';
 import clsx from 'clsx';
+import { createCmsMenu, createCmsMenuItem, deleteCmsMenuItem, listCmsMenuItems, patchCmsMenuItem } from '@/lib/cms/v2';
+import { CmsMenuItem } from '@/types/cms-v2';
+import { ApiError } from '@/lib/http';
 
 interface MenuItem {
+    id: number;
     label: string;
     href: string;
     is_external?: boolean;
+    target?: string;
+    visibility?: string;
+    sort_order?: number;
 }
 
 interface NavConfig {
@@ -24,6 +30,8 @@ interface NavConfig {
 
 export default function CmsMenusManagement() {
     const { token } = useAuth();
+    const SITE_KEY = 'faro';
+    const MENU_KEY = 'main';
     const [navConfig, setNavConfig] = useState<NavConfig>({ items: [] });
     const [loading, setLoading] = useState(true);
     const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
@@ -40,63 +48,107 @@ export default function CmsMenusManagement() {
     const fetchNav = async () => {
         if (!token) return;
         try {
-            const data = await apiFetch<any>('/content/faro_nav_items', { token });
-            if (data && data.content) {
-                const parsed = JSON.parse(data.content);
-                setNavConfig(parsed || { items: [] });
-            }
+            const items = await listCmsMenuItems(SITE_KEY, MENU_KEY, token);
+            const sorted = (Array.isArray(items) ? items : [])
+                .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                .map((item: CmsMenuItem) => ({
+                    id: item.id,
+                    label: item.label,
+                    href: item.href,
+                    is_external: item.is_external,
+                    target: item.target,
+                    visibility: item.visibility,
+                    sort_order: item.sort_order,
+                }));
+            setNavConfig({ items: sorted });
         } catch (error) {
-            console.error("Error fetching nav:", error);
+            if (error instanceof ApiError && error.status === 404) {
+                try {
+                    await createCmsMenu(SITE_KEY, { menu_key: MENU_KEY, name: 'Menu principal', is_active: true }, token);
+                    const items = await listCmsMenuItems(SITE_KEY, MENU_KEY, token);
+                    const sorted = (Array.isArray(items) ? items : [])
+                        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                        .map((item: CmsMenuItem) => ({
+                            id: item.id,
+                            label: item.label,
+                            href: item.href,
+                            is_external: item.is_external,
+                            target: item.target,
+                            visibility: item.visibility,
+                            sort_order: item.sort_order,
+                        }));
+                    setNavConfig({ items: sorted });
+                } catch (nestedError) {
+                    console.error('Error creating default menu:', nestedError);
+                }
+            } else {
+                console.error("Error fetching nav:", error);
+            }
         } finally {
             setLoading(false);
         }
     };
 
-    const saveNav = async (updatedItems: MenuItem[]) => {
-        if (!token) return;
-        try {
-            await apiFetch('/content/faro_nav_items', {
-                method: 'PATCH',
-                token,
-                body: JSON.stringify({
-                    content: JSON.stringify({ items: updatedItems })
-                })
-            });
-            setNavConfig({ items: updatedItems });
-        } catch (error) {
-            console.error("Error saving nav:", error);
-        }
-    };
-
-    const handleAddItem = (e?: React.FormEvent) => {
+    const handleAddItem = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         if (!newItemLabel.trim() || !newItemHref.trim()) return;
 
-        const newItems = [...navConfig.items, { 
-            label: newItemLabel, 
-            href: newItemHref,
-            is_external: newItemHref.startsWith('http')
-        }];
-        saveNav(newItems);
-        setNewItemLabel("");
-        setNewItemHref("");
-        setIsQuickAddOpen(false);
+        try {
+            await createCmsMenuItem(
+                SITE_KEY,
+                MENU_KEY,
+                {
+                    label: newItemLabel,
+                    href: newItemHref,
+                    is_external: newItemHref.startsWith('http'),
+                    sort_order: navConfig.items.length,
+                },
+                token,
+            );
+            setNewItemLabel("");
+            setNewItemHref("");
+            setIsQuickAddOpen(false);
+            fetchNav();
+        } catch (error) {
+            console.error('Error creating menu item:', error);
+        }
     };
 
-    const handleDeleteItem = (index: number) => {
-        const newItems = navConfig.items.filter((_, i) => i !== index);
-        saveNav(newItems);
+    const handleDeleteItem = async (index: number) => {
+        const target = navConfig.items[index];
+        if (!target) return;
+        try {
+            await deleteCmsMenuItem(SITE_KEY, MENU_KEY, target.id, token);
+            fetchNav();
+        } catch (error) {
+            console.error('Error deleting menu item:', error);
+        }
         if (selectedIndex === index) {
             setSelectedItem(null);
             setSelectedIndex(null);
         }
     };
 
-    const handleUpdateItem = (index: number, updatedItem: MenuItem) => {
-        const newItems = [...navConfig.items];
-        newItems[index] = updatedItem;
-        saveNav(newItems);
-        setSelectedItem(updatedItem);
+    const handleUpdateItem = async (index: number, updatedItem: MenuItem) => {
+        const target = navConfig.items[index];
+        if (!target) return;
+        try {
+            await patchCmsMenuItem(
+                SITE_KEY,
+                MENU_KEY,
+                target.id,
+                {
+                    label: updatedItem.label,
+                    href: updatedItem.href,
+                    is_external: !!updatedItem.is_external,
+                },
+                token,
+            );
+            setSelectedItem(updatedItem);
+            fetchNav();
+        } catch (error) {
+            console.error('Error updating menu item:', error);
+        }
     };
 
     return (

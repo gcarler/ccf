@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { MapPin, Menu, X, ChevronRight, Sun, Moon, Zap } from "lucide-react";
 import { useFaroTheme } from "./FaroThemeProvider";
 import { useContentBlock } from "@/hooks/useContent";
+import { getCmsPublicMenu } from "@/lib/cms/v2";
 
 const DEFAULT_NAV_LINKS = [
     { href: "/faro", label: "Inicio" },
@@ -22,10 +23,34 @@ export default function FaroNavbar() {
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [menuItemsV2, setMenuItemsV2] = useState<Array<{ href: string; label: string }>>([]);
 
     // Dinamización vía CMS
     const { data: navContent } = useContentBlock("faro_nav_items");
-    const navLinks = Array.isArray(navContent?.items) ? navContent.items : DEFAULT_NAV_LINKS;
+    const legacyLinks = Array.isArray(navContent?.items) ? navContent.items : DEFAULT_NAV_LINKS;
+    const navLinks = menuItemsV2.length > 0 ? menuItemsV2 : legacyLinks;
+
+    useEffect(() => {
+        let mounted = true;
+        const loadMenu = async () => {
+            try {
+                const data = await getCmsPublicMenu("faro", "main");
+                const next = (data?.items || [])
+                    .filter((item) => item.visibility !== "hidden")
+                    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                    .map((item) => ({ href: item.href, label: item.label }));
+                if (mounted && next.length > 0) {
+                    setMenuItemsV2(next);
+                }
+            } catch {
+                // Fallback automatico a bloque legacy
+            }
+        };
+        loadMenu();
+        return () => {
+            mounted = false;
+        };
+    }, []);
 
     useEffect(() => {
         const handler = () => setScrolled(window.scrollY > 20);

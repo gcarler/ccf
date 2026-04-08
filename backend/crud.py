@@ -4,7 +4,7 @@ import datetime as dt
 import json
 import uuid
 from types import SimpleNamespace
-from typing import Optional, List
+from typing import Any, Optional, List
 
 from sqlalchemy import or_, func, text
 from sqlalchemy.orm import Session
@@ -1179,6 +1179,495 @@ def delete_cms_media_item(db: Session, item_id: int):
     db.delete(row)
     db.commit()
     return True
+
+
+# CMS v2 (multisitio)
+def list_cms_sites(db: Session, *, only_active: bool = False):
+    q = db.query(models.CmsSite)
+    if only_active:
+        q = q.filter(models.CmsSite.is_active.is_(True))
+    return q.order_by(models.CmsSite.site_key.asc()).all()
+
+
+def get_cms_site_by_key(db: Session, site_key: str):
+    return db.query(models.CmsSite).filter(models.CmsSite.site_key == site_key).first()
+
+
+def create_cms_site(db: Session, payload: schemas.CmsSiteCreate):
+    row = models.CmsSite(
+        site_key=payload.site_key.strip().lower(),
+        name=payload.name.strip(),
+        base_path=payload.base_path.strip(),
+        is_active=payload.is_active,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def update_cms_site(db: Session, row: models.CmsSite, payload: schemas.CmsSiteUpdate):
+    data = payload.model_dump(exclude_unset=True)
+    if "name" in data and data["name"] is not None:
+        row.name = str(data["name"]).strip()
+    if "base_path" in data and data["base_path"] is not None:
+        row.base_path = str(data["base_path"]).strip()
+    if "is_active" in data and data["is_active"] is not None:
+        row.is_active = bool(data["is_active"])
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def list_cms_themes(db: Session, site_id: int):
+    return (
+        db.query(models.CmsTheme)
+        .filter(models.CmsTheme.site_id == site_id)
+        .order_by(models.CmsTheme.updated_at.desc())
+        .all()
+    )
+
+
+def create_cms_theme(db: Session, site_id: int, payload: schemas.CmsThemeCreate, created_by: int | None):
+    version = (
+        db.query(func.max(models.CmsTheme.version))
+        .filter(models.CmsTheme.site_id == site_id)
+        .scalar()
+        or 0
+    )
+    row = models.CmsTheme(
+        site_id=site_id,
+        name=payload.name.strip(),
+        tokens_json=payload.tokens_json or {},
+        is_active=bool(payload.is_active),
+        version=int(version) + 1,
+        created_by=created_by,
+    )
+    db.add(row)
+    if row.is_active:
+        db.query(models.CmsTheme).filter(
+            models.CmsTheme.site_id == site_id,
+            models.CmsTheme.id != row.id,
+        ).update({"is_active": False})
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def get_cms_theme(db: Session, site_id: int, theme_id: int):
+    return (
+        db.query(models.CmsTheme)
+        .filter(models.CmsTheme.site_id == site_id, models.CmsTheme.id == theme_id)
+        .first()
+    )
+
+
+def update_cms_theme(db: Session, row: models.CmsTheme, payload: schemas.CmsThemeUpdate):
+    data = payload.model_dump(exclude_unset=True)
+    if "name" in data and data["name"] is not None:
+        row.name = str(data["name"]).strip()
+    if "tokens_json" in data and data["tokens_json"] is not None:
+        row.tokens_json = data["tokens_json"]
+    if "is_active" in data and data["is_active"] is not None:
+        row.is_active = bool(data["is_active"])
+        if row.is_active:
+            db.query(models.CmsTheme).filter(
+                models.CmsTheme.site_id == row.site_id,
+                models.CmsTheme.id != row.id,
+            ).update({"is_active": False})
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def activate_cms_theme(db: Session, site_id: int, theme_id: int):
+    db.query(models.CmsTheme).filter(models.CmsTheme.site_id == site_id).update({"is_active": False})
+    row = get_cms_theme(db, site_id, theme_id)
+    if not row:
+        return None
+    row.is_active = True
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def get_active_cms_theme(db: Session, site_id: int):
+    return (
+        db.query(models.CmsTheme)
+        .filter(models.CmsTheme.site_id == site_id, models.CmsTheme.is_active.is_(True))
+        .order_by(models.CmsTheme.updated_at.desc())
+        .first()
+    )
+
+
+def list_cms_menus(db: Session, site_id: int):
+    return (
+        db.query(models.CmsMenu)
+        .filter(models.CmsMenu.site_id == site_id)
+        .order_by(models.CmsMenu.menu_key.asc())
+        .all()
+    )
+
+
+def get_cms_menu(db: Session, site_id: int, menu_key: str):
+    return (
+        db.query(models.CmsMenu)
+        .filter(models.CmsMenu.site_id == site_id, models.CmsMenu.menu_key == menu_key)
+        .first()
+    )
+
+
+def create_cms_menu(db: Session, site_id: int, payload: schemas.CmsMenuCreate):
+    row = models.CmsMenu(
+        site_id=site_id,
+        menu_key=payload.menu_key.strip().lower(),
+        name=payload.name.strip(),
+        is_active=payload.is_active,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def update_cms_menu(db: Session, row: models.CmsMenu, payload: schemas.CmsMenuUpdate):
+    data = payload.model_dump(exclude_unset=True)
+    if "name" in data and data["name"] is not None:
+        row.name = str(data["name"]).strip()
+    if "is_active" in data and data["is_active"] is not None:
+        row.is_active = bool(data["is_active"])
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_cms_menu(db: Session, row: models.CmsMenu):
+    db.delete(row)
+    db.commit()
+
+
+def list_cms_menu_items(db: Session, menu_id: int):
+    return (
+        db.query(models.CmsMenuItem)
+        .filter(models.CmsMenuItem.menu_id == menu_id)
+        .order_by(models.CmsMenuItem.sort_order.asc(), models.CmsMenuItem.id.asc())
+        .all()
+    )
+
+
+def create_cms_menu_item(db: Session, menu_id: int, payload: schemas.CmsMenuItemCreate):
+    row = models.CmsMenuItem(
+        menu_id=menu_id,
+        parent_id=payload.parent_id,
+        label=payload.label.strip(),
+        href=payload.href.strip(),
+        target=payload.target,
+        is_external=payload.is_external,
+        visibility=payload.visibility,
+        sort_order=payload.sort_order,
+        meta_json=payload.meta_json or {},
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def get_cms_menu_item(db: Session, menu_id: int, item_id: int):
+    return (
+        db.query(models.CmsMenuItem)
+        .filter(models.CmsMenuItem.menu_id == menu_id, models.CmsMenuItem.id == item_id)
+        .first()
+    )
+
+
+def update_cms_menu_item(db: Session, row: models.CmsMenuItem, payload: schemas.CmsMenuItemUpdate):
+    data = payload.model_dump(exclude_unset=True)
+    for field in ["parent_id", "target", "is_external", "visibility", "sort_order"]:
+        if field in data:
+            setattr(row, field, data[field])
+    if "label" in data and data["label"] is not None:
+        row.label = str(data["label"]).strip()
+    if "href" in data and data["href"] is not None:
+        row.href = str(data["href"]).strip()
+    if "meta_json" in data and data["meta_json"] is not None:
+        row.meta_json = data["meta_json"]
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_cms_menu_item(db: Session, row: models.CmsMenuItem):
+    db.delete(row)
+    db.commit()
+
+
+def reorder_cms_menu_items(db: Session, menu_id: int, items: list[schemas.CmsMenuItemReorderItem]):
+    rows_by_id = {
+        row.id: row
+        for row in db.query(models.CmsMenuItem).filter(models.CmsMenuItem.menu_id == menu_id).all()
+    }
+    for item in items:
+        row = rows_by_id.get(item.id)
+        if not row:
+            continue
+        row.parent_id = item.parent_id
+        row.sort_order = item.sort_order
+    db.commit()
+    return list_cms_menu_items(db, menu_id)
+
+
+def list_cms_pages(db: Session, site_id: int):
+    return (
+        db.query(models.CmsPage)
+        .filter(models.CmsPage.site_id == site_id)
+        .order_by(models.CmsPage.updated_at.desc())
+        .all()
+    )
+
+
+def get_cms_page(db: Session, site_id: int, slug: str):
+    return (
+        db.query(models.CmsPage)
+        .filter(models.CmsPage.site_id == site_id, models.CmsPage.slug == slug)
+        .first()
+    )
+
+
+def create_cms_page(db: Session, site_id: int, payload: schemas.CmsPageCreate, user_id: int | None):
+    row = models.CmsPage(
+        site_id=site_id,
+        slug=payload.slug.strip().lower(),
+        title=payload.title.strip(),
+        status=payload.status,
+        seo_json=payload.seo_json or {},
+        created_by=user_id,
+        updated_by=user_id,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def update_cms_page(db: Session, row: models.CmsPage, payload: schemas.CmsPageUpdate, user_id: int | None):
+    data = payload.model_dump(exclude_unset=True)
+    if "slug" in data and data["slug"] is not None:
+        row.slug = str(data["slug"]).strip().lower()
+    if "title" in data and data["title"] is not None:
+        row.title = str(data["title"]).strip()
+    if "status" in data and data["status"] is not None:
+        row.status = str(data["status"]).strip()
+    if "seo_json" in data and data["seo_json"] is not None:
+        row.seo_json = data["seo_json"]
+    if user_id is not None:
+        row.updated_by = user_id
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_cms_page(db: Session, row: models.CmsPage):
+    db.delete(row)
+    db.commit()
+
+
+def list_cms_sections(db: Session, page_id: int):
+    return (
+        db.query(models.CmsSection)
+        .filter(models.CmsSection.page_id == page_id)
+        .order_by(models.CmsSection.sort_order.asc(), models.CmsSection.id.asc())
+        .all()
+    )
+
+
+def create_cms_section(db: Session, page_id: int, payload: schemas.CmsSectionCreate):
+    row = models.CmsSection(
+        page_id=page_id,
+        section_key=(payload.section_key or uuid.uuid4().hex),
+        type=payload.type,
+        props_json=payload.props_json or {},
+        sort_order=payload.sort_order,
+        is_visible=payload.is_visible,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def get_cms_section(db: Session, page_id: int, section_id: int):
+    return (
+        db.query(models.CmsSection)
+        .filter(models.CmsSection.page_id == page_id, models.CmsSection.id == section_id)
+        .first()
+    )
+
+
+def update_cms_section(db: Session, row: models.CmsSection, payload: schemas.CmsSectionUpdate):
+    data = payload.model_dump(exclude_unset=True)
+    for field in ["type", "sort_order", "is_visible"]:
+        if field in data and data[field] is not None:
+            setattr(row, field, data[field])
+    if "props_json" in data and data["props_json"] is not None:
+        row.props_json = data["props_json"]
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_cms_section(db: Session, row: models.CmsSection):
+    db.delete(row)
+    db.commit()
+
+
+def reorder_cms_sections(db: Session, page_id: int, items: list[schemas.CmsSectionReorderItem]):
+    rows_by_id = {
+        row.id: row
+        for row in db.query(models.CmsSection).filter(models.CmsSection.page_id == page_id).all()
+    }
+    for item in items:
+        row = rows_by_id.get(item.id)
+        if not row:
+            continue
+        row.sort_order = item.sort_order
+    db.commit()
+    return list_cms_sections(db, page_id)
+
+
+def _build_page_snapshot(db: Session, page: models.CmsPage):
+    sections = list_cms_sections(db, page.id)
+    return {
+        "page": {
+            "id": page.id,
+            "slug": page.slug,
+            "title": page.title,
+            "status": page.status,
+            "seo_json": page.seo_json or {},
+        },
+        "sections": [
+            {
+                "id": section.id,
+                "section_key": section.section_key,
+                "type": section.type,
+                "props_json": section.props_json or {},
+                "sort_order": section.sort_order,
+                "is_visible": section.is_visible,
+            }
+            for section in sections
+        ],
+    }
+
+
+def create_cms_page_version(db: Session, page: models.CmsPage, user_id: int | None, notes: str | None = None):
+    max_version = (
+        db.query(func.max(models.CmsPageVersion.version_number))
+        .filter(models.CmsPageVersion.page_id == page.id)
+        .scalar()
+        or 0
+    )
+    snapshot = _build_page_snapshot(db, page)
+    row = models.CmsPageVersion(
+        page_id=page.id,
+        version_number=int(max_version) + 1,
+        snapshot_json=snapshot,
+        notes=notes,
+        created_by=user_id,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def list_cms_page_versions(db: Session, page_id: int):
+    return (
+        db.query(models.CmsPageVersion)
+        .filter(models.CmsPageVersion.page_id == page_id)
+        .order_by(models.CmsPageVersion.version_number.desc())
+        .all()
+    )
+
+
+def get_cms_page_version(db: Session, page_id: int, version_id: int):
+    return (
+        db.query(models.CmsPageVersion)
+        .filter(models.CmsPageVersion.page_id == page_id, models.CmsPageVersion.id == version_id)
+        .first()
+    )
+
+
+def restore_cms_page_version(db: Session, page: models.CmsPage, version: models.CmsPageVersion, user_id: int | None):
+    snapshot = version.snapshot_json or {}
+    page_data = snapshot.get("page") or {}
+    sections_data = snapshot.get("sections") or []
+    if isinstance(page_data, dict):
+        page.slug = str(page_data.get("slug") or page.slug)
+        page.title = str(page_data.get("title") or page.title)
+        page.seo_json = page_data.get("seo_json") or {}
+    page.status = "draft"
+    page.updated_by = user_id
+    db.query(models.CmsSection).filter(models.CmsSection.page_id == page.id).delete(synchronize_session=False)
+    for idx, section_data in enumerate(sections_data):
+        if not isinstance(section_data, dict):
+            continue
+        db.add(
+            models.CmsSection(
+                page_id=page.id,
+                section_key=str(section_data.get("section_key") or uuid.uuid4().hex),
+                type=str(section_data.get("type") or "rich_text"),
+                props_json=section_data.get("props_json") or {},
+                sort_order=int(section_data.get("sort_order") or idx),
+                is_visible=bool(section_data.get("is_visible", True)),
+            )
+        )
+    db.commit()
+    db.refresh(page)
+    return page
+
+
+def transition_cms_page_status(db: Session, page: models.CmsPage, action: str, user_id: int | None, notes: str | None = None):
+    action = action.strip().lower()
+    action_map = {
+        "submit_review": "in_review",
+        "approve": "approved",
+        "publish": "published",
+        "archive": "archived",
+        "revert_draft": "draft",
+    }
+    if action not in action_map:
+        return None
+    next_status = action_map[action]
+    previous_status = page.status
+    if action == "publish":
+        version = create_cms_page_version(db, page, user_id=user_id, notes=notes)
+        page.published_version_id = version.id
+    page.status = next_status
+    page.updated_by = user_id
+    db.add(
+        models.CmsPublishLog(
+            site_id=page.site_id,
+            page_id=page.id,
+            entity_type="page",
+            entity_id=page.id,
+            action=action,
+            from_status=previous_status,
+            to_status=next_status,
+            actor_user_id=user_id,
+            metadata_json={"notes": notes} if notes else {},
+        )
+    )
+    db.commit()
+    db.refresh(page)
+    return page
+
+
+def get_public_cms_page(db: Session, site_id: int, slug: str):
+    return (
+        db.query(models.CmsPage)
+        .filter(models.CmsPage.site_id == site_id, models.CmsPage.slug == slug, models.CmsPage.status == "published")
+        .first()
+    )
 
 
 def increment_content_metric(db: Session, metric_key: str, ref_id: int, amount: int = 1):

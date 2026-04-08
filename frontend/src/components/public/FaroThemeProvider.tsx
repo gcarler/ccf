@@ -1,5 +1,6 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { apiFetch } from "@/lib/http";
 
 export type FaroTheme = "institutional" | "light" | "dark";
 
@@ -21,6 +22,7 @@ export function useFaroTheme() {
 
 export function FaroThemeProvider({ children }: { children: React.ReactNode }) {
     const [theme, setTheme] = useState<FaroTheme>("institutional");
+    const [remoteTokens, setRemoteTokens] = useState<Record<string, string>>({});
 
     useEffect(() => {
         const saved = (localStorage.getItem("faro-theme-v2") as FaroTheme) || "institutional";
@@ -43,6 +45,32 @@ export function FaroThemeProvider({ children }: { children: React.ReactNode }) {
         
         localStorage.setItem("faro-theme-v2", theme);
     }, [theme]);
+
+    useEffect(() => {
+        let mounted = true;
+        const loadRemoteTheme = async () => {
+            try {
+                const row = await apiFetch<{ tokens_json?: Record<string, string> }>("/cms/v2/public/sites/faro/theme");
+                if (mounted && row?.tokens_json && typeof row.tokens_json === "object") {
+                    setRemoteTokens(row.tokens_json);
+                }
+            } catch {
+                // fallback to local CSS theme tokens
+            }
+        };
+        loadRemoteTheme();
+        return () => {
+            mounted = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        const root = document.documentElement;
+        Object.entries(remoteTokens).forEach(([key, value]) => {
+            if (!key.startsWith("--") || typeof value !== "string") return;
+            root.style.setProperty(key, value);
+        });
+    }, [remoteTokens]);
 
     const toggle = () => {
         setTheme((prev) => {
