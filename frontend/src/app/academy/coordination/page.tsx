@@ -10,6 +10,7 @@ import { GraduationCap, Target, AlertTriangle, BarChart3, Loader2, Users, Shield
 import clsx from 'clsx';
 import { toast } from 'sonner';
 import { DSMetric, DSCard, DSBadge } from '@/design';
+import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 
 export default function CoordinationConsole() {
     const { token, user, isAuthenticated } = useAuth();
@@ -20,6 +21,8 @@ export default function CoordinationConsole() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [modalityFilter, setModalityFilter] = useState<'all' | 'formal' | 'non_formal'>('all');
+    const [viewType, setViewType] = useState<ViewType>(() => getStoredView('academy_coordination_view', 'grid'));
+    const [wikiNotes, setWikiNotes] = useState('');
 
     const isCoordination = useMemo(() => {
         const role = (user?.role || '').toLowerCase();
@@ -49,6 +52,25 @@ export default function CoordinationConsole() {
         load();
     }, [token, isAuthenticated]);
 
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem('academy_coordination_view', viewType);
+        }
+    }, [viewType]);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const saved = window.localStorage.getItem('academy_coordination_wiki_notes');
+            if (saved) setWikiNotes(saved);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem('academy_coordination_wiki_notes', wikiNotes);
+        }
+    }, [wikiNotes]);
+
     const readinessPerc = readiness?.readiness_score != null ? Math.round(readiness.readiness_score * 100) : 0;
     const filteredCourses = useMemo(() => {
         return courses.filter((course) => {
@@ -57,6 +79,17 @@ export default function CoordinationConsole() {
             return matchesSearch && matchesModality;
         });
     }, [courses, search, modalityFilter]);
+
+    const boardColumns = useMemo(() => {
+        const formal = filteredCourses.filter((course) => course.modality === 'formal');
+        const nonFormal = filteredCourses.filter((course) => course.modality !== 'formal');
+        const pendingCert = filteredCourses.filter((course) => !course.certificate_type || course.certificate_type === 'Pendiente');
+        return [
+            { key: 'formal', label: 'Formal', items: formal },
+            { key: 'non-formal', label: 'No formal', items: nonFormal },
+            { key: 'pending', label: 'Certificado pendiente', items: pendingCert },
+        ];
+    }, [filteredCourses]);
 
     const downloadSnapshot = () => {
         const payload = JSON.stringify({ metrics, readiness, courses }, null, 2);
@@ -77,8 +110,9 @@ export default function CoordinationConsole() {
                     { label: 'Academia', icon: GraduationCap },
                     { label: 'Coordinación', icon: ShieldCheck },
                 ]}
-                viewType="grid"
-                setViewType={() => {}}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki']}
                 rightActions={
                     <div className="flex items-center gap-3">
                         <button 
@@ -105,7 +139,7 @@ export default function CoordinationConsole() {
                     <div className="flex items-center gap-3 text-slate-500 text-sm"><Loader2 className="animate-spin" /> Preparando tableros ejecutivos...</div>
                 )}
 
-                {metrics && (
+                {metrics && viewType === 'grid' && (
                     <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <DSMetric label="Cursos totales" value={String(metrics.total_courses ?? 0)} trend="+4 cohortes" tone="blue" />
                         <DSMetric label="Inscripciones" value={String(metrics.total_enrollments ?? 0)} trend="Semana actual" tone="emerald" />
@@ -113,7 +147,7 @@ export default function CoordinationConsole() {
                     </section>
                 )}
 
-                {readiness && (
+                {readiness && viewType === 'grid' && (
                     <section className="rounded-[2.5rem] border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] shadow-xl p-6">
                         <header className="flex items-center justify-between mb-6">
                             <div>
@@ -141,7 +175,7 @@ export default function CoordinationConsole() {
                     </section>
                 )}
 
-                {readiness && readiness.checklist.some((item) => !item.completed) && (
+                {readiness && readiness.checklist.some((item) => !item.completed) && viewType === 'grid' && (
                     <section className="rounded-[2rem] border border-amber-200 bg-amber-50/70 p-6 text-amber-800 flex items-center gap-4">
                         <AlertTriangle size={32} />
                         <div>
@@ -151,7 +185,90 @@ export default function CoordinationConsole() {
                     </section>
                 )}
 
-                {filteredCourses.length > 0 && (
+                {viewType === 'list' && (
+                    <section className="space-y-3">
+                        {filteredCourses.map((course) => (
+                            <article key={course.id} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{course.title}</p>
+                                    <p className="text-xs text-slate-500">{course.cohort_name || 'Sin cohorte'} · {course.modality === 'formal' ? 'Formal' : 'No formal'}</p>
+                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{course.certificate_type || 'Pendiente'}</span>
+                            </article>
+                        ))}
+                        {filteredCourses.length === 0 && <div className="py-8 text-center text-slate-400 text-sm">Sin cursos para mostrar</div>}
+                    </section>
+                )}
+
+                {(viewType === 'board' || viewType === 'kanban') && (
+                    <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        {boardColumns.map((column) => (
+                            <div key={column.key} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3">
+                                <div className="mb-3 flex items-center justify-between">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{column.label}</p>
+                                    <span className="text-[10px] font-black text-slate-400">{column.items.length}</span>
+                                </div>
+                                <div className="space-y-2">
+                                    {column.items.map((course) => (
+                                        <div key={course.id} className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                                            <p className="text-xs font-black text-slate-800 dark:text-slate-100">{course.title}</p>
+                                            <p className="text-[10px] text-slate-400">{course.cohort_name || 'Sin cohorte'}</p>
+                                        </div>
+                                    ))}
+                                    {column.items.length === 0 && <div className="py-5 text-center text-[10px] font-black uppercase tracking-widest text-slate-400">Vacío</div>}
+                                </div>
+                            </div>
+                        ))}
+                    </section>
+                )}
+
+                {viewType === 'calendar' && (
+                    <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {filteredCourses.map((course) => (
+                            <article key={course.id} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">{course.cohort_name || 'Sin cohorte definida'}</p>
+                                <h4 className="text-base font-black text-slate-900 dark:text-white">{course.title}</h4>
+                                <p className="text-xs text-slate-500 mt-1">{course.modality === 'formal' ? 'Formal' : 'No formal'} · Certificado: {course.certificate_type || 'Pendiente'}</p>
+                            </article>
+                        ))}
+                        {filteredCourses.length === 0 && <div className="col-span-full py-8 text-center text-slate-400 text-sm">No hay eventos de cohorte</div>}
+                    </section>
+                )}
+
+                {viewType === 'gantt' && (
+                    <section className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Roadmap de alistamiento académico</p>
+                        {(readiness?.checklist || []).map((item) => {
+                            const progress = item.completed ? 100 : 40;
+                            return (
+                                <div key={item.key} className="space-y-1">
+                                    <div className="flex items-center justify-between text-[11px]">
+                                        <span className="font-bold text-slate-700 dark:text-slate-300">{item.label}</span>
+                                        <span className="font-black text-slate-400">{progress}%</span>
+                                    </div>
+                                    <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                                        <div className={clsx('h-full', item.completed ? 'bg-emerald-500' : 'bg-amber-500')} style={{ width: `${progress}%` }} />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        {(!readiness || readiness.checklist.length === 0) && <div className="py-8 text-center text-slate-400 text-sm">Sin datos de roadmap</div>}
+                    </section>
+                )}
+
+                {viewType === 'wiki' && (
+                    <section className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Wiki de coordinación académica</p>
+                        <textarea
+                            value={wikiNotes}
+                            onChange={(e) => setWikiNotes(e.target.value)}
+                            placeholder="Documenta políticas de cohortes, apertura/cierre de cursos, certificación y actas..."
+                            className="w-full min-h-[340px] rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20"
+                        />
+                    </section>
+                )}
+
+                {(viewType === 'grid' || viewType === 'table') && filteredCourses.length > 0 && (
                     <DSCard tone="light" className="shadow-2xl">
                         <header className="px-6 py-5 border-b border-slate-100 space-y-3">
                             <div className="flex items-center justify-between">

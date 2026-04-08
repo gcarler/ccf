@@ -276,7 +276,7 @@ export default function AutomationsPage() {
                                     </div>
                                     {rule.payload?.message && (
                                         <div className="mt-3 ml-16 p-3 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-100 dark:border-white/5">
-                                            <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">"{rule.payload.message}"</p>
+                                            <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">&quot;{rule.payload.message}&quot;</p>
                                         </div>
                                     )}
                                 </motion.div>

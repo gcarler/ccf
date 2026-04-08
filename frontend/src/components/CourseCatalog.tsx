@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, School, Clock } from "lucide-react";
 import { useToast } from "@/context/ToastContext";
 import { useRouter } from 'next/navigation';
@@ -50,6 +50,7 @@ export default function CourseCatalog({
   const [loading, setLoading] = useState(!initialCourses);
   const [filterModality, setFilterModality] = useState<Modality | "all">("all");
   const [internalViewType, setInternalViewType] = useState<ViewType>(() => getStoredView('academy_catalog_view', 'grid'));
+  const [wikiNotes, setWikiNotes] = useState("");
   const resolvedViewType = viewType ?? internalViewType;
 
   const handleViewTypeChange = (nextView: ViewType) => {
@@ -88,6 +89,38 @@ export default function CourseCatalog({
     loadCourses();
   }, [filterModality, token, addToast, initialCourses]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem("academy_catalog_wiki_notes");
+    if (saved) setWikiNotes(saved);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("academy_catalog_wiki_notes", wikiNotes);
+  }, [wikiNotes]);
+
+  const boardColumns = useMemo(() => {
+    const formal = courses.filter((c) => c.modality === "formal");
+    const nonFormal = courses.filter((c) => c.modality !== "formal");
+    const enrolled = courses.filter((c) => enrolledCourseIds.includes(c.id));
+    return [
+      { key: "formal", label: "Teología", items: formal },
+      { key: "non-formal", label: "Liderazgo", items: nonFormal },
+      { key: "enrolled", label: "Inscritos", items: enrolled },
+    ];
+  }, [courses, enrolledCourseIds]);
+
+  const calendarBuckets = useMemo(() => {
+    const map: Record<string, Course[]> = {};
+    for (const course of courses) {
+      const key = course.cohort_name || "Sin cohorte";
+      if (!map[key]) map[key] = [];
+      map[key].push(course);
+    }
+    return Object.entries(map);
+  }, [courses]);
+
 
   const handleEnrollClick = (courseId: number) => {
     if (enrolledCourseIds.includes(courseId)) {
@@ -125,7 +158,7 @@ export default function CourseCatalog({
           <ViewSwitcher
             viewType={resolvedViewType}
             setViewType={handleViewTypeChange}
-            availableViews={['grid', 'list', 'table']}
+            availableViews={['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki']}
             storageKey="academy_catalog_view"
           />
         )}
@@ -248,6 +281,88 @@ export default function CourseCatalog({
               <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">No hay cursos publicados.</p>
             </div>
           )}
+        </div>
+        )}
+
+        {(resolvedViewType === 'board' || resolvedViewType === 'kanban') && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 px-4">
+          {boardColumns.map((column) => (
+            <div key={column.key} className="rounded-2xl border border-white/10 bg-slate-900/30 p-3">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{column.label}</p>
+                <span className="text-[10px] font-black text-slate-500">{column.items.length}</span>
+              </div>
+              <div className="space-y-2">
+                {column.items.map((course) => (
+                  <button
+                    key={course.id}
+                    onClick={() => handleEnrollClick(course.id)}
+                    className="w-full text-left rounded-xl border border-white/10 bg-white/5 p-3 hover:border-primary/40 transition-all"
+                  >
+                    <p className="text-xs font-black text-white">{course.title}</p>
+                    <p className="text-[10px] text-slate-400">{course.code} · {course.duration_hours}h</p>
+                  </button>
+                ))}
+                {column.items.length === 0 && <div className="py-5 text-center text-[10px] font-black uppercase tracking-widest text-slate-500">Vacío</div>}
+              </div>
+            </div>
+          ))}
+        </div>
+        )}
+
+        {resolvedViewType === 'calendar' && (
+        <div className="space-y-4 px-4">
+          {calendarBuckets.map(([bucket, items]) => (
+            <div key={bucket} className="rounded-2xl border border-white/10 bg-slate-900/30 p-4">
+              <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{bucket}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {items.map((course) => (
+                  <button key={course.id} onClick={() => handleEnrollClick(course.id)} className="rounded-xl border border-white/10 bg-white/5 p-3 text-left hover:border-primary/40 transition-all">
+                    <p className="text-sm font-black text-white">{course.title}</p>
+                    <p className="text-[10px] text-slate-400">{course.code} · {course.is_self_paced ? 'Autoguiado' : 'Cohorte'}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          {calendarBuckets.length === 0 && <div className="py-8 text-center text-slate-500 text-sm">Sin cursos en calendario</div>}
+        </div>
+        )}
+
+        {resolvedViewType === 'gantt' && (
+        <div className="px-4">
+          <div className="rounded-2xl border border-white/10 bg-slate-900/30 p-4 space-y-3">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Progreso sugerido por curso</p>
+            {courses.map((course) => {
+              const progress = Math.min(100, Math.max(15, Math.round((course.lesson_count / 12) * 100)));
+              return (
+                <div key={course.id} className="space-y-1">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-bold text-slate-200">{course.title}</span>
+                    <span className="font-black text-slate-400">{progress}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div className="h-full bg-primary" style={{ width: `${progress}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+            {courses.length === 0 && <div className="py-8 text-center text-slate-500 text-sm">Sin datos para timeline</div>}
+          </div>
+        </div>
+        )}
+
+        {resolvedViewType === 'wiki' && (
+        <div className="px-4">
+          <div className="rounded-2xl border border-white/10 bg-slate-900/30 p-4 space-y-3">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Wiki del catálogo</p>
+            <textarea
+              value={wikiNotes}
+              onChange={(e) => setWikiNotes(e.target.value)}
+              placeholder="Documenta rutas de cursos, prerequisitos, recomendaciones y lineamientos para estudiantes..."
+              className="w-full min-h-[320px] rounded-2xl border border-white/10 bg-black/20 p-4 text-sm font-medium text-slate-200 outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
         </div>
         )}
         </>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import CourseCatalog from '@/components/CourseCatalog';
 import MyEnrollments from '@/components/MyEnrollments';
@@ -32,6 +32,10 @@ export default function AcademyClient({ initialCourses, initialEnrollments }: Ac
     const [aiInsights, setAiInsights] = useState<any[]>([]);
     const { data: pageContents } = useContentBlocks(['academy_hero', 'academy_welcome_sub']);
     const { insights: graphInsights } = useGraphInsights({ types: ['course'], limit: 4, enabled: isAuthenticated });
+    const canActAsTeacher = useMemo(() => {
+        const role = (user?.role || '').toLowerCase();
+        return ['admin', 'coordinador', 'staff'].includes(role);
+    }, [user?.role]);
 
     useEffect(() => {
         if (isAuthenticated && user) {
@@ -112,14 +116,14 @@ export default function AcademyClient({ initialCourses, initialEnrollments }: Ac
 
     return (
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden font-sans relative">
-            <div className="shrink-0 h-12 border-b border-slate-100 dark:border-white/5 flex items-center px-6 gap-2 bg-white/50 dark:bg-black/20 backdrop-blur-md relative z-20">
-                <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
-                    {(['grid', 'list', 'table'] as ViewType[]).map((vt) => (
+            <div className="shrink-0 h-12 border-b border-slate-100 dark:border-white/5 flex items-center justify-between px-6 gap-3 bg-white/50 dark:bg-black/20 backdrop-blur-md relative z-20">
+                <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl overflow-x-auto hide-scrollbar max-w-full">
+                    {(['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki'] as ViewType[]).map((vt) => (
                         <button
                             key={vt}
                             onClick={() => setViewType(vt)}
                             className={clsx(
-                                'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all',
+                                'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap',
                                 viewType === vt ? 'bg-white dark:bg-[#1a1b1e] text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white'
                             )}
                         >
@@ -127,6 +131,14 @@ export default function AcademyClient({ initialCourses, initialEnrollments }: Ac
                         </button>
                     ))}
                 </div>
+                {canActAsTeacher && (
+                    <button
+                        onClick={() => router.push('/academy/teacher')}
+                        className="shrink-0 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all"
+                    >
+                        Modo Docente
+                    </button>
+                )}
             </div>
 
             {/* Ambient Background */}
