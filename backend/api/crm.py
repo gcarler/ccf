@@ -179,6 +179,28 @@ def get_pipeline(
         })
     return result
 
+@router.get("/consolidation/pipeline/{lead_id}", response_model=dict)
+def get_pipeline_lead(
+    lead_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Obtiene el detalle de un prospecto específico."""
+    lead = db.query(models.ConsolidationPipeline).filter(models.ConsolidationPipeline.id == lead_id).first()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    return {
+        "id": lead.id,
+        "first_name": lead.first_name,
+        "last_name": lead.last_name,
+        "phone": lead.phone,
+        "source": lead.source,
+        "stage": lead.stage,
+        "notes": lead.notes,
+        "created_at": lead.created_at.isoformat(),
+        "assigned_pastor_id": lead.assigned_pastor_id
+    }
+
 @router.patch("/consolidation/pipeline/{lead_id}", response_model=dict)
 def update_pipeline_lead(
     lead_id: int,
@@ -254,10 +276,37 @@ def register_bulk_attendance(
 @router.get("/counseling/", response_model=List[schemas.CounselingTicket])
 def list_counseling_tickets(
     status: Optional[str] = None,
+    member_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin)
 ):
-    return crud.get_counseling_tickets(db, status=status)
+    tickets = crud.get_counseling_tickets(db, status=status)
+    if member_id:
+        tickets = [t for t in tickets if t.member_id == member_id]
+    return tickets
+
+@router.get("/counseling/lead/{lead_id}", response_model=List[dict])
+def get_counseling_by_lead(
+    lead_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Devuelve sesiones de consejería asociadas a un prospecto (por lead_id o member_id combinado)."""
+    try:
+        # Buscar tickets donde el member_id coincida (lead puede haberse convertido en miembro)
+        tickets = db.query(models.CounselingTicket).filter(
+            models.CounselingTicket.member_id == lead_id
+        ).all()
+        return [{
+            "id": t.id,
+            "subject": t.subject,
+            "notes": t.notes,
+            "status": t.status,
+            "priority_level": t.priority_level,
+            "created_at": t.created_at.isoformat() if t.created_at else None,
+        } for t in tickets]
+    except Exception:
+        return []
 
 @router.post("/counseling/", response_model=schemas.CounselingTicket)
 def create_counseling_ticket(
@@ -297,6 +346,30 @@ def create_prayer_request(
 ):
     return crud.create_prayer_request(db, payload)
 
+@router.patch("/prayer-requests/{request_id}", response_model=dict)
+def update_prayer_request(
+    request_id: int,
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Actualiza estado de una petición de oración (pending/praying/answered)."""
+    req = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="Prayer request not found")
+    if "status" in payload:
+        req.status = payload["status"]
+    if "is_answered" in payload:
+        # Compatibilidad: is_answered=True → status answered
+        req.status = "answered" if payload["is_answered"] else "pending"
+    db.commit()
+    db.refresh(req)
+    return {
+        "id": req.id,
+        "status": req.status,
+        "requester_name": req.requester_name,
+    }
+
 # --- GLORY HOUSES ---
 
 @router.get("/glory-houses", response_model=List[schemas.GloryHouse])
@@ -315,6 +388,39 @@ def create_glory_house(
     return crud.create_glory_house(db, payload)
 
 # --- MESSAGING & AUTOMATIONS ---
+
+@router.get("/messaging/history", response_model=List[dict])
+def get_messaging_history(
+    member_id: Optional[int] = None,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Devuelve el historial de mensajes enviados. Filtra por member_id si se provee."""
+    try:
+        q = db.query(models.CommunicationLog).order_by(models.CommunicationLog.sent_at.desc())
+        if member_id:
+            q = q.filter(models.CommunicationLog.member_id == member_id)
+        logs = q.limit(limit).all()
+        result = []
+        for log in logs:
+            member_name = None
+            if log.member_id:
+                m = db.query(models.Member).filter(models.Member.id == log.member_id).first()
+                if m:
+                    member_name = f"{m.first_name} {m.last_name}"
+            result.append({
+                "id": log.id,
+                "member_id": log.member_id,
+                "member_name": member_name,
+                "channel": log.channel,
+                "message": log.message,
+                "status": log.status,
+                "sent_at": log.sent_at.isoformat() if log.sent_at else None,
+            })
+        return result
+    except Exception:
+        return []
 
 @router.post("/messaging/send", response_model=dict)
 async def send_crm_message(
@@ -465,6 +571,37 @@ def create_shift(
     current_user: models.User = Depends(require_pastor_or_admin)
 ):
     return crud.create_volunteer_shift(db, payload)
+
+@router.post("/volunteers/apply", response_model=dict)
+def apply_volunteer(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Registra la postulación de un miembro a un equipo de voluntariado."""
+    try:
+        from datetime import timedelta
+        # Crear un turno pendiente como postulación
+        member = db.query(models.Member).filter(models.Member.user_id == current_user.id).first()
+        if not member:
+            raise HTTPException(404, "Perfil de miembro no encontrado")
+        shift = models.VolunteerShift(
+            member_id=member.id,
+            role_name=payload.get("team", "General"),
+            team_name=payload.get("team", "General"),
+            shift_start=datetime.utcnow(),
+            shift_end=datetime.utcnow() + timedelta(hours=2),
+            status="pending",
+            notes=f"Disponibilidad: {payload.get('availability','')} | {payload.get('notes','')}"
+        )
+        db.add(shift)
+        db.commit()
+        db.refresh(shift)
+        return {"status": "success", "shift_id": shift.id, "message": "Solicitud enviada al equipo pastoral"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(400, str(e))
 
 # --- SETTINGS ---
 

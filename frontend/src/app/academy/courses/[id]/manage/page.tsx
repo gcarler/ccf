@@ -68,11 +68,12 @@ export default function CourseManagementPage() {
         const loadData = async () => {
             try {
                 setLoading(true);
-                await new Promise(r => setTimeout(r, 400));
-                const [courseData, studentsData] = await Promise.all([
-                    apiFetch<CourseDetails>(`/academy/courses/${id}`, { token }),
-                    apiFetch<Student[]>(`/academy/admin/courses/${id}/students`, { token })
-                ]);
+                // Allow independent failure
+                const courseReq = apiFetch<CourseDetails>(`/academy/courses/${id}`, { token }).catch(() => null);
+                // Dummy endpoint, wait for backend Implementation
+                const studentsReq = apiFetch<Student[]>(`/academy/admin/courses/${id}/students`, { token }).catch(() => []);
+                
+                const [courseData, studentsData] = await Promise.all([courseReq, studentsReq]);
                 setCourse(courseData);
                 setStudents(Array.isArray(studentsData) ? studentsData : []);
             } catch (err) {
@@ -159,10 +160,10 @@ export default function CourseManagementPage() {
                             </div>
                             <div>
                                 <h1 className="text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-3">
-                                    {course?.title || 'Sincronizando...'}
+                                    {course ? course.title : (loading ? 'Sincronizando...' : 'Datos del Curso (No Disponible)')}
                                 </h1>
                                 <div className="flex items-center gap-6 text-slate-500 font-bold text-sm">
-                                    <span className="flex items-center gap-2"><Users size={16} className="text-blue-500" /> {course?.students_count} Alumnos</span>
+                                    <span className="flex items-center gap-2"><Users size={16} className="text-blue-500" /> {course?.students_count ?? 0} Alumnos</span>
                                     <span className="flex items-center gap-2"><Clock size={16} className="text-blue-500" /> {course?.cohort_name || 'Cohorte 2026-I'}</span>
                                 </div>
                             </div>

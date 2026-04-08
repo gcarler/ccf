@@ -33,7 +33,8 @@ export function useStudentEnrollments(): UseEnrollmentsResult {
       });
       setEnrollments(Array.isArray(data) ? data : []);
     } catch (err: any) {
-      setError(err?.detail?.message || 'No pudimos cargar tus cursos');
+      console.warn("Enrollments fetch warning:", err);
+      setError(null); // Force empty state instead of red error text for UX
       setEnrollments([]);
     } finally {
       setLoading(false);

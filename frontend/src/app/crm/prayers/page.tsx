@@ -57,10 +57,10 @@ export default function PrayerSupportCenter() {
             if (Array.isArray(data)) {
                 setRequests(data.map((r: any) => ({
                     id: r.id,
-                    name: r.name || 'Anónimo',
-                    request: r.request,
+                    name: r.requester_name || r.name || 'Anónimo',
+                    request: r.request_text || r.request,
                     category: r.category || 'General',
-                    status: r.is_answered ? 'answered' : 'active',
+                    status: r.status || (r.is_answered ? 'answered' : 'pending'),
                     is_urgent: r.is_urgent || false,
                     time: new Date(r.created_at).toLocaleDateString()
                 })));
@@ -73,10 +73,12 @@ export default function PrayerSupportCenter() {
 
     const updateRequestStatus = useCallback(async (id: number, newStatus: string) => {
         setRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
+        // Sync selected request if open
+        setSelectedRequest((prev: any) => prev?.id === id ? { ...prev, status: newStatus } : prev);
         try {
             await apiFetch(`/crm/prayer-requests/${id}`, {
                 method: 'PATCH', token,
-                body: { is_answered: newStatus === 'answered' }
+                body: { status: newStatus }
             });
             addToast(`Petición marcada como ${newStatus.toUpperCase()}`, 'success');
         } catch {

@@ -1615,3 +1615,32 @@ def search_knowledge_base(db: Session, query: str):
         results = mock_docs[:3] # Devolver top 3 si no hay coincidencia directa
     
     return [SimpleNamespace(**doc) for doc in results]
+
+def get_dashboard_metrics(db: Session) -> schemas.DashboardMetrics:
+    total_courses = db.query(models.Course).count()
+    total_enrollments = db.query(models.Enrollment).count()
+    approved_formal_enrollments = db.query(models.Enrollment)\
+        .join(models.Course)\
+        .filter(models.Enrollment.approved == True, models.Course.modality == 'formal')\
+        .count()
+    
+    return schemas.DashboardMetrics(
+        total_courses=total_courses,
+        total_enrollments=total_enrollments,
+        approved_formal_enrollments=approved_formal_enrollments
+    )
+
+def get_pilot_readiness(db: Session) -> schemas.PilotReadiness:
+    # Calculate a mock readiness score based on system stats
+    checklist = [
+        {"key": "courses", "label": "Catálogo de Cursos", "completed": db.query(models.Course).count() >= 5},
+        {"key": "users", "label": "Usuarios Estudiantes", "completed": db.query(models.User).filter(models.User.role == 'estudiante').count() >= 10},
+        {"key": "enrollments", "label": "Matrículas Activas", "completed": db.query(models.Enrollment).count() >= 5}
+    ]
+    completed_count = sum(1 for item in checklist if item['completed'])
+    readiness_score = (completed_count / len(checklist)) if checklist else 0.0
+    
+    return schemas.PilotReadiness(
+        readiness_score=readiness_score,
+        checklist=checklist
+    )

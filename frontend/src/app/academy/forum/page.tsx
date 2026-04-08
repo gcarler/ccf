@@ -121,6 +121,15 @@ export default function AcademyForumPage() {
                         </div>
 
                         <div className="space-y-4">
+                            {!loading && threads.length === 0 && (
+                                <div className="py-20 text-center space-y-4 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem]">
+                                    <MessageSquare className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-600" />
+                                    <div className="space-y-1">
+                                        <h3 className="text-xl font-black text-slate-900 dark:text-white">Aún no hay debates</h3>
+                                        <p className="text-slate-500 font-medium">Sé el primero en iniciar una conversación en esta categoría.</p>
+                                    </div>
+                                </div>
+                            )}
                             {threads.map((thread) => (
                                 <motion.div 
                                     key={thread.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}

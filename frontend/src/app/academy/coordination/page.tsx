@@ -49,7 +49,7 @@ export default function CoordinationConsole() {
         load();
     }, [token, isAuthenticated]);
 
-    const readinessPerc = readiness ? Math.round(readiness.readiness_score * 100) : 0;
+    const readinessPerc = readiness?.readiness_score != null ? Math.round(readiness.readiness_score * 100) : 0;
     const filteredCourses = useMemo(() => {
         return courses.filter((course) => {
             const matchesSearch = course.title.toLowerCase().includes(search.toLowerCase());
@@ -107,9 +107,9 @@ export default function CoordinationConsole() {
 
                 {metrics && (
                     <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <DSMetric label="Cursos totales" value={String(metrics.total_courses)} trend="+4 cohortes" tone="blue" />
-                        <DSMetric label="Inscripciones" value={String(metrics.total_enrollments)} trend="Semana actual" tone="emerald" />
-                        <DSMetric label="Formales aprobados" value={String(metrics.approved_formal_enrollments)} trend="Actas activas" tone="amber" />
+                        <DSMetric label="Cursos totales" value={String(metrics.total_courses ?? 0)} trend="+4 cohortes" tone="blue" />
+                        <DSMetric label="Inscripciones" value={String(metrics.total_enrollments ?? 0)} trend="Semana actual" tone="emerald" />
+                        <DSMetric label="Formales aprobados" value={String(metrics.approved_formal_enrollments ?? 0)} trend="Actas activas" tone="amber" />
                     </section>
                 )}
 

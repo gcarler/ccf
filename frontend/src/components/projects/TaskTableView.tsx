@@ -386,6 +386,7 @@ function QuickAddRow({ onConfirm, onCancel }: { onConfirm: (title: string) => vo
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 interface Props {
+    projectId?: string | number;
     tasks: ProjectTaskRecord[];
     onOpenTask: (task: ProjectTaskRecord) => void;
     onAddTask: (status: string, dueDate?: string, title?: string) => Promise<void> | void;
@@ -399,6 +400,7 @@ interface Props {
 
 type SortKey = 'title' | 'status' | 'priority' | 'due_date';
 type SortDir = 'asc' | 'desc';
+type SortConfig = { key: SortKey; dir: SortDir };
 type GroupKey = 'status' | 'priority' | 'none';
 
 const STATUS_ORDER: Record<string, number> = {
@@ -418,15 +420,14 @@ const ALL_COLUMNS: { id: ColumnId; label: string }[] = [
 
 type ActiveFilter = { field: 'status' | 'priority'; value: string; label: string };
 
-export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpdated }: Props) {
+export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask, onTaskUpdated }: Props) {
     const { token } = useAuth();
     const { openLayer } = useSidebarLayers();
 
     // ─ Optimistic overrides
     const [overrides, setOverrides] = useState<Record<number, Partial<ProjectTaskRecord>>>({});
     const [selected, setSelected]   = useState<Set<number>>(new Set());
-    const [sortKey, setSortKey]      = useState<SortKey | null>(null);
-    const [sortDir, setSortDir]      = useState<SortDir>('asc');
+    const [sortConfig, setSortConfig] = useState<SortConfig[]>([]);
     const [groupBy, setGroupBy]      = useState<GroupKey>('status');
     const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
     const [quickAddGroup, setQuickAddGroup] = useState<string | null>(null);
@@ -438,6 +439,44 @@ export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpda
     const [filterOpen, setFilterOpen] = useState(false);
     const [sortOpen,   setSortOpen]   = useState(false);
     const [groupOpen,  setGroupOpen]  = useState(false);
+    
+    // Persistence load
+    const [isLoaded, setIsLoaded] = useState(false);
+    useEffect(() => {
+        const storageKey = projectId ? `ccf_task_table_prefs_${projectId}` : 'ccf_task_table_prefs';
+        try {
+            const stored = localStorage.getItem(storageKey);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (parsed.sortConfig) setSortConfig(parsed.sortConfig);
+                if (parsed.groupBy) setGroupBy(parsed.groupBy);
+                if (parsed.collapsedGroups) setCollapsedGroups(parsed.collapsedGroups);
+                if (parsed.activeFilters) setActiveFilters(parsed.activeFilters);
+                if (parsed.visibleCols) setVisibleCols(new Set(parsed.visibleCols));
+            }
+        } catch (e) {
+            console.error('Error loading table prefs', e);
+        }
+        setIsLoaded(true);
+    }, [projectId]);
+
+    // Persistence save
+    useEffect(() => {
+        if (!isLoaded) return;
+        const storageKey = projectId ? `ccf_task_table_prefs_${projectId}` : 'ccf_task_table_prefs';
+        try {
+            const prefs = {
+                sortConfig,
+                groupBy,
+                collapsedGroups,
+                activeFilters,
+                visibleCols: Array.from(visibleCols),
+            };
+            localStorage.setItem(storageKey, JSON.stringify(prefs));
+        } catch (e) {
+            console.error('Error saving table prefs', e);
+        }
+    }, [isLoaded, projectId, sortConfig, groupBy, collapsedGroups, activeFilters, visibleCols]);
 
     const resolveTask = useCallback((t: ProjectTaskRecord): ProjectTaskRecord => ({
         ...t,
@@ -445,19 +484,40 @@ export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpda
     }), [overrides]);
 
     // ─ Sort toggle
-    const handleSortToggle = (key: SortKey) => {
-        if (sortKey === key) {
-            if (sortDir === 'asc') setSortDir('desc');
-            else { setSortKey(null); setSortDir('asc'); }
-        } else {
-            setSortKey(key);
-            setSortDir('asc');
-        }
+    const handleSortToggle = (key: SortKey, e?: React.MouseEvent) => {
+        setSortConfig(prev => {
+            const existingIdx = prev.findIndex(s => s.key === key);
+            let next = [...prev];
+
+            if (e?.shiftKey) {
+                if (existingIdx >= 0) {
+                    if (next[existingIdx].dir === 'asc') next[existingIdx].dir = 'desc';
+                    else next.splice(existingIdx, 1);
+                } else {
+                    next.push({ key, dir: 'asc' });
+                }
+            } else {
+                if (existingIdx >= 0 && prev.length === 1) {
+                    if (next[existingIdx].dir === 'asc') next[existingIdx].dir = 'desc';
+                    else next = [];
+                } else {
+                    next = [{ key, dir: 'asc' }];
+                }
+            }
+            return next;
+        });
     };
 
     const SortIcon = ({ k }: { k: SortKey }) => {
-        if (sortKey !== k) return <ChevronsUpDown size={12} className="text-slate-300" />;
-        return sortDir === 'asc' ? <ArrowUp size={12} className="text-violet-500" /> : <ArrowDown size={12} className="text-violet-500" />;
+        const confIdx = sortConfig.findIndex(s => s.key === k);
+        if (confIdx < 0) return <ChevronsUpDown size={12} className="text-slate-300 transition-colors group-hover/th:text-slate-400" />;
+        const conf = sortConfig[confIdx];
+        return (
+            <div className="flex items-center gap-0.5">
+                {conf.dir === 'asc' ? <ArrowUp size={12} className="text-violet-500" /> : <ArrowDown size={12} className="text-violet-500" />}
+                {sortConfig.length > 1 && <span className="text-[9px] font-bold text-violet-500">{confIdx + 1}</span>}
+            </div>
+        );
     };
 
     // ─ Process: filter + sort
@@ -471,22 +531,25 @@ export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpda
                 return true;
             });
         }
-        if (sortKey) {
+        if (sortConfig.length > 0) {
             list = [...list].sort((a, b) => {
-                let cmp = 0;
-                if (sortKey === 'title')   cmp = (a.title ?? '').localeCompare(b.title ?? '');
-                if (sortKey === 'status')  cmp = (STATUS_ORDER[a.status ?? ''] ?? 99) - (STATUS_ORDER[b.status ?? ''] ?? 99);
-                if (sortKey === 'priority') cmp = (PRIORITY_ORDER[a.priority ?? ''] ?? 99) - (PRIORITY_ORDER[b.priority ?? ''] ?? 99);
-                if (sortKey === 'due_date') {
-                    const da = a.due_date ? new Date(a.due_date).getTime() : Infinity;
-                    const db = b.due_date ? new Date(b.due_date).getTime() : Infinity;
-                    cmp = da - db;
+                for (const { key, dir } of sortConfig) {
+                    let cmp = 0;
+                    if (key === 'title')   cmp = (a.title ?? '').localeCompare(b.title ?? '');
+                    if (key === 'status')  cmp = (STATUS_ORDER[a.status ?? 'todo'] ?? 99) - (STATUS_ORDER[b.status ?? 'todo'] ?? 99);
+                    if (key === 'priority') cmp = (PRIORITY_ORDER[a.priority ?? 'normal'] ?? 99) - (PRIORITY_ORDER[b.priority ?? 'normal'] ?? 99);
+                    if (key === 'due_date') {
+                        const da = a.due_date ? new Date(a.due_date).getTime() : Infinity;
+                        const db = b.due_date ? new Date(b.due_date).getTime() : Infinity;
+                        cmp = da - db;
+                    }
+                    if (cmp !== 0) return dir === 'asc' ? cmp : -cmp;
                 }
-                return sortDir === 'asc' ? cmp : -cmp;
+                return 0;
             });
         }
         return list;
-    }, [tasks, sortKey, sortDir, activeFilters, resolveTask])
+    }, [tasks, sortConfig, activeFilters, resolveTask])
 
     const groups = useMemo(() => {
         const grouped: Record<string, ProjectTaskRecord[]> = {};
@@ -542,9 +605,9 @@ export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpda
     };
 
     const ColHeader = ({ label, k, width }: { label: string; k: SortKey; width: string }) => (
-        <th style={{ width }} className="px-4 py-2.5 text-left border-r border-slate-100 dark:border-white/5 last:border-r-0">
-            <button onClick={() => handleSortToggle(k)}
-                className="flex items-center gap-1.5 group/th">
+        <th style={{ width }} className="px-4 py-2.5 text-left border-r border-slate-100 dark:border-white/5 last:border-r-0 select-none">
+            <button onClick={(e) => handleSortToggle(k, e)}
+                className="flex items-center gap-1.5 group/th w-full">
                 <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 group-hover/th:text-slate-700 dark:group-hover/th:text-slate-200 transition-colors">
                     {label}
                 </span>
@@ -687,41 +750,52 @@ export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpda
                     <Popover.Trigger asChild>
                         <button className={clsx(
                             'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all',
-                            sortKey ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
+                            sortConfig.length > 0 ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
                         )}>
                             <SlidersHorizontal size={12} />
-                            Ordenar{sortKey ? `: ${sortKey === 'due_date' ? 'Fecha' : sortKey === 'title' ? 'Nombre' : sortKey === 'status' ? 'Estado' : 'Prioridad'} ${sortDir === 'asc' ? '↑' : '↓'}` : ''}
+                            Ordenar{sortConfig.length > 0 ? ` (${sortConfig.length})` : ''}
                         </button>
                     </Popover.Trigger>
                     <Popover.Portal>
                         <Popover.Content sideOffset={6} align="start"
-                            className="z-[500] w-56 bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl border border-slate-200/80 dark:border-white/10 p-2">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 py-1.5">Columna</p>
-                            {([['title','Nombre'],['status','Estado'],['priority','Prioridad'],['due_date','Fecha límite']] as [SortKey, string][]).map(([k, lbl]) => (
-                                <button key={k} onClick={() => handleSortToggle(k)}
-                                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                    <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 flex-1 text-left">{lbl}</span>
-                                    {sortKey === k && (sortDir === 'asc' ? <ArrowUp size={12} className="text-violet-500" /> : <ArrowDown size={12} className="text-violet-500" />)}
+                            className="z-[500] w-64 bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl border border-slate-200/80 dark:border-white/10 p-2">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 py-1.5">Columnas activas</p>
+                            {sortConfig.length === 0 && <p className="text-[11px] text-slate-500 px-2 pb-2">Ninguna</p>}
+                            {sortConfig.map((conf, idx) => {
+                                const lbl = conf.key === 'due_date' ? 'Fecha límite' : conf.key === 'title' ? 'Nombre' : conf.key === 'status' ? 'Estado' : 'Prioridad';
+                                return (
+                                    <div key={conf.key} className="flex justify-between items-center w-full px-2 py-1.5 mb-1 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group/sort">
+                                        <div className="flex items-center gap-2">
+                                            <div className="size-4 rounded-full bg-violet-100 dark:bg-violet-500/20 text-[9px] font-bold text-violet-600 flex items-center justify-center">{idx + 1}</div>
+                                            <span className="text-[12px] font-medium text-slate-700 dark:text-slate-200">{lbl}</span>
+                                        </div>
+                                        <div className="flex gap-1 items-center">
+                                            <button onClick={() => setSortConfig(prev => prev.map((c, i) => i === idx ? { ...c, dir: c.dir === 'asc' ? 'desc' : 'asc' } : c))} className="p-1 text-slate-400 hover:text-violet-500 hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors" title="Cambiar dirección">
+                                                {conf.dir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+                                            </button>
+                                            <button onClick={() => setSortConfig(prev => prev.filter((_, i) => i !== idx))} className="p-1 text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors opacity-0 group-hover/sort:opacity-100" title="Quitar">
+                                                <X size={12} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            <div className="border-t border-slate-100 dark:border-white/5 my-1.5" />
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 py-1.5">Añadir ordenación</p>
+                            {([['title','Nombre'],['status','Estado'],['priority','Prioridad'],['due_date','Fecha límite']] as [SortKey, string][])
+                                .filter(([k]) => !sortConfig.some(s => s.key === k))
+                                .map(([k, lbl]) => (
+                                <button key={k} onClick={() => setSortConfig(prev => [...prev, { key: k, dir: 'asc' }])}
+                                    className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                    <Plus size={12} className="text-slate-400" />
+                                    <span className="text-[12px] font-medium text-slate-700 dark:text-slate-200 flex-1 text-left">{lbl}</span>
                                 </button>
                             ))}
-                            {sortKey && (
-                                <>
-                                    <div className="border-t border-slate-100 dark:border-white/5 my-1" />
-                                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 py-1.5">Dirección</p>
-                                    <div className="flex gap-1.5 px-2 pb-1">
-                                        {([['asc','Ascendente'],['desc','Descendente']] as const).map(([d, lbl]) => (
-                                            <button key={d} onClick={() => setSortDir(d)}
-                                                className={clsx('flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all',
-                                                    sortDir === d ? 'bg-violet-600 text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-slate-200')}>
-                                                {lbl}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <button onClick={() => { setSortKey(null); setSortDir('asc'); setSortOpen(false); }}
-                                        className="w-full text-[11px] font-bold text-rose-500 py-1.5 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors mt-1">
-                                        Quitar ordenación
-                                    </button>
-                                </>
+                            {sortConfig.length > 0 && (
+                                <button onClick={() => setSortConfig([])}
+                                    className="w-full text-[11px] font-bold text-rose-500 py-1.5 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors mt-2 border-t border-slate-100 dark:border-white/5">
+                                    Limpiar todo
+                                </button>
                             )}
                         </Popover.Content>
                     </Popover.Portal>
@@ -795,9 +869,9 @@ export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpda
                                         <Check size={10} className="text-violet-600" />}
                                 </div>
                             </th>
-                            <th className="px-4 py-2.5 text-left border-r border-slate-100 dark:border-white/5" style={{ width: '380px' }}>
-                                <button onClick={() => handleSortToggle('title')}
-                                    className="flex items-center gap-1.5 group/th">
+                            <th className="px-4 py-2.5 text-left border-r border-slate-100 dark:border-white/5 select-none" style={{ width: '380px' }}>
+                                <button onClick={(e) => handleSortToggle('title', e)}
+                                    className="flex items-center gap-1.5 group/th w-full">
                                     <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 group-hover/th:text-slate-700 dark:group-hover/th:text-slate-200 transition-colors">
                                         Nombre de la tarea
                                     </span>
@@ -1027,7 +1101,12 @@ export default function TaskTableView({ tasks, onOpenTask, onAddTask, onTaskUpda
                 </div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                     {processed.length} tarea{processed.length !== 1 ? 's' : ''}
-                    {sortKey && ` · ord. por ${sortKey}`}
+                    {sortConfig.length > 0 && ` · ord. por ${sortConfig.map(s => {
+                        if (s.key === 'due_date') return 'Fecha';
+                        if (s.key === 'title') return 'Nombre';
+                        if (s.key === 'status') return 'Estado';
+                        return 'Prioridad';
+                    }).join(', ')}`}
                 </span>
             </footer>
         </div>

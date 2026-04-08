@@ -381,18 +381,13 @@ class Certificate(BaseModel):
 
 
 class DashboardMetrics(BaseModel):
-    active_students: int = 0
-    completion_rate: float = 0
-    certificates_issued: int = 0
-    cards: List[Dict[str, Any]] = Field(default_factory=list)
-    formal_stats: Dict[str, Any] = Field(default_factory=dict) # {total, completed, rate, avg_grade}
-    no_formal_stats: Dict[str, Any] = Field(default_factory=dict)
-    top_courses: List[Dict[str, Any]] = Field(default_factory=list)
-
+    total_courses: int = 0
+    total_enrollments: int = 0
+    approved_formal_enrollments: int = 0
 
 class PilotReadiness(BaseModel):
-    environment_ready: bool
-    checklist: List[Dict[str, Any]]
+    readiness_score: float = 0.0
+    checklist: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 class FormalActaCloseRequest(BaseModel):

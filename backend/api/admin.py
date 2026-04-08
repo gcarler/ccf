@@ -353,5 +353,35 @@ def create_automation(payload: Dict[str, Any], db: Session = Depends(get_db), cu
     )
     db.add(rule)
     db.commit()
+    db.refresh(rule)
+    return {"status": "success", "id": rule.id}
+
+@router.patch("/automations/{rule_id}")
+def update_automation(rule_id: int, payload: Dict[str, Any], db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
+    """Actualiza una regla de automatización (nombre, trigger, acción, activo)."""
+    rule = db.query(models.CrmAutomation).filter(models.CrmAutomation.id == rule_id).first()
+    if not rule:
+        raise HTTPException(status_code=404, detail="Automation rule not found")
+    if "name" in payload:
+        rule.name = payload["name"]
+    if "trigger" in payload:
+        rule.trigger_event = payload["trigger"]
+    if "action" in payload:
+        rule.action_type = payload["action"]
+    if "payload" in payload:
+        rule.action_payload = payload["payload"]
+    if "active" in payload:
+        rule.is_active = payload["active"]
+    db.commit()
+    return {"status": "success"}
+
+@router.delete("/automations/{rule_id}")
+def delete_automation(rule_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
+    """Elimina una regla de automatización permanentemente."""
+    rule = db.query(models.CrmAutomation).filter(models.CrmAutomation.id == rule_id).first()
+    if not rule:
+        raise HTTPException(status_code=404, detail="Automation rule not found")
+    db.delete(rule)
+    db.commit()
     return {"status": "success"}
 

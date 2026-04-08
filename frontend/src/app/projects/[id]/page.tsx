@@ -455,6 +455,7 @@ export default function ProjectDetailPage() {
                             {activeTab === 'gantt' && <GanttView tasks={tasks} onTaskClick={handleOpenTask} />}
                             {activeTab === 'tabla' && (
                                 <TaskTableView
+                                    projectId={project.id}
                                     tasks={tasks}
                                     onOpenTask={handleOpenTask}
                                     onAddTask={handleAddTask}

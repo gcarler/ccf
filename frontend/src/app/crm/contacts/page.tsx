@@ -1,207 +1,325 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Search, UserPlus, Phone, MessageSquare, Link2 , Users } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
+import { apiFetch } from '@/lib/http';
+import { Search, UserPlus, Phone, MessageSquare, Link2, Users, Plus, Loader2, Send, X } from 'lucide-react';
 import CrmShell from '@/components/crm/CrmShell';
-import AdminHero from '@/components/admin/AdminHero';
+import Skeleton from '@/components/ui/Skeleton';
+import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 
-interface Lead {
-    id: string;
-    name: string;
-    source: string;
-    time: string;
-    status: 'hot' | 'warm' | 'cold';
-    avatar: string;
+const PIPELINE_STAGES = ['new', 'call', 'visit', 'discipleship', 'consolidated'];
+const STAGE_LABELS: Record<string, string> = {
+    new: 'Nuevo',
+    call: 'Por Llamar',
+    visit: 'Visita',
+    discipleship: 'Discipulado',
+    consolidated: 'Consolidado',
+};
+const SOURCE_OPTS = ['Visitante', 'Formulario Web', 'Redes Sociales', 'Invitado Directo', 'Evento', 'Referido'];
+
+function getStatusStyles(stage: string) {
+    switch (stage) {
+        case 'new':          return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+        case 'call':         return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
+        case 'visit':        return 'bg-purple-500/10 text-purple-600 border-purple-500/20';
+        case 'discipleship': return 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20';
+        case 'consolidated': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
+        default:             return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+    }
+}
+function getStatusDot(stage: string) {
+    switch (stage) {
+        case 'new':          return 'bg-blue-500';
+        case 'call':         return 'bg-amber-500';
+        case 'visit':        return 'bg-purple-500';
+        case 'discipleship': return 'bg-indigo-500';
+        case 'consolidated': return 'bg-emerald-500';
+        default:             return 'bg-slate-400';
+    }
 }
 
-export default function LeadManagement() {
-    const { isAuthenticated } = useAuth();
+export default function ContactsPage() {
+    const { token } = useAuth();
+    const { addToast } = useToast();
     const router = useRouter();
+
+    const [leads, setLeads] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
 
-    const leads: Lead[] = [
-        {
-            id: '1',
-            name: 'Juan Pérez',
-            source: 'Invitado en Evento',
-            time: 'Hace 2h',
-            status: 'hot',
-            avatar: 'https://i.pravatar.cc/150?u=1'
-        },
-        {
-            id: '2',
-            name: 'Elena Rodríguez',
-            source: 'Formulario Web',
-            time: 'Ayer',
-            status: 'warm',
-            avatar: 'https://i.pravatar.cc/150?u=2'
-        },
-        {
-            id: '3',
-            name: 'Ricardo Morales',
-            source: 'Redes Sociales',
-            time: '3 días',
-            status: 'cold',
-            avatar: 'https://i.pravatar.cc/150?u=3'
-        },
-        {
-            id: '4',
-            name: 'Sonia Méndez',
-            source: 'Invitado Directo',
-            time: '1 semana',
-            status: 'hot',
-            avatar: 'https://i.pravatar.cc/150?u=4'
+    // Create drawer
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [newLead, setNewLead] = useState({
+        first_name: '', last_name: '', phone: '', source: 'Visitante', stage: 'new', notes: ''
+    });
+
+    const fetchLeads = useCallback(async () => {
+        if (!token) return;
+        setLoading(true);
+        try {
+            const data = await apiFetch<any[]>('/crm/consolidation/pipeline', { token, cache: 'no-store' });
+            setLeads(Array.isArray(data) ? data : []);
+        } catch {
+            addToast('Error al cargar contactos', 'error');
+        } finally {
+            setLoading(false);
         }
-    ];
+    }, [token, addToast]);
 
-    if (!isAuthenticated) return null;
+    useEffect(() => { fetchLeads(); }, [fetchLeads]);
 
-    const heroWatchers = ['Equipo Consolidación', 'Optimus Brain'];
+    const handleCreate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newLead.first_name.trim()) return;
+        setIsSaving(true);
+        try {
+            await apiFetch('/crm/members/', {
+                method: 'POST', token,
+                body: {
+                    first_name: newLead.first_name,
+                    last_name: newLead.last_name,
+                    phone: newLead.phone,
+                    source: newLead.source,
+                    spiritual_status: 'Prospecto',
+                }
+            });
+            addToast('Contacto registrado exitosamente', 'success');
+            setIsCreateOpen(false);
+            setNewLead({ first_name: '', last_name: '', phone: '', source: 'Visitante', stage: 'new', notes: '' });
+            fetchLeads();
+        } catch {
+            addToast('Error al registrar contacto', 'error');
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
-    const filteredLeads = leads.filter(lead => {
-        const matchesSearch = lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            lead.source.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesFilter = activeFilter === 'all' ||
-            (activeFilter === 'hot' && lead.status === 'hot') ||
-            (activeFilter === 'warm' && lead.status === 'warm') ||
-            (activeFilter === 'cold' && lead.status === 'cold');
+    const filtered = leads.filter(lead => {
+        const name = `${lead.first_name} ${lead.last_name}`.toLowerCase();
+        const matchesSearch = name.includes(searchQuery.toLowerCase()) ||
+            (lead.source || '').toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesFilter = activeFilter === 'all' || lead.stage === activeFilter;
         return matchesSearch && matchesFilter;
     });
 
-    const getStatusStyles = (status: string) => {
-        switch (status) {
-            case 'hot': return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
-            case 'warm': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
-            case 'cold': return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-            default: return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-        }
-    };
-
-    const getStatusLabel = (status: string) => {
-        switch (status) {
-            case 'hot': return 'Caliente';
-            case 'warm': return 'Tibio';
-            case 'cold': return 'Frío';
-            default: return status;
-        }
-    };
-
-    const getStatusDot = (status: string) => {
-        switch (status) {
-            case 'hot': return 'bg-rose-500';
-            case 'warm': return 'bg-amber-500';
-            case 'cold': return 'bg-slate-500';
-            default: return 'bg-slate-500';
-        }
-    };
-
     return (
         <CrmShell
-            breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'CRM Pastoral', icon: Users }, { label: 'Contactos', icon: UserPlus }]}
+            breadcrumbs={[
+                { label: 'CRM Pastoral', icon: Users },
+                { label: 'Contactos / Leads', icon: UserPlus }
+            ]}
+            rightActions={
+                <button
+                    onClick={() => setIsCreateOpen(true)}
+                    className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+                >
+                    <Plus size={14} /> Nuevo Contacto
+                </button>
+            }
         >
-            <AdminHero
-                eyebrow="Contactos"
-                title="Nuevos contactos"
-                description="Clasifica, filtra y acompaña tus prospectos con triggers IA y asignaciones rápidas."
-                tags={['Leads', 'Follow-up', 'IA']}
-                watchers={heroWatchers}
-                primaryAction={{ label: 'Agregar contacto', icon: UserPlus, onClick: () => router.push('/crm/contacts/new') }}
-                secondaryAction={{ label: 'Ver embudo', icon: Link2, onClick: () => router.push('/crm/pipeline') }}
-            />
-            <div className="space-y-6">
-                <div className="relative group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Buscar por nombre o fuente..."
-                        className="w-full bg-slate-900/60 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm font-medium focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+            <div className="flex flex-col h-full overflow-hidden">
+                {/* Toolbar */}
+                <div className="px-6 py-4 border-b border-slate-100 dark:border-white/5 space-y-3">
+                    <div className="relative">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Buscar por nombre o fuente..."
+                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-3 pl-11 pr-4 text-sm font-medium focus:ring-2 focus:ring-blue-500/20 outline-none dark:text-white transition-all"
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                        <button
+                            onClick={() => setActiveFilter('all')}
+                            className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border whitespace-nowrap ${activeFilter === 'all' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-white/5 text-slate-400 border-slate-200 dark:border-white/10'}`}
+                        >
+                            Todos ({leads.length})
+                        </button>
+                        {PIPELINE_STAGES.map(s => (
+                            <button
+                                key={s}
+                                onClick={() => setActiveFilter(s)}
+                                className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border whitespace-nowrap ${activeFilter === s ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-white/5 text-slate-400 border-slate-200 dark:border-white/10'}`}
+                            >
+                                {STAGE_LABELS[s]} ({leads.filter(l => l.stage === s).length})
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
-                <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
-                    {['all', 'hot', 'warm', 'cold'].map((filter) => (
-                        <button
-                            key={filter}
-                            onClick={() => setActiveFilter(filter)}
-                            className={`px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${activeFilter === filter
-                                ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20 scale-105'
-                                : 'bg-white/5 text-slate-500 border-white/5 hover:border-white/10'
-                                }`}
+                {/* List */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-3">
+                    {loading ? (
+                        [...Array(5)].map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-3xl" />)
+                    ) : filtered.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-32 text-center space-y-4">
+                            <div className="size-20 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-300 border border-slate-200 dark:border-white/10">
+                                <Search size={40} />
+                            </div>
+                            <h4 className="text-slate-800 dark:text-white font-black text-lg">No hay contactos</h4>
+                            <p className="text-slate-400 text-sm max-w-[200px]">Agrega un nuevo contacto o ajusta los filtros.</p>
+                            <button
+                                onClick={() => setIsCreateOpen(true)}
+                                className="px-6 py-3 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20"
+                            >
+                                Agregar Contacto
+                            </button>
+                        </div>
+                    ) : filtered.map(lead => (
+                        <div
+                            key={lead.id}
+                            onClick={() => router.push(`/crm/contacts/${lead.id}`)}
+                            className="bg-white dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-[2rem] p-5 hover:border-blue-300 dark:hover:border-blue-700 transition-all group cursor-pointer shadow-sm hover:shadow-xl"
                         >
-                            {filter === 'all' ? 'Todos' : getStatusLabel(filter)}
-                        </button>
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="flex gap-4">
+                                    <div className="relative">
+                                        <div className="size-14 rounded-2xl bg-blue-500/10 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-white font-black text-lg uppercase group-hover:border-blue-400 transition-colors">
+                                            {lead.first_name?.charAt(0)}{lead.last_name?.charAt(0)}
+                                        </div>
+                                        <div className={`absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-white dark:border-[#1e1f21] ${getStatusDot(lead.stage)}`} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-black text-slate-800 dark:text-white text-base tracking-tight group-hover:text-blue-600 transition-colors">
+                                            {lead.first_name} {lead.last_name}
+                                        </h3>
+                                        <p className="text-[11px] text-slate-400 font-medium">
+                                            {lead.source || 'Sin fuente'} · {lead.phone || 'Sin teléfono'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${getStatusStyles(lead.stage)}`}>
+                                    {STAGE_LABELS[lead.stage] || lead.stage}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/5">
+                                <button
+                                    onClick={e => { e.stopPropagation(); router.push('/crm/pipeline'); }}
+                                    className="text-blue-600 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:text-blue-700 transition-colors"
+                                >
+                                    <div className="size-5 rounded-lg bg-blue-600/10 flex items-center justify-center">
+                                        <Link2 size={11} />
+                                    </div>
+                                    Ver en Pipeline
+                                </button>
+                                <div className="flex gap-2">
+                                    {lead.phone && (
+                                        <a
+                                            href={`tel:${lead.phone}`}
+                                            onClick={e => e.stopPropagation()}
+                                            className="size-9 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all border border-emerald-500/20"
+                                        >
+                                            <Phone size={15} />
+                                        </a>
+                                    )}
+                                    <button
+                                        onClick={e => { e.stopPropagation(); }}
+                                        className="size-9 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all border border-blue-500/20"
+                                    >
+                                        <MessageSquare size={15} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     ))}
                 </div>
             </div>
 
-            <div className="space-y-4">
-                <div className="space-y-4">
-                    {filteredLeads.map((lead) => (
-                            <div
-                                key={lead.id}
-                                onClick={() => router.push(`/crm/contacts/${lead.id}`)}
-                                className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-[2rem] p-5 hover:bg-slate-900/60 hover:border-white/10 transition-all group cursor-pointer"
-                            >
-                                <div className="flex justify-between items-start mb-6">
-                                    <div className="flex gap-4">
-                                        <div className="relative">
-                                            <div className="size-14 rounded-2xl overflow-hidden border-2 border-white/10 group-hover:border-primary/50 transition-colors bg-slate-800 flex items-center justify-center text-white font-black uppercase">
-                                                {lead.name?.charAt(0)}
-                                            </div>
-
-                                            <div className={`absolute -bottom-1 -right-1 size-4 rounded-full border-2 border-slate-900 ${getStatusDot(lead.status)}`}></div>
-                                        </div>
-                                        <div>
-                                            <h3 className="font-black text-white text-lg tracking-tight group-hover:text-primary transition-colors">{lead.name}</h3>
-                                            <p className="text-xs text-slate-500 font-medium">{lead.source} • <span className="text-slate-600 italic">{lead.time}</span></p>
-                                        </div>
-                                    </div>
-                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${getStatusStyles(lead.status)}`}>
-                                        {getStatusLabel(lead.status)}
-                                    </span>
-                                </div>
-
-                                <div className="flex items-center justify-between pt-5 border-t border-white/5">
-                                    <button className="text-primary text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:text-primary-400 transition-colors">
-                                        <div className="size-6 rounded-lg bg-primary/10 flex items-center justify-center">
-                                            <UserPlus size={12} />
-                                        </div>
-                                        Asignar a Líder
-                                    </button>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); }}
-                                            className="size-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all border border-emerald-500/20"
-                                        >
-                                            <Phone size={18} />
-                                        </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); }}
-                                            className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-all border border-primary/20"
-                                        >
-                                            <MessageSquare size={18} />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-
-                    {filteredLeads.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                            <div className="size-20 rounded-full bg-white/5 flex items-center justify-center text-slate-600 border border-white/5">
-                                <Search size={40} />
-                            </div>
-                            <h4 className="text-white font-black">No se encontraron contactos</h4>
-                            <p className="text-slate-500 text-sm max-w-[200px]">Prueba ajustando los filtros o la búsqueda.</p>
+            {/* ─── Drawer: Nuevo Contacto ─── */}
+            <WorkspaceDrawer
+                isOpen={isCreateOpen}
+                onClose={() => setIsCreateOpen(false)}
+                title="Nuevo Contacto"
+                subtitle="Registrar prospecto en el pipeline pastoral"
+                actions={
+                    <>
+                        <button type="button" onClick={() => setIsCreateOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700">
+                            Cancelar
+                        </button>
+                        <button
+                            form="create-contact-form"
+                            type="submit"
+                            disabled={isSaving}
+                            className="px-8 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
+                        >
+                            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                            Registrar
+                        </button>
+                    </>
+                }
+            >
+                <form id="create-contact-form" onSubmit={handleCreate} className="space-y-5">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre *</label>
+                            <input
+                                required
+                                value={newLead.first_name}
+                                onChange={e => setNewLead({ ...newLead, first_name: e.target.value })}
+                                placeholder="Juan"
+                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                            />
                         </div>
-                    )}
-                </div>
-            </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Apellido</label>
+                            <input
+                                value={newLead.last_name}
+                                onChange={e => setNewLead({ ...newLead, last_name: e.target.value })}
+                                placeholder="Pérez"
+                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                            />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Teléfono</label>
+                        <input
+                            value={newLead.phone}
+                            onChange={e => setNewLead({ ...newLead, phone: e.target.value })}
+                            placeholder="+57 300 123 4567"
+                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fuente</label>
+                            <select
+                                value={newLead.source}
+                                onChange={e => setNewLead({ ...newLead, source: e.target.value })}
+                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                            >
+                                {SOURCE_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Etapa inicial</label>
+                            <select
+                                value={newLead.stage}
+                                onChange={e => setNewLead({ ...newLead, stage: e.target.value })}
+                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                            >
+                                {PIPELINE_STAGES.map(s => <option key={s} value={s}>{STAGE_LABELS[s]}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Notas</label>
+                        <textarea
+                            value={newLead.notes}
+                            onChange={e => setNewLead({ ...newLead, notes: e.target.value })}
+                            placeholder="Contexto del contacto inicial..."
+                            rows={3}
+                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white resize-none"
+                        />
+                    </div>
+                </form>
+            </WorkspaceDrawer>
         </CrmShell>
     );
 }
