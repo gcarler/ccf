@@ -16,7 +16,11 @@ from backend import crud, schemas
 from backend.core.database import SessionLocal
 
 
-SYSTEM_PROMPT = """You are CCF's autonomous ops agent. Summarize anomalies, propose tasks, and request data when needed."""
+SYSTEM_PROMPT = """You are Optimus Brain, the Neural MESH engine for CCF. 
+Your goal is to assist users with ministerial management, data analysis, and theological foundations.
+Always be professional, concise, and helpful. 
+If context from the Knowledge Base is provided, use it to ground your answers.
+If you don't know something, offer to notify a pastor or admin."""
 
 
 class AgentOrchestrator:
@@ -31,25 +35,30 @@ class AgentOrchestrator:
     def run_diagnosis(self, summary: str, metrics: Dict[str, Any]) -> schemas.AgentInsightCreate:
         if OpenAI is None:
             raise RuntimeError("openai package not installed")
-        payload = self.client.responses.create(
-            model="o4-mini",
-            reasoning={"effort": "medium"},
-            input=[
+        
+        # Build context from metrics if available
+        full_context = metrics.get("full_query", summary)
+        
+        response = self.client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
                 {
                     "role": "system",
                     "content": SYSTEM_PROMPT,
                 },
                 {
                     "role": "user",
-                    "content": f"Metrics: {json.dumps(metrics)}\nSummary: {summary}",
+                    "content": f"Data/Context: {json.dumps(metrics)}\n\nQuery/Summary: {summary}\n\nFull Input: {full_context}",
                 },
             ],
-            temperature=0.2,
+            temperature=0.7,
         )
-        content = payload.output[0].content[0].text
+        
+        content = response.choices[0].message.content
+        
         return schemas.AgentInsightCreate(
-            title="Diagn??stico autom??tico",
-            insight_type="diagnostic",
+            title="Respuesta de Optimus",
+            insight_type="assistant_response",
             payload=content,
         )
 
@@ -59,16 +68,23 @@ def bootstrap_diagnostic_task(summary: str, metrics: Dict[str, Any]) -> None:
     insight = orchestrator.run_diagnosis(summary, metrics)
     db: Session = SessionLocal()
     try:
-        crud.create_agent_insight(db, insight)
-        crud.create_agent_task(
-            db,
-            schemas.AgentTaskCreate(
-                title="Revisar diagn??stico autom??tico",
-                description=insight.payload[:500],
-                priority="high",
-                source="agent",
-            ),
-            status="pending_review",
-        )
+        # Solo persistir si el contenido es relevante (evitar ruido)
+        content = insight.payload.strip()
+        is_relevant = len(content) > 20 and "no lo sé" not in content.lower() and "desconozco" not in content.lower()
+        
+        if is_relevant:
+            crud.create_agent_insight(db, insight)
+            crud.create_agent_task(
+                db,
+                schemas.AgentTaskCreate(
+                    title="Revisar análisis de agente",
+                    description=insight.payload[:500],
+                    priority="medium",
+                    source="agent",
+                ),
+                status="pending_review",
+            )
+        else:
+            print(f"Skipping task persistence: Content not relevant enough ({len(content)} chars)")
     finally:
         db.close()

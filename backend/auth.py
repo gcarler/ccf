@@ -11,6 +11,7 @@ from backend import crud, schemas, database
 from backend.core.cache import get_redis
 from backend.core.config import get_settings
 from backend.core.security import verify_password
+from backend.core.context import user_role_context
 
 settings = get_settings()
 
@@ -23,6 +24,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 ROLE_ALIASES = {
     "student": "estudiante",
     "leader": "coordinador",
+    "lider": "coordinador",
     "staff": "docente",
     "pastor": "pastor",
 }
@@ -43,6 +45,11 @@ def normalize_role(role: str) -> str:
 
 def role_in(user_role: str, allowed_roles: set[str]) -> bool:
     return normalize_role(user_role) in allowed_roles
+
+
+def is_crm_privileged(role: str) -> bool:
+    """Verifica si un rol tiene acceso total al CRM (Administradores y Pastores)."""
+    return normalize_role(role) in {"admin", "pastor"}
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -82,6 +89,10 @@ async def get_current_user(
 
     if user is None:
         raise credentials_exception
+    
+    # Set context for RBAC in schemas
+    user_role_context.set(user.role)
+    
     return user
 
 

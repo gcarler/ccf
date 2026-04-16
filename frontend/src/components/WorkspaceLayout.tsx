@@ -7,24 +7,22 @@ import WorkspaceInbox from '@/components/WorkspaceInbox';
 import MeshChat from '@/components/ui/MeshChat';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Tooltip from '@/components/ui/Tooltip';
-import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import {
-    Bell, Layout, PanelLeft, PanelLeftClose,
-    Sun, Moon, User, LogOut, PanelLeftOpen, X,
-    ChevronLeft, Target, GraduationCap, Users, Globe,
+    Bell, Layout,
+    ChevronLeft, Users, 
     Home, Inbox, CheckSquare, Folder, Calendar, LayoutDashboard,
-    FileText, MessageCircle, Settings2, ShieldCheck, Zap, Bot, Settings,
+    FileText, MessageCircle, ShieldCheck, Zap, Bot, Settings,
     BookOpen, Link2, UserPlus, Heart, Scan, PieChart, Contact, KanbanSquare, Mail, ChevronRight
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useTheme } from '@/app/theme/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import * as Popover from '@radix-ui/react-popover';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useCreation } from '@/context/CreationContext';
 import UniversalCreationModal from '@/components/ui/UniversalCreationModal';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 
 // ── Layer Context (importamos el provider aquí) ──────────────────
 import { SidebarLayerProvider, useSidebarLayers } from '@/context/SidebarLayerContext';
@@ -119,9 +117,9 @@ const MODULE_CONFIGS: Record<string, any> = {
             {
                 title: "Estudio",
                 items: [
-                    { id: 'academy-home',    label: 'Inicio',   href: '/academy',         icon: GraduationCap },
+                    { id: 'academy-home',    label: 'Inicio',   href: '/academy',         icon: BookOpen },
                     { id: 'academy-courses', label: 'Cursos',   href: '/academy/courses',  icon: BookOpen },
-                    { id: 'academy-profile', label: 'Mi cuenta', href: '/academy/account', icon: User },
+                    { id: 'academy-profile', label: 'Mi cuenta', href: '/academy/account', icon: Contact },
                 ]
             }
         ]
@@ -176,7 +174,6 @@ const MODULE_CONFIGS: Record<string, any> = {
                 items: [
                     { id: 'wiki-home',      label: 'Inicio Wiki',   href: '/wiki',         icon: LayoutDashboard },
                     { id: 'wiki-docs',      label: 'Documentos',    href: '/wiki/docs',    icon: FileText },
-                    { id: 'wiki-knowledge', label: 'Base Pastoral', href: '/wiki/pastoral', icon: BookOpen },
                 ]
             }
         ]
@@ -208,7 +205,7 @@ const MODULE_CONFIGS: Record<string, any> = {
             {
                 title: "Formación",
                 items: [
-                    { id: 'sl-academy', label: 'Academia CCF', href: '/academy', icon: GraduationCap },
+                    { id: 'sl-academy', label: 'Academia CCF', href: '/academy', icon: BookOpen },
                 ]
             }
         ]
@@ -225,21 +222,21 @@ export default function WorkspaceLayout({
     allowedRoles,
     depth = 1,
     onBack,
-    customSidebar
+    customSidebar,
+    ...toolbarProps
 }: any) {
     return (
-        <SidebarLayerProvider>
-            <WorkspaceLayoutInner
-                manualTitle={manualTitle}
-                manualSections={manualSections}
-                allowedRoles={allowedRoles}
-                depth={depth}
-                onBack={onBack}
-                customSidebar={customSidebar}
-            >
-                {children}
-            </WorkspaceLayoutInner>
-        </SidebarLayerProvider>
+        <WorkspaceLayoutInner
+            manualTitle={manualTitle}
+            manualSections={manualSections}
+            allowedRoles={allowedRoles}
+            depth={depth}
+            onBack={onBack}
+            customSidebar={customSidebar}
+            {...toolbarProps}
+        >
+            {children}
+        </WorkspaceLayoutInner>
     );
 }
 
@@ -248,10 +245,12 @@ export default function WorkspaceLayout({
 // ─────────────────────────────────────────────────────────────────
 function WorkspaceLayoutInner({
     children, manualTitle, manualSections,
-    allowedRoles, depth, onBack, customSidebar
+    allowedRoles, depth, onBack, customSidebar,
+    // Toolbar props
+    breadcrumbs, viewType, setViewType, availableViews,
+    rightActions, leftActions, onSearch, onFilter, onAdd, onAddOption
 }: any) {
-    const { theme } = useTheme();
-    const { user, logout } = useAuth();
+    const { user } = useAuth();
     const pathname = usePathname();
     const [showInbox, setShowInbox] = useState(false);
     const [showChat, setShowChat] = useState(false);
@@ -259,11 +258,10 @@ function WorkspaceLayoutInner({
     const { isModalOpen, closeModal, defaultType } = useCreation();
 
     // ── Layer state ──────────────────────────────────────────────
-    const { layers, toggleLayer, openLayer, closeLayer } = useSidebarLayers();
+    const { layers, openLayer } = useSidebarLayers();
 
     // S1 visibility is controlled by layers.S1 (always true, but kept in sync)
     const s1Visible = layers.S1;
-    const s2Mode = layers.S2 ? 'full' : 'hidden';
 
     useEffect(() => {
         setIsReady(true);
@@ -361,12 +359,38 @@ function WorkspaceLayoutInner({
         ? user.username.split('@')[0]
         : user?.username;
 
+    // Combined Right Actions for WorkspaceToolbar
+    const defaultRightActions = (
+        <div className="flex items-center gap-0.5">
+            <ThemeToggle variant="pill" />
+
+            <button
+                onClick={() => setShowInbox(!showInbox)}
+                className="p-2 text-slate-400 hover:text-blue-600 relative rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+                aria-label="Notificaciones"
+            >
+                <Bell size={17} />
+                <span className="absolute top-1.5 right-1.5 size-1.5 bg-rose-500 rounded-full ring-1 ring-white dark:ring-[#141517]" />
+            </button>
+
+            <div className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-2" />
+
+            {/* User chip — premium */}
+            <button className="flex items-center gap-2 h-9 pl-2.5 pr-1 bg-slate-50 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.07] rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all group">
+                <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors max-w-[80px] truncate">
+                    {displayName}
+                </span>
+                <div className="size-7 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-black text-[10px] shadow-md">
+                    {displayName?.substring(0, 2).toUpperCase()}
+                </div>
+            </button>
+        </div>
+    );
+
     return (
         <ProtectedRoute allowedRoles={allowedRoles}>
-            {/* ROOT: overflow-x hidden para evitar desbordamiento horizontal */}
             <div className="flex h-screen w-full bg-slate-50 dark:bg-[#111213] overflow-hidden font-display relative transition-colors duration-500">
 
-                {/* ── PAGE LOAD INDICATOR ──────────────────────────────── */}
                 <motion.div
                     className="absolute top-0 left-0 right-0 h-[2px] bg-blue-600 z-[10000]"
                     initial={{ scaleX: 0, originX: 0 }}
@@ -376,12 +400,6 @@ function WorkspaceLayoutInner({
 
                 <UniversalCreationModal isOpen={isModalOpen} onClose={closeModal} initialType={defaultType} />
 
-                {/* ═══════════════════════════════════════════════════════
-                    SIDEBAR 1 — Navegación Primaria
-                    z-index: 50 (máxima autoridad visual)
-                    Ancho fijo 64px, siempre visible
-                    Shadow derecha pronunciada para marcar jerarquía
-                ════════════════════════════════════════════════════════ */}
                 <AnimatePresence mode="popLayout">
                     {s1Visible && (
                         <motion.div
@@ -391,26 +409,15 @@ function WorkspaceLayoutInner({
                             exit={{ x: -80, opacity: 0 }}
                             transition={{ type: 'tween', duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
                             className="flex shrink-0 z-50 h-screen py-[10vh] pl-4"
-                            // Sombra más pronunciada = máxima jerarquía
                             style={{ filter: 'drop-shadow(8px 0 24px rgba(0,0,0,0.15))' }}
                         >
-                            <WorkspaceMiniSidebar onHide={() => closeLayer('S1')} />
+                            <WorkspaceMiniSidebar onHide={() => {}} />
                         </motion.div>
                     )}
                 </AnimatePresence>
 
-                {/* ═══════════════════════════════════════════════════════
-                    CONTENT AREA (S2 + Main) — flex-1 dinámico
-                ════════════════════════════════════════════════════════ */}
                 <main className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
                     <div className="flex h-full w-full overflow-hidden">
-
-                        {/* ══════════════════════════════════════════════════
-                            SIDEBAR 2 — Navegación de Módulo
-                            z-index: 40 (debajo de S1)
-                            Colapsable: full → mini → hidden
-                            Shadow derecha moderada
-                        ═══════════════════════════════════════════════════ */}
                         <div
                             className={clsx(
                                 "h-full shrink-0 relative flex",
@@ -437,7 +444,6 @@ function WorkspaceLayoutInner({
                                 )}
                             </div>
 
-                            {/* Drag handle */}
                             {s2DetailMode === 'full' && (
                                 <div
                                     className="absolute top-0 right-[-3px] w-1.5 h-full cursor-col-resize z-50 group flex items-center justify-center"
@@ -451,76 +457,71 @@ function WorkspaceLayoutInner({
                             )}
                         </div>
 
-                        {/* ══════════════════════════════════════════════════
-                            CAPA 3 (Content + optional S3 + optional RIGHT)
-                            El contenido principal usa flex-grow para
-                            adaptarse al espacio restante dinámicamente
-                        ═══════════════════════════════════════════════════ */}
                         <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#141517] shadow-2xl relative z-10 border-l border-slate-100 dark:border-white/5 overflow-hidden">
 
-                            {/* ── TOOLBAR / HEADER ───────────────────────── */}
-                            <header className="h-14 border-b border-slate-100/80 dark:border-white/[0.05] flex items-center px-5 gap-3 shrink-0 bg-white dark:bg-[#141517] z-[60] relative">
-                                {depth > 1 && (
-                                    <button
-                                        onClick={onBack}
-                                        className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all text-slate-400"
-                                    >
-                                        <ChevronLeft size={20} />
-                                    </button>
-                                )}
-
-                                {/* Module title with accent dot */}
-                                <div className="flex-1 flex items-center gap-3 overflow-hidden min-w-0">
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                        <div className="size-2 rounded-full bg-blue-500 shrink-0 shadow-[0_0_6px_2px_rgba(59,130,246,0.4)]" />
-                                        <h1 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 truncate tracking-tight leading-none">
-                                            {displayTitle}
-                                        </h1>
-                                    </div>
-                                </div>
-
-                                {/* ── Right toolbar actions ──────────────── */}
-                                <div className="flex items-center gap-0.5">
-                                    <ThemeToggle variant="pill" />
-
-                                    <button
-                                        onClick={() => setShowInbox(!showInbox)}
-                                        className="p-2 text-slate-400 hover:text-blue-600 relative rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
-                                        aria-label="Notificaciones"
-                                    >
-                                        <Bell size={17} />
-                                        <span className="absolute top-1.5 right-1.5 size-1.5 bg-rose-500 rounded-full ring-1 ring-white dark:ring-[#141517]" />
-                                    </button>
-
-                                    <div className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-2" />
-
-                                    {/* User chip — premium */}
-                                    <button className="flex items-center gap-2 h-9 pl-2.5 pr-1 bg-slate-50 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.07] rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all group">
-                                        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors max-w-[80px] truncate">
-                                            {displayName}
-                                        </span>
-                                        <div className="size-7 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-black text-[10px] shadow-md">
-                                            {displayName?.substring(0, 2).toUpperCase()}
+                            {/* ── UNIFIED TOOLBAR / HEADER ───────────────────────── */}
+                            {breadcrumbs ? (
+                                <WorkspaceToolbar
+                                    breadcrumbs={breadcrumbs}
+                                    viewType={viewType}
+                                    setViewType={setViewType}
+                                    availableViews={availableViews}
+                                    leftActions={
+                                        <>
+                                            {depth > 1 && (
+                                                <button
+                                                    onClick={onBack}
+                                                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all text-slate-400 mr-1"
+                                                >
+                                                    <ChevronLeft size={16} />
+                                                </button>
+                                            )}
+                                            {leftActions}
+                                        </>
+                                    }
+                                    rightActions={
+                                        <div className="flex items-center gap-2">
+                                            {rightActions}
+                                            {defaultRightActions}
                                         </div>
-                                    </button>
-                                </div>
-                            </header>
+                                    }
+                                    onSearch={onSearch}
+                                    onFilter={onFilter}
+                                    onAdd={onAdd}
+                                    onAddOption={onAddOption}
+                                />
+                            ) : (
+                                <header className="h-14 border-b border-slate-100/80 dark:border-white/[0.05] flex items-center px-5 gap-3 shrink-0 bg-white dark:bg-[#141517] z-[60] relative">
+                                    {depth > 1 && (
+                                        <button
+                                            onClick={onBack}
+                                            className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all text-slate-400"
+                                        >
+                                            <ChevronLeft size={20} />
+                                        </button>
+                                    )}
 
-                            {/* ── PAGE CONTENT (children go here) ─────── */}
+                                    <div className="flex-1 flex items-center gap-3 overflow-hidden min-w-0">
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <div className="size-2 rounded-full bg-blue-500 shrink-0 shadow-[0_0_6px_2px_rgba(59,130,246,0.4)]" />
+                                            <h1 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 truncate tracking-tight leading-none">
+                                                {displayTitle}
+                                            </h1>
+                                        </div>
+                                    </div>
+                                    {defaultRightActions}
+                                </header>
+                            )}
+
                             <div className="flex-1 overflow-hidden relative">
                                 {children}
                             </div>
-
                         </div>
                     </div>
 
-                    {/* Inbox drawer */}
                     <WorkspaceInbox isOpen={showInbox} onClose={() => setShowInbox(false)} />
-
-                    {/* MESH AI Chat */}
                     <MeshChat isOpen={showChat} onClose={() => setShowChat(false)} />
 
-                    {/* Floating MESH AI trigger */}
                     <motion.button
                         initial={{ scale: 0, rotate: -45 }}
                         animate={{ scale: 1, rotate: 0 }}
@@ -535,7 +536,6 @@ function WorkspaceLayoutInner({
                     </motion.button>
                 </main>
 
-                {/* S1 restore button (if somehow hidden) */}
                 {!s1Visible && (
                     <motion.button
                         initial={{ opacity: 0, x: -20 }}
@@ -548,7 +548,6 @@ function WorkspaceLayoutInner({
                     </motion.button>
                 )}
 
-                {/* S2 restore button (under S1) */}
                 {s2DetailMode === 'hidden' && (
                     <Tooltip content="Mostrar panel de módulo" side="right">
                         <motion.button

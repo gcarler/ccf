@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
@@ -26,6 +27,7 @@ interface DraftItem {
 const EMPTY_ITEM: DraftItem = { url: "", alt_text: "", section: "general", tags: "" };
 
 export default function CmsMediaPage() {
+  const router = useRouter();
   const { token, isAuthenticated } = useAuth();
   const [items, setItems] = useState<MediaItem[]>([]);
   const [drafts, setDrafts] = useState<DraftItem[]>([]);
@@ -231,8 +233,8 @@ export default function CmsMediaPage() {
                   <p className="text-sm text-slate-700 dark:text-slate-300">{item.alt_text || "Sin alt"}</p>
                   <p className="text-[10px] text-slate-400">{(item.tags || []).join(", ") || "Sin tags"}</p>
                   <div className="flex items-center justify-between pt-2">
-                    <button onClick={() => pushItemToDraft(item)} className="text-xs font-black uppercase tracking-[0.2em] text-primary">
-                      Editar
+                    <button onClick={() => router.push(`/cms/media/${item.id}`)} className="text-xs font-black uppercase tracking-[0.2em] text-primary">
+                      Editar Full
                     </button>
                     <button
                       onClick={async () => {

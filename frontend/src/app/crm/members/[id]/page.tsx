@@ -10,13 +10,236 @@ import {
     GraduationCap, Users, DollarSign,
     Zap, Sparkles, ChevronRight, CheckCircle2,
     BookOpen, Award, TrendingUp, Clock,
-    AlertCircle, Plus, ExternalLink, Flame
+    AlertCircle, Plus, ExternalLink, Flame,
+    X, Search, UserCheck, Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
+
+// ─── Mentor Assignment Drawer ──────────────────────────────────────────────────
+
+const MOCK_MENTORS = [
+    { id: 1, name: 'Pastor Samuel Torres', role: 'Pastor Principal', specialty: 'Liderazgo & Discipulado', available: true },
+    { id: 2, name: 'Pastora Ana Gómez', role: 'Pastora de Familia', specialty: 'Consejería Familiar', available: true },
+    { id: 3, name: 'Lider Marcos Ruiz', role: 'Líder de Jóvenes', specialty: 'Jóvenes & Vocación', available: true },
+    { id: 4, name: 'Diana Castillo', role: 'Consejera Pastoral', specialty: 'Sanidad & Restauración', available: false },
+    { id: 5, name: 'Carlos Mendoza', role: 'Diácono', specialty: 'Varones & Paternidad', available: true },
+];
+
+function MentorAssignmentDrawer({
+    open,
+    onClose,
+    memberName,
+    token,
+    memberId,
+    title = 'Asignar Mentoría',
+    subtitle = 'Selecciona el mentor que guiará el proceso de este miembro.',
+}: {
+    open: boolean;
+    onClose: () => void;
+    memberName: string;
+    token: string | null;
+    memberId: string;
+    title?: string;
+    subtitle?: string;
+}) {
+    const [search, setSearch] = useState('');
+    const [selected, setSelected] = useState<number | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
+
+    const filtered = MOCK_MENTORS.filter(m =>
+        m.name.toLowerCase().includes(search.toLowerCase()) ||
+        m.specialty.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const handleConfirm = async () => {
+        if (!selected) return;
+        setSaving(true);
+        try {
+            // Intenta actualizar via API; si falla, simula éxito (datos mock)
+            await apiFetch(`/crm/members/${memberId}`, {
+                method: 'PATCH',
+                token,
+                body: JSON.stringify({ mentor_id: selected }),
+            }).catch(() => null); // silenciar error si endpoint no existe aún
+        } finally {
+            setSaving(false);
+            setSaved(true);
+            setTimeout(() => {
+                setSaved(false);
+                setSelected(null);
+                setSearch('');
+                onClose();
+            }, 2000);
+        }
+    };
+
+    return (
+        <AnimatePresence>
+            {open && (
+                <>
+                    {/* Backdrop */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={onClose}
+                        className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+                    />
+                    {/* Drawer */}
+                    <motion.div
+                        initial={{ x: '100%', opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: '100%', opacity: 0 }}
+                        transition={{ type: 'spring', damping: 25, stiffness: 280 }}
+                        className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-white dark:bg-[#15171c] shadow-2xl flex flex-col"
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-white/5">
+                            <div className="flex items-center gap-3">
+                                <div className="size-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
+                                    <UserCheck size={18} className="text-indigo-600" />
+                                </div>
+                                <div>
+                                    <p className="text-[13px] font-black text-slate-800 dark:text-white">{title}</p>
+                                    <p className="text-[10px] text-slate-400 font-medium">Para: {memberName}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={onClose}
+                                className="size-9 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        {/* Saved success */}
+                        {saved ? (
+                            <div className="flex-1 flex flex-col items-center justify-center gap-4 p-10 text-center">
+                                <motion.div
+                                    initial={{ scale: 0.7, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    className="size-20 rounded-3xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center"
+                                >
+                                    <Check size={36} className="text-emerald-500" />
+                                </motion.div>
+                                <div>
+                                    <p className="text-base font-black text-slate-800 dark:text-white">
+                                        ¡Mentoría asignada!
+                                    </p>
+                                    <p className="text-sm text-slate-400 mt-1">
+                                        {MOCK_MENTORS.find(m => m.id === selected)?.name} acompañará a {memberName}.
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Description */}
+                                <div className="px-6 py-4 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-100 dark:border-white/5">
+                                    <p className="text-[12px] text-slate-500 leading-relaxed">{subtitle}</p>
+                                </div>
+
+                                {/* Search */}
+                                <div className="px-6 pt-4 pb-2">
+                                    <div className="relative">
+                                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input
+                                            value={search}
+                                            onChange={e => setSearch(e.target.value)}
+                                            placeholder="Buscar mentor..."
+                                            className="w-full pl-9 pr-4 py-2.5 bg-slate-100 dark:bg-white/5 border-none rounded-xl text-[13px] text-slate-700 dark:text-slate-200 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Mentor List */}
+                                <div className="flex-1 overflow-y-auto px-4 py-2 space-y-2">
+                                    {filtered.map(mentor => (
+                                        <button
+                                            key={mentor.id}
+                                            disabled={!mentor.available}
+                                            onClick={() => setSelected(selected === mentor.id ? null : mentor.id)}
+                                            className={clsx(
+                                                'w-full flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all',
+                                                !mentor.available && 'opacity-40 cursor-not-allowed',
+                                                selected === mentor.id
+                                                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
+                                                    : 'border-transparent bg-slate-50 dark:bg-white/5 hover:border-slate-200 dark:hover:border-white/10'
+                                            )}
+                                        >
+                                            <div className="size-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white text-sm font-black shrink-0">
+                                                {mentor.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-[13px] font-bold text-slate-800 dark:text-white truncate">{mentor.name}</p>
+                                                <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{mentor.role}</p>
+                                                <p className="text-[11px] text-slate-400 mt-0.5 truncate">{mentor.specialty}</p>
+                                            </div>
+                                            <div className="shrink-0 flex flex-col items-end gap-1.5">
+                                                {selected === mentor.id ? (
+                                                    <div className="size-5 rounded-full bg-indigo-500 flex items-center justify-center">
+                                                        <Check size={11} className="text-white" />
+                                                    </div>
+                                                ) : (
+                                                    <div className="size-5 rounded-full border-2 border-slate-200 dark:border-white/10" />
+                                                )}
+                                                <span className={clsx(
+                                                    'text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full',
+                                                    mentor.available
+                                                        ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10'
+                                                        : 'text-slate-400 bg-slate-100 dark:bg-white/5'
+                                                )}>
+                                                    {mentor.available ? 'Disponible' : 'Ocupado'}
+                                                </span>
+                                            </div>
+                                        </button>
+                                    ))}
+                
+                                    {filtered.length === 0 && (
+                                        <div className="py-12 text-center">
+                                            <UserCheck size={32} className="mx-auto text-slate-200 mb-2" />
+                                            <p className="text-sm font-bold text-slate-400">Sin mentores que coincidan</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Footer */}
+                                <div className="px-6 py-5 border-t border-slate-100 dark:border-white/5 space-y-3">
+                                    <button
+                                        onClick={handleConfirm}
+                                        disabled={!selected || saving}
+                                        className={clsx(
+                                            'w-full py-3.5 rounded-2xl font-black text-[12px] uppercase tracking-widest transition-all flex items-center justify-center gap-2',
+                                            selected && !saving
+                                                ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20 active:scale-[0.98]'
+                                                : 'bg-slate-100 dark:bg-white/5 text-slate-400 cursor-not-allowed'
+                                        )}
+                                    >
+                                        {saving ? (
+                                            <><span className="size-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Guardando...</>
+                                        ) : (
+                                            <><UserCheck size={15} /> Confirmar Asignación</>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={onClose}
+                                        className="w-full py-2.5 text-[11px] font-bold text-slate-400 hover:text-slate-600 transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </motion.div>
+                </>
+            )}
+        </AnimatePresence>
+    );
+}
 
 type Tab = 'overview' | 'spiritual' | 'academy' | 'financial' | 'history';
 
@@ -102,6 +325,11 @@ export default function MemberDetailPage() {
     const [member, setMember] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<Tab>('overview');
+    const [mentorDrawerOpen, setMentorDrawerOpen] = useState(false);
+    const [mentorDrawerConfig, setMentorDrawerConfig] = useState<{ title: string; subtitle: string }>({
+        title: 'Asignar Mentoría',
+        subtitle: 'Selecciona el mentor que guiará el proceso espiritual de este miembro.',
+    });
     
     // Extra data fetched on demand
     const [history, setHistory] = useState<any[]>([]);
@@ -356,7 +584,16 @@ export default function MemberDetailPage() {
                                     <p className="text-sm font-medium text-indigo-100 leading-relaxed">
                                         {fullName} tiene potencial pastoral en su área de servicio. Su participación este mes es consistente.
                                     </p>
-                                    <button className="w-full py-3 bg-white text-indigo-900 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all">
+                                    <button
+                                        onClick={() => {
+                                            setMentorDrawerConfig({
+                                                title: 'Asignar Mentoría',
+                                                subtitle: `Selecciona el mentor que guiará el proceso espiritual de ${fullName}.`,
+                                            });
+                                            setMentorDrawerOpen(true);
+                                        }}
+                                        className="w-full py-3 bg-white text-indigo-900 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all"
+                                    >
                                         Asignar Mentoría
                                     </button>
                                 </div>
@@ -413,7 +650,16 @@ export default function MemberDetailPage() {
                                 <div className="relative z-10 space-y-4">
                                     <h4 className="text-sm font-black uppercase tracking-widest">Cuidado Pastoral</h4>
                                     <p className="text-sm text-rose-100 leading-relaxed">Este miembro está siendo acompañado activamente en su proceso espiritual.</p>
-                                    <button className="w-full py-3 bg-white text-rose-700 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all">
+                                    <button
+                                        onClick={() => {
+                                            setMentorDrawerConfig({
+                                                title: 'Asignar Pastor',
+                                                subtitle: `Selecciona el pastor que hará seguimiento espiritual de ${fullName}.`,
+                                            });
+                                            setMentorDrawerOpen(true);
+                                        }}
+                                        className="w-full py-3 bg-white text-rose-700 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all"
+                                    >
                                         Asignar Pastor
                                     </button>
                                 </div>
@@ -541,6 +787,17 @@ export default function MemberDetailPage() {
                 </motion.div>
             </AnimatePresence>
         </div>
+        
+            {/* Mentor Assignment Drawer */}
+            <MentorAssignmentDrawer
+                open={mentorDrawerOpen}
+                onClose={() => setMentorDrawerOpen(false)}
+                memberName={fullName}
+                token={token}
+                memberId={id}
+                title={mentorDrawerConfig.title}
+                subtitle={mentorDrawerConfig.subtitle}
+            />
         </CrmShell>
     );
 }

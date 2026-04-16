@@ -143,7 +143,7 @@ export default function CourseManagementPage() {
             <main className="flex-1 overflow-y-auto scrollbar-thin p-6 lg:p-10 relative z-10">
                 <motion.div 
                     variants={containerVariants} initial="hidden" animate="show"
-                    className="max-w-[1400px] mx-auto space-y-10"
+                    className="w-full space-y-10"
                 >
                     {/* Course Header Glassmorphism */}
                     <motion.section variants={itemVariants} className="bg-white/70 dark:bg-[#15171c]/70 backdrop-blur-3xl rounded-[3rem] border border-white dark:border-white/5 p-8 lg:p-12 shadow-2xl shadow-slate-200/50 dark:shadow-none flex flex-col md:flex-row md:items-center justify-between gap-8 relative overflow-hidden group">
@@ -159,7 +159,7 @@ export default function CourseManagementPage() {
                                 </div>
                             </div>
                             <div>
-                                <h1 className="text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-3">
+                                <h1 className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-3">
                                     {course ? course.title : (loading ? 'Sincronizando...' : 'Datos del Curso (No Disponible)')}
                                 </h1>
                                 <div className="flex items-center gap-6 text-slate-500 font-bold text-sm">

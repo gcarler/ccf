@@ -23,7 +23,7 @@ import {
     User,
     Users as FamilyIcon
 } from 'lucide-react';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
 import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -98,29 +98,27 @@ export default function CRMClient({ initialMembers: _initialMembers = [] }: CrmC
     }), [members]);
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#141517] overflow-hidden font-display animate-fade-in">
-            <WorkspaceToolbar 
-                breadcrumbs={[{ label: 'CRM Pastoral', icon: Users }, { label: 'Comunidad Viva', icon: Heart }]}
-                viewType={viewType}
-                setViewType={setViewType}
-                onSearch={setSearch}
-                rightActions={
-                    <SplitDropdownButton
-                        mainLabel="Nuevo"
-                        icon={UserPlus}
-                        onMainClick={() => router.push('/crm/members')}
-                        options={[
-                            { id: 'member', label: 'Miembro', icon: User, onClick: () => router.push('/crm/members') },
-                            { id: 'family', label: 'Familia', icon: FamilyIcon, onClick: () => router.push('/crm/members') },
-                            { id: 'appointment', label: 'Cita', icon: Calendar, onClick: () => router.push('/crm/counseling') },
-                            { id: 'call', label: 'Llamada', icon: Phone, onClick: () => router.push('/crm/pipeline') },
-                            { id: 'mail', label: 'Email', icon: Mail, onClick: () => router.push('/crm/pipeline') },
-                            { id: 'sms', label: 'SMS', icon: MessageCircle, onClick: () => router.push('/crm/pipeline') }
-                        ]}
-                    />
-                }
-            />
-
+        <WorkspaceLayout
+            breadcrumbs={[{ label: 'CRM Pastoral', icon: Users }, { label: 'Comunidad Viva', icon: Heart }]}
+            viewType={viewType}
+            setViewType={setViewType}
+            onSearch={setSearch}
+            rightActions={
+                <SplitDropdownButton
+                    mainLabel="Nuevo"
+                    icon={UserPlus}
+                    onMainClick={() => router.push('/crm/members')}
+                    options={[
+                        { id: 'member', label: 'Miembro', icon: User, onClick: () => router.push('/crm/members') },
+                        { id: 'family', label: 'Familia', icon: FamilyIcon, onClick: () => router.push('/crm/members') },
+                        { id: 'appointment', label: 'Cita', icon: Calendar, onClick: () => router.push('/crm/counseling') },
+                        { id: 'call', label: 'Llamada', icon: Phone, onClick: () => router.push('/crm/pipeline') },
+                        { id: 'mail', label: 'Email', icon: Mail, onClick: () => router.push('/crm/pipeline') },
+                        { id: 'sms', label: 'SMS', icon: MessageCircle, onClick: () => router.push('/crm/pipeline') }
+                    ]}
+                />
+            }
+        >
             <main className="flex-1 overflow-y-auto scrollbar-thin p-10 relative">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
                 
@@ -175,7 +173,7 @@ export default function CRMClient({ initialMembers: _initialMembers = [] }: CrmC
                     }} />
                 </RightPanel>
             )}
-        </div>
+        </WorkspaceLayout>
     );
 }
 

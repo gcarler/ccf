@@ -1,12 +1,14 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import {
+import UniversalTableView from '@/components/ui/UniversalTableView';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
+import { 
     CheckCircle2, Circle, Clock, AlertCircle, Search,
     Filter, ChevronRight, MoreHorizontal, Zap, Bot,
     Flag, CalendarDays, Tag, Inbox, ListChecks, Star,
     SortAsc, ArrowUpDown, FolderOpen, Table2, LayoutGrid,
-    KanbanSquare, BarChart3
+    KanbanSquare, BarChart3, Sparkles
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -18,7 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import Link from 'next/link';
 import { ViewType } from '@/components/ViewSwitcher';
-import UniversalTableView from '@/components/ui/UniversalTableView';
+
 
 interface Task {
     id: number;
@@ -144,20 +146,19 @@ export default function UserTasksPage() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="flex flex-col h-full bg-slate-50 dark:bg-[#111213] overflow-hidden">
-            <WorkspaceToolbar
-                breadcrumbs={[{ label: 'Mi Centro de Tareas', icon: ListChecks }]}
-                viewType={viewType}
-                setViewType={setViewType}
-                availableViews={['list', 'table', 'grid', 'kanban']}
-                rightActions={
-                    <SplitDropdownButton
-                        onMainClick={() => {}}
-                        onOptionClick={() => {}}
-                    />
-                }
-            />
-
+        <WorkspaceLayout
+            breadcrumbs={[{ label: 'Mi Centro de Tareas', icon: ListChecks, href: '/tasks' }]}
+            viewType={viewType}
+            setViewType={setViewType}
+            availableViews={['list', 'table', 'grid', 'kanban']}
+            rightActions={
+                <SplitDropdownButton
+                    onMainClick={() => {}}
+                    onOptionClick={() => {}}
+                />
+            }
+        >
+            <div className="flex flex-col h-full bg-slate-50 dark:bg-[#111213] overflow-hidden rounded-2xl">
             {/* ── TASK EDIT DRAWER ── */}
             <TaskEditDrawer
                 task={selectedTask}
@@ -501,6 +502,7 @@ export default function UserTasksPage() {
                 </div>
                 )}
             </main>
-        </div>
+            </div>
+        </WorkspaceLayout>
     );
 }

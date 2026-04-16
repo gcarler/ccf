@@ -9,12 +9,15 @@ import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import CrmShell from '@/components/crm/CrmShell';
+import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
 import AdminHero from '@/components/admin/AdminHero';
 import RightPanel from '@/components/ui/RightPanel';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
+import { useRouter } from 'next/navigation';
+import { ChevronRight } from 'lucide-react';
 
 interface GloryHouse {
     id: number;
@@ -64,6 +67,7 @@ const INPUT_CLS = "w-full px-4 py-3 rounded-xl border border-slate-200 dark:bord
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function GroupsPage() {
+    const router = useRouter();
     const [groups, setGroups] = useState<GloryHouse[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<'grid' | 'map' | 'list' | 'table' | 'calendar' | 'gantt' | 'wiki'>(
@@ -262,10 +266,7 @@ export default function GroupsPage() {
 
                                     return (
                                         <motion.div
-                                            key={group.id}
-                                            initial={{ opacity: 0, scale: 0.95 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            transition={{ delay: i * 0.04 }}
+                                            onClick={() => router.push(`/crm/groups/${group.id}`)}
                                             className="bg-white dark:bg-[#1e1f21] p-7 rounded-[2.5rem] border border-slate-100 dark:border-white/5 hover:shadow-xl hover:shadow-slate-200/30 hover:-translate-y-1 dark:hover:shadow-none transition-all duration-400 group overflow-hidden relative cursor-pointer"
                                         >
                                             {/* BG watermark */}
@@ -416,13 +417,22 @@ export default function GroupsPage() {
                         ) : viewMode === 'list' ? (
                             <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
                                 {filteredGroups.map(group => (
-                                    <div key={group.id} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 flex items-center justify-between">
+                                <div 
+                                    key={group.id} 
+                                    onClick={() => router.push(`/crm/groups/${group.id}`)}
+                                    className="cursor-pointer group"
+                                >
+                                    <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 flex items-center justify-between hover:border-blue-500/50 transition-all">
                                         <div>
-                                            <p className="text-sm font-black text-slate-800 dark:text-slate-100">{group.name}</p>
+                                            <p className="text-sm font-black text-slate-800 dark:text-slate-100 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{group.name}</p>
                                             <p className="text-[11px] text-slate-500">{group.zone} · {group.leader_name || 'Sin líder'}</p>
                                         </div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{group.members_count}/{group.capacity}</span>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{group.members_count}/{group.capacity}</span>
+                                            <ChevronRight size={14} className="text-slate-300 group-hover:text-blue-500 transition-all" />
+                                        </div>
                                     </div>
+                                </div>
                                 ))}
                             </motion.div>
                         ) : viewMode === 'table' ? (
@@ -438,44 +448,29 @@ export default function GroupsPage() {
                                     </thead>
                                     <tbody>
                                         {filteredGroups.map(group => (
-                                            <tr key={group.id} className="border-t border-slate-100 dark:border-white/5">
-                                                <td className="px-4 py-3 text-sm font-bold text-slate-800 dark:text-slate-100">{group.name}</td>
+                                            <tr 
+                                                key={group.id} 
+                                                onClick={() => router.push(`/crm/groups/${group.id}`)}
+                                                className="border-t border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-all group"
+                                            >
+                                                <td className="px-4 py-3 text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-blue-600 uppercase italic">{group.name}</td>
                                                 <td className="px-4 py-3 text-xs text-slate-500">{group.zone}</td>
                                                 <td className="px-4 py-3 text-xs text-slate-500">{group.leader_name || 'Sin líder'}</td>
-                                                <td className="px-4 py-3 text-xs font-black text-slate-500">{group.members_count}/{group.capacity}</td>
+                                                <td className="px-4 py-3 text-xs font-black text-slate-500 flex items-center justify-between">
+                                                    <span>{group.members_count}/{group.capacity}</span>
+                                                    <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 text-blue-500" />
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             </motion.div>
-                        ) : viewMode === 'calendar' ? (
-                            <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
-                                {filteredGroups.map(group => (
-                                    <div key={group.id} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">{group.schedule || 'Horario por definir'}</p>
-                                        <p className="text-sm font-black text-slate-800 dark:text-slate-100">{group.name}</p>
-                                        <p className="text-[11px] text-slate-500">{group.zone} · {group.address || 'Sin dirección'}</p>
-                                    </div>
-                                ))}
-                            </motion.div>
-                        ) : viewMode === 'gantt' ? (
-                            <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Nivel de ocupación por casa</p>
-                                {filteredGroups.map(group => {
-                                    const ratio = group.capacity > 0 ? Math.min(100, Math.round((group.members_count / group.capacity) * 100)) : 0;
-                                    return (
-                                        <div key={group.id} className="space-y-1">
-                                            <div className="flex items-center justify-between text-[11px]"><span className="font-bold text-slate-700 dark:text-slate-300">{group.name}</span><span className="font-black text-slate-400">{ratio}%</span></div>
-                                            <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden"><div className="h-full bg-blue-600" style={{ width: `${ratio}%` }} /></div>
-                                        </div>
-                                    );
-                                })}
-                            </motion.div>
                         ) : (
-                            <motion.div key="wiki" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Wiki de casas de gloria</p>
-                                <textarea value={wikiNotes} onChange={(e) => setWikiNotes(e.target.value)} placeholder="Documenta criterios de apertura, cobertura territorial y estandares de liderazgo..." className="w-full min-h-[320px] rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20" />
-                            </motion.div>
+                            <CrmViewPlaceholder 
+                                viewType={viewMode as any} 
+                                items={filteredGroups}
+                                wikiKey="crm_groups_wiki_notes"
+                            />
                         )}
                     </AnimatePresence>
                 </div>

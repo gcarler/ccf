@@ -88,40 +88,6 @@ export default function StudentProfilePage() {
 
     return (
         <div className="flex flex-col h-full bg-slate-50/50 dark:bg-[#0a0f16] overflow-hidden font-display">
-            <style jsx global>{`
-                .badge-3d {
-                    position: relative;
-                    transform-style: preserve-3d;
-                    transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-                }
-                .badge-3d:hover {
-                    transform: translateY(-5px) rotateX(10deg) rotateY(-10deg);
-                }
-                .badge-3d::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    border-radius: inherit;
-                    background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%, rgba(0,0,0,0.2) 100%);
-                    z-index: 10;
-                    pointer-events: none;
-                }
-                .badge-3d::after {
-                    content: '';
-                    position: absolute;
-                    inset: -2px;
-                    border-radius: inherit;
-                    background: linear-gradient(to bottom, rgba(255,255,255,0.8), transparent);
-                    z-index: -1;
-                    transform: translateZ(-5px);
-                    filter: blur(4px);
-                    opacity: 0.5;
-                }
-                .inner-glow {
-                    box-shadow: inset 0 0 20px rgba(255,255,255,0.3), 0 10px 30px rgba(0,0,0,0.2);
-                }
-            `}</style>
-
             <WorkspaceToolbar 
                 breadcrumbs={[
                     { label: 'Academia', icon: GraduationCap },

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, FileText, Globe, Plus, Search, Trash2, Zap } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -15,6 +16,7 @@ function slugify(value: string) {
 }
 
 export default function CmsPagesManagement() {
+  const router = useRouter();
   const { token, user } = useAuth();
   const [siteKey, setSiteKey] = useState("faro");
   const [sites, setSites] = useState<Array<{ site_key: string; name: string }>>([]);
@@ -27,12 +29,21 @@ export default function CmsPagesManagement() {
   const canEdit = canEditCms(user?.role);
 
   const fetchPages = async (targetSite: string) => {
-    if (!token) return;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const [nextSites, nextPages] = await Promise.all([listCmsSites(token), listCmsPages(targetSite, token)]);
-      setSites((nextSites || []).map((site) => ({ site_key: site.site_key, name: site.name })));
+      const siteList = (nextSites || []).map((site) => ({ site_key: site.site_key, name: site.name }));
+      setSites(siteList);
+      // If the current siteKey is not in the fetched sites, default to the first one
+      if (!siteList.find((s) => s.site_key === targetSite) && siteList.length > 0) {
+        setSiteKey(siteList[0].site_key);
+      }
       setPages(nextPages || []);
+      console.log('Fetched pages:', nextPages?.length || 0);
     } catch (error) {
       console.error("Error fetching pages:", error);
       setPages([]);
@@ -178,7 +189,7 @@ export default function CmsPagesManagement() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.04 }}
-                onClick={() => setSelectedPage(page)}
+                onClick={() => router.push(`/cms/pages/${page.id}`)}
                 className="group bg-white dark:bg-[#252528] rounded-2xl border border-slate-200/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all duration-300 cursor-pointer active:scale-[0.99] flex items-center gap-4"
               >
                 <div className="size-12 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all">

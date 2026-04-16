@@ -316,8 +316,12 @@ export default function CoordinationConsole() {
                                 </thead>
                                 <tbody>
                                     {filteredCourses.map((course) => (
-                                        <tr key={course.id} className="border-t border-slate-100">
-                                            <td className="px-6 py-4 font-semibold text-slate-900">{course.title}</td>
+                                        <tr 
+                                            key={course.id} 
+                                            className="border-t border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors group"
+                                            onClick={() => router.push(`/academy/courses/${course.id}`)}
+                                        >
+                                            <td className="px-6 py-4 font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">{course.title}</td>
                                             <td className="px-6 py-4 text-slate-500">{course.cohort_name || 'Sin asignar'}</td>
                                             <td className="px-6 py-4">{course.modality === 'formal' ? 'Formal' : 'No formal'}</td>
                                             <td className="px-6 py-4 text-slate-500">{course.certificate_type || 'Pendiente'}</td>

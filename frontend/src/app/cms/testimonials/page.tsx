@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import AdminHero from '@/components/admin/AdminHero';
@@ -21,6 +22,7 @@ interface Testimonial {
 const emotionFilters = ['Todos', 'Sanidad', 'Provisión', 'Restauración', 'Fe'];
 
 export default function CmsTestimonialsPage() {
+    const router = useRouter();
     const { user, token, isAuthenticated } = useAuth();
     const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
     const [filter, setFilter] = useState('Todos');
@@ -122,7 +124,11 @@ export default function CmsTestimonialsPage() {
                 ) : (
                     <div className="px-6 py-8 space-y-4">
                         {filtered.map((testimony) => (
-                            <article key={testimony.id} className="border border-slate-100 dark:border-white/10 rounded-[2rem] p-5 hover:border-primary/30 transition-colors">
+                            <article 
+                                key={testimony.id} 
+                                onClick={() => router.push(`/cms/testimonials/${testimony.id}`)}
+                                className="border border-slate-100 dark:border-white/10 rounded-[2rem] p-5 hover:border-primary/30 transition-colors cursor-pointer group"
+                            >
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex flex-col">
                                         <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-primary flex items-center gap-2">

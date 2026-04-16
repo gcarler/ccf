@@ -27,8 +27,12 @@ import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
+import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import { useRouter } from 'next/navigation';
+import { useSidebarLayers } from '@/context/SidebarLayerContext';
+import ShiftDetailSidebar from '@/components/crm/ShiftDetailSidebar';
 
 const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
@@ -64,6 +68,7 @@ function getWeekMonday(offset = 0): Date {
 
 export default function VolunteerCalendar() {
     const { token, isAuthenticated, user } = useAuth();
+    const router = useRouter();
     const { addToast } = useToast();
     const [shifts, setShifts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -77,6 +82,7 @@ export default function VolunteerCalendar() {
     );
     const [isApplyDrawerOpen, setIsApplyDrawerOpen] = useState(false);
     const [applyForm, setApplyForm] = useState({ team: '', availability: '', notes: '' });
+    const { pushSidebarPanel, popSidebarPanel } = useSidebarLayers();
     const [isSaving, setIsSaving] = useState(false);
 
     const [wikiNotes, setWikiNotes] = useState('');
@@ -133,9 +139,13 @@ export default function VolunteerCalendar() {
         if (saved) setWikiNotes(saved);
     }, []);
 
-    useEffect(() => {
-        localStorage.setItem('crm_volunteers_wiki_notes', wikiNotes);
-    }, [wikiNotes]);
+    const openShiftDetail = (shift: any) => {
+        pushSidebarPanel({
+            id: `shift-detail-${shift.id}`,
+            title: shift.role_name || 'Detalle de Turno',
+            content: <ShiftDetailSidebar shift={shift} onClose={popSidebarPanel} />
+        });
+    };
 
     const handleApply = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -253,6 +263,7 @@ export default function VolunteerCalendar() {
                                             {shifts.filter(s => s.dayIndex === idx).map(shift => (
                                                 <motion.div
                                                     key={shift.id} whileHover={{ scale: 1.02 }}
+                                                    onClick={() => openShiftDetail(shift)}
                                                     className={clsx(
                                                         "p-4 rounded-2xl shadow-sm border border-transparent hover:border-white/20 transition-all cursor-pointer relative overflow-hidden group",
                                                         shift.color === 'blue' ? "bg-blue-600 text-white" :
@@ -288,7 +299,7 @@ export default function VolunteerCalendar() {
                             className="flex-1 space-y-4 overflow-y-auto scrollbar-thin pr-4 pb-20"
                         >
                             {shifts.length > 0 ? shifts.map((shift) => (
-                                <div key={shift.id} className="p-8 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all flex items-center justify-between">
+                                <div key={shift.id} onClick={() => openShiftDetail(shift)} className="p-8 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all flex items-center justify-between cursor-pointer">
                                     <div className="flex items-center gap-6">
                                         <div className={clsx("size-14 rounded-2xl flex items-center justify-center",
                                             shift.color === 'blue' ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600")}>
@@ -332,7 +343,7 @@ export default function VolunteerCalendar() {
                                     </thead>
                                     <tbody>
                                         {shifts.map(shift => (
-                                            <tr key={shift.id} className="border-t border-slate-100 dark:border-white/5">
+                                            <tr key={shift.id} onClick={() => openShiftDetail(shift)} className="border-t border-slate-100 dark:border-white/5 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5">
                                                 <td className="px-4 py-3 text-sm font-bold text-slate-800 dark:text-slate-100">{shift.role_name}</td>
                                                 <td className="px-4 py-3 text-xs text-slate-500">{shift.team_name}</td>
                                                 <td className="px-4 py-3 text-xs text-slate-500">{new Date(shift.shift_start).toLocaleDateString()}</td>
@@ -351,7 +362,7 @@ export default function VolunteerCalendar() {
                                     <div className="mb-3 flex items-center justify-between"><p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{status}</p><span className="text-[10px] font-black text-slate-400">{shifts.filter(s => (s.status || 'open') === status).length}</span></div>
                                     <div className="space-y-2">
                                         {shifts.filter(s => (s.status || 'open') === status).map(shift => (
-                                            <div key={shift.id} className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                                            <div key={shift.id} onClick={() => openShiftDetail(shift)} className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3 cursor-pointer hover:border-blue-500/30 transition-all">
                                                 <p className="text-xs font-black text-slate-800 dark:text-slate-100">{shift.role_name}</p>
                                                 <p className="text-[10px] text-slate-400">{shift.team_name} · {shift.time}</p>
                                             </div>
@@ -360,44 +371,12 @@ export default function VolunteerCalendar() {
                                 </div>
                             ))}
                         </motion.div>
-                    ) : viewMode === 'calendar' ? (
-                        <motion.div key="calendar-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 space-y-4 overflow-y-auto pb-10">
-                            {DAYS.map((day, idx) => (
-                                <div key={day} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
-                                    <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">{day}</p>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        {shifts.filter(s => s.dayIndex === idx).map(shift => (
-                                            <div key={shift.id} className="rounded-xl border border-slate-200 dark:border-white/10 p-3">
-                                                <p className="text-sm font-black text-slate-800 dark:text-slate-100">{shift.role_name}</p>
-                                                <p className="text-[10px] text-slate-400">{shift.team_name} · {shift.time}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </motion.div>
-                    ) : viewMode === 'gantt' ? (
-                        <motion.div key="gantt-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto">
-                            <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Cobertura por turno</p>
-                                {shifts.map(shift => {
-                                    const progress = shift.status === 'confirmed' ? 100 : shift.status === 'pending' ? 60 : 25;
-                                    return (
-                                        <div key={shift.id} className="space-y-1">
-                                            <div className="flex items-center justify-between text-[11px]"><span className="font-bold text-slate-700 dark:text-slate-300">{shift.role_name}</span><span className="font-black text-slate-400">{progress}%</span></div>
-                                            <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden"><div className="h-full bg-blue-600" style={{ width: `${progress}%` }} /></div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </motion.div>
                     ) : (
-                        <motion.div key="wiki-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto">
-                            <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Wiki de servidores</p>
-                                <textarea value={wikiNotes} onChange={(e) => setWikiNotes(e.target.value)} placeholder="Documenta protocolos de servicio, horarios y estándares por equipo..." className="w-full min-h-[320px] rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20" />
-                            </div>
-                        </motion.div>
+                        <CrmViewPlaceholder
+                            viewType={crmViewType}
+                            items={shifts}
+                            wikiKey="crm_volunteers_wiki_notes"
+                        />
                     )}
                 </AnimatePresence>
             </div>

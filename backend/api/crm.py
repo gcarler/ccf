@@ -211,7 +211,30 @@ def update_pipeline_lead(
     lead = crud.update_pipeline_lead(db, lead_id=lead_id, payload=payload)
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
+    
+    # Audit logging for pipeline movements
+    record_admin_action(
+        db, current_user,
+        action="update_pipeline_lead",
+        resource_type="pipeline_lead",
+        resource_id=str(lead.id),
+        metadata=payload.model_dump(exclude_unset=True)
+    )
+    
     return {"status": "success", "lead_id": lead.id, "stage": lead.stage}
+
+@router.get("/consolidation/pipeline/{lead_id}/audit", response_model=List[schemas.AdminAuditLog])
+def get_pipeline_lead_audit(
+    lead_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Retrieve the audit trail for a specific pipeline lead."""
+    logs = db.query(models.AdminAuditLog).filter(
+        models.AdminAuditLog.resource_type == "pipeline_lead",
+        models.AdminAuditLog.resource_id == str(lead_id)
+    ).order_by(models.AdminAuditLog.created_at.desc()).all()
+    return logs
 
 @router.get("/pipeline/leads/{lead_id}/calls", response_model=List[dict])
 def get_lead_calls(

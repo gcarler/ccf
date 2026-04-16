@@ -148,11 +148,14 @@ class Assessment(Base):
     __tablename__ = "assessments"
     id = Column(Integer, primary_key=True, index=True)
     lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=True) # Direct course relation
     title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
     min_score = Column(Numeric(5, 2), default=70)
     weight = Column(Numeric(5, 2), default=1.0)
 
     lesson = relationship("Lesson", back_populates="assessments")
+    course = relationship("Course") # New relationship
     questions = relationship("AssessmentQuestion", back_populates="assessment")
 
 class AssessmentQuestion(Base):
@@ -350,6 +353,7 @@ class PrayerRequest(Base):
     id = Column(Integer, primary_key=True, index=True)
     requester_name = Column(String(200), nullable=False, index=True)
     request_text = Column(Text, nullable=False)
+    category = Column(String(50), default="General") # New column
     is_public = Column(Boolean, default=False, index=True)
     status = Column(String(50), default="pending", index=True) # pending, praying, answered
     created_at = Column(DateTime, default=_utcnow, index=True)
@@ -564,6 +568,8 @@ class AdminAuditLog(Base):
     action = Column(String(120), nullable=False, index=True)
     resource_type = Column(String(120), nullable=True, index=True)
     resource_id = Column(String(120), nullable=True)
+    ip_address = Column(String(45), nullable=True) # New column
+    severity = Column(String(20), default="info") # New column
     metadata_json = Column("metadata", JSON, default={})
     created_at = Column(DateTime, default=_utcnow, index=True)
 
@@ -575,6 +581,7 @@ class PastoralCallLog(Base):
     pastor_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     outcome = Column(String(120), nullable=False)
     notes = Column(Text, nullable=True)
+    duration_seconds = Column(Integer, default=0) # New column
     created_at = Column(DateTime, default=_utcnow)
 
 
@@ -635,6 +642,7 @@ class CmsMediaItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     url = Column(String(500), nullable=False)
     alt_text = Column(String(255), nullable=True)
+    dimensions = Column(String(50), nullable=True) # New column
     section = Column(String(120), nullable=False, index=True, default="general")
     tags = Column(JSON, default=[])
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
@@ -808,6 +816,9 @@ class Donation(Base):
     member_id = Column(Integer, ForeignKey("members.id"), nullable=True, index=True)
     amount = Column(Float, nullable=False)
     donation_type = Column(String(50), default="Diezmo") # Diezmo, Ofrenda, Especial
+    status = Column(String(20), default="completed") # New column
+    reference_code = Column(String(100), nullable=True) # New column
+    payment_method = Column(String(50), default="Transferencia") # New column
     fund_id = Column(Integer, nullable=True)
     person_id = Column(Integer, nullable=True) # Legado compatibilidad
     donor_name = Column(String(100), nullable=True)

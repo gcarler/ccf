@@ -11,6 +11,7 @@ import { Toaster } from "sonner";
 import { CommandCenter } from "@/components/ui/CommandCenter";
 import { CommandCenterProvider } from "@/context/CommandCenterContext";
 import { CreationProvider } from "@/context/CreationContext";
+import { SidebarLayerProvider } from "@/context/SidebarLayerContext";
 
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
 
@@ -64,10 +65,12 @@ export default function RootLayout({
                             <ThemeProvider>
                                 <CommandCenterProvider>
                                     <CreationProvider>
-                                        <ClientBootstrap />
-                                        <Toaster position="bottom-right" expand={false} richColors />
-                                        <CommandCenter />
-                                        {children}
+                                        <SidebarLayerProvider>
+                                            <ClientBootstrap />
+                                            <Toaster position="bottom-right" expand={false} richColors />
+                                            <CommandCenter />
+                                            {children}
+                                        </SidebarLayerProvider>
                                     </CreationProvider>
                                 </CommandCenterProvider>
                             </ThemeProvider>

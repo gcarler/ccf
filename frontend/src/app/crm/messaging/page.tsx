@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
     Send, 
     MessageSquare, 
@@ -34,11 +35,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
+import CrmShell from '@/components/crm/CrmShell';
 
 type Channel = 'whatsapp' | 'email' | 'sms';
 const STATUS_PROGRESS: Record<string, number> = { failed: 20, sent: 75, delivered: 100 };
 
 export default function MessagingCampaignCenter() {
+    const router = useRouter();
     const { token } = useAuth();
     const { addToast } = useToast();
     const [channel, setChannel] = useState<Channel>('whatsapp');
@@ -122,7 +125,7 @@ export default function MessagingCampaignCenter() {
     }, [history]);
 
     const groupedByDate = useMemo(() => {
-        const map: Record<string, any[]> = {};
+        const map = {} as Record<string, any[]>;
         for (const item of history) {
             const key = item.date || 'Sin fecha';
             if (!map[key]) map[key] = [];
@@ -132,27 +135,30 @@ export default function MessagingCampaignCenter() {
     }, [history]);
 
     return (
-        <div className="flex flex-col h-full bg-slate-50/50 dark:bg-[#1e1f21] overflow-hidden font-display">
-            <WorkspaceToolbar 
-                breadcrumbs={[
-                    { label: 'CRM Pastoral', icon: Users },
-                    { label: 'Centro de Mensajería', icon: Send }
-                ]}
-                viewType={viewType}
-                setViewType={setViewType}
-                availableViews={['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki']}
-                rightActions={
-                    <button className="flex items-center gap-2 px-6 py-2 bg-white dark:bg-white/5 hover:bg-slate-50 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 shadow-sm transition-all active:scale-95">
-                        <History size={14} /> Historial Detallado
-                    </button>
-                }
-            />
-
-            <main className="flex-1 overflow-y-auto scrollbar-thin p-8 lg:p-12">
+        <CrmShell
+            breadcrumbs={[
+                { label: 'CRM Pastoral', icon: Users },
+                { label: 'Centro de Mensajería', icon: Send }
+            ]}
+            viewOptions={['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki']}
+            viewType={viewType}
+            onViewChange={setViewType}
+            rightActions={
+                <button className="flex items-center gap-2 px-6 py-2 bg-white dark:bg-white/5 hover:bg-slate-50 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 shadow-sm transition-all active:scale-95">
+                    <History size={14} /> Historial Detallado
+                </button>
+            }
+        >
+            <div className="flex flex-col h-full bg-slate-50/50 dark:bg-[#1e1f21] overflow-hidden font-display rounded-2xl">
+                <div className="flex-1 overflow-y-auto scrollbar-thin p-8 lg:p-12">
                 {viewType === 'list' && (
                     <div className="max-w-5xl mx-auto space-y-3">
                         {history.map((item) => (
-                            <div key={item.id} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 flex items-center justify-between">
+                            <div 
+                                key={item.id} 
+                                onClick={() => router.push(`/crm/messaging/${item.id}`)}
+                                className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 flex items-center justify-between hover:border-blue-500/30 transition-all cursor-pointer group"
+                            >
                                 <div>
                                     <p className="text-sm font-black text-slate-800 dark:text-slate-100">{item.name}</p>
                                     <p className="text-[11px] text-slate-500">{item.channel} · {item.date}</p>
@@ -178,7 +184,11 @@ export default function MessagingCampaignCenter() {
                             </thead>
                             <tbody>
                                 {history.map((item) => (
-                                    <tr key={item.id} className="border-t border-slate-100 dark:border-white/5">
+                                    <tr 
+                                        key={item.id} 
+                                        onClick={() => router.push(`/crm/messaging/${item.id}`)}
+                                        className="border-t border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer transition-colors"
+                                    >
                                         <td className="px-4 py-3 text-sm font-bold text-slate-800 dark:text-slate-100">{item.name}</td>
                                         <td className="px-4 py-3 text-xs text-slate-500 uppercase">{item.channel}</td>
                                         <td className="px-4 py-3 text-xs text-slate-500">{item.date}</td>
@@ -201,7 +211,11 @@ export default function MessagingCampaignCenter() {
                                 </div>
                                 <div className="space-y-2">
                                     {col.items.map((item: any) => (
-                                        <div key={item.id} className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                                        <div 
+                                            key={item.id} 
+                                            onClick={() => router.push(`/crm/messaging/${item.id}`)}
+                                            className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3 hover:border-blue-500/30 transition-all cursor-pointer"
+                                        >
                                             <p className="text-xs font-black text-slate-800 dark:text-slate-100">{item.name}</p>
                                             <p className="text-[10px] text-slate-400">{item.date} · {item.count} envíos</p>
                                         </div>
@@ -219,7 +233,11 @@ export default function MessagingCampaignCenter() {
                                 <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {items.map((item: any) => (
-                                        <div key={item.id} className="rounded-xl border border-slate-200 dark:border-white/10 p-3">
+                                        <div 
+                                            key={item.id} 
+                                            onClick={() => router.push(`/crm/messaging/${item.id}`)}
+                                            className="rounded-xl border border-slate-200 dark:border-white/10 p-3 hover:border-blue-500/30 transition-all cursor-pointer bg-white dark:bg-white/5"
+                                        >
                                             <p className="text-sm font-black text-slate-800 dark:text-slate-100">{item.name}</p>
                                             <p className="text-[10px] text-slate-400">{item.channel} · {item.status}</p>
                                         </div>
@@ -234,7 +252,11 @@ export default function MessagingCampaignCenter() {
                     <div className="max-w-5xl mx-auto rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Avance de entrega</p>
                         {history.map((item) => (
-                            <div key={item.id} className="space-y-1">
+                            <div 
+                                key={item.id} 
+                                onClick={() => router.push(`/crm/messaging/${item.id}`)}
+                                className="space-y-1 cursor-pointer group p-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl transition-all"
+                            >
                                 <div className="flex items-center justify-between text-[11px]">
                                     <span className="font-bold text-slate-700 dark:text-slate-300">{item.name}</span>
                                     <span className="font-black text-slate-400">{STATUS_PROGRESS[item.status] ?? 0}%</span>
@@ -366,7 +388,11 @@ export default function MessagingCampaignCenter() {
                             </div>
                             <div className="space-y-6">
                                 {history.map((item) => (
-                                    <div key={item.id} className="flex items-center justify-between group cursor-pointer">
+                                    <div 
+                                        key={item.id} 
+                                        onClick={() => router.push(`/crm/messaging/${item.id}`)}
+                                        className="flex items-center justify-between group cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 p-2 rounded-2xl transition-all"
+                                    >
                                         <div className="flex items-center gap-4">
                                             <div className={clsx(
                                                 "size-12 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110",
@@ -403,8 +429,9 @@ export default function MessagingCampaignCenter() {
                 {!['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) && (
                     <CrmViewPlaceholder moduleName="Centro de Mensajeria" viewType={viewType} />
                 )}
-            </main>
-        </div>
+                </div>
+            </div>
+        </CrmShell>
     );
 }
 

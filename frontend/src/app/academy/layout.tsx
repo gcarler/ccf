@@ -56,21 +56,12 @@ const SIDEBAR_SECTIONS = [
     }
 ];
 
-export default function AcademyLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
-    const pathname = usePathname() ?? '';
-
-    // If the route manages its own deep layer (like course viewer), don't wrap it in the general layout.
-    const isDeepLayer = pathname.includes('/course/') || pathname.includes('/assessments/');
-    if (isDeepLayer) {
-        return <div className="h-full bg-[#f8f9fb]">{children}</div>;
-    }
+export default function AcademyLayout({ children }: { children: React.ReactNode }) {
+    const pathname = usePathname();
 
     const getSidebarTitle = () => {
-        if (pathname === '/academy') return 'Academia / Resumen';
+        if (pathname === '/academy') return 'Academia Faro';
+        if (pathname.includes('/course/')) return 'Currículo del Curso';
         const segments = pathname.split('/');
         const last = segments[segments.length - 1];
         return `Academia / ${last.charAt(0).toUpperCase() + last.slice(1)}`;
@@ -81,7 +72,7 @@ export default function AcademyLayout({
             sidebarTitle={getSidebarTitle()} 
             sidebarSections={SIDEBAR_SECTIONS}
         >
-            <div className="bg-[#f8f9fb] min-h-full">
+            <div className="bg-white dark:bg-[#1e1f21] h-full overflow-hidden">
                 {children}
             </div>
         </WorkspaceLayout>

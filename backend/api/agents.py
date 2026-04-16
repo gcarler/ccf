@@ -8,6 +8,7 @@ from backend import crud, models, schemas
 from backend.auth import require_admin, require_active_user
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
+from backend.agents.orchestrator import AgentOrchestrator
 
 
 router = APIRouter(prefix="/agents", tags=["agents"])
@@ -152,20 +153,43 @@ def ask_optimus(
     db=Depends(get_db),
     current_user: models.User = Depends(require_active_user)
 ):
-    # 1. Search in KB
-    results = crud.search_knowledge_base(db, payload.query)
+    """
+    Query the Neural MESH engine. It searches the Knowledge Base and 
+    then uses AgentOrchestrator to generate a high-quality response.
+    """
+    # 1. Search in KB for context
+    kb_results = crud.search_knowledge_base(db, payload.query)
+    context = ""
+    sources = []
     
-    if not results:
+    if kb_results:
+        context = "\n".join([f"Source [{r.title}]: {r.content}" for r in kb_results])
+        sources = [r.title for r in kb_results]
+
+    # 2. Use Orchestrator for real AI generation if configured
+    try:
+        orchestrator = AgentOrchestrator()
+        # Create a custom prompt combining KB context and query
+        full_query = f"Context from Knowledge Base:\n{context}\n\nUser Question: {payload.query}"
+        
+        insight = orchestrator.run_diagnosis(
+            summary=f"Consulta de usuario: {payload.query}",
+            metrics={"context_length": len(context), "user": current_user.username, "full_query": full_query}
+        )
+        
         return {
-            "answer": "Lo siento, no encontr?? informaci??n espec??fica sobre eso en mi base de conocimientos actual. ??Te gustar??a que asigne esta duda a un pastor?",
+            "answer": insight.payload,
+            "sources": sources
+        }
+    except Exception as e:
+        # Fallback to basic KB retrieval if AI fails or is not configured
+        if kb_results:
+            return {
+                "answer": f"He encontrado informaci??n relevante en nuestra base de conocimientos: {kb_results[0].content[:500]}...",
+                "sources": sources
+            }
+        
+        return {
+            "answer": "Lo siento, el motor neuronal MESH no est?? disponible en este momento y no encontr?? informaci??n en la base de datos local. ??Te gustar??a que notifique a un administrador?",
             "sources": []
         }
-    
-    # 2. Simulate AI response generation
-    context = "\n".join([r.content for r in results])
-    # In a real app, we would send 'context' and 'payload.query' to OpenAI/Gemini here.
-    
-    return {
-        "answer": f"Seg??n nuestros manuales y doctrina: {results[0].content[:200]}...",
-        "sources": [r.title for r in results]
-    }

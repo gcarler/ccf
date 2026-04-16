@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     Heart,
     MessageSquare,
@@ -30,6 +31,7 @@ import StatusPicker, { StatusOption } from '@/components/ui/StatusPicker';
 import clsx from 'clsx';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
+import CrmShell from '@/components/crm/CrmShell';
 
 const PRAYER_STATUS_OPTIONS: StatusOption[] = [
     { label: 'ACTIVA', value: 'active', color: 'bg-rose-500', text: 'text-rose-600', bg: 'bg-rose-50' },
@@ -41,6 +43,7 @@ const CATEGORIES = ['Salud', 'Familia', 'Trabajo', 'Espiritual', 'Finanzas', 'Ot
 const PRAYER_PROGRESS: Record<string, number> = { pending: 20, active: 40, praying: 70, answered: 100 };
 
 export default function PrayerSupportCenter() {
+    const router = useRouter();
     const { token } = useAuth();
     const { addToast } = useToast();
     const [requests, setRequests] = useState<any[]>([]);
@@ -168,8 +171,7 @@ export default function PrayerSupportCenter() {
     ], [updateRequestStatus]);
 
     const handleOpenRequest = (req: any) => {
-        setSelectedRequest(req);
-        setIsDrawerOpen(true);
+        router.push(`/crm/prayers/${req.id}`);
     };
 
     // Dynamic stats
@@ -186,7 +188,7 @@ export default function PrayerSupportCenter() {
     );
 
     const groupedByDate = useMemo(() => {
-        const map: Record<string, { label: string; items: any[] }> = {};
+        const map = {} as Record<string, { label: string; items: any[] }>;
         for (const req of filtered) {
             const raw = req.time ? new Date(req.time) : new Date();
             const date = Number.isNaN(raw.getTime()) ? new Date() : raw;
@@ -208,28 +210,25 @@ export default function PrayerSupportCenter() {
     }, [filtered]);
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
-            <WorkspaceToolbar
-                breadcrumbs={[{ label: 'CRM Pastoral', icon: Users }, { label: 'Muro de Intercesión', icon: Heart }]}
-                viewType={viewType}
-                setViewType={setViewType}
-                availableViews={['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki']}
-                onSearch={setSearch}
-                rightActions={
-                    <button
-                        onClick={() => setIsCreateDrawerOpen(true)}
-                        className="flex items-center gap-2 px-4 py-1.5 bg-rose-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-rose-500/20 active:scale-95 transition-all"
-                    >
-                        <Plus size={14} /> Nueva Petición
-                    </button>
-                }
-            />
+        <CrmShell
+            breadcrumbs={[{ label: 'CRM Pastoral', icon: Users }, { label: 'Muro de Intercesión', icon: Heart }]}
+            viewType={viewType}
+            onViewChange={setViewType}
+            viewOptions={['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki']}
+            onSearch={setSearch}
+            rightActions={
+                <button
+                    onClick={() => setIsCreateDrawerOpen(true)}
+                    className="flex items-center gap-2 px-4 py-1.5 bg-rose-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-rose-500/20 active:scale-95 transition-all"
+                >
+                    <Plus size={14} /> Nueva Petición
+                </button>
+            }
+        >
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#f43f5e05_0%,_transparent_50%)] pointer-events-none" />
 
-            <main className="flex-1 overflow-y-auto scrollbar-thin relative flex flex-col">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#f43f5e05_0%,_transparent_50%)] pointer-events-none" />
-
-                {/* Prayer Dashboard Hero */}
-                <section className="p-6 lg:p-10">
+            {/* Prayer Dashboard Hero */}
+            <section className="p-6 lg:p-10">
                     <div className="bg-gradient-to-br from-rose-600 to-rose-800 rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden group border border-white/10">
                         <div className="absolute top-0 right-0 p-10 opacity-10 group-hover:scale-110 transition-transform duration-1000"><Flame size={160} /></div>
                         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-10">
@@ -366,7 +365,6 @@ export default function PrayerSupportCenter() {
                         </div>
                     )}
                 </div>
-            </main>
 
             {/* ─── Drawer: Detalle de Petición ─── */}
             <WorkspaceDrawer
@@ -509,6 +507,6 @@ export default function PrayerSupportCenter() {
                     </div>
                 </form>
             </WorkspaceDrawer>
-        </div>
+        </CrmShell>
     );
 }

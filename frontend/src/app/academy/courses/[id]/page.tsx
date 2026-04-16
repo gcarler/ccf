@@ -1,0 +1,211 @@
+"use client";
+
+import React, { useEffect, useState, useMemo } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import { apiFetch } from '@/lib/http';
+import { 
+    GraduationCap, 
+    ShieldCheck, 
+    Users, 
+    BookOpen, 
+    CheckCircle2, 
+    Clock, 
+    TrendingUp, 
+    ArrowLeft,
+    FileText,
+    Calendar,
+    Settings,
+    MoreHorizontal
+} from 'lucide-react';
+import DSBadge from '@/design/components/DSBadge';
+import DSCard from '@/design/components/DSCard';
+import DSMetric from '@/design/components/DSMetric';
+import { toast } from 'sonner';
+import clsx from 'clsx';
+import { motion } from 'framer-motion';
+
+interface CourseStats {
+    total_enrolled: number;
+    completion_rate: number;
+    average_grade: number;
+    active_sessions: number;
+}
+
+export default function CourseCoordinationPage() {
+    const params = useParams();
+    const id = params?.id;
+    const router = useRouter();
+    const { token, user, isAuthenticated } = useAuth();
+    
+    const [course, setCourse] = useState<any>(null);
+    const [stats, setStats] = useState<CourseStats | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    const isCoordinator = useMemo(() => {
+        const role = (user?.role || '').toLowerCase();
+        return ['admin', 'coordinador'].includes(role);
+    }, [user?.role]);
+
+    useEffect(() => {
+        if (!token || !isAuthenticated || !id) return;
+        
+        const loadData = async () => {
+            try {
+                setLoading(true);
+                const [courseData, statsData] = await Promise.all([
+                    apiFetch<any>(`/academy/courses/${id}`, { token }),
+                    // Mock stats for now as specific detail metrics might be pending in backend
+                    Promise.resolve({
+                        total_enrolled: 42,
+                        completion_rate: 85,
+                        average_grade: 92,
+                        active_sessions: 3
+                    })
+                ]);
+                setCourse(courseData);
+                setStats(statsData);
+            } catch (err) {
+                console.error(err);
+                toast.error('No se pudo cargar la información del programa');
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadData();
+    }, [id, token, isAuthenticated]);
+
+    if (loading) return (
+        <div className="flex items-center justify-center h-full p-10 text-slate-500 font-black uppercase tracking-[0.3em] animate-pulse">
+            Sincronizando Malla Curricular...
+        </div>
+    );
+
+    if (!course) return (
+        <div className="flex flex-col items-center justify-center h-full p-10 text-center space-y-4">
+            <h2 className="text-2xl font-black text-rose-500 uppercase">Programa no encontrado</h2>
+            <button onClick={() => router.back()} className="text-sm font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
+                <ArrowLeft size={14} /> Volver a Coordinación
+            </button>
+        </div>
+    );
+
+    return (
+        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
+            <WorkspaceToolbar
+                breadcrumbs={[
+                    { label: 'Academia', icon: GraduationCap },
+                    { label: 'Coordinación', icon: ShieldCheck, onClick: () => router.push('/academy/coordination') },
+                    { label: course.title, icon: BookOpen },
+                ]}
+                rightActions={
+                    <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => router.push(`/academy/courses/${id}/manage`)}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-105 transition-all"
+                        >
+                            Gestionar Cohorte
+                        </button>
+                    </div>
+                }
+            />
+
+            <main className="flex-1 overflow-y-auto p-8 lg:p-12 space-y-8">
+                <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div className="space-y-2">
+                        <DSBadge variant={course.modality === 'formal' ? 'indigo' : 'emerald'}>
+                            {course.modality === 'formal' ? 'RUTA FORMAL' : 'RUTA NO FORMAL'}
+                        </DSBadge>
+                        <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-none uppercase">
+                            {course.title}
+                        </h1>
+                        <p className="text-slate-500 font-bold uppercase tracking-widest text-xs flex items-center gap-2">
+                            <span className="text-blue-600">{course.code}</span> • {course.cohort_name || 'Sin cohorte activa'}
+                        </p>
+                    </div>
+                </header>
+
+                <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <DSMetric label="Inscritos" value={String(stats?.total_enrolled ?? 0)} trend="+5 esta semana" tone="blue" icon={Users} />
+                    <DSMetric label="Finalización" value={`${stats?.completion_rate ?? 0}%`} trend="Target 90%" tone="emerald" icon={CheckCircle2} />
+                    <DSMetric label="Promedio" value={String(stats?.average_grade ?? 0)} trend="Sobre 100" tone="amber" icon={TrendingUp} />
+                    <DSMetric label="Lecciones" value={String(course.lessons_count ?? 0)} trend="Activas" tone="purple" icon={BookOpen} />
+                </section>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2 space-y-8">
+                        <DSCard title="Estado de Alistamiento Académico">
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="size-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
+                                            <Calendar size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Periodo de Inscripción</p>
+                                            <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">Abierto hasta 30 Mayo, 2026</p>
+                                        </div>
+                                    </div>
+                                    <DSBadge variant="success">ACTIVO</DSBadge>
+                                </div>
+                                
+                                <div className="h-px bg-slate-100 dark:bg-white/5" />
+
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="size-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
+                                            <FileText size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Malla Curricular</p>
+                                            <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">9 de 10 lecciones con contenido</p>
+                                        </div>
+                                    </div>
+                                    <DSBadge variant="warning">REVISIÓN</DSBadge>
+                                </div>
+                            </div>
+                        </DSCard>
+
+                        <DSCard title="Actas y Certificación">
+                            <div className="p-8 text-center bg-slate-50 dark:bg-white/5 rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10">
+                                <ShieldCheck size={48} className="mx-auto text-slate-300 mb-4" />
+                                <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest">Sin actas de cierre emitidas</h4>
+                                <p className="text-[11px] text-slate-500 mt-2 font-medium">Las actas se generan automáticamente al finalizar el periodo académico del programa formal.</p>
+                            </div>
+                        </DSCard>
+                    </div>
+
+                    <div className="space-y-8">
+                        <DSCard title="Acciones de Control">
+                            <div className="space-y-3">
+                                <button className="w-full flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-white/5 hover:bg-blue-600 hover:text-white transition-all group">
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Ver Reporte de Asistencia</span>
+                                    <ChevronRight size={14} className="text-slate-400 group-hover:text-white" />
+                                </button>
+                                <button className="w-full flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-white/5 hover:bg-blue-600 hover:text-white transition-all group">
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Auditar Evaluaciones</span>
+                                    <ChevronRight size={14} className="text-slate-400 group-hover:text-white" />
+                                </button>
+                                <button className="w-full flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-white/5 hover:bg-blue-600 hover:text-white transition-all group">
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Lista de Espera</span>
+                                    <ChevronRight size={14} className="text-slate-400 group-hover:text-white" />
+                                </button>
+                            </div>
+                        </DSCard>
+
+                        <div className="bg-indigo-600 rounded-[2.5rem] p-8 text-white space-y-4 shadow-xl shadow-indigo-500/20">
+                            <h4 className="text-lg font-black uppercase tracking-tight">Optimus Coach</h4>
+                            <p className="text-[11px] text-indigo-100 font-medium leading-relaxed">
+                                Este curso tiene un 15% más de participación que el promedio. Recomiendo abrir una segunda cohorte para el próximo periodo.
+                            </p>
+                            <button className="text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 bg-white/20 rounded-xl hover:bg-white/30 transition-all">
+                                Ver Análisis IA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+}

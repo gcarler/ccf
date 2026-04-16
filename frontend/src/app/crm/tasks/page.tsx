@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     CheckSquare,
     Circle,
@@ -78,7 +79,7 @@ function TaskCard({ task, onClick, onStatusChange }: { task: PastoralTask; onCli
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             whileHover={{ y: -2 }}
-            onClick={onClick}
+            onClick={() => window.location.href = `/crm/tasks/${task.id}`}
             className="p-4 bg-white dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group"
         >
             <div className="flex items-start gap-3">
@@ -121,6 +122,7 @@ function TaskCard({ task, onClick, onStatusChange }: { task: PastoralTask; onCli
 
 // ─── Main ────────────────────────────────────────────────
 export default function CrmTasksPage() {
+    const router = useRouter();
     const { token } = useAuth();
     const { addToast } = useToast();
     const [tasks, setTasks] = useState<PastoralTask[]>([]);
@@ -338,7 +340,7 @@ export default function CrmTasksPage() {
                         ) : tasks.map(task => (
                             <div
                                 key={task.id}
-                                onClick={() => { setSelectedTask(task); setIsDetailOpen(true); }}
+                                onClick={() => router.push(`/crm/tasks/${task.id}`)}
                                 className="flex items-center gap-4 p-4 bg-white dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer group"
                             >
                                 <button
@@ -384,7 +386,7 @@ export default function CrmTasksPage() {
                                     return (
                                         <tr
                                             key={task.id}
-                                            onClick={() => { setSelectedTask(task); setIsDetailOpen(true); }}
+                                            onClick={() => router.push(`/crm/tasks/${task.id}`)}
                                             className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer transition-colors"
                                         >
                                             <td className="py-3 px-3 text-[13px] font-bold text-slate-800 dark:text-white max-w-[250px] truncate">{task.title}</td>

@@ -25,7 +25,11 @@ import {
     Layers,
     Monitor,
     MoreHorizontal,
-    Search
+    Search,
+    PieChart,
+    UserPlus,
+    Scan,
+    MessageCircle
 } from 'lucide-react';
 
 export default function CrmSidebar() {
@@ -108,6 +112,7 @@ export default function CrmSidebar() {
                 <div className="flex-1 overflow-y-auto px-2 py-2 space-y-6 scrollbar-thin scrollbar-thumb-white/10">
                     <div className="space-y-0.5">
                         {navItem('/crm', <LayoutDashboard />, 'Inicio')}
+                        {navItem('/crm/analytics', <PieChart />, 'Analítica', 'text-blue-400')}
                         {navItem('/crm/messaging', <Inbox />, 'Bandeja de entrada')}
                         {navItem('/crm/tasks', <CheckCircle2 />, 'Mis tareas', 'text-emerald-500')}
                         <button className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[13px] text-slate-500 hover:text-slate-300 transition-colors">
@@ -123,6 +128,7 @@ export default function CrmSidebar() {
                             <ChevronRight size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
                         {navItem('/crm/pipeline', <Target />, 'Proyectos', 'text-cu-blue')}
+                        {navItem('/crm/contacts', <UserPlus />, 'Leads/Contactos', 'text-amber-400')}
                     </div>
 
                     {/* ESPACIOS */}
@@ -146,6 +152,7 @@ export default function CrmSidebar() {
                                 <div className="ml-6 space-y-0.5 border-l border-white/5 pl-2">
                                     {navItem('/crm/pipeline', <Layers />, 'Consolidación')}
                                     {navItem('/crm/counseling', <Heart />, 'Consejería')}
+                                    {navItem('/crm/prayers', <MessageCircle />, 'Muro de Oración')}
                                     {navItem('/crm/groups', <HouseIcon />, 'Casas de Gloria')}
                                 </div>
                             )}
@@ -166,6 +173,7 @@ export default function CrmSidebar() {
                                     {navItem('/crm/members', <Users />, 'Miembros')}
                                     {navItem('/crm/volunteers', <ShieldCheck />, 'Servidores')}
                                     {navItem('/crm/events', <Calendar />, 'Eventos')}
+                                    {navItem('/crm/scanner', <Scan />, 'Escáner ASST')}
                                 </div>
                             )}
                         </div>
@@ -181,4 +189,3 @@ export default function CrmSidebar() {
         </div>
     );
 }
-

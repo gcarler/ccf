@@ -70,7 +70,7 @@ export default function CrmLayout({
     const pathname = usePathname();
 
     const getSidebarTitle = () => {
-        if (!pathname || pathname === '/crm') return 'CRM / Dashboard';
+        if (pathname === '/crm') return 'CRM Pastoral';
         const segments = pathname.split('/');
         const last = segments[segments.length - 1];
         return `CRM / ${last.charAt(0).toUpperCase() + last.slice(1)}`;
@@ -81,7 +81,7 @@ export default function CrmLayout({
             sidebarTitle={getSidebarTitle()} 
             sidebarSections={SIDEBAR_SECTIONS}
         >
-            <div className="bg-[#f8f9fb] min-h-full">
+            <div className="bg-white dark:bg-[#1e1f21] h-full overflow-hidden">
                 {children}
             </div>
         </WorkspaceLayout>

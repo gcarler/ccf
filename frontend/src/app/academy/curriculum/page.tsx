@@ -2,6 +2,7 @@
 
 import clsx from 'clsx';
 import React, { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { BookOpen, CheckCircle, Link as LinkIcon, PlusCircle, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -12,6 +13,7 @@ import CommunityToolbarChip from '@/components/community/ToolbarChip';
 const filters = ['Todos', 'En progreso', 'Finalizados'];
 
 export default function StudentCurriculum() {
+    const router = useRouter();
     const { isAuthenticated } = useAuth();
     const { enrollments, loading, error } = useStudentEnrollments();
     const [activeFilter, setActiveFilter] = useState('Todos');
@@ -82,7 +84,11 @@ export default function StudentCurriculum() {
                 )}
                 <div className="px-6 pb-8 space-y-4">
                         {filtered.map((enrollment) => (
-                            <article key={enrollment.id} className="bg-slate-50 dark:bg-white/5 rounded-[2rem] p-5 border border-slate-100 dark:border-white/10 flex items-center gap-4 group">
+                            <article 
+                                key={enrollment.id} 
+                                onClick={() => router.push(`/academy/course/${enrollment.course.id}`)}
+                                className="bg-slate-50 dark:bg-white/5 rounded-[2rem] p-5 border border-slate-100 dark:border-white/10 flex items-center gap-4 group cursor-pointer hover:shadow-lg transition-all"
+                            >
                                 <div className="text-slate-400 group-hover:text-primary transition-colors p-2">
                                     <BookOpen size={20} />
                                 </div>

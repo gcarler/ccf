@@ -3,7 +3,8 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, create_model
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, create_model, model_validator
+from backend.core.context import user_role_context
 
 orm_config: ConfigDict = ConfigDict(from_attributes=True)
 
@@ -310,7 +311,9 @@ class AssessmentQuestion(BaseModel):
 
 class Assessment(BaseModel):
     id: int
+    course_id: Optional[int] = None
     title: str = "Assessment"
+    description: Optional[str] = None
     min_score: float = 70
     weight: float = 1.0
     questions: List[AssessmentQuestion] = Field(default_factory=list)
@@ -518,9 +521,18 @@ class CounselingTicket(CounselingTicketBase):
     created_at: datetime
     model_config = orm_config
 
+    @model_validator(mode='after')
+    def restrict_counseling_notes(self) -> 'CounselingTicket':
+        from backend.auth import is_crm_privileged
+        role = user_role_context.get()
+        if role and not is_crm_privileged(role):
+            self.notes = "[RESTRINGIDO - SOLO PASTORES/ADMIN]"
+        return self
+
 class PrayerRequestBase(BaseModel):
     requester_name: str
     request_text: str
+    category: str = "General"
     is_public: bool = False
     status: str = "pending"
 
@@ -544,6 +556,9 @@ class DonationCreate(DonationBase):
 
 class Donation(DonationBase):
     id: int
+    status: str = "completed"
+    reference_code: Optional[str] = None
+    payment_method: str = "Transferencia"
     created_at: datetime
     model_config = orm_config
 
@@ -608,6 +623,17 @@ class Member(BaseModel):
     pastoral_notes: Optional[str] = None
     created_at: datetime
     model_config = orm_config
+
+    @model_validator(mode='after')
+    def restrict_crm_fields(self) -> 'Member':
+        from backend.auth import is_crm_privileged
+        role = user_role_context.get()
+        if role and not is_crm_privileged(role):
+            self.pastoral_notes = "[RESTRINGIDO]"
+            self.spiritual_health = 0.0
+            self.talents = "[RESTRINGIDO]"
+            self.spiritual_gifts = "[RESTRINGIDO]"
+        return self
 
 class Family(BaseModel):
     id: int
@@ -682,6 +708,18 @@ class PastoralCallLogCreate(BaseModel):
     lead_id: int
     pastor_id: int
     outcome: str
+    duration_seconds: int = 0
+
+
+class PastoralCallLog(BaseModel):
+    id: int
+    lead_id: int
+    pastor_id: int
+    outcome: str
+    notes: Optional[str] = None
+    duration_seconds: int = 0
+    created_at: datetime
+    model_config = orm_config
 
 
 class AgentTaskCreate(BaseModel):
@@ -731,6 +769,8 @@ class AdminAuditLog(BaseModel):
     action: str
     resource_type: Optional[str] = None
     resource_id: Optional[str] = None
+    ip_address: Optional[str] = None
+    severity: str = "info"
     metadata: Dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
     model_config = orm_config
@@ -837,6 +877,7 @@ class CmsMediaRead(BaseModel):
     id: int
     url: str
     alt_text: Optional[str] = None
+    dimensions: Optional[str] = None
     section: str
     tags: List[str] = Field(default_factory=list)
     created_by: Optional[int] = None
@@ -1091,6 +1132,9 @@ class Donation(BaseModel):
     id: int
     amount: float
     donor_name: Optional[str] = None
+    status: str = "completed"
+    reference_code: Optional[str] = None
+    payment_method: str = "Transferencia"
     created_at: datetime
     model_config = orm_config
 
