@@ -84,11 +84,9 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
     response = await nativeFetch(url, { ...init, signal: controller.signal });
   } catch (err: any) {
     clearTimeout(timeoutId);
-    // Network error or abort — do NOT redirect to login, just throw
-    if (err.name === 'AbortError') {
-      throw new ApiError('Request timed out', 0, err);
-    }
-    throw new ApiError(err.message || 'Network error', 0, err);
+    const errorMsg = err.name === 'AbortError' ? 'Request timed out' : (err.message || 'Network error');
+    console.error(`[API_NETWORK_ERROR] ${method} ${path}:`, err);
+    throw new ApiError(errorMsg, 0, err);
   } finally {
     clearTimeout(timeoutId);
   }
@@ -97,7 +95,7 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   const parsed = raw ? safeJsonParse(raw) : undefined;
 
   if (response.status === 401) {
-    // ONLY REDIRECT TO LOGIN IF /auth/me FAILS (CRITICAL AUTH PATH)
+    console.warn(`[API_UNAUTHORIZED] ${path}`);
     if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && path.includes('/auth/me')) {
        localStorage.removeItem('ccf_token');
        window.location.href = '/login?expired=true';
@@ -106,6 +104,7 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   }
 
   if (!response.ok) {
+    console.error(`[API_FAILURE] ${response.status} ${method} ${path}:`, parsed);
     throw new ApiError(response.statusText || "Request failed", response.status, parsed);
   }
 

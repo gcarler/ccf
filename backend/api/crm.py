@@ -5,7 +5,13 @@ import uuid
 from datetime import datetime
 from backend import crud, schemas, models
 from backend.core.database import get_db
-from backend.auth import get_current_user, require_admin, require_pastor_or_admin
+from backend.auth import (
+    get_current_user, 
+    require_admin, 
+    require_pastor_or_admin, 
+    require_staff_or_admin,
+    require_coordinator_or_admin
+)
 from backend.core.audit import record_admin_action
 
 router = APIRouter(tags=["CRM"])
@@ -16,7 +22,7 @@ router = APIRouter(tags=["CRM"])
 def list_members(
     search: Optional[str] = None, 
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     """Lista miembros con tipado estricto y búsqueda optimizada."""
     return crud.search_members(db, search=search)
@@ -25,7 +31,7 @@ def list_members(
 def create_member(
     payload: schemas.MemberCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     """Registra un nuevo miembro en el CRM."""
     return crud.create_member(db, payload)
@@ -33,7 +39,7 @@ def create_member(
 @router.get("/members/me", response_model=dict)
 def get_my_crm_card(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     """Devuelve la tarjeta de miembro del usuario actual."""
     member = crud.get_members(db, search=current_user.email)
@@ -58,7 +64,7 @@ def get_my_crm_card(
 def get_member(
     member_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     member = db.query(models.Member).filter(models.Member.id == member_id).first()
     if not member:
@@ -70,7 +76,7 @@ def update_member(
     member_id: int,
     payload: schemas.MemberUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     """Actualiza datos de un miembro con persistencia y auditoría."""
     member = crud.update_member(db, member_id=member_id, payload=payload)
@@ -104,7 +110,7 @@ def delete_member(
 def get_member_communications(
     member_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     return db.query(models.CommunicationLog).filter(models.CommunicationLog.member_id == member_id).all()
 
@@ -112,7 +118,7 @@ def get_member_communications(
 def list_member_donations(
     member_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     return crud.get_member_donations(db, member_id=member_id)
 
@@ -120,7 +126,7 @@ def list_member_donations(
 def get_member_growth_timeline(
     member_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     """Devuelve la línea de tiempo unificada (Academia, Consejería, Comunicaciones)."""
     return crud.get_member_timeline(db, member_id=member_id)
@@ -131,7 +137,7 @@ def get_member_growth_timeline(
 def list_families(
     skip: int = 0, limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     return crud.get_families(db, skip=skip, limit=limit)
 
@@ -139,7 +145,7 @@ def list_families(
 def create_new_family(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     name = payload.get("name")
     if not name:
@@ -151,7 +157,7 @@ def create_new_family(
 def get_family(
     family_id: int, 
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     return crud.get_family_members(db, family_id=family_id)
 
@@ -161,7 +167,7 @@ def get_family(
 def get_pipeline(
     stage: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     leads = crud.get_pipeline_leads(db, stage=stage)
     result = []
@@ -183,7 +189,7 @@ def get_pipeline(
 def get_pipeline_lead(
     lead_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     """Obtiene el detalle de un prospecto específico."""
     lead = db.query(models.ConsolidationPipeline).filter(models.ConsolidationPipeline.id == lead_id).first()
@@ -206,7 +212,7 @@ def update_pipeline_lead(
     lead_id: int,
     payload: schemas.ConsolidationPipelineUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     lead = crud.update_pipeline_lead(db, lead_id=lead_id, payload=payload)
     if not lead:
@@ -227,7 +233,7 @@ def update_pipeline_lead(
 def get_pipeline_lead_audit(
     lead_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     """Retrieve the audit trail for a specific pipeline lead."""
     logs = db.query(models.AdminAuditLog).filter(
@@ -240,7 +246,7 @@ def get_pipeline_lead_audit(
 def get_lead_calls(
     lead_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     logs = crud.get_pastoral_call_logs(db, lead_id)
     return [{"id": l.id, "outcome": l.outcome, "notes": l.notes, "created_at": l.created_at} for l in logs]
@@ -251,7 +257,7 @@ def get_lead_calls(
 def list_events(
     skip: int = 0, limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     return crud.get_crm_events(db, skip=skip, limit=limit)
 
@@ -259,7 +265,7 @@ def list_events(
 def create_event(
     payload: schemas.CrmEventCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     event = crud.create_crm_event(db, payload)
     record_admin_action(db, current_user, action="create_event", resource_type="event", resource_id=str(event.id))
@@ -269,7 +275,7 @@ def create_event(
 def register_attendance(
     payload: schemas.EventAttendanceCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     return crud.create_event_attendance(db, payload)
 
@@ -277,7 +283,7 @@ def register_attendance(
 def register_bulk_attendance(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     event_id = payload.get("event_id")
     member_ids = payload.get("member_ids", [])
@@ -312,7 +318,7 @@ def list_counseling_tickets(
 def get_counseling_by_lead(
     lead_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     """Devuelve sesiones de consejería asociadas a un prospecto (por lead_id o member_id combinado)."""
     try:
@@ -357,7 +363,7 @@ def update_counseling_ticket(
 def list_prayer_requests(
     status: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     return crud.get_prayer_requests(db, status=status)
 
@@ -365,7 +371,7 @@ def list_prayer_requests(
 def create_prayer_request(
     payload: schemas.PrayerRequestCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     return crud.create_prayer_request(db, payload)
 
@@ -374,7 +380,7 @@ def update_prayer_request(
     request_id: int,
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     """Actualiza estado de una petición de oración (pending/praying/answered)."""
     req = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
@@ -398,7 +404,7 @@ def update_prayer_request(
 @router.get("/glory-houses", response_model=List[schemas.GloryHouse])
 def list_glory_houses(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     return crud.get_glory_houses(db)
 
@@ -417,7 +423,7 @@ def get_messaging_history(
     member_id: Optional[int] = None,
     limit: int = 50,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     """Devuelve el historial de mensajes enviados. Filtra por member_id si se provee."""
     try:
@@ -449,7 +455,7 @@ def get_messaging_history(
 async def send_crm_message(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     from backend.services.messaging import MessagingGateway
     member_id = payload.get("member_id")
@@ -473,7 +479,7 @@ def list_crm_tasks(
     assignee_id: Optional[int] = None,
     member_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     """Lista todas las tareas pastorales. Filtra por status, assignee_id o member_id."""
     try:
@@ -513,7 +519,7 @@ def list_crm_tasks(
 def create_crm_task(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     """Crea una nueva tarea pastoral. Accesible a todos los usuarios autenticados."""
     try:
@@ -551,7 +557,7 @@ def update_crm_task(
     task_id: int,
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     task = db.query(models.CrmTask).filter(models.CrmTask.id == task_id).first()
     if not task:
@@ -583,7 +589,7 @@ def update_crm_task(
 def list_volunteer_shifts(
     member_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     return crud.get_volunteer_shifts(db, member_id=member_id)
 
@@ -599,7 +605,7 @@ def create_shift(
 def apply_volunteer(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     """Registra la postulación de un miembro a un equipo de voluntariado."""
     try:
@@ -649,7 +655,7 @@ def update_crm_settings(
 def validate_scanner_token(
     token: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_pastor_or_admin)
 ):
     """Valida un código QR de asistencia y registra el ingreso."""
     # Formato esperado: CCF-MBR-{id}-{secret}
@@ -683,7 +689,7 @@ def validate_scanner_token(
 def pipeline_alias(
     stage: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Alias de /consolidation/pipeline para compatibilidad de frontend."""
     return get_pipeline(stage=stage, db=db, current_user=current_user)
@@ -692,7 +698,7 @@ def pipeline_alias(
 @router.get("/groups", response_model=list)
 def groups_alias(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Alias de /glory-houses para compatibilidad de frontend."""
     houses = list_glory_houses(db=db, current_user=current_user)
@@ -717,7 +723,7 @@ def groups_alias(
 @router.get("/volunteers", response_model=list)
 def volunteers_alias(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Alias de /volunteers/shifts para compatibilidad de frontend."""
     return list_volunteer_shifts(member_id=None, db=db, current_user=current_user)
@@ -726,7 +732,7 @@ def volunteers_alias(
 @router.get("/prayers", response_model=list)
 def prayers_alias(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Alias de /prayer-requests/ para compatibilidad de frontend."""
     requests_list = list_prayer_requests(status=None, db=db, current_user=current_user)
@@ -746,7 +752,7 @@ def prayers_alias(
 @router.get("/analytics", response_model=dict)
 def crm_analytics(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Métricas agregadas del CRM para el dashboard de analíticas."""
     from sqlalchemy import func as sqlfunc

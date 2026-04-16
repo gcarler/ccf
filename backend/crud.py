@@ -7,7 +7,7 @@ from types import SimpleNamespace
 from typing import Any, Optional, List
 
 from sqlalchemy import or_, func, text
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from backend import models, schemas
 from backend.content_defaults import PAGE_CONTENT_DEFAULTS
@@ -203,21 +203,21 @@ def search_members(
 
     members = query.offset(skip).limit(limit).all()
     
-    # Enriquecimiento con métricas de "Calidad" (Tres Factores: Datos/Inteligencia)
+    # Batch progress calculation to avoid N+1 queries
+    user_ids = [m.user_id for m in members if m.user_id]
+    progress_map = {}
+    if user_ids:
+        progress_data = db.query(
+            models.Enrollment.user_id,
+            func.avg(models.Enrollment.progress_percent)
+        ).filter(models.Enrollment.user_id.in_(user_ids)).group_by(models.Enrollment.user_id).all()
+        progress_map = {uid: avg for uid, avg in progress_data}
+
     for m in members:
-        # 1. Mock de Salud Espiritual (basado en interacciones recientes)
-        # En producción esto sería un score real de la IA
+        # Mock Spiritual Health (Producción: IA real)
         m.spiritual_health = 0.5 + (abs(hash(m.first_name)) % 50) / 100.0
-        
-        # 2. Academy Progress Real
-        if m.user_id:
-            enrollments = db.query(models.Enrollment).filter(models.Enrollment.user_id == m.user_id).all()
-            if enrollments:
-                m.academy_progress = sum(e.progress_percent for e in enrollments) / len(enrollments)
-            else:
-                m.academy_progress = 0.0
-        else:
-            m.academy_progress = 0.0
+        # Real Academy Progress
+        m.academy_progress = float(progress_map.get(m.user_id, 0.0))
             
     return members
 
@@ -305,15 +305,21 @@ def get_courses(
 
     courses = query.offset(skip).limit(limit).all()
 
-    # Enrich with counts
-    for course in courses:
-        stats = db.query(
+    # Batch enrichment of stats to avoid N+1 queries
+    course_ids = [c.id for c in courses]
+    stats_map = {}
+    if course_ids:
+        stats_data = db.query(
+            models.Lesson.course_id,
             func.count(models.Lesson.id),
             func.sum(models.Lesson.duration_minutes)
-        ).filter(models.Lesson.course_id == course.id).first()
+        ).filter(models.Lesson.course_id.in_(course_ids)).group_by(models.Lesson.course_id).all()
+        stats_map = {cid: (count, minutes) for cid, count, minutes in stats_data}
 
-        course.lesson_count = stats[0] or 0
-        course.total_minutes = stats[1] or 0
+    for course in courses:
+        c_stats = stats_map.get(course.id, (0, 0))
+        course.lesson_count = c_stats[0]
+        course.total_minutes = c_stats[1] or 0
 
     return courses
 
@@ -351,7 +357,7 @@ def get_enrollment(db: Session, enrollment_id: int):
 
 
 def get_enrollments_by_user(db: Session, user_id: int):
-    return db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
+    return db.query(models.Enrollment).options(joinedload(models.Enrollment.course)).filter(models.Enrollment.user_id == user_id).all()
 
 
 def get_assessment(db: Session, assessment_id: int):

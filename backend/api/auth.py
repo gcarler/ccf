@@ -21,6 +21,7 @@ from backend.auth import (
 )
 from backend.core.config import get_settings
 from backend.core.database import get_db
+from backend.core.rate_limit import rate_limiter
 
 settings = get_settings()
 log = logging.getLogger(__name__)
@@ -28,7 +29,7 @@ log = logging.getLogger(__name__)
 router = APIRouter(tags=["Autenticacion"])
 
 
-@router.post("/login", response_model=schemas.Token)
+@router.post("/login", response_model=schemas.Token, dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))])
 def login(
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -115,7 +116,7 @@ def logout(response: Response):
     response.delete_cookie(settings.access_token_cookie_name)
 
 
-@router.post("/register", response_model=schemas.User)
+@router.post("/register", response_model=schemas.User, dependencies=[Depends(rate_limiter(limit=5, window_seconds=60))])
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     """Registro de nuevos miembros."""
     db_user = crud.get_user_by_email(db, email=user.email)

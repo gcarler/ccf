@@ -11,7 +11,14 @@ from pydantic import BaseModel
 from backend import crud
 from backend import models
 from backend import schemas
-from backend.auth import normalize_role, require_active_user, require_staff_or_admin, role_in
+from backend.auth import (
+    normalize_role, 
+    require_active_user, 
+    require_staff_or_admin, 
+    require_teacher_or_admin, 
+    require_coordinator_or_admin,
+    role_in
+)
 from backend.core.audit import record_admin_action
 from backend.core.config import get_settings
 from backend.core.database import get_db
@@ -154,7 +161,7 @@ def record_bulk_attendance(
     course_id: int,
     payload: schemas.BulkAttendanceCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_staff_or_admin),
+    current_user: models.User = Depends(require_coordinator_or_admin),
 ):
     # Verify course exists
     course = db.query(models.Course).filter(models.Course.id == course_id).first()
@@ -207,7 +214,7 @@ def validate_certificate(code: str, db: Session = Depends(get_db)):
 @router.get("/dashboard/metrics", response_model=schemas.DashboardMetrics)
 def get_dashboard_metrics(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_staff_or_admin),
+    current_user: models.User = Depends(require_coordinator_or_admin),
 ):
     return crud.get_dashboard_metrics(db)
 
@@ -215,7 +222,7 @@ def get_dashboard_metrics(
 @router.get("/dashboard/pilot-readiness", response_model=schemas.PilotReadiness)
 def get_pilot_readiness(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_staff_or_admin),
+    current_user: models.User = Depends(require_coordinator_or_admin),
 ):
     return crud.get_pilot_readiness(db)
 
@@ -225,7 +232,7 @@ def close_formal_acta(
     course_id: int,
     payload: schemas.FormalActaCloseRequest,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_staff_or_admin),
+    current_user: models.User = Depends(require_coordinator_or_admin),
 ):
     acta = crud.close_formal_acta(
         db,
@@ -336,7 +343,7 @@ async def upload_resource(
     title: str,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_staff_or_admin),
+    current_user: models.User = Depends(require_coordinator_or_admin),
 ):
     original_name = file.filename or "resource"
     sanitized = sanitize_filename(cast(str, original_name))
@@ -412,7 +419,7 @@ async def submit_assignment_file(
 def admin_list_submissions(
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_staff_or_admin),
+    current_user: models.User = Depends(require_coordinator_or_admin),
 ):
     rows = crud.list_assignment_submissions_with_meta(db, limit=limit)
     return [_serialize_submission_review(row) for row in rows]
@@ -424,7 +431,7 @@ def admin_grade_submission(
     grade: Optional[float] = Query(None),
     feedback: Optional[str] = Query(None),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_staff_or_admin),
+    current_user: models.User = Depends(require_coordinator_or_admin),
 ):
     if grade is None and feedback is None:
         raise HTTPException(status_code=400, detail="grade or feedback required")
@@ -442,7 +449,7 @@ def admin_grade_submission(
 @router.post("/certificates/sync", response_model=List[schemas.Certificate])
 def sync_certificates(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_staff_or_admin),
+    current_user: models.User = Depends(require_coordinator_or_admin),
 ):
     issued = crud.issue_pending_certificates(db)
     record_admin_action(
@@ -480,7 +487,7 @@ def get_my_academy_profile(
 @router.get("/analytics/candidates", response_model=List[schemas.User])
 def get_academy_candidates(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_staff_or_admin)
+    current_user: models.User = Depends(require_coordinator_or_admin)
 ):
     return crud.get_academy_candidates(db)
 
@@ -492,7 +499,7 @@ def get_academy_candidates(
 def get_member_academy_profile(
     member_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_staff_or_admin)
+    current_user: models.User = Depends(require_coordinator_or_admin)
 ):
     """Obtiene el perfil académico de un miembro del CRM."""
     member = db.query(models.Member).filter(models.Member.id == member_id).first()
@@ -525,7 +532,7 @@ def create_academy_account(
     member_id: int,
     payload: CreateAcademyAccountRequest,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_staff_or_admin)
+    current_user: models.User = Depends(require_coordinator_or_admin)
 ):
     """Crea una cuenta de usuario (Academia) para un miembro del CRM."""
     member = db.query(models.Member).filter(models.Member.id == member_id).first()

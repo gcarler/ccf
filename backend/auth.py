@@ -154,12 +154,23 @@ async def require_staff_or_admin(
     return current_user
 
 
-async def require_pastor_or_admin(
+async def require_teacher_or_admin(
     current_user: schemas.User = Depends(get_current_active_user)
 ):
-    if not role_in(current_user.role, {"admin", "pastor"}):
+    if not role_in(current_user.role, {"admin", "docente", "pastor"}):
         raise HTTPException(
             status_code=403,
-            detail="Acceso restringido a administradores y pastores"
+            detail="Acceso restringido a administradores y docentes"
+        )
+    return current_user
+
+
+async def require_coordinator_or_admin(
+    current_user: schemas.User = Depends(get_current_active_user)
+):
+    if not role_in(current_user.role, {"admin", "coordinador", "pastor"}):
+        raise HTTPException(
+            status_code=403,
+            detail="Acceso restringido a coordinadores y administradores"
         )
     return current_user

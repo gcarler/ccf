@@ -6,17 +6,19 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from backend import crud, schemas, models
-from backend.auth import require_admin
+from backend.auth import require_admin, require_active_user
 from backend.core.database import get_db
+from backend.core.rate_limit import rate_limiter
 
 
 router = APIRouter(prefix="/donations", tags=["donations"])
 
 
-@router.post("/", response_model=schemas.Donation)
+@router.post("/", response_model=schemas.Donation, dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))])
 def create_donation(
     payload: schemas.DonationCreate,
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
 ):
     created = crud.create_donation(db, payload)
     return created
