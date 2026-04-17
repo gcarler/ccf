@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import AdminShell from '@/components/admin/AdminShell';
@@ -19,6 +20,7 @@ interface AuditLog {
 }
 
 export default function SecurityAuditPage() {
+    const router = useRouter();
     const { token, isAuthenticated } = useAuth();
     const [logs, setLogs] = useState<AuditLog[]>([]);
     const [loading, setLoading] = useState(true);
@@ -121,6 +123,7 @@ export default function SecurityAuditPage() {
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: idx * 0.05 }}
                                             key={log.id}
+                                            onClick={() => router.push(`/admin/audit/${log.id}`)}
                                             className="group flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-xl bg-black/40 border border-emerald-900/20 hover:border-emerald-500/50 hover:bg-emerald-950/20 transition-all cursor-crosshair"
                                         >
                                             <div className="flex items-center gap-4 w-full md:w-auto md:min-w-[200px] shrink-0">
@@ -146,7 +149,10 @@ export default function SecurityAuditPage() {
                                                 <div className="text-[9px] text-emerald-600/50 uppercase tracking-widest hidden lg:block truncate max-w-[200px]">
                                                     {JSON.stringify(log.metadata)}
                                                 </div>
-                                                <button className="p-2 bg-emerald-950/50 rounded-lg text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-emerald-900">
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); router.push(`/admin/audit/${log.id}`); }}
+                                                    className="p-2 bg-emerald-950/50 rounded-lg text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-emerald-900"
+                                                >
                                                     <Eye size={14} />
                                                 </button>
                                             </div>
@@ -168,3 +174,4 @@ export default function SecurityAuditPage() {
         </AdminShell>
     );
 }
+

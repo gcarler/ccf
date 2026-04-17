@@ -119,7 +119,12 @@ app.include_router(graph.router, prefix="/api", tags=["graph"])
 def read_root():
     return {
         "status": "online",
+        "message": "CCF Mesh API is running",
         "ministerio": "CCF El Faro",
         "engine": "Optimus 3.0-Quality",
         "uptime": True
     }
+
+@app.get("/healthz")
+def health_check():
+    return {"status": "ok", "version": "3.0.0-PRO"}

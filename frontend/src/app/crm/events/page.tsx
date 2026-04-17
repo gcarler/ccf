@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { Plus, Calendar, Check, Users, Clock, MoreHorizontal, Link2, X as CloseIcon } from 'lucide-react';
+import { Plus, Calendar, Check, Users, Clock, MoreHorizontal, Link2, X as CloseIcon, ArrowRight } from 'lucide-react';
 import ViewSwitcher, { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import CrmShell from '@/components/crm/CrmShell';
 import AdminHero from '@/components/admin/AdminHero';
@@ -490,3 +490,4 @@ export default function EventsPage() {
         </CrmShell>
     );
 }
+

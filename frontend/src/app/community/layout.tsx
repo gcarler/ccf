@@ -52,3 +52,4 @@ export default function CommunityLayout({ children }: { children: React.ReactNod
         </WorkspaceLayout>
     );
 }
+

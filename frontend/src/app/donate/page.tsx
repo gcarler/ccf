@@ -235,3 +235,4 @@ function TypeOption({ active, onClick, icon: Icon, label }: any) {
 }
 
 function Loader2({ size, className }: any) { return <Sparkles size={size} className={className} />; } // Simplified fallback
+

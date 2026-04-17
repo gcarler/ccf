@@ -41,7 +41,6 @@ export default function TaskDetailPage() {
         const loadTask = async () => {
             try {
                 setLoading(true);
-                // Try fetching from projects/tasks or generic tasks
                 const data = await apiFetch<any>(`/projects/tasks/${id}`, { token }).catch(() => null);
                 setTask(data || {
                     id,
@@ -88,17 +87,16 @@ export default function TaskDetailPage() {
                     <div className="lg:col-span-2 space-y-8">
                         <header className="space-y-4">
                             <div className="flex items-center gap-3">
-                                <DSBadge variant={task.priority === 'high' ? 'danger' : 'warning'}>
-                                    <Flag size={10} className="mr-1" /> {task.priority.toUpperCase()}
-                                </DSBadge>
-                                <DSBadge variant="indigo">{task.status.toUpperCase()}</DSBadge>
+                                <DSBadge tone={task.priority === 'high' ? 'violet' : 'amber'} label={task.priority.toUpperCase()} />
+                                <DSBadge tone="blue" label={task.status.toUpperCase()} />
                             </div>
                             <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight uppercase">
                                 {task.title}
                             </h1>
                         </header>
 
-                        <DSCard title="Descripción">
+                        <DSCard>
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Descripción</h3>
                             <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
                                 {task.description}
                             </p>

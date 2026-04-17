@@ -23,3 +23,4 @@ export default async function CRMDashboardPage() {
     const members = await fetchMembers();
     return <CRMClient initialMembers={members} />;
 }
+

@@ -315,3 +315,4 @@ function SpecItem({ label, value, icon: Icon }: any) {
         </div>
     );
 }
+

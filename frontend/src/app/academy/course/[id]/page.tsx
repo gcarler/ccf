@@ -28,6 +28,7 @@ import WorkspaceLayout from '@/components/WorkspaceLayout';
 import VideoPlayer from '@/components/academy/VideoPlayer';
 import Skeleton from '@/components/ui/Skeleton';
 import Tooltip from '@/components/ui/Tooltip';
+import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 

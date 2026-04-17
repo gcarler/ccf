@@ -60,6 +60,7 @@ export default function AcademyLayout({ children }: { children: React.ReactNode 
     const pathname = usePathname();
 
     const getSidebarTitle = () => {
+        if (!pathname) return 'Academia Faro';
         if (pathname === '/academy') return 'Academia Faro';
         if (pathname.includes('/course/')) return 'Currículo del Curso';
         const segments = pathname.split('/');
@@ -78,3 +79,4 @@ export default function AcademyLayout({ children }: { children: React.ReactNode 
         </WorkspaceLayout>
     );
 }
+

@@ -14,17 +14,19 @@ import {
     Tag,
     Info,
     History,
-    Link2
+    Link2,
+    Plus
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import DSCard from '@/design/components/DSCard';
-import DSBadge from '@/design/components/DSBadge';
+import { DSCard } from '@/design/components/DSCard';
+import { DSBadge } from '@/design/components/DSBadge';
 import { toast } from 'sonner';
 
 export default function CmsMediaDetailPage() {
-    const { id } = useParams();
+    const params = useParams();
+    const id = params?.id as string;
     const router = useRouter();
     const { token } = useAuth();
     
@@ -62,8 +64,8 @@ export default function CmsMediaDetailPage() {
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'CMS', icon: Layout, onClick: () => router.push('/cms') },
-                    { label: 'Media', icon: ImageIcon, onClick: () => router.push('/cms/media') },
+                    { label: 'CMS', icon: Layout, href: '/cms' },
+                    { label: 'Media', icon: ImageIcon, href: '/cms/media' },
                     { label: item.filename, icon: Info },
                 ]}
                 rightActions={
@@ -119,7 +121,8 @@ export default function CmsMediaDetailPage() {
                             </div>
                         </section>
 
-                        <DSCard title="Información Técnica">
+                        <DSCard>
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Información Técnica</h3>
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nombre de Archivo</p>
@@ -140,11 +143,12 @@ export default function CmsMediaDetailPage() {
                             </div>
                         </DSCard>
 
-                        <DSCard title="Etiquetas y Organización">
+                        <DSCard>
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Etiquetas y Organización</h3>
                             <div className="space-y-4">
                                 <div className="flex flex-wrap gap-2">
                                     {item.tags?.map((tag: string) => (
-                                        <DSBadge key={tag} variant="indigo">#{tag}</DSBadge>
+                                        <DSBadge key={tag} tone="blue" label={`#${tag}`} />
                                     ))}
                                     <button className="size-6 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-slate-400 hover:border-blue-500 hover:text-blue-500 transition-all">
                                         <Plus size={12} />
@@ -152,20 +156,6 @@ export default function CmsMediaDetailPage() {
                                 </div>
                             </div>
                         </DSCard>
-
-                        <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-[2rem] border border-slate-100 dark:border-white/5 space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                <Settings size={14} /> SEO y Accesibilidad
-                            </div>
-                            <div className="space-y-2">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Alt Text</p>
-                                <textarea 
-                                    placeholder="Describe la imagen para lectores de pantalla..."
-                                    className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-xs outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
-                                    rows={2}
-                                />
-                            </div>
-                        </div>
                     </div>
                 </div>
             </main>

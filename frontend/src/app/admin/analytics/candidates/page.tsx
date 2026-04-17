@@ -227,3 +227,4 @@ function CandidateStat({ label, value, icon: Icon, color, auraColor }: any) {
     );
 }
 
+

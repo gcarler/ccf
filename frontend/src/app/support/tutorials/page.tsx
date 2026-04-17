@@ -1,0 +1,109 @@
+"use client";
+
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { FileText, Play, Clock, Star, Filter, Search, BookMarked, ChevronRight, Lock } from 'lucide-react';
+import clsx from 'clsx';
+
+const TUTORIALS = [
+    { id: 1, title: 'Primeros pasos en CCF Platform', category: 'Inicio', duration: '5 min', level: 'Básico', views: 512, rating: 4.9, free: true, thumbnail: 'from-blue-500 to-indigo-600' },
+    { id: 2, title: 'Cómo usar el CRM Pastoral correctamente', category: 'CRM', duration: '12 min', level: 'Intermedio', views: 341, rating: 4.8, free: true, thumbnail: 'from-purple-500 to-pink-600' },
+    { id: 3, title: 'Gestionar el pipeline de consolidación paso a paso', category: 'CRM', duration: '18 min', level: 'Intermedio', views: 289, rating: 4.7, free: false, thumbnail: 'from-emerald-500 to-teal-600' },
+    { id: 4, title: 'Crear cursos y contenido en la Academia', category: 'Academia', duration: '22 min', level: 'Avanzado', views: 198, rating: 4.6, free: false, thumbnail: 'from-amber-500 to-orange-600' },
+    { id: 5, title: 'Configurar finanzas y transparencia', category: 'Finanzas', duration: '15 min', level: 'Intermedio', views: 167, rating: 4.5, free: true, thumbnail: 'from-rose-500 to-red-600' },
+    { id: 6, title: 'Administrar permisos y roles de usuario', category: 'Admin', duration: '10 min', level: 'Avanzado', views: 134, rating: 4.4, free: false, thumbnail: 'from-slate-500 to-gray-600' },
+];
+
+const LEVEL_COLOR: Record<string, string> = {
+    'Básico': 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10',
+    'Intermedio': 'text-amber-600 bg-amber-50 dark:bg-amber-500/10',
+    'Avanzado': 'text-rose-600 bg-rose-50 dark:bg-rose-500/10',
+};
+
+export default function SupportTutorialsPage() {
+    const [search, setSearch] = useState('');
+    const [selectedLevel, setSelectedLevel] = useState<string>('all');
+
+    const filtered = TUTORIALS.filter(t =>
+        (selectedLevel === 'all' || t.level === selectedLevel) &&
+        t.title.toLowerCase().includes(search.toLowerCase())
+    );
+
+    return (
+        <div className="h-full flex flex-col bg-slate-50 dark:bg-[#0f1117]">
+            <header className="h-14 border-b border-slate-200/60 dark:border-white/5 flex items-center px-6 gap-4 shrink-0 bg-white dark:bg-[#1a1d27]">
+                <FileText size={16} className="text-purple-500" />
+                <h1 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex-1">Tutoriales de la Plataforma</h1>
+                <div className="relative">
+                    <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input value={search} onChange={e => setSearch(e.target.value)}
+                        placeholder="Buscar tutorial..."
+                        className="pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-white/5 border-none rounded-xl text-[12px] focus:ring-2 focus:ring-purple-500/20 w-56 transition-all text-slate-700 dark:text-slate-200" />
+                </div>
+            </header>
+
+            {/* Level filter */}
+            <div className="flex items-center gap-2 px-6 py-3 border-b border-slate-200/60 dark:border-white/5 bg-white dark:bg-[#1a1d27] shrink-0">
+                <Filter size={12} className="text-slate-400" />
+                {['all', 'Básico', 'Intermedio', 'Avanzado'].map(level => (
+                    <button key={level} onClick={() => setSelectedLevel(level)}
+                        className={clsx("px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                            selectedLevel === level ? "bg-purple-50 dark:bg-purple-500/10 text-purple-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300")}>
+                        {level === 'all' ? 'Todos' : level}
+                    </button>
+                ))}
+                <span className="ml-auto text-[10px] text-slate-400">{filtered.length} tutoriales</span>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+                <div className="max-w-5xl mx-auto grid grid-cols-3 gap-5">
+                    {filtered.map((t, i) => (
+                        <motion.div
+                            key={t.id}
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.05 }}
+                            className="bg-white dark:bg-[#1a1d27] rounded-2xl border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group"
+                        >
+                            {/* Thumbnail */}
+                            <div className={`h-36 bg-gradient-to-br ${t.thumbnail} flex items-center justify-center relative`}>
+                                <div className="size-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center group-hover:scale-110 transition-all">
+                                    <Play size={22} className="text-white ml-0.5" />
+                                </div>
+                                {!t.free && (
+                                    <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 bg-black/40 backdrop-blur rounded-lg text-[9px] text-white font-black uppercase tracking-widest">
+                                        <Lock size={9} /> Pro
+                                    </div>
+                                )}
+                                <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 bg-black/40 backdrop-blur rounded-lg text-[9px] text-white font-bold">
+                                    <Clock size={9} /> {t.duration}
+                                </div>
+                            </div>
+
+                            <div className="p-4 space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest", LEVEL_COLOR[t.level])}>
+                                        {t.level}
+                                    </span>
+                                    <span className="text-[9px] text-slate-400 font-bold">{t.category}</span>
+                                </div>
+                                <p className="text-[13px] font-bold text-slate-700 dark:text-slate-200 leading-snug group-hover:text-purple-600 transition-colors">
+                                    {t.title}
+                                </p>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-1">
+                                        <Star size={11} className="text-amber-400 fill-amber-400" />
+                                        <span className="text-[11px] font-bold text-slate-500">{t.rating}</span>
+                                        <span className="text-[10px] text-slate-300 ml-1">{t.views} vistas</span>
+                                    </div>
+                                    <ChevronRight size={14} className="text-slate-300 group-hover:text-purple-500 transition-colors" />
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+

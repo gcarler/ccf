@@ -285,3 +285,4 @@ function ToggleSetting({ icon: Icon, color, title, desc, active, onToggle }: any
 function Loader2({ className, size = 24 }: any) {
     return <Activity size={size} className={clsx("animate-spin", className)} />;
 }
+

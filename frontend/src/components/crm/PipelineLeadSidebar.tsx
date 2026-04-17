@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     Phone, 
     MessageCircle, 
@@ -11,10 +11,16 @@ import {
     ChevronLeft,
     User,
     Mail,
-    Smartphone
+    Smartphone,
+    History,
+    Clock,
+    UserCircle2
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/http';
+import { STAGE_LABEL } from '@/app/crm/pipeline/constants';
 
 interface PipelineLeadSidebarProps {
     lead: any;
@@ -24,6 +30,28 @@ interface PipelineLeadSidebarProps {
 }
 
 export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onViewFullProfile }: PipelineLeadSidebarProps) {
+    const { token } = useAuth();
+    const [auditLogs, setAuditLogs] = useState<any[]>([]);
+    const [loadingAudit, setLoadingAudit] = useState(false);
+
+    useEffect(() => {
+        if (!lead?.id || !token) return;
+
+        const fetchAudit = async () => {
+            try {
+                setLoadingAudit(true);
+                const logs = await apiFetch<any[]>(`/consolidation/pipeline/${lead.id}/audit`, { token });
+                setAuditLogs(logs || []);
+            } catch (err) {
+                console.error("Error fetching audit:", err);
+            } finally {
+                setLoadingAudit(false);
+            }
+        };
+
+        fetchAudit();
+    }, [lead?.id, token]);
+
     if (!lead) return null;
 
     const currentStage = stages.find(s => s.value === lead.stage);
@@ -127,23 +155,62 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                     </div>
                 </section>
                 
-                {lead.notes && (
-                    <section className="space-y-4">
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
-                            <Mail size={14} className="text-blue-600" /> Notas de Captación
-                        </h3>
-                        <div className="p-6 bg-amber-50 dark:bg-amber-900/5 border border-amber-100 dark:border-amber-500/10 rounded-[2.2rem]">
-                            <p className="text-xs font-bold text-amber-900 dark:text-amber-200 leading-relaxed italic group-hover:not-italic transition-all">
-                                &quot;{lead.notes}&quot;
-                            </p>
-                        </div>
-                    </section>
-                )}
+
+
+                <section className="space-y-6 pb-12">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
+                        <History size={14} className="text-blue-600" /> Historial de Actividad
+                    </h3>
+                    
+                    <div className="relative pl-4 space-y-8 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-px before:bg-slate-100 dark:before:bg-white/5">
+                        <AnimatePresence mode="popLayout">
+                            {auditLogs.length > 0 ? (
+                                auditLogs.map((log, idx) => (
+                                    <motion.div 
+                                        key={log.id}
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: idx * 0.05 }}
+                                        className="relative"
+                                    >
+                                        <div className="absolute -left-[21px] top-0 size-[13px] rounded-full bg-white dark:bg-[#0f1113] border-2 border-blue-500 shadow-sm z-10" />
+                                        
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] font-black text-slate-900 dark:text-white uppercase">
+                                                        {log.action === 'update_pipeline_lead' ? 'Movimiento de Etapa' : log.action}
+                                                    </span>
+                                                </div>
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase flex items-center gap-1">
+                                                    <Clock size={10} /> {new Date(log.created_at).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                            
+                                            <div className="p-4 rounded-3xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.04] text-[11px] leading-relaxed">
+                                                <p className="text-slate-600 dark:text-slate-400 font-medium">
+                                                    {log.metadata?.stage ? (
+                                                        <>Se movió a <span className="font-black text-blue-600 dark:text-blue-400">{STAGE_LABEL[log.metadata.stage] || log.metadata.stage}</span></>
+                                                    ) : (
+                                                        'Actualización de datos generales'
+                                                    )}
+                                                </p>
+                                                <div className="mt-2 flex items-center gap-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                                    <UserCircle2 size={12} /> Responsable: System Audit
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))
+                            ) : (
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-2">
+                                    {loadingAudit ? 'Cargando registros...' : 'No hay actividad reciente registrada'}
+                                </p>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </section>
             </div>
         </div>
     );
-}
-
-function History({ size, className }: { size: number, className: string }) {
-    return <Zap size={size} className={className} />;
 }

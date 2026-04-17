@@ -19,13 +19,14 @@ import {
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import DSCard from '@/design/components/DSCard';
-import DSBadge from '@/design/components/DSBadge';
+import { DSCard } from '@/design/components/DSCard';
+import { DSBadge } from '@/design/components/DSBadge';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 
 export default function CmsTestimonialDetailPage() {
-    const { id } = useParams();
+    const params = useParams();
+    const id = params?.id as string;
     const router = useRouter();
     const { token } = useAuth();
     
@@ -73,8 +74,8 @@ export default function CmsTestimonialDetailPage() {
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'CMS', icon: Layout, onClick: () => router.push('/cms') },
-                    { label: 'Testimonios', icon: Quote, onClick: () => router.push('/cms/testimonials') },
+                    { label: 'CMS', icon: Layout, href: '/cms' },
+                    { label: 'Testimonios', icon: Quote, href: '/cms/testimonials' },
                     { label: testimonial.author_name, icon: User },
                 ]}
             />
@@ -84,10 +85,8 @@ export default function CmsTestimonialDetailPage() {
                     <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
-                                <DSBadge variant="indigo">{testimonial.category.toUpperCase()}</DSBadge>
-                                <DSBadge variant={testimonial.status === 'approved' ? 'success' : 'warning'}>
-                                    {testimonial.status.toUpperCase()}
-                                </DSBadge>
+                                <DSBadge tone="violet" label={testimonial.category.toUpperCase()} />
+                                <DSBadge tone={testimonial.status === 'approved' ? 'emerald' : 'amber'} label={testimonial.status.toUpperCase()} />
                             </div>
                             <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-none uppercase">
                                 Moderación de Testimonio
@@ -125,7 +124,8 @@ export default function CmsTestimonialDetailPage() {
                                 </div>
                             </DSCard>
 
-                            <DSCard title="Información del Autor">
+                            <DSCard>
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Información del Autor</h3>
                                 <div className="flex items-center gap-6">
                                     <div className="size-16 rounded-3xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
                                         <User size={32} />
@@ -139,7 +139,8 @@ export default function CmsTestimonialDetailPage() {
                         </div>
 
                         <aside className="space-y-6">
-                            <DSCard title="Detalles de Envío">
+                            <DSCard>
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Detalles de Envío</h3>
                                 <div className="space-y-4">
                                     <div className="space-y-1">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Fecha de Recepción</p>

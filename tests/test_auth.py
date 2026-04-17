@@ -21,7 +21,7 @@ def seed_user(db_session, email="admin@example.com", password="secret123"):
 def test_login_and_refresh_flow(client: TestClient, db_session):
     seed_user(db_session)
     response = client.post(
-        "/auth/login",
+        "/api/auth/login",
         data={"username": "admin@example.com", "password": "secret123", "grant_type": "password"},
     )
     assert response.status_code == 200
@@ -31,7 +31,7 @@ def test_login_and_refresh_flow(client: TestClient, db_session):
     assert "refresh_token" in data
 
     refresh_resp = client.post(
-        "/auth/refresh",
+        "/api/auth/refresh",
         json={"refresh_token": data["refresh_token"]},
     )
     assert refresh_resp.status_code == 200
@@ -43,12 +43,12 @@ def test_login_and_refresh_flow(client: TestClient, db_session):
 def test_login_rejects_invalid_credentials(client: TestClient, db_session):
     seed_user(db_session)
     response = client.post(
-        "/auth/login",
+        "/api/auth/login",
         data={"username": "admin@example.com", "password": "wrong", "grant_type": "password"},
     )
     assert response.status_code == 401
 
 
 def test_refresh_rejects_invalid_token(client: TestClient, db_session):
-    response = client.post("/auth/refresh", json={"refresh_token": "invalid"})
+    response = client.post("/api/auth/refresh", json={"refresh_token": "invalid"})
     assert response.status_code == 401

@@ -191,3 +191,4 @@ export default function PredicasPage() {
         </main>
     );
 }
+

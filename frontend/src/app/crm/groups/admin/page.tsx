@@ -283,3 +283,4 @@ function HouseStat({ label, value, trend, icon: Icon, color }: any) {
         </div>
     );
 }
+

@@ -11,7 +11,7 @@ import {
 
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
 import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ViewType } from '@/components/ViewSwitcher';
@@ -142,48 +142,47 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
     ], []);
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
-            <WorkspaceToolbar
-                breadcrumbs={[{ label: 'Workspace', icon: Layers }, { label: 'Portfolio de Proyectos', icon: Folder }]}
-                viewType={viewType}
-                setViewType={setViewType}
-                availableViews={['grid', 'table']}
-                onSearch={setSearch}
-                rightActions={
-                    <div className="flex items-center gap-2">
-                        <SplitDropdownButton
-                            mainLabel={isCreating ? 'Creando...' : 'Nuevo'}
-                            icon={Plus}
-                            onMainClick={handleCreateProject}
-                            onOptionClick={() => {}}
-                        />
-                    </div>
-                }
-            />
-
-            <main className="flex-1 overflow-y-auto scrollbar-thin p-6 lg:p-10 relative">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
-                <div className="max-w-[1400px] mx-auto space-y-10 relative z-10">
-                    <SectionHeader
-                        label="Estado del portfolio"
-                        caption="Supervisa y orquesta todas las iniciativas del ministerio desde un solo lugar."
+        <WorkspaceLayout
+            breadcrumbs={[{ label: 'Workspace', icon: Layers }, { label: 'Portfolio de Proyectos', icon: Folder }]}
+            viewType={viewType}
+            setViewType={setViewType}
+            availableViews={['grid', 'table']}
+            onSearch={setSearch}
+            rightActions={
+                <div className="flex items-center gap-2">
+                    <SplitDropdownButton
+                        mainLabel={isCreating ? 'Creando...' : 'Nuevo'}
+                        icon={Plus}
+                        onMainClick={handleCreateProject}
+                        onOptionClick={() => {}}
                     />
-
-                    <AnimatePresence mode="wait">
-                        {viewType === 'grid' ? (
-                            <motion.div key="grid" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 pb-20">
-                                {filtered.map((p, idx) => <ProjectCard key={p.id} project={p} index={idx} />)}
-                            </motion.div>
-                        ) : (
-                            <motion.div key="table" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-20">
-                                <DataTable columns={tableColumns} data={filtered} />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
                 </div>
-            </main>
+            }
+        >
+            <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+                <main className="flex-1 overflow-y-auto scrollbar-thin p-6 lg:p-10 relative">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
+                    <div className="max-w-[1400px] mx-auto space-y-10 relative z-10">
+                        <SectionHeader
+                            label="Estado del portfolio"
+                            caption="Supervisa y orquesta todas las iniciativas del ministerio desde un solo lugar."
+                        />
 
-        </div>
+                        <AnimatePresence mode="wait">
+                            {viewType === 'grid' ? (
+                                <motion.div key="grid" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 pb-20">
+                                    {filtered.map((p, idx) => <ProjectCard key={p.id} project={p} index={idx} />)}
+                                </motion.div>
+                            ) : (
+                                <motion.div key="table" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-20">
+                                    <DataTable columns={tableColumns} data={filtered} />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </main>
+            </div>
+        </WorkspaceLayout>
     );
 }
 
@@ -289,4 +288,5 @@ function ProjectCard({ project, index }: { project: ProjectRecord; index: number
         </motion.div>
     );
 }
+
 

@@ -21,9 +21,9 @@ import {
     LayoutDashboard
 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
-import DSMetric from '@/design/components/DSMetric';
-import DSCard from '@/design/components/DSCard';
-import DSBadge from '@/design/components/DSBadge';
+import { DSMetric } from '@/design/components/DSMetric';
+import { DSCard } from '@/design/components/DSCard';
+import { DSBadge } from '@/design/components/DSBadge';
 import { toast } from 'sonner';
 
 export default function DonationsManagementPage() {
@@ -59,7 +59,7 @@ export default function DonationsManagementPage() {
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'Administración', icon: LayoutDashboard },
+                    { label: 'Administración', icon: LayoutDashboard, href: '/admin' },
                     { label: 'Donaciones y Ofrendas', icon: Heart },
                 ]}
                 rightActions={
@@ -81,10 +81,10 @@ export default function DonationsManagementPage() {
 
             <main className="flex-1 overflow-y-auto p-8 lg:p-12 space-y-10">
                 <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <DSMetric label="Recaudación Mensual" value="$42,500" trend="+12% vs marzo" tone="blue" icon={DollarSign} />
-                    <DSMetric label="Donantes Activos" value="156" trend="+8 nuevos" tone="emerald" icon={Users} />
-                    <DSMetric label="Promedio por Donación" value="$272" trend="Sostenido" tone="amber" icon={TrendingUp} />
-                    <DSMetric label="Pendientes" value="4" trend="Por conciliar" tone="purple" icon={Calendar} />
+                    <DSMetric label="Recaudación Mensual" value="$42,500" trend="+12% vs marzo" tone="blue" />
+                    <DSMetric label="Donantes Activos" value="156" trend="+8 nuevos" tone="emerald" />
+                    <DSMetric label="Promedio por Donación" value="$272" trend="Sostenido" tone="amber" />
+                    <DSMetric label="Pendientes" value="4" trend="Por conciliar" tone="violet" />
                 </section>
 
                 <div className="space-y-6">
@@ -138,9 +138,7 @@ export default function DonationsManagementPage() {
                                             <td className="px-6 py-4 text-xs font-medium text-slate-500">{d.type}</td>
                                             <td className="px-6 py-4 text-xs text-slate-400">{new Date(d.date).toLocaleDateString()}</td>
                                             <td className="px-6 py-4">
-                                                <DSBadge variant={d.status === 'completed' ? 'success' : 'warning'}>
-                                                    {d.status === 'completed' ? 'COMPLETADO' : 'PENDIENTE'}
-                                                </DSBadge>
+                                                <DSBadge tone={d.status === 'completed' ? 'emerald' : 'amber'} label={d.status === 'completed' ? 'COMPLETADO' : 'PENDIENTE'} />
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <button className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all">

@@ -6,3 +6,4 @@ import { WebVitalsReporter } from './(analytics)/WebVitalsReporter';
 export function ClientBootstrap() {
   return <WebVitalsReporter />;
 }
+

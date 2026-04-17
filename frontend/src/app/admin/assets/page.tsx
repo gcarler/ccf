@@ -223,3 +223,4 @@ function StorageStat({ label, count, size, icon: Icon, color, isProgress }: any)
         </div>
     );
 }
+

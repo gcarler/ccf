@@ -132,3 +132,4 @@ function VitalCard({ metric, unit, summary }: { metric: string; unit: string; su
     </article>
   );
 }
+

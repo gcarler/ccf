@@ -1,17 +1,20 @@
 {
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "./tsconfig.json",
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "plugins": ["@typescript-eslint", "prettier"],
   "extends": [
     "next/core-web-vitals",
-    "plugin:storybook/recommended"
+    "plugin:storybook/recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
   ],
-  "overrides": [
-    {
-      "files": [
-        "src/app/(public)/faro/**/*.tsx"
-      ],
-      "rules": {
-        "@next/next/no-img-element": "off",
-        "jsx-a11y/alt-text": "off"
-      }
-    }
-  ]
+  "rules": {
+    "@next/next/no-img-element": "off",
+    "jsx-a11y/alt-text": "off",
+    "prettier/prettier": "error"
+  }
 }

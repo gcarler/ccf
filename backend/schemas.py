@@ -389,6 +389,7 @@ class DashboardMetrics(BaseModel):
     approved_formal_enrollments: int = 0
 
 class PilotReadiness(BaseModel):
+    environment_ready: bool = False
     readiness_score: float = 0.0
     checklist: List[Dict[str, Any]] = Field(default_factory=list)
 
@@ -670,7 +671,7 @@ class MemberCreate(BaseModel):
     first_name: str = Field(..., min_length=2, max_length=100)
     last_name: str = Field(..., min_length=2, max_length=100)
     email: Optional[str] = None
-    family_id: int = Field(...)
+    family_id: Optional[int] = None
     church_role: str = "Miembro"
     talents: Optional[str] = None
     spiritual_gifts: Optional[str] = None

@@ -777,6 +777,20 @@ class Notification(Base):
     created_at = Column(DateTime, default=_utcnow)
 
 
+class UserReminder(Base):
+    __tablename__ = "user_reminders"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    remind_at = Column(DateTime, nullable=False)
+    priority = Column(String(20), default="normal")
+    related_type = Column(String(50), nullable=True) # e.g. 'task', 'event'
+    related_id = Column(Integer, nullable=True)
+    is_sent = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=_utcnow)
+
+
 class CommunicationLog(Base):
     __tablename__ = "communication_logs"
     id = Column(Integer, primary_key=True, index=True)

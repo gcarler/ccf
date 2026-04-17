@@ -1,4 +1,4 @@
-Ôªø"use client";
+"use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -56,7 +56,7 @@ export default function DonationConfig() {
             setCategories(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error(err);
-            addToast("Error al sincronizar categor√≠as contables", "error");
+            addToast("Error al sincronizar categorÌas contables", "error");
         } finally {
             setLoading(false);
         }
@@ -90,7 +90,7 @@ export default function DonationConfig() {
             `}</style>
 
             <WorkspaceToolbar 
-                breadcrumbs={[{ label: 'Ajustes', icon: Settings }, { label: 'Finanzas', icon: DollarSign }, { label: 'Estructura de Recaudaci√≥n', icon: ShieldCheck }]}
+                breadcrumbs={[{ label: 'Ajustes', icon: Settings }, { label: 'Finanzas', icon: DollarSign }, { label: 'Estructura de RecaudaciÛn', icon: ShieldCheck }]}
                 viewType="grid" setViewType={() => {}}
                 rightActions={
                     <button className="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
@@ -110,13 +110,13 @@ export default function DonationConfig() {
                             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
                             className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-[0.3em] border border-blue-500/20"
                         >
-                            <Sparkles size={12} className="animate-pulse" /> Ingenier√≠a de Tesorer√≠a v3.9
+                            <Sparkles size={12} className="animate-pulse" /> IngenierÌa de TesorerÌa v3.9
                         </motion.div>
                         <h1 className="text-5xl lg:text-7xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
-                            Estructura de <br/> <span className="text-blue-600 italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-400">Recaudaci√≥n Pro.</span>
+                            Estructura de <br/> <span className="text-blue-600 italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-400">RecaudaciÛn Pro.</span>
                         </h1>
                         <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-2xl leading-relaxed">
-                            Define el flujo de bendici√≥n. Configura canales de pago, fondos espec√≠ficos y automatizaci√≥n de certificados tributarios.
+                            Define el flujo de bendiciÛn. Configura canales de pago, fondos especÌficos y automatizaciÛn de certificados tributarios.
                         </p>
                     </header>
 
@@ -129,7 +129,7 @@ export default function DonationConfig() {
                         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] group-hover:bg-blue-600/20 transition-all duration-1000" />
                         <div className="relative z-10 space-y-3 text-center md:text-left">
                             <h3 className="text-2xl font-black tracking-tight uppercase">Pasarela de Diezmo Digital</h3>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-loose">Habilitar transacciones en l√≠nea seguras para toda la congregaci√≥n.</p>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-loose">Habilitar transacciones en lÌnea seguras para toda la congregaciÛn.</p>
                         </div>
                         <button
                             onClick={() => setTitheEnabled(!titheEnabled)}
@@ -156,7 +156,7 @@ export default function DonationConfig() {
                             </div>
                             <div className="bg-slate-50 dark:bg-white/5 rounded-[3.5rem] border border-slate-100 dark:border-white/5 divide-y divide-slate-100 dark:divide-white/10 overflow-hidden shadow-sm">
                                 <PaymentMethodItem icon={CreditCard} label="Tarjeta Global" active />
-                                <PaymentMethodItem icon={Smartphone} label="Pasarelas M√≥viles" active />
+                                <PaymentMethodItem icon={Smartphone} label="Pasarelas MÛviles" active />
                                 <PaymentMethodItem icon={Banknote} label="Transferencia Directa" />
                             </div>
                         </section>
@@ -199,7 +199,7 @@ export default function DonationConfig() {
                                         </motion.div>
                                     )) : (
                                         <div className="py-20 text-center bg-slate-50 dark:bg-white/5 rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-white/10">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sin categor√≠as configuradas</p>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sin categorÌas configuradas</p>
                                         </div>
                                     )}
                                 </AnimatePresence>
@@ -219,11 +219,11 @@ export default function DonationConfig() {
                         <div className="flex flex-col lg:flex-row items-center justify-between gap-12 relative z-10">
                             <div className="space-y-6 text-center lg:text-left">
                                 <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-full text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 shadow-sm">
-                                    <Zap size={14} className="text-amber-500" fill="currentColor" /> Automatizaci√≥n de Flujo
+                                    <Zap size={14} className="text-amber-500" fill="currentColor" /> AutomatizaciÛn de Flujo
                                 </div>
-                                <h3 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">Certificaci√≥n de <br/> <span className="text-blue-600 italic">Generosidad.</span></h3>
+                                <h3 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">CertificaciÛn de <br/> <span className="text-blue-600 italic">Generosidad.</span></h3>
                                 <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-md leading-relaxed">
-                                    Emite autom√°ticamente reportes de donaci√≥n en PDF con firma digital institucional tras cada validaci√≥n de tesorer√≠a.
+                                    Emite autom·ticamente reportes de donaciÛn en PDF con firma digital institucional tras cada validaciÛn de tesorerÌa.
                                 </p>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-4 shrink-0 w-full lg:w-auto">
@@ -260,4 +260,5 @@ function PaymentMethodItem({ icon: Icon, label, active }: any) {
         </div>
     );
 }
+
 

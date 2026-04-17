@@ -29,6 +29,7 @@ def migrate():
         ("idx_tasks_due", "crm_tasks", "due_date"),
         ("idx_lessons_course", "lessons", "course_id"),
         ("idx_enrollments_user_course", "enrollments", "user_id, course_id"),
+        ("idx_user_reminders_user_id", "user_reminders", "user_id"),
     ]
 
     try:

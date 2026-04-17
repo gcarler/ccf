@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/http';
-import DSCard from '@/design/components/DSCard';
+import { DSCard } from '@/design/components/DSCard';
 import clsx from 'clsx';
 
 interface Question {
@@ -69,11 +69,6 @@ export default function NewAssessmentPage() {
 
         try {
             // Mocking the POST to assessments
-            // await apiFetch('/academy/assessments', {
-            //     method: 'POST',
-            //     token,
-            //     body: { title, description, passing_score: passingScore, questions }
-            // });
             toast.success('Evaluación creada correctamente');
             router.back();
         } catch (err) {
@@ -108,7 +103,8 @@ export default function NewAssessmentPage() {
 
             <main className="flex-1 overflow-y-auto p-8 lg:p-12">
                 <div className="max-w-4xl mx-auto space-y-8">
-                    <DSCard title="Configuración General">
+                    <DSCard>
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Configuración General</h3>
                         <div className="space-y-6">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Título de la Evaluación</label>

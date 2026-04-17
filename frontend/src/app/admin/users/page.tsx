@@ -14,9 +14,11 @@ import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import { useRouter } from 'next/navigation';
 
 export default function AdminUsersPage() {
     const { token } = useAuth();
+    const router = useRouter();
     const { addToast } = useToast();
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -124,7 +126,11 @@ export default function AdminUsersPage() {
                                             <tr key={i}><td colSpan={5} className="px-8 py-6"><div className="h-12 w-full bg-slate-100 dark:bg-white/5 rounded-2xl animate-pulse" /></td></tr>
                                         ))
                                     ) : filteredUsers.map((user) => (
-                                        <tr key={user.id} className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer" onClick={() => { setSelectedUser(user); setIsDrawerOpen(true); }}>
+                                        <tr 
+                                            key={user.id} 
+                                            className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer" 
+                                            onClick={() => router.push(`/admin/users/${user.id}`)}
+                                        >
                                             <td className="px-8 py-5">
                                                 <div className="flex items-center gap-4">
                                                     <div className="size-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-[12px] font-black shadow-lg">
@@ -224,3 +230,4 @@ export default function AdminUsersPage() {
         </div>
     );
 }
+

@@ -832,7 +832,7 @@ export default function CommunityHubPage() {
     };
 
     return (
-        <div className="space-y-10 animate-in fade-in duration-500 px-4 sm:px-6 pb-16 max-w-5xl mx-auto">
+        <div className="space-y-10 animate-in fade-in duration-500 px-4 sm:px-6 pb-16 w-full">
             <div className="rounded-[24px] border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between text-[10px] uppercase tracking-[0.2em] text-[hsl(var(--text-secondary))]">
                 <div className="flex items-center gap-2">
                     <button type="button" onClick={navigateTo('/')} className="font-medium text-[hsl(var(--text-primary))] hover:text-[hsl(var(--primary))]">
@@ -1253,3 +1253,4 @@ export default function CommunityHubPage() {
         </div>
     );
 }
+

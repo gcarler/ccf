@@ -15,6 +15,7 @@ import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
 import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import CounselingDetailSidebar from '@/components/crm/CounselingDetailSidebar';
+import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 
 const STATUS_ORDER = ['Pendiente', 'Realizada', 'Cancelada'];
 const STATUS_PROGRESS: Record<string, number> = { Pendiente: 30, Realizada: 100, Cancelada: 0 };
@@ -453,7 +454,6 @@ export default function CounselingPage() {
                         ) : null
                     }
                 ]}
-                searchPlaceholder="Buscar sesiones por tema..."
                 emptyMessage="No se encontraron sesiones."
                 onRowClick={openSessionDetail}
             />
@@ -742,4 +742,5 @@ export default function CounselingPage() {
         </CrmShell>
     );
 }
+
 

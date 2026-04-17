@@ -20,12 +20,13 @@ import {
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import DSCard from '@/design/components/DSCard';
-import DSBadge from '@/design/components/DSBadge';
+import { DSCard } from '@/design/components/DSCard';
+import { DSBadge } from '@/design/components/DSBadge';
 import { toast } from 'sonner';
 
 export default function CmsPageDetailPage() {
-    const { id } = useParams();
+    const params = useParams();
+    const id = params?.id as string;
     const router = useRouter();
     const { token } = useAuth();
     
@@ -37,8 +38,8 @@ export default function CmsPageDetailPage() {
         const loadPage = async () => {
             try {
                 setLoading(true);
-                // Mock CMS page detail
-                setPage({
+                const data = await apiFetch<any>(`/cms/pages/${id}`, { token }).catch(() => null);
+                setPage(data || {
                     id,
                     title: 'Página de Inicio FARO',
                     slug: 'faro-home',
@@ -65,8 +66,8 @@ export default function CmsPageDetailPage() {
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'CMS', icon: Layout, onClick: () => router.push('/cms') },
-                    { label: 'Páginas', icon: FileText, onClick: () => router.push('/cms/pages') },
+                    { label: 'CMS', icon: Layout, href: '/cms' },
+                    { label: 'Páginas', icon: FileText, href: '/cms/pages' },
                     { label: page.title, icon: PenTool },
                 ]}
                 rightActions={
@@ -86,8 +87,8 @@ export default function CmsPageDetailPage() {
                     <div className="lg:col-span-3 space-y-8">
                         <header className="space-y-4">
                             <div className="flex items-center gap-3">
-                                <DSBadge variant="indigo">SITE: FARO</DSBadge>
-                                <DSBadge variant="success">PUBLISHED</DSBadge>
+                                <DSBadge tone="violet" label="SITE: FARO" />
+                                <DSBadge tone="emerald" label="PUBLISHED" />
                             </div>
                             <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">
                                 {page.title}
@@ -130,7 +131,8 @@ export default function CmsPageDetailPage() {
                     </div>
 
                     <aside className="space-y-6">
-                        <DSCard title="Configuración SEO">
+                        <DSCard>
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Configuración SEO</h3>
                             <div className="space-y-4">
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Meta Title</p>
@@ -138,7 +140,7 @@ export default function CmsPageDetailPage() {
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Indexación</p>
-                                    <DSBadge variant="success">SEARCH_INDEX_OK</DSBadge>
+                                    <DSBadge tone="emerald" label="SEARCH_INDEX_OK" />
                                 </div>
                             </div>
                         </DSCard>

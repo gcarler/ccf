@@ -871,15 +871,6 @@ def get_dashboard_metrics(db: Session):
     }
 
 
-def get_pilot_readiness(db: Session):
-    checklist = [
-        {"key": "db", "status": "ok"},
-        {"key": "courses", "status": "ok" if db.query(models.Course).count() >= 0 else "warning"},
-        {"key": "users", "status": "ok" if db.query(models.User).count() >= 0 else "warning"},
-    ]
-    return schemas.PilotReadiness(environment_ready=True, checklist=checklist)
-
-
 def create_agent_task(db: Session, payload: schemas.AgentTaskCreate):
     row = models.AgentTask(
         title=payload.title,
@@ -2136,6 +2127,292 @@ def get_pilot_readiness(db: Session) -> schemas.PilotReadiness:
     readiness_score = (completed_count / len(checklist)) if checklist else 0.0
     
     return schemas.PilotReadiness(
+        environment_ready=True,
         readiness_score=readiness_score,
         checklist=checklist
     )
+
+def create_agent_task(db: Session, payload: schemas.AgentTaskCreate):
+    row = models.AgentTask(
+        title=payload.title,
+        description=payload.description,
+        priority=payload.priority,
+        source=payload.source,
+        status="pending",
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+def list_agent_tasks(db: Session, status: str | None = None):
+    query = db.query(models.AgentTask)
+    if status:
+        query = query.filter(models.AgentTask.status == status)
+    return query.order_by(models.AgentTask.created_at.desc()).all()
+
+def update_agent_task(db: Session, task_id: int, payload: schemas.AgentTaskUpdate):
+    row = db.query(models.AgentTask).filter(models.AgentTask.id == task_id).first()
+    if not row:
+        return None
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+def create_agent_insight(db: Session, payload: schemas.AgentInsightCreate):
+    row = models.AgentInsight(
+        title=payload.title,
+        insight_type=payload.insight_type,
+        payload=payload.payload,
+        acknowledged=False,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+def list_agent_insights(db: Session, acknowledged: bool | None = None):
+    query = db.query(models.AgentInsight)
+    if acknowledged is not None:
+        query = query.filter(models.AgentInsight.acknowledged == acknowledged)
+    return query.order_by(models.AgentInsight.created_at.desc()).all()
+
+def acknowledge_insight(db: Session, insight_id: int):
+    row = db.query(models.AgentInsight).filter(models.AgentInsight.id == insight_id).first()
+    if not row:
+        return None
+    row.acknowledged = True
+    db.commit()
+    db.refresh(row)
+    return row
+
+def create_admin_audit_log(
+    db: Session,
+    actor_user_id: int | None,
+    action: str,
+    resource_type: str | None = None,
+    resource_id: str | None = None,
+    metadata: dict | None = None,
+    ip_address: str | None = None,
+):
+    row = models.AdminAuditLog(
+        actor_user_id=actor_user_id,
+        action=action,
+        resource_type=resource_type,
+        resource_id=resource_id,
+        metadata_json={**(metadata or {}), **({"ip_address": ip_address} if ip_address else {})},
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+def get_admin_audit_logs(
+    db: Session,
+    limit: int = 100,
+    actor_user_id: int | None = None,
+    resource_type: str | None = None,
+):
+    query = db.query(models.AdminAuditLog)
+    if actor_user_id is not None:
+        query = query.filter(models.AdminAuditLog.actor_user_id == actor_user_id)
+    if resource_type is not None:
+        query = query.filter(models.AdminAuditLog.resource_type == resource_type)
+    rows = query.order_by(models.AdminAuditLog.created_at.desc()).limit(limit).all()
+    for row in rows:
+        row.metadata = row.metadata_json or {}
+    return rows
+
+def update_page_content(db: Session, page_key: str, payload: schemas.PageContentUpdate):
+    page = db.query(models.PageContent).filter(models.PageContent.page_key == page_key).first()
+    if not page:
+        page = models.PageContent(page_key=page_key, title=payload.title or "", content=payload.content or "")
+        db.add(page)
+        db.commit()
+        db.refresh(page)
+        return page
+    version = models.PageContentVersion(page_key=page.page_key, title=page.title, content=page.content)
+    db.add(version)
+    if payload.title is not None:
+        page.title = payload.title
+    if payload.content is not None:
+        page.content = payload.content
+    db.commit()
+    db.refresh(page)
+    return page
+
+def get_page_content(db: Session, page_key: str):
+    return db.query(models.PageContent).filter(models.PageContent.page_key == page_key).first()
+
+def list_page_contents(db: Session, limit: int = 200):
+    return (
+        db.query(models.PageContent)
+        .order_by(models.PageContent.updated_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+def get_or_create_page_content(db: Session, page_key: str):
+    row = get_page_content(db, page_key)
+    if row:
+        return row
+
+    defaults = PAGE_CONTENT_DEFAULTS.get(page_key, {})
+    title = str(defaults.get("title") or page_key.replace("_", " ").title())
+    default_content = defaults.get("content", {})
+
+    if isinstance(default_content, str):
+        content_payload = default_content
+    else:
+        content_payload = json.dumps(default_content, ensure_ascii=False)
+
+    row = models.PageContent(page_key=page_key, title=title, content=content_payload)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+def get_page_content_versions(db: Session, page_key: str):
+    return (
+        db.query(models.PageContentVersion)
+        .filter(models.PageContentVersion.page_key == page_key)
+        .order_by(models.PageContentVersion.created_at.desc())
+        .all()
+    )
+
+def restore_page_content_version(db: Session, page_key: str, version_id: int):
+    version = (
+        db.query(models.PageContentVersion)
+        .filter(
+            models.PageContentVersion.id == version_id,
+            models.PageContentVersion.page_key == page_key,
+        )
+        .first()
+    )
+    if not version:
+        return None
+
+    row = get_or_create_page_content(db, page_key)
+    snapshot = models.PageContentVersion(page_key=row.page_key, title=row.title, content=row.content)
+    db.add(snapshot)
+    row.title = version.title
+    row.content = version.content
+    db.commit()
+    db.refresh(row)
+    return row
+
+def get_or_create_content_publication(db: Session, page_key: str):
+    row = (
+        db.query(models.ContentPublication)
+        .filter(models.ContentPublication.page_key == page_key)
+        .first()
+    )
+    if row:
+        return row
+    row = models.ContentPublication(page_key=page_key, status="draft")
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+def update_content_publication(
+    db: Session,
+    page_key: str,
+    *,
+    status: str | None = None,
+    publish_at: dt.datetime | None | object = ...,
+    expire_at: dt.datetime | None | object = ...,
+    notes: str | None = None,
+    updated_by: int | None = None,
+):
+    row = get_or_create_content_publication(db, page_key)
+    if status is not None:
+        row.status = status
+    if publish_at is not ...:
+        row.publish_at = publish_at
+    if expire_at is not ...:
+        row.expire_at = expire_at
+    if notes is not None:
+        row.notes = notes
+    if updated_by is not None:
+        row.updated_by = updated_by
+    if status == "published":
+        row.last_published_at = _utcnow()
+    db.commit()
+    db.refresh(row)
+    return row
+
+def list_content_publications(db: Session):
+    return db.query(models.ContentPublication).all()
+
+def create_cms_media_item(
+    db: Session,
+    *,
+    url: str,
+    alt_text: str | None,
+    section: str,
+    tags: list[str] | None,
+    created_by: int | None,
+):
+    row = models.CmsMediaItem(
+        url=url,
+        alt_text=alt_text,
+        section=section,
+        tags=tags or [],
+        created_by=created_by,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+def list_cms_media_items(db: Session, *, query: str | None = None, section: str | None = None, limit: int = 250):
+    q = db.query(models.CmsMediaItem)
+    if section:
+        q = q.filter(models.CmsMediaItem.section == section)
+    if query:
+        like = f"%{query.strip()}%"
+        q = q.filter(
+            or_(
+                models.CmsMediaItem.url.ilike(like),
+                models.CmsMediaItem.alt_text.ilike(like),
+            )
+        )
+    return q.order_by(models.CmsMediaItem.updated_at.desc()).limit(limit).all()
+
+def get_cms_media_item(db: Session, item_id: int):
+    return db.query(models.CmsMediaItem).filter(models.CmsMediaItem.id == item_id).first()
+
+def update_cms_media_item(
+    db: Session,
+    item_id: int,
+    *,
+    url: str | None = None,
+    alt_text: str | None = None,
+    section: str | None = None,
+    tags: list[str] | None = None,
+):
+    row = get_cms_media_item(db, item_id)
+    if not row:
+        return None
+    if url is not None:
+        row.url = url
+    if alt_text is not None:
+        row.alt_text = alt_text
+    if section is not None:
+        row.section = section
+    if tags is not None:
+        row.tags = tags
+    db.commit()
+    db.refresh(row)
+    return row
+
+def delete_cms_media_item(db: Session, item_id: int):
+    row = get_cms_media_item(db, item_id)
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True

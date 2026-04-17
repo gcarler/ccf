@@ -266,3 +266,4 @@ function GoalItem({ label, target, current, color }: any) {
         </div>
     );
 }
+

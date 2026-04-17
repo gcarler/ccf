@@ -248,7 +248,7 @@ function InlineDatePicker({
 
     const selectDay = (day: number) => {
         const d = new Date(viewYear, viewMonth, day);
-        const iso = d.toISOString().split('T')[0];
+        const iso = d.toLocaleDateString('en-CA');
         onSelect(iso);
         setOpen(false);
     };

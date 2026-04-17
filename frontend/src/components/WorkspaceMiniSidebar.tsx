@@ -1,7 +1,7 @@
 "use client";
 
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
     Layout,
     Users,
@@ -15,16 +15,20 @@ import {
     CalendarDays,
     Inbox,
     Heart,
+    BookOpen,
+    Shield,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Tooltip from '@/components/ui/Tooltip';
 import clsx from 'clsx';
 import { useCreation } from '@/context/CreationContext';
+import { useSidebarLayers } from '@/context/SidebarLayerContext';
 
 export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void }) {
     const pathname = usePathname();
     const { openModal } = useCreation();
+    const { resetSidebarStack } = useSidebarLayers();
 
     const primaryItems = [
         { id: 'projects', icon: Target,       href: '/projects',  label: 'Proyectos' },
@@ -34,17 +38,20 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
 
     const moduleItems = [
         { id: 'academy',       icon: GraduationCap, href: '/academy',        label: 'Academia' },
-        { id: 'crm',           icon: Users,         href: '/crm',            label: 'Comunidad' },
+        { id: 'crm',           icon: Users,         href: '/crm',            label: 'Pastoral' },
+        { id: 'community',     icon: Globe,         href: '/community',      label: 'Comunidad' },
         { id: 'finances',      icon: DollarSign,    href: '/finances',       label: 'Finanzas' },
         { id: 'cms',           icon: Globe,         href: '/cms',            label: 'Sitio Web' },
+        { id: 'wiki',          icon: BookOpen,      href: '/wiki',           label: 'Wiki' },
         { id: 'spiritual-life',icon: Heart,         href: '/spiritual-life', label: 'Vida Espiritual' },
+        { id: 'admin',         icon: Shield,        href: '/admin',          label: 'Admin' },
     ];
 
     const NavItem = ({ id, icon: Icon, href, label, badge }: any) => {
         const isActive = pathname?.startsWith(href);
         return (
             <Tooltip key={id} content={label} side="right">
-                <Link href={href} className="relative">
+                <Link href={href} className="relative" onClick={() => resetSidebarStack()}>
                     <div className={clsx(
                         "size-10 rounded-2xl flex items-center justify-center transition-all duration-200 cursor-pointer",
                         isActive

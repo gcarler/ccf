@@ -1,63 +1,59 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
-import { usePathname } from 'next/navigation';
-import { apiFetch } from '@/lib/http';
+import React, { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Layout as LayoutIcon, Workflow } from 'lucide-react';
-import type { ProjectRecord } from '@/types/projects';
+import { apiFetch } from '@/lib/http';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
+import { 
+    LayoutDashboard, 
+    CheckCircle2, 
+    Users, 
+    Settings, 
+    List as ListIcon, 
+    Clock, 
+    Plus,
+    Home
+} from 'lucide-react';
+import Link from 'next/link';
 
-export default function ProjectsLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+export default function ProjectsLayout({ children }: { children: React.ReactNode }) {
     const { token } = useAuth();
-    const [projects, setProjects] = useState<ProjectRecord[]>([]);
+    const router = useRouter();
+    const params = useParams();
+    const [projects, setProjects] = useState<any[]>([]);
 
     useEffect(() => {
-        const fetchProjects = async () => {
-            if (!token) return;
-            try {
-                const data = await apiFetch<ProjectRecord[]>('/projects', { token });
-                if (Array.isArray(data)) setProjects(data);
-            } catch { }
-        };
-        fetchProjects();
+        if (!token) return;
+        apiFetch<any[]>('/projects/', { token })
+            .then(setProjects)
+            .catch(() => setProjects([{ id: 1, title: 'Campaña Faro 2026' }]));
     }, [token]);
 
-    const sidebarSections = [
+    const projectSections = [
         {
-            title: 'Inicio',
+            id: 'global',
+            label: 'Global',
             items: [
-                { id: 'portfolio', label: 'Portfolio', href: '/projects', icon: LayoutIcon }
+                { id: 'all-projects', label: 'Todos los Proyectos', icon: LayoutDashboard, href: '/projects' },
+                { id: 'my-tasks', label: 'Mis Tareas', icon: CheckCircle2, href: '/tasks' },
             ]
         },
         {
-            title: 'Proyectos Activos',
-            canAdd: true,
-            items: projects.slice(0, 20).map(p => ({
-                id: `proj-${p.id}`,
+            id: 'projects',
+            label: 'Proyectos Activos',
+            items: projects.map(p => ({
+                id: `project-${p.id}`,
                 label: p.title,
-                href: `/projects/${p.id}`,
-                icon: Workflow,
-                count: (p.tasks?.length ?? 0) > 0 ? (p.tasks!.length as number) : undefined
+                icon: Home,
+                href: `/projects/${p.id}`
             }))
         }
     ];
 
     return (
-        <ProtectedRoute>
-            <WorkspaceLayout
-                sidebarTitle="Portfolio"
-                sidebarSections={sidebarSections}
-            >
-                <div className="bg-white dark:bg-[#1e1f21] h-full">
-                    {children}
-                </div>
-            </WorkspaceLayout>
-        </ProtectedRoute>
+        <WorkspaceLayout sidebarTitle="Proyectos CCF" sidebarSections={projectSections}>
+            {children}
+        </WorkspaceLayout>
     );
 }

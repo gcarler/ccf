@@ -12,23 +12,26 @@ import {
     Zap
 } from 'lucide-react';
 import clsx from 'clsx';
-import { SOURCES } from '@/app/crm/pipeline/constants';
+import { SOURCES, STAGE_PROGRESS } from '@/app/crm/pipeline/constants';
 
 interface SortableLeadCardProps {
     lead: any;
     stage: any;
     onClick: () => void;
+    isDragging?: boolean;
 }
 
-export function SortableLeadCard({ lead, stage, onClick }: SortableLeadCardProps) {
+export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDragging }: SortableLeadCardProps) {
     const {
         attributes,
         listeners,
         setNodeRef,
         transform,
         transition,
-        isDragging
+        isDragging: isSortableDragging
     } = useSortable({ id: lead.id.toString() });
+
+    const isDragging = isOverlayDragging || isSortableDragging;
 
     const style = {
         transform: CSS.Translate.toString(transform),
@@ -41,6 +44,13 @@ export function SortableLeadCard({ lead, stage, onClick }: SortableLeadCardProps
         ? Math.floor((Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24))
         : null;
 
+    const progress = STAGE_PROGRESS[lead.stage] || 0;
+    const radius = 18;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (progress / 100) * circumference;
+
+    const isSlaOverdue = daysSince !== null && daysSince > 7 && lead.stage !== 'consolidated';
+
     // Premium Color Logic
     const glowColor = stage.color.replace('bg-', 'shadow-');
 
@@ -52,24 +62,59 @@ export function SortableLeadCard({ lead, stage, onClick }: SortableLeadCardProps
             {...listeners}
             onClick={onClick}
             className={clsx(
-                "group relative p-4 mb-3 rounded-[1.5rem] transition-all cursor-grab active:cursor-grabbing",
-                "bg-white/80 dark:bg-[#1e1f21]/80 backdrop-blur-xl border border-slate-200/50 dark:border-white/5",
-                "hover:border-blue-500/30 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)]",
-                "hover:-translate-y-1 active:scale-[0.97] active:shadow-inner",
-                isDragging && "ring-2 ring-blue-500/50 shadow-2xl scale-[1.05]"
+                "group relative p-4 mb-3 rounded-[1.8rem] transition-all cursor-grab active:cursor-grabbing",
+                "bg-white dark:bg-[#1e1f21] border border-slate-200/50 dark:border-white/5",
+                "hover:border-blue-500/30 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)]",
+                "hover:-translate-y-1 active:scale-[0.98]",
+                isDragging && "opacity-0",
+                isOverlayDragging && "opacity-100 scale-105 shadow-2xl ring-2 ring-blue-500/30",
+                isSlaOverdue && "ring-1 ring-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.05)]"
             )}
         >
+            {/* SLA Overdue Pulse */}
+            {isSlaOverdue && (
+                <div className="absolute inset-0 rounded-[1.8rem] ring-2 ring-amber-500/10 animate-pulse pointer-events-none" />
+            )}
             {/* Top Glow Accent */}
             <div className={clsx("absolute top-0 left-6 right-6 h-[1.5px] opacity-20 blur-[1px]", stage.color)} />
 
             {/* Header: Avatar + Info */}
-            <div className="flex items-start gap-3.5 mb-4">
-                <div className={clsx(
-                    "size-10 rounded-2xl flex items-center justify-center text-white font-black text-xs shadow-lg shrink-0 transition-transform group-hover:scale-110",
-                    stage.color,
-                    glowColor
-                )}>
-                    {lead.first_name?.[0] ?? ''}{lead.last_name?.[0] ?? ''}
+            <div className="flex items-start gap-4 mb-4 relative">
+                <div className="relative shrink-0">
+                    {/* Progress Circle SVG */}
+                    <svg className="size-11 -rotate-90 absolute -top-0.5 -left-0.5 pointer-events-none">
+                        <circle
+                            cx="22" cy="22" r={radius}
+                            fill="transparent"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            className="text-slate-100 dark:text-white/5"
+                        />
+                        <circle
+                            cx="22" cy="22" r={radius}
+                            fill="transparent"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeDasharray={circumference}
+                            style={{ 
+                                strokeDashoffset: offset,
+                                transition: 'stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1)'
+                            }}
+                            className={clsx(stage.text, "opacity-40")}
+                        />
+                    </svg>
+
+                    <div className={clsx(
+                        "size-10 rounded-2xl flex items-center justify-center text-white font-black text-xs shadow-lg relative z-10 transition-transform group-hover:scale-105",
+                        stage.color,
+                        glowColor
+                    )}>
+                        {lead.first_name?.[0] ?? ''}{lead.last_name?.[0] ?? ''}
+                    </div>
+
+                    {isSlaOverdue && (
+                        <div className="absolute -top-1 -right-1 size-3 rounded-full bg-amber-500 border-2 border-white dark:border-[#1e1f21] z-20 animate-bounce" />
+                    )}
                 </div>
                 
                 <div className="flex-1 min-w-0 pt-0.5">

@@ -1,7 +1,7 @@
 "use client";
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -11,6 +11,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import Tooltip from '@/components/ui/Tooltip';
+import { useSidebarLayers } from '@/context/SidebarLayerContext';
 
 interface NavItem {
     id: string;
@@ -20,6 +21,7 @@ interface NavItem {
     count?: number;
     color?: string;
     suffix?: string;
+    onClick?: () => void;
 }
 
 interface NavSection {
@@ -103,27 +105,37 @@ function NavRow({
     isMini?: boolean;
 }) {
     const Icon = item.icon ?? Circle;
+    // Items that have a drill-down chevron (indicated by suffix or specific metadata)
+    const canDrill = item.href.includes(':') || item.id.startsWith('drill-') || item.count !== undefined;
+    
     return (
-        <Link href={item.href}>
+        <Link 
+            href={item.href} 
+            onClick={(e) => {
+                if (item.onClick) {
+                    item.onClick();
+                }
+            }}
+        >
             <div className={clsx(
-                'relative flex items-center gap-2.5 px-3 py-2 mx-2 rounded-lg transition-all duration-150 group cursor-pointer',
+                'relative flex items-center gap-2.5 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group cursor-pointer',
                 isActive
-                    ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-blue-600/10 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-white'
             )}>
                 {/* Active indicator bar */}
                 {isActive && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-blue-500 rounded-full -ml-2" />
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-blue-600 rounded-full -ml-2" />
                 )}
                 {item.color ? (
                     <span
-                        className="size-4 rounded shrink-0 flex items-center justify-center text-[10px] font-black text-white"
+                        className="size-4 rounded-lg shrink-0 flex items-center justify-center text-[10px] font-black text-white"
                         style={{ backgroundColor: item.color }}
                     >
                         {item.label.charAt(0)}
                     </span>
                 ) : (
-                    <Icon size={15} className={clsx(
+                    <Icon size={16} className={clsx(
                         'shrink-0 transition-colors',
                         isActive ? 'text-blue-500' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'
                     )} />
@@ -132,21 +144,22 @@ function NavRow({
                     <>
                         <span className={clsx(
                             'text-[13px] flex-1 truncate leading-none',
-                            isActive ? 'font-semibold' : 'font-medium'
+                            isActive ? 'font-black' : 'font-semibold'
                         )}>{item.label}</span>
-                        {item.suffix && (
-                            <span className="text-[10px] text-slate-400 shrink-0 truncate max-w-[80px]">{item.suffix}</span>
-                        )}
-                        {item.count !== undefined && item.count > 0 && (
+                        {item.count !== undefined && (
                             <span className={clsx(
                                 'px-1.5 py-0.5 rounded-md text-[9px] font-black leading-none shrink-0',
                                 isActive
-                                    ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300'
+                                    ? 'bg-blue-200 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
                                     : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
                             )}>
                                 {item.count}
                             </span>
                         )}
+                        <ChevronRight size={12} className={clsx(
+                            'shrink-0 transition-all duration-200',
+                            isActive ? 'opacity-80 text-blue-500' : 'opacity-0 group-hover:opacity-100 text-slate-400 translate-x-1 group-hover:translate-x-0'
+                        )} />
                     </>
                 )}
             </div>
@@ -154,63 +167,154 @@ function NavRow({
     );
 }
 
+
 export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle, isCollapsed }: Props) {
     const pathname = usePathname();
+    const { 
+        sidebarStack, 
+        popSidebarPanel, 
+        resetSidebarStack, 
+        stackDirection 
+    } = useSidebarLayers();
+
+    // Auto-reset when navigating to a different top-level module
+    const currentModule = pathname?.split('/')[1] ?? '';
+    const prevModuleRef = useRef(currentModule);
+    useEffect(() => {
+        if (prevModuleRef.current !== currentModule) {
+            prevModuleRef.current = currentModule;
+            resetSidebarStack();
+        }
+    }, [currentModule, resetSidebarStack]);
+
+    // Determine current level to render
+    const currentLevelIndex = sidebarStack.length;
+    const isDrillDown = currentLevelIndex > 0;
+    const currentPanel = isDrillDown ? sidebarStack[currentLevelIndex - 1] : null;
+
+    const displayTitle = currentPanel?.title ?? title;
 
     return (
-        <aside className="h-full flex flex-col bg-white dark:bg-[#1e1f21] transition-colors duration-300 ease-in-out">
-            {/* Module title header */}
-            <div className="h-[50px] flex items-center px-4 border-b border-slate-100 dark:border-white/[0.05] shrink-0">
+        <aside className="h-full flex flex-col bg-white dark:bg-[#0f1113] transition-colors duration-500 ease-in-out relative overflow-hidden">
+            <div className="shrink-0 border-b border-slate-100 dark:border-white/[0.04] relative z-20 bg-white/80 dark:bg-[#0f1113]/80 backdrop-blur-xl">
+                {/* 1. Breadcrumbs (Opcional pero recomendado para contexto) */}
                 {!isMini && (
-                    <h2 className="text-[13px] font-bold text-slate-700 dark:text-slate-200 truncate tracking-tight">
-                        {title}
-                    </h2>
+                    <div className="px-5 pt-5 pb-1 flex items-center gap-2 overflow-hidden min-h-[22px]">
+                        <span 
+                            onClick={() => resetSidebarStack()}
+                            className={clsx(
+                                "text-[10px] font-black uppercase tracking-[0.15em] transition-all cursor-pointer",
+                                isDrillDown ? "text-slate-400 hover:text-blue-500" : "text-blue-600"
+                            )}
+                        >
+                            {title}
+                        </span>
+                        {isDrillDown && sidebarStack.map((level, i) => (
+                            <React.Fragment key={level.id}>
+                                <div className="size-1 rounded-full bg-slate-300 dark:bg-white/10 shrink-0 mx-0.5" />
+                                <span className={clsx(
+                                    "text-[10px] font-black uppercase tracking-[0.15em] truncate transition-all",
+                                    i === sidebarStack.length - 1 ? "text-slate-900 dark:text-white" : "text-slate-400"
+                                )}>
+                                    {level.title}
+                                </span>
+                            </React.Fragment>
+                        ))}
+                    </div>
                 )}
+
+                {/* 2. Header Anatomy: Botón Atrás + Título */}
+                <div className="h-[52px] flex items-center px-5 gap-3">
+                    {!isMini && (
+                        <>
+                            {isDrillDown && (
+                                <motion.button
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    whileHover={{ x: -2 }}
+                                    onClick={() => {
+                                        if (currentPanel?.onBack) currentPanel.onBack();
+                                        popSidebarPanel();
+                                    }}
+                                    className="p-2 -ml-2 rounded-xl bg-slate-50 dark:bg-white/5 text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-white/10 transition-all shadow-sm flex items-center justify-center shrink-0 border border-slate-100 dark:border-white/5 active:scale-90"
+                                >
+                                    <ChevronLeft size={18} strokeWidth={2.5} />
+                                </motion.button>
+                            )}
+                            <h2 className={clsx(
+                                "text-[15px] font-black text-slate-900 dark:text-white truncate tracking-tight flex-1",
+                                isDrillDown && "italic"
+                            )}>
+                                {displayTitle}
+                            </h2>
+                        </>
+                    )}
+                </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto scrollbar-hide py-3 space-y-0">
-                {/* ── Custom sections from parent ── */}
-                {sections && sections.length > 0 && sections.map((group, idx) => (
-                    <SidebarSection
-                        key={group.title ?? idx}
-                        title={group.title}
-                        canAdd={group.canAdd}
-                        isMini={isMini}
-                        defaultOpen
+            {/* 3. Body: Contenido con animación de Slide Direccional */}
+            <div className="flex-1 relative overflow-hidden bg-slate-50/30 dark:bg-black/5">
+                <AnimatePresence mode="popLayout" custom={stackDirection} initial={false}>
+                    <motion.div
+                        key={isDrillDown && currentPanel ? currentPanel.id : 'base'}
+                        custom={stackDirection}
+                        variants={{
+                            enter: (dir: string) => ({
+                                x: dir === 'forward' ? '100%' : '-100%',
+                                opacity: 0
+                            }),
+                            center: {
+                                x: 0,
+                                opacity: 1
+                            },
+                            exit: (dir: string) => ({
+                                x: dir === 'forward' ? '-100%' : '100%',
+                                opacity: 0
+                            })
+                        }}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        transition={{ 
+                            type: 'spring', 
+                            damping: 32, 
+                            stiffness: 300,
+                            mass: 0.6,
+                            restDelta: 0.001
+                        }}
+                        className="absolute inset-0 overflow-y-auto scrollbar-hide py-3 space-y-0.5"
                     >
-                        {group.items.map(item => {
-                            const isActive = pathname === item.href ||
-                                !!(item.href !== '/' && pathname?.startsWith(item.href));
-                            return (
-                                <NavRow key={item.id} item={item} isActive={isActive} isMini={isMini} />
-                            );
-                        })}
-                    </SidebarSection>
-                ))}
+                        {isDrillDown && currentPanel ? currentPanel.content : (
+                            <>
+                                {sections && sections.length > 0 && sections.map((group, idx) => (
+                                    <SidebarSection
+                                        key={group.title ?? idx}
+                                        title={group.title}
+                                        canAdd={group.canAdd}
+                                        isMini={isMini}
+                                        defaultOpen
+                                    >
+                                        {group.items.map(item => {
+                                            const isActive = pathname === item.href ||
+                                                !!(item.href !== '/' && pathname?.startsWith(item.href));
+                                            return (
+                                                <NavRow key={item.id} item={item} isActive={isActive} isMini={isMini} />
+                                            );
+                                        })}
+                                    </SidebarSection>
+                                ))}
 
-                {/* ── ClickUp-style fallback ── */}
-                {!sections?.length && !isMini && (
-                    <>
-                        <SidebarSection title="Favoritos">
-                            <div className="px-4 py-3">
-                                <p className="text-[11px] text-slate-300 dark:text-slate-600">
-                                    Haz clic en ☆ para añadir favoritos.
-                                </p>
-                            </div>
-                        </SidebarSection>
-
-                        <SidebarSection title="Canales" canAdd>
-                            <NavRow
-                                item={{ id: 'ch-welcome', label: 'Welcome', href: '#', icon: Hash }}
-                                isActive={false}
-                            />
-                            <div className="flex items-center gap-2 px-5 py-1.5 text-[12px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer transition-colors">
-                                <Plus size={13} />
-                                Añadir canal
-                            </div>
-                        </SidebarSection>
-                    </>
-                )}
+                                {/* Fallback content */}
+                                {!sections?.length && !isMini && (
+                                    <div className="px-6 py-10 text-center space-y-3 opacity-40">
+                                        <Circle size={40} className="mx-auto text-slate-200" />
+                                        <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Sin contenido</p>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </motion.div>
+                </AnimatePresence>
             </div>
 
             {/* ── Footer S2: Expand/Collapse toggle ── */}

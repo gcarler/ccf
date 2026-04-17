@@ -247,3 +247,4 @@ function ThemeCard({ label, icon: Icon, active }: any) {
         </div>
     );
 }
+

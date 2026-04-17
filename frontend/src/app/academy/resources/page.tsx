@@ -183,3 +183,4 @@ function ResourceRow({ resource, isFavorite, onToggleFavorite }: { resource: Res
         </article>
     );
 }
+

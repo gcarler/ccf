@@ -333,3 +333,4 @@ function LogItem({ icon: Icon, title, user, time, color, bg }: any) {
         </div>
     );
 }
+

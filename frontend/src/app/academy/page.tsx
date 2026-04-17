@@ -1,40 +1,25 @@
-import type { Metadata } from 'next';
+"use client";
+
+import React, { useEffect, useState } from 'react';
 import AcademyClient from './AcademyClient';
-import { serverApiFetch } from '@/lib/serverApi';
+import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/http';
 
-export const metadata: Metadata = {
-    title: 'Academia Faro · CCF Mesh',
-};
+export default function AcademyPage() {
+    const { token } = useAuth();
+    const [courses, setCourses] = useState<any[]>([]);
+    const [enrollments, setEnrollments] = useState<any[]>([]);
 
-export const dynamic = 'force-dynamic';
+    useEffect(() => {
+        if (!token) return;
+        Promise.all([
+            apiFetch<any[]>('/academy/courses', { token }),
+            apiFetch<any[]>('/academy/enrollments/my', { token })
+        ]).then(([c, e]) => {
+            setCourses(c);
+            setEnrollments(e);
+        });
+    }, [token]);
 
-async function fetchInitialCourses() {
-    try {
-        const data = await serverApiFetch<any[]>('/academy/courses/');
-        return Array.isArray(data) ? data : [];
-    } catch (error) {
-        console.error('academy courses fetch failed', error);
-        return [];
-    }
-}
-
-async function fetchInitialEnrollments() {
-    try {
-        const me = await serverApiFetch<{ user_id: string }>('/auth/me');
-        if (!me?.user_id) return [];
-        const enrollments = await serverApiFetch<any[]>(`/users/${me.user_id}/enrollments`);
-        return Array.isArray(enrollments) ? enrollments : [];
-    } catch (error) {
-        console.error('academy enrollments fetch failed', error);
-        return [];
-    }
-}
-
-export default async function AcademyPage() {
-    const [courses, enrollments] = await Promise.all([
-        fetchInitialCourses(),
-        fetchInitialEnrollments(),
-    ]);
-
-    return <AcademyClient initialCourses={courses} initialEnrollments={enrollments} />;
+    return <AcademyClient />;
 }

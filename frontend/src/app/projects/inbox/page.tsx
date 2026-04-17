@@ -160,3 +160,4 @@ function Tab({ active, label, onClick }: any) {
         <button onClick={onClick} className={clsx("px-6 py-4 text-[11px] font-black uppercase tracking-widest transition-all border-b-2", active ? "text-blue-600 border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600")}>{label}</button>
     );
 }
+

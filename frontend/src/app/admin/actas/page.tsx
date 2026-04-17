@@ -322,3 +322,4 @@ export default function ActaManagementPage() {
         </WorkspaceLayout>
     );
 }
+

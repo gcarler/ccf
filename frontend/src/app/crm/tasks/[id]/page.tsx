@@ -18,13 +18,15 @@ import {
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import DSCard from '@/design/components/DSCard';
-import DSBadge from '@/design/components/DSBadge';
+import { DSCard } from '@/design/components/DSCard';
+import { DSBadge } from '@/design/components/DSBadge';
 import CrmShell from '@/components/crm/CrmShell';
 import { toast } from 'sonner';
+import clsx from 'clsx';
 
 export default function CrmTaskDetailPage() {
-    const { id } = useParams();
+    const params = useParams();
+    const id = params?.id as string;
     const router = useRouter();
     const { token } = useAuth();
     
@@ -61,8 +63,8 @@ export default function CrmTaskDetailPage() {
     return (
         <CrmShell
             breadcrumbs={[
-                { label: 'CRM', icon: LayoutDashboard, onClick: () => router.push('/crm') },
-                { label: 'Tareas Pastorales', icon: CheckCircle2, onClick: () => router.push('/crm/tasks') },
+                { label: 'CRM', icon: LayoutDashboard, href: '/crm' },
+                { label: 'Tareas Pastorales', icon: CheckCircle2, href: '/crm/tasks' },
                 { label: `TASK-${id}`, icon: CheckCircle2 },
             ]}
         >
@@ -71,8 +73,8 @@ export default function CrmTaskDetailPage() {
                     <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
-                                <DSBadge variant="indigo">{task.category.toUpperCase()}</DSBadge>
-                                <DSBadge variant={task.status === 'completed' ? 'success' : 'warning'}>{task.status.toUpperCase()}</DSBadge>
+                                <DSBadge tone="violet" label={task.category.toUpperCase()} />
+                                <DSBadge tone={task.status === 'completed' ? 'emerald' : 'amber'} label={task.status.toUpperCase()} />
                             </div>
                             <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">
                                 {task.title}
@@ -82,13 +84,15 @@ export default function CrmTaskDetailPage() {
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 space-y-8">
-                            <DSCard title="Detalle de la Actividad">
+                            <DSCard>
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Detalle de la Actividad</h3>
                                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                                     {task.description}
                                 </p>
                             </DSCard>
 
-                            <DSCard title="Bitácora de Seguimiento">
+                            <DSCard>
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Bitácora de Seguimiento</h3>
                                 <div className="space-y-4">
                                     <div className="flex gap-4">
                                         <div className="size-8 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">

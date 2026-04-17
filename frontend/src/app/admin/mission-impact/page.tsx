@@ -224,3 +224,4 @@ function GoalProgress({ label, current, target, color }: any) {
         </div>
     );
 }
+

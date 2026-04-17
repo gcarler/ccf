@@ -280,3 +280,4 @@ function AgentState({ label, load, status, color }: any) {
         </div>
     );
 }
+

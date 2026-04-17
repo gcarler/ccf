@@ -1,0 +1,112 @@
+"use client";
+
+import React, { useEffect, useState } from 'react';
+import {
+    Award, Download, ShieldCheck, ExternalLink, Waves, FileCheck,
+    Loader2
+} from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/http';
+import { motion } from 'framer-motion';
+import clsx from 'clsx';
+
+interface Certificate {
+    id: number;
+    certificate_code: string;
+    certificate_type: string | null;
+    issued_at: string;
+    enrollment_id: number;
+    course_title?: string;
+}
+
+export default function SpiritualCertificatesPanel() {
+    const { token, user } = useAuth();
+    const [certificates, setCertificates] = useState<Certificate[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!token || !user?.id) { setLoading(false); return; }
+        apiFetch<Certificate[]>(`/academy/users/${user.id}/certificates`, { token, cache: 'no-store' })
+            .then(data => setCertificates(Array.isArray(data) ? data : []))
+            .catch(() => setCertificates([]))
+            .finally(() => setLoading(false));
+    }, [token, user]);
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-40 gap-3">
+                <Loader2 className="animate-spin text-cyan-600" size={24} />
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Consultando registros...</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6 p-6">
+            {certificates.length === 0 ? (
+                <div className="text-center py-20 bg-slate-50 dark:bg-white/[0.02] rounded-[2.5rem] border border-dashed border-slate-200 dark:border-white/10">
+                    <Award className="mx-auto text-slate-200 dark:text-white/10 mb-4 animate-pulse" size={48} />
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Sembrando esfuerzo para cosechar victoria</p>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {certificates.map((cert, i) => {
+                        const isSacramento = cert.certificate_type?.toLowerCase().includes('bautismo') || cert.certificate_type?.toLowerCase().includes('sacramento');
+                        return (
+                            <motion.div
+                                key={cert.id}
+                                initial={{ opacity: 0, y: 15 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.1, type: 'spring', damping: 20 }}
+                                className="group relative bg-white dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.05] rounded-[2.5rem] p-6 shadow-sm hover:shadow-2xl hover:shadow-blue-500/5 transition-all hover:border-blue-500/20"
+                            >
+                                <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:opacity-10 transition-opacity">
+                                    <Award size={80} strokeWidth={1} />
+                                </div>
+
+                                <div className="flex items-start justify-between mb-6 relative z-10">
+                                    <div className={clsx(
+                                        "size-12 rounded-2xl flex items-center justify-center border-2 shadow-lg transition-transform group-hover:scale-110",
+                                        isSacramento ? "bg-cyan-500/10 border-cyan-500/20 text-cyan-500" : "bg-blue-500/10 border-blue-500/20 text-blue-500"
+                                    )}>
+                                        {isSacramento ? <Waves size={24} /> : <FileCheck size={24} />}
+                                    </div>
+                                    <span className={clsx(
+                                        "text-[9px] font-black uppercase tracking-[0.15em] px-3 py-1.5 rounded-xl border-2",
+                                        isSacramento ? "bg-cyan-50 text-cyan-600 border-cyan-100 dark:bg-cyan-900/40 dark:border-cyan-500/30" : "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/40 dark:border-blue-500/30"
+                                    )}>
+                                        {cert.certificate_type || 'ACADEMIA'}
+                                    </span>
+                                </div>
+
+                                <div className="space-y-2 mb-6 relative z-10">
+                                    <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tight">
+                                        {cert.course_title || cert.certificate_type}
+                                    </h3>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                        <ShieldCheck size={12} className="text-emerald-500" /> Verificado {new Date(cert.issued_at).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                                    </p>
+                                </div>
+
+                                <div className="pt-5 border-t border-slate-100 dark:border-white/[0.04] flex items-center justify-between relative z-10">
+                                    <div className="space-y-0.5">
+                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest opacity-60">ID DE VALIDACIÓN</p>
+                                        <code className="text-[10px] font-mono text-slate-500 dark:text-slate-400 font-bold tracking-tight">{cert.certificate_code}</code>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button className="px-5 py-2.5 bg-slate-900 dark:bg-blue-600 text-white text-[10px] font-black uppercase tracking-[0.15em] rounded-2xl shadow-lg active:scale-95 transition-all flex items-center gap-2">
+                                            <Download size={14} /> PDF
+                                        </button>
+                                        <button className="p-2.5 bg-slate-100 dark:bg-white/5 text-slate-400 hover:text-blue-500 rounded-2xl transition-all active:scale-90">
+                                            <ExternalLink size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+}
