@@ -74,8 +74,8 @@ def _run_startup_migrations():
             "UPDATE crm_tasks SET status = 'pending' WHERE status = 'todo'",
             "UPDATE crm_tasks SET priority = 'medium' WHERE priority = 'normal'",
             # cms v2 bootstrap: create default FARO site and main menu
-            "INSERT INTO cms_sites (site_key, name, base_path, is_active, created_at, updated_at) SELECT 'faro', 'FARO', '/faro', true, NOW(), NOW() WHERE NOT EXISTS (SELECT 1 FROM cms_sites WHERE site_key = 'faro')",
-            "INSERT INTO cms_menus (site_id, menu_key, name, is_active, created_at, updated_at) SELECT id, 'main', 'Menu principal', true, NOW(), NOW() FROM cms_sites WHERE site_key = 'faro' AND NOT EXISTS (SELECT 1 FROM cms_menus m WHERE m.site_id = cms_sites.id AND m.menu_key = 'main')",
+            "INSERT INTO cms_sites (site_key, name, base_path, is_active, created_at, updated_at) SELECT 'faro', 'FARO', '/faro', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP WHERE NOT EXISTS (SELECT 1 FROM cms_sites WHERE site_key = 'faro')",
+            "INSERT INTO cms_menus (site_id, menu_key, name, is_active, created_at, updated_at) SELECT id, 'main', 'Menu principal', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM cms_sites WHERE site_key = 'faro' AND NOT EXISTS (SELECT 1 FROM cms_menus m WHERE m.site_id = cms_sites.id AND m.menu_key = 'main')",
         ]
         for sql in migrations:
             try:
