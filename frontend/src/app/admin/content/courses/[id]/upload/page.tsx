@@ -15,7 +15,7 @@ import {
     Loader2
 } from 'lucide-react';
 
-export default function UploadMaterials({ params }: { params: { id: string } }) {
+export default function UploadMaterials() {
     const { isAuthenticated } = useAuth();
     const router = useRouter();
     const [uploadProgress, setUploadProgress] = useState(75);

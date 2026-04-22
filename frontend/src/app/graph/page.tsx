@@ -10,7 +10,7 @@ import { useGraphInsights } from "@/hooks/useGraphInsights";
 import type { GraphNode } from "@/types/graph";
 import { useConfig } from "@/context/ConfigContext";
 
-const ForceGraph2D = dynamic(() => import("react-force-graph").then((mod) => mod.ForceGraph2D), { ssr: false });
+const ForceGraph2D = dynamic(() => import("react-force-graph-2d").then((mod) => mod.default), { ssr: false });
 
 const palette: Record<string, string> = {
   course: "#2563eb",

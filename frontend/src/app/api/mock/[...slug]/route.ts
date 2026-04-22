@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     slug?: string[]
-  }
+  }>
 }
 
 const mockUser = {
@@ -192,20 +192,21 @@ function normalizePath(slug?: string[]) {
 }
 
 export async function GET(_: Request, { params }: RouteContext) {
-  const rawPath = normalizePath(params.slug)
+  const resolvedParams = await params
+  const rawPath = normalizePath(resolvedParams.slug)
   const withSlash = rawPath.endsWith('/') ? rawPath : `${rawPath}/`
   const withoutSlash = rawPath.endsWith('/') ? rawPath.slice(0, -1) || '/' : rawPath
 
-  if (params.slug?.[0] === 'users' && params.slug[2] === 'enrollments') {
+  if (resolvedParams.slug?.[0] === 'users' && resolvedParams.slug[2] === 'enrollments') {
     return NextResponse.json(mockEnrollments)
   }
 
-  if (params.slug?.[0] === 'users' && params.slug[2] === 'certificates') {
+  if (resolvedParams.slug?.[0] === 'users' && resolvedParams.slug[2] === 'certificates') {
     return NextResponse.json(mockCertificates)
   }
 
-  if (params.slug?.[0] === 'courses' && params.slug[2] === 'lessons') {
-    const courseId = Number(params.slug[1])
+  if (resolvedParams.slug?.[0] === 'courses' && resolvedParams.slug[2] === 'lessons') {
+    const courseId = Number(resolvedParams.slug[1])
     return NextResponse.json(mockLessons[courseId as 1 | 2] ?? [])
   }
 
@@ -217,7 +218,8 @@ export async function GET(_: Request, { params }: RouteContext) {
 }
 
 export async function POST(request: Request, { params }: RouteContext) {
-  const rawPath = normalizePath(params.slug)
+  const resolvedParams = await params
+  const rawPath = normalizePath(resolvedParams.slug)
   if (rawPath.startsWith('/enrollments/') && rawPath.endsWith('/check-in')) {
     return NextResponse.json({ status: 'checked-in' })
   }

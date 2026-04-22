@@ -1,12 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import {
-    ArrowLeft,
     Facebook,
     Instagram,
     Youtube,
@@ -14,9 +12,7 @@ import {
     Radio,
     ExternalLink,
     Save,
-    CheckCircle2,
     Sparkles,
-    Zap,
     Globe,
     Loader2,
     Link2,
@@ -43,7 +39,6 @@ const PLATFORMS = [
 export default function SocialMediaSettings() {
     const { token, isAuthenticated } = useAuth();
     const { addToast } = useToast();
-    const router = useRouter();
 
     const [socials, setSocials] = useState<SocialChannel[]>([]);
     const [loading, setLoading] = useState(true);

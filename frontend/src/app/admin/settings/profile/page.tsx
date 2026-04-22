@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Church, MapPin, Phone, Mail, Globe, Camera, Save, Edit2, AlertCircle } from 'lucide-react';
+import { Church, Camera, Save, Edit2, AlertCircle } from 'lucide-react';
 
 export default function AdminSettingsProfilePage() {
     const [editing, setEditing] = useState(false);

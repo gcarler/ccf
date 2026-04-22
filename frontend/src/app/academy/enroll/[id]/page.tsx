@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/http';
 import { ArrowLeft, BookOpen, Upload, CreditCard, Wallet, Landmark, Lock, CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
@@ -10,10 +10,12 @@ import { useToast } from '@/context/ToastContext';
 import { motion, AnimatePresence } from "framer-motion";
 import AcademyDetailShell from '@/components/academy/AcademyDetailShell';
 
-export default function EnrollmentWizard({ params }: { params: { id: string } }) {
+export default function EnrollmentWizard() {
     const { token, isAuthenticated, user } = useAuth();
     const { addToast } = useToast();
     const router = useRouter();
+    const params = useParams<{ id: string }>();
+    const courseId = params?.id ?? '';
 
     const [step, setStep] = useState(1);
     const [course, setCourse] = useState<any>(null);
@@ -29,7 +31,7 @@ export default function EnrollmentWizard({ params }: { params: { id: string } })
 
         const fetchCourse = async () => {
             try {
-                const data = await apiFetch(`/courses/${params.id}`, { cache: 'no-store' });
+                const data = await apiFetch(`/courses/${courseId}`, { cache: 'no-store' });
                 setCourse(data);
             } catch (error) {
                 addToast("Curso no encontrado", "error");
@@ -42,7 +44,7 @@ export default function EnrollmentWizard({ params }: { params: { id: string } })
         fetchCourse();
         // router is stable in Next.js app router
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isAuthenticated, params.id, addToast]);
+    }, [isAuthenticated, courseId, addToast]);
 
     const handleEnrollment = async () => {
         setEnrolling(true);
@@ -50,7 +52,7 @@ export default function EnrollmentWizard({ params }: { params: { id: string } })
             await apiFetch("/enrollments/", {
                 method: "POST",
                 token,
-                body: { user_id: user?.id, course_id: parseInt(params.id) }
+                body: { user_id: user?.id, course_id: parseInt(courseId) }
             });
             addToast("¡Inscripción y pago exitosos!", "success");
             setStep(3); // Success step

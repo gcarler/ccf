@@ -10,6 +10,7 @@ from backend.api import auth, projects, academy, crm, workspace, system, cms, co
 from backend.core.config import get_settings
 from backend.core.database import engine, Base
 from backend.services.automation_engine import engine as automation_engine
+from backend.core.security_headers import mount_security_headers
 
 # Configuración de Logging Ministerial
 logging.basicConfig(level=logging.INFO)
@@ -23,6 +24,9 @@ app = FastAPI(
     description="Sistema de Inteligencia Ministerial El Faro",
     version="3.0.0-PRO"
 )
+
+# 0. Blindaje de Infraestructura
+mount_security_headers(app)
 
 # 1. Calidad: Middleware de Rendimiento y Seguridad
 @app.middleware("http")
@@ -95,6 +99,7 @@ def shutdown_event():
 
 # Montaje de Routers
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(auth.router, prefix="/auth", tags=["auth-legacy"])
 app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
 app.include_router(academy.router, prefix="/api/academy", tags=["academy"])
 app.include_router(crm.router, prefix="/api/crm", tags=["crm"])
@@ -105,11 +110,15 @@ app.include_router(cms_v2.router, prefix="/api")
 app.include_router(content.router, prefix="/api")
 app.include_router(agents.router, prefix="/api")
 app.include_router(agents.analytics_router, prefix="/api")
+app.include_router(agents.router, prefix="")
+app.include_router(agents.analytics_router, prefix="")
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(finance.router, prefix="/api", tags=["finance"])
 app.include_router(donations.router, prefix="/api", tags=["donations"])
 app.include_router(governance.router, prefix="/api", tags=["governance"])
+app.include_router(governance.router, prefix="", tags=["governance-legacy"])
 app.include_router(messaging.router, prefix="/api", tags=["messaging"])
+app.include_router(messaging.router, prefix="", tags=["messaging-legacy"])
 app.include_router(support.router, prefix="/api/support", tags=["support"])
 app.include_router(spiritual_life.router, prefix="/api", tags=["spiritual_life"])
 app.include_router(graph.router, prefix="/api", tags=["graph"])

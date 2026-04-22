@@ -12,7 +12,7 @@ async function parseResponse(response: Response) {
 }
 
 export async function serverApiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const headers = new Headers(init.headers);
   headers.set('Accept', 'application/json');
   cookieStore.getAll().forEach((cookie) => {

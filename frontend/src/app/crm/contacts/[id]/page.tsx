@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
@@ -45,10 +45,12 @@ const STAGE_LABELS: Record<string, string> = {
     lost: 'Perdido',
 };
 
-export default function LeadDetail({ params }: { params: { id: string } }) {
+export default function LeadDetail() {
     const { isAuthenticated, token } = useAuth();
     const { addToast } = useToast();
     const router = useRouter();
+    const params = useParams<{ id: string }>();
+    const leadId = params?.id ?? '';
 
     const [activeTab, setActiveTab] = useState('history');
     const [lead, setLead] = useState<any>(null);
@@ -66,13 +68,13 @@ export default function LeadDetail({ params }: { params: { id: string } }) {
     const [isSavingStage, setIsSavingStage] = useState(false);
 
     const fetchLeadData = useCallback(async () => {
-        if (!token || !params.id) return;
+        if (!token || !leadId) return;
         setLoading(true);
         try {
             const [leadData, logsData, counselingData] = await Promise.allSettled([
-                apiFetch(`/crm/consolidation/pipeline/${params.id}`, { token, cache: 'no-store' }),
-                apiFetch<CallLog[]>(`/crm/pipeline/leads/${params.id}/calls`, { token, cache: 'no-store' }),
-                apiFetch(`/crm/counseling/lead/${params.id}`, { token, cache: 'no-store' })
+                apiFetch(`/crm/consolidation/pipeline/${leadId}`, { token, cache: 'no-store' }),
+                apiFetch<CallLog[]>(`/crm/pipeline/leads/${leadId}/calls`, { token, cache: 'no-store' }),
+                apiFetch(`/crm/counseling/lead/${leadId}`, { token, cache: 'no-store' })
             ]);
             if (leadData.status === 'fulfilled') setLead(leadData.value);
             setCallLogs(logsData.status === 'fulfilled' && Array.isArray((logsData as any).value) ? (logsData as any).value : []);
@@ -82,13 +84,13 @@ export default function LeadDetail({ params }: { params: { id: string } }) {
         } finally {
             setLoading(false);
         }
-    }, [token, params.id]);
+    }, [token, leadId]);
 
     const handleStageChange = async (newStage: string) => {
         setIsStageOpen(false);
         setIsSavingStage(true);
         try {
-            await apiFetch(`/crm/consolidation/pipeline/${params.id}`, {
+            await apiFetch(`/crm/consolidation/pipeline/${leadId}`, {
                 method: 'PATCH', token,
                 body: { stage: newStage }
             });
@@ -105,7 +107,7 @@ export default function LeadDetail({ params }: { params: { id: string } }) {
         e.preventDefault();
         setIsSavingCall(true);
         try {
-            await apiFetch(`/crm/pipeline/leads/${params.id}/calls`, {
+            await apiFetch(`/crm/pipeline/leads/${leadId}/calls`, {
                 method: 'POST', token,
                 body: callForm
             });

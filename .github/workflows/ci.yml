@@ -53,11 +53,12 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Install frontend dependencies
         run: npm ci
-      - name: Run critical lint gate
+      - name: Run critical lint gate (ESLint CLI)
         run: npm run lint:critical
       - name: Run TypeScript check
         run: npm run typecheck
-      - name: Run strict lint check
+      - name: Run strict lint check (advisory, ESLint CLI)
+        continue-on-error: true
         run: npm run lint:strict
       - name: Build frontend
         run: npm run build

@@ -6,30 +6,21 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import {
-    ArrowLeft,
     Sparkles,
     Zap,
-    Layout,
     Palette,
     Settings,
-    Eye,
-    EyeOff,
-    CheckCircle2,
-    XCircle,
     Smartphone,
-    Monitor,
     Bot,
     GanttChart,
-    Calendar,
-    Users,
+    Heart,
     KanbanSquare,
+    Shield,
     Save,
     RotateCcw
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
-import Tooltip from '@/components/ui/Tooltip';
 
 const FEATURE_CARDS = [
     { id: 'gantt', label: 'Vista de Gantt', desc: 'Habilita el cronograma interactivo en proyectos.', icon: GanttChart, color: 'text-blue-500' },
@@ -201,7 +192,4 @@ export default function WorkspaceExperienceManager() {
         </div>
     );
 }
-
-function Shield({ size, className }: any) { return <Layout size={size} className={className} />; }
-function Heart({ size, className }: any) { return <Sparkles size={size} className={className} />; }
 

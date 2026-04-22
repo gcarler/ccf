@@ -11,7 +11,6 @@ import {
     Cpu, 
     Globe, 
     Lock, 
-    Bell, 
     Smartphone, 
     Mail, 
     Layers,
@@ -31,7 +30,6 @@ import AdminShell from '@/components/admin/AdminShell';
 import AdminHero from '@/components/admin/AdminHero';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
 export default function SystemSettings() {
@@ -1322,7 +1320,7 @@ function ProviderRow({ icon: Icon, name, status, color, detail }: any) {
     );
 }
 
-function SecurityCheck({ label, active }: any) {
+function SecurityCheck({ label }: any) {
     return (
         <div className="flex items-center gap-3">
             <div className="size-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]" />

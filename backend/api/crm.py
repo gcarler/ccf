@@ -7,12 +7,15 @@ from backend import crud, schemas, models
 from backend.core.database import get_db
 from backend.auth import (
     get_current_user, 
+    normalize_role,
+    require_active_user,
     require_admin, 
     require_pastor_or_admin, 
     require_staff_or_admin,
     require_coordinator_or_admin
 )
 from backend.core.audit import record_admin_action
+from backend.mesh_websockets import manager
 
 router = APIRouter(tags=["CRM"])
 
@@ -39,18 +42,17 @@ def create_member(
 @router.get("/members/me", response_model=dict)
 def get_my_crm_card(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin)
+    current_user: models.User = Depends(require_active_user)
 ):
-    """Devuelve la tarjeta de miembro del usuario actual."""
-    member = crud.get_members(db, search=current_user.email)
-    if member and len(member) > 0:
-        m = member[0]
+    """Devuelve la tarjeta de miembro del usuario actual vinculada por user_id."""
+    member = db.query(models.Member).filter(models.Member.user_id == current_user.id).first()
+    if member:
         return {
-            "id": m.id,
-            "first_name": m.first_name,
-            "last_name": m.last_name,
-            "church_role": m.church_role,
-            "qr_code": f"CCF-MBR-{m.id}-{uuid.uuid4().hex[:6]}"
+            "id": member.id,
+            "first_name": member.first_name,
+            "last_name": member.last_name,
+            "church_role": member.church_role,
+            "qr_code": f"CCF-MBR-{member.id}-{uuid.uuid4().hex[:6]}"
         }
     return {
         "id": 0,
@@ -64,11 +66,20 @@ def get_my_crm_card(
 def get_member(
     member_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin)
+    current_user: models.User = Depends(require_active_user)
 ):
+    """Obtiene el detalle de un miembro con validación de propiedad (IDOR)."""
     member = db.query(models.Member).filter(models.Member.id == member_id).first()
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
+        
+    # Check if user is looking at their own profile OR is a pastor/admin
+    is_self = member.user_id == current_user.id
+    is_staff = normalize_role(str(current_user.role)) in ["admin", "pastor", "coordinador"]
+    
+    if not is_self and not is_staff:
+        raise HTTPException(status_code=403, detail="No autorizado para ver este perfil")
+        
     return member
 
 @router.patch("/members/{member_id}", response_model=schemas.Member)
@@ -208,7 +219,7 @@ def get_pipeline_lead(
     }
 
 @router.patch("/consolidation/pipeline/{lead_id}", response_model=dict)
-def update_pipeline_lead(
+async def update_pipeline_lead(
     lead_id: int,
     payload: schemas.ConsolidationPipelineUpdate,
     db: Session = Depends(get_db),
@@ -226,6 +237,14 @@ def update_pipeline_lead(
         resource_id=str(lead.id),
         metadata=payload.model_dump(exclude_unset=True)
     )
+
+    # BROADCAST REAL-TIME UPDATE
+    await manager.broadcast_event({
+        "type": "PIPELINE_UPDATED",
+        "lead_id": lead.id,
+        "stage": lead.stage,
+        "actor": current_user.username
+    }, room="pastoral_ops")
     
     return {"status": "success", "lead_id": lead.id, "stage": lead.stage}
 
@@ -425,30 +444,26 @@ def get_messaging_history(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin)
 ):
-    """Devuelve el historial de mensajes enviados. Filtra por member_id si se provee."""
+    """Devuelve el historial de mensajes optimizado con JOIN para evitar N+1."""
     try:
-        q = db.query(models.CommunicationLog).order_by(models.CommunicationLog.sent_at.desc())
+        from sqlalchemy.orm import joinedload
+        q = db.query(models.CommunicationLog).options(joinedload(models.CommunicationLog.member))
+        
         if member_id:
             q = q.filter(models.CommunicationLog.member_id == member_id)
-        logs = q.limit(limit).all()
-        result = []
-        for log in logs:
-            member_name = None
-            if log.member_id:
-                m = db.query(models.Member).filter(models.Member.id == log.member_id).first()
-                if m:
-                    member_name = f"{m.first_name} {m.last_name}"
-            result.append({
-                "id": log.id,
-                "member_id": log.member_id,
-                "member_name": member_name,
-                "channel": log.channel,
-                "message": log.message,
-                "status": log.status,
-                "sent_at": log.sent_at.isoformat() if log.sent_at else None,
-            })
-        return result
-    except Exception:
+            
+        logs = q.order_by(models.CommunicationLog.sent_at.desc()).limit(limit).all()
+        
+        return [{
+            "id": log.id,
+            "member_id": log.member_id,
+            "member_name": f"{log.member.first_name} {log.member.last_name}" if log.member else "Desconocido",
+            "channel": log.channel,
+            "message": log.message,
+            "status": log.status,
+            "sent_at": log.sent_at.isoformat() if log.sent_at else None,
+        } for log in logs]
+    except Exception as e:
         return []
 
 @router.post("/messaging/send", response_model=dict)
@@ -481,33 +496,30 @@ def list_crm_tasks(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin)
 ):
-    """Lista todas las tareas pastorales. Filtra por status, assignee_id o member_id."""
+    """Lista tareas pastorales optimizada con JOIN para evitar N+1."""
     try:
-        q = db.query(models.CrmTask)
+        from sqlalchemy.orm import joinedload
+        q = db.query(models.CrmTask).options(joinedload(models.CrmTask.member))
         if assignee_id:
-            q = q.filter(models.CrmTask.member_id == assignee_id)
+            q = q.filter(models.CrmTask.assignee_id == assignee_id)
         if member_id:
             q = q.filter(models.CrmTask.member_id == member_id)
+        
         tasks = q.all()
         result = []
         for t in tasks:
-            member_name = None
-            if hasattr(t, 'member_id') and t.member_id:
-                member = db.query(models.Member).filter(models.Member.id == t.member_id).first()
-                if member:
-                    member_name = f"{member.first_name} {member.last_name}"
             result.append({
                 "id": t.id,
                 "title": t.title,
-                "description": getattr(t, 'description', None),
+                "description": t.description,
                 "status": t.status,
-                "priority": getattr(t, 'priority', 'medium'),
-                "category": getattr(t, 'category', 'Pastoral'),
+                "priority": t.priority,
+                "category": t.category,
                 "due_date": t.due_date.isoformat() if t.due_date else None,
-                "member_id": getattr(t, 'member_id', None),
-                "member_name": member_name,
-                "assigned_to": getattr(t, 'assignee_id', None),
-                "created_at": t.created_at.isoformat() if hasattr(t, 'created_at') and t.created_at else datetime.utcnow().isoformat(),
+                "member_id": t.member_id,
+                "member_name": f"{t.member.first_name} {t.member.last_name}" if t.member else None,
+                "assigned_to": t.assignee_id,
+                "created_at": t.created_at.isoformat() if t.created_at else None,
             })
         if status:
             result = [r for r in result if r["status"] == status]
@@ -516,12 +528,12 @@ def list_crm_tasks(
         return []
 
 @router.post("/tasks/", response_model=dict)
-def create_crm_task(
+async def create_crm_task(
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin)
 ):
-    """Crea una nueva tarea pastoral. Accesible a todos los usuarios autenticados."""
+    """Crea una nueva tarea pastoral y notifica vía WebSocket."""
     try:
         task = models.CrmTask(
             title=payload.get("title", ""),
@@ -537,16 +549,19 @@ def create_crm_task(
         db.add(task)
         db.commit()
         db.refresh(task)
+
+        # BROADCAST REAL-TIME NOTIFICATION
+        await manager.broadcast_event({
+            "type": "TASK_CREATED",
+            "task_id": task.id,
+            "title": task.title,
+            "assigned_to": current_user.username
+        }, room="pastoral_ops")
+
         return {
             "id": task.id,
             "title": task.title,
-            "description": getattr(task, 'description', None),
             "status": task.status,
-            "priority": getattr(task, 'priority', 'medium'),
-            "category": getattr(task, 'category', 'Pastoral'),
-            "due_date": task.due_date.isoformat() if task.due_date else None,
-            "member_id": getattr(task, 'member_id', None),
-            "member_name": None,
             "created_at": task.created_at.isoformat(),
         }
     except Exception as e:
@@ -657,18 +672,24 @@ def validate_scanner_token(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin)
 ):
-    """Valida un código QR de asistencia y registra el ingreso."""
-    # Formato esperado: CCF-MBR-{id}-{secret}
+    """Valida un código QR de asistencia con check de integridad."""
+    # Formato: CCF-MBR-{id}-{secret}
     if not token.startswith("CCF-MBR-"):
         raise HTTPException(status_code=400, detail="Formato de código inválido")
     
     try:
         parts = token.split("-")
         member_id = int(parts[2])
+        secret = parts[3] if len(parts) > 3 else None
+        
         member = db.query(models.Member).filter(models.Member.id == member_id).first()
         
         if not member:
             raise HTTPException(status_code=404, detail="Miembro no encontrado")
+
+        # VALIDACIÓN DE INTEGRIDAD (Simulada para MVP, en PROD comparar con hash en DB)
+        if not secret or len(secret) < 6:
+             raise HTTPException(status_code=403, detail="Código de seguridad inválido o expirado")
             
         return {
             "valid": True,

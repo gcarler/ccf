@@ -4,8 +4,9 @@ import PublicSectionRenderer from "@/components/public/cms/PublicSectionRenderer
 import { getCmsPublicPage } from "@/lib/cms/v2";
 import { CmsPublicPage } from "@/types/cms-v2";
 
-export default async function FaroDynamicPage({ params }: { params: { slug: string[] } }) {
-  const slugValue = Array.isArray(params?.slug) ? params.slug.join("/") : "";
+export default async function FaroDynamicPage({ params }: { params: Promise<{ slug: string[] }> }) {
+  const resolvedParams = await params;
+  const slugValue = Array.isArray(resolvedParams?.slug) ? resolvedParams.slug.join("/") : "";
 
   if (!slugValue) {
     notFound();

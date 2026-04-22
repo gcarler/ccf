@@ -1,11 +1,13 @@
+"use client";
+
 import WorkspaceLayout from '@/components/WorkspaceLayout';
-import { Heart, Calendar, Award, BookOpen, GraduationCap } from 'lucide-react';
+import { Heart, Calendar, Award, GraduationCap } from 'lucide-react';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import SpiritualTimelinePanel from '@/components/spiritual/SpiritualTimelinePanel';
 import SpiritualCertificatesPanel from '@/components/spiritual/SpiritualCertificatesPanel';
 
 export default function SpiritualLifeLayout({ children }: { children: React.ReactNode }) {
-    const { pushSidebarPanel, popSidebarPanel } = useSidebarLayers();
+    const { pushSidebarPanel } = useSidebarLayers();
 
     const SPIRITUAL_SECTIONS = [
         {
