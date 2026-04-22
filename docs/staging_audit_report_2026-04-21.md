@@ -196,3 +196,26 @@ Actualizacion de mantenimiento aplicada (2026-04-22, ronda 3):
 - Verificado:
   - `npm run lint:critical` -> OK.
   - `npm run build` -> OK sin warning de `optimizeFonts`.
+
+Actualizacion de cobertura de rutas faltantes (2026-04-22, ronda 4):
+- Se implementaron las pantallas faltantes detectadas en auditoria de frontend:
+  - `frontend/src/app/groups/map/page.tsx`
+  - `frontend/src/app/groups/analytics/page.tsx`
+  - `frontend/src/app/groups/history/page.tsx`
+  - `frontend/src/app/theme/page.tsx`
+- Enfoque aplicado:
+  - Integracion con datos reales desde `/crm/groups` para vistas de `groups/*`.
+  - Manejo de estados `loading`, `error` y `empty` en cada vista nueva.
+  - Integracion de `ThemeContext` y `PaletteSelector` en `/theme`.
+
+Validaciones ejecutadas tras implementacion:
+- `npm run lint:critical` -> **OK**.
+- `npx eslint src/app/groups/map/page.tsx src/app/groups/analytics/page.tsx src/app/groups/history/page.tsx src/app/theme/page.tsx --max-warnings 0` -> **OK**.
+- `npm run typecheck` -> **OK**.
+- `npm run build` -> **OK** (rutas nuevas compiladas y listadas en build output).
+- `npm run test:e2e:auth` -> **PARCIAL** (3 pruebas @auth existentes en `skip`; no hay casos automatizados aun para las rutas nuevas `/groups/map`, `/groups/analytics`, `/groups/history`, `/theme`).
+
+Estado de cobertura de pantallas:
+- Rutas faltantes previas: **CERRADAS** (4/4 implementadas).
+- Riesgo residual:
+  1. Falta ampliar suite E2E autenticada para cubrir navegacion y render de las 4 rutas nuevas.
