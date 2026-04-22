@@ -14,7 +14,6 @@ import {
     Calendar,
     Plus,
     Sparkles,
-    CheckCircle2,
     Check,
     MoreVertical,
     Link2,
@@ -36,11 +35,12 @@ interface CallLog {
     created_at: string;
 }
 
-const STAGES = ['new', 'contacted', 'in_process', 'consolidated', 'lost'];
+const STAGES = ['new', 'call', 'visit', 'discipleship', 'consolidated', 'lost'];
 const STAGE_LABELS: Record<string, string> = {
     new: 'Nuevo',
-    contacted: 'Contactado',
-    in_process: 'En Proceso',
+    call: 'Por Llamar',
+    visit: 'Visita',
+    discipleship: 'Discipulado',
     consolidated: 'Consolidado',
     lost: 'Perdido',
 };

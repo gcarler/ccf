@@ -1,21 +1,15 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { 
     Users, 
-    Calendar, 
     MessageSquare, 
     Phone, 
     Mail, 
-    MapPin, 
-    History, 
     Clock, 
-    MoreVertical,
-    ArrowLeft,
-    CheckCircle2,
     LayoutDashboard,
     User
 } from 'lucide-react';
@@ -28,7 +22,6 @@ import CrmDetailShell from '@/components/crm/CrmDetailShell';
 export default function LeadDetailPage() {
     const params = useParams();
     const id = params?.id as string;
-    const router = useRouter();
     const { token } = useAuth();
     
     const [lead, setLead] = useState<any>(null);
@@ -47,7 +40,7 @@ export default function LeadDetailPage() {
                     last_name: 'González',
                     phone: '+57 300 123 4567',
                     email: 'mateo@example.com',
-                    stage: 'contacted',
+                    stage: 'call',
                     source: 'Invitación Directa',
                     notes: 'Joven universitario, interesado en el ministerio de música.'
                 });
@@ -69,9 +62,13 @@ export default function LeadDetailPage() {
 
     const STAGE_LABELS: any = {
         'new': 'NUEVO',
-        'contacted': 'CONTACTADO',
-        'visited': 'VISITADO',
-        'integrated': 'INTEGRADO',
+        'call': 'POR LLAMAR',
+        'visit': 'VISITA',
+        'discipleship': 'DISCIPULADO',
+        'consolidated': 'CONSOLIDADO',
+        'contacted': 'POR LLAMAR',
+        'visited': 'VISITA',
+        'integrated': 'CONSOLIDADO',
         'lost': 'DESISTIÓ'
     };
 
@@ -138,7 +135,7 @@ export default function LeadDetailPage() {
                             <div className="space-y-6">
                                 <div className="space-y-2">
                                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Etapa Actual</p>
-                                    <DSBadge tone={lead.stage === 'integrated' ? 'emerald' : 'blue'} label={STAGE_LABELS[lead.stage] || lead.stage.toUpperCase()} />
+                                    <DSBadge tone={lead.stage === 'consolidated' || lead.stage === 'integrated' ? 'emerald' : 'blue'} label={STAGE_LABELS[lead.stage] || lead.stage.toUpperCase()} />
                                 </div>
                                 
                                 <div className="h-px bg-slate-100 dark:bg-white/5" />

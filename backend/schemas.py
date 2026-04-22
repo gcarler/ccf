@@ -691,6 +691,30 @@ class MemberUpdate(BaseModel):
     pastoral_notes: Optional[str] = None
 
 
+PIPELINE_STAGE_ALIASES: Dict[str, str] = {
+    "new": "new",
+    "call": "call",
+    "visit": "visit",
+    "discipleship": "discipleship",
+    "consolidated": "consolidated",
+    "lost": "lost",
+    "contacted": "call",
+    "visited": "visit",
+    "in_process": "discipleship",
+    "integrated": "consolidated",
+    "converted": "consolidated",
+}
+
+
+def normalize_pipeline_stage(value: str, strict: bool = False) -> str:
+    normalized = PIPELINE_STAGE_ALIASES.get(str(value).strip().lower())
+    if not normalized:
+        if strict:
+            raise ValueError(f"Invalid pipeline stage: {value}")
+        return str(value).strip().lower()
+    return normalized
+
+
 class ConsolidationPipelineCreate(BaseModel):
     first_name: str
     last_name: str
@@ -699,10 +723,21 @@ class ConsolidationPipelineCreate(BaseModel):
     stage: str = "new"
     assigned_pastor_id: Optional[int] = None
 
+    @model_validator(mode="after")
+    def normalize_stage(self) -> "ConsolidationPipelineCreate":
+        self.stage = normalize_pipeline_stage(self.stage, strict=True)
+        return self
+
 
 class ConsolidationPipelineUpdate(BaseModel):
     stage: Optional[str] = None
     assigned_pastor_id: Optional[int] = None
+
+    @model_validator(mode="after")
+    def normalize_stage(self) -> "ConsolidationPipelineUpdate":
+        if self.stage is not None:
+            self.stage = normalize_pipeline_stage(self.stage, strict=True)
+        return self
 
 
 class PastoralCallLogCreate(BaseModel):

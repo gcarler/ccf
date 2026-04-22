@@ -12,7 +12,8 @@ export const PIPELINE_STAGES: (StatusOption & { dot: string; colBg: string; empt
 export const STAGE_LABEL: Record<string, string> = {
     new: 'Nuevo', call: 'Por Llamar', visit: 'Visita',
     discipleship: 'Discipulado', consolidated: 'Consolidado',
-    contacted: 'Contactado', in_process: 'En Proceso', lost: 'Perdido',
+    contacted: 'Por Llamar', visited: 'Visita', in_process: 'Discipulado',
+    integrated: 'Consolidado', converted: 'Consolidado', lost: 'Perdido',
 };
 
 export const SOURCES: Record<string, string> = {
@@ -21,5 +22,6 @@ export const SOURCES: Record<string, string> = {
 };
 
 export const STAGE_PROGRESS: Record<string, number> = { 
-    new: 20, call: 40, visit: 60, discipleship: 80, consolidated: 100 
+    new: 20, call: 40, visit: 60, discipleship: 80, consolidated: 100,
+    contacted: 40, visited: 60, in_process: 80, integrated: 100, converted: 100, lost: 0,
 };

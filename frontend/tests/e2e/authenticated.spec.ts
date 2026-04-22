@@ -29,4 +29,23 @@ test.describe('authenticated routes', () => {
     await page.goto('/crm');
     await expect(page.locator('body')).toContainText(/crm|pastoral|pipeline|miembros/i);
   });
+
+  test('@auth crm pipeline route loads for authenticated user', async ({ page }) => {
+    await page.goto('/crm/pipeline');
+    await expect(page.locator('body')).toContainText(/pipeline|consolidaci[oó]n|lead/i);
+  });
+
+  test('@auth new groups and theme routes load for authenticated user', async ({ page }) => {
+    await page.goto('/groups/map');
+    await expect(page.locator('body')).toContainText(/mapa|coordenadas|casas/i);
+
+    await page.goto('/groups/analytics');
+    await expect(page.locator('body')).toContainText(/analitica|top grupos|ocupacion/i);
+
+    await page.goto('/groups/history');
+    await expect(page.locator('body')).toContainText(/historial|meses|registros/i);
+
+    await page.goto('/theme');
+    await expect(page.locator('body')).toContainText(/tema visual|modo|personalizacion/i);
+  });
 });

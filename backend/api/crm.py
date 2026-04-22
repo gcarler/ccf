@@ -189,12 +189,56 @@ def get_pipeline(
             "last_name": lead.last_name,
             "phone": lead.phone,
             "source": lead.source,
-            "stage": lead.stage,
+            "stage": schemas.normalize_pipeline_stage(lead.stage),
             "notes": lead.notes,
             "created_at": lead.created_at.isoformat(),
             "assigned_pastor_id": lead.assigned_pastor_id
         })
     return result
+
+
+@router.post("/consolidation/pipeline", response_model=dict)
+async def create_pipeline_lead(
+    payload: schemas.ConsolidationPipelineCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin)
+):
+    lead = crud.create_pipeline_lead(db, payload)
+
+    record_admin_action(
+        db,
+        current_user,
+        action="create_pipeline_lead",
+        resource_type="pipeline_lead",
+        resource_id=str(lead.id),
+        metadata={
+            "source": lead.source,
+            "stage": lead.stage,
+            "assigned_pastor_id": lead.assigned_pastor_id,
+        },
+    )
+
+    await manager.broadcast_event(
+        {
+            "type": "PIPELINE_CREATED",
+            "lead_id": lead.id,
+            "stage": schemas.normalize_pipeline_stage(lead.stage),
+            "actor": current_user.username,
+        },
+        room="pastoral_ops",
+    )
+
+    return {
+        "id": lead.id,
+        "first_name": lead.first_name,
+        "last_name": lead.last_name,
+        "phone": lead.phone,
+        "source": lead.source,
+        "stage": schemas.normalize_pipeline_stage(lead.stage),
+        "notes": lead.notes,
+        "created_at": lead.created_at.isoformat() if lead.created_at else None,
+        "assigned_pastor_id": lead.assigned_pastor_id,
+    }
 
 @router.get("/consolidation/pipeline/{lead_id}", response_model=dict)
 def get_pipeline_lead(
@@ -212,7 +256,7 @@ def get_pipeline_lead(
         "last_name": lead.last_name,
         "phone": lead.phone,
         "source": lead.source,
-        "stage": lead.stage,
+        "stage": schemas.normalize_pipeline_stage(lead.stage),
         "notes": lead.notes,
         "created_at": lead.created_at.isoformat(),
         "assigned_pastor_id": lead.assigned_pastor_id
@@ -246,7 +290,7 @@ async def update_pipeline_lead(
         "actor": current_user.username
     }, room="pastoral_ops")
     
-    return {"status": "success", "lead_id": lead.id, "stage": lead.stage}
+    return {"status": "success", "lead_id": lead.id, "stage": schemas.normalize_pipeline_stage(lead.stage)}
 
 @router.get("/consolidation/pipeline/{lead_id}/audit", response_model=List[schemas.AdminAuditLog])
 def get_pipeline_lead_audit(
@@ -268,7 +312,62 @@ def get_lead_calls(
     current_user: models.User = Depends(require_pastor_or_admin)
 ):
     logs = crud.get_pastoral_call_logs(db, lead_id)
-    return [{"id": l.id, "outcome": l.outcome, "notes": l.notes, "created_at": l.created_at} for l in logs]
+    return [
+        {
+            "id": l.id,
+            "outcome": l.outcome,
+            "notes": l.notes,
+            "prayer_requests": None,
+            "created_at": l.created_at.isoformat() if l.created_at else None,
+        }
+        for l in logs
+    ]
+
+
+@router.post("/pipeline/leads/{lead_id}/calls", response_model=dict)
+def create_lead_call(
+    lead_id: int,
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin)
+):
+    lead = db.query(models.ConsolidationPipeline).filter(models.ConsolidationPipeline.id == lead_id).first()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    outcome = str(payload.get("outcome", "Exitoso"))
+    notes = payload.get("notes")
+    duration_seconds = int(payload.get("duration_seconds", 0) or 0)
+
+    row = models.PastoralCallLog(
+        lead_id=lead_id,
+        pastor_id=current_user.id,
+        outcome=outcome,
+        notes=notes,
+        duration_seconds=duration_seconds,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+
+    record_admin_action(
+        db,
+        current_user,
+        action="create_pastoral_call_log",
+        resource_type="pipeline_lead",
+        resource_id=str(lead_id),
+        metadata={"outcome": outcome},
+    )
+
+    return {
+        "id": row.id,
+        "lead_id": row.lead_id,
+        "pastor_id": row.pastor_id,
+        "outcome": row.outcome,
+        "notes": row.notes,
+        "prayer_requests": payload.get("prayer_requests"),
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+    }
 
 # --- EVENTS & ATTENDANCE ---
 
@@ -716,6 +815,16 @@ def pipeline_alias(
     return get_pipeline(stage=stage, db=db, current_user=current_user)
 
 
+@router.post("/pipeline", response_model=dict)
+async def pipeline_create_alias(
+    payload: schemas.ConsolidationPipelineCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Alias de creacion para compatibilidad de frontend."""
+    return await create_pipeline_lead(payload=payload, db=db, current_user=current_user)
+
+
 @router.get("/groups", response_model=list)
 def groups_alias(
     db: Session = Depends(get_db),
@@ -789,7 +898,10 @@ def crm_analytics(
         .group_by(models.ConsolidationPipeline.stage)
         .all()
     )
-    pipeline_by_stage = {stage: count for stage, count in pipeline_rows}
+    pipeline_by_stage = {}
+    for stage, count in pipeline_rows:
+        normalized_stage = schemas.normalize_pipeline_stage(stage)
+        pipeline_by_stage[normalized_stage] = pipeline_by_stage.get(normalized_stage, 0) + count
     total_leads = sum(pipeline_by_stage.values())
 
     # Consejería

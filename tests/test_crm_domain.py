@@ -70,13 +70,13 @@ def test_pipeline_lead_create_and_update(db_session):
     updated = crud.update_pipeline_lead(
         db_session,
         lead.id,
-        schemas.ConsolidationPipelineUpdate(stage="contacted"),
+        schemas.ConsolidationPipelineUpdate(stage="call"),
     )
-    assert updated and updated.stage == "contacted"
+    assert updated and updated.stage == "call"
 
     results = crud.get_pipeline_leads(
         db_session,
-        stage="contacted",
+        stage="call",
         assigned_pastor_id=pastor.id,
         search="Maria",
     )
@@ -92,7 +92,7 @@ def test_create_pastoral_call_log(db_session):
             last_name="Perez",
             phone="999",
             source="Evento",
-            stage="contacted",
+            stage="call",
             assigned_pastor_id=pastor.id,
         ),
     )
