@@ -1,18 +1,73 @@
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
+import React, { useEffect, useState } from "react";
+
 import { ArrowRight, Clock, Mail, Heart, Star, Shield } from "lucide-react";
 import { useContentBlock } from "@/hooks/useContent";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { apiFetch } from "@/lib/http";
+
+interface TestimonialItem {
+    id: number;
+    content: string;
+    is_approved?: boolean;
+    author?: { username: string } | null;
+}
 
 export default function ConocerAJesusPage() {
     const { data: heroContent } = useContentBlock("faro_discover_hero");
+    const { data: discoverContent } = useContentBlock("faro_discover_feed");
+    const [testimonials, setTestimonials] = useState<TestimonialItem[]>([]);
+
+    const discoverData = (discoverContent?.parsed && typeof discoverContent.parsed === "object" && !Array.isArray(discoverContent.parsed))
+        ? discoverContent.parsed as Record<string, unknown>
+        : null;
+
+    useEffect(() => {
+        apiFetch<TestimonialItem[]>("/cms/testimonials")
+            .then((data) => {
+                if (Array.isArray(data)) {
+                    setTestimonials(data.filter((t) => t.is_approved).slice(0, 3));
+                }
+            })
+            .catch(() => {});
+    }, []);
+
     const heroEyebrow = heroContent?.eyebrow || "Inicia tu camino";
     const heroTitleLead = heroContent?.title_lead || "La Luz que ";
     const heroTitleAccent = heroContent?.title_accent || "Guía";
     const heroTitleTail = heroContent?.title_tail || " Tu Vida.";
     const heroDescription = heroContent?.description || "Conocer a Jesús no es una religión, es el comienzo de una relación que transforma la oscuridad en un propósito eterno.";
     const heroCta = heroContent?.cta || "Quiero conocer a Jesús";
+
+    const benefitCards = Array.isArray(discoverData?.benefits)
+        ? discoverData.benefits as Array<{ icon: string; title: string; desc: string }>
+        : [
+            { icon: "Heart", title: "Gracia sin condenas", desc: "Eres bienvenido tal como eres." },
+            { icon: "Star", title: "Propósito real", desc: "Descubre para qué fuiste creado." },
+            { icon: "Shield", title: "Comunidad que cuida", desc: "No estarás solo en este camino." },
+            { icon: "ArrowRight", title: "Primer paso simple", desc: "Escríbenos y conectamos." },
+        ];
+
+    const iconMap: Record<string, React.ReactNode> = {
+        Heart: <Heart size={22} />,
+        Star: <Star size={22} />,
+        Shield: <Shield size={22} />,
+        ArrowRight: <ArrowRight size={22} />,
+    };
+
+    const contactInfo = Array.isArray(discoverData?.contact_info)
+        ? discoverData.contact_info as Array<{ icon: string; text: string }>
+        : [
+            { icon: "Clock", text: "Respuesta en menos de 24 horas" },
+            { icon: "Mail", text: "hola@comunidadfaro.org" },
+        ];
+
+    const contactIconMap: Record<string, React.ReactNode> = {
+        Clock: <Clock size={18} />,
+        Mail: <Mail size={18} />,
+    };
 
     const [form, setForm] = useState({ name: "", phone: "", message: "" });
     const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -21,22 +76,24 @@ export default function ConocerAJesusPage() {
         e.preventDefault();
         setStatus("sending");
         try {
-            const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-            const res = await fetch(`${API}/api/crm/members`, {
+            await apiFetch("/public/contact", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
+                body: {
                     full_name: form.name,
                     phone: form.phone,
                     notes: form.message,
                     status: "prospect",
                     source: "conocer-a-jesus",
-                }),
+                },
             });
-            if (res.ok) setStatus("sent");
-            else setStatus("error");
+            
+            // Si no lanza un error (ApiError), asumimos que funcionó (porque apiFetch lanza excepción si no es ok)
+            setStatus("sent");
+            toast.success("¡Mensaje enviado con éxito! Te contactaremos pronto.");
+
         } catch {
             setStatus("error");
+            toast.error("Ocurrió un error inesperado de conexión.");
         }
     };
 
@@ -49,7 +106,7 @@ export default function ConocerAJesusPage() {
                     className="absolute inset-0 bg-cover bg-center"
                     style={{
                         backgroundImage:
-                            "url('https://images.unsplash.com/photo-1518623489648-a173ef7824f3?w=1600&q=80')",
+                            "url('https://picsum.photos/seed/1518623489648-a173ef7824f3/800/600')",
                         filter: "brightness(0.25) saturate(0.4)",
                     }}
                 />
@@ -68,7 +125,12 @@ export default function ConocerAJesusPage() {
                     }}
                 />
 
-                <div className="relative z-10 max-w-4xl mx-auto px-6 md:px-16 pb-20">
+                <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className="relative z-10 max-w-4xl mx-auto px-6 md:px-16 pb-20"
+                >
                     <span
                         className="inline-block px-4 py-1.5 rounded-full border text-xs font-black uppercase tracking-[0.25em] mb-8"
                         style={{
@@ -119,7 +181,7 @@ export default function ConocerAJesusPage() {
                         {heroCta}
                         <ArrowRight size={18} />
                     </a>
-                </div>
+                </motion.div>
             </header>
 
             {/* ── INTRO EDITORIAL ─────────────────────────── */}
@@ -128,7 +190,11 @@ export default function ConocerAJesusPage() {
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
                 <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
-                    <div>
+                    <motion.div
+                        initial={{ opacity: 0, x: -30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                    >
                         <h2
                             className="text-4xl font-black mb-6"
                             style={{ color: "var(--faro-primary)" }}
@@ -159,17 +225,16 @@ export default function ConocerAJesusPage() {
                                 alma y una dirección clara para el futuro.
                             </p>
                         </div>
-                    </div>
+                    </motion.div>
                     <div className="grid grid-cols-2 gap-4">
-                        {[
-                            { icon: <Heart size={22} />, title: "Gracia sin condenas", desc: "Eres bienvenido tal como eres." },
-                            { icon: <Star size={22} />, title: "Propósito real", desc: "Descubre para qué fuiste creado." },
-                            { icon: <Shield size={22} />, title: "Comunidad que cuida", desc: "No estarás solo en este camino." },
-                            { icon: <ArrowRight size={22} />, title: "Primer paso simple", desc: "Escríbenos y conectamos." },
-                        ].map(({ icon, title, desc }) => (
-                            <div
+                        {benefitCards.map(({ icon, title, desc }, idx) => (
+                            <motion.div
                                 key={title}
-                                className="rounded-2xl p-6"
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: 0.1 * (idx + 1) }}
+                                className="rounded-2xl p-6 transition-transform hover:-translate-y-1 hover:shadow-lg"
                                 style={{ background: "var(--faro-surface-container)" }}
                             >
                                 <div
@@ -179,7 +244,7 @@ export default function ConocerAJesusPage() {
                                         color: "var(--faro-primary)",
                                     }}
                                 >
-                                    {icon}
+                                    {iconMap[icon] || <Heart size={22} />}
                                 </div>
                                 <h4
                                     className="font-black text-sm mb-1"
@@ -193,7 +258,7 @@ export default function ConocerAJesusPage() {
                                 >
                                     {desc}
                                 </p>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
                 </div>
@@ -212,15 +277,20 @@ export default function ConocerAJesusPage() {
                         Historias que{" "}
                         <span style={{ color: "var(--faro-secondary)" }}>Iluminan</span>
                     </h2>
+                    {testimonials.length === 0 ? (
+                        <p className="text-center col-span-full py-8" style={{ color: "var(--faro-on-surface-variant)" }}>
+                            Próximamente compartiremos historias de transformación.
+                        </p>
+                    ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[
-                            { q: "Encontré la paz que mi carrera no podía darme.", a: "Mateo R., Diseñador" },
-                            { q: "Llegué buscando respuestas y encontré una familia que me aceptó tal cual soy.", a: "Lucía G." },
-                            { q: "El curso de fundamentos cambió mi perspectiva sobre el propósito de mi vida diaria.", a: "Carlos M." },
-                        ].map(({ q, a }) => (
-                            <div
-                                key={a}
-                                className="rounded-2xl p-8 border-b-4"
+                        {testimonials.map((t, idx) => (
+                            <motion.div
+                                key={t.id}
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: 0.1 * idx }}
+                                className="rounded-2xl p-8 border-b-4 hover:shadow-md transition-shadow"
                                 style={{
                                     background: "var(--faro-surface-container)",
                                     borderColor: "var(--faro-primary)",
@@ -230,17 +300,18 @@ export default function ConocerAJesusPage() {
                                     className="text-lg italic leading-relaxed mb-6"
                                     style={{ color: "var(--faro-on-surface)" }}
                                 >
-                                    &quot;{q}&quot;
+                                    &quot;{t.content}&quot;
                                 </p>
                                 <p
                                     className="text-xs font-black uppercase tracking-widest"
                                     style={{ color: "var(--faro-primary)" }}
                                 >
-                                    — {a}
+                                    — {(t.author?.username) || "Anónimo"}
                                 </p>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
+                    )}
                 </div>
             </section>
 
@@ -267,10 +338,7 @@ export default function ConocerAJesusPage() {
                             está aquí para acompañarte sin juicios.
                         </p>
                         <div className="space-y-5">
-                            {[
-                                { icon: <Clock size={18} />, text: "Respuesta en menos de 24 horas" },
-                                { icon: <Mail size={18} />, text: "hola@comunidadfaro.org" },
-                            ].map(({ icon, text }) => (
+                            {contactInfo.map(({ icon, text }) => (
                                 <div
                                     key={text}
                                     className="flex items-center gap-4"
@@ -283,7 +351,7 @@ export default function ConocerAJesusPage() {
                                             color: "var(--faro-primary)",
                                         }}
                                     >
-                                        {icon}
+                                        {contactIconMap[icon] || <Mail size={18} />}
                                     </div>
                                     <span className="text-sm">{text}</span>
                                 </div>
@@ -292,9 +360,15 @@ export default function ConocerAJesusPage() {
                     </div>
 
                     {/* Formulario */}
-                    <div
-                        className="rounded-3xl p-8 md:p-12"
-                        style={{ background: "var(--faro-surface-container)" }}
+                    <motion.div
+                        initial={{ opacity: 0, x: 30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        className="rounded-3xl p-8 md:p-12 shadow-xl backdrop-blur-xl"
+                        style={{ 
+                            background: "var(--faro-surface-container)",
+                            border: "1px solid rgba(255,255,255,0.05)"
+                        }}
                     >
                         {status === "sent" ? (
                             <div className="text-center py-16">
@@ -341,7 +415,7 @@ export default function ConocerAJesusPage() {
                                                     background: "var(--faro-surface)",
                                                     border: "2px solid var(--faro-outline-variant)",
                                                     color: "var(--faro-on-surface)",
-                                                    // @ts-ignore
+                                                    // @ts-expect-error Tailwind custom properties are not typed by default in React CSS properties
                                                     "--tw-ring-color": "var(--faro-primary)",
                                                 }}
                                             />
@@ -373,10 +447,11 @@ export default function ConocerAJesusPage() {
                                 <button
                                     type="submit"
                                     disabled={status === "sending"}
-                                    className="w-full py-5 rounded-2xl font-black text-sm uppercase tracking-widest text-white transition-all hover:scale-[1.02] disabled:opacity-60"
+                                    className="w-full py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                                     style={{
                                         background:
                                             "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
+                                        color: "var(--faro-on-primary)",
                                         boxShadow: "0 8px 24px rgba(44,96,157,0.3)",
                                     }}
                                 >
@@ -394,7 +469,7 @@ export default function ConocerAJesusPage() {
                                 )}
                             </form>
                         )}
-                    </div>
+                    </motion.div>
                 </div>
             </section>
         </main>

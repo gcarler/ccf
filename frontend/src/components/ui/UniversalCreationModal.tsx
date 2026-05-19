@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
+import { 
     X, CheckSquare, FileText, Bell, LayoutDashboard, Layers,
     Plus, User, Calendar, Flag, Tag, MoreHorizontal, Paperclip,
-    MessageSquare, ChevronDown, Sparkles, Loader2, ToggleLeft,
-    Table2, Columns, List, ArrowUpRight, ChevronRight, Users,
+    MessageSquare, ChevronDown, Sparkles, Loader2,
+    Table2, Columns, List, ChevronRight, Users,
     Minus
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -26,7 +26,7 @@ interface Props {
 
 // ── Tab config ─────────────────────────────────────────────────────────────
 const TABS: { id: CreationType; label: string; icon: React.ElementType; color?: string }[] = [
-    { id: 'task',       label: 'Tarea',        icon: CheckSquare,    color: 'text-violet-600' },
+    { id: 'task',       label: 'Tarea',        icon: CheckSquare,    color: 'text-blue-600' },
     { id: 'event',      label: 'Evento',       icon: Calendar,       color: 'text-blue-600' },
     { id: 'doc',        label: 'Documento',    icon: FileText,       color: 'text-slate-500' },
     { id: 'reminder',   label: 'Recordatorio', icon: Bell,           color: 'text-slate-500' },
@@ -34,10 +34,9 @@ const TABS: { id: CreationType; label: string; icon: React.ElementType; color?: 
     { id: 'panel',      label: 'Panel',        icon: Layers,         color: 'text-slate-500' },
 ];
 
-const STATUS_OPTIONS = ['PENDIENTE', 'EN CURSO', 'COMPLETADO'];
 const STATUS_COLORS: Record<string, string> = {
     'PENDIENTE':   'bg-slate-200 text-slate-600',
-    'EN CURSO':    'bg-violet-600 text-white',
+    'EN CURSO':    'bg-blue-600 text-white',
     'COMPLETADO':  'bg-emerald-100 text-emerald-700',
 };
 
@@ -54,10 +53,11 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
     const [description, setDescription] = useState('');
     const [status, setStatus] = useState('PENDIENTE');
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
-    const [priority, setPriority] = useState('normal');
+    const [priority] = useState('normal');
     const [isGeneratingAi, setIsGeneratingAi] = useState(false);
     const [eventDate, setEventDate] = useState(() => initialData?.initialDate || new Date().toISOString().split('T')[0]);
-    const [eventGuests, setEventGuests] = useState('');
+    const [eventEndDate, setEventEndDate] = useState(() => initialData?.initialDate || new Date().toISOString().split('T')[0]);
+    const [eventLocation, setEventLocation] = useState('');
 
     const titleRef = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
 
@@ -68,8 +68,11 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
             setDescription('');
             setStatus('PENDIENTE');
             setIsPrivate(false);
-            setEventGuests('');
-            if (initialData?.initialDate) setEventDate(initialData.initialDate);
+            setEventLocation('');
+            if (initialData?.initialDate) {
+                setEventDate(initialData.initialDate);
+                setEventEndDate(initialData.initialDate);
+            }
             fetchProjects();
             setTimeout(() => titleRef.current?.focus(), 100);
         }
@@ -115,9 +118,16 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                 });
                 toast.success('Tarea creada');
             } else if (type === 'event') {
-                await apiFetch('/crm/events/', {
+                await apiFetch('/agenda/events', {
                     method: 'POST', token,
-                    body: { title: title.trim(), description, event_date: new Date(eventDate).toISOString(), location: eventGuests }
+                    body: {
+                        title: title.trim(),
+                        description,
+                        start_at: new Date(eventDate).toISOString(),
+                        end_at: new Date(eventEndDate).toISOString(),
+                        location: eventLocation,
+                        is_all_day: true,
+                    }
                 });
                 toast.success('Evento creado');
             } else if (type === 'doc') {
@@ -134,7 +144,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                 if (selectedProjectId) {
                     await apiFetch(`/projects/${selectedProjectId}/whiteboard`, {
                         method: 'POST', token,
-                        body: { name: title.trim() }
+                        body: { title: title.trim(), elements_json: '[]' }
                     }).catch(() => {});
                 }
                 toast.success('Pizarra inicializada');
@@ -253,7 +263,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         </button>
                                                         <button
                                                             onClick={handleAiWrite}
-                                                            className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                                                            className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                                                         >
                                                             {isGeneratingAi
                                                                 ? <Loader2 size={13} className="animate-spin" />
@@ -331,8 +341,8 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                             <span className="text-slate-400 text-[11px]">hasta</span>
                                                             <input 
                                                                 type="date"
-                                                                value={eventDate}
-                                                                onChange={e => setEventDate(e.target.value)}
+                                                                value={eventEndDate}
+                                                                onChange={e => setEventEndDate(e.target.value)}
                                                                 className="text-[12px] bg-transparent border border-slate-200 dark:border-white/10 rounded px-2 py-1 text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500" 
                                                             />
                                                         </div>
@@ -340,8 +350,8 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                             <Users size={14} className="text-slate-400" />
                                                             <input 
                                                                 type="text" 
-                                                                value={eventGuests}
-                                                                onChange={e => setEventGuests(e.target.value)}
+                                                                value={eventLocation}
+                                                                onChange={e => setEventLocation(e.target.value)}
                                                                 placeholder="Añadir invitados (correo o nombre)" 
                                                                 className="text-[12px] flex-1 bg-transparent border-b border-slate-200 dark:border-white/10 pb-1 text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 placeholder:text-slate-400"
                                                             />
@@ -381,7 +391,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                             <FileText size={13} />
                                                             Empezar a escribir
                                                         </button>
-                                                        <button onClick={handleAiWrite} className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors w-full">
+                                                        <button onClick={handleAiWrite} className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors w-full">
                                                             <Sparkles size={13} />
                                                             Escribir con IA
                                                         </button>
@@ -469,7 +479,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                 >
                                                     <div className={clsx(
                                                         'relative w-8 h-4 rounded-full transition-colors',
-                                                        isPrivate ? 'bg-violet-600' : 'bg-slate-200 dark:bg-white/10'
+                                                        isPrivate ? 'bg-blue-600' : 'bg-slate-200 dark:bg-white/10'
                                                     )}>
                                                         <span className={clsx(
                                                             'absolute top-0.5 size-3 bg-white rounded-full shadow transition-transform',
@@ -530,7 +540,7 @@ function PropBtn({ icon: Icon, label }: { icon: React.ElementType; label: string
 function ReminderChip({ icon: Icon, label, avatar }: { icon?: React.ElementType; label: string; avatar?: boolean }) {
     return (
         <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-            {avatar && <span className="size-4 rounded-full bg-violet-600 inline-block" />}
+            {avatar && <span className="size-4 rounded-full bg-blue-600 inline-block" />}
             {Icon && <Icon size={12} />}
             {label}
         </button>

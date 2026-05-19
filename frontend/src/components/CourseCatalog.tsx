@@ -6,6 +6,7 @@ import { useToast } from "@/context/ToastContext";
 import { useRouter } from 'next/navigation';
 import { apiFetch } from "@/lib/http";
 import ViewSwitcher, { ViewType, getStoredView } from "@/components/ViewSwitcher";
+import { useWikiDocument } from "@/hooks/useWikiDocument";
 
 type Modality = "formal" | "no_formal";
 
@@ -24,7 +25,6 @@ interface Course {
 }
 
 interface CourseCatalogProps {
-  userId: number;
   token: string;
   enrolledCourseIds?: number[];
   initialCourses?: Course[];
@@ -35,7 +35,6 @@ interface CourseCatalogProps {
 
 
 export default function CourseCatalog({
-  userId,
   token,
   enrolledCourseIds = [],
   initialCourses,
@@ -50,7 +49,9 @@ export default function CourseCatalog({
   const [loading, setLoading] = useState(!initialCourses);
   const [filterModality, setFilterModality] = useState<Modality | "all">("all");
   const [internalViewType, setInternalViewType] = useState<ViewType>(() => getStoredView('academy_catalog_view', 'grid'));
-  const [wikiNotes, setWikiNotes] = useState("");
+  const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument("academy_catalog_wiki_notes", {
+    title: "Wiki del catalogo academico",
+  });
   const resolvedViewType = viewType ?? internalViewType;
 
   const handleViewTypeChange = (nextView: ViewType) => {
@@ -88,17 +89,6 @@ export default function CourseCatalog({
 
     loadCourses();
   }, [filterModality, token, addToast, initialCourses]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const saved = window.localStorage.getItem("academy_catalog_wiki_notes");
-    if (saved) setWikiNotes(saved);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem("academy_catalog_wiki_notes", wikiNotes);
-  }, [wikiNotes]);
 
   const boardColumns = useMemo(() => {
     const formal = courses.filter((c) => c.modality === "formal");

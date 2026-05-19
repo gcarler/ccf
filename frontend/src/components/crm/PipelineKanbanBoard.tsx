@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { 
     DndContext, 
     closestCorners,
-    KeyboardSensor,
     PointerSensor,
     useSensor,
     useSensors,
@@ -13,10 +12,6 @@ import {
     DragStartEvent,
     defaultDropAnimationSideEffects
 } from '@dnd-kit/core';
-import { 
-    SortableContext,
-    horizontalListSortingStrategy
-} from '@dnd-kit/sortable';
 import { DroppablePipelineColumn } from './DroppablePipelineColumn';
 import { SortableLeadCard } from './SortableLeadCard';
 import { PIPELINE_STAGES } from '@/app/crm/pipeline/constants';
@@ -29,7 +24,6 @@ interface PipelineKanbanBoardProps {
 }
 
 export function PipelineKanbanBoard({ leads, onLeadClick, onDropLead, onNewLead }: PipelineKanbanBoardProps) {
-    const [activeId, setActiveId] = useState<string | null>(null);
     const [activeLead, setActiveLead] = useState<any | null>(null);
     const [optimisticLeads, setOptimisticLeads] = useState<any[] | null>(null);
 
@@ -45,7 +39,6 @@ export function PipelineKanbanBoard({ leads, onLeadClick, onDropLead, onNewLead 
 
     const handleDragStart = (event: DragStartEvent) => {
         const { active } = event;
-        setActiveId(active.id.toString());
         const lead = leads.find(l => l.id.toString() === active.id.toString());
         setActiveLead(lead || null);
     };
@@ -53,7 +46,6 @@ export function PipelineKanbanBoard({ leads, onLeadClick, onDropLead, onNewLead 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         
-        setActiveId(null);
         setActiveLead(null);
 
         if (!over) return;
@@ -111,7 +103,7 @@ export function PipelineKanbanBoard({ leads, onLeadClick, onDropLead, onNewLead 
                         <SortableLeadCard 
                             lead={activeLead} 
                             stage={PIPELINE_STAGES.find(s => s.value === activeLead.stage)}
-                            onClick={() => {}} 
+                            onClick={() => onLeadClick(activeLead)}
                             isDragging={true}
                         />
                     </div>

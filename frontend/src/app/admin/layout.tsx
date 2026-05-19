@@ -9,11 +9,8 @@ import {
     TrendingUp, 
     CheckSquare,
     FileText,
-    MessageSquare,
     Globe,
     Megaphone,
-    Search,
-    Settings,
     Heart,
     BarChart3,
     Shield

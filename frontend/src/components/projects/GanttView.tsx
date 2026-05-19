@@ -17,16 +17,11 @@ import { es } from 'date-fns/locale';
 import { 
     ChevronLeft, 
     ChevronRight, 
-    Calendar as CalendarIcon, 
-    MoreHorizontal,
-    MoreVertical,
-    Plus,
-    UserCircle,
-    CornerDownRight
+    Calendar as CalendarIcon,
+    Plus
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import Tooltip from '@/components/ui/Tooltip';
 
 interface GanttViewProps {
     tasks: any[];
@@ -121,7 +116,7 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Nombre de Tarea</span>
                     </div>
                     <div className="flex-1 overflow-y-auto scrollbar-none">
-                        {tasks.map((task, idx) => (
+                        {tasks.map((task) => (
                             <div 
                                 key={task.id}
                                 onClick={() => onTaskClick(task)}
@@ -152,9 +147,9 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
                             ))}
                         </div>
                         <div className="h-10 flex bg-white dark:bg-[#1e1f21] border-b border-slate-100 dark:border-white/5">
-                            {days.map((day, i) => (
+                            {days.map((day) => (
                                 <div 
-                                    key={i} 
+                                    key={day.toISOString()} 
                                     style={{ width: dayWidth }}
                                     className={clsx(
                                         "h-full flex items-center justify-center shrink-0 border-r border-slate-50 dark:border-white/5 text-[10px] font-bold",

@@ -1,19 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { 
     BookOpen, 
     FileText, 
     Plus, 
     Save, 
-    ArrowLeft,
-    LayoutDashboard,
-    Trash2,
     Settings,
     History,
     ChevronRight,
-    Eye
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { useAuth } from '@/context/AuthContext';
@@ -25,7 +21,6 @@ import { toast } from 'sonner';
 export default function AdminCourseContentPage() {
     const params = useParams();
     const id = (params?.id as string) || '';
-    const router = useRouter();
     const { token } = useAuth();
     
     const [course, setCourse] = useState<any>(null);

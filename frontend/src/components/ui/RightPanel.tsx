@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, GripVertical } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import clsx from 'clsx';
 

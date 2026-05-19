@@ -47,7 +47,7 @@ export default function AdminHero({
 }: AdminHeroProps) {
     return (
         <section className="relative overflow-hidden rounded-[3rem] border border-[hsl(var(--border))] bg-gradient-to-br from-white via-slate-50 to-slate-100 dark:from-[#1e1f21] dark:via-[#18191c] dark:to-[#0f1012] p-8 space-y-6">
-            <div className="absolute inset-y-0 right-8 w-72 bg-gradient-to-br from-blue-500/20 via-purple-500/10 to-transparent blur-3xl pointer-events-none" />
+            <div className="absolute inset-y-0 right-8 w-72 bg-gradient-to-br from-blue-500/20 via-sky-500/10 to-transparent blur-3xl pointer-events-none" />
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 relative z-10">
                 <div className="space-y-3 max-w-3xl">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[hsl(var(--primary))]">{eyebrow}</p>

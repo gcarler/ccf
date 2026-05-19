@@ -7,8 +7,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: ccf_db
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-ccf_db}
     ports:
       - "5435:5432"
 
@@ -32,8 +32,8 @@ services:
     image: minio/minio:latest
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ccf
-      MINIO_ROOT_PASSWORD: ccfsecret
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-ccf}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD}
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -47,12 +47,12 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/ccf_db
-      REDIS_URL: redis://redis:6379/0
-      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
-      UPLOADS_DIR: uploads
-      SECRET_KEY: changeme
-      ENV: production
+      environment: production
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://postgres:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ccf_db}}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-redpanda:9092}
+      UPLOADS_DIR: ${UPLOADS_DIR:-uploads}
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY}
     depends_on:
       - db
       - redis

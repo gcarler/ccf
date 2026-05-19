@@ -3,13 +3,12 @@ import requests
 def test_api():
     base_url = "http://localhost:8001"
     endpoints = [
-        "/announcements",
-        "/admin/announcements",
-        "/sermons",
-        "/admin/sermons",
-        "/books",
-        "/admin/books",
-        "/content/home"
+        "/api/cms/announcements",
+        "/api/admin/announcements",
+        "/api/cms/testimonials",
+        "/api/admin/testimonials",
+        "/api/content/faro_home_hero",
+        "/api/agents/analytics/summary",
     ]
     
     print(f"Testing API at {base_url}")

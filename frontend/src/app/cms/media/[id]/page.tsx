@@ -1,19 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { 
+    Archive,
     Layout, 
     Image as ImageIcon, 
-    Save, 
-    ArrowLeft,
-    Trash2,
+    Save,
+    RotateCcw,
     Download,
     Maximize2,
-    Settings,
-    Tag,
     Info,
-    History,
     Link2,
     Plus
 } from 'lucide-react';
@@ -24,14 +21,22 @@ import { DSCard } from '@/design/components/DSCard';
 import { DSBadge } from '@/design/components/DSBadge';
 import { toast } from 'sonner';
 
+function formatBytes(bytes?: number): string {
+    if (!bytes) return '0 KB';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export default function CmsMediaDetailPage() {
     const params = useParams();
     const id = params?.id as string;
-    const router = useRouter();
     const { token } = useAuth();
     
     const [item, setItem] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [tagsText, setTagsText] = useState('');
 
     useEffect(() => {
         if (!token || !id) return;
@@ -39,16 +44,29 @@ export default function CmsMediaDetailPage() {
             try {
                 setLoading(true);
                 const data = await apiFetch<any>(`/cms/media/${id}`, { token }).catch(() => null);
-                setItem(data || {
+                const normalized = data ? {
+                    ...data,
+                    alt_text: data.alt_text || data.filename || '',
+                    section: data.section || 'general',
+                    tags: Array.isArray(data.tags) ? data.tags : [],
+                    mime_type: data.mime_type || data.mimetype || '',
+                    file_size: data.file_size || data.size || 0,
+                    status: data.status || 'active',
+                } : {
                     id,
                     title: 'Hero Banner Campaña 2026',
                     filename: 'banner-faro-2026.webp',
                     url: '/api/static/banner-faro-2026.webp',
-                    mimetype: 'image/webp',
-                    size: 1024 * 450, // 450KB
+                    alt_text: 'Hero Banner',
+                    mime_type: 'image/webp',
+                    file_size: 1024 * 450,
+                    status: 'active',
+                    section: 'general',
                     created_at: '2026-04-10T08:00:00Z',
                     tags: ['marketing', 'faro', 'hero']
-                });
+                };
+                setItem(normalized);
+                setTagsText(normalized.tags.join(', '));
             } catch (err) {
                 toast.error('Error al cargar detalle del recurso');
             } finally {
@@ -57,6 +75,54 @@ export default function CmsMediaDetailPage() {
         };
         loadItem();
     }, [id, token]);
+
+    const saveMetadata = async () => {
+        if (!token || !item) return;
+        setSaving(true);
+        try {
+            const tags = tagsText.split(',').map((tag) => tag.trim()).filter(Boolean);
+            const updated = await apiFetch<any>(`/cms/media/${id}`, {
+                method: 'PATCH',
+                token,
+                body: {
+                    alt_text: item.alt_text,
+                    section: item.section || 'general',
+                    tags,
+                    filename: item.filename,
+                },
+            });
+            setItem({ ...updated, tags });
+            setTagsText(tags.join(', '));
+            toast.success('Metadata del recurso guardada');
+        } catch (err) {
+            toast.error('Error al guardar metadata');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const copyUrl = async () => {
+        if (!item?.url) return;
+        await navigator.clipboard.writeText(item.url);
+        toast.success('URL copiada');
+    };
+
+    const toggleArchiveItem = async () => {
+        if (!token || !item) return;
+        try {
+            if (item.status === 'archived') {
+                const updated = await apiFetch<any>(`/cms/media/${id}`, { method: 'PATCH', token, body: { status: 'active' } });
+                setItem({ ...item, ...updated, status: 'active' });
+                toast.success('Recurso restaurado');
+            } else {
+                await apiFetch(`/cms/media/${id}`, { method: 'DELETE', token });
+                setItem({ ...item, status: 'archived' });
+                toast.success('Recurso archivado');
+            }
+        } catch (err) {
+            toast.error('Error al actualizar estado del recurso');
+        }
+    };
 
     if (loading) return <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Recuperando Recurso Multimedia...</div>;
 
@@ -70,11 +136,11 @@ export default function CmsMediaDetailPage() {
                 ]}
                 rightActions={
                     <div className="flex items-center gap-3">
-                        <button className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all">
-                            <Trash2 size={20} />
+                        <button onClick={toggleArchiveItem} className={`p-2 rounded-xl transition-all ${item.status === 'archived' ? 'text-emerald-600 hover:bg-emerald-500/10' : 'text-amber-600 hover:bg-amber-500/10'}`}>
+                            {item.status === 'archived' ? <RotateCcw size={20} /> : <Archive size={20} />}
                         </button>
-                        <button className="px-6 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
-                            <Save size={14} /> Guardar Cambios
+                        <button onClick={saveMetadata} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-50">
+                            <Save size={14} /> {saving ? 'Guardando...' : 'Guardar Cambios'}
                         </button>
                     </div>
                 }
@@ -86,7 +152,7 @@ export default function CmsMediaDetailPage() {
                         <div className="aspect-video rounded-[2.5rem] bg-slate-900 overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl relative group">
                             <img 
                                 src={item.url} 
-                                alt={item.title}
+                                alt={item.alt_text || item.filename || 'Media'}
                                 className="w-full h-full object-contain"
                                 onError={(e) => {
                                     (e.target as any).src = 'https://placehold.co/800x450/1e293b/64748b?text=Media+Preview';
@@ -100,10 +166,10 @@ export default function CmsMediaDetailPage() {
                         </div>
 
                         <div className="flex gap-4">
-                            <button className="flex-1 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
+                            <button onClick={() => item?.url && window.open(item.url, '_blank')} className="flex-1 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
                                 <Download size={14} /> Descargar Original
                             </button>
-                            <button className="flex-1 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
+                            <button onClick={copyUrl} className="flex-1 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
                                 <Link2 size={14} /> Copiar URL
                             </button>
                         </div>
@@ -114,9 +180,17 @@ export default function CmsMediaDetailPage() {
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Título del Recurso</label>
                                 <input 
-                                    value={item.title}
-                                    onChange={(e) => setItem({ ...item, title: e.target.value })}
+                                    value={item.alt_text || ''}
+                                    onChange={(e) => setItem({ ...item, alt_text: e.target.value })}
                                     className="w-full bg-transparent border-b border-slate-200 dark:border-white/10 py-2 text-2xl font-black outline-none focus:border-blue-500 transition-all"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Seccion CMS</label>
+                                <input
+                                    value={item.section || 'general'}
+                                    onChange={(e) => setItem({ ...item, section: e.target.value })}
+                                    className="w-full bg-transparent border-b border-slate-200 dark:border-white/10 py-2 text-sm font-bold outline-none focus:border-blue-500 transition-all"
                                 />
                             </div>
                         </section>
@@ -130,11 +204,11 @@ export default function CmsMediaDetailPage() {
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tipo de MIME</p>
-                                    <p className="text-xs font-bold">{item.mimetype}</p>
+                                    <p className="text-xs font-bold">{item.mime_type || 'sin tipo'}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tamaño</p>
-                                    <p className="text-xs font-bold">{(item.size / 1024).toFixed(2)} KB</p>
+                                    <p className="text-xs font-bold">{formatBytes(item.file_size)}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Subido</p>
@@ -146,8 +220,14 @@ export default function CmsMediaDetailPage() {
                         <DSCard>
                             <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Etiquetas y Organización</h3>
                             <div className="space-y-4">
+                                <input
+                                    value={tagsText}
+                                    onChange={(e) => setTagsText(e.target.value)}
+                                    placeholder="hero, faro, campana"
+                                    className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-transparent px-4 py-3 text-sm font-bold outline-none focus:border-blue-500"
+                                />
                                 <div className="flex flex-wrap gap-2">
-                                    {item.tags?.map((tag: string) => (
+                                    {tagsText.split(',').map((tag: string) => tag.trim()).filter(Boolean).map((tag: string) => (
                                         <DSBadge key={tag} tone="blue" label={`#${tag}`} />
                                     ))}
                                     <button className="size-6 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-slate-400 hover:border-blue-500 hover:text-blue-500 transition-all">

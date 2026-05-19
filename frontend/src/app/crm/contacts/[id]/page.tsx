@@ -142,7 +142,7 @@ export default function LeadDetail() {
             prayer: '',
             time: new Date(session.created_at).toLocaleString(),
             type: 'counseling',
-            color: 'bg-purple-600',
+            color: 'bg-sky-600',
             isInsight: false
         })),
         {
@@ -164,13 +164,13 @@ export default function LeadDetail() {
         </div>
     );
 
-    const heroWatchers = ['Coordinación Pastoral', 'Optimus Brain'];
+    const heroWatchers = ['Coordinación de Consolidación', 'Optimus Brain'];
 
     return (
         <CrmShell
             breadcrumbs={[
                 { label: 'CCF', icon: Users },
-                { label: 'CRM Pastoral', icon: Users },
+                { label: 'Consolidación', icon: Users },
                 { label: lead ? `${lead.first_name} ${lead.last_name}` : 'Contacto', icon: Users }
             ]}
             rightActions={
@@ -300,7 +300,7 @@ export default function LeadDetail() {
                                 <Calendar size={24} />
                             </div>
                             <div>
-                                <h4 className="text-white font-black tracking-tight">Acciones Pastorales</h4>
+                                <h4 className="text-white font-black tracking-tight">Acciones de Consolidación</h4>
                                 <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Gestión del Seguimiento</p>
                             </div>
                         </div>
@@ -351,7 +351,7 @@ export default function LeadDetail() {
             <WorkspaceDrawer
                 isOpen={isCallDrawerOpen}
                 onClose={() => setIsCallDrawerOpen(false)}
-                title="Registrar Llamada Pastoral"
+                title="Registrar Llamada de Consolidación"
                 subtitle="Historial de contacto con el prospecto"
                 actions={
                     <>

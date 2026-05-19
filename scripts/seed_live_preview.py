@@ -5,7 +5,8 @@ from pathlib import Path
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from backend.core.database import SessionLocal, Base, engine
+from backend.core.database import SessionLocal
+from backend.management.schema import reset_database_for_local_bootstrap
 from backend import models, crud, schemas
 
 def seed_live_preview():
@@ -13,8 +14,7 @@ def seed_live_preview():
     
     # Force fresh schema for testing and preview
     print("[0/4] Re-syncing Database Schema...")
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
+    reset_database_for_local_bootstrap()
     
     db = SessionLocal()
     

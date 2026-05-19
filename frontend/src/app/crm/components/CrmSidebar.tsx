@@ -8,9 +8,6 @@ import {
     ChevronRight,
     LayoutDashboard,
     Users,
-    Calendar,
-    MessageSquare,
-    Columns,
     Heart,
     Home as HouseIcon,
     ShieldCheck,
@@ -25,10 +22,8 @@ import {
     Layers,
     Monitor,
     MoreHorizontal,
-    Search,
     PieChart,
     UserPlus,
-    Scan,
     MessageCircle
 } from 'lucide-react';
 
@@ -153,7 +148,7 @@ export default function CrmSidebar() {
                                     {navItem('/crm/pipeline', <Layers />, 'Consolidación')}
                                     {navItem('/crm/counseling', <Heart />, 'Consejería')}
                                     {navItem('/crm/prayers', <MessageCircle />, 'Muro de Oración')}
-                                    {navItem('/crm/groups', <HouseIcon />, 'Casas de Gloria')}
+                                    {navItem('/crm/groups', <HouseIcon />, 'Faros en Casa')}
                                 </div>
                             )}
                         </div>
@@ -172,8 +167,8 @@ export default function CrmSidebar() {
                                 <div className="ml-6 space-y-0.5 border-l border-white/5 pl-2">
                                     {navItem('/crm/members', <Users />, 'Miembros')}
                                     {navItem('/crm/volunteers', <ShieldCheck />, 'Servidores')}
-                                    {navItem('/crm/events', <Calendar />, 'Eventos')}
-                                    {navItem('/crm/scanner', <Scan />, 'Escáner ASST')}
+                                    {navItem('/crm/contacts', <UserPlus />, 'Contactos')}
+                                    {navItem('/crm/tasks', <CheckCircle2 />, 'Seguimiento')}
                                 </div>
                             )}
                         </div>

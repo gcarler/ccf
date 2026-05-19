@@ -1,10 +1,6 @@
 "use client";
 
 import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
-import { 
-    Heading1, Heading2, List, ListOrdered, 
-    CheckSquare, Quote, Type, Minus 
-} from 'lucide-react';
 import clsx from 'clsx';
 
 export const CommandsList = forwardRef((props: any, ref) => {

@@ -7,14 +7,15 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from sqlalchemy.orm import Session
-from backend.core.database import SessionLocal, Base, engine
+from backend.core.database import SessionLocal
+from backend.management.schema import upgrade_with_optional_bootstrap
 from backend import models, crud, schemas
 
 def seed_quality_motors():
     db = SessionLocal()
     try:
-        print("--- Ensuring tables exist ---")
-        Base.metadata.create_all(bind=engine)
+        print("--- Applying migrations ---")
+        upgrade_with_optional_bootstrap()
         
         print("--- Seeding Gamification Levels ---")
         levels = [

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
 
@@ -8,12 +8,14 @@ interface FaroThemeContextType {
     theme: FaroTheme;
     setTheme: (theme: FaroTheme) => void;
     toggle: () => void;
+    themeTokens: Record<string, string>;
 }
 
 const ThemeContext = createContext<FaroThemeContextType>({
     theme: "institutional",
     setTheme: () => {},
     toggle: () => {},
+    themeTokens: {},
 });
 
 export function useFaroTheme() {
@@ -50,7 +52,7 @@ export function FaroThemeProvider({ children }: { children: React.ReactNode }) {
         let mounted = true;
         const loadRemoteTheme = async () => {
             try {
-                const row = await apiFetch<{ tokens_json?: Record<string, string> }>("/cms/v2/public/sites/faro/theme");
+                const row = await apiFetch<{ tokens_json?: Record<string, string> }>("/cms/v2/public/sites/faro/theme", { silent: true });
                 if (mounted && row?.tokens_json && typeof row.tokens_json === "object") {
                     setRemoteTokens(row.tokens_json);
                 }
@@ -81,8 +83,9 @@ export function FaroThemeProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, setTheme, toggle }}>
+        <ThemeContext.Provider value={{ theme, setTheme, toggle, themeTokens: remoteTokens }}>
             {children}
         </ThemeContext.Provider>
     );
 }
+

@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Church, Search, HandHeart, CalendarDays, User, HeartHandshake, Loader2, PlusCircle, UserCircle, Heart, Zap, Sparkles } from 'lucide-react';
+import { HandHeart, CalendarDays, Loader2, PlusCircle, UserCircle, Heart, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/http';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,8 +19,7 @@ interface PrayerRequest {
 }
 
 export default function PrayerWall() {
-    const { isAuthenticated, token, user } = useAuth();
-    const router = useRouter();
+    const { isAuthenticated, token } = useAuth();
     const [activeTab, setActiveTab] = useState('Recientes');
     const [requests, setRequests] = useState<PrayerRequest[]>([]);
     const [loading, setLoading] = useState(true);

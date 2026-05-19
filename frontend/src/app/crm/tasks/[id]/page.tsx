@@ -1,21 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { 
     CheckCircle2, 
-    Clock, 
-    User, 
     Calendar, 
-    MessageSquare, 
     LayoutDashboard,
-    ArrowLeft,
     Flag,
     AlertCircle,
-    UserPlus,
     History
 } from 'lucide-react';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { DSCard } from '@/design/components/DSCard';
@@ -27,7 +21,6 @@ import clsx from 'clsx';
 export default function CrmTaskDetailPage() {
     const params = useParams();
     const id = params?.id as string;
-    const router = useRouter();
     const { token } = useAuth();
     
     const [task, setTask] = useState<any>(null);
@@ -42,12 +35,12 @@ export default function CrmTaskDetailPage() {
                 setTask(data || {
                     id,
                     title: 'Seguimiento de Consolidación',
-                    description: 'Contactar al nuevo miembro para invitarlo a la Casa de Gloria de su sector.',
+                    description: 'Contactar al nuevo miembro para invitarlo al Faro en Casa de su sector.',
                     status: 'pending',
                     priority: 'high',
                     due_date: '2026-04-20',
                     assigned_to: 'Diácono Roberto',
-                    category: 'Pastoral'
+                    category: 'Consolidación'
                 });
             } catch (err) {
                 toast.error('Error al cargar la tarea pastoral');
@@ -64,7 +57,7 @@ export default function CrmTaskDetailPage() {
         <CrmShell
             breadcrumbs={[
                 { label: 'CRM', icon: LayoutDashboard, href: '/crm' },
-                { label: 'Tareas Pastorales', icon: CheckCircle2, href: '/crm/tasks' },
+                { label: 'Tareas de Consolidación', icon: CheckCircle2, href: '/crm/tasks' },
                 { label: `TASK-${id}`, icon: CheckCircle2 },
             ]}
         >

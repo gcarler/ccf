@@ -9,13 +9,13 @@ interface InlineEventPopoverProps {
     onOpenChange: (open: boolean) => void;
     day: Date;
     children: React.ReactNode;
-    onSave?: (data: { title: string; type: 'event'|'task'; description: string; guests: string; date: Date }) => Promise<void> | void;
+    onSave?: (data: { title: string; type: 'event'|'task'; description: string; location: string; date: Date }) => Promise<void> | void;
 }
 
 export default function InlineEventPopover({ open, onOpenChange, day, children, onSave }: InlineEventPopoverProps) {
     const [title, setTitle] = useState('');
     const [type, setType] = useState<'event'|'task'>('event');
-    const [guests, setGuests] = useState('');
+    const [location, setLocation] = useState('');
     const [description, setDescription] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
@@ -24,7 +24,7 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
         if (open) {
             setTitle('');
             setType('event');
-            setGuests('');
+            setLocation('');
             setDescription('');
             setIsSaving(false);
         }
@@ -35,7 +35,7 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
         setIsSaving(true);
         try {
             if (onSave) {
-                await onSave({ title: title.trim(), type, description: description.trim(), guests: guests.trim(), date: day });
+                await onSave({ title: title.trim(), type, description: description.trim(), location: location.trim(), date: day });
             }
             onOpenChange(false);
         } finally {
@@ -101,8 +101,8 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
                             <input 
                                 type="text" 
                                 placeholder="Añadir invitados" 
-                                value={guests}
-                                onChange={(e) => setGuests(e.target.value)}
+                                value={location}
+                                onChange={(e) => setLocation(e.target.value)}
                                 className="text-[12px] bg-transparent outline-none w-full placeholder:text-slate-400" 
                             />
                         </div>

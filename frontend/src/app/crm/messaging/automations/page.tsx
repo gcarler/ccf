@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     Zap, Plus, Settings2, Trash2, ToggleLeft, ToggleRight,
-    Loader2, Send, X, CheckCircle2, MessageSquare, CheckSquare,
+    Loader2, Send, CheckCircle2, MessageSquare, CheckSquare,
     Users, Bell, Clock, AlertTriangle, Heart
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -38,7 +38,7 @@ const TRIGGERS = [
 const ACTIONS = [
     { value: 'send_whatsapp', label: 'Enviar WhatsApp', icon: MessageSquare },
     { value: 'send_sms', label: 'Enviar SMS', icon: MessageSquare },
-    { value: 'create_task', label: 'Crear Tarea Pastoral', icon: CheckSquare },
+    { value: 'create_task', label: 'Crear Tarea de Consolidación', icon: CheckSquare },
     { value: 'send_email', label: 'Enviar Email', icon: Send },
 ];
 
@@ -47,7 +47,7 @@ const TRIGGER_COLORS: Record<string, string> = {
     birthday: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
     inactivity: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
     low_attendance: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
-    anniversary: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
+    anniversary: 'bg-sky-500/10 text-sky-600 border-sky-500/20',
     stage_change: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20',
 };
 
@@ -158,7 +158,7 @@ export default function AutomationsPage() {
     return (
         <CrmShell
             breadcrumbs={[
-                { label: 'CRM Pastoral', icon: Users },
+                { label: 'Consolidación', icon: Users },
                 { label: 'Automatizaciones', icon: Zap }
             ]}
             rightActions={

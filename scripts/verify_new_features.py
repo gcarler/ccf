@@ -7,13 +7,14 @@ import uuid
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backend import models, schemas, crud
-from backend.core.database import SessionLocal, engine, Base
+from backend.core.database import SessionLocal
+from backend.management.schema import upgrade_with_optional_bootstrap
 
 def verify_new_logic():
     print("🚀 Iniciando Verificación de Reglas de Negocio (MVP-001 al MVP-004)...")
     
-    # Asegurar que las tablas existan (especialmente la nueva de prerrequisitos)
-    Base.metadata.create_all(bind=engine)
+    # Asegurar migraciones antes de verificar reglas de negocio.
+    upgrade_with_optional_bootstrap()
     db = SessionLocal()
     
     try:

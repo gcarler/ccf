@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
 import { 
     MousePointer2, Pencil, Square, Circle, Type, 
-    Trash2, Undo, Redo, ZoomIn, ZoomOut, Maximize,
-    Cloud, Loader2, Grid3X3, Sparkles, Wand2,
-    X, Save, Download, Share2, Move, Layers, LayoutDashboard
+    Trash2, ZoomIn, ZoomOut,
+    Cloud, Loader2, Sparkles,
+    X, Layers, LayoutDashboard
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as Dialog from '@radix-ui/react-dialog';
@@ -60,7 +60,7 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
             apiFetch(`/projects/${project_id}/whiteboard`, {
                 method: 'POST',
                 token,
-                body: { elements_json: json }
+                body: { title: 'Pizarra Estrategica', elements_json: json }
             }).then(() => {
                 setSaveStatus('saved');
                 setTimeout(() => setSaveStatus('idle'), 2000);
@@ -82,13 +82,41 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
         setTool('select');
     };
 
+    const addCircle = () => {
+        const circle = new fabric.Circle({
+            left: 120,
+            top: 120,
+            radius: 48,
+            fill: 'rgba(16, 185, 129, 0.12)',
+            stroke: '#10b981',
+            strokeWidth: 2,
+        });
+        fabricCanvas.current?.add(circle);
+        setTool('select');
+    };
+
+    const addText = () => {
+        const text = new fabric.IText('Nuevo texto', {
+            left: 140,
+            top: 140,
+            fontSize: 24,
+            fill: '#0f172a',
+            fontFamily: 'Arial',
+        });
+        fabricCanvas.current?.add(text);
+        fabricCanvas.current?.setActiveObject(text);
+        text.enterEditing();
+        text.selectAll();
+        setTool('select');
+    };
+
     const handleAiDiagram = async () => {
         const prompt = window.prompt("¿Qué proceso ministerial deseas diagramar? (Ej: Flujo de grabación de clips)");
         if (!prompt) return;
 
         setIsAiDrawing(true);
         try {
-            const data = await apiFetch<{response: string}>('/system/ai/generate', {
+            await apiFetch<{response: string}>('/system/ai/generate', {
                 method: 'POST',
                 token,
                 body: { prompt: `Genera un diagrama de pizarra para: ${prompt}`, context: "Estética ministerial" }
@@ -156,8 +184,8 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
                                         <ToolBtn active={tool === 'pencil'} onClick={() => { setTool('pencil'); if (fabricCanvas.current) { fabricCanvas.current.isDrawingMode = true; fabricCanvas.current.freeDrawingBrush = new fabric.PencilBrush(fabricCanvas.current); fabricCanvas.current.freeDrawingBrush.width = 3; fabricCanvas.current.freeDrawingBrush.color = '#2563eb'; } }} icon={Pencil} label="Dibujo" />
                                         <div className="h-[1px] w-8 bg-slate-100 dark:bg-white/5 mx-auto my-1" />
                                         <ToolBtn active={false} onClick={addRect} icon={Square} label="Caja" />
-                                        <ToolBtn active={false} onClick={() => {}} icon={Circle} label="Nodo" />
-                                        <ToolBtn active={false} onClick={() => {}} icon={Type} label="Texto" />
+                                        <ToolBtn active={false} onClick={addCircle} icon={Circle} label="Nodo" />
+                                        <ToolBtn active={false} onClick={addText} icon={Type} label="Texto" />
                                         <div className="h-[1px] w-8 bg-slate-100 dark:bg-white/5 mx-auto my-1" />
                                         <ToolBtn active={false} onClick={() => { fabricCanvas.current?.remove(...fabricCanvas.current?.getActiveObjects()); fabricCanvas.current?.discardActiveObject(); fabricCanvas.current?.renderAll(); }} icon={Trash2} label="Borrar" color="text-rose-500" />
                                     </div>

@@ -3,10 +3,10 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Heart, HeartHandshake, Mail, Phone, Globe, Youtube, Users, Podcast, Send, CheckCircle2, Wallet, Coins, CreditCard } from 'lucide-react';
+import { Heart, HeartHandshake, Mail, Phone, Globe, Youtube, Users, Podcast, Send, CheckCircle2, Wallet } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export default function GivingAndConnection() {
     const { isAuthenticated, user, token } = useAuth();

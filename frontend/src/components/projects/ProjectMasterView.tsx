@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { 
-    Radio, Share2, Users, Globe, Film, CheckCircle2, Clock, 
-    Zap, Heart, Trophy, Calendar, TrendingUp, AlertCircle,
+    Radio, Share2, Globe, CheckCircle2, Clock, 
+    Zap, Trophy, Calendar, TrendingUp, AlertCircle,
     ArrowUpRight, BarChart3
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -17,8 +17,6 @@ interface ProjectMasterViewProps {
 
 export function ProjectMasterView({ project, tasks }: ProjectMasterViewProps) {
     const nutritionTasks = tasks.filter(t => t.title.includes('[Gestión]'));
-    const evangelismTasks = tasks.filter(t => t.title.includes('[Evangelismo]') || t.title.includes('Historial:'));
-    const formationTasks = tasks.filter(t => t.title.includes('[Formación]'));
     const webTasks = tasks.filter(t => t.title.includes('[Web]'));
 
     const milestones = project.milestones || [];
@@ -92,7 +90,7 @@ export function ProjectMasterView({ project, tasks }: ProjectMasterViewProps) {
                     </h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {milestones.map((m, i) => (
+                    {milestones.map((m) => (
                         <div key={m.id} className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[2.5rem] p-8 hover:shadow-2xl transition-all group relative overflow-hidden">
                             <div className="flex items-start justify-between mb-6">
                                 <div className={clsx("size-12 rounded-2xl flex items-center justify-center shadow-lg", m.is_completed ? "bg-emerald-500 text-white" : "bg-slate-100 dark:bg-white/5 text-slate-400")}>

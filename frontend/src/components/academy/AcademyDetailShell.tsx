@@ -25,7 +25,7 @@ const VARIANT_PRESETS: Record<Variant, { primary: string; secondary: string }> =
     },
     violet: {
         primary: "from-fuchsia-500/15",
-        secondary: "from-purple-500/10",
+        secondary: "from-sky-500/10",
     },
 };
 

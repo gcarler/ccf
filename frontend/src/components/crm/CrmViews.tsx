@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import { 
     Heart, Mail, Phone, Star, GraduationCap, ChevronRight, 
-    MoreHorizontal, Calendar, Search, List as ListIcon 
+    Calendar
 } from 'lucide-react';
 
 interface Member {
@@ -310,7 +310,7 @@ export function CrmGanttView({ members }: CrmViewProps) {
         <div className="bg-white dark:bg-[#1e1f21] shadow-sm rounded-3xl border border-slate-200 dark:border-white/10 overflow-hidden animate-fade-in py-8 px-10">
             <h3 className="text-lg font-black tracking-tight mb-8">Timeline de Integración (Últimos 15)</h3>
             <div className="space-y-6 relative before:absolute before:inset-0 before:ml-[11px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 dark:before:via-white/5 before:to-transparent">
-                {sorted.map((m, i) => (
+                {sorted.map(m => (
                     <div key={m.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                         <div className="flex items-center justify-center w-6 h-6 rounded-full border-4 border-white dark:border-[#1e1f21] bg-blue-500 text-slate-500 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div>
                         <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-2xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 shadow-sm">

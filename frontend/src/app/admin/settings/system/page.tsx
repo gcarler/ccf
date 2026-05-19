@@ -1172,7 +1172,7 @@ export default function SystemSettings() {
                                             <button onClick={() => updateIncident(incident.id, 'silence')} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-blue-600">Silence 3h</button>
                                             <button onClick={() => updateIncident(incident.id, 'reopen')} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-amber-600">Reopen</button>
                                             <button onClick={() => updateIncident(incident.id, 'close')} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-emerald-600">Close</button>
-                                            <button onClick={() => addIncidentNote(incident.id)} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-violet-600">Add note</button>
+                                            <button onClick={() => addIncidentNote(incident.id)} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-blue-600">Add note</button>
                                         </div>
                                         {Array.isArray(incident.history) && incident.history.length > 0 ? (
                                             <div className="mt-3 rounded-xl border border-slate-100 dark:border-white/10 bg-white/60 dark:bg-black/30 p-3">

@@ -22,7 +22,7 @@ def seed_admin(db_session, email: str = "admin@example.com", password: str = "se
 
 def obtain_token(client: TestClient, email: str, password: str) -> str:
     response = client.post(
-        "/auth/login",
+        "/api/auth/login",
         data={"username": email, "password": password, "grant_type": "password"},
     )
     assert response.status_code == 200
@@ -39,7 +39,7 @@ def test_agent_task_creation_logs_audit(client: TestClient, db_session):
     token = obtain_token(client, admin.email, password)
 
     response = client.post(
-        "/agents/tasks",
+        "/api/agents/tasks",
         headers=auth_headers(token),
         json={"title": "Revisar reportes", "priority": "high", "source": "test"},
     )
@@ -62,7 +62,7 @@ def test_audit_logs_endpoint_returns_entries(client: TestClient, db_session):
     )
     token = obtain_token(client, admin.email, password)
 
-    response = client.get("/governance/audit-logs", headers=auth_headers(token))
+    response = client.get("/api/governance/audit-logs", headers=auth_headers(token))
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1

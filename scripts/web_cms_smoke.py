@@ -93,17 +93,17 @@ def run_smoke(ctx: SmokeContext) -> None:
     status, _ = _request(ctx, "GET", "/api/cms/testimonials")
     _assert_status("GET /api/cms/testimonials", status, 200)
 
-    print("[3/8] Public testimonials alias")
+    print("[3/8] Legacy testimonials alias removed")
     status, _ = _request(ctx, "GET", "/api/testimonials")
-    _assert_status("GET /api/testimonials", status, 200)
+    _assert_status("GET /api/testimonials", status, 404)
 
     print("[4/8] Public CMS announcements endpoint")
     status, _ = _request(ctx, "GET", "/api/cms/announcements")
     _assert_status("GET /api/cms/announcements", status, 200)
 
-    print("[5/8] Public announcements alias")
+    print("[5/8] Legacy announcements alias removed")
     status, _ = _request(ctx, "GET", "/api/announcements")
-    _assert_status("GET /api/announcements", status, 200)
+    _assert_status("GET /api/announcements", status, 404)
 
     print("[6/8] Protected admin endpoint without auth")
     status, _ = _request(ctx, "GET", "/api/admin/testimonials")

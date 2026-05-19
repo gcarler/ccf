@@ -36,9 +36,9 @@ export default function WikiDocEditPage() {
         await apiFetch(`/content/${page_key}`, {
             method: 'PATCH',
             token,
-            body: JSON.stringify({
+            body: {
                 content: newContent
-            })
+            }
         });
     };
 

@@ -6,27 +6,26 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import {
-    Menu,
-    Bell,
-    Share2,
-    Bookmark,
-    ChevronRight,
     Plus,
     Calendar,
     Megaphone,
     Sparkles,
-    Zap,
     Layout,
-    Globe,
     Loader2,
-    Image as ImageIcon,
-    Check,
     Edit3,
-    X
+    X,
+    CheckCircle2,
+    Archive
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import type { ViewType } from '@/components/ViewSwitcher';
+import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
+import UniversalGanttView from '@/components/ui/UniversalGanttView';
+import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+
+const ANNOUNCEMENT_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 interface Announcement {
     id: number;
@@ -35,7 +34,36 @@ interface Announcement {
     category: string;
     featured: boolean;
     date: string;
+    status: 'draft' | 'published' | 'archived';
 }
+
+interface RawAnnouncement {
+    id: number;
+    title?: string;
+    content?: string;
+    category?: string;
+    is_featured?: boolean;
+    featured?: boolean;
+    published_at?: string;
+    created_at?: string;
+    status?: 'draft' | 'published' | 'archived';
+}
+
+const STATUS_LABELS: Record<Announcement['status'], string> = {
+    draft: 'Borrador',
+    published: 'Publicado',
+    archived: 'Archivado'
+};
+
+const normalizeAnnouncement = (item: RawAnnouncement): Announcement => ({
+    id: item.id,
+    title: item.title || 'Comunicado',
+    content: item.content || '',
+    category: item.category || 'General',
+    featured: Boolean(item.is_featured ?? item.featured),
+    date: item.published_at || item.created_at || new Date().toISOString(),
+    status: item.status || 'published',
+});
 
 export default function AnnouncementsAdmin() {
     const { token, isAuthenticated } = useAuth();
@@ -43,13 +71,14 @@ export default function AnnouncementsAdmin() {
     const router = useRouter();
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [loading, setLoading] = useState(true);
+    const [viewType, setViewType] = useState<ViewType>('grid');
 
     const fetchAnnouncements = useCallback(async () => {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<Announcement[]>('/admin/announcements', { token, cache: 'no-store' });
-            setAnnouncements(Array.isArray(data) ? data : []);
+            const data = await apiFetch<RawAnnouncement[]>('/admin/announcements', { token, cache: 'no-store' });
+            setAnnouncements(Array.isArray(data) ? data.map(normalizeAnnouncement) : []);
         } catch (err) {
             console.error(err);
             addToast("Error al sincronizar comunicados", "error");
@@ -62,8 +91,133 @@ export default function AnnouncementsAdmin() {
         if (isAuthenticated) fetchAnnouncements();
     }, [isAuthenticated, fetchAnnouncements]);
 
-    const featuredAnn = announcements.find(a => a.featured) || announcements[0];
+    const handleStatusChange = async (ann: Announcement, status: Announcement['status']) => {
+        if (!token) return;
+        try {
+            const updated = await apiFetch<RawAnnouncement>(`/admin/announcements/${ann.id}`, {
+                method: 'PATCH',
+                token,
+                body: { status },
+            });
+            setAnnouncements((items) => items.map((item) => item.id === ann.id ? normalizeAnnouncement(updated) : item));
+            addToast(`Comunicado marcado como ${STATUS_LABELS[status].toLowerCase()}`, "success");
+        } catch (err) {
+            console.error(err);
+            addToast("Error al actualizar el comunicado", "error");
+        }
+    };
+
+    const featuredAnn = announcements.find(a => a.featured && a.status === 'published') || announcements.find(a => a.status === 'published') || announcements[0];
     const normalAnnouncements = announcements.filter(a => a.id !== featuredAnn?.id);
+    const groupedAnnouncements = [
+        { id: 'published', label: 'Publicados', items: announcements.filter((ann) => ann.status === 'published') },
+        { id: 'draft', label: 'Borradores', items: announcements.filter((ann) => ann.status === 'draft') },
+        { id: 'archived', label: 'Archivados', items: announcements.filter((ann) => ann.status === 'archived') },
+    ];
+    const calendarEvents = announcements.map((ann) => ({
+        id: ann.id,
+        title: ann.title,
+        date: (ann.date || new Date().toISOString()).split('T')[0],
+        color: ann.featured ? 'blue' as const : 'indigo' as const,
+        location: ann.category,
+    }));
+    const ganttItems = announcements.map((ann) => ({
+        id: ann.id,
+        title: ann.title,
+        subtitle: ann.category,
+        start_date: ann.date || new Date().toISOString(),
+        end_date: ann.date || new Date().toISOString(),
+        color: ann.featured ? 'blue' as const : 'indigo' as const,
+        progress: ann.status === 'published' ? 100 : ann.status === 'draft' ? 40 : 15,
+    }));
+
+    const renderList = () => (
+        <div className="space-y-4">
+            {announcements.map((ann) => (
+                <div key={ann.id} className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[2rem] p-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="text-blue-600 text-[10px] font-black uppercase tracking-[0.3em]">{ann.category}</span>
+                            {ann.featured && <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[9px] font-black uppercase">Destacado</span>}
+                            <span className={clsx(
+                                "px-2 py-0.5 rounded-full text-[9px] font-black uppercase",
+                                ann.status === 'published' ? "bg-emerald-50 text-emerald-600" : ann.status === 'draft' ? "bg-amber-50 text-amber-600" : "bg-slate-100 text-slate-500"
+                            )}>{STATUS_LABELS[ann.status]}</span>
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">{ann.title}</h3>
+                        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{ann.content}</p>
+                    </div>
+                    <div className="self-start md:self-center flex items-center gap-2">
+                        {ann.status !== 'published' && (
+                            <button onClick={() => handleStatusChange(ann, 'published')} className="p-3 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 rounded-xl transition-all" title="Publicar">
+                                <CheckCircle2 size={16} />
+                            </button>
+                        )}
+                        {ann.status !== 'archived' && (
+                            <button onClick={() => handleStatusChange(ann, 'archived')} className="p-3 bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-rose-600 rounded-xl transition-all" title="Archivar">
+                                <Archive size={16} />
+                            </button>
+                        )}
+                        <button className="p-3 bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-blue-600 rounded-xl transition-all"><Edit3 size={16} /></button>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+
+    const renderTable = () => (
+        <div className="rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+            <table className="w-full text-left">
+                <thead className="bg-slate-50 dark:bg-white/5">
+                    <tr>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Comunicado</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Categoría</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Fecha</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Estado</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                    {announcements.map((ann) => (
+                        <tr key={ann.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03]">
+                            <td className="px-5 py-4 text-sm font-bold text-slate-800 dark:text-slate-100">{ann.title}</td>
+                            <td className="px-5 py-4 hidden md:table-cell text-[11px] text-slate-500">{ann.category}</td>
+                            <td className="px-5 py-4 hidden lg:table-cell text-[11px] text-slate-400">{new Date(ann.date).toLocaleDateString('es-ES')}</td>
+                            <td className="px-5 py-4">
+                                <span className={clsx(
+                                    "px-2 py-0.5 rounded-full text-[9px] font-black uppercase",
+                                    ann.status === 'published' ? "bg-emerald-50 text-emerald-600" : ann.status === 'draft' ? "bg-amber-50 text-amber-600" : "bg-slate-100 text-slate-500"
+                                )}>
+                                    {STATUS_LABELS[ann.status]}
+                                </span>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+
+    const renderBoard = () => (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {groupedAnnouncements.map((group) => (
+                <section key={group.id} className="rounded-[2.5rem] bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-5">
+                    <div className="flex items-center justify-between mb-5">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{group.label}</span>
+                        <span className="text-[10px] font-black text-slate-400">{group.items.length}</span>
+                    </div>
+                    <div className="space-y-4">
+                        {group.items.map((ann) => (
+                            <div key={ann.id} className="bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-[1.5rem] p-5">
+                                <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{ann.title}</p>
+                                <p className="mt-2 text-[10px] font-bold text-blue-600 uppercase tracking-widest">{ann.category} · {STATUS_LABELS[ann.status]}</p>
+                                <p className="mt-4 text-xs text-slate-500 line-clamp-3">{ann.content}</p>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            ))}
+        </div>
+    );
 
     if (!isAuthenticated) return null;
 
@@ -90,7 +244,9 @@ export default function AnnouncementsAdmin() {
 
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: 'Admin', icon: Layout }, { label: 'Comunicaciones Globales', icon: Megaphone }]}
-                viewType="grid" setViewType={() => {}}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={ANNOUNCEMENT_VIEWS}
                 rightActions={
                     <button 
                         onClick={() => router.push('/admin/announcements/new')}
@@ -123,6 +279,24 @@ export default function AnnouncementsAdmin() {
                         <div className="py-40 flex flex-col items-center justify-center gap-6 text-slate-400 font-black uppercase tracking-[0.5em] animate-pulse">
                             <Loader2 className="animate-spin text-blue-600" size={48} strokeWidth={1.5} /> Sincronizando Noticias...
                         </div>
+                    ) : viewType === 'list' ? (
+                        renderList()
+                    ) : viewType === 'table' ? (
+                        renderTable()
+                    ) : viewType === 'board' || viewType === 'kanban' ? (
+                        renderBoard()
+                    ) : viewType === 'calendar' ? (
+                        <UniversalCalendarView
+                            events={calendarEvents}
+                            title="Calendario de comunicados"
+                        />
+                    ) : viewType === 'gantt' ? (
+                        <UniversalGanttView
+                            items={ganttItems}
+                            moduleName="Comunicaciones"
+                        />
+                    ) : viewType === 'wiki' ? (
+                        <UniversalWikiView moduleName="Comunicaciones" storageKey="wiki_admin_announcements" />
                     ) : (
                         <div className="space-y-16">
                             {/* Featured Cinematic */}
@@ -134,7 +308,7 @@ export default function AnnouncementsAdmin() {
                                 >
                                     <div
                                         className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"
-                                        style={{ backgroundImage: `linear-gradient(to top, rgba(10, 15, 22, 0.95) 0%, rgba(10, 15, 22, 0.4) 50%, transparent 100%), url('https://images.unsplash.com/photo-1438232992991-995b7058bbb3?q=80&w=1200&auto=format&fit=crop')` }}
+                                        style={{ backgroundImage: `linear-gradient(to top, rgba(10, 15, 22, 0.95) 0%, rgba(10, 15, 22, 0.4) 50%, transparent 100%), url('https://picsum.photos/seed/1438232992991-995b7058bbb3/800/600')` }}
                                     />
                                     <div className="absolute inset-0 bg-blue-600/5 mix-blend-overlay" />
                                     
@@ -158,7 +332,7 @@ export default function AnnouncementsAdmin() {
                                     <h3 className="text-slate-900 dark:text-white text-xl font-black tracking-[0.2em] uppercase flex items-center gap-3">
                                         <Megaphone size={20} className="text-blue-600" /> Últimas Actualizaciones
                                     </h3>
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{announcements.length} Comunicados Activos</span>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{announcements.filter((ann) => ann.status === 'published').length} Comunicados Publicados</span>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -192,8 +366,13 @@ export default function AnnouncementsAdmin() {
                                                         <span className="text-[10px] font-black uppercase tracking-widest">{new Date(ann.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}</span>
                                                     </div>
                                                     <div className="flex gap-2">
+                                                        {ann.status !== 'published' && (
+                                                            <button onClick={() => handleStatusChange(ann, 'published')} className="p-3 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 rounded-xl transition-all" title="Publicar">
+                                                                <CheckCircle2 size={16} />
+                                                            </button>
+                                                        )}
                                                         <button className="p-3 bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-blue-600 rounded-xl transition-all"><Edit3 size={16} /></button>
-                                                        <button className="p-3 bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-rose-600 rounded-xl transition-all"><X size={16} /></button>
+                                                        <button onClick={() => handleStatusChange(ann, 'archived')} className="p-3 bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-rose-600 rounded-xl transition-all" title="Archivar"><X size={16} /></button>
                                                     </div>
                                                 </div>
                                             </motion.div>

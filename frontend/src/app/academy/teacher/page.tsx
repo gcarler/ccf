@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { toast } from 'sonner';
+import { useWikiDocument } from '@/hooks/useWikiDocument';
 
 export default function TeacherWorkspace() {
     const { token, user, isAuthenticated } = useAuth();
@@ -33,7 +34,9 @@ export default function TeacherWorkspace() {
     const [gradingId, setGradingId] = useState<number | null>(null);
     const [viewMode, setViewMode] = useState<'pending' | 'history' | 'courses'>('courses');
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('academy_teacher_view', 'grid'));
-    const [wikiNotes, setWikiNotes] = useState('');
+    const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('academy_teacher_wiki_notes', {
+        title: 'Wiki docente',
+    });
 
     const isStaff = useMemo(() => {
         const role = (user?.role || '').toLowerCase();
@@ -70,21 +73,6 @@ export default function TeacherWorkspace() {
             window.localStorage.setItem('academy_teacher_view', viewType);
         }
     }, [viewType]);
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const saved = window.localStorage.getItem('academy_teacher_wiki_notes');
-            if (saved) setWikiNotes(saved);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            window.localStorage.setItem('academy_teacher_wiki_notes', wikiNotes);
-        }
-    }, [wikiNotes]);
-
-
 
     const pending = submissions.filter((submission) => submission.grade == null);
     const graded = submissions.filter((submission) => submission.grade != null);

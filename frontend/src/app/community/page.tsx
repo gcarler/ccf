@@ -272,7 +272,7 @@ const featureCards = [
         description: 'Comparte peticiones y celebra respuestas en comunidad.',
         icon: Heart,
         href: '/community/prayer',
-        tone: 'from-purple-200/40 to-purple-50/30'
+        tone: 'from-sky-200/40 to-sky-50/30'
     },
     {
         title: 'Testimonios',

@@ -13,8 +13,13 @@ import {
     FileText,
     Globe,
     ChevronRight,
+    Palette,
+    PanelsTopLeft,
+    ImageIcon,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { useAuth } from '@/context/AuthContext';
+import { canEditCms, canManageSites } from '@/lib/cms/permissions';
 
 // ── Tabs compartidos en todas las páginas del módulo CMS ──────────
 const CMS_TABS = [
@@ -24,6 +29,10 @@ const CMS_TABS = [
     { id: 'hero',        label: 'Landing Hero', href: '/cms/content',       icon: Feather },
     { id: 'eventos',     label: 'Eventos',      href: '/cms/events',        icon: CalendarRange },
     { id: 'menus',       label: 'Menús',        href: '/cms/menus',         icon: Link2 },
+    { id: 'media',       label: 'Media',        href: '/cms/media',         icon: ImageIcon },
+    { id: 'builder',     label: 'Builder',      href: '/cms/builder',       icon: PanelsTopLeft },
+    { id: 'themes',      label: 'Temas',        href: '/cms/themes',        icon: Palette },
+    { id: 'sites',       label: 'Sitios',       href: '/cms/sites',         icon: Globe },
 ] as const;
 
 // Sub-páginas que ya renderizan sus propios tabs (cms/page.tsx los tiene inline)
@@ -32,8 +41,16 @@ const ROOT_CMS_PATH = '/cms';
 
 function CmsTabsToolbar() {
     const pathname = usePathname();
+    const { user } = useAuth();
+    const canEdit = canEditCms(user?.role);
+    const canManage = canManageSites(user?.role);
+    const availableTabs = CMS_TABS.filter((tab) => {
+        if (tab.id === 'sites') return canManage;
+        if (tab.id !== 'resumen') return canEdit;
+        return true;
+    });
 
-    const activeTab = CMS_TABS.find(t => {
+    const activeTab = availableTabs.find(t => {
         if (t.href === ROOT_CMS_PATH) return pathname === ROOT_CMS_PATH;
         return pathname ? pathname.startsWith(t.href) : false;
     })?.id ?? 'resumen';
@@ -41,7 +58,7 @@ function CmsTabsToolbar() {
     // No inyectar en la raíz /cms porque esa página ya tiene sus propios tabs inline
     if (pathname === ROOT_CMS_PATH) return null;
 
-    const activeLabel = CMS_TABS.find(t => t.id === activeTab)?.label ?? 'CMS';
+    const activeLabel = availableTabs.find(t => t.id === activeTab)?.label ?? 'CMS';
 
     return (
         <div className="shrink-0 border-b border-slate-100 dark:border-white/[0.05] bg-white dark:bg-[#141517]">
@@ -57,7 +74,7 @@ function CmsTabsToolbar() {
 
             {/* Tabs row */}
             <div className="flex items-center gap-0 px-4 pt-1">
-                {CMS_TABS.map(tab => {
+                {availableTabs.map(tab => {
                     const Icon = tab.icon;
                     const isActive = tab.id === activeTab;
                     return (

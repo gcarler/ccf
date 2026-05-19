@@ -1,97 +1,136 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import CrmShell from '@/components/crm/CrmShell';
-import AdminHero from '@/components/admin/AdminHero';
-import { 
-    LayoutDashboard, 
-    Sparkles, 
-    Wand2, 
-    Plus, 
-    FileText, 
-    Clock, 
-    Users, 
-    ChevronRight,
-    Search
-} from 'lucide-react';
-import { motion } from 'framer-motion';
-
-const MOCK_BOARDS = [
-    { id: 1, name: 'Plan Estratégico Faro 2026', owner: 'Pastor Rodrigo', updated: 'Hace 2 horas', members: 5 },
-    { id: 2, name: 'Brainstorming Campaña Jóvenes', owner: 'Equipo Creativo', updated: 'Ayer', members: 12 },
-    { id: 3, name: 'Arquitectura de Datos Malla', owner: 'IT Dept', updated: 'Hace 3 días', members: 3 },
-];
+import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import CrmShell from "@/components/crm/CrmShell";
+import AdminHero from "@/components/admin/AdminHero";
+import { LayoutDashboard, Sparkles, Plus, Search, Clock, Trash2 } from "lucide-react";
+import {
+    readWhiteboards,
+    whiteboardCanvasKey,
+    WhiteboardRecord,
+    writeWhiteboards,
+} from "@/lib/whiteboards";
 
 export default function WhiteboardPage() {
     const router = useRouter();
-    const [query, setQuery] = useState('');
+    const [query, setQuery] = useState("");
+    const [boards, setBoards] = useState<WhiteboardRecord[]>([]);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        setBoards(readWhiteboards(window.localStorage));
+    }, []);
+
+    const filtered = useMemo(() => {
+        const normalized = query.trim().toLowerCase();
+        if (!normalized) return boards;
+        return boards.filter((board) =>
+            board.title.toLowerCase().includes(normalized) ||
+            (board.description || "").toLowerCase().includes(normalized)
+        );
+    }, [boards, query]);
+
+    const deleteBoard = (id: string) => {
+        if (typeof window === "undefined") return;
+        const next = boards.filter((board) => board.id !== id);
+        writeWhiteboards(window.localStorage, next);
+        window.localStorage.removeItem(whiteboardCanvasKey(id));
+        setBoards(next);
+    };
 
     return (
         <CrmShell
             breadcrumbs={[
-                { label: 'CCF Tools', icon: LayoutDashboard },
-                { label: 'Lienzo Colaborativo', icon: Sparkles }
+                { label: "CCF Tools", icon: LayoutDashboard },
+                { label: "Lienzo Colaborativo", icon: Sparkles },
             ]}
         >
             <div className="space-y-8 px-8 py-8">
-                <AdminHero 
+                <AdminHero
                     eyebrow="PRODUCTIVIDAD"
                     title="Pizarras Infinitas"
-                    description="Espacios de cocreación en tiempo real integrados con Optimus Brain para diagramación asistida."
-                    tags={['Beta', 'Colaborativo', 'IA Assist']}
-                    watchers={['Equipo Estratégico', 'Diseño']}
-                    primaryAction={{ label: 'Nueva Pizarra', icon: Plus, onClick: () => {} }}
+                    description="Espacios de trabajo visuales con canvas real, capas y guardado local persistente."
+                    tags={["Canvas", "Local-first"]}
+                    watchers={["Equipo Estrategico", "Diseno"]}
+                    primaryAction={{ label: "Nueva Pizarra", icon: Plus, onClick: () => router.push("/whiteboard/new") }}
                 />
 
                 <div className="max-w-7xl mx-auto space-y-6">
                     <div className="relative max-w-md">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                        <input 
+                        <input
                             value={query}
-                            onChange={(e) => setQuery(e.target.value)}
+                            onChange={(event) => setQuery(event.target.value)}
                             placeholder="Buscar en tus lienzos..."
                             className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {MOCK_BOARDS.map((board) => (
-                            <motion.div
-                                key={board.id}
-                                whileHover={{ y: -4 }}
-                                onClick={() => router.push(`/whiteboard/${board.id}`)}
-                                className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer group"
-                            >
-                                <div className="flex items-center justify-between mb-6">
-                                    <div className="size-14 rounded-2xl bg-blue-50 dark:bg-blue-600/10 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all">
-                                        <LayoutDashboard size={28} />
+                    {filtered.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                            {filtered.map((board) => (
+                                <article
+                                    key={board.id}
+                                    className="group rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-blue-300 hover:shadow-xl dark:border-white/10 dark:bg-white/5"
+                                >
+                                    <button
+                                        onClick={() => router.push(`/whiteboard/${board.id}`)}
+                                        className="block w-full text-left"
+                                    >
+                                        <div className="mb-5 flex h-36 items-center justify-center rounded-[1.5rem] border border-slate-100 bg-slate-50 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] dark:border-white/10 dark:bg-black/20 dark:bg-[radial-gradient(#334155_1px,transparent_1px)]">
+                                            <Sparkles className="text-blue-500 opacity-70" size={34} />
+                                        </div>
+                                        <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">{board.title}</h3>
+                                        <p className="mt-1 line-clamp-2 text-sm font-medium text-slate-500">
+                                            {board.description || "Sin objetivo documentado."}
+                                        </p>
+                                        <div className="mt-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                            <Clock size={12} />
+                                            {formatBoardDate(board.updated_at || board.created_at)}
+                                        </div>
+                                    </button>
+                                    <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-white/10">
+                                        <button
+                                            onClick={() => router.push(`/whiteboard/${board.id}`)}
+                                            className="rounded-xl bg-blue-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20"
+                                        >
+                                            Abrir
+                                        </button>
+                                        <button
+                                            onClick={() => deleteBoard(board.id)}
+                                            className="rounded-xl p-2 text-slate-300 transition-all hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-500/10"
+                                            title="Eliminar pizarra local"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
                                     </div>
-                                    <ChevronRight className="text-slate-300 group-hover:text-blue-500 transition-colors" />
-                                </div>
-
-                                <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2 leading-tight uppercase tracking-tight">{board.name}</h3>
-                                
-                                <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-white/5">
-                                    <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                        <Clock size={12} /> Actualizado {board.updated}
-                                    </div>
-                                    <div className="flex items-center gap-2 text-[10px] font-black text-blue-500 uppercase tracking-widest">
-                                        <Users size={12} /> {board.members} integrantes activos
-                                    </div>
-                                </div>
-                            </motion.div>
-                        ))}
-
-                        <div className="border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[2.5rem] flex flex-col items-center justify-center p-8 text-center space-y-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer">
-                            <Plus className="text-slate-300" size={32} />
-                            <p className="text-xs font-black uppercase tracking-widest text-slate-400">Crear lienzo en blanco</p>
+                                </article>
+                            ))}
                         </div>
-                    </div>
+                    ) : (
+                        <div className="border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[2.5rem] p-10 text-center bg-white/60 dark:bg-white/[0.03]">
+                            <Sparkles size={40} className="mx-auto text-slate-300 mb-3" />
+                            <p className="text-sm font-black uppercase tracking-widest text-slate-500">
+                                {boards.length === 0 ? "No hay pizarras registradas todavia" : "Sin resultados"}
+                            </p>
+                            <p className="text-xs text-slate-400 mt-2">
+                                {boards.length === 0 ? "Crea una nueva pizarra para empezar a colaborar." : "Ajusta la busqueda para encontrar otro lienzo."}
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
         </CrmShell>
     );
 }
 
-
+function formatBoardDate(value: string) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Sin fecha";
+    return date.toLocaleDateString("es-CO", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+    });
+}

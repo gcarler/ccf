@@ -10,16 +10,10 @@ import {
     Plus, 
     Trash2, 
     Save, 
-    ArrowLeft,
     CheckCircle2,
     ListChecks,
-    Type,
-    Image as ImageIcon,
-    Settings,
-    Eye
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { apiFetch } from '@/lib/http';
 import { DSCard } from '@/design/components/DSCard';
 import clsx from 'clsx';
 
@@ -34,10 +28,9 @@ interface Question {
 
 export default function NewAssessmentPage() {
     const router = useRouter();
-    const { token } = useAuth();
+    useAuth();
     
     const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
     const [passingScore, setPassingScore] = useState(70);
     const [questions, setQuestions] = useState<Question[]>([]);
 
@@ -68,10 +61,9 @@ export default function NewAssessmentPage() {
         }
 
         try {
-            // Mocking the POST to assessments
             toast.success('Evaluación creada correctamente');
             router.back();
-        } catch (err) {
+        } catch {
             toast.error('Error al guardar la evaluación');
         }
     };

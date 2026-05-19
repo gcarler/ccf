@@ -1,14 +1,13 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Copy, Eye, EyeOff, ExternalLink, LayoutPanelTop, Monitor, Plus, Save, Send, Smartphone, Trash2, Upload, Undo2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Copy, Eye, EyeOff, ExternalLink, FileImage, ImageIcon, LayoutPanelTop, Monitor, Plus, Save, Search, Send, Smartphone, Trash2, Upload, Undo2, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
   createCmsPage,
   createCmsSection,
-  deleteCmsPage,
-  deleteCmsSection,
   listCmsPageVersions,
+  listCmsPagePublishLog,
   listCmsPages,
   listCmsSections,
   listCmsSites,
@@ -18,11 +17,63 @@ import {
   rollbackCmsPageVersion,
   workflowCmsPage,
 } from "@/lib/cms/v2";
-import { CmsPage, CmsPageVersion, CmsSection } from "@/types/cms-v2";
+import { CmsPage, CmsPageVersion, CmsPublishLog, CmsSection } from "@/types/cms-v2";
 import { useSearchParams } from "next/navigation";
 import { canEditCms, canPublishCms } from "@/lib/cms/permissions";
+import { apiFetch } from "@/lib/http";
 
-const SECTION_TYPES = ["hero", "rich_text", "cards", "cta_banner", "gallery", "faq", "embed"];
+const SECTION_TYPES = [
+  "hero", "video_hero", "rich_text", "rich_text_columns",
+  "cards", "cta_banner", "gallery", "faq", "embed",
+  "testimonials", "stats", "team", "countdown", "pricing", "popup_banner"
+];
+
+const SECTION_TYPE_COLORS: Record<string, string> = {
+  hero:              "bg-blue-600",
+  video_hero:        "bg-indigo-600",
+  rich_text:         "bg-slate-500",
+  rich_text_columns: "bg-slate-600",
+  cards:             "bg-blue-600",
+  cta_banner:        "bg-emerald-600",
+  gallery:           "bg-pink-500",
+  faq:               "bg-amber-500",
+  embed:             "bg-cyan-600",
+  testimonials:      "bg-rose-500",
+  stats:             "bg-teal-600",
+  team:              "bg-orange-500",
+  countdown:         "bg-red-600",
+  pricing:           "bg-sky-600",
+  popup_banner:      "bg-fuchsia-500",
+};
+
+const SECTION_TYPE_LABEL: Record<string, string> = {
+  hero:              "Hero Principal",
+  video_hero:        "Hero con Video",
+  rich_text:         "Texto Enriquecido",
+  rich_text_columns: "Texto 2 Columnas",
+  cards:             "Tarjetas",
+  cta_banner:        "Banner CTA",
+  gallery:           "Galería",
+  faq:               "Preguntas Frecuentes",
+  embed:             "Embed / iFrame",
+  testimonials:      "Testimonios",
+  stats:             "Estadísticas",
+  team:              "Equipo",
+  countdown:         "Cuenta Regresiva",
+  pricing:           "Precios / Donaciones",
+  popup_banner:      "Pop-up Promocional",
+};
+
+interface CmsMediaItem {
+  id: number;
+  url: string;
+  filename?: string | null;
+  mime_type?: string | null;
+  alt_text?: string | null;
+  section?: string;
+  tags?: string[];
+  created_at?: string;
+}
 
 const PAGE_TEMPLATES: Array<{ key: string; label: string; sections: Array<{ type: string; props_json: Record<string, unknown> }> }> = [
   {
@@ -110,7 +161,7 @@ const SECTION_TEMPLATES: Array<{ label: string; type: string; props_json: Record
     type: "cta_banner",
     props_json: {
       title: "¿Listo para dar el siguiente paso?",
-      body: "Conoce nuestros próximos eventos y grupos de conexión.",
+      body: "Conoce nuestros próximos eventos y Faros en Casa.",
       cta_label: "Ver eventos",
       cta_href: "/faro/eventos",
     },
@@ -144,36 +195,305 @@ function SectionPreview({ section }: { section: CmsSection }) {
   const title = safeString(section.props_json?.title);
   const body = safeString(section.props_json?.body);
   const imageUrl = safeString(section.props_json?.image_url);
-  if (section.type === "hero") {
+  const ctaLabel = safeString(section.props_json?.cta_label);
+  const typeColor = SECTION_TYPE_COLORS[section.type] ?? "bg-slate-500";
+  const typeLabel = SECTION_TYPE_LABEL[section.type] ?? section.type;
+
+  const TypeBadge = () => (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest text-white ${typeColor}`}>
+      {typeLabel}
+    </span>
+  );
+
+  if (section.type === "hero" || section.type === "video_hero") {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-300 dark:border-white/20 p-4">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hero</p>
-        <h3 className="mt-2 text-xl font-black text-slate-900 dark:text-white">{title || "Título hero"}</h3>
-        <p className="mt-2 text-sm text-slate-500">{body || "Subtítulo hero"}</p>
+      <div className="rounded-2xl border border-dashed border-slate-300 dark:border-white/20 p-4 space-y-2">
+        <TypeBadge />
+        <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight">{title || "Título hero"}</h3>
+        <p className="text-sm text-slate-500 line-clamp-2">{body || "Subtítulo o descripción principal"}</p>
+        {ctaLabel && <span className="inline-block mt-1 px-3 py-1 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase">{ctaLabel}</span>}
+        {section.type === "video_hero" && <p className="text-[9px] text-slate-400 font-bold uppercase">🎬 Video de fondo configurado</p>}
       </div>
     );
   }
-  if (section.type === "cards") {
+  if (section.type === "cards" || section.type === "pricing") {
+    const items = Array.isArray(section.props_json?.items) ? section.props_json.items as Array<Record<string,unknown>> : [];
     return (
-      <div className="rounded-2xl border border-dashed border-slate-300 dark:border-white/20 p-4">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Cards</p>
-        <p className="mt-2 text-sm font-bold text-slate-800 dark:text-slate-200">{title || "Bloque de tarjetas"}</p>
+      <div className="rounded-2xl border border-dashed border-slate-300 dark:border-white/20 p-4 space-y-2">
+        <TypeBadge />
+        <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{title || "Bloque de tarjetas"}</p>
+        {items.length > 0 && (
+          <div className="flex gap-2 flex-wrap">
+            {items.slice(0, 3).map((item, idx) => (
+              <span key={idx} className="px-2 py-1 bg-slate-100 dark:bg-white/10 rounded-lg text-[9px] font-bold text-slate-600 dark:text-slate-300">
+                {safeString(item.title) || `Item ${idx + 1}`}
+              </span>
+            ))}
+            {items.length > 3 && <span className="text-[9px] text-slate-400">+{items.length - 3} más</span>}
+          </div>
+        )}
       </div>
     );
   }
   if (section.type === "gallery") {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-300 dark:border-white/20 p-4">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Gallery</p>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{imageUrl ? `Imagen principal: ${imageUrl}` : "Define image_url en props"}</p>
+      <div className="rounded-2xl border border-dashed border-slate-300 dark:border-white/20 p-4 space-y-2">
+        <TypeBadge />
+        {imageUrl
+          // eslint-disable-next-line @next/next/no-img-element
+          ? <img src={imageUrl} alt="gallery" className="w-full h-24 object-cover rounded-xl" />
+          : <div className="w-full h-16 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-[9px] text-slate-400 font-bold uppercase">Sin imagen configurada</div>
+        }
       </div>
     );
   }
+  if (section.type === "cta_banner") {
+    return (
+      <div className="rounded-2xl border border-dashed border-emerald-300 dark:border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-900/10 p-4 space-y-2">
+        <TypeBadge />
+        <p className="text-sm font-black text-slate-800 dark:text-slate-100">{title || "Llamado a la Acción"}</p>
+        <p className="text-xs text-slate-500 line-clamp-1">{body || "Subtítulo"}</p>
+        {ctaLabel && <span className="inline-block px-3 py-1 bg-emerald-600 text-white rounded-lg text-[10px] font-black uppercase">{ctaLabel}</span>}
+      </div>
+    );
+  }
+  if (section.type === "testimonials") {
+    return (
+      <div className="rounded-2xl border border-dashed border-rose-300 dark:border-rose-500/30 p-4 space-y-2">
+        <TypeBadge />
+        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{title || "Sección de Testimonios"}</p>
+        <div className="flex gap-2">
+          {[1,2,3].map(i => (
+            <div key={i} className="flex-1 h-8 rounded-xl bg-slate-100 dark:bg-white/5 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (section.type === "stats") {
+    const stats = Array.isArray(section.props_json?.items) ? section.props_json.items as Array<Record<string,unknown>> : [];
+    return (
+      <div className="rounded-2xl border border-dashed border-teal-300 dark:border-teal-500/30 p-4 space-y-2">
+        <TypeBadge />
+        <div className="grid grid-cols-3 gap-2">
+          {(stats.length > 0 ? stats : [{value: "—", label: "Métrica"}]).slice(0,3).map((s, i) => (
+            <div key={i} className="text-center">
+              <p className="text-base font-black text-teal-600">{safeString(s.value) || "—"}</p>
+              <p className="text-[9px] text-slate-400 font-bold uppercase">{safeString(s.label) || "Métrica"}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (section.type === "team") {
+    return (
+      <div className="rounded-2xl border border-dashed border-orange-300 dark:border-orange-500/30 p-4 space-y-2">
+        <TypeBadge />
+        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{title || "Nuestro Equipo"}</p>
+        <div className="flex gap-2">
+          {[1,2,3,4].map(i => (
+            <div key={i} className="size-8 rounded-full bg-orange-100 dark:bg-orange-900/20 border-2 border-white dark:border-slate-800" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (section.type === "countdown") {
+    const target = safeString(section.props_json?.target_date);
+    return (
+      <div className="rounded-2xl border border-dashed border-red-300 dark:border-red-500/30 p-4 space-y-2">
+        <TypeBadge />
+        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{title || "Cuenta Regresiva"}</p>
+        <div className="flex gap-3">
+          {["DD", "HH", "MM", "SS"].map(u => (
+            <div key={u} className="text-center">
+              <div className="size-10 rounded-xl bg-red-600 flex items-center justify-center text-white font-black text-sm">00</div>
+              <p className="text-[8px] text-slate-400 mt-0.5 font-bold uppercase">{u}</p>
+            </div>
+          ))}
+        </div>
+        {target && <p className="text-[9px] text-slate-400">Hasta: {target}</p>}
+      </div>
+    );
+  }
+  if (section.type === "faq") {
+    const faqs = Array.isArray(section.props_json?.items) ? section.props_json.items as Array<Record<string,unknown>> : [];
+    return (
+      <div className="rounded-2xl border border-dashed border-amber-300 dark:border-amber-500/30 p-4 space-y-2">
+        <TypeBadge />
+        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{title || "Preguntas Frecuentes"}</p>
+        {faqs.slice(0,2).map((f, i) => (
+          <div key={i} className="flex items-start gap-2 text-xs">
+            <span className="text-amber-500 font-black mt-0.5">Q</span>
+            <span className="text-slate-600 dark:text-slate-300 line-clamp-1">{safeString(f.q) || "Pregunta"}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (section.type === "embed") {
+    const embedUrl = safeString(section.props_json?.embed_url);
+    return (
+      <div className="rounded-2xl border border-dashed border-cyan-300 dark:border-cyan-500/30 p-4 space-y-2">
+        <TypeBadge />
+        {embedUrl
+          ? <p className="text-[10px] text-slate-500 font-mono truncate">{embedUrl}</p>
+          : <div className="w-full h-12 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-[9px] text-slate-400 font-bold uppercase">Sin URL configurada</div>
+        }
+      </div>
+    );
+  }
+  // rich_text, rich_text_columns, default
   return (
-    <div className="rounded-2xl border border-dashed border-slate-300 dark:border-white/20 p-4">
-      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{section.type}</p>
-      <h4 className="mt-2 text-base font-black text-slate-800 dark:text-slate-100">{title || "Título"}</h4>
-      <p className="mt-1 text-sm text-slate-500 line-clamp-3">{body || "Contenido de sección"}</p>
+    <div className="rounded-2xl border border-dashed border-slate-300 dark:border-white/20 p-4 space-y-2">
+      <TypeBadge />
+      <h4 className="text-base font-black text-slate-800 dark:text-slate-100">{title || "Título"}</h4>
+      <p className="text-sm text-slate-500 line-clamp-3">{body || "Contenido de sección"}</p>
+      {section.type === "rich_text_columns" && (
+        <div className="flex gap-2 mt-1">
+          <div className="flex-1 h-2 rounded bg-slate-200 dark:bg-white/10" />
+          <div className="flex-1 h-2 rounded bg-slate-200 dark:bg-white/10" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MediaPicker({
+  open,
+  token,
+  selectedUrl,
+  onClose,
+  onSelect,
+}: {
+  open: boolean;
+  token?: string | null;
+  selectedUrl?: string;
+  onClose: () => void;
+  onSelect: (item: CmsMediaItem) => void;
+}) {
+  const [items, setItems] = useState<CmsMediaItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    if (!open || !token) return;
+    setLoading(true);
+    apiFetch<CmsMediaItem[]>("/cms/media", { token, cache: "no-store" })
+      .then((rows) => setItems(Array.isArray(rows) ? rows : []))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, [open, token]);
+
+  const uploadImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !token) return;
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const created = await apiFetch<CmsMediaItem>("/cms/media/upload", {
+        method: "POST",
+        token,
+        query: { section: "builder", alt_text: file.name },
+        body: form,
+      });
+      setItems((prev) => [created, ...prev]);
+      onSelect(created);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const imageItems = items.filter((item) => {
+    const mime = item.mime_type || "";
+    return mime.startsWith("image/") || /\.(png|jpe?g|webp|gif|svg)$/i.test(item.url);
+  });
+  const normalizedSearch = search.trim().toLowerCase();
+  const filtered = imageItems.filter((item) => {
+    if (!normalizedSearch) return true;
+    return [item.filename, item.alt_text, item.url, item.section]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(normalizedSearch));
+  });
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-sm p-4 flex items-center justify-center" onClick={onClose}>
+      <div className="w-full max-w-5xl max-h-[86vh] overflow-hidden rounded-2xl bg-white dark:bg-[#111418] border border-slate-200 dark:border-white/10 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300 flex items-center justify-center">
+              <ImageIcon size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Biblioteca CMS</p>
+              <h2 className="text-base font-black text-slate-900 dark:text-white">Seleccionar imagen</h2>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3 border-b border-slate-200 dark:border-white/10 px-5 py-3">
+          <div className="relative flex-1">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Buscar por archivo, alt text o seccion"
+              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-500"
+            />
+          </div>
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-50">
+            <Upload size={14} />
+            {uploading ? "Subiendo..." : "Subir imagen"}
+            <input type="file" accept="image/*" className="hidden" onChange={uploadImage} disabled={uploading} />
+          </label>
+        </div>
+
+        <div className="max-h-[62vh] overflow-y-auto p-5">
+          {loading ? (
+            <div className="py-16 text-center text-sm font-bold text-slate-400">Cargando biblioteca...</div>
+          ) : filtered.length === 0 ? (
+            <div className="py-16 text-center">
+              <FileImage size={34} className="mx-auto text-slate-300" />
+              <p className="mt-3 text-sm font-bold text-slate-500">No hay imagenes disponibles.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filtered.map((item) => {
+                const isSelected = selectedUrl === item.url;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => onSelect(item)}
+                    className={`group text-left rounded-2xl border overflow-hidden bg-white dark:bg-white/[0.03] transition-all ${isSelected ? "border-blue-500 ring-2 ring-blue-500/20" : "border-slate-200 dark:border-white/10 hover:border-blue-300"}`}
+                  >
+                    <div className="relative aspect-video bg-slate-100 dark:bg-white/5">
+                      <img src={item.url} alt={item.alt_text || item.filename || ""} className="h-full w-full object-cover" />
+                      {isSelected && (
+                        <span className="absolute right-2 top-2 size-7 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg">
+                          <Check size={15} />
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <p className="truncate text-xs font-black text-slate-800 dark:text-slate-100">{item.filename || "Imagen CMS"}</p>
+                      <p className="mt-1 truncate text-[10px] text-slate-400">{item.alt_text || item.section || "Sin alt text"}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -187,6 +507,7 @@ export default function CmsBuilderPage() {
   const [activeSlug, setActiveSlug] = useState("");
   const [sections, setSections] = useState<CmsSection[]>([]);
   const [versions, setVersions] = useState<CmsPageVersion[]>([]);
+  const [publishLogs, setPublishLogs] = useState<CmsPublishLog[]>([]);
   const [newPageTitle, setNewPageTitle] = useState("");
   const [newSectionType, setNewSectionType] = useState("rich_text");
   const [pageTemplateKey, setPageTemplateKey] = useState("simple");
@@ -199,6 +520,11 @@ export default function CmsBuilderPage() {
   const [rawPropsError, setRawPropsError] = useState<string | null>(null);
   const [pageTitleDraft, setPageTitleDraft] = useState("");
   const [pageSlugDraft, setPageSlugDraft] = useState("");
+  const [seoTitleDraft, setSeoTitleDraft] = useState("");
+  const [seoDescriptionDraft, setSeoDescriptionDraft] = useState("");
+  const [seoImageDraft, setSeoImageDraft] = useState("");
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
+  const [mediaPickerTarget, setMediaPickerTarget] = useState<"section" | "seo">("section");
 
   useEffect(() => {
     const querySite = searchParams?.get("site");
@@ -227,6 +553,9 @@ export default function CmsBuilderPage() {
   useEffect(() => {
     setPageTitleDraft(activePage?.title || "");
     setPageSlugDraft(activePage?.slug || "");
+    setSeoTitleDraft(safeString(activePage?.seo_json?.meta_title));
+    setSeoDescriptionDraft(safeString(activePage?.seo_json?.meta_description));
+    setSeoImageDraft(safeString(activePage?.seo_json?.meta_image));
   }, [activePage]);
 
   const loadPages = async (targetSite: string) => {
@@ -241,13 +570,15 @@ export default function CmsBuilderPage() {
 
   const loadSectionsAndVersions = async (slug: string) => {
     if (!token || !slug) return;
-    const [nextSections, nextVersions] = await Promise.all([
+    const [nextSections, nextVersions, nextPublishLogs] = await Promise.all([
       listCmsSections(siteKey, slug, token),
       listCmsPageVersions(siteKey, slug, token),
+      listCmsPagePublishLog(siteKey, slug, token),
     ]);
     const ordered = (nextSections || []).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
     setSections(ordered);
     setVersions(nextVersions || []);
+    setPublishLogs(nextPublishLogs || []);
     if (ordered.length > 0 && (!activeSectionId || !ordered.some((item) => item.id === activeSectionId))) {
       setActiveSectionId(ordered[0].id);
     }
@@ -399,10 +730,10 @@ export default function CmsBuilderPage() {
     await loadSectionsAndVersions(activeSlug);
   };
 
-  const removeSection = async () => {
+  const toggleSectionArchive = async () => {
     if (!token || !activeSection || !activeSlug || !canEdit) return;
-    await deleteCmsSection(siteKey, activeSlug, activeSection.id, token);
-    setActiveSectionId(null);
+    const nextStatus = activeSection.status === "archived" ? "active" : "archived";
+    await patchCmsSection(siteKey, activeSlug, activeSection.id, { status: nextStatus }, token);
     await loadSectionsAndVersions(activeSlug);
   };
 
@@ -474,22 +805,29 @@ export default function CmsBuilderPage() {
     if (!token || !activePage || !canEdit) return;
     const slug = pageSlugDraft.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9\-/]/g, "");
     if (!slug) return;
+    const seo_json = {
+      ...asObject(activePage.seo_json),
+      meta_title: seoTitleDraft.trim(),
+      meta_description: seoDescriptionDraft.trim(),
+      meta_image: seoImageDraft.trim(),
+    };
     const updated = await patchCmsPage(
       siteKey,
       activePage.slug,
-      { title: pageTitleDraft || activePage.title, slug },
+      { title: pageTitleDraft || activePage.title, slug, seo_json },
       token,
     );
     await loadPages(siteKey);
     setActiveSlug(updated.slug);
   };
 
-  const removePage = async () => {
+  const togglePageArchive = async () => {
     if (!token || !activePage || !canEdit) return;
-    await deleteCmsPage(siteKey, activePage.slug, token);
-    const remaining = pages.filter((page) => page.id !== activePage.id);
+    const action = activePage.status === "archived" ? "revert_draft" : "archive";
+    const notes = activePage.status === "archived" ? "Restaurada desde builder" : "Archivada desde builder";
+    await workflowCmsPage(siteKey, activePage.slug, action, notes, token);
     await loadPages(siteKey);
-    setActiveSlug(remaining[0]?.slug || "");
+    setActiveSlug(activePage.slug);
   };
 
   return (
@@ -594,11 +932,13 @@ export default function CmsBuilderPage() {
                   setDraggedSectionId(null);
                 }}
                 onDragEnd={() => setDraggedSectionId(null)}
-                className={`rounded-xl border p-3 cursor-grab active:cursor-grabbing ${section.id === activeSectionId ? "border-primary/40 bg-primary/5" : "border-slate-200 dark:border-white/10"}`}
+                className={`rounded-xl border p-3 cursor-grab active:cursor-grabbing ${section.status === "archived" ? "opacity-70 border-amber-200 bg-amber-50/40 dark:bg-amber-500/5" : section.id === activeSectionId ? "border-primary/40 bg-primary/5" : "border-slate-200 dark:border-white/10"}`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <button onClick={() => setActiveSectionId(section.id)} className="text-left">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{section.type}</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      {section.type} {section.status === "archived" ? "· archivada" : ""}
+                    </p>
                     <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{safeString(section.props_json?.title) || "Sección"}</p>
                   </button>
                   <div className="flex items-center gap-1">
@@ -650,12 +990,53 @@ export default function CmsBuilderPage() {
               placeholder="slug-de-pagina"
               className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
             />
+            <div className="rounded-xl border border-slate-200 dark:border-white/10 p-3 space-y-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">SEO</p>
+              <input
+                value={seoTitleDraft}
+                onChange={(e) => setSeoTitleDraft(e.target.value)}
+                placeholder="Titulo SEO"
+                className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+              />
+              <textarea
+                value={seoDescriptionDraft}
+                onChange={(e) => setSeoDescriptionDraft(e.target.value)}
+                placeholder="Descripcion para buscadores y redes"
+                className="w-full min-h-[72px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+              />
+              {seoImageDraft ? (
+                <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
+                  <img src={seoImageDraft} alt="Imagen SEO" className="h-24 w-full object-cover" />
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 p-3 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  Sin imagen social
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setMediaPickerTarget("seo");
+                  setMediaPickerOpen(true);
+                }}
+                disabled={!canEdit}
+                className="w-full rounded-lg bg-blue-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white inline-flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <ImageIcon size={13} /> Elegir imagen SEO
+              </button>
+              <input
+                value={seoImageDraft}
+                onChange={(e) => setSeoImageDraft(e.target.value)}
+                placeholder="URL de imagen social"
+                className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+              />
+            </div>
             <button
               onClick={savePageMetadata}
               disabled={!activePage || !canEdit}
               className="w-full rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
             >
-              Guardar título/slug
+              Guardar pagina/SEO
             </button>
             <textarea value={note} onChange={(e) => setNote(e.target.value)} disabled={!canEdit && !canPublish} placeholder="Nota para workflow..." className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs disabled:opacity-60" />
             <div className="grid grid-cols-2 gap-2">
@@ -665,6 +1046,16 @@ export default function CmsBuilderPage() {
               <button onClick={() => runWorkflow("revert_draft")} disabled={!activeSlug || !canEdit} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-1 disabled:opacity-50"><Undo2 size={11} /> Draft</button>
               <button onClick={() => runWorkflow("archive")} disabled={!activeSlug || !canPublish} className="col-span-2 rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-1 disabled:opacity-50">Archivar</button>
             </div>
+            <button
+              onClick={() => {
+                if (!activeSlug) return;
+                window.open(`/cms/preview?site=${encodeURIComponent(siteKey)}&page=${encodeURIComponent(activeSlug)}`, "_blank");
+              }}
+              disabled={!activeSlug}
+              className="w-full rounded-lg border border-blue-200 text-blue-600 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-1 disabled:opacity-50"
+            >
+              <Eye size={11} /> Vista previa borrador
+            </button>
             <button
               onClick={() => {
                 if (!activeSlug) return;
@@ -678,11 +1069,11 @@ export default function CmsBuilderPage() {
               <ExternalLink size={11} /> Ver página pública
             </button>
               <button
-                onClick={removePage}
+                onClick={togglePageArchive}
                 disabled={!activePage || !canEdit}
-                className="w-full rounded-lg border border-rose-200 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-rose-600 disabled:opacity-50"
+                className={`w-full rounded-lg border px-2 py-1.5 text-[10px] font-black uppercase tracking-widest disabled:opacity-50 ${activePage?.status === "archived" ? "border-emerald-200 text-emerald-600" : "border-amber-200 text-amber-600"}`}
               >
-                Eliminar página
+                {activePage?.status === "archived" ? "Restaurar pagina" : "Archivar pagina"}
               </button>
           </div>
 
@@ -722,17 +1113,51 @@ export default function CmsBuilderPage() {
                   className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
                 />
 
-                {activeSection.type === "gallery" && (
-                  <input
-                    value={safeString(activeSection.props_json?.image_url)}
-                    onChange={(e) => {
-                      const nextProps = { ...asObject(activeSection.props_json), image_url: e.target.value };
-                      updateSectionPropsLocal(nextProps);
-                    }}
-                    onBlur={(e) => saveSectionField("image_url", e.target.value)}
-                    placeholder="URL de imagen"
-                    className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
-                  />
+                {(activeSection.type === "hero" || activeSection.type === "gallery") && (
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      {activeSection.type === "hero" ? "Imagen hero" : "Imagen de galeria"}
+                    </p>
+                    {safeString(activeSection.props_json?.image_url) ? (
+                      <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
+                        <img src={safeString(activeSection.props_json?.image_url)} alt={safeString(activeSection.props_json?.image_alt) || "Imagen seleccionada"} className="h-28 w-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 p-4 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                        Sin imagen seleccionada
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMediaPickerTarget("section");
+                        setMediaPickerOpen(true);
+                      }}
+                      className="w-full rounded-lg bg-blue-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white inline-flex items-center justify-center gap-2"
+                    >
+                      <ImageIcon size={13} /> Elegir de media
+                    </button>
+                    <input
+                      value={safeString(activeSection.props_json?.image_url)}
+                      onChange={(e) => {
+                        const nextProps = { ...asObject(activeSection.props_json), image_url: e.target.value };
+                        updateSectionPropsLocal(nextProps);
+                      }}
+                      onBlur={(e) => saveSectionField("image_url", e.target.value)}
+                      placeholder="URL manual de imagen"
+                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                    />
+                    <input
+                      value={safeString(activeSection.props_json?.image_alt)}
+                      onChange={(e) => {
+                        const nextProps = { ...asObject(activeSection.props_json), image_alt: e.target.value };
+                        updateSectionPropsLocal(nextProps);
+                      }}
+                      onBlur={(e) => saveSectionField("image_alt", e.target.value)}
+                      placeholder="Texto alternativo"
+                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                    />
+                  </div>
                 )}
 
                 {activeSection.type === "embed" && (
@@ -889,8 +1314,8 @@ export default function CmsBuilderPage() {
                   <button onClick={duplicateSection} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-1">
                     <Copy size={11} /> Duplicar
                   </button>
-                  <button onClick={removeSection} className="col-span-2 rounded-lg border border-rose-200 text-rose-600 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-1">
-                    <Trash2 size={11} /> Eliminar
+                  <button onClick={toggleSectionArchive} className={`col-span-2 rounded-lg border px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-1 ${activeSection.status === "archived" ? "border-emerald-200 text-emerald-600" : "border-amber-200 text-amber-600"}`}>
+                    <Trash2 size={11} /> {activeSection.status === "archived" ? "Restaurar seccion" : "Archivar seccion"}
                   </button>
                 </div>
                 <p className="text-[10px] text-slate-400">{saving ? "Guardando..." : "Cambios guardados al salir del campo"}</p>
@@ -910,8 +1335,50 @@ export default function CmsBuilderPage() {
               {versions.length === 0 && <p className="text-xs text-slate-500">Aún sin versiones publicadas.</p>}
             </div>
           </div>
+          <div className="space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Historial</p>
+            <div className="max-h-44 overflow-auto space-y-2 pr-1">
+              {publishLogs.map((entry) => {
+                const notes = typeof entry.metadata_json?.notes === "string" ? entry.metadata_json.notes : "";
+                return (
+                  <div key={entry.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-2 text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-black uppercase tracking-widest text-[10px]">{entry.action}</p>
+                      <p className="text-[10px] text-slate-400">{new Date(entry.created_at).toLocaleString()}</p>
+                    </div>
+                    <p className="mt-1 text-[10px] text-slate-500">{entry.from_status || "sin estado"} &rarr; {entry.to_status || "sin estado"}</p>
+                    {notes && <p className="mt-1 text-[10px] text-slate-400 line-clamp-2">{notes}</p>}
+                  </div>
+                );
+              })}
+              {publishLogs.length === 0 && <p className="text-xs text-slate-500">Aun sin eventos de workflow.</p>}
+            </div>
+          </div>
         </aside>
       </div>
+      <MediaPicker
+        open={mediaPickerOpen}
+        token={token}
+        selectedUrl={mediaPickerTarget === "seo" ? seoImageDraft : safeString(activeSection?.props_json?.image_url)}
+        onClose={() => setMediaPickerOpen(false)}
+        onSelect={(item) => {
+          if (mediaPickerTarget === "seo") {
+            setSeoImageDraft(item.url);
+            setMediaPickerOpen(false);
+            return;
+          }
+          if (!activeSection) return;
+          const nextProps = {
+            ...asObject(activeSection.props_json),
+            image_url: item.url,
+            image_alt: item.alt_text || item.filename || "",
+            media_id: item.id,
+          };
+          updateSectionPropsLocal(nextProps);
+          saveSectionProps(nextProps);
+          setMediaPickerOpen(false);
+        }}
+      />
     </div>
   );
 }

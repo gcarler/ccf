@@ -1,32 +1,41 @@
+import os
+import sys
+
 try:
-    from backend.security import get_password_hash
+    from backend.core.security import get_password_hash
     from backend.core.database import SessionLocal
     from backend import models
 except ImportError:
-    from security import get_password_hash
+    from core.security import get_password_hash
     from core.database import SessionLocal
     import models
 
 def create_admin():
+    admin_email = os.getenv("CCF_ADMIN_EMAIL", "admin@ccf.com")
+    admin_password = os.getenv("CCF_ADMIN_PASSWORD")
+
+    if not admin_password:
+        print("ERROR: Set CCF_ADMIN_PASSWORD environment variable.", file=sys.stderr)
+        sys.exit(1)
+
     db = SessionLocal()
     try:
-        # Check if user already exists
-        user = db.query(models.User).filter(models.User.email == 'admin@ccf.com').first()
+        user = db.query(models.User).filter(models.User.email == admin_email).first()
         if user:
             print(f"User {user.email} already exists with role {user.role}. Updating to admin.")
             user.role = 'admin'
+            user.password_hash = get_password_hash(admin_password)
         else:
             print("Creating new admin user.")
-            hashed = get_password_hash('admin123')
             user = models.User(
                 username='admin',
-                email='admin@ccf.com',
-                password_hash=hashed,
+                email=admin_email,
+                password_hash=get_password_hash(admin_password),
                 role='admin',
                 is_active=True
             )
             db.add(user)
-        
+
         db.commit()
         print('Admin user setup complete')
     except Exception as e:

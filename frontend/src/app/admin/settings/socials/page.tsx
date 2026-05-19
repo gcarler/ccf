@@ -19,6 +19,10 @@ import {
     Smartphone
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import type { ViewType } from '@/components/ViewSwitcher';
+import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
+import UniversalGanttView from '@/components/ui/UniversalGanttView';
+import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -35,6 +39,7 @@ const PLATFORMS = [
     { id: 'youtube', icon: Youtube, label: 'YouTube', color: 'text-rose-600', aura: 'rgba(225, 29, 72, 0.1)' },
     { id: 'whatsapp', icon: MessageCircle, label: 'WhatsApp', color: 'text-emerald-600', aura: 'rgba(16, 185, 129, 0.1)' },
 ];
+const SOCIAL_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 export default function SocialMediaSettings() {
     const { token, isAuthenticated } = useAuth();
@@ -43,6 +48,7 @@ export default function SocialMediaSettings() {
     const [socials, setSocials] = useState<SocialChannel[]>([]);
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [viewType, setViewType] = useState<ViewType>('grid');
 
     const fetchSocials = useCallback(async () => {
         if (!token) return;
@@ -76,6 +82,100 @@ export default function SocialMediaSettings() {
 
     if (!isAuthenticated) return null;
 
+    const platformRows = PLATFORMS.map((platform) => ({
+        ...platform,
+        channel: socials.find(s => s.platform.toLowerCase() === platform.id),
+    }));
+
+    const groupedRows = [
+        { id: 'visible', label: 'Visibles', rows: platformRows.filter(row => row.channel?.visible !== false && row.channel?.url) },
+        { id: 'pending', label: 'Pendientes', rows: platformRows.filter(row => !row.channel?.url || row.channel?.visible === false) },
+    ];
+
+    const calendarEvents = platformRows.map((row, index) => ({
+        id: row.id,
+        title: row.label,
+        date: new Date(Date.now() + index * 86400000).toISOString().split('T')[0],
+        color: row.channel?.url ? 'emerald' as const : 'amber' as const,
+        location: row.channel?.url || 'Sin enlace',
+    }));
+
+    const ganttItems = platformRows.map((row, index) => {
+        const date = new Date(Date.now() + index * 86400000).toISOString();
+        return {
+            id: row.id,
+            title: row.label,
+            subtitle: row.channel?.url || 'Pendiente de configurar',
+            start_date: date,
+            end_date: date,
+            color: row.channel?.url ? 'emerald' as const : 'amber' as const,
+            progress: row.channel?.url ? 100 : 35,
+        };
+    });
+
+    const renderList = () => (
+        <div className="space-y-4">
+            {platformRows.map((row) => (
+                <div key={row.id} className="social-aura bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-6 rounded-[2rem] flex items-center justify-between gap-6" style={{ '--aura-color': row.aura } as any}>
+                    <div className="flex items-center gap-5 min-w-0">
+                        <div className={clsx("size-12 rounded-2xl flex items-center justify-center bg-slate-50 dark:bg-black/20", row.color)}>
+                            <row.icon size={24} />
+                        </div>
+                        <div className="min-w-0">
+                            <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{row.label}</h3>
+                            <p className="mt-1 text-[10px] font-bold text-slate-400 truncate">{row.channel?.url || 'Sin URL configurada'}</p>
+                        </div>
+                    </div>
+                    <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", row.channel?.url ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{row.channel?.url ? 'Activo' : 'Pendiente'}</span>
+                </div>
+            ))}
+        </div>
+    );
+
+    const renderTable = () => (
+        <div className="rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+            <table className="w-full text-left">
+                <thead className="bg-slate-50 dark:bg-white/5">
+                    <tr>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Canal</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">URL</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Estado</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                    {platformRows.map((row) => (
+                        <tr key={row.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03]">
+                            <td className="px-5 py-4 text-sm font-bold text-slate-800 dark:text-slate-100">{row.label}</td>
+                            <td className="px-5 py-4 hidden md:table-cell text-[11px] text-slate-500 truncate max-w-[420px]">{row.channel?.url || '—'}</td>
+                            <td className="px-5 py-4"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", row.channel?.url ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{row.channel?.url ? 'Activo' : 'Pendiente'}</span></td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+
+    const renderBoard = () => (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {groupedRows.map((group) => (
+                <section key={group.id} className="rounded-[2.5rem] bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-5">
+                    <div className="flex items-center justify-between mb-5">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{group.label}</span>
+                        <span className="text-[10px] font-black text-slate-400">{group.rows.length}</span>
+                    </div>
+                    <div className="space-y-3">
+                        {group.rows.map((row) => (
+                            <div key={row.id} className="bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-[1.5rem] p-4">
+                                <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{row.label}</p>
+                                <p className="mt-2 text-[10px] font-bold text-slate-400 truncate">{row.channel?.url || 'Sin enlace'}</p>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            ))}
+        </div>
+    );
+
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#0a0f16] font-display overflow-hidden">
             <style jsx global>{`
@@ -99,7 +199,9 @@ export default function SocialMediaSettings() {
 
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: 'Ajustes', icon: Globe }, { label: 'Canales Sociales', icon: Smartphone }]}
-                viewType="grid" setViewType={() => {}}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={SOCIAL_VIEWS}
                 rightActions={
                     <button 
                         onClick={handleSave} disabled={isSaving}
@@ -136,6 +238,18 @@ export default function SocialMediaSettings() {
                             <div className="py-40 flex flex-col items-center justify-center gap-4 text-slate-400 font-black uppercase tracking-[0.4em] animate-pulse">
                                 <Loader2 className="animate-spin" size={40} /> Conectando API...
                             </div>
+                        ) : viewType === 'list' ? (
+                            renderList()
+                        ) : viewType === 'table' ? (
+                            renderTable()
+                        ) : viewType === 'board' || viewType === 'kanban' ? (
+                            renderBoard()
+                        ) : viewType === 'calendar' ? (
+                            <UniversalCalendarView events={calendarEvents} title="Calendario de canales sociales" />
+                        ) : viewType === 'gantt' ? (
+                            <UniversalGanttView items={ganttItems} moduleName="Canales sociales" />
+                        ) : viewType === 'wiki' ? (
+                            <UniversalWikiView moduleName="Canales sociales" storageKey="wiki_admin_socials" />
                         ) : (
                             <motion.section 
                                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}

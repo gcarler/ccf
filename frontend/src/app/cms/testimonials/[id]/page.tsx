@@ -1,13 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { 
     Layout, 
     Quote, 
-    Save, 
-    ArrowLeft,
-    Trash2,
     CheckCircle2,
     XCircle,
     User,
@@ -27,7 +24,6 @@ import clsx from 'clsx';
 export default function CmsTestimonialDetailPage() {
     const params = useParams();
     const id = params?.id as string;
-    const router = useRouter();
     const { token } = useAuth();
     
     const [testimonial, setTestimonial] = useState<any>(null);
@@ -38,17 +34,16 @@ export default function CmsTestimonialDetailPage() {
         const loadTestimonial = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<any>(`/cms/testimonials/${id}`, { token }).catch(() => null);
-                setTestimonial(data || {
-                    id,
-                    author_name: 'Ana María Restrepo',
-                    author_role: 'Estudiante Academia',
-                    content: 'La plataforma CCF ha transformado mi manera de estudiar la palabra. Las herramientas de seguimiento y el contenido son excepcionales.',
-                    status: 'pending',
+                const data = await apiFetch<any>(`/admin/testimonials/${id}`, { token }).catch(() => null);
+                const normalized = data ? {
+                    ...data,
+                    author_name: data.author?.username || (data.author_id ? `Miembro #${data.author_id}` : 'Anonimo'),
+                    author_role: 'Miembro de la comunidad',
+                    status: data.is_approved ? 'approved' : 'pending',
                     rating: 5,
-                    created_at: '2026-04-11T14:30:00Z',
-                    category: 'Academia'
-                });
+                    category: data.emotion || 'Testimonio',
+                } : null;
+                setTestimonial(normalized);
             } catch (err) {
                 toast.error('Error al cargar detalle del testimonio');
             } finally {
@@ -60,8 +55,17 @@ export default function CmsTestimonialDetailPage() {
 
     const handleAction = async (newStatus: string) => {
         try {
-            // Mocking PATCH
-            setTestimonial({ ...testimonial, status: newStatus });
+            const isApproved = newStatus === 'approved';
+            const updated = await apiFetch<any>(`/admin/testimonials/${id}`, {
+                method: 'PATCH',
+                token,
+                body: { is_approved: isApproved },
+            });
+            setTestimonial({
+                ...testimonial,
+                ...updated,
+                status: isApproved ? 'approved' : 'pending',
+            });
             toast.success(`Testimonio ${newStatus === 'approved' ? 'aprobado' : 'rechazado'}`);
         } catch (err) {
             toast.error('Error al actualizar estado');
@@ -69,6 +73,7 @@ export default function CmsTestimonialDetailPage() {
     };
 
     if (loading) return <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Verificando Testimonio...</div>;
+    if (!testimonial) return <div className="p-20 text-center font-black uppercase tracking-widest text-slate-400">Testimonio no encontrado.</div>;
 
     return (
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">

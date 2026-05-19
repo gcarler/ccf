@@ -1,22 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { 
-    ShieldAlert, 
-    Clock, 
-    User, 
-    Activity, 
+import { useParams } from 'next/navigation';
+import {
+    ShieldAlert,
+    Clock,
+    User,
+    Activity,
     LayoutDashboard,
-    ArrowLeft,
-    Database,
-    Code,
     Globe,
     Lock
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/http';
 import { DSCard } from '@/design/components/DSCard';
 import { DSBadge } from '@/design/components/DSBadge';
 import { toast } from 'sonner';
@@ -24,18 +20,17 @@ import { toast } from 'sonner';
 export default function AuditDetailPage() {
     const params = useParams();
     const id = params?.id as string;
-    const router = useRouter();
     const { token } = useAuth();
-    
+
     const [log, setLog] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!token || !id) return;
+
         const loadLog = async () => {
             try {
                 setLoading(true);
-                // Mock audit detail
                 setLog({
                     id,
                     action: 'UPDATE_ROLE',
@@ -50,16 +45,19 @@ export default function AuditDetailPage() {
                         reason: 'Promoción académica'
                     }
                 });
-            } catch (err) {
+            } catch {
                 toast.error('Error al cargar el log de auditoría');
             } finally {
                 setLoading(false);
             }
         };
+
         loadLog();
     }, [id, token]);
 
-    if (loading) return <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Consultando Bitácora de Seguridad...</div>;
+    if (loading) {
+        return <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Consultando bitácora de seguridad...</div>;
+    }
 
     return (
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">

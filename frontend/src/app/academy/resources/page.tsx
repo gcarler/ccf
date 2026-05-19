@@ -30,6 +30,7 @@ export default function ResourcesLibrary() {
     const [activeFilter, setActiveFilter] = useState('Todos');
     const [query, setQuery] = useState('');
     const [favorites, setFavorites] = useState<string[]>([]);
+    const [showFavorites, setShowFavorites] = useState(false);
 
     const resources: ResourceEntry[] = useMemo(() => {
         return enrollments.flatMap((enrollment) => {
@@ -52,9 +53,9 @@ export default function ResourcesLibrary() {
         if (activeFilter === 'Lecciones') return true;
         if (activeFilter === 'Materiales') return resource.snippet.length > 120;
         return true;
-    });
+    }).filter((resource) => !showFavorites || favorites.includes(resource.id));
 
-    const favoriteResources = filteredResources.filter((resource) => favorites.includes(resource.id));
+    const favoriteResources = resources.filter((resource) => favorites.includes(resource.id));
 
     const toggleFavorite = useCallback((id: string) => {
         setFavorites((prev) => prev.includes(id) ? prev.filter((fav) => fav !== id) : [...prev, id]);
@@ -75,7 +76,7 @@ export default function ResourcesLibrary() {
                 description="Filtra recursos por nivel y descarga materiales selectos."
                 tags={['Lecciones', 'Materiales', 'Descargas']}
                 watchers={['Equipo Recursos', 'Optimus Brain']}
-                primaryAction={{ label: 'Favoritos', icon: Star, onClick: () => {} }}
+                primaryAction={{ label: showFavorites ? 'Ver todos' : 'Favoritos', icon: Star, onClick: () => setShowFavorites((prev) => !prev) }}
             />
             <div className="relative group mb-6 rounded-[2.5rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-6">
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">

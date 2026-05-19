@@ -1,4 +1,4 @@
-import { apiUrl } from "./api";
+﻿import { apiUrl } from "./api";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -12,6 +12,8 @@ export interface ApiFetchOptions {
   query?: Record<string, QueryValue>;
   cache?: RequestCache;
   credentials?: RequestCredentials;
+  timeout?: number;
+  silent?: boolean;
 }
 
 export class ApiError extends Error {
@@ -28,7 +30,15 @@ export class ApiError extends Error {
 function buildUrl(path: string, query?: Record<string, QueryValue>) {
   const target = path.startsWith("http") ? path : apiUrl(path);
   if (!query) return target;
-  const url = new URL(target);
+
+  // For relative paths in the browser, we need an absolute base for URL()
+  const base = target.startsWith("http")
+    ? undefined
+    : typeof window !== "undefined"
+    ? window.location.origin
+    : "http://localhost:3000";
+
+  const url = base ? new URL(target, base) : new URL(target);
   Object.entries(query).forEach(([key, value]) => {
     if (value === undefined || value === null) return;
     url.searchParams.set(key, String(value));
@@ -41,7 +51,7 @@ function buildHeaders(base?: HeadersInit) {
 }
 
 export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
-  const { method = "GET", body, token, headers, query, cache, credentials } = options;
+  const { method = "GET", body, token, headers, query, cache, credentials, timeout, silent } = options;
   const url = buildUrl(path, query);
   const finalHeaders = buildHeaders(headers);
 
@@ -72,9 +82,12 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
     init.body = JSON.stringify(body);
   }
 
-  // AbortController: 5s timeout so loading never hangs when backend is down
+  // AbortController: longer timeout on server (SSR cold start) vs client
+  const isServer = typeof window === 'undefined';
+  const defaultTimeoutMs = isServer ? 30_000 : 15_000;
+  const timeoutMs = timeout || defaultTimeoutMs;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   const nativeFetch: typeof fetch =
     (typeof globalThis !== "undefined" && (globalThis as any).__ccfOriginalFetch) || fetch;
@@ -84,9 +97,12 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
     response = await nativeFetch(url, { ...init, signal: controller.signal });
   } catch (err: any) {
     clearTimeout(timeoutId);
-    const errorMsg = err.name === 'AbortError' ? 'Request timed out' : (err.message || 'Network error');
-    console.error(`[API_NETWORK_ERROR] ${method} ${path}:`, err);
-    throw new ApiError(errorMsg, 0, err);
+    if (err.name === 'AbortError') {
+      // Silently treat timeouts as a network error â€” not a crash
+      throw new ApiError('Request timed out', 0, err);
+    }
+    console.error(`[API_NETWORK_ERROR] ${method} ${path}:`, err.message);
+    throw new ApiError(err.message || 'Network error', 0, err);
   } finally {
     clearTimeout(timeoutId);
   }
@@ -96,7 +112,7 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
 
   if (response.status === 401) {
     console.warn(`[API_UNAUTHORIZED] ${path}`);
-    if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && path.includes('/auth/me')) {
+    if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
        localStorage.removeItem('ccf_token');
        window.location.href = '/login?expired=true';
     }
@@ -104,7 +120,7 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   }
 
   if (!response.ok) {
-    console.error(`[API_FAILURE] ${response.status} ${method} ${path}:`, parsed);
+    if (!silent) console.error(`[API_FAILURE] ${response.status} ${method} ${path}:`, parsed);
     throw new ApiError(response.statusText || "Request failed", response.status, parsed);
   }
 
@@ -118,3 +134,4 @@ function safeJsonParse(payload: string) {
     return payload;
   }
 }
+

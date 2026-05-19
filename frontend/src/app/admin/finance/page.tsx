@@ -2,27 +2,31 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
-    TrendingUp, TrendingDown, DollarSign, Calendar, Filter, Download, Search, 
-    ArrowUpRight, ArrowDownLeft, Wallet, PieChart, ArrowRight, ChevronRight, 
-    MoreHorizontal, Plus, Layout, Globe, CreditCard, ShieldCheck, History, 
-    FileText, Settings, Banknote, Sparkles, Zap, BarChart3, Receipt, ExternalLink
+    TrendingUp, TrendingDown, DollarSign, Calendar, Download,
+    ArrowUpRight, ArrowDownLeft, Wallet, PieChart,
+    MoreHorizontal, Plus, Layout, ShieldCheck, History,
+    FileText, Settings, Banknote, Sparkles, Zap, BarChart3, Receipt
 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/context/ToastContext';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { DataTable } from '@/components/ui/DataTable';
+import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
+import UniversalGanttView from '@/components/ui/UniversalGanttView';
+import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { ColumnDef } from '@tanstack/react-table';
 import Skeleton from '@/components/ui/Skeleton';
-import Tooltip from '@/components/ui/Tooltip';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import type { ViewType } from '@/components/ViewSwitcher';
+
+const FINANCE_VIEWS: ViewType[] = ['grid', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 export default function FinanceAdminPage() {
     const { token } = useAuth();
-    const { addToast } = useToast();
     const [activeTab, setActiveTab] = useState<'summary' | 'transactions' | 'audit'>('summary');
+    const [viewType, setViewType] = useState<ViewType>('grid');
     const [transactions, setTransactions] = useState<any[]>([]);
     const [summary, setSummary] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -84,6 +88,30 @@ export default function FinanceAdminPage() {
         },
         { id: 'actions', header: '', size: 50, cell: () => <button className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400 opacity-0 group-hover:opacity-100 transition-all"><MoreHorizontal size={16} /></button> }
     ], []);
+    const filteredTransactions = useMemo(() => transactions.filter(tx =>
+        String(tx.description || '').toLowerCase().includes(search.toLowerCase()) ||
+        String(tx.category || '').toLowerCase().includes(search.toLowerCase())
+    ), [transactions, search]);
+    const groupedTransactions = useMemo(() => ['income', 'expense'].map((type) => ({
+        type,
+        items: filteredTransactions.filter((tx) => (tx.type || 'expense') === type),
+    })), [filteredTransactions]);
+    const calendarEvents = useMemo(() => filteredTransactions.map((tx) => ({
+        id: tx.id,
+        title: tx.description,
+        date: (tx.date || tx.created_at || new Date().toISOString()).slice(0, 10),
+        color: tx.type === 'income' ? 'emerald' as const : 'rose' as const,
+        location: tx.category,
+    })), [filteredTransactions]);
+    const ganttItems = useMemo(() => filteredTransactions.map((tx) => ({
+        id: tx.id,
+        title: tx.description,
+        subtitle: tx.category || tx.type,
+        start_date: (tx.date || tx.created_at || new Date().toISOString()).slice(0, 10),
+        end_date: (tx.updated_at || tx.date || tx.created_at || new Date().toISOString()).slice(0, 10),
+        color: tx.type === 'income' ? 'emerald' as const : 'rose' as const,
+        progress: 100,
+    })), [filteredTransactions]);
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
@@ -141,7 +169,7 @@ export default function FinanceAdminPage() {
 
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: 'CCF Platform', icon: Layout }, { label: 'Tesorería y Finanzas', icon: Wallet }]}
-                viewType="table" setViewType={() => {}} onSearch={setSearch}
+                viewType={viewType} setViewType={setViewType} availableViews={FINANCE_VIEWS} onSearch={setSearch}
                 rightActions={
                     <div className="flex items-center gap-2">
                         <button className="flex items-center gap-2 px-4 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-all active:scale-95"><Download size={14} /> Exportar</button>
@@ -165,6 +193,64 @@ export default function FinanceAdminPage() {
                             <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">{[1,2,3].map(i => <Skeleton key={i} className="h-44 rounded-[3rem]" />)}</div>
                                 <Skeleton className="h-96 w-full rounded-[3rem]" />
+                            </motion.div>
+                        ) : viewType === 'list' ? (
+                            <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
+                                {filteredTransactions.map((tx) => (
+                                    <button key={tx.id} onClick={() => handleOpenTx(tx)} className="flex w-full items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left dark:border-white/10 dark:bg-white/5">
+                                        <div>
+                                            <p className="text-sm font-black text-slate-900 dark:text-white">{tx.description}</p>
+                                            <p className="text-xs font-semibold text-slate-400">{tx.category}</p>
+                                        </div>
+                                        <span className={clsx("font-black", tx.type === 'income' ? "text-emerald-600" : "text-rose-600")}>${Number(tx.amount || 0).toLocaleString()}</span>
+                                    </button>
+                                ))}
+                            </motion.div>
+                        ) : viewType === 'board' || viewType === 'kanban' ? (
+                            <motion.div key="board" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-4 overflow-x-auto">
+                                {groupedTransactions.map((column) => (
+                                    <section key={column.type} className="w-96 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                                        <div className="mb-3 flex items-center justify-between px-1">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{column.type}</p>
+                                            <span className="text-[10px] font-black text-slate-400">{column.items.length}</span>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {column.items.map((tx) => (
+                                                <button key={tx.id} onClick={() => handleOpenTx(tx)} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-left dark:border-white/10 dark:bg-white/5">
+                                                    <p className="text-xs font-black text-slate-900 dark:text-white">{tx.description}</p>
+                                                    <p className="mt-1 text-[10px] font-semibold text-slate-400">${Number(tx.amount || 0).toLocaleString()} · {tx.category}</p>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </section>
+                                ))}
+                            </motion.div>
+                        ) : viewType === 'calendar' ? (
+                            <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-[720px]">
+                                <UniversalCalendarView events={calendarEvents} title="Calendario financiero" onEventClick={(event) => {
+                                    const tx = filteredTransactions.find((item) => item.id === event.id);
+                                    if (tx) handleOpenTx(tx);
+                                }} />
+                            </motion.div>
+                        ) : viewType === 'gantt' ? (
+                            <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-[720px]">
+                                <UniversalGanttView items={ganttItems} moduleName="Finanzas" onItemClick={(item) => {
+                                    const tx = filteredTransactions.find((entry) => entry.id === item.id);
+                                    if (tx) handleOpenTx(tx);
+                                }} />
+                            </motion.div>
+                        ) : viewType === 'wiki' ? (
+                            <motion.div key="wiki" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                                <UniversalWikiView moduleName="Finanzas" storageKey="wiki_admin_finance" />
+                            </motion.div>
+                        ) : viewType === 'table' ? (
+                            <motion.div
+                                key="table-view"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="h-full bg-white dark:bg-black/20 rounded-[3.5rem] border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm"
+                            >
+                                <DataTable data={filteredTransactions} columns={columns} onRowClick={handleOpenTx} />
                             </motion.div>
                         ) : activeTab === 'summary' ? (
                             <motion.div 
@@ -239,7 +325,7 @@ export default function FinanceAdminPage() {
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 className="space-y-10"
                             >
-                                <section className="p-12 lg:p-20 bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-900 rounded-[4rem] text-white shadow-2xl relative overflow-hidden group">
+                                <section className="p-12 lg:p-20 bg-gradient-to-br from-slate-900 via-indigo-950 to-sky-900 rounded-[4rem] text-white shadow-2xl relative overflow-hidden group">
                                     <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:scale-110 group-hover:rotate-12 transition-all duration-1000"><Sparkles size={240} /></div>
                                     <div className="absolute -bottom-20 -left-20 size-96 bg-blue-500/10 blur-[100px] rounded-full" />
                                     
@@ -268,10 +354,10 @@ export default function FinanceAdminPage() {
                                 animate={{ opacity: 1 }} 
                                 className="h-full bg-white dark:bg-black/20 rounded-[3.5rem] border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm"
                             >
-                                <DataTable 
-                                    data={transactions.filter(tx => tx.description.toLowerCase().includes(search.toLowerCase()))} 
-                                    columns={columns} 
-                                    onRowClick={handleOpenTx} 
+                                <DataTable
+                                    data={filteredTransactions}
+                                    columns={columns}
+                                    onRowClick={handleOpenTx}
                                 />
                             </motion.div>
                         )}

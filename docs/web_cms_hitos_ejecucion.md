@@ -43,10 +43,9 @@ Endpoints nuevos:
 - `GET/PUT/PATCH/POST /api/content/{page_key}`
 - `GET /api/content/{page_key}/versions`
 - `GET /api/cms/testimonials`, `POST /api/cms/testimonials`
-- `GET /api/testimonials`, `POST /api/testimonials`
 - `GET /api/admin/testimonials`, `PATCH /api/admin/testimonials/{id}`
 - `GET /api/cms/announcements`, `POST /api/cms/announcements`
-- `GET /api/announcements`, `GET /api/admin/announcements`
+- `GET /api/admin/announcements`
 
 Estado: completado.
 
@@ -94,9 +93,9 @@ Validaciones ejecutadas:
 - Smoke API con `fastapi.testclient`:
   - `GET /api/content/faro_home_hero` -> 200
   - `GET /api/cms/testimonials` -> 200
-  - `GET /api/testimonials` -> 200
+  - `GET /api/testimonials` -> 404 (alias retirado)
   - `GET /api/cms/announcements` -> 200
-  - `GET /api/announcements` -> 200
+  - `GET /api/announcements` -> 404 (alias retirado)
   - `GET /api/admin/testimonials` sin token -> 401
   - `GET /api/content/faro_home_hero/versions` sin token -> 401
 - Typecheck global frontend: falla por errores preexistentes fuera de este alcance (`admin/settings/system` y `academy/course/[id]`).

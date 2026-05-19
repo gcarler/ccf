@@ -5,9 +5,11 @@ import { Bell, BookOpen, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useStudentEnrollments } from '@/hooks/useStudentEnrollments';
 import AdminHero from '@/components/admin/AdminHero';
+import { useRouter } from 'next/navigation';
 
 export default function StudentGrades() {
     const { isAuthenticated } = useAuth();
+    const router = useRouter();
     const { enrollments, loading } = useStudentEnrollments();
 
     const approvedGrades = enrollments.filter((en) => typeof en.final_grade === 'number');
@@ -33,7 +35,7 @@ export default function StudentGrades() {
                 description="Consolida tus promedios por nivel: Fundamentos, Intermedio y Avanzado."
                 tags={['Promedio', 'Asistencia', 'Logros']}
                 watchers={['Equipo Académico', 'Optimus Brain']}
-                primaryAction={{ label: 'Configurar alertas', icon: Bell, onClick: () => {} }}
+                primaryAction={{ label: 'Configurar alertas', icon: Bell, onClick: () => router.push('/account') }}
             />
 
             <section className="relative overflow-hidden rounded-[2.5rem] bg-primary p-8 text-white shadow-2xl shadow-primary/30 border border-white/10">

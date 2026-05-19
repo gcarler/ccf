@@ -3,7 +3,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Award, Download, Share2, School, Bell } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/http';
 import { useStudentEnrollments } from '@/hooks/useStudentEnrollments';
 import type { CertificateRecord } from '@/types/academy';
@@ -14,13 +13,13 @@ import { toast } from 'sonner';
 export default function StudentCertificates() {
     const { user, token, isAuthenticated } = useAuth();
     const userId = user?.id;
-    const router = useRouter();
     const { enrollments, loading: loadingEnrollments } = useStudentEnrollments();
     const [certificates, setCertificates] = useState<CertificateRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeCertificate, setActiveCertificate] = useState<CertificateRecord | null>(null);
     const [sharingId, setSharingId] = useState<number | null>(null);
+    const [alertsEnabled, setAlertsEnabled] = useState(false);
 
     useEffect(() => {
         if (!userId || !token || !isAuthenticated) return;
@@ -29,7 +28,7 @@ export default function StudentCertificates() {
             setLoading(true);
             setError(null);
             try {
-                const data = await apiFetch<CertificateRecord[]>(`/academy/users/${userId}/certificates`, {
+                const data = await apiFetch<CertificateRecord[]>(`/academy/me/certificates`, {
                     token,
                     cache: 'no-store',
                 });
@@ -84,7 +83,10 @@ export default function StudentCertificates() {
                 description="Diplomas por nivel de formación: Básico, Intermedio y Misión Global."
                 tags={['Básico', 'Intermedio', 'Misión Global']}
                 watchers={['Academia Faro', 'Optimus Brain']}
-                primaryAction={{ label: 'Activar alertas', icon: Bell, onClick: () => {} }}
+                primaryAction={{ label: alertsEnabled ? 'Alertas activas' : 'Activar alertas', icon: Bell, onClick: () => {
+                    setAlertsEnabled(true);
+                    toast.success('Alertas de certificados activadas');
+                } }}
             />
             <main className="rounded-[2.5rem] border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] shadow-xl overflow-hidden pb-24 relative z-10 hide-scrollbar">
                 {totalLoading ? (

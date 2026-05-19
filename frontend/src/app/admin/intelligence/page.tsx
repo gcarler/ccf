@@ -6,10 +6,6 @@ import {
     Zap, 
     BrainCircuit, 
     Activity, 
-    CheckCircle2, 
-    Clock, 
-    AlertTriangle, 
-    Search, 
     Send, 
     Layers, 
     BarChart3, 
@@ -19,7 +15,6 @@ import {
     ChevronRight,
     Terminal,
     Cpu,
-    Database,
     ShieldCheck
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -27,22 +22,32 @@ import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import AdminShell from '@/components/admin/AdminShell';
 import AdminHero from '@/components/admin/AdminHero';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
 export default function IntelligenceConsole() {
     const { token, isAuthenticated } = useAuth();
     const { addToast } = useToast();
+    const router = useRouter();
     const [insights, setInsights] = useState<any[]>([]);
     const [tasks, setTasks] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
     const [query, setQuery] = useState('');
     const [aiResponse, setAiResponse] = useState<any>(null);
     const [isAsking, setIsAsking] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const [acknowledgingId, setAcknowledgingId] = useState<number | null>(null);
+    const [acknowledgingAll, setAcknowledgingAll] = useState(false);
+    const [showTaskComposer, setShowTaskComposer] = useState(false);
+    const [newTaskTitle, setNewTaskTitle] = useState('');
+    const [newTaskPriority, setNewTaskPriority] = useState('medium');
+    const [creatingTask, setCreatingTask] = useState(false);
 
     const fetchData = useCallback(async () => {
         if (!token) return;
         setLoading(true);
+        setLoadError(null);
         try {
             const [insightsData, tasksData] = await Promise.all([
                 apiFetch('/agents/insights', { token }),
@@ -52,15 +57,9 @@ export default function IntelligenceConsole() {
             setTasks(Array.isArray(tasksData) ? tasksData : []);
         } catch (err) {
             console.error(err);
-            // Mock data for visual excellence
-            setInsights([
-                { id: 1, title: 'Predicción de Deserción', insight_type: 'predictive', payload: 'Se detectó un 15% de riesgo en el curso de Fundamentos.', acknowledged: false, created_at: new Date().toISOString() },
-                { id: 2, title: 'Pico de Donaciones', insight_type: 'anomaly', payload: 'Las ofrendas del sector Norte superaron la meta en 20%.', acknowledged: true, created_at: new Date().toISOString() }
-            ]);
-            setTasks([
-                { id: 1, title: 'Indexación de Base Doctrinal', status: 'running', priority: 'high', created_at: new Date().toISOString() },
-                { id: 2, title: 'Cierre Mensual Automático', status: 'pending', priority: 'medium', created_at: new Date().toISOString() }
-            ]);
+            setInsights([]);
+            setTasks([]);
+            setLoadError('No se pudo sincronizar la consola de inteligencia.');
         } finally {
             setLoading(false);
         }
@@ -85,6 +84,76 @@ export default function IntelligenceConsole() {
         }
     };
 
+    const handleTrainModel = async () => {
+        await fetchData();
+        addToast('Modelo sincronizado con los datos más recientes', 'success');
+    };
+
+    const handleAcknowledgeInsight = async (insightId: number) => {
+        if (!token) return;
+        setAcknowledgingId(insightId);
+        try {
+            await apiFetch(`/agents/insights/${insightId}/ack`, {
+                method: 'POST',
+                token,
+            });
+            setInsights((items) => items.map((item) => item.id === insightId ? { ...item, acknowledged: true } : item));
+            addToast('Insight reconocido', 'success');
+        } catch (err) {
+            console.error(err);
+            addToast('No se pudo reconocer el insight', 'error');
+        } finally {
+            setAcknowledgingId(null);
+        }
+    };
+
+    const handleAcknowledgeAll = async () => {
+        if (!token) return;
+        const pending = insights.filter((insight) => !insight.acknowledged);
+        if (pending.length === 0) return;
+
+        setAcknowledgingAll(true);
+        try {
+            await Promise.all(pending.map((insight) => apiFetch(`/agents/insights/${insight.id}/ack`, {
+                method: 'POST',
+                token,
+            })));
+            setInsights((items) => items.map((item) => ({ ...item, acknowledged: true })));
+            addToast('Todos los insights fueron reconocidos', 'success');
+        } catch (err) {
+            console.error(err);
+            addToast('No se pudieron reconocer todos los insights', 'error');
+        } finally {
+            setAcknowledgingAll(false);
+        }
+    };
+
+    const handleCreateTask = async () => {
+        if (!token || !newTaskTitle.trim()) return;
+        setCreatingTask(true);
+        try {
+            const created = await apiFetch('/agents/tasks', {
+                method: 'POST',
+                token,
+                body: {
+                    title: newTaskTitle.trim(),
+                    priority: newTaskPriority,
+                    source: 'manual_console',
+                },
+            });
+            setTasks((items) => [created, ...items]);
+            setNewTaskTitle('');
+            setNewTaskPriority('medium');
+            setShowTaskComposer(false);
+            addToast('Tarea manual asignada', 'success');
+        } catch (err) {
+            console.error(err);
+            addToast('No se pudo crear la tarea manual', 'error');
+        } finally {
+            setCreatingTask(false);
+        }
+    };
+
     if (!isAuthenticated) return null;
 
     return (
@@ -100,15 +169,15 @@ export default function IntelligenceConsole() {
                 description="Supervisa la red de agentes autónomos y procesa los hallazgos generados por Optimus Brain. La IA está analizando patrones operativos en tiempo real."
                 tags={['Optimus v2.1', 'Neural Core', 'Active']}
                 watchers={['Tech Lead', 'Dirección Académica']}
-                primaryAction={{ label: 'Entrenar Modelo', icon: Zap, onClick: () => {} }}
-                secondaryAction={{ label: 'Ver Logs', icon: Terminal, onClick: () => {} }}
+                primaryAction={{ label: 'Entrenar Modelo', icon: Zap, onClick: handleTrainModel }}
+                secondaryAction={{ label: 'Ver Logs', icon: Terminal, onClick: () => router.push('/admin/audit') }}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-20">
                 {/* Main AI Stats */}
                 <div className="lg:col-span-8 space-y-8">
                     <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <StatusCard label="Salud del Core" value="ÓPTIMA" status="online" icon={Cpu} color="blue" />
+                        <StatusCard label="Salud del Core" value={loadError ? 'DEGRADADA' : 'ÓPTIMA'} status={loadError ? 'degraded' : 'online'} icon={Cpu} color="blue" />
                         <StatusCard label="Insights Activos" value={insights.length.toString()} status="ready" icon={Sparkles} color="purple" />
                         <StatusCard label="Tareas en Cola" value={tasks.length.toString()} status="processing" icon={Layers} color="amber" />
                     </section>
@@ -163,8 +232,19 @@ export default function IntelligenceConsole() {
                     <section className="space-y-6">
                         <div className="flex justify-between items-center px-4">
                             <h3 className="text-lg font-black tracking-tight uppercase tracking-widest">Intelligent Insights</h3>
-                            <button className="text-[11px] font-black text-blue-600 uppercase tracking-widest hover:underline">Limpiar Todo</button>
+                            <button
+                                onClick={() => void handleAcknowledgeAll()}
+                                disabled={acknowledgingAll || insights.every((insight) => insight.acknowledged)}
+                                className="text-[11px] font-black text-blue-600 uppercase tracking-widest hover:underline disabled:opacity-40 disabled:no-underline"
+                            >
+                                {acknowledgingAll ? 'Procesando...' : 'Reconocer Todo'}
+                            </button>
                         </div>
+                        {loadError && (
+                            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600">
+                                {loadError}
+                            </div>
+                        )}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {insights.map((insight) => (
                                 <div key={insight.id} className="p-8 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
@@ -178,13 +258,26 @@ export default function IntelligenceConsole() {
                                             <h4 className="text-[15px] font-black text-slate-900 dark:text-white mb-1 uppercase tracking-tight">{insight.title}</h4>
                                             <p className="text-[12px] font-medium text-slate-500 leading-tight">{insight.payload}</p>
                                         </div>
-                                        <button className="flex items-center gap-2 text-[10px] font-black text-blue-600 uppercase tracking-widest group-hover:gap-3 transition-all">
-                                            Ejecutar Acción <ChevronRight size={14} />
-                                        </button>
+                                        {!insight.acknowledged ? (
+                                            <button
+                                                onClick={() => void handleAcknowledgeInsight(insight.id)}
+                                                disabled={acknowledgingId === insight.id}
+                                                className="flex items-center gap-2 text-[10px] font-black text-blue-600 uppercase tracking-widest group-hover:gap-3 transition-all disabled:opacity-40"
+                                            >
+                                                {acknowledgingId === insight.id ? 'Procesando...' : 'Reconocer'} <ChevronRight size={14} />
+                                            </button>
+                                        ) : (
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Reconocido</span>
+                                        )}
                                     </div>
                                 </div>
                             ))}
                         </div>
+                        {!loading && insights.length === 0 && (
+                            <div className="rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-8 text-sm font-semibold text-slate-500">
+                                No hay insights disponibles.
+                            </div>
+                        )}
                     </section>
                 </div>
 
@@ -218,12 +311,55 @@ export default function IntelligenceConsole() {
                                         <button className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity"><MoreHorizontal size={16} /></button>
                                     </div>
                                 ))}
+                                {!loading && tasks.length === 0 && (
+                                    <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 p-5 text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                                        Sin tareas en cola
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        <button className="w-full py-5 bg-slate-900 dark:bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95">
-                            Asignar Tarea Manual
-                        </button>
+                        {showTaskComposer ? (
+                            <div className="space-y-3 rounded-2xl border border-slate-200 dark:border-white/10 p-4">
+                                <input
+                                    value={newTaskTitle}
+                                    onChange={(event) => setNewTaskTitle(event.target.value)}
+                                    placeholder="Título de la tarea"
+                                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none"
+                                />
+                                <select
+                                    value={newTaskPriority}
+                                    onChange={(event) => setNewTaskPriority(event.target.value)}
+                                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none"
+                                >
+                                    <option value="low">Baja</option>
+                                    <option value="medium">Media</option>
+                                    <option value="high">Alta</option>
+                                </select>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => void handleCreateTask()}
+                                        disabled={creatingTask || !newTaskTitle.trim()}
+                                        className="flex-1 rounded-xl bg-blue-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-40"
+                                    >
+                                        {creatingTask ? 'Guardando...' : 'Crear'}
+                                    </button>
+                                    <button
+                                        onClick={() => setShowTaskComposer(false)}
+                                        className="rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500"
+                                    >
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => setShowTaskComposer(true)}
+                                className="w-full py-5 bg-slate-900 dark:bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95"
+                            >
+                                Asignar Tarea Manual
+                            </button>
+                        )}
                     </section>
 
                     <section className="p-8 bg-blue-50 dark:bg-blue-900/10 rounded-[3rem] border border-blue-100 dark:border-blue-500/20">
@@ -245,17 +381,20 @@ export default function IntelligenceConsole() {
 function StatusCard({ label, value, status, icon: Icon, color }: any) {
     const colors: any = {
         blue: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20',
-        purple: 'text-purple-600 bg-purple-50 dark:bg-purple-900/20',
+        purple: 'text-sky-600 bg-sky-50 dark:bg-sky-900/20',
         amber: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20'
     };
+    const statusTone = status === 'degraded'
+        ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600'
+        : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600';
     return (
         <div className="p-8 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] shadow-sm flex flex-col gap-6 group hover:shadow-xl transition-all relative overflow-hidden">
             <div className="flex justify-between items-start">
                 <div className={clsx("size-14 rounded-2xl flex items-center justify-center transition-transform group-hover:rotate-12", colors[color])}>
                     <Icon size={28} />
                 </div>
-                <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg">
-                    <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <div className={clsx("flex items-center gap-1.5 px-2 py-1 rounded-lg", statusTone)}>
+                    <div className={clsx("size-1.5 rounded-full animate-pulse", status === 'degraded' ? 'bg-rose-500' : 'bg-emerald-500')} />
                     <span className="text-[8px] font-black uppercase">{status}</span>
                 </div>
             </div>

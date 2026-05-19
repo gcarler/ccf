@@ -1,17 +1,10 @@
 /** @type {import('next').NextConfig} */
+const apiBaseUrl = process.env.API_BASE_URL || '';
+const apiProxyTarget =
+    process.env.API_PROXY_TARGET ||
+    (apiBaseUrl ? apiBaseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '') : '');
+
 const nextConfig = {
-    eslint: {
-        // Warning: This allows production builds to successfully complete even if
-        // your project has ESLint errors.
-        ignoreDuringBuilds: true,
-    },
-    typescript: {
-        // !! WARN !!
-        // Dangerously allow production builds to successfully complete even if
-        // your project has type errors.
-        // !! WARN !!
-        ignoreBuildErrors: true,
-    },
     images: {
         remotePatterns: [
             {
@@ -19,7 +12,27 @@ const nextConfig = {
                 hostname: 'images.unsplash.com',
                 pathname: '**',
             },
+            {
+                protocol: 'https',
+                hostname: 'picsum.photos',
+                pathname: '**',
+            },
         ],
+    },
+    async rewrites() {
+        if (!apiProxyTarget) return [];
+        return [
+            {
+                source: '/api/:path*',
+                destination: `${apiProxyTarget}/api/:path*`
+            }
+        ];
+    },
+    webpack(config, { isServer }) {
+        if (isServer) {
+            config.output.chunkFilename = "chunks/[name].js";
+        }
+        return config;
     },
 };
 

@@ -1,0 +1,2 @@
+{"time": "2026-05-06 17:28:13.397378-05:00", "level": "INFO", "message": "Starting Claude Code Proxy...", "module": "api.runtime", "function": "startup", "line": 102}
+{"time": "2026-05-06 17:28:13.399720-05:00", "level": "ERROR", "message": "Startup failed:\nConfigured model validation failed:\n- sources=MODEL provider=nvidia_nim model=z-ai/glm4.7 problem=query failure: NVIDIA_NIM_API_KEY is not set. Add it to your .env file. Get a key at https://build.nvidia.com/settings/api-keys", "module": "api.runtime", "function": "log_startup_failure", "line": 68}

@@ -96,44 +96,51 @@ redis_client = _create_redis_client()
 
 
 import functools
+import hashlib
 import json
+
 
 def get_redis():
     return redis_client
+
+
+def _stable_cache_key(func_name: str, args: tuple, kwargs: dict) -> str:
+    """Derive a deterministic, collision-resistant cache key."""
+    payload = json.dumps({"args": args, "kwargs": kwargs}, sort_keys=True, default=str)
+    digest = hashlib.sha256(payload.encode()).hexdigest()
+    return f"cache:{func_name}:{digest}"
+
 
 def cached(ttl: int = 300):
     """Decorador simple para cachear resultados en Redis/Memoria."""
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            # No cachear si no hay redis
             redis = get_redis()
-            
-            # Crear key basada en el nombre de la funcion y argumentos
-            key = f"cache:{func.__name__}:{hash(str(args) + str(kwargs))}"
-            
+
+            key = _stable_cache_key(func.__name__, args, kwargs)
+
             # Intentar obtener del cache
             cached_val = redis.get(key)
             if cached_val:
                 try:
                     return json.loads(cached_val)
-                except:
+                except (json.JSONDecodeError, TypeError):
                     return cached_val
-            
+
             # Ejecutar funcion real
             result = func(*args, **kwargs)
-            
+
             # Guardar en cache
             try:
                 serializable_result = result
-                # Manejar objetos de Pydantic o tipos complejos si es necesario
                 if hasattr(result, "model_dump"):
                     serializable_result = result.model_dump()
-                
+
                 redis.setex(key, ttl, json.dumps(serializable_result))
-            except:
+            except (TypeError, ValueError, ConnectionError):
                 pass
-                
+
             return result
         return wrapper
     return decorator

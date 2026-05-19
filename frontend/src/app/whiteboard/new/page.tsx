@@ -1,0 +1,98 @@
+"use client";
+
+import React, { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import CrmShell from "@/components/crm/CrmShell";
+import { LayoutDashboard, PenTool, Sparkles } from "lucide-react";
+import { upsertWhiteboard } from "@/lib/whiteboards";
+
+export default function NewWhiteboardPage() {
+    const router = useRouter();
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
+    const previewTitle = useMemo(() => title.trim() || "Nueva pizarra CCF", [title]);
+
+    const handleCreate = () => {
+        const id = `local-${Date.now()}`;
+        if (typeof window !== "undefined") {
+            upsertWhiteboard(window.localStorage, {
+                id,
+                title: previewTitle,
+                description,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            });
+        }
+        router.push(`/whiteboard/${id}`);
+    };
+
+    return (
+        <CrmShell
+            breadcrumbs={[
+                { label: "CCF Tools", icon: LayoutDashboard, href: "/whiteboard" },
+                { label: "Nueva Pizarra", icon: PenTool },
+            ]}
+        >
+            <div className="mx-auto flex h-full max-w-5xl items-center px-8 py-10">
+                <section className="grid w-full grid-cols-1 overflow-hidden rounded-[2.5rem] border border-slate-200 bg-white shadow-2xl dark:border-white/10 dark:bg-white/5 lg:grid-cols-[1fr_0.9fr]">
+                    <div className="space-y-6 p-8 lg:p-10">
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-blue-500">Lienzo colaborativo</p>
+                            <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-950 dark:text-white">Crear pizarra</h1>
+                            <p className="mt-3 max-w-xl text-sm font-medium leading-6 text-slate-500">
+                                Activa un espacio de trabajo para mapas, diagramas, lluvia de ideas y planeacion asistida.
+                            </p>
+                        </div>
+
+                        <label className="block space-y-2">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nombre</span>
+                            <input
+                                value={title}
+                                onChange={(event) => setTitle(event.target.value)}
+                                placeholder="Ej: Planeacion Faro Q2"
+                                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:border-blue-400 dark:border-white/10 dark:bg-black/20"
+                            />
+                        </label>
+
+                        <label className="block space-y-2">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Objetivo</span>
+                            <textarea
+                                value={description}
+                                onChange={(event) => setDescription(event.target.value)}
+                                placeholder="Describe que se va a construir en este lienzo..."
+                                className="min-h-[140px] w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 dark:border-white/10 dark:bg-black/20"
+                            />
+                        </label>
+
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={handleCreate}
+                                className="rounded-2xl bg-blue-600 px-6 py-3 text-[11px] font-black uppercase tracking-widest text-white shadow-xl shadow-blue-500/20"
+                            >
+                                Crear pizarra
+                            </button>
+                            <button
+                                onClick={() => router.push("/whiteboard")}
+                                className="rounded-2xl border border-slate-200 px-6 py-3 text-[11px] font-black uppercase tracking-widest text-slate-500 dark:border-white/10"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="relative min-h-[420px] overflow-hidden bg-slate-950 p-8 text-white">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.35),transparent_35%),radial-gradient(circle_at_80%_70%,rgba(14,165,233,0.2),transparent_30%)]" />
+                        <div className="relative flex h-full flex-col justify-between rounded-[2rem] border border-white/10 bg-white/10 p-6 backdrop-blur">
+                            <Sparkles className="text-blue-300" size={36} />
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.35em] text-blue-200">Preview</p>
+                                <h2 className="mt-2 text-3xl font-black">{previewTitle}</h2>
+                                <p className="mt-3 text-sm font-medium text-slate-300">{description || "Sin objetivo definido todavia."}</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </CrmShell>
+    );
+}

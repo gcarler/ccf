@@ -1,17 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { 
-    Search, Filter, Video, Music, Users, Crown, ChevronRight, Award, Zap
+import {
+    Search,
+    ChevronRight,
+    Award,
+    Zap
 } from 'lucide-react';
-import { api } from '@/services/apiService';
-
-const SKILL_CATEGORIES = [
-    { id: 'media', label: 'Media & Video', icon: Video, color: 'text-red-500' },
-    { id: 'musica', label: 'Alabanza', icon: Music, color: 'text-primary' },
-    { id: 'liderazgo', label: 'Liderazgo', icon: Crown, color: 'text-amber-500' },
-    { id: 'servicio', label: 'Servicio', icon: Users, color: 'text-emerald-500' },
-];
+import { apiFetch } from '@/lib/http';
 
 export default function TalentSearchPage() {
     const [talents, setTalents] = useState<any[]>([]);
@@ -21,7 +17,7 @@ export default function TalentSearchPage() {
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             setLoading(true);
-            api.get<any[]>(`/crm/talents?q=${search}`)
+            apiFetch<any[]>(`/crm/talents?q=${encodeURIComponent(search)}`)
                 .then(setTalents)
                 .catch(console.error)
                 .finally(() => setLoading(false));

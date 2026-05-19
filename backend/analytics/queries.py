@@ -9,15 +9,15 @@ try:
 except ImportError:  # pragma: no cover
     duckdb = None  # type: ignore
 
-from backend.analytics.event_sink import WAREHOUSE_PATH, CREATE_EVENTS_SQL
+from backend.analytics import event_sink
+
+WAREHOUSE_PATH = event_sink.WAREHOUSE_PATH
 
 
 def _connect():
     if duckdb is None:  # pragma: no cover
         raise RuntimeError("duckdb dependency is required for analytics")
-    conn = duckdb.connect(str(WAREHOUSE_PATH))
-    conn.execute(CREATE_EVENTS_SQL)
-    return conn
+    return event_sink._connect()
 
 
 def get_event_summary(days: int = 7) -> Dict[str, Any]:

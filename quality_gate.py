@@ -3,16 +3,25 @@ import os
 import sys
 import subprocess
 import logging
+from pathlib import Path
 from sqlalchemy import text
 from backend.core.database import SessionLocal
 
+REPORT_PATH = Path("test_artifacts") / "quality_report.log"
+REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+
 # Configuración de logging para reporte de calidad
+# Forzar UTF-8 en stdout si es posible
+stdout_encoding = getattr(sys.stdout, "encoding", None) or ""
+if stdout_encoding.lower() != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler('quality_report.log', mode='w')
+        logging.FileHandler(REPORT_PATH, mode='w', encoding='utf-8')
     ]
 )
 logger = logging.getLogger("QualityGate")
@@ -113,7 +122,7 @@ def main():
         logger.info("La plataforma está lista para el despliegue.")
     else:
         logger.info("⚠️ RESULTADO FINAL: SE REQUIEREN CORRECCIONES")
-        logger.info("Revisa los errores en quality_report.log")
+        logger.info(f"Revisa los errores en {REPORT_PATH.as_posix()}")
     logger.info("====================================================")
     
     if not overall_success:

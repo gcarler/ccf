@@ -10,13 +10,12 @@ import TaskItem from '@tiptap/extension-task-item';
 import Suggestion from '@tiptap/suggestion';
 import tippy from 'tippy.js';
 import { 
-    Bold, Italic, Strikethrough, Heading1, Heading2, 
-    List, ListOrdered, CheckSquare, Quote, Undo, Redo,
-    Cloud, CloudUpload, Loader2, Type, Minus
+    Bold, Italic, Heading1, Heading2, 
+    List, CheckSquare, Quote, Undo, Redo,
+    Cloud, Loader2, Minus
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import { toast } from 'sonner';
 import { CommandsList } from './wiki/CommandsList';
 
 interface Props {

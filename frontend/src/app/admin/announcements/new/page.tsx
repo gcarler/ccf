@@ -4,27 +4,19 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
     Bell, 
-    ChevronLeft, 
     Save, 
     Send, 
     ImageIcon, 
-    Calendar, 
-    Tag, 
     Users, 
     Eye, 
-    Layout, 
     Sparkles,
-    Bot,
-    Clock,
-    CheckCircle2
+    Bot
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import AdminShell from '@/components/admin/AdminShell';
 import AdminHero from '@/components/admin/AdminHero';
-import { motion } from 'framer-motion';
-import clsx from 'clsx';
 
 export default function NewAnnouncementPage() {
     const router = useRouter();
@@ -35,7 +27,8 @@ export default function NewAnnouncementPage() {
         title: '',
         content: '',
         category: 'General',
-        is_active: true
+        is_featured: false,
+        status: 'published'
     });
 
     const handlePublish = async () => {
@@ -48,12 +41,33 @@ export default function NewAnnouncementPage() {
             await apiFetch('/cms/announcements', {
                 method: 'POST',
                 token,
-                body: formData
+                body: { ...formData, status: 'published' }
             });
             addToast('Anuncio publicado correctamente', 'success');
-            router.push('/admin/dashboard');
-        } catch (err) {
+            router.push('/admin/announcements');
+        } catch {
             addToast('Error al publicar el anuncio', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSaveDraft = async () => {
+        if (!formData.title || !formData.content) {
+            addToast('Completa el tÃ­tulo y el contenido', 'warning');
+            return;
+        }
+        setLoading(true);
+        try {
+            await apiFetch('/cms/announcements', {
+                method: 'POST',
+                token,
+                body: { ...formData, status: 'draft' }
+            });
+            addToast('Borrador guardado en CMS', 'success');
+            router.push('/admin/announcements');
+        } catch {
+            addToast('Error al guardar el borrador', 'error');
         } finally {
             setLoading(false);
         }
@@ -73,7 +87,7 @@ export default function NewAnnouncementPage() {
                 tags={['Global Reach', 'Instant', 'Official']}
                 watchers={['Comité de Comunicación', 'Pastoral']}
                 primaryAction={{ label: loading ? 'Publicando...' : 'Lanzar Anuncio', icon: Send, onClick: handlePublish }}
-                secondaryAction={{ label: 'Guardar Borrador', icon: Save, onClick: () => {} }}
+                secondaryAction={{ label: 'Guardar Borrador', icon: Save, onClick: handleSaveDraft }}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-32">
@@ -141,6 +155,19 @@ export default function NewAnnouncementPage() {
                                 </div>
                                 <div className="size-5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
                             </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setFormData({ ...formData, is_featured: !formData.is_featured })}
+                                className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${
+                                    formData.is_featured
+                                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300'
+                                        : 'bg-slate-50 dark:bg-black/10 text-slate-500 dark:text-slate-300'
+                                }`}
+                            >
+                                <span className="text-[11px] font-bold uppercase">Destacar anuncio</span>
+                                <span className={`size-5 rounded-full ${formData.is_featured ? 'bg-blue-600' : 'bg-slate-300 dark:bg-white/20'}`} />
+                            </button>
 
                             <button className="w-full py-4 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl text-slate-400 hover:text-blue-600 transition-all flex flex-col items-center gap-2">
                                 <ImageIcon size={24} />

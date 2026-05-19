@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
-import { Send, Smile } from "lucide-react";
+import { Headphones, ImageIcon, LinkIcon, PlayCircle, Send, Smile } from "lucide-react";
 import { apiFetch } from "@/lib/http";
 
 interface TestimonialFormProps {
@@ -13,6 +13,10 @@ interface TestimonialFormProps {
 export default function TestimonialForm({ userId, token, onSubmitted }: TestimonialFormProps) {
   const [content, setContent] = useState("");
   const [emotion, setEmotion] = useState("Feliz");
+  const [mediaType, setMediaType] = useState<"text" | "image" | "video" | "podcast">("text");
+  const [imageUrl, setImageUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [podcastUrl, setPodcastUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -27,18 +31,26 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
     setIsSubmitting(true);
 
     try {
-      await apiFetch("/testimonials", {
+      await apiFetch("/cms/testimonials", {
         method: "POST",
         token,
         body: {
           content,
           emotion,
+          media_type: mediaType,
+          media_url: mediaType === "image" ? imageUrl : mediaType === "video" ? videoUrl : mediaType === "podcast" ? podcastUrl : null,
+          image_url: imageUrl || null,
+          video_url: videoUrl || null,
+          podcast_url: podcastUrl || null,
           author_id: userId,
         },
       });
 
         setMessage("Gracias. Tu testimonio fue enviado para moderacion.");
         setContent("");
+        setImageUrl("");
+        setVideoUrl("");
+        setPodcastUrl("");
         if (onSubmitted) onSubmitted();
     } catch (error) {
       console.error("testimonial error", error);
@@ -88,6 +100,49 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
           </div>
         </div>
 
+        <div className="space-y-3">
+          <label className="block text-sm font-medium">Medio asociado (opcional)</label>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { id: "text", label: "Solo texto", icon: Smile },
+              { id: "image", label: "Imagen", icon: ImageIcon },
+              { id: "video", label: "Video", icon: PlayCircle },
+              { id: "podcast", label: "Podcast", icon: Headphones },
+            ].map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setMediaType(option.id as typeof mediaType)}
+                className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-black uppercase tracking-widest transition-all ${
+                  mediaType === option.id
+                    ? "border-primary bg-primary text-white"
+                    : "border-slate-300 bg-white/70 text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                <option.icon size={14} /> {option.label}
+              </button>
+            ))}
+          </div>
+          {mediaType !== "text" && (
+            <label className="block space-y-2">
+              <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500">
+                <LinkIcon size={13} /> URL de {mediaType === "image" ? "imagen" : mediaType === "video" ? "video" : "podcast"}
+              </span>
+              <input
+                type="url"
+                value={mediaType === "image" ? imageUrl : mediaType === "video" ? videoUrl : podcastUrl}
+                onChange={(event) => {
+                  if (mediaType === "image") setImageUrl(event.target.value);
+                  if (mediaType === "video") setVideoUrl(event.target.value);
+                  if (mediaType === "podcast") setPodcastUrl(event.target.value);
+                }}
+                placeholder="Pega la URL desde la biblioteca de medios"
+                className="w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-sm outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary"
+              />
+            </label>
+          )}
+        </div>
+
         <button
           type="submit"
           disabled={isSubmitting}
@@ -105,3 +160,4 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
     </div>
   );
 }
+

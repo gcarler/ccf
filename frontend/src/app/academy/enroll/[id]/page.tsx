@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/http';
-import { ArrowLeft, BookOpen, Upload, CreditCard, Wallet, Landmark, Lock, CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
+import { BookOpen, Upload, CreditCard, Wallet, Landmark, Lock, CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -31,9 +31,9 @@ export default function EnrollmentWizard() {
 
         const fetchCourse = async () => {
             try {
-                const data = await apiFetch(`/courses/${courseId}`, { cache: 'no-store' });
+                const data = await apiFetch(`/academy/courses/${courseId}`, { cache: 'no-store' });
                 setCourse(data);
-            } catch (error) {
+            } catch {
                 addToast("Curso no encontrado", "error");
                 router.push('/academy');
             } finally {
@@ -49,14 +49,14 @@ export default function EnrollmentWizard() {
     const handleEnrollment = async () => {
         setEnrolling(true);
         try {
-            await apiFetch("/enrollments/", {
+            await apiFetch("/academy/enrollments/", {
                 method: "POST",
                 token,
                 body: { user_id: user?.id, course_id: parseInt(courseId) }
             });
             addToast("¡Inscripción y pago exitosos!", "success");
             setStep(3); // Success step
-        } catch (error) {
+        } catch {
             addToast("Error de conexión.", "error");
             setEnrolling(false);
         }

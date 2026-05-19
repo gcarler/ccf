@@ -3,9 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-    Send, X, Bot, User, Sparkles, Loader2, 
-    MessageSquare, Trash2, Maximize2, Minimize2,
-    ChevronDown, Zap, ShieldCheck
+    Send, X, Bot, User, Sparkles, Loader2
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
@@ -102,7 +100,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                         {/* Header */}
                         <header className="p-6 border-b border-slate-50 dark:border-white/5 flex items-center justify-between bg-white dark:bg-white/5 shrink-0">
                             <div className="flex items-center gap-4">
-                                <div className="size-12 rounded-2xl bg-purple-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/30 relative">
+                                <div className="size-12 rounded-2xl bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 relative">
                                     <Bot size={24} />
                                     <div className="absolute -bottom-1 -right-1 size-4 bg-emerald-500 rounded-full border-2 border-white dark:border-[#15171c]" />
                                 </div>
@@ -133,7 +131,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                 >
                                     <div className={clsx(
                                         "size-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm",
-                                        msg.role === 'bot' ? "bg-purple-50 dark:bg-purple-900/20 text-purple-600" : "bg-blue-600 text-white"
+                                        msg.role === 'bot' ? "bg-sky-50 dark:bg-sky-900/20 text-sky-600" : "bg-blue-600 text-white"
                                     )}>
                                         {msg.role === 'bot' ? <Sparkles size={16} /> : <User size={16} />}
                                     </div>
@@ -166,7 +164,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                             ))}
                             {loading && (
                                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3">
-                                    <div className="size-8 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 shrink-0">
+                                    <div className="size-8 rounded-xl bg-sky-50 dark:bg-sky-900/20 flex items-center justify-center text-sky-600 shrink-0">
                                         <Loader2 size={16} className="animate-spin" />
                                     </div>
                                     <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-[1.5rem] flex gap-1 items-center">
@@ -186,12 +184,12 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     placeholder="Preguntar a Optimus..."
-                                    className="w-full h-14 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-2xl pl-6 pr-14 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500/50 transition-all shadow-inner"
+                                    className="w-full h-14 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-2xl pl-6 pr-14 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500/50 transition-all shadow-inner"
                                 />
                                 <button 
                                     type="submit"
                                     disabled={!input.trim() || loading}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 size-10 rounded-xl bg-purple-600 text-white flex items-center justify-center hover:bg-purple-500 active:scale-95 transition-all shadow-lg shadow-purple-500/30 disabled:opacity-50"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 size-10 rounded-xl bg-sky-600 text-white flex items-center justify-center hover:bg-sky-500 active:scale-95 transition-all shadow-lg shadow-sky-500/30 disabled:opacity-50"
                                 >
                                     <Send size={18} />
                                 </button>

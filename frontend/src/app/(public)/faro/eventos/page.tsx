@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
+
 import Image from "next/image";
-import { MapPin, Bell, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { Bell, ChevronLeft, ChevronRight, MapPin, Star } from "lucide-react";
 import { useContentBlock } from "@/hooks/useContent";
 import { FARO_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
 
@@ -14,15 +14,31 @@ interface PublicEventItem {
     excerpt?: string;
     category?: string;
     featured?: boolean;
+    img?: string;
 }
 
-const EVENT_IMGS = [
-    "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&q=80",
-    "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=600&q=80",
-    "https://images.unsplash.com/photo-1447690709975-318628b14c57?w=600&q=80",
+interface CalendarDay {
+    n: number;
+    prev: boolean;
+    event?: boolean;
+}
+
+const CATEGORY_FILTERS = [
+    "Todos",
+    "Conferencias",
+    "Grupos de Conexión",
+    "Cursos & Talleres",
+    "Especiales",
 ];
 
-const CATEGORY_FILTERS = ["Todos", "Conferencias", "Grupos de Conexión", "Cursos & Talleres", "Especiales"];
+function formatMonthDay(date?: string) {
+    if (!date) return { month: "", day: "" };
+    const parts = date.trim().split(/\s+/);
+    return {
+        day: parts[0] ?? "",
+        month: parts[2] ?? "",
+    };
+}
 
 export default function EventosPage() {
     const { data: heroContent } = useContentBlock("faro_events_hero");
@@ -33,51 +49,33 @@ export default function EventosPage() {
     const heroTitle = heroContent?.title || "Nuestra Agenda";
     const heroDescription =
         heroContent?.description ||
-        "Espacios diseñados para el crecimiento, la conexión y la guía espiritual.";
+        "Espacios disenados para el crecimiento, la conexion y la guia espiritual.";
 
     const parsedEvents = Array.isArray(eventsContent?.parsed)
         ? (eventsContent?.parsed as PublicEventItem[])
         : [];
 
-    const featuredEvent = parsedEvents.find((e) => e.featured) ||
-        parsedEvents[0] || {
-            date: "24 DE JUNIO, 2025",
-            title: "Noche de Iluminación: Adoración & Palabra",
-            location: "Auditorio Central",
-        };
+    const featuredEvent = parsedEvents.find((event) => event.featured) || parsedEvents[0];
+    const upcomingEvent = parsedEvents[1];
+    const upcomingCards = parsedEvents;
+    const hasEvents = parsedEvents.length > 0;
 
-    const upcomingEvent = parsedEvents[1] || {
-        date: "12",
-        title: "Cena de Jóvenes",
-        location: "Sede Norte • 19:30 hrs",
-    };
-
-    const fallbackUpcomingCards = [
-        { img: EVENT_IMGS[0], tag: "Conferencia", month: "JUL", day: "05", title: "Liderazgo Radiante", desc: "Herramientas para guiar con propósito en un mundo cambiante." },
-        { img: EVENT_IMGS[1], tag: "Música", month: "JUL", day: "12", title: "Festival FARO Sound", desc: "Tarde de música en vivo y comunidad al aire libre." },
-        { img: EVENT_IMGS[2], tag: "Estudio", month: "AGO", day: "02", title: "Profundidad Teológica", desc: "Taller intensivo sobre los Salmos y su aplicación hoy." },
-    ];
-
-    const upcomingCards = parsedEvents.length > 0
-        ? parsedEvents.map((e) => ({
-              img: (e as any).img || EVENT_IMGS[0],
-              tag: e.category || "Evento",
-              month: (e.date || "").split(" ")[2] || "MÁS",
-              day: (e.date || "").split(" ")[0] || "*",
-              title: e.title || "",
-              desc: e.excerpt || "",
-          }))
-        : fallbackUpcomingCards;
-
-    const calendarDays = [
-        { n: 26, prev: true }, { n: 27, prev: true }, { n: 28, prev: true },
-        { n: 29, prev: true }, { n: 30, prev: true }, { n: 31, prev: true },
-        ...Array.from({ length: 29 }, (_, i) => ({ n: i + 1, prev: false, event: [2, 5, 12, 24].includes(i + 1) })),
+    const calendarDays: CalendarDay[] = [
+        { n: 26, prev: true },
+        { n: 27, prev: true },
+        { n: 28, prev: true },
+        { n: 29, prev: true },
+        { n: 30, prev: true },
+        { n: 31, prev: true },
+        ...Array.from({ length: 29 }, (_, i) => ({
+            n: i + 1,
+            prev: false,
+            event: [2, 5, 12, 24].includes(i + 1),
+        })),
     ];
 
     return (
         <main className="pt-[88px] pb-20 px-6 md:px-12 max-w-7xl mx-auto">
-            {/* ── HERO ──────────────────────────────── */}
             <header className="mb-14 pt-12 md:grid md:grid-cols-12 gap-8 items-end">
                 <div className="md:col-span-8">
                     <span
@@ -101,20 +99,28 @@ export default function EventosPage() {
                 </div>
             </header>
 
-            {/* ── EVENTO DESTACADO + FILTROS ─────────── */}
             <section className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-                {/* Featured */}
                 <div
                     className="md:col-span-2 relative h-[440px] rounded-3xl overflow-hidden group"
                     style={{ background: "var(--faro-surface-container)" }}
                 >
-                    <Image
-                        src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=900&q=80"
-                        alt="Gran Evento Destacado"
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                        style={{ opacity: 0.5 }}
-                    />
+                    {featuredEvent?.img ? (
+                        <Image
+                            src={featuredEvent.img}
+                            alt={featuredEvent.title || "Evento destacado"}
+                            fill
+                            className="object-cover transition-transform duration-700 group-hover:scale-105"
+                            style={{ opacity: 0.5 }}
+                        />
+                    ) : (
+                        <div
+                            className="absolute inset-0"
+                            style={{
+                                background:
+                                    "linear-gradient(135deg, var(--faro-primary-container), var(--faro-surface-container-high))",
+                            }}
+                        />
+                    )}
                     <div
                         className="absolute inset-0"
                         style={{
@@ -122,51 +128,82 @@ export default function EventosPage() {
                                 "linear-gradient(to top, var(--faro-surface-container-lowest) 0%, transparent 60%)",
                         }}
                     />
-                    <div className="absolute bottom-0 p-8 w-full">
-                        <div className="flex items-center gap-2 mb-4">
-                            <span
-                                className="px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase"
-                                style={{
-                                    background: "var(--faro-primary-container)",
-                                    color: "var(--faro-primary)",
-                                }}
+                    {featuredEvent ? (
+                        <div className="absolute bottom-0 p-8 w-full">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span
+                                    className="px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase"
+                                    style={{
+                                        background: "var(--faro-primary-container)",
+                                        color: "var(--faro-primary)",
+                                    }}
+                                >
+                                    Destacado
+                                </span>
+                                {featuredEvent.date ? (
+                                    <span
+                                        className="text-xs font-bold"
+                                        style={{ color: "var(--faro-on-surface-variant)" }}
+                                    >
+                                        {featuredEvent.date}
+                                    </span>
+                                ) : null}
+                            </div>
+                            <h2
+                                className="text-3xl font-black mb-4"
+                                style={{ color: "var(--faro-on-surface)" }}
                             >
-                                Destacado
-                            </span>
-                            <span
-                                className="text-xs font-bold"
-                                style={{ color: "var(--faro-on-surface-variant)" }}
-                            >
-                                {featuredEvent.date}
-                            </span>
+                                {featuredEvent.title || "Evento destacado"}
+                            </h2>
+                            <div className="flex items-center gap-6">
+                                <button
+                                    className="px-8 py-3 rounded-2xl font-black text-sm uppercase tracking-widest text-white transition-all hover:scale-105"
+                                    style={{
+                                        background:
+                                            "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
+                                    }}
+                                >
+                                    Reservar lugar
+                                </button>
+                                {featuredEvent.location ? (
+                                    <span
+                                        className="flex items-center gap-2 text-sm font-bold"
+                                        style={{ color: "var(--faro-primary)" }}
+                                    >
+                                        <MapPin size={16} /> {featuredEvent.location}
+                                    </span>
+                                ) : null}
+                            </div>
                         </div>
-                        <h2
-                            className="text-3xl font-black mb-4"
-                            style={{ color: "var(--faro-on-surface)" }}
-                        >
-                            {featuredEvent.title}
-                        </h2>
-                        <div className="flex items-center gap-6">
-                            <button
-                                className="px-8 py-3 rounded-2xl font-black text-sm uppercase tracking-widest text-white transition-all hover:scale-105"
-                                style={{
-                                    background:
-                                        "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
-                                }}
+                    ) : (
+                        <div className="absolute inset-0 flex items-center justify-center p-8">
+                            <div
+                                className="max-w-md rounded-3xl p-8 text-center"
+                                style={{ background: "rgba(0,13,42,0.68)", backdropFilter: "blur(12px)" }}
                             >
-                                Reservar Lugar
-                            </button>
-                            <span
-                                className="flex items-center gap-2 text-sm font-bold"
-                                style={{ color: "var(--faro-primary)" }}
-                            >
-                                <MapPin size={16} /> {featuredEvent.location}
-                            </span>
+                                <p
+                                    className="text-[10px] font-black uppercase tracking-[0.2em] mb-3"
+                                    style={{ color: "var(--faro-on-surface-variant)" }}
+                                >
+                                    Sin eventos publicados
+                                </p>
+                                <h2
+                                    className="text-3xl font-black mb-3"
+                                    style={{ color: "var(--faro-on-surface)" }}
+                                >
+                                    Esperando agenda desde el CMS
+                                </h2>
+                                <p
+                                    className="text-sm"
+                                    style={{ color: "var(--faro-on-surface-variant)" }}
+                                >
+                                    Cuando haya eventos reales publicados, apareceran aqui sin contenido simulado.
+                                </p>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
-                {/* Filtros + próximo */}
                 <div
                     className="rounded-3xl p-8 flex flex-col justify-between"
                     style={{ background: "var(--faro-surface-container-low)" }}
@@ -196,9 +233,9 @@ export default function EventosPage() {
                                     }}
                                 >
                                     {cat}
-                                    {activeFilter === cat && (
+                                    {activeFilter === cat ? (
                                         <Star size={14} style={{ color: "var(--faro-primary)" }} />
-                                    )}
+                                    ) : null}
                                 </button>
                             ))}
                         </div>
@@ -211,98 +248,144 @@ export default function EventosPage() {
                             className="text-[10px] font-black uppercase tracking-[0.2em] mb-3"
                             style={{ color: "var(--faro-on-surface-variant)" }}
                         >
-                            Próximo en 48 horas
+                            Proximo en 48 horas
                         </p>
-                        <div className="flex items-center gap-4">
-                            <div
-                                className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shrink-0"
-                                style={{
-                                    background: "var(--faro-primary-container)",
-                                    color: "var(--faro-primary)",
-                                }}
-                            >
-                                {upcomingEvent.date}
-                            </div>
-                            <div>
-                                <p
-                                    className="text-sm font-black"
-                                    style={{ color: "var(--faro-on-surface)" }}
+                        {upcomingEvent ? (
+                            <div className="flex items-center gap-4">
+                                <div
+                                    className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shrink-0"
+                                    style={{
+                                        background: "var(--faro-primary-container)",
+                                        color: "var(--faro-primary)",
+                                    }}
                                 >
-                                    {upcomingEvent.title}
-                                </p>
-                                <p
-                                    className="text-xs italic"
-                                    style={{ color: "var(--faro-on-surface-variant)" }}
-                                >
-                                    {upcomingEvent.location}
-                                </p>
+                                    {upcomingEvent.date || "!"}
+                                </div>
+                                <div>
+                                    <p
+                                        className="text-sm font-black"
+                                        style={{ color: "var(--faro-on-surface)" }}
+                                    >
+                                        {upcomingEvent.title || "Proximo evento"}
+                                    </p>
+                                    <p
+                                        className="text-xs italic"
+                                        style={{ color: "var(--faro-on-surface-variant)" }}
+                                    >
+                                        {upcomingEvent.location || "Sin ubicacion publicada"}
+                                    </p>
+                                </div>
                             </div>
-                        </div>
+                        ) : (
+                            <p className="text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>
+                                Sin eventos proximos publicados.
+                            </p>
+                        )}
                     </div>
                 </div>
             </section>
 
-            {/* ── TARJETAS DE EVENTOS ─────────────────── */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
-                {upcomingCards.map(({ img, tag, month, day, title, desc }) => (
-                    <article
-                        key={title}
-                        className="rounded-3xl overflow-hidden group transition-transform hover:-translate-y-1"
+                {hasEvents ? (
+                    upcomingCards.map((event) => {
+                        const { month, day } = formatMonthDay(event.date);
+                        return (
+                            <article
+                                key={`${event.title || "event"}-${event.date || "date"}`}
+                                className="rounded-3xl overflow-hidden group transition-transform hover:-translate-y-1"
+                                style={{ background: "var(--faro-surface-container-low)" }}
+                            >
+                                <div className="h-52 relative overflow-hidden">
+                                    {event.img ? (
+                                        <Image
+                                            src={event.img}
+                                            alt={event.title || "Evento"}
+                                            fill
+                                            className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                        />
+                                    ) : (
+                                        <div
+                                            className="absolute inset-0"
+                                            style={{
+                                                background:
+                                                    "linear-gradient(135deg, var(--faro-primary-container), var(--faro-surface-container-high))",
+                                            }}
+                                        />
+                                    )}
+                                    {month || day ? (
+                                        <div
+                                            className="absolute top-4 right-4 p-3 rounded-2xl text-center min-w-[64px]"
+                                            style={{
+                                                background: "rgba(0,13,42,0.8)",
+                                                backdropFilter: "blur(12px)",
+                                            }}
+                                        >
+                                            {month ? (
+                                                <p
+                                                    className="text-[9px] font-black uppercase tracking-wider"
+                                                    style={{ color: "var(--faro-on-surface-variant)" }}
+                                                >
+                                                    {month}
+                                                </p>
+                                            ) : null}
+                                            {day ? (
+                                                <p
+                                                    className="text-xl font-black"
+                                                    style={{ color: "var(--faro-primary)" }}
+                                                >
+                                                    {day}
+                                                </p>
+                                            ) : null}
+                                        </div>
+                                    ) : null}
+                                </div>
+                                <div className="p-7">
+                                    <span
+                                        className="text-[10px] font-black uppercase tracking-widest mb-2 block"
+                                        style={{ color: "var(--faro-secondary)" }}
+                                    >
+                                        {event.category || "Evento"}
+                                    </span>
+                                    <h4
+                                        className="font-black text-lg mb-3 group-hover:opacity-80 transition-opacity"
+                                        style={{ color: "var(--faro-on-surface)" }}
+                                    >
+                                        {event.title || "Evento publicado"}
+                                    </h4>
+                                    <p
+                                        className="text-sm leading-relaxed line-clamp-2"
+                                        style={{ color: "var(--faro-on-surface-variant)" }}
+                                    >
+                                        {event.excerpt || event.location || "Contenido real desde el CMS"}
+                                    </p>
+                                </div>
+                            </article>
+                        );
+                    })
+                ) : (
+                    <div
+                        className="md:col-span-3 rounded-3xl p-10 text-center"
                         style={{ background: "var(--faro-surface-container-low)" }}
                     >
-                        <div className="h-52 relative overflow-hidden">
-                            <Image
-                                src={img || "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&q=80"}
-                                alt={title || "Evento"}
-                                fill
-                                className="object-cover transition-transform duration-500 group-hover:scale-110"
-                            />
-                            <div
-                                className="absolute top-4 right-4 p-3 rounded-2xl text-center min-w-[64px]"
-                                style={{
-                                    background: "rgba(0,13,42,0.8)",
-                                    backdropFilter: "blur(12px)",
-                                }}
-                            >
-                                <p
-                                    className="text-[9px] font-black uppercase tracking-wider"
-                                    style={{ color: "var(--faro-on-surface-variant)" }}
-                                >
-                                    {month}
-                                </p>
-                                <p
-                                    className="text-xl font-black"
-                                    style={{ color: "var(--faro-primary)" }}
-                                >
-                                    {day}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="p-7">
-                            <span
-                                className="text-[10px] font-black uppercase tracking-widest mb-2 block"
-                                style={{ color: "var(--faro-secondary)" }}
-                            >
-                                {tag}
-                            </span>
-                            <h4
-                                className="font-black text-lg mb-3 group-hover:opacity-80 transition-opacity"
-                                style={{ color: "var(--faro-on-surface)" }}
-                            >
-                                {title}
-                            </h4>
-                            <p
-                                className="text-sm leading-relaxed line-clamp-2"
-                                style={{ color: "var(--faro-on-surface-variant)" }}
-                            >
-                                {desc}
-                            </p>
-                        </div>
-                    </article>
-                ))}
+                        <p
+                            className="text-[10px] font-black uppercase tracking-[0.2em] mb-3"
+                            style={{ color: "var(--faro-on-surface-variant)" }}
+                        >
+                            Sin eventos publicados
+                        </p>
+                        <h3
+                            className="text-2xl font-black mb-2"
+                            style={{ color: "var(--faro-on-surface)" }}
+                        >
+                            El calendario aun no tiene contenido real
+                        </h3>
+                        <p className="text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>
+                            Cuando el CMS publique eventos, apareceran aqui sin tarjetas inventadas.
+                        </p>
+                    </div>
+                )}
             </div>
 
-            {/* ── CALENDARIO ──────────────────────────── */}
             <section className="mb-20">
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                     <div>
@@ -323,26 +406,26 @@ export default function EventosPage() {
                         className="inline-flex p-1 rounded-2xl"
                         style={{ background: "var(--faro-surface-container-high)" }}
                     >
-                        {["Semanal", "Mensual", "Anual"].map((v) => (
+                        {["Semanal", "Mensual", "Anual"].map((value) => (
                             <button
-                                key={v}
+                                key={value}
                                 className="px-6 py-2 rounded-2xl text-xs font-black tracking-widest uppercase transition-all"
                                 style={
-                                    v === "Mensual"
+                                    value === "Mensual"
                                         ? {
-                                            background: "var(--faro-primary)",
-                                            color: "var(--faro-on-primary)",
-                                        }
+                                              background: "var(--faro-primary)",
+                                              color: "var(--faro-on-primary)",
+                                          }
                                         : { color: "var(--faro-on-surface-variant)" }
                                 }
                             >
-                                {v}
+                                {value}
                             </button>
                         ))}
                     </div>
                 </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    {/* Calendar grid */}
                     <div
                         className="lg:col-span-8 rounded-3xl p-6 md:p-10"
                         style={{
@@ -386,30 +469,30 @@ export default function EventosPage() {
                                 HOY
                             </button>
                         </div>
-                        {/* Day headers */}
+
                         <div className="grid grid-cols-7 gap-1 mb-2">
-                            {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((d) => (
+                            {["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"].map((day) => (
                                 <div
-                                    key={d}
+                                    key={day}
                                     className="text-center py-2 text-[10px] font-black uppercase tracking-widest"
                                     style={{ color: "var(--faro-on-surface-variant)" }}
                                 >
-                                    {d}
+                                    {day}
                                 </div>
                             ))}
                         </div>
-                        {/* Days */}
+
                         <div className="grid grid-cols-7 gap-1">
-                            {calendarDays.map((day, i) => (
+                            {calendarDays.map((day, index) => (
                                 <div
-                                    key={i}
+                                    key={index}
                                     className="aspect-square p-1 flex flex-col items-center justify-between rounded-xl cursor-pointer transition-all hover:scale-105"
                                     style={
                                         day.n === 24 && !day.prev
                                             ? {
-                                                background: "rgba(44,96,157,0.2)",
-                                                border: "2px solid var(--faro-primary)",
-                                            }
+                                                  background: "rgba(44,96,157,0.2)",
+                                                  border: "2px solid var(--faro-primary)",
+                                              }
                                             : day.prev
                                             ? { opacity: 0.2 }
                                             : { background: "transparent" }
@@ -426,18 +509,17 @@ export default function EventosPage() {
                                     >
                                         {day.n}
                                     </span>
-                                    {(day as any).event && (
+                                    {day.event ? (
                                         <div
                                             className="w-1.5 h-1.5 rounded-full"
                                             style={{ background: "var(--faro-primary)" }}
                                         />
-                                    )}
+                                    ) : null}
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    {/* Sidebar upcoming */}
                     <div className="lg:col-span-4 space-y-5">
                         <div
                             className="rounded-3xl p-8"
@@ -454,38 +536,44 @@ export default function EventosPage() {
                                 Destacados
                             </h3>
                             <div className="space-y-5">
-                                {[
-                                    { tag: "Música • 12 JUN", title: "Festival FARO Sound", desc: "Música en vivo en Sede Jardín.", color: "var(--faro-secondary)" },
-                                    { tag: "Especial • 24 JUN", title: "Noche de Iluminación", desc: "Adoración y Palabra profética.", color: "var(--faro-primary)" },
-                                    { tag: "Semanal • Domingos", title: "Reuniones Generales", desc: "09:00, 11:00 y 18:00 hrs.", color: "var(--faro-on-surface-variant)" },
-                                ].map(({ tag, title, desc, color }) => (
-                                    <div key={title} className="flex gap-3 group cursor-pointer">
+                                {hasEvents ? (
+                                    parsedEvents.slice(0, 3).map((event) => (
                                         <div
-                                            className="w-2 shrink-0 rounded-full mt-1"
-                                            style={{ background: color, minHeight: "12px" }}
-                                        />
-                                        <div>
-                                            <p
-                                                className="text-[10px] font-black uppercase tracking-widest mb-0.5"
-                                                style={{ color }}
-                                            >
-                                                {tag}
-                                            </p>
-                                            <h4
-                                                className="text-sm font-black group-hover:opacity-70 transition-opacity"
-                                                style={{ color: "var(--faro-on-surface)" }}
-                                            >
-                                                {title}
-                                            </h4>
-                                            <p
-                                                className="text-xs line-clamp-1"
-                                                style={{ color: "var(--faro-on-surface-variant)" }}
-                                            >
-                                                {desc}
-                                            </p>
+                                            key={`${event.title || "event"}-${event.date || "date"}`}
+                                            className="flex gap-3 group cursor-pointer"
+                                        >
+                                            <div
+                                                className="w-2 shrink-0 rounded-full mt-1"
+                                                style={{ background: "var(--faro-primary)", minHeight: "12px" }}
+                                            />
+                                            <div>
+                                                <p
+                                                    className="text-[10px] font-black uppercase tracking-widest mb-0.5"
+                                                    style={{ color: "var(--faro-primary)" }}
+                                                >
+                                                    {event.category || "Evento"}
+                                                    {event.date ? ` • ${event.date}` : ""}
+                                                </p>
+                                                <h4
+                                                    className="text-sm font-black group-hover:opacity-70 transition-opacity"
+                                                    style={{ color: "var(--faro-on-surface)" }}
+                                                >
+                                                    {event.title || "Evento publicado"}
+                                                </h4>
+                                                <p
+                                                    className="text-xs line-clamp-1"
+                                                    style={{ color: "var(--faro-on-surface-variant)" }}
+                                                >
+                                                    {event.excerpt || event.location || "Contenido real desde el CMS"}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))
+                                ) : (
+                                    <p className="text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>
+                                        Sin destacados publicados todavia.
+                                    </p>
+                                )}
                             </div>
                             <button
                                 className="w-full mt-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border transition-all hover:scale-105"
@@ -519,7 +607,7 @@ export default function EventosPage() {
                                     className="font-black text-sm"
                                     style={{ color: "var(--faro-on-surface)" }}
                                 >
-                                    ¿Quieres recordatorios?
+                                    Quieres recordatorios?
                                 </h4>
                                 <p
                                     className="text-xs"
@@ -535,4 +623,3 @@ export default function EventosPage() {
         </main>
     );
 }
-

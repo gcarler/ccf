@@ -10,14 +10,10 @@ import {
     Smartphone, 
     Zap, 
     History, 
-    Plus, 
     Filter, 
     ChevronRight, 
-    MoreHorizontal,
     Bot,
     Sparkles,
-    Calendar,
-    Layout,
     CheckCircle2,
     Clock,
     AlertCircle,
@@ -29,9 +25,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import WorkspaceDrawer from '@/components/WorkspaceDrawer';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useWikiDocument } from '@/hooks/useWikiDocument';
 import clsx from 'clsx';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
@@ -39,6 +33,38 @@ import CrmShell from '@/components/crm/CrmShell';
 
 type Channel = 'whatsapp' | 'email' | 'sms';
 const STATUS_PROGRESS: Record<string, number> = { failed: 20, sent: 75, delivered: 100 };
+
+type MessagingHistoryRow = {
+    id: number;
+    name: string;
+    campaign_name?: string;
+    channel: Channel;
+    status: string;
+    count: number;
+    date: string;
+    target_count: number;
+    delivered_count: number;
+    failed_count: number;
+};
+
+function normalizeHistoryRow(row: any): MessagingHistoryRow {
+    const sentAt = row?.sent_at ? new Date(row.sent_at) : null;
+    const targetCount = Number(row?.target_count ?? row?.count ?? 1);
+    const deliveredCount = Number(row?.delivered_count ?? (row?.status === 'failed' ? 0 : targetCount));
+    const failedCount = Number(row?.failed_count ?? (row?.status === 'failed' ? targetCount : 0));
+    return {
+        id: Number(row?.id ?? 0),
+        name: row?.name ?? row?.campaign_name ?? row?.member_name ?? `Mensaje #${row?.id ?? 0}`,
+        campaign_name: row?.campaign_name,
+        channel: (String(row?.channel || 'whatsapp').toLowerCase() as Channel),
+        status: String(row?.status || 'sent'),
+        count: Number(row?.count ?? row?.target_count ?? 1),
+        date: sentAt && !Number.isNaN(sentAt.getTime()) ? sentAt.toLocaleString() : String(row?.date || 'Sin fecha'),
+        target_count: targetCount,
+        delivered_count: deliveredCount,
+        failed_count: failedCount,
+    };
+}
 
 export default function MessagingCampaignCenter() {
     const router = useRouter();
@@ -49,39 +75,26 @@ export default function MessagingCampaignCenter() {
     const [message, setMessage] = useState('');
     const [segments, setSegments] = useState<string[]>([]);
     const [history, setHistory] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
     const [isSending, setIsSending] = useState(false);
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_messaging_view', 'grid'));
-    const [wikiNotes, setWikiNotes] = useState('');
+    const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('crm_messaging_wiki_notes', {
+        title: 'Wiki de mensajeria CRM',
+    });
 
     const fetchHistory = useCallback(async () => {
         if (!token) return;
-        setLoading(true);
         try {
             const data = await apiFetch('/crm/messaging/history', { token });
-            setHistory(Array.isArray(data) ? data : []);
+            setHistory(Array.isArray(data) ? data.map(normalizeHistoryRow) : []);
         } catch (err) {
-            // Mock history for visual demo
-            setHistory([
-                { id: 1, name: 'Bienvenida Nuevos', channel: 'whatsapp', status: 'sent', count: 45, date: 'Hace 2 horas' },
-                { id: 2, name: 'Recordatorio Ofrenda', channel: 'email', status: 'delivered', count: 128, date: 'Ayer' },
-                { id: 3, name: 'Alerta Evento Jóvenes', channel: 'sms', status: 'failed', count: 12, date: 'Hace 3 días' }
-            ]);
-        } finally {
-            setLoading(false);
+            console.error(err);
+            setHistory([]);
+            addToast('No se pudo cargar el historial de mensajeria', 'error');
         }
-    }, [token]);
+    }, [addToast, token]);
 
     useEffect(() => { fetchHistory(); }, [fetchHistory]);
 
-    useEffect(() => {
-        const saved = localStorage.getItem('crm_messaging_wiki_notes');
-        if (saved) setWikiNotes(saved);
-    }, []);
-
-    useEffect(() => {
-        localStorage.setItem('crm_messaging_wiki_notes', wikiNotes);
-    }, [wikiNotes]);
 
     const handleSendCampaign = async () => {
         if (!message || !campaignName || segments.length === 0) {
@@ -94,7 +107,7 @@ export default function MessagingCampaignCenter() {
                 method: 'POST',
                 token,
                 body: {
-                    name: campaignName,
+                    campaign_name: campaignName,
                     channel,
                     content: message,
                     target_segments: segments
@@ -137,7 +150,7 @@ export default function MessagingCampaignCenter() {
     return (
         <CrmShell
             breadcrumbs={[
-                { label: 'CRM Pastoral', icon: Users },
+                { label: 'Consolidación', icon: Users },
                 { label: 'Centro de Mensajería', icon: Send }
             ]}
             viewOptions={['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki']}
@@ -161,7 +174,7 @@ export default function MessagingCampaignCenter() {
                             >
                                 <div>
                                     <p className="text-sm font-black text-slate-800 dark:text-slate-100">{item.name}</p>
-                                    <p className="text-[11px] text-slate-500">{item.channel} · {item.date}</p>
+                                    <p className="text-[11px] text-slate-500">{item.channel} · {item.date} · {item.count} contactos</p>
                                 </div>
                                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{item.status}</span>
                             </div>
@@ -193,7 +206,7 @@ export default function MessagingCampaignCenter() {
                                         <td className="px-4 py-3 text-xs text-slate-500 uppercase">{item.channel}</td>
                                         <td className="px-4 py-3 text-xs text-slate-500">{item.date}</td>
                                         <td className="px-4 py-3 text-xs font-black uppercase text-slate-500">{item.status}</td>
-                                        <td className="px-4 py-3 text-xs text-slate-500">{item.count}</td>
+                                        <td className="px-4 py-3 text-xs text-slate-500">{item.target_count}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -217,7 +230,7 @@ export default function MessagingCampaignCenter() {
                                             className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3 hover:border-blue-500/30 transition-all cursor-pointer"
                                         >
                                             <p className="text-xs font-black text-slate-800 dark:text-slate-100">{item.name}</p>
-                                            <p className="text-[10px] text-slate-400">{item.date} · {item.count} envíos</p>
+                                            <p className="text-[10px] text-slate-400">{item.date} · {item.target_count} envíos</p>
                                         </div>
                                     ))}
                                 </div>
@@ -239,7 +252,7 @@ export default function MessagingCampaignCenter() {
                                             className="rounded-xl border border-slate-200 dark:border-white/10 p-3 hover:border-blue-500/30 transition-all cursor-pointer bg-white dark:bg-white/5"
                                         >
                                             <p className="text-sm font-black text-slate-800 dark:text-slate-100">{item.name}</p>
-                                            <p className="text-[10px] text-slate-400">{item.channel} · {item.status}</p>
+                                            <p className="text-[10px] text-slate-400">{item.channel} · {item.status} · {item.target_count}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -255,7 +268,7 @@ export default function MessagingCampaignCenter() {
                             <div 
                                 key={item.id} 
                                 onClick={() => router.push(`/crm/messaging/${item.id}`)}
-                                className="space-y-1 cursor-pointer group p-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl transition-all"
+                                        className="space-y-1 cursor-pointer group p-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl transition-all"
                             >
                                 <div className="flex items-center justify-between text-[11px]">
                                     <span className="font-bold text-slate-700 dark:text-slate-300">{item.name}</span>
@@ -365,7 +378,7 @@ export default function MessagingCampaignCenter() {
                                 <SegmentTag label="Miembros Activos" active={segments.includes('active')} onClick={() => toggleSegment('active')} />
                                 <SegmentTag label="Nuevos Visitantes" active={segments.includes('new')} onClick={() => toggleSegment('new')} />
                                 <SegmentTag label="Pastores & Staff" active={segments.includes('staff')} onClick={() => toggleSegment('staff')} />
-                                <SegmentTag label="Casas de Gloria" active={segments.includes('groups')} onClick={() => toggleSegment('groups')} />
+                                <SegmentTag label="Faros en Casa" active={segments.includes('groups')} onClick={() => toggleSegment('groups')} />
                                 <SegmentTag label="Baja Asistencia" active={segments.includes('low')} onClick={() => toggleSegment('low')} />
                                 <SegmentTag label="Donantes Pro" active={segments.includes('vip')} onClick={() => toggleSegment('vip')} />
                             </div>
@@ -373,8 +386,8 @@ export default function MessagingCampaignCenter() {
                                 <div className="flex items-center gap-4">
                                     <div className="size-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600"><Users size={20} /></div>
                                     <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Total Estimado</p>
-                                        <h4 className="text-xl font-black text-slate-900 dark:text-white">1,450 <span className="text-[10px] text-slate-400 font-bold tracking-normal uppercase">Contactos</span></h4>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Segmentos Seleccionados</p>
+                                        <h4 className="text-xl font-black text-slate-900 dark:text-white">{segments.length} <span className="text-[10px] text-slate-400 font-bold tracking-normal uppercase">Segmentos</span></h4>
                                     </div>
                                 </div>
                                 <Target size={20} className="text-blue-500" />

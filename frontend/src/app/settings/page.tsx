@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import {
     Settings, User, Bell, Lock, Palette, Globe, Shield,
     ChevronRight, Moon, Sun, Monitor, Check,
-    Languages, Keyboard, Zap, CreditCard, LogOut, Trash2
+    Languages, Keyboard, Zap, LogOut, Trash2
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -43,7 +43,7 @@ const SETTINGS_GROUPS = [
 
 const COLOR_MAP: Record<string, string> = {
     blue: "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400",
-    purple: "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400",
+    purple: "bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400",
     emerald: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
 };
 

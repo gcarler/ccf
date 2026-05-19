@@ -1,21 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { 
     LayoutDashboard, 
     CheckCircle2, 
-    Clock, 
-    User, 
     Calendar, 
     MessageSquare, 
-    Paperclip,
     MoreVertical,
-    ArrowLeft,
     Play,
     Pause,
-    Save,
-    Flag,
     Sparkles
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
@@ -29,7 +23,6 @@ import clsx from 'clsx';
 export default function TaskDetailPage() {
     const params = useParams();
     const id = params?.id as string;
-    const router = useRouter();
     const { token } = useAuth();
     
     const [task, setTask] = useState<any>(null);

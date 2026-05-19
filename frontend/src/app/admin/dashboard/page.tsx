@@ -18,11 +18,8 @@ import {
     Target,
     Layers,
     Calendar,
-    ArrowUpRight,
     PieChart,
     ChevronRight,
-    Search,
-    BrainCircuit,
     Sparkles
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -44,7 +41,7 @@ type AcademyMetrics = {
 };
 
 export default function AdminDashboard() {
-    const { isAuthenticated, user, token } = useAuth();
+    const { isAuthenticated, token } = useAuth();
     const router = useRouter();
     const [stats, setStats] = useState<AdminStats>({ users: 0, donations: 0, attendance: 24 });
     const [academy, setAcademy] = useState<AcademyMetrics | null>(null);
@@ -85,7 +82,7 @@ export default function AdminDashboard() {
                 description="Monitorea el crecimiento espiritual y académico de la comunidad en tiempo real. Optimus Brain está analizando las tendencias de participación."
                 tags={['Dashboard', 'Real-time', 'BI']}
                 watchers={['Admin Team', 'Optimus Brain']}
-                primaryAction={{ label: 'Nueva Campaña', icon: Zap, onClick: () => {} }}
+                primaryAction={{ label: 'Nueva Campaña', icon: Zap, onClick: () => router.push('/admin/announcements/new') }}
                 secondaryAction={{ label: 'Ver Reportes', icon: TrendingUp, onClick: () => router.push('/admin/reports') }}
             />
 

@@ -80,6 +80,7 @@ export interface CmsSection {
   props_json: Record<string, unknown>;
   sort_order: number;
   is_visible: boolean;
+  status: "active" | "archived" | string;
   created_at: string;
   updated_at: string;
 }
@@ -91,6 +92,20 @@ export interface CmsPageVersion {
   snapshot_json: Record<string, unknown>;
   notes: string | null;
   created_by: number | null;
+  created_at: string;
+}
+
+export interface CmsPublishLog {
+  id: number;
+  site_id: number;
+  page_id: number | null;
+  entity_type: string;
+  entity_id: number | null;
+  action: string;
+  from_status: string | null;
+  to_status: string | null;
+  actor_user_id: number | null;
+  metadata_json: Record<string, unknown>;
   created_at: string;
 }
 

@@ -4,7 +4,6 @@ import React from 'react';
 import { 
     X as CloseIcon, 
     Calendar, 
-    Clock, 
     Music, 
     Baby, 
     Coffee, 
@@ -33,7 +32,7 @@ const iconMap: Record<string, any> = {
 
 const colorMap: Record<string, string> = {
     'Alabanza': 'bg-blue-600',
-    'Generación G': 'bg-purple-600',
+    'Generación G': 'bg-sky-600',
     'Hospitalidad': 'bg-amber-500',
     'Oración': 'bg-indigo-600',
     'Seguridad': 'bg-slate-800',

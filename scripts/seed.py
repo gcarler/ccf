@@ -29,14 +29,14 @@ def seed():
     ]
 
     for t in testimonials:
-        res = requests.post(f"{BASE_URL}/testimonials/", json=t)
-        if res.status_code == 200:
+        res = requests.post(f"{BASE_URL}/api/cms/testimonials", json=t)
+        if res.status_code in (200, 201):
             print(f"Testimonial created: {res.json()['id']}")
             
             # Auto-approve one for demo
             if "Interfaz" in t["content"]:
                 t_id = res.json()["id"]
-                requests.patch(f"{BASE_URL}/admin/testimonials/{t_id}", json={"is_approved": True})
+                requests.patch(f"{BASE_URL}/api/admin/testimonials/{t_id}", json={"is_approved": True})
                 print(f"Testimonial {t_id} auto-approved.")
 
 if __name__ == "__main__":

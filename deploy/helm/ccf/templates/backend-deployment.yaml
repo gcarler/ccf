@@ -30,6 +30,23 @@ spec:
             - name: {{ $key }}
               value: "{{ $value }}"
             {{- end }}
+            {{- $secretName := .Values.backend.secrets.existingSecret }}
+            {{- if .Values.backend.secrets.create }}
+            {{- $secretName = printf "%s-backend-secrets" (include "ccf.fullname" .) }}
+            {{- end }}
+            {{- if $secretName }}
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName | quote }}
+                  key: {{ .Values.backend.secrets.secretKeyKey | quote }}
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName | quote }}
+                  key: {{ .Values.backend.secrets.encryptionKeyKey | quote }}
+                  optional: true
+            {{- end }}
           ports:
             - containerPort: 8000
           readinessProbe:

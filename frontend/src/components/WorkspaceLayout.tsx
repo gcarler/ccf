@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import WorkspaceMiniSidebar from '@/components/WorkspaceMiniSidebar';
@@ -8,213 +8,24 @@ import MeshChat from '@/components/ui/MeshChat';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Tooltip from '@/components/ui/Tooltip';
 import { useAuth } from '@/context/AuthContext';
-import {
-    Bell, Layout,
-    ChevronLeft, Users, 
-    Home, Inbox, CheckSquare, Folder, Calendar, LayoutDashboard,
-    FileText, MessageCircle, ShieldCheck, Zap, Bot, Settings,
-    BookOpen, Link2, UserPlus, Heart, Scan, PieChart, Contact, KanbanSquare, Mail, ChevronRight
-} from 'lucide-react';
+import { Bell, Bot, ChevronLeft, ChevronRight, Maximize2, Minimize2 } from 'lucide-react';
 import clsx from 'clsx';
-import { useTheme } from '@/app/theme/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { useCreation } from '@/context/CreationContext';
 import UniversalCreationModal from '@/components/ui/UniversalCreationModal';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { useRegisterCommands } from '@/context/CommandCenterContext';
 
-// ── Layer Context (importamos el provider aquí) ──────────────────
-import { SidebarLayerProvider, useSidebarLayers } from '@/context/SidebarLayerContext';
+// â”€â”€ Layer Context (importamos el provider aquÃ­) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+import { useSidebarLayers } from '@/context/SidebarLayerContext';
+import { MODULE_CONFIGS } from '@/components/workspace/moduleConfigs';
 
-// ── Module configs (Sidebar 2 sections) ─────────────────────────
-const MODULE_CONFIGS: Record<string, any> = {
-    projects: {
-        title: "Portfolio",
-        sections: [
-            {
-                title: "Gestión",
-                items: [
-                    { id: 'projects-home',  label: 'Portfolio',   href: '/projects',  icon: Layout },
-                    { id: 'projects-tasks', label: 'Mis Tareas',  href: '/tasks',     icon: CheckSquare },
-                    { id: 'projects-team',  label: 'Equipo',      href: '/projects/team', icon: Users },
-                ]
-            },
-            {
-                title: "Herramientas",
-                items: [
-                    { id: 'projects-calendar', label: 'Calendario',      href: '/calendar',              icon: Calendar },
-                    { id: 'projects-auto',     label: 'Automatizaciones', href: '/projects/automations',  icon: Zap },
-                ]
-            }
-        ]
-    },
-    tasks: {
-        title: "Productividad",
-        sections: [
-            {
-                title: "Mis espacios",
-                items: [
-                    { id: 'tasks-all',      label: 'Todas las tareas', href: '/tasks',    icon: CheckSquare },
-                    { id: 'tasks-calendar', label: 'Calendario',       href: '/calendar', icon: Calendar },
-                ]
-            }
-        ]
-    },
-    calendar: {
-        title: "Calendario",
-        sections: [
-            {
-                title: "Vistas",
-                items: [
-                    { id: 'cal-month', label: 'Por Mes',  href: '/calendar', icon: Calendar },
-                ]
-            }
-        ]
-    },
-    crm: {
-        title: "Comunidad CRM",
-        sections: [
-            {
-                title: "Actividad y Métricas",
-                items: [
-                    { id: 'crm-analytics', label: 'Panel Analítico', href: '/crm/analytics', icon: PieChart }
-                ]
-            },
-            {
-                title: "Directorio Pastoral",
-                items: [
-                    { id: 'crm-members',    label: 'Miembros',          href: '/crm/members',    icon: Users },
-                    { id: 'crm-groups',     label: 'Casas de Gloria',   href: '/crm/groups',     icon: Home },
-                    { id: 'crm-contacts',   label: 'Contactos/Leads',   href: '/crm/contacts',   icon: UserPlus },
-                    { id: 'crm-volunteers', label: 'Voluntariado',      href: '/crm/volunteers', icon: ShieldCheck },
-                ]
-            },
-            {
-                title: "Consolidación",
-                items: [
-                    { id: 'crm-pipeline',   label: 'Pipeline pastoral', href: '/crm/pipeline',   icon: KanbanSquare },
-                    { id: 'crm-counseling', label: 'Consejería',        href: '/crm/counseling', icon: Heart },
-                    { id: 'crm-prayers',    label: 'Muro de Oración',   href: '/crm/prayers',    icon: MessageCircle },
-                    { id: 'crm-tasks',      label: 'Tareas Asignadas',  href: '/crm/tasks',      icon: CheckSquare },
-                ]
-            },
-            {
-                title: "Herramientas",
-                items: [
-                    { id: 'crm-events',    label: 'Eventos',       href: '/crm/events',    icon: Calendar },
-                    { id: 'crm-scanner',   label: 'Escáner ASST',  href: '/crm/scanner',   icon: Scan },
-                    { id: 'crm-messaging', label: 'Mensajería',    href: '/crm/messaging', icon: Mail },
-                    { id: 'crm-mycard',    label: 'Mi Carnet',     href: '/crm/my-card',   icon: Contact },
-                    { id: 'crm-settings',  label: 'Configuración', href: '/crm/settings',  icon: Settings },
-                ]
-            }
-        ]
-    },
-    academy: {
-        title: "Academia",
-        sections: [
-            {
-                title: "Estudio",
-                items: [
-                    { id: 'academy-home',    label: 'Inicio',   href: '/academy',         icon: BookOpen },
-                    { id: 'academy-courses', label: 'Cursos',   href: '/academy/courses',  icon: BookOpen },
-                    { id: 'academy-profile', label: 'Mi cuenta', href: '/academy/account', icon: Contact },
-                ]
-            }
-        ]
-    },
-    finances: {
-        title: "Finanzas",
-        sections: [
-            {
-                title: "Reportes",
-                items: [
-                    { id: 'fin-home',         label: 'Resumen',        href: '/finances',              icon: LayoutDashboard },
-                    { id: 'fin-transparency', label: 'Transparencia',   href: '/finances/transparency', icon: FileText },
-                ]
-            }
-        ]
-    },
-    inbox: {
-        title: "Bandeja",
-        sections: [
-            {
-                title: "Filtros",
-                items: [
-                    { id: 'inbox-all',      label: 'Todo',       href: '/inbox',           icon: Inbox },
-                    { id: 'inbox-mentions', label: 'Menciones',  href: '/inbox#menciones', icon: MessageCircle },
-                    { id: 'inbox-tasks',    label: 'Tareas',     href: '/inbox#tareas',    icon: CheckSquare },
-                    { id: 'inbox-ai',       label: 'MESH AI',    href: '/inbox#ai',        icon: Bot },
-                ]
-            }
-        ]
-    },
-    cms: {
-        title: "Sitio Web",
-        sections: [
-            {
-                title: "Contenido",
-                items: [
-                    { id: 'cms-home',         label: 'Inicio CMS',      href: '/cms',               icon: LayoutDashboard },
-                    { id: 'cms-pages',        label: 'Páginas',         href: '/cms/pages',         icon: FileText },
-                    { id: 'cms-menus',        label: 'Menús del sitio', href: '/cms/menus',         icon: Link2 },
-                    { id: 'cms-testimonials', label: 'Testimonios',      href: '/cms/testimonials',  icon: MessageCircle },
-                    { id: 'cms-content',      label: 'Landing Hero',     href: '/cms/content',       icon: FileText },
-                    { id: 'cms-events',       label: 'Eventos públicos', href: '/cms/events',        icon: Calendar },
-                ]
-            }
-        ]
-    },
-    wiki: {
-        title: "Conocimiento",
-        sections: [
-            {
-                title: "Espacios",
-                items: [
-                    { id: 'wiki-home',      label: 'Inicio Wiki',   href: '/wiki',         icon: LayoutDashboard },
-                    { id: 'wiki-docs',      label: 'Documentos',    href: '/wiki/docs',    icon: FileText },
-                ]
-            }
-        ]
-    },
-    groups: {
-        title: "Comunidad",
-        sections: [
-            {
-                title: "Células",
-                items: [
-                    { id: 'groups-all',    label: 'Casas de Bendición', href: '/groups',        icon: Home },
-                    { id: 'groups-family', label: 'Núcleos Familiares', href: '/groups/family',  icon: Users },
-                    { id: 'groups-crm',   label: 'Directorio CRM',     href: '/crm',            icon: ShieldCheck },
-                ]
-            }
-        ]
-    },
-    'spiritual-life': {
-        title: "Vida Espiritual",
-        sections: [
-            {
-                title: "Mi Caminar",
-                items: [
-                    { id: 'sl-home',  label: 'Panel Espiritual',  href: '/spiritual-life',              icon: BookOpen },
-                    { id: 'sl-tl',    label: 'Línea de Tiempo',   href: '/spiritual-life/timeline',     icon: Calendar },
-                    { id: 'sl-certs', label: 'Mis Certificados',  href: '/spiritual-life/certificates', icon: FileText },
-                ]
-            },
-            {
-                title: "Formación",
-                items: [
-                    { id: 'sl-academy', label: 'Academia CCF', href: '/academy', icon: BookOpen },
-                ]
-            }
-        ]
-    },
-};
-
-// ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // PUBLIC API: WorkspaceLayout wraps children with the layer provider
-// ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function WorkspaceLayout({
     children,
     sidebarTitle: manualTitle,
@@ -240,32 +51,54 @@ export default function WorkspaceLayout({
     );
 }
 
-// ─────────────────────────────────────────────────────────────────
-// INNER LAYOUT — has access to SidebarLayerContext
-// ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// INNER LAYOUT â€” has access to SidebarLayerContext
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function WorkspaceLayoutInner({
     children, manualTitle, manualSections,
     allowedRoles, depth, onBack, customSidebar,
     // Toolbar props
     breadcrumbs, viewType, setViewType, availableViews,
-    rightActions, leftActions, onSearch, onFilter, onAdd, onAddOption
+    rightActions, leftActions, onSearch, onFilter, onColumns, onGroup, onMore, onAdd, onAddOption
 }: any) {
     const { user } = useAuth();
     const pathname = usePathname();
+    const moduleKey = pathname?.split('/')[1] || 'default';
     const [showInbox, setShowInbox] = useState(false);
     const [showChat, setShowChat] = useState(false);
     const [isMounted, setIsReady] = useState(false);
+    const [isFocusMode, setIsFocusMode] = useState(false);
     const { isModalOpen, closeModal, defaultType } = useCreation();
+    const previousLayerStateRef = useRef<{ s1: boolean; s2: boolean } | null>(null);
 
-    // ── Layer state ──────────────────────────────────────────────
-    const { layers, openLayer } = useSidebarLayers();
+    // â”€â”€ Layer state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const { layers, openLayer, closeLayer } = useSidebarLayers();
 
     // S1 visibility is controlled by layers.S1 (always true, but kept in sync)
     const s1Visible = layers.S1;
 
     useEffect(() => {
+        const savedS1 = localStorage.getItem('workspace:s1') !== 'hidden';
+        const savedS2 = localStorage.getItem(`workspace:s2:${moduleKey}`) !== 'hidden';
+        const savedFocusMode = localStorage.getItem(`workspace:focus:${moduleKey}`) === '1';
+
+        if (savedS1) openLayer('S1');
+        else closeLayer('S1');
+
+        if (savedS2) openLayer('S2');
+        else closeLayer('S2');
+
+        previousLayerStateRef.current = null;
+        setIsFocusMode(savedFocusMode);
+
+        if (savedFocusMode) {
+            previousLayerStateRef.current = { s1: savedS1, s2: savedS2 };
+            closeLayer('S1');
+            closeLayer('S2');
+        }
+
         setIsReady(true);
-    }, []);
+    }, [closeLayer, moduleKey, openLayer]);
 
     const moduleContext = useMemo(() => {
         const root = pathname?.split('/')[1] || '';
@@ -274,25 +107,81 @@ function WorkspaceLayoutInner({
 
     const displayTitle = manualTitle || moduleContext.title;
     const displaySections = manualSections || moduleContext.sections;
-
-    // Toggle S2 between full and hidden. Mini mode is now managed manually via dragging.
-    const s2LocalKey = `s2mode_${pathname?.split('/')[1] || 'default'}`;
-    const [s2DetailMode, setS2DetailMode] = useState<'full' | 'hidden'>(() => {
-        if (typeof window === 'undefined') return 'full';
-        const saved = localStorage.getItem(s2LocalKey);
-        return (saved === 'hidden' ? 'hidden' : 'full');
-    });
+    const role = (user?.role || '').toLowerCase();
+    const canAccessEvangelism = role === 'admin' || role === 'pastor';
+    const filteredDisplaySections = useMemo(() => {
+        if (canAccessEvangelism) return displaySections;
+        if (!Array.isArray(displaySections)) return displaySections;
+        return displaySections
+            .map((section: any) => ({
+                ...section,
+                items: Array.isArray(section?.items)
+                    ? section.items.filter((item: any) => {
+                        const href = String(item?.href || '');
+                        return !href.startsWith('/evangelism');
+                    })
+                    : section?.items,
+            }))
+            .filter((section: any) => !Array.isArray(section?.items) || section.items.length > 0);
+    }, [canAccessEvangelism, displaySections]);
 
     const cycleS2 = useCallback(() => {
-        setS2DetailMode(m => {
-            const next = m === 'full' ? 'hidden' : 'full';
-            localStorage.setItem(s2LocalKey, next);
+        if (layers.S2) closeLayer('S2');
+        else openLayer('S2');
+    }, [closeLayer, layers.S2, openLayer]);
+
+    const toggleFocusMode = useCallback(() => {
+        setIsFocusMode((enabled) => {
+            const next = !enabled;
+
+            if (next) {
+                previousLayerStateRef.current = { s1: layers.S1, s2: layers.S2 };
+                closeLayer('S1');
+                closeLayer('S2');
+            } else {
+                const previous = previousLayerStateRef.current;
+                if (previous?.s1) openLayer('S1');
+                else closeLayer('S1');
+                if (previous?.s2) openLayer('S2');
+                else closeLayer('S2');
+                previousLayerStateRef.current = null;
+            }
+
+            localStorage.setItem(`workspace:focus:${moduleKey}`, next ? '1' : '0');
             return next;
         });
-    }, [s2LocalKey]);
+    }, [closeLayer, layers.S1, layers.S2, moduleKey, openLayer]);
+
+    useEffect(() => {
+        if (!isMounted || isFocusMode) return;
+        localStorage.setItem('workspace:s1', layers.S1 ? 'visible' : 'hidden');
+        localStorage.setItem(`workspace:s2:${moduleKey}`, layers.S2 ? 'visible' : 'hidden');
+    }, [isFocusMode, isMounted, layers.S1, layers.S2, moduleKey]);
+
+    useRegisterCommands(`workspace-${moduleKey}`, [
+        {
+            id: `workspace-${moduleKey}-focus`,
+            label: isFocusMode ? 'Salir de modo enfoque' : 'Entrar en modo enfoque',
+            description: 'Oculta barras laterales para trabajar a pantalla completa',
+            group: 'Workspace',
+            action: toggleFocusMode,
+        },
+        {
+            id: `workspace-${moduleKey}-toggle-s1`,
+            label: layers.S1 ? 'Ocultar navegacion principal' : 'Mostrar navegacion principal',
+            group: 'Workspace',
+            action: () => (layers.S1 ? closeLayer('S1') : openLayer('S1')),
+        },
+        {
+            id: `workspace-${moduleKey}-toggle-s2`,
+            label: layers.S2 ? 'Ocultar panel de modulo' : 'Mostrar panel de modulo',
+            group: 'Workspace',
+            action: cycleS2,
+        },
+    ]);
 
     // Resizing logic for S2
-    const minS2Width = 64; // Permite reducirse a sólo los iconos (64px)
+    const minS2Width = 64; // Permite reducirse a sÃ³lo los iconos (64px)
     const snapThreshold = 130; // Debajo de esto se 'snappea' a 64px
     const maxS2Width = 480;
 
@@ -350,8 +239,8 @@ function WorkspaceLayoutInner({
         e.preventDefault();
     };
 
-    const isMiniSidebar = s2DetailMode === 'full' && s2WidthNum <= snapThreshold;
-    const currentS2Width = s2DetailMode === 'full' ? `${s2WidthNum}px` : '0px';
+    const isMiniSidebar = layers.S2 && s2WidthNum <= snapThreshold;
+    const currentS2Width = layers.S2 ? `${s2WidthNum}px` : '0px';
 
     if (!isMounted) return <div className="h-screen w-full bg-white dark:bg-[#111213]" />;
 
@@ -365,6 +254,20 @@ function WorkspaceLayoutInner({
             <ThemeToggle variant="pill" />
 
             <button
+                onClick={toggleFocusMode}
+                className={clsx(
+                    "p-2 rounded-lg transition-all",
+                    isFocusMode
+                        ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
+                        : "text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-white/5"
+                )}
+                aria-label={isFocusMode ? "Salir de modo enfoque" : "Entrar en modo enfoque"}
+                title={isFocusMode ? "Salir de modo enfoque" : "Modo enfoque"}
+            >
+                {isFocusMode ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
+            </button>
+
+            <button
                 onClick={() => setShowInbox(!showInbox)}
                 className="p-2 text-slate-400 hover:text-blue-600 relative rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
                 aria-label="Notificaciones"
@@ -375,7 +278,7 @@ function WorkspaceLayoutInner({
 
             <div className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-2" />
 
-            {/* User chip — premium */}
+            {/* User chip â€” premium */}
             <button className="flex items-center gap-2 h-9 pl-2.5 pr-1 bg-slate-50 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.07] rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all group">
                 <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors max-w-[80px] truncate">
                     {displayName}
@@ -411,7 +314,7 @@ function WorkspaceLayoutInner({
                             className="flex shrink-0 z-50 h-screen py-[10vh] pl-4"
                             style={{ filter: 'drop-shadow(8px 0 24px rgba(0,0,0,0.15))' }}
                         >
-                            <WorkspaceMiniSidebar onHide={() => {}} />
+                            <WorkspaceMiniSidebar onHide={() => closeLayer('S1')} />
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -429,22 +332,22 @@ function WorkspaceLayoutInner({
                             }}
                         >
                             <div className="w-full h-full overflow-hidden" style={{
-                                boxShadow: s2DetailMode !== 'hidden'
+                                boxShadow: layers.S2
                                     ? '4px 0 16px rgba(0,0,0,0.06), 1px 0 4px rgba(0,0,0,0.04)'
                                     : 'none',
                             }}>
                                 {customSidebar || (
                                 <WorkspaceMainSidebar
                                         title={displayTitle}
-                                        sections={displaySections}
+                                        sections={filteredDisplaySections}
                                         isMini={isMiniSidebar}
                                         onToggle={cycleS2}
-                                        isCollapsed={s2DetailMode !== 'full'}
+                                        isCollapsed={!layers.S2}
                                     />
                                 )}
                             </div>
 
-                            {s2DetailMode === 'full' && (
+                            {layers.S2 && (
                                 <div
                                     className="absolute top-0 right-[-3px] w-1.5 h-full cursor-col-resize z-50 group flex items-center justify-center"
                                     onMouseDown={handleMouseDownS2}
@@ -459,7 +362,7 @@ function WorkspaceLayoutInner({
 
                         <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#141517] shadow-2xl relative z-10 border-l border-slate-100 dark:border-white/5 overflow-hidden">
 
-                            {/* ── UNIFIED TOOLBAR / HEADER ───────────────────────── */}
+                            {/* â”€â”€ UNIFIED TOOLBAR / HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                             {breadcrumbs ? (
                                 <WorkspaceToolbar
                                     breadcrumbs={breadcrumbs}
@@ -487,6 +390,9 @@ function WorkspaceLayoutInner({
                                     }
                                     onSearch={onSearch}
                                     onFilter={onFilter}
+                                    onColumns={onColumns}
+                                    onGroup={onGroup}
+                                    onMore={onMore}
                                     onAdd={onAdd}
                                     onAddOption={onAddOption}
                                 />
@@ -514,7 +420,9 @@ function WorkspaceLayoutInner({
                             )}
 
                             <div className="flex-1 overflow-hidden relative">
-                                {children}
+                                <ErrorBoundary moduleName={displayTitle}>
+                                    {children}
+                                </ErrorBoundary>
                             </div>
                         </div>
                     </div>
@@ -528,7 +436,7 @@ function WorkspaceLayoutInner({
                         whileHover={{ scale: 1.1, rotate: 5 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => setShowChat(true)}
-                        className="fixed bottom-8 right-8 z-[500] size-14 rounded-[1.5rem] bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-2xl shadow-purple-500/40 flex items-center justify-center border border-white/20 group"
+                        className="fixed bottom-8 right-8 z-[500] size-14 rounded-[1.5rem] bg-gradient-to-tr from-sky-600 to-indigo-600 text-white shadow-2xl shadow-sky-500/40 flex items-center justify-center border border-white/20 group"
                         aria-label="Abrir MESH AI"
                     >
                         <Bot size={28} className="group-hover:animate-pulse" />
@@ -542,20 +450,20 @@ function WorkspaceLayoutInner({
                         animate={{ opacity: 1, x: 0 }}
                         onClick={() => openLayer('S1')}
                         className="fixed left-8 bottom-[88px] z-[60] size-8 bg-slate-900 text-white rounded-xl shadow-md hover:bg-slate-800 hover:scale-110 active:scale-95 transition-all flex items-center justify-center border border-white/10 dark:border-[#111213]"
-                        aria-label="Mostrar navegación principal"
+                        aria-label="Mostrar navegaciÃ³n principal"
                     >
                         <ChevronRight size={16} strokeWidth={2.5} />
                     </motion.button>
                 )}
 
-                {s2DetailMode === 'hidden' && (
-                    <Tooltip content="Mostrar panel de módulo" side="right">
+                {!layers.S2 && (
+                    <Tooltip content="Mostrar panel de mÃ³dulo" side="right">
                         <motion.button
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             onClick={cycleS2}
                             className="fixed left-8 bottom-6 z-[60] size-8 bg-slate-900 text-white rounded-xl shadow-md hover:bg-slate-800 hover:-translate-y-1 active:scale-95 active:translate-y-0 transition-all flex items-center justify-center border border-white/10 dark:border-[#111213]"
-                            aria-label="Mostrar panel de módulo"
+                            aria-label="Mostrar panel de mÃ³dulo"
                         >
                             <ChevronRight size={16} strokeWidth={2.5} />
                         </motion.button>

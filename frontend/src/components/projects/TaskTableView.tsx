@@ -4,10 +4,10 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import {
     Plus, Flag, Calendar, User, X, CheckCircle2, Circle,
-    ChevronDown, ChevronRight, MoreHorizontal, AlertCircle,
+    ChevronDown, AlertCircle,
     ArrowUp, ArrowDown, ChevronsUpDown, Check, Search, Loader2,
     ChevronLeft, Trash2, MessageSquare, Settings2, SlidersHorizontal,
-    Layers, Eye, EyeOff, GripVertical, Filter,
+    Layers, Eye, EyeOff, Filter,
 } from 'lucide-react';
 import * as Popover from '@radix-ui/react-popover';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -40,11 +40,10 @@ function formatRelative(date: Date): string {
 const STATUS_OPTIONS = [
     { value:'todo',        label:'Pendiente',   dot:'bg-slate-400',   bg:'bg-slate-100 dark:bg-white/5',          text:'text-slate-600 dark:text-slate-300',    border:'border-slate-200 dark:border-white/10' },
     { value:'pending',     label:'Pendiente',   dot:'bg-slate-400',   bg:'bg-slate-100 dark:bg-white/5',          text:'text-slate-600 dark:text-slate-300',    border:'border-slate-200 dark:border-white/10' },
-    { value:'in_progress', label:'En Progreso', dot:'bg-violet-500',  bg:'bg-violet-100 dark:bg-violet-500/20',   text:'text-violet-700 dark:text-violet-300',  border:'border-violet-200 dark:border-violet-500/30' },
+    { value:'in_progress', label:'En Progreso', dot:'bg-blue-500',  bg:'bg-blue-100 dark:bg-blue-500/20',   text:'text-blue-700 dark:text-blue-300',  border:'border-blue-200 dark:border-blue-500/30' },
     { value:'blocked',     label:'Bloqueado',   dot:'bg-rose-500',    bg:'bg-rose-100 dark:bg-rose-500/20',       text:'text-rose-700 dark:text-rose-300',      border:'border-rose-200 dark:border-rose-500/30' },
     { value:'done',        label:'Completado',  dot:'bg-emerald-500', bg:'bg-emerald-100 dark:bg-emerald-500/20', text:'text-emerald-700 dark:text-emerald-300', border:'border-emerald-200 dark:border-emerald-500/30' },
 ] as const;
-type StatusValue = typeof STATUS_OPTIONS[number]['value'];
 function getStatus(val: string) { return STATUS_OPTIONS.find(s => s.value === val) ?? STATUS_OPTIONS[0]; }
 
 // ─── Priority Config ──────────────────────────────────────────────────────────
@@ -54,7 +53,6 @@ const PRIORITY_OPTIONS = [
     { value:'high',   label:'Alta',    color:'text-orange-500', fill:'#f97316' },
     { value:'urgent', label:'Urgente', color:'text-rose-500',   fill:'#ef4444' },
 ] as const;
-type PriorityValue = typeof PRIORITY_OPTIONS[number]['value'];
 function getPriority(val: string) { return PRIORITY_OPTIONS.find(p => p.value === val) ?? PRIORITY_OPTIONS[1]; }
 
 // ─── FlagIcon ─────────────────────────────────────────────────────────────────
@@ -78,7 +76,7 @@ function InlineStatusCell({ value, onChange }: { value: string; onChange: (v: st
                         'flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all whitespace-nowrap',
                         st.bg, st.text, st.border,
                         'hover:opacity-80 hover:shadow-sm',
-                        open && 'ring-2 ring-violet-500/30'
+                        open && 'ring-2 ring-blue-500/30'
                     )}>
                     <div className={clsx('size-1.5 rounded-full shrink-0', st.dot)} />
                     {st.label}
@@ -96,7 +94,7 @@ function InlineStatusCell({ value, onChange }: { value: string; onChange: (v: st
                             className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                             <div className={clsx('size-2 rounded-full shrink-0', s.dot)} />
                             <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 flex-1 text-left">{s.label}</span>
-                            {s.value === value && <Check size={12} className="text-violet-500" />}
+                            {s.value === value && <Check size={12} className="text-blue-500" />}
                         </button>
                     ))}
                 </Popover.Content>
@@ -133,7 +131,7 @@ function InlinePriorityCell({ value, onChange }: { value: string; onChange: (v: 
                             className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                             <FlagIcon fill={p.fill} size={12} />
                             <span className={clsx('text-[12px] font-semibold flex-1 text-left', p.color)}>{p.label}</span>
-                            {p.value === value && <Check size={12} className="text-violet-500" />}
+                            {p.value === value && <Check size={12} className="text-blue-500" />}
                         </button>
                     ))}
                 </Popover.Content>
@@ -214,7 +212,7 @@ function InlineDateCell({ value, onChange }: { value?: string | null; onChange: 
                                 <button key={day} onClick={() => selectDay(day)}
                                     className={clsx(
                                         'size-8 rounded-lg text-[12px] font-medium transition-all mx-auto flex items-center justify-center',
-                                        isSel  ? 'bg-violet-600 text-white font-bold shadow-sm'
+                                        isSel  ? 'bg-blue-600 text-white font-bold shadow-sm'
                                         : isTd ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 font-bold ring-1 ring-blue-200'
                                         : isPast? 'text-slate-300 dark:text-white/20 hover:bg-slate-50'
                                                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
@@ -226,7 +224,7 @@ function InlineDateCell({ value, onChange }: { value?: string | null; onChange: 
                     </div>
                     <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-100 dark:border-white/5">
                         <button onClick={() => selectDay(today.getDate())}
-                            className="flex-1 text-[11px] font-bold text-violet-600 dark:text-violet-400 py-1.5 rounded-lg hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors">
+                            className="flex-1 text-[11px] font-bold text-blue-600 dark:text-blue-400 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors">
                             Hoy
                         </button>
                         {value && (
@@ -289,7 +287,7 @@ function InlineUserCell({ value, token, onChange }: {
                     )}>
                     <div className={clsx(
                         'size-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0',
-                        value ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-300'
+                        value ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300'
                                : 'bg-slate-100 dark:bg-white/5 text-slate-400'
                     )}>
                         {value && displayName ? displayName.charAt(0).toUpperCase() : <User size={11} />}
@@ -312,7 +310,7 @@ function InlineUserCell({ value, token, onChange }: {
                     <div className="max-h-[200px] overflow-y-auto py-1">
                         {loading ? (
                             <div className="flex items-center justify-center py-4">
-                                <Loader2 size={16} className="text-violet-500 animate-spin" />
+                                <Loader2 size={16} className="text-blue-500 animate-spin" />
                             </div>
                         ) : filtered.length === 0 ? (
                             <p className="text-[11px] text-slate-400 text-center py-4">Sin resultados</p>
@@ -328,14 +326,14 @@ function InlineUserCell({ value, token, onChange }: {
                                 {filtered.map(u => (
                                     <button key={u.id} onClick={() => { onChange(u.id, u.username); setDisplayName(u.username); setOpen(false); }}
                                         className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                        <div className="size-6 rounded-full bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center text-[10px] font-black text-violet-600 shrink-0">
+                                        <div className="size-6 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-[10px] font-black text-blue-600 shrink-0">
                                             {u.username.charAt(0).toUpperCase()}
                                         </div>
                                         <div className="flex-1 text-left">
                                             <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">{u.username}</p>
                                             {u.email && <p className="text-[10px] text-slate-400 truncate">{u.email}</p>}
                                         </div>
-                                        {u.id === value && <Check size={12} className="text-violet-500" />}
+                                        {u.id === value && <Check size={12} className="text-blue-500" />}
                                     </button>
                                 ))}
                             </>
@@ -353,7 +351,7 @@ function QuickAddRow({ onConfirm, onCancel }: { onConfirm: (title: string) => vo
     const ref = useRef<HTMLInputElement>(null);
     useEffect(() => { setTimeout(() => ref.current?.focus(), 50); }, []);
     return (
-        <tr className="bg-violet-50/50 dark:bg-violet-500/5">
+        <tr className="bg-blue-50/50 dark:bg-blue-500/5">
             <td className="w-10 px-3 py-2 border-r border-slate-100 dark:border-white/5" />
             <td className="px-4 py-2" colSpan={5}>
                 <div className="flex items-center gap-3">
@@ -370,7 +368,7 @@ function QuickAddRow({ onConfirm, onCancel }: { onConfirm: (title: string) => vo
                         className="flex-1 text-[13px] font-medium text-slate-800 dark:text-slate-200 bg-transparent outline-none placeholder:text-slate-400"
                     />
                     <button onClick={() => title.trim() && onConfirm(title.trim())}
-                        className="px-3 py-1 bg-violet-600 text-white text-[11px] font-bold rounded-lg hover:bg-violet-700 transition-colors shrink-0">
+                        className="px-3 py-1 bg-blue-600 text-white text-[11px] font-bold rounded-lg hover:bg-blue-700 transition-colors shrink-0">
                         Crear
                     </button>
                     <button onClick={onCancel}
@@ -431,7 +429,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     const [groupBy, setGroupBy]      = useState<GroupKey>('status');
     const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
     const [quickAddGroup, setQuickAddGroup] = useState<string | null>(null);
-    const [quickAddLoading, setQuickAddLoading] = useState(false);
+    const [, setQuickAddLoading] = useState(false);
     const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
     const [visibleCols, setVisibleCols]     = useState<Set<ColumnId>>(new Set<ColumnId>(['title','status','priority','assignee','due_date','comments']));
     // Toolbar popover states
@@ -514,8 +512,8 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
         const conf = sortConfig[confIdx];
         return (
             <div className="flex items-center gap-0.5">
-                {conf.dir === 'asc' ? <ArrowUp size={12} className="text-violet-500" /> : <ArrowDown size={12} className="text-violet-500" />}
-                {sortConfig.length > 1 && <span className="text-[9px] font-bold text-violet-500">{confIdx + 1}</span>}
+                {conf.dir === 'asc' ? <ArrowUp size={12} className="text-blue-500" /> : <ArrowDown size={12} className="text-blue-500" />}
+                {sortConfig.length > 1 && <span className="text-[9px] font-bold text-blue-500">{confIdx + 1}</span>}
             </div>
         );
     };
@@ -583,7 +581,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     const handleQuickAdd = async (status: string, title: string) => {
         setQuickAddLoading(true);
         try {
-            await apiFetch('/projects/tasks/', {
+            await apiFetch(`/projects/${projectId}/tasks`, {
                 method: 'POST',
                 body: JSON.stringify({ title, status, priority: 'normal' }),
                 token: token ?? undefined
@@ -629,7 +627,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                     <Popover.Trigger asChild>
                         <button className={clsx(
                             'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all',
-                            cfgOpen ? 'bg-violet-50 dark:bg-violet-500/10 text-violet-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
+                            cfgOpen ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
                         )}>
                             <Settings2 size={12} /> Config
                         </button>
@@ -648,7 +646,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                     })}
                                     className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                                     {visibleCols.has(col.id)
-                                        ? <Eye size={13} className="text-violet-500 shrink-0" />
+                                        ? <Eye size={13} className="text-blue-500 shrink-0" />
                                         : <EyeOff size={13} className="text-slate-300 shrink-0" />}
                                     <span className={clsx('text-[12px] font-medium flex-1 text-left', visibleCols.has(col.id) ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400')}>{col.label}</span>
                                     {col.id === 'title' && <span className="text-[9px] text-slate-300">fijo</span>}
@@ -665,7 +663,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                     <Popover.Trigger asChild>
                         <button className={clsx(
                             'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all',
-                            groupBy !== 'status' ? 'bg-violet-50 dark:bg-violet-500/10 text-violet-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
+                            groupBy !== 'status' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
                         )}>
                             <Layers size={12} />
                             Agrupar{groupBy !== 'none' ? `: ${groupBy === 'status' ? 'Estado' : 'Prioridad'}` : ''}
@@ -679,7 +677,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                 <button key={k} onClick={() => { setGroupBy(k); setGroupOpen(false); }}
                                     className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                                     <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 flex-1 text-left">{lbl}</span>
-                                    {groupBy === k && <Check size={12} className="text-violet-500" />}
+                                    {groupBy === k && <Check size={12} className="text-blue-500" />}
                                 </button>
                             ))}
                         </Popover.Content>
@@ -711,7 +709,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                                 : [...prev, { field: 'status', value: s.value, label: s.label }]
                                             )}
                                             className={clsx('flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all',
-                                                active ? `${s.bg} ${s.text} ${s.border} ring-2 ring-violet-500/30` : `${s.bg} ${s.text} ${s.border} opacity-60 hover:opacity-100`)}>
+                                                active ? `${s.bg} ${s.text} ${s.border} ring-2 ring-blue-500/30` : `${s.bg} ${s.text} ${s.border} opacity-60 hover:opacity-100`)}>
                                             <div className={clsx('size-1.5 rounded-full', s.dot)} />{s.label}
                                         </button>
                                     );
@@ -728,7 +726,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                                 : [...prev, { field: 'priority', value: p.value, label: p.label }]
                                             )}
                                             className={clsx('flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all',
-                                                active ? 'bg-slate-100 dark:bg-white/10 border-slate-300 ring-2 ring-violet-500/30' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 opacity-60 hover:opacity-100',
+                                                active ? 'bg-slate-100 dark:bg-white/10 border-slate-300 ring-2 ring-blue-500/30' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 opacity-60 hover:opacity-100',
                                                 p.color)}>
                                             <FlagIcon fill={p.fill} size={11} />{p.label}
                                         </button>
@@ -766,11 +764,11 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                 return (
                                     <div key={conf.key} className="flex justify-between items-center w-full px-2 py-1.5 mb-1 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group/sort">
                                         <div className="flex items-center gap-2">
-                                            <div className="size-4 rounded-full bg-violet-100 dark:bg-violet-500/20 text-[9px] font-bold text-violet-600 flex items-center justify-center">{idx + 1}</div>
+                                            <div className="size-4 rounded-full bg-blue-100 dark:bg-blue-500/20 text-[9px] font-bold text-blue-600 flex items-center justify-center">{idx + 1}</div>
                                             <span className="text-[12px] font-medium text-slate-700 dark:text-slate-200">{lbl}</span>
                                         </div>
                                         <div className="flex gap-1 items-center">
-                                            <button onClick={() => setSortConfig(prev => prev.map((c, i) => i === idx ? { ...c, dir: c.dir === 'asc' ? 'desc' : 'asc' } : c))} className="p-1 text-slate-400 hover:text-violet-500 hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors" title="Cambiar dirección">
+                                            <button onClick={() => setSortConfig(prev => prev.map((c, i) => i === idx ? { ...c, dir: c.dir === 'asc' ? 'desc' : 'asc' } : c))} className="p-1 text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors" title="Cambiar dirección">
                                                 {conf.dir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
                                             </button>
                                             <button onClick={() => setSortConfig(prev => prev.filter((_, i) => i !== idx))} className="p-1 text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors opacity-0 group-hover/sort:opacity-100" title="Quitar">
@@ -834,7 +832,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="flex items-center gap-3 px-4 py-2 bg-violet-600 text-white overflow-hidden">
+                        className="flex items-center gap-3 px-4 py-2 bg-blue-600 text-white overflow-hidden">
                         <span className="text-[12px] font-bold">{totalSelected} seleccionada{totalSelected > 1 ? 's' : ''}</span>
                         <div className="flex items-center gap-1 ml-2">
                             <button className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[11px] font-bold transition-colors">
@@ -859,14 +857,14 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                         <tr>
                             <th className="w-10 px-3 py-2.5 border-r border-slate-100 dark:border-white/5">
                                 <div className="size-4 rounded border-2 border-slate-300 dark:border-white/20 cursor-pointer
-                                    flex items-center justify-center hover:border-violet-500 transition-colors"
+                                    flex items-center justify-center hover:border-blue-500 transition-colors"
                                     onClick={() => {
                                         const allIds = processed.map(t => Number(t.id));
                                         const allSelected = allIds.every(id => selected.has(id));
                                         setSelected(allSelected ? new Set() : new Set(allIds));
                                     }}>
                                     {selected.size > 0 && selected.size === processed.length &&
-                                        <Check size={10} className="text-violet-600" />}
+                                        <Check size={10} className="text-blue-600" />}
                                 </div>
                             </th>
                             <th className="px-4 py-2.5 text-left border-r border-slate-100 dark:border-white/5 select-none" style={{ width: '380px' }}>
@@ -919,7 +917,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                                 {/* Group checkbox */}
                                                 <div className={clsx(
                                                     'size-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors',
-                                                    allGroupSelected ? 'bg-violet-500 border-violet-500' : 'border-slate-300 dark:border-white/20 hover:border-violet-500'
+                                                    allGroupSelected ? 'bg-blue-500 border-blue-500' : 'border-slate-300 dark:border-white/20 hover:border-blue-500'
                                                 )} onClick={() => toggleGroupSelect(groupIds)}>
                                                     {allGroupSelected && <Check size={10} className="text-white" />}
                                                 </div>
@@ -957,7 +955,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                                     transition={{ duration: 0.1, delay: idx * 0.01 }}
                                                     className={clsx(
                                                         'group hover:bg-blue-50/40 dark:hover:bg-white/[0.02] transition-colors cursor-pointer',
-                                                        isChecked && 'bg-violet-50/40 dark:bg-violet-500/5'
+                                                        isChecked && 'bg-blue-50/40 dark:bg-blue-500/5'
                                                     )}
                                                     onClick={() => onOpenTask(t)}>
 
@@ -965,7 +963,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                                     <td className="w-10 px-3 py-2.5 border-r border-slate-100 dark:border-white/5" onClick={e => e.stopPropagation()}>
                                                         <div className={clsx(
                                                             'size-4 rounded border-2 flex items-center justify-center cursor-pointer transition-all',
-                                                            isChecked ? 'bg-violet-500 border-violet-500' : 'border-slate-200 dark:border-white/10 hover:border-violet-400 opacity-0 group-hover:opacity-100'
+                                                            isChecked ? 'bg-blue-500 border-blue-500' : 'border-slate-200 dark:border-white/10 hover:border-blue-400 opacity-0 group-hover:opacity-100'
                                                         )} onClick={() => setSelected(prev => {
                                                             const next = new Set(prev);
                                                             if (next.has(Number(t.id))) next.delete(Number(t.id)); else next.add(Number(t.id));
@@ -981,13 +979,13 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                                             <div onClick={e => { e.stopPropagation(); applyChange(Number(t.id), 'status', t.status === 'done' ? 'todo' : 'done'); }}>
                                                                 {t.status === 'done'
                                                                     ? <CheckCircle2 size={15} className="text-emerald-500 shrink-0 hover:text-emerald-400 transition-colors" />
-                                                                    : <Circle size={15} className="text-slate-300 dark:text-white/20 shrink-0 group-hover:text-violet-400 transition-colors" />}
+                                                                    : <Circle size={15} className="text-slate-300 dark:text-white/20 shrink-0 group-hover:text-blue-400 transition-colors" />}
                                                             </div>
                                                             <span className={clsx(
                                                                 'text-[13px] font-medium truncate',
                                                                 t.status === 'done'
                                                                     ? 'text-slate-400 line-through'
-                                                                    : 'text-slate-800 dark:text-slate-200 group-hover:text-violet-600 dark:group-hover:text-violet-400'
+                                                                    : 'text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400'
                                                             )}>
                                                                 {t.title}
                                                             </span>
@@ -1033,7 +1031,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                                     {visibleCols.has('comments') && (
                                                         <td className="w-10 px-3 py-2.5" onClick={e => e.stopPropagation()}>
                                                             <button onClick={() => openLayer('RIGHT')}
-                                                                className="p-1.5 rounded-lg text-slate-300 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-all opacity-0 group-hover:opacity-100">
+                                                                className="p-1.5 rounded-lg text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all opacity-0 group-hover:opacity-100">
                                                                 <MessageSquare size={13} />
                                                             </button>
                                                         </td>
@@ -1058,7 +1056,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                         <tr className="group/add">
                                             <td colSpan={7} className="px-6 py-0.5">
                                                 <button onClick={() => setQuickAddGroup(groupName)}
-                                                    className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300 hover:text-violet-600 dark:text-white/10 dark:hover:text-violet-400 py-1.5 transition-all opacity-0 group-hover/add:opacity-100">
+                                                    className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300 hover:text-blue-600 dark:text-white/10 dark:hover:text-blue-400 py-1.5 transition-all opacity-0 group-hover/add:opacity-100">
                                                     <Plus size={12} />
                                                     Agregar tarea
                                                 </button>
@@ -1079,7 +1077,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                         </div>
                                         <p className="text-slate-400 text-sm font-medium">Sin tareas en este proyecto</p>
                                         <button onClick={() => onAddTask('todo')}
-                                            className="text-[12px] font-bold text-violet-500 hover:underline">
+                                            className="text-[12px] font-bold text-blue-500 hover:underline">
                                             Crear la primera tarea
                                         </button>
                                     </div>
@@ -1094,7 +1092,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
             <footer className="px-4 py-2 border-t border-slate-100 dark:border-white/[0.04] flex items-center justify-between bg-slate-50/50 dark:bg-black/10">
                 <div className="flex items-center gap-3">
                     <button onClick={() => setQuickAddGroup('todo')}
-                        className="flex items-center gap-1.5 text-[12px] font-bold text-slate-400 hover:text-violet-600 transition-colors">
+                        className="flex items-center gap-1.5 text-[12px] font-bold text-slate-400 hover:text-blue-600 transition-colors">
                         <Plus size={13} /> Agregar tarea
                         <span className="ml-1 text-slate-300 font-normal text-[10px]">Shift+Enter</span>
                     </button>

@@ -9,15 +9,16 @@ import {
     MoreHorizontal, Edit3, Share2, 
     GraduationCap, Users, DollarSign,
     Zap, Sparkles, ChevronRight, CheckCircle2,
-    BookOpen, Award, TrendingUp, Clock,
+    BookOpen, Award, TrendingUp,
     AlertCircle, Plus, ExternalLink, Flame,
-    X, Search, UserCheck, Check
+    Search, Check, Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
+import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 
 // ─── Mentor Assignment Drawer ──────────────────────────────────────────────────
 
@@ -36,7 +37,6 @@ function MentorAssignmentDrawer({
     token,
     memberId,
     title = 'Asignar Mentoría',
-    subtitle = 'Selecciona el mentor que guiará el proceso de este miembro.',
 }: {
     open: boolean;
     onClose: () => void;
@@ -44,7 +44,6 @@ function MentorAssignmentDrawer({
     token: string | null;
     memberId: string;
     title?: string;
-    subtitle?: string;
 }) {
     const [search, setSearch] = useState('');
     const [selected, setSelected] = useState<number | null>(null);
@@ -79,165 +78,100 @@ function MentorAssignmentDrawer({
     };
 
     return (
-        <AnimatePresence>
-            {open && (
-                <>
-                    {/* Backdrop */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={onClose}
-                        className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
-                    />
-                    {/* Drawer */}
-                    <motion.div
-                        initial={{ x: '100%', opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        exit={{ x: '100%', opacity: 0 }}
-                        transition={{ type: 'spring', damping: 25, stiffness: 280 }}
-                        className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-white dark:bg-[#15171c] shadow-2xl flex flex-col"
-                    >
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-white/5">
-                            <div className="flex items-center gap-3">
-                                <div className="size-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
-                                    <UserCheck size={18} className="text-indigo-600" />
-                                </div>
-                                <div>
-                                    <p className="text-[13px] font-black text-slate-800 dark:text-white">{title}</p>
-                                    <p className="text-[10px] text-slate-400 font-medium">Para: {memberName}</p>
-                                </div>
+        <WorkspaceDrawer
+            isOpen={open}
+            onClose={onClose}
+            title={title}
+            subtitle={`Para: ${memberName}`}
+            actions={
+                saved ? null : (
+                    <>
+                        <button disabled={saving} onClick={onClose} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-50">
+                            Cancelar
+                        </button>
+                        <button disabled={!selected || saving} onClick={handleConfirm} className="flex items-center gap-2 px-8 py-2 bg-indigo-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50">
+                            {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />} 
+                            {saving ? 'Guardando...' : 'Confirmar'}
+                        </button>
+                    </>
+                )
+            }
+        >
+            <div className="mt-4 flex-1 overflow-hidden flex flex-col">
+                {saved ? (
+                    <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
+                        <div className="size-20 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 flex items-center justify-center mb-6">
+                            <Check size={40} strokeWidth={3} />
+                        </div>
+                        <p className="text-xl font-black text-slate-800 dark:text-white">Mentor Asignado</p>
+                        <p className="text-sm text-slate-400 mt-2">El proceso de mentoría ha sido inicializado correctamente.</p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="shrink-0 space-y-4 mb-4">
+                            <div className="relative">
+                                <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                    placeholder="Buscar por nombre o especialidad..."
+                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                />
                             </div>
-                            <button
-                                onClick={onClose}
-                                className="size-9 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all"
-                            >
-                                <X size={16} />
-                            </button>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                Mentores Sugeridos ({filtered.length})
+                            </p>
                         </div>
 
-                        {/* Saved success */}
-                        {saved ? (
-                            <div className="flex-1 flex flex-col items-center justify-center gap-4 p-10 text-center">
-                                <motion.div
-                                    initial={{ scale: 0.7, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    className="size-20 rounded-3xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center"
-                                >
-                                    <Check size={36} className="text-emerald-500" />
-                                </motion.div>
-                                <div>
-                                    <p className="text-base font-black text-slate-800 dark:text-white">
-                                        ¡Mentoría asignada!
-                                    </p>
-                                    <p className="text-sm text-slate-400 mt-1">
-                                        {MOCK_MENTORS.find(m => m.id === selected)?.name} acompañará a {memberName}.
-                                    </p>
+                        <div className="flex-1 overflow-y-auto space-y-3 pb-6">
+                            {filtered.length === 0 ? (
+                                <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
+                                    <p className="text-sm font-bold text-slate-500">No hay mentores que coincidan.</p>
                                 </div>
-                            </div>
-                        ) : (
-                            <>
-                                {/* Description */}
-                                <div className="px-6 py-4 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-100 dark:border-white/5">
-                                    <p className="text-[12px] text-slate-500 leading-relaxed">{subtitle}</p>
-                                </div>
-
-                                {/* Search */}
-                                <div className="px-6 pt-4 pb-2">
-                                    <div className="relative">
-                                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                                        <input
-                                            value={search}
-                                            onChange={e => setSearch(e.target.value)}
-                                            placeholder="Buscar mentor..."
-                                            className="w-full pl-9 pr-4 py-2.5 bg-slate-100 dark:bg-white/5 border-none rounded-xl text-[13px] text-slate-700 dark:text-slate-200 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Mentor List */}
-                                <div className="flex-1 overflow-y-auto px-4 py-2 space-y-2">
-                                    {filtered.map(mentor => (
-                                        <button
-                                            key={mentor.id}
-                                            disabled={!mentor.available}
-                                            onClick={() => setSelected(selected === mentor.id ? null : mentor.id)}
-                                            className={clsx(
-                                                'w-full flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all',
-                                                !mentor.available && 'opacity-40 cursor-not-allowed',
-                                                selected === mentor.id
-                                                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
-                                                    : 'border-transparent bg-slate-50 dark:bg-white/5 hover:border-slate-200 dark:hover:border-white/10'
-                                            )}
-                                        >
-                                            <div className="size-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white text-sm font-black shrink-0">
-                                                {mentor.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-[13px] font-bold text-slate-800 dark:text-white truncate">{mentor.name}</p>
-                                                <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{mentor.role}</p>
-                                                <p className="text-[11px] text-slate-400 mt-0.5 truncate">{mentor.specialty}</p>
-                                            </div>
-                                            <div className="shrink-0 flex flex-col items-end gap-1.5">
-                                                {selected === mentor.id ? (
-                                                    <div className="size-5 rounded-full bg-indigo-500 flex items-center justify-center">
-                                                        <Check size={11} className="text-white" />
-                                                    </div>
-                                                ) : (
-                                                    <div className="size-5 rounded-full border-2 border-slate-200 dark:border-white/10" />
-                                                )}
-                                                <span className={clsx(
-                                                    'text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full',
-                                                    mentor.available
-                                                        ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10'
-                                                        : 'text-slate-400 bg-slate-100 dark:bg-white/5'
-                                                )}>
-                                                    {mentor.available ? 'Disponible' : 'Ocupado'}
-                                                </span>
-                                            </div>
-                                        </button>
-                                    ))}
-                
-                                    {filtered.length === 0 && (
-                                        <div className="py-12 text-center">
-                                            <UserCheck size={32} className="mx-auto text-slate-200 mb-2" />
-                                            <p className="text-sm font-bold text-slate-400">Sin mentores que coincidan</p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Footer */}
-                                <div className="px-6 py-5 border-t border-slate-100 dark:border-white/5 space-y-3">
-                                    <button
-                                        onClick={handleConfirm}
-                                        disabled={!selected || saving}
+                            ) : (
+                                filtered.map(m => (
+                                    <div 
+                                        key={m.id}
+                                        onClick={() => m.available && setSelected(m.id)}
                                         className={clsx(
-                                            'w-full py-3.5 rounded-2xl font-black text-[12px] uppercase tracking-widest transition-all flex items-center justify-center gap-2',
-                                            selected && !saving
-                                                ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20 active:scale-[0.98]'
-                                                : 'bg-slate-100 dark:bg-white/5 text-slate-400 cursor-not-allowed'
+                                            "p-4 rounded-2xl border-2 transition-all flex items-center gap-4",
+                                            !m.available ? "opacity-50 cursor-not-allowed border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-black/20" :
+                                            selected === m.id ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 cursor-pointer" : "border-slate-100 dark:border-white/5 bg-white dark:bg-[#15171c] hover:border-indigo-200 cursor-pointer"
                                         )}
                                     >
-                                        {saving ? (
-                                            <><span className="size-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Guardando...</>
-                                        ) : (
-                                            <><UserCheck size={15} /> Confirmar Asignación</>
+                                        <div className="size-12 rounded-full bg-slate-100 dark:bg-white/10 flex flex-col items-center justify-center font-black text-slate-400">
+                                            {m.name.charAt(0)}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{m.name}</p>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-black uppercase tracking-widest bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-full">
+                                                    {m.role}
+                                                </span>
+                                                {!m.available && (
+                                                    <span className="text-[9px] text-rose-500 font-black uppercase tracking-widest bg-rose-50 dark:bg-rose-500/10 px-2 py-0.5 rounded-full">
+                                                        Cupo Lleno
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-[11px] text-slate-500 font-medium mt-1 truncate">
+                                                Especialidad: {m.specialty}
+                                            </p>
+                                        </div>
+                                        {selected === m.id && (
+                                            <div className="size-6 rounded-full bg-indigo-500 text-white flex items-center justify-center shrink-0">
+                                                <Check size={14} strokeWidth={3} />
+                                            </div>
                                         )}
-                                    </button>
-                                    <button
-                                        onClick={onClose}
-                                        className="w-full py-2.5 text-[11px] font-bold text-slate-400 hover:text-slate-600 transition-colors"
-                                    >
-                                        Cancelar
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </motion.div>
-                </>
-            )}
-        </AnimatePresence>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </>
+                )}
+            </div>
+        </WorkspaceDrawer>
     );
 }
 
@@ -526,7 +460,7 @@ export default function MemberDetailPage() {
                                 <InfoGrid items={[
                                     { label: 'Fecha de Ingreso', value: formatDate(member.joinedAt), icon: Calendar },
                                     { label: 'Fecha de Nacimiento', value: formatDate(member.birthday), icon: Calendar },
-                                    { label: 'Casa de Gloria', value: member.house, icon: Heart },
+                                    { label: 'Faro en Casa', value: member.house, icon: Heart },
                                     { label: 'Rol en Ministerio', value: member.church_role, icon: ShieldCheck },
                                 ]} />
                                 {member.pastoral_notes && (
@@ -616,7 +550,7 @@ export default function MemberDetailPage() {
                                 <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Datos Espirituales</h3>
                                 <InfoGrid items={[
                                     { label: 'Fecha de Bautismo', value: formatDate(member.baptism_date), icon: CheckCircle2 },
-                                    { label: 'Casa de Gloria', value: member.house, icon: Heart },
+                                    { label: 'Faro en Casa', value: member.house, icon: Heart },
                                     { label: 'Estado Espiritual', value: member.status, icon: ShieldCheck },
                                     { label: 'Rol en la Iglesia', value: member.church_role, icon: Star },
                                 ]} />
@@ -796,7 +730,6 @@ export default function MemberDetailPage() {
                 token={token}
                 memberId={id}
                 title={mentorDrawerConfig.title}
-                subtitle={mentorDrawerConfig.subtitle}
             />
         </CrmShell>
     );

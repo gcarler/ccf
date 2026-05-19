@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Users, MapPin, Clock, Calendar, Search, Plus, Filter } from 'lucide-react';
+import { Users, MapPin, Clock, Search, Plus, Filter } from 'lucide-react';
 
 export default function GroupsPage() {
     const groups = [
@@ -15,7 +15,7 @@ export default function GroupsPage() {
             schedule: "Jueves, 7:30 PM",
             members: 12,
             category: "Familias",
-            image: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&auto=format&fit=crop&q=60"
+            image: "https://picsum.photos/seed/1511632765486-a01980e01a18/800/600"
         },
         {
             id: 2,
@@ -25,7 +25,7 @@ export default function GroupsPage() {
             schedule: "Sábados, 5:00 PM",
             members: 45,
             category: "Jóvenes",
-            image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&auto=format&fit=crop&q=60"
+            image: "https://picsum.photos/seed/1529156069898-49953e39b3ac/800/600"
         },
         {
             id: 3,
@@ -35,7 +35,7 @@ export default function GroupsPage() {
             schedule: "Martes, 6:00 AM",
             members: 28,
             category: "Hombres",
-            image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=60"
+            image: "https://picsum.photos/seed/1507003211169-0a1dd7228f2d/800/600"
         }
     ];
 

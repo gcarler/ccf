@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { 
     Award, 
     Crown, 
     Star, 
     Zap, 
-    CheckCircle2, 
     Shield, 
     ChevronRight,
     Edit3,
@@ -55,7 +54,7 @@ export default function MinistryProfilePage() {
                                     <Crown size={14} className="text-amber-500" /> Oficios Eclesiásticos
                                 </h3>
                                 <div className="space-y-2">
-                                    {['Evangelista', 'Líder de Casa de Gloria'].map((office, i) => (
+                                    {['Evangelista', 'Líder de Faro en Casa'].map((office, i) => (
                                         <div key={i} className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
                                             <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_10px_#f59e0b]" />
                                             <span className="text-sm font-bold text-white uppercase tracking-tight">{office}</span>
@@ -85,7 +84,7 @@ export default function MinistryProfilePage() {
                                 { label: 'Fundamentos', icon: Star, color: 'text-blue-400' },
                                 { label: 'Consolidador', icon: Heart, color: 'text-rose-400' },
                                 { label: 'Líder 1', icon: Shield, color: 'text-emerald-400' },
-                                { label: 'Maestro', icon: Award, color: 'text-purple-400' },
+                                { label: 'Maestro', icon: Award, color: 'text-sky-400' },
                             ].map((badge, i) => (
                                 <div key={i} className="bg-white/5 p-6 rounded-3xl flex flex-col items-center gap-3 text-center group hover:bg-white/10 transition-all border border-white/5">
                                     <div className={`w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center ${badge.color} group-hover:scale-110 transition-transform`}>

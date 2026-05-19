@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { User, MessageSquare, Phone, Calendar, MoreHorizontal, ChevronRight, Star, ShieldCheck } from 'lucide-react';
+import { MessageSquare, MoreHorizontal, Star } from 'lucide-react';
 import clsx from 'clsx';
 
 interface MemberCardProps {

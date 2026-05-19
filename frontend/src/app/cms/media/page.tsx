@@ -1,300 +1,648 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Archive,
+  Copy, FileImage, FileText, Film, Loader2, Plus, Search,
+  RotateCcw, Upload, X, Check, Download, Headphones
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
-import AdminHero from "@/components/admin/AdminHero";
-import { Image as ImageIcon, Plus, Save, Search, Trash2, Upload } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import clsx from "clsx";
+import ViewSwitcher, { ViewType } from "@/components/ViewSwitcher";
+import UniversalCalendarView from "@/components/ui/UniversalCalendarView";
+import UniversalGanttView from "@/components/ui/UniversalGanttView";
+import UniversalWikiView from "@/components/ui/UniversalWikiView";
 
 interface MediaItem {
   id: number;
   url: string;
+  filename: string;
+  mime_type?: string;
   alt_text?: string;
-  section: string;
-  tags: string[];
+  file_size?: number;
+  width?: number;
+  height?: number;
+  status?: string;
+  created_at?: string;
 }
 
-interface DraftItem {
-  id?: number;
-  url: string;
-  alt_text: string;
-  section: string;
-  tags: string;
+const MEDIA_VIEWS: ViewType[] = ["grid", "list", "table", "board", "kanban", "calendar", "gantt", "wiki"];
+type FilterType = "all" | "image" | "video" | "audio" | "document";
+
+const FILTER_OPTIONS: { id: FilterType; label: string }[] = [
+  { id: "all", label: "Todos" },
+  { id: "image", label: "Imágenes" },
+  { id: "video", label: "Videos" },
+  { id: "audio", label: "Audio/Podcast" },
+  { id: "document", label: "Documentos" },
+];
+
+function formatBytes(bytes?: number): string {
+  if (!bytes) return "—";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const EMPTY_ITEM: DraftItem = { url: "", alt_text: "", section: "general", tags: "" };
+function getFileTypeIcon(mime?: string) {
+  if (!mime) return FileText;
+  if (mime.startsWith("image/")) return FileImage;
+  if (mime.startsWith("video/")) return Film;
+  if (mime.startsWith("audio/")) return Headphones;
+  return FileText;
+}
 
-export default function CmsMediaPage() {
-  const router = useRouter();
-  const { token, isAuthenticated } = useAuth();
+function isImage(mime?: string): boolean {
+  return !!mime && mime.startsWith("image/");
+}
+
+function matchesFilter(item: MediaItem, filter: FilterType): boolean {
+  if (filter === "all") return true;
+  if (filter === "image") return isImage(item.mime_type);
+  if (filter === "video") return !!item.mime_type?.startsWith("video/");
+  if (filter === "audio") return !!item.mime_type?.startsWith("audio/");
+  if (filter === "document") return !isImage(item.mime_type) && !item.mime_type?.startsWith("video/") && !item.mime_type?.startsWith("audio/");
+  return true;
+}
+
+export default function CmsMediaLibrary() {
+  const { token } = useAuth();
   const [items, setItems] = useState<MediaItem[]>([]);
-  const [drafts, setDrafts] = useState<DraftItem[]>([]);
-  const [query, setQuery] = useState("");
-  const [sectionFilter, setSectionFilter] = useState("");
+  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [viewType, setViewType] = useState<ViewType>("grid");
+  const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const load = async () => {
-    if (!token) return;
+  const fetchMedia = useCallback(async () => {
+    if (!token) { setLoading(false); return; }
     setLoading(true);
-    setMessage(null);
     try {
-      const data = await apiFetch<MediaItem[]>("/cms/media", {
-        token,
-        cache: "no-store",
-        query: {
-          query: query || undefined,
-          section: sectionFilter || undefined
-        }
-      });
+      const data = await apiFetch<MediaItem[]>("/cms/media", { token, cache: "no-store", query: { include_archived: true } });
       setItems(Array.isArray(data) ? data : []);
     } catch {
       setItems([]);
-      setMessage("No se pudo cargar la biblioteca.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, query, sectionFilter]);
+  useEffect(() => { fetchMedia(); }, [fetchMedia]);
 
-  const saveDrafts = async () => {
-    if (!token || drafts.length === 0) return;
-    setSaving(true);
-    setMessage(null);
-    try {
-      for (const draft of drafts) {
-        const payload = {
-          url: draft.url,
-          alt_text: draft.alt_text || null,
-          section: draft.section || "general",
-          tags: draft.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
-        };
-        if (draft.id) {
-          await apiFetch(`/cms/media/${draft.id}`, { method: "PATCH", token, body: payload });
-        } else {
-          await apiFetch(`/cms/media`, { method: "POST", token, body: payload });
-        }
-      }
-      setDrafts([]);
-      setMessage("Biblioteca actualizada.");
-      await load();
-    } catch {
-      setMessage("No se pudo guardar la biblioteca.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const totalBySection = useMemo(() => {
-    const acc: Record<string, number> = {};
-    for (const item of items) {
-      acc[item.section] = (acc[item.section] || 0) + 1;
-    }
-    return acc;
-  }, [items]);
-
-  const pushItemToDraft = (item?: MediaItem) => {
-    setDrafts((prev) => [
-      ...prev,
-      item
-        ? {
-            id: item.id,
-            url: item.url,
-            alt_text: item.alt_text || "",
-            section: item.section,
-            tags: (item.tags || []).join(", ")
-          }
-        : { ...EMPTY_ITEM }
-    ]);
-  };
-
-  const uploadFile = async (file: File) => {
-    if (!token) return;
-    const form = new FormData();
-    form.append("file", file);
+  const uploadFiles = async (files: FileList | File[]) => {
+    if (!token || !files.length) return;
     setUploading(true);
-    setMessage(null);
+    const fileArray = Array.from(files);
     try {
-      await apiFetch("/cms/media/upload?section=general", {
-        method: "POST",
-        token,
-        body: form
-      });
-      setMessage("Archivo subido y agregado a biblioteca.");
-      await load();
-    } catch {
-      setMessage("No se pudo subir el archivo.");
+      for (const file of fileArray) {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("alt_text", file.name);
+        await apiFetch("/cms/media/upload", {
+          method: "POST",
+          token,
+          body: form,
+        });
+      }
+      await fetchMedia();
+    } catch (err) {
+      console.error("Upload error", err);
     } finally {
       setUploading(false);
     }
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="max-w-3xl mx-auto py-24 text-center space-y-3">
-        <h1 className="text-3xl font-black">Inicia sesion</h1>
-        <p className="text-slate-500">Necesitas una sesion valida para administrar media.</p>
-      </div>
-    );
-  }
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) uploadFiles(e.target.files);
+    e.target.value = "";
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingOver(false);
+    if (e.dataTransfer.files) uploadFiles(e.dataTransfer.files);
+  };
+
+  const copyUrl = (item: MediaItem) => {
+    navigator.clipboard.writeText(item.url);
+    setCopiedId(item.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const toggleArchiveItem = async (item: MediaItem) => {
+    if (!token) return;
+    setDeletingId(item.id);
+    try {
+      const nextStatus = item.status === "archived" ? "active" : "archived";
+      const updated = item.status === "archived"
+        ? await apiFetch<MediaItem>(`/cms/media/${item.id}`, { method: "PATCH", token, body: { status: nextStatus } })
+        : await apiFetch<MediaItem | undefined>(`/cms/media/${item.id}`, { method: "DELETE", token }).then(() => ({ ...item, status: "archived" }));
+      setItems(prev => prev.map(i => i.id === item.id ? { ...i, ...updated, status: nextStatus } : i));
+      if (selectedItem?.id === item.id) setSelectedItem(prev => prev ? { ...prev, ...updated, status: nextStatus } : prev);
+    } catch (err) {
+      console.error("Archive media error", err);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const filtered = items.filter(item => {
+    const matchSearch = !search || item.filename?.toLowerCase().includes(search.toLowerCase()) || item.alt_text?.toLowerCase().includes(search.toLowerCase());
+    return matchSearch && matchesFilter(item, filter);
+  });
+
+  const mediaGroups = FILTER_OPTIONS.slice(1).map(group => ({
+    ...group,
+    items: filtered.filter(item => matchesFilter(item, group.id)),
+  }));
+
+  const calendarEvents = filtered.map(item => ({
+    id: item.id,
+    title: item.filename || "Archivo",
+    date: (item.created_at || new Date().toISOString()).split("T")[0],
+    color: isImage(item.mime_type) ? "blue" as const : item.mime_type?.startsWith("video/") ? "rose" as const : "amber" as const,
+    location: item.mime_type || "Archivo",
+  }));
+
+  const ganttItems = filtered.map(item => {
+    const date = item.created_at || new Date().toISOString();
+    return {
+      id: item.id,
+      title: item.filename || "Archivo",
+      subtitle: `${item.mime_type || "Sin tipo"} · ${formatBytes(item.file_size)}`,
+      start_date: date,
+      end_date: date,
+      color: isImage(item.mime_type) ? "blue" as const : item.mime_type?.startsWith("video/") ? "rose" as const : "amber" as const,
+      progress: 100,
+    };
+  });
+
+  const renderMediaTable = () => (
+    <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
+      <table className="w-full text-left">
+        <thead className="bg-slate-50 dark:bg-white/5">
+          <tr>
+            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Archivo</th>
+            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Tipo</th>
+            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">TamaÃ±o</th>
+            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden xl:table-cell">Subido</th>
+            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Acciones</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+          {filtered.map(item => {
+            const FileIcon = getFileTypeIcon(item.mime_type);
+            return (
+              <tr key={item.id} onClick={() => setSelectedItem(item)} className={clsx("hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer", item.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="size-9 rounded-xl overflow-hidden bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+                      {isImage(item.mime_type) ? <img src={item.url} alt="" className="w-full h-full object-cover" /> : <FileIcon size={16} className="text-slate-400" />}
+                    </div>
+                    <span className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate max-w-[260px]">{item.filename || "Archivo"}</span>
+                    {item.status === "archived" && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-700">Archivado</span>}
+                  </div>
+                </td>
+                <td className="px-4 py-3 hidden md:table-cell text-[11px] text-slate-500">{item.mime_type || "—"}</td>
+                <td className="px-4 py-3 hidden lg:table-cell text-[11px] text-slate-500">{formatBytes(item.file_size)}</td>
+                <td className="px-4 py-3 hidden xl:table-cell text-[11px] text-slate-400">{item.created_at ? new Date(item.created_at).toLocaleDateString() : "—"}</td>
+                <td className="px-4 py-3">
+                  <button onClick={e => { e.stopPropagation(); copyUrl(item); }} className="p-2 rounded-xl hover:bg-blue-50 text-slate-400 hover:text-blue-600">
+                    {copiedId === item.id ? <Check size={14} /> : <Copy size={14} />}
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const renderMediaBoard = () => (
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-full">
+      {mediaGroups.map(group => (
+        <section key={group.id} className="rounded-3xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-4">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{group.label}</span>
+            <span className="text-[10px] font-black text-slate-400">{group.items.length}</span>
+          </div>
+          <div className="space-y-3">
+            {group.items.map(item => {
+              const FileIcon = getFileTypeIcon(item.mime_type);
+              return (
+                <button key={item.id} onClick={() => setSelectedItem(item)} className={clsx("w-full text-left bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/5 rounded-2xl p-3 hover:border-blue-400 transition-all flex items-center gap-3", item.status === "archived" && "opacity-70 border-amber-200 bg-amber-50/40 dark:bg-amber-500/5")}>
+                  <div className="size-10 rounded-xl overflow-hidden bg-slate-100 dark:bg-white/5 flex items-center justify-center shrink-0">
+                    {isImage(item.mime_type) ? <img src={item.url} alt="" className="w-full h-full object-cover" /> : <FileIcon size={18} className="text-slate-400" />}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{item.filename || "Archivo"}</p>
+                    {item.status === "archived" && <p className="text-[9px] font-black uppercase tracking-widest text-amber-600">Archivado</p>}
+                    <p className="text-[10px] text-slate-400 mt-1">{formatBytes(item.file_size)}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
 
   return (
-    <div className="space-y-8 px-4 py-8">
-      <AdminHero
-        eyebrow="CMS"
-        title="Media manager"
-        description="Biblioteca con filtros, metadatos, etiquetas y subida de archivos para contenido FARO."
-        tags={["Media", "Assets", "FARO"]}
-        watchers={["Comunicaciones", "Diseno"]}
-        primaryAction={{ label: saving ? "Guardando..." : "Guardar cambios", icon: Save, onClick: saveDrafts }}
-      />
+    <div
+      className="flex flex-col h-full bg-white dark:bg-[#0d0e11] overflow-hidden"
+      onDragOver={(e) => { e.preventDefault(); setIsDraggingOver(true); }}
+      onDragLeave={() => setIsDraggingOver(false)}
+      onDrop={handleDrop}
+    >
+      {/* ── Drag overlay ── */}
+      <AnimatePresence>
+        {isDraggingOver && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-blue-600/20 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none border-4 border-dashed border-blue-500 rounded-3xl m-4"
+          >
+            <Upload size={64} className="text-blue-500 mb-4" strokeWidth={1} />
+            <p className="text-blue-600 dark:text-blue-400 font-black text-xl uppercase tracking-widest">
+              Suelta para subir
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <section className="rounded-[2rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-6 space-y-5">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <label className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar por URL o alt"
-              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent pl-10 pr-3 py-2 text-sm outline-none"
-            />
-          </label>
+      {/* ── Toolbar ── */}
+      <header className="shrink-0 border-b border-slate-100 dark:border-white/5 px-6 py-4 flex items-center gap-4">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <FileImage size={18} className="text-blue-600 shrink-0" />
+          <h1 className="text-[13px] font-black uppercase tracking-widest text-slate-800 dark:text-white truncate">
+            Biblioteca de Medios
+          </h1>
+          <span className="text-[10px] font-black text-slate-400 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full shrink-0">
+            {filtered.length} archivos
+          </span>
+        </div>
+
+        {/* Search */}
+        <div className="relative w-60 shrink-0">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
-            value={sectionFilter}
-            onChange={(event) => setSectionFilter(event.target.value)}
-            placeholder="Filtrar por seccion"
-            className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar archivos..."
+            className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"
           />
-          <label className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2 text-xs font-black uppercase tracking-[0.2em] cursor-pointer">
-            <Upload size={14} />
-            {uploading ? "Subiendo" : "Subir archivo"}
-            <input
-              type="file"
-              className="hidden"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) uploadFile(file);
+        </div>
+
+        <ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={MEDIA_VIEWS} />
+
+        {/* Upload button */}
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-60 shrink-0"
+        >
+          {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+          {uploading ? "Subiendo..." : "Subir Archivos"}
+        </button>
+        <input ref={fileInputRef} type="file" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx" className="hidden" onChange={handleFileInput} />
+      </header>
+
+      {/* ── Filter bar ── */}
+      <div className="shrink-0 px-6 py-3 border-b border-slate-100 dark:border-white/5 flex items-center gap-2">
+        {FILTER_OPTIONS.map(opt => (
+          <button
+            key={opt.id}
+            onClick={() => setFilter(opt.id)}
+            className={clsx(
+              "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+              filter === opt.id
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                : "bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10"
+            )}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Main content ── */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Media grid/list */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {loading ? (
+            <div className={clsx("gap-4", viewType === "grid" ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6" : "space-y-2")}>
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className={clsx("animate-pulse bg-slate-100 dark:bg-white/5 rounded-2xl", viewType === "grid" ? "aspect-square" : "h-14")} />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-center space-y-6 py-20">
+              <div className="size-24 rounded-[2.5rem] bg-slate-50 dark:bg-white/5 flex items-center justify-center">
+                <FileImage size={40} strokeWidth={1} className="text-slate-300" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">
+                  {search ? "Sin resultados" : "Biblioteca vacía"}
+                </p>
+                <p className="text-sm text-slate-400 font-medium">
+                  {search ? "Intenta con otros términos" : "Arrastra archivos aquí o haz clic en «Subir Archivos»"}
+                </p>
+              </div>
+              {!search && (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all"
+                >
+                  <Plus size={16} /> Subir primer archivo
+                </button>
+              )}
+            </div>
+          ) : viewType === "grid" ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {filtered.map(item => {
+                const FileIcon = getFileTypeIcon(item.mime_type);
+                return (
+                  <motion.div
+                    key={item.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    onClick={() => setSelectedItem(item)}
+                    className={clsx(
+                      "group relative aspect-square rounded-2xl border overflow-hidden cursor-pointer transition-all",
+                      item.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5",
+                      selectedItem?.id === item.id
+                        ? "border-blue-500 ring-2 ring-blue-500/30"
+                        : "border-slate-200 dark:border-white/10 hover:border-blue-400 hover:shadow-lg"
+                    )}
+                  >
+                    {isImage(item.mime_type) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={item.url} alt={item.alt_text || item.filename} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-slate-50 dark:bg-white/5 flex flex-col items-center justify-center gap-2">
+                        <FileIcon size={32} strokeWidth={1} className="text-slate-400" />
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center px-2 line-clamp-2">{item.filename}</p>
+                      </div>
+                    )}
+
+                    {/* Hover overlay */}
+                    {item.status === "archived" && (
+                      <span className="absolute left-2 top-2 rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-700">
+                        Archivado
+                      </span>
+                    )}
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-2 p-2">
+                      <button
+                        onClick={e => { e.stopPropagation(); copyUrl(item); }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-800 hover:bg-blue-50 transition-all w-full justify-center"
+                      >
+                        {copiedId === item.id ? <Check size={10} className="text-emerald-600" /> : <Copy size={10} />}
+                        {copiedId === item.id ? "¡Copiado!" : "Copiar URL"}
+                      </button>
+                      <button
+                        onClick={e => { e.stopPropagation(); toggleArchiveItem(item); }}
+                        disabled={deletingId === item.id}
+                        className={clsx(
+                          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-white transition-all w-full justify-center disabled:opacity-60",
+                          item.status === "archived" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-amber-500 hover:bg-amber-600"
+                        )}
+                      >
+                        {deletingId === item.id ? <Loader2 size={10} className="animate-spin" /> : item.status === "archived" ? <RotateCcw size={10} /> : <Archive size={10} />}
+                        {item.status === "archived" ? "Restaurar" : "Archivar"}
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : viewType === "table" ? (
+            renderMediaTable()
+          ) : viewType === "board" || viewType === "kanban" ? (
+            renderMediaBoard()
+          ) : viewType === "calendar" ? (
+            <UniversalCalendarView
+              title="Calendario de medios"
+              events={calendarEvents}
+              onEventClick={(event) => {
+                const item = filtered.find(entry => entry.id === event.id);
+                if (item) setSelectedItem(item);
               }}
             />
-          </label>
+          ) : viewType === "gantt" ? (
+            <UniversalGanttView
+              moduleName="Media CMS"
+              items={ganttItems}
+              onItemClick={(item) => {
+                const media = filtered.find(entry => entry.id === item.id);
+                if (media) setSelectedItem(media);
+              }}
+            />
+          ) : viewType === "wiki" ? (
+            <UniversalWikiView moduleName="Media CMS" storageKey="cms-media-wiki" />
+          ) : (
+            /* List view */
+            <div className="space-y-2">
+              {filtered.map(item => {
+                const FileIcon = getFileTypeIcon(item.mime_type);
+                return (
+                  <motion.div
+                    key={item.id}
+                    layout
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    onClick={() => setSelectedItem(item)}
+                    className={clsx(
+                      "group flex items-center gap-4 p-3 rounded-2xl border cursor-pointer transition-all",
+                      item.status === "archived" && "opacity-70 border-amber-200 bg-amber-50/40 dark:bg-amber-500/5",
+                      selectedItem?.id === item.id
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/10"
+                        : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] hover:border-blue-300 dark:hover:border-blue-700"
+                    )}
+                  >
+                    {/* Thumbnail */}
+                    <div className="size-10 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+                      {isImage(item.mime_type) ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={item.url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <FileIcon size={18} strokeWidth={1} className="text-slate-400" />
+                      )}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{item.filename || "Archivo"}</p>
+                        {item.status === "archived" && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-700">Archivado</span>}
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-medium">{item.mime_type || "—"} · {formatBytes(item.file_size)}</p>
+                    </div>
+
+                    {/* Date */}
+                    {item.created_at && (
+                      <p className="text-[10px] text-slate-400 font-bold shrink-0 hidden md:block">
+                        {new Date(item.created_at).toLocaleDateString()}
+                      </p>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={e => { e.stopPropagation(); copyUrl(item); }}
+                        className={clsx("p-2 rounded-xl transition-all", copiedId === item.id ? "bg-emerald-50 text-emerald-600" : "hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-blue-600")}
+                      >
+                        {copiedId === item.id ? <Check size={14} /> : <Copy size={14} />}
+                      </button>
+                      <a href={item.url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-600 transition-all">
+                        <Download size={14} />
+                      </a>
+                      <button
+                        onClick={e => { e.stopPropagation(); toggleArchiveItem(item); }}
+                        disabled={deletingId === item.id}
+                        className={clsx(
+                          "p-2 rounded-xl transition-all disabled:opacity-60",
+                          item.status === "archived"
+                            ? "hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-slate-400 hover:text-emerald-600"
+                            : "hover:bg-amber-50 dark:hover:bg-amber-500/10 text-slate-400 hover:text-amber-600"
+                        )}
+                      >
+                        {deletingId === item.id ? <Loader2 size={14} className="animate-spin" /> : item.status === "archived" ? <RotateCcw size={14} /> : <Archive size={14} />}
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-slate-500">Activos: {items.length}</p>
-          <button
-            onClick={() => pushItemToDraft()}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-black uppercase tracking-[0.2em]"
-          >
-            <Plus size={14} />
-            Nuevo item
-          </button>
-        </div>
+        {/* ── Detail panel ── */}
+        <AnimatePresence>
+          {selectedItem && (
+            <motion.aside
+              key="detail"
+              initial={{ x: 320, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 320, opacity: 0 }}
+              transition={{ type: "spring", damping: 28, stiffness: 280 }}
+              className="w-80 shrink-0 border-l border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-[#111418] flex flex-col overflow-y-auto"
+            >
+              {/* Header */}
+              <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-white/5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Detalle</p>
+                <button onClick={() => setSelectedItem(null)} className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 text-slate-400 transition-all">
+                  <X size={14} />
+                </button>
+              </div>
 
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(totalBySection).map(([section, count]) => (
-            <span key={section} className="text-[10px] uppercase tracking-[0.2em] px-2 py-1 rounded-full border border-slate-200 text-slate-500">
-              {section}: {count}
-            </span>
-          ))}
-        </div>
-
-        {loading ? (
-          <p className="text-sm text-slate-500">Cargando biblioteca...</p>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {items.map((item) => (
-              <div key={item.id} className="rounded-2xl border border-slate-100 dark:border-white/10 p-4 space-y-4 flex flex-col md:flex-row gap-4">
-                <div className="relative w-full md:w-32 h-32 shrink-0 rounded-xl overflow-hidden bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5">
-                  <Image
-                    src={item.url}
-                    alt={item.alt_text || "Preview"}
-                    fill
-                    unoptimized
-                    className="object-cover transition-transform hover:scale-110"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = "https://placehold.co/400x400/111418/white?text=No+Preview";
-                      target.srcset = "";
-                    }}
+              {/* Preview */}
+              <div className="p-4">
+                {isImage(selectedItem.mime_type) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={selectedItem.url}
+                    alt={selectedItem.alt_text || selectedItem.filename}
+                    className="w-full rounded-2xl border border-slate-200 dark:border-white/10 object-cover max-h-56"
                   />
+                ) : selectedItem.mime_type?.startsWith("video/") ? (
+                  <video controls className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-black max-h-56">
+                    <source src={selectedItem.url} type={selectedItem.mime_type} />
+                  </video>
+                ) : selectedItem.mime_type?.startsWith("audio/") ? (
+                  <div className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                    <audio controls src={selectedItem.url} className="w-full" />
+                  </div>
+                ) : (
+                  <div className="w-full h-40 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 flex flex-col items-center justify-center gap-3">
+                    {React.createElement(getFileTypeIcon(selectedItem.mime_type), { size: 40, strokeWidth: 1, className: "text-slate-300" })}
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">{selectedItem.mime_type}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Metadata */}
+              <div className="p-4 space-y-4 flex-1">
+                <div className="space-y-3">
+                  {[
+                    { label: "Nombre", val: selectedItem.filename || "—" },
+                    { label: "Estado", val: selectedItem.status === "archived" ? "Archivado" : "Activo" },
+                    { label: "Tipo", val: selectedItem.mime_type || "—" },
+                    { label: "Tamaño", val: formatBytes(selectedItem.file_size) },
+                    ...(selectedItem.width && selectedItem.height
+                      ? [{ label: "Dimensiones", val: `${selectedItem.width} × ${selectedItem.height} px` }]
+                      : []),
+                    ...(selectedItem.created_at
+                      ? [{ label: "Subido", val: new Date(selectedItem.created_at).toLocaleDateString("es-CO", { year: "numeric", month: "short", day: "numeric" }) }]
+                      : []),
+                  ].map(item => (
+                    <div key={item.label} className="flex items-start gap-3">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest w-20 shrink-0 pt-0.5">{item.label}</p>
+                      <p className="text-[11px] font-bold text-slate-700 dark:text-slate-200 break-all">{item.val}</p>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex-1 space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{item.section}</p>
-                  <p className="text-xs text-slate-500 break-all">{item.url}</p>
-                  <p className="text-sm text-slate-700 dark:text-slate-300">{item.alt_text || "Sin alt"}</p>
-                  <p className="text-[10px] text-slate-400">{(item.tags || []).join(", ") || "Sin tags"}</p>
-                  <div className="flex items-center justify-between pt-2">
-                    <button onClick={() => router.push(`/cms/media/${item.id}`)} className="text-xs font-black uppercase tracking-[0.2em] text-primary">
-                      Editar Full
-                    </button>
+
+                {/* URL field */}
+                <div className="space-y-1.5">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">URL pública</p>
+                  <div className="flex gap-2">
+                    <input
+                      readOnly
+                      value={selectedItem.url}
+                      className="flex-1 min-w-0 text-[10px] font-mono bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 outline-none text-slate-600 dark:text-slate-300"
+                    />
                     <button
-                      onClick={async () => {
-                        if (!token) return;
-                        if (!confirm("¿Eliminar este recurso?")) return;
-                        await apiFetch(`/cms/media/${item.id}`, { method: "DELETE", token });
-                        await load();
-                      }}
-                      className="inline-flex items-center gap-1 text-xs font-black uppercase tracking-[0.2em] text-rose-500"
+                      onClick={() => copyUrl(selectedItem)}
+                      className={clsx(
+                        "p-2 rounded-xl border transition-all flex-shrink-0",
+                        copiedId === selectedItem.id
+                          ? "bg-emerald-50 border-emerald-200 text-emerald-600"
+                          : "border-slate-200 dark:border-white/10 text-slate-400 hover:text-blue-600 hover:border-blue-300"
+                      )}
                     >
-                      <Trash2 size={12} /> Eliminar
+                      {copiedId === selectedItem.id ? <Check size={14} /> : <Copy size={14} />}
                     </button>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
 
-        {drafts.length > 0 && (
-          <div className="space-y-3 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 p-4">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Pendientes por guardar</p>
-            {drafts.map((draft, index) => (
-              <div key={`${draft.id || "new"}-${index}`} className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                <input
-                  value={draft.url}
-                  onChange={(event) => setDrafts((prev) => prev.map((row, i) => (i === index ? { ...row, url: event.target.value } : row)))}
-                  placeholder="https://..."
-                  className="rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
-                />
-                <input
-                  value={draft.alt_text}
-                  onChange={(event) => setDrafts((prev) => prev.map((row, i) => (i === index ? { ...row, alt_text: event.target.value } : row)))}
-                  placeholder="Texto alternativo"
-                  className="rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
-                />
-                <input
-                  value={draft.section}
-                  onChange={(event) => setDrafts((prev) => prev.map((row, i) => (i === index ? { ...row, section: event.target.value } : row)))}
-                  placeholder="Seccion"
-                  className="rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
-                />
-                <input
-                  value={draft.tags}
-                  onChange={(event) => setDrafts((prev) => prev.map((row, i) => (i === index ? { ...row, tags: event.target.value } : row)))}
-                  placeholder="tag1, tag2"
-                  className="rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
-                />
+              {/* Actions */}
+              <div className="p-4 border-t border-slate-200 dark:border-white/5 space-y-2">
+                <a
+                  href={selectedItem.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all"
+                >
+                  <Download size={14} /> Descargar
+                </a>
+                <button
+                  onClick={() => toggleArchiveItem(selectedItem)}
+                  disabled={deletingId === selectedItem.id}
+                  className={clsx(
+                    "flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-60",
+                    selectedItem.status === "archived"
+                      ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 hover:bg-emerald-100"
+                      : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 hover:bg-amber-100"
+                  )}
+                >
+                  {deletingId === selectedItem.id ? <Loader2 size={14} className="animate-spin" /> : selectedItem.status === "archived" ? <RotateCcw size={14} /> : <Archive size={14} />}
+                  {selectedItem.status === "archived" ? "Restaurar archivo" : "Archivar archivo"}
+                </button>
               </div>
-            ))}
-          </div>
-        )}
-
-        {message && (
-          <p className="text-sm text-slate-500 flex items-center gap-2">
-            <ImageIcon size={14} /> {message}
-          </p>
-        )}
-      </section>
+            </motion.aside>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
-

@@ -11,7 +11,7 @@ import {
     Zap,
     Filter
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
 interface PipelineFiltersSidebarProps {
@@ -41,7 +41,7 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
                     <div>
                         <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-[-0.04em] leading-tight">
                             Pipeline<br/>
-                            <span className="text-blue-600">Pastoral</span>
+                            <span className="text-blue-600">Consolidación</span>
                         </h2>
                     </div>
                 </div>
@@ -50,9 +50,9 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
                 <div className="grid grid-cols-2 gap-3 mt-8 relative z-10">
                     {[
                         { label: 'Total Leads', value: stats.total, color: 'text-slate-800 dark:text-white' },
-                        { label: 'Conversión', value: `${stats.conversion}%`, color: 'text-purple-600', icon: TrendingUp }
-                    ].map((s, i) => (
-                        <div key={i} className="bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm p-4 rounded-3xl border border-slate-100 dark:border-white/[0.05] shadow-sm">
+                        { label: 'Conversión', value: `${stats.conversion}%`, color: 'text-sky-600', icon: TrendingUp }
+                    ].map((s) => (
+                        <div key={s.label} className="bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm p-4 rounded-3xl border border-slate-100 dark:border-white/[0.05] shadow-sm">
                             <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1.5">{s.label}</p>
                             <div className="flex items-center justify-between">
                                 <p className={clsx("text-lg font-black tracking-tighter leading-none", s.color)}>{s.value}</p>
@@ -74,7 +74,7 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
                             { id: 'all', label: 'Todos los Prospectos', icon: Users, count: stats.total, color: 'text-blue-600', bg: 'bg-blue-500/5' },
                             { id: 'new', label: 'Registros Nuevos', icon: UserPlus, count: stats.new, color: 'text-amber-600', bg: 'bg-amber-500/5' },
                             { id: 'consolidated', label: 'Casos de Éxito', icon: CheckCircle2, count: stats.consolidated, color: 'text-emerald-600', bg: 'bg-emerald-500/5' },
-                        ].map((s, i) => (
+                        ].map((s) => (
                             <motion.button 
                                 key={s.id}
                                 whileHover={{ x: 4 }}

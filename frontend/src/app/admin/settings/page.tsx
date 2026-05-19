@@ -71,7 +71,7 @@ export default function MinistrySettings() {
                 <section className="flex flex-col items-center">
                     <div className="relative group">
                         <div className="size-32 rounded-full border-2 border-primary/20 p-1.5 bg-primary/5 shadow-2xl shadow-primary/10">
-                            <div className="size-full rounded-full bg-cover bg-center border-2 border-white/5" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1544427928-c49cddee14bb?q=80&w=200&auto=format&fit=crop')" }}></div>
+                            <div className="size-full rounded-full bg-cover bg-center border-2 border-white/5" style={{ backgroundImage: "url('https://picsum.photos/seed/1544427928-c49cddee14bb/800/600')" }}></div>
                         </div>
                         <button className="absolute bottom-1 right-1 size-10 rounded-full bg-primary text-white border-2 border-slate-950 flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl">
                             <Edit3 size={16} />

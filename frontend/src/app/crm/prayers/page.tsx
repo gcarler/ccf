@@ -2,12 +2,9 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import {
+import { 
     Heart,
-    MessageSquare,
     Plus,
-    Search,
-    CheckCircle2,
     Users,
     Sparkles,
     Flame,
@@ -16,13 +13,12 @@ import {
     Briefcase,
     Home,
     Loader2,
-    Send,
-    X
+    Send
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import { useWikiDocument } from '@/hooks/useWikiDocument';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { DataTable } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
@@ -55,7 +51,9 @@ export default function PrayerSupportCenter() {
     const [isSaving, setIsSaving] = useState(false);
     const [newPrayer, setNewPrayer] = useState({ name: '', request: '', category: 'General', is_urgent: false });
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_prayers_view', 'table'));
-    const [wikiNotes, setWikiNotes] = useState('');
+    const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('crm_prayers_wiki_notes', {
+        title: 'Wiki de intercesion CRM',
+    });
 
     const fetchRequests = useCallback(async () => {
         if (!token) return;
@@ -79,14 +77,6 @@ export default function PrayerSupportCenter() {
 
     useEffect(() => { fetchRequests(); }, [fetchRequests]);
 
-    useEffect(() => {
-        const saved = localStorage.getItem('crm_prayers_wiki_notes');
-        if (saved) setWikiNotes(saved);
-    }, []);
-
-    useEffect(() => {
-        localStorage.setItem('crm_prayers_wiki_notes', wikiNotes);
-    }, [wikiNotes]);
 
     const updateRequestStatus = useCallback(async (id: number, newStatus: string) => {
         setRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
@@ -211,7 +201,7 @@ export default function PrayerSupportCenter() {
 
     return (
         <CrmShell
-            breadcrumbs={[{ label: 'CRM Pastoral', icon: Users }, { label: 'Muro de Intercesión', icon: Heart }]}
+            breadcrumbs={[{ label: 'Consolidación', icon: Users }, { label: 'Muro de Intercesión', icon: Heart }]}
             viewType={viewType}
             onViewChange={setViewType}
             viewOptions={['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki']}

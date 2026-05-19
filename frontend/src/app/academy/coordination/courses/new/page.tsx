@@ -4,19 +4,16 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import type { ViewType } from '@/components/ViewSwitcher';
 import { apiFetch } from '@/lib/http';
 import { 
     GraduationCap, 
     Save, 
-    X, 
     Plus, 
-    BookOpen, 
-    Type, 
     FileText, 
     ShieldCheck, 
     ArrowLeft,
     Clock,
-    Award
 } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
@@ -38,6 +35,7 @@ export default function NewCoursePage() {
     });
     
     const [loading, setLoading] = useState(false);
+    const [viewType, setViewType] = useState<ViewType>('grid');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -79,8 +77,9 @@ export default function NewCoursePage() {
                     { label: 'Coordinación', icon: ShieldCheck, href: '/academy/coordination' },
                     { label: 'Nuevo Programa', icon: Plus },
                 ]}
-                viewType="grid"
-                setViewType={() => {}}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={['grid', 'list', 'table']}
                 leftActions={
                     <button onClick={() => router.back()} className="p-2.5 hover:bg-white dark:hover:bg-white/5 rounded-xl transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10 shadow-sm">
                         <ArrowLeft size={18} className="text-slate-500" />
@@ -89,6 +88,49 @@ export default function NewCoursePage() {
             />
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-6 lg:p-12 relative z-10">
+                {viewType === 'list' && (
+                    <div className="max-w-4xl mx-auto space-y-5">
+                        {[
+                            ['Código', formData.code || 'Pendiente'],
+                            ['Nombre', formData.title || 'Pendiente'],
+                            ['Modalidad', formData.modality],
+                            ['Duración', `${formData.duration_hours} horas`],
+                            ['Certificación', formData.certificate_type],
+                        ].map(([label, value]) => (
+                            <article key={label} className="rounded-3xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</p>
+                                <h3 className="mt-2 text-lg font-black text-slate-900 dark:text-white">{value}</h3>
+                            </article>
+                        ))}
+                    </div>
+                )}
+
+                {viewType === 'table' && (
+                    <div className="max-w-4xl mx-auto overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+                        <table className="w-full text-left">
+                            <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                <tr><th className="px-6 py-4">Campo</th><th className="px-6 py-4">Valor actual</th></tr>
+                            </thead>
+                            <tbody>
+                                {[
+                                    ['Código', formData.code || 'Pendiente'],
+                                    ['Nombre', formData.title || 'Pendiente'],
+                                    ['Descripción', formData.description || 'Pendiente'],
+                                    ['Modalidad', formData.modality],
+                                    ['Duración', `${formData.duration_hours} horas`],
+                                    ['Certificación', formData.certificate_type],
+                                ].map(([label, value]) => (
+                                    <tr key={label} className="border-t border-slate-100 dark:border-white/5">
+                                        <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{label}</td>
+                                        <td className="px-6 py-4 text-slate-500">{value}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {viewType === 'grid' && (
                 <motion.div 
                     variants={containerVariants} initial="hidden" animate="show"
                     className="max-w-4xl mx-auto space-y-12"
@@ -140,9 +182,9 @@ export default function NewCoursePage() {
                         </motion.div>
 
                         {/* Configuration */}
-                        <motion.div variants={{hidden: {opacity:0}, show: {opacity:1}}} className="bg-white dark:bg-[#15171c] rounded-[3rem] border border-slate-200 dark:border-white/5 p-10 lg:p-14 shadow-2xl shadow-slate-200/20 dark:shadow-none space-y-10 group transition-all hover:border-purple-500/20">
-                            <div className="flex items-center gap-4 text-purple-600">
-                                <div className="size-12 rounded-2xl bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center shadow-inner">
+                        <motion.div variants={{hidden: {opacity:0}, show: {opacity:1}}} className="bg-white dark:bg-[#15171c] rounded-[3rem] border border-slate-200 dark:border-white/5 p-10 lg:p-14 shadow-2xl shadow-slate-200/20 dark:shadow-none space-y-10 group transition-all hover:border-sky-500/20">
+                            <div className="flex items-center gap-4 text-sky-600">
+                                <div className="size-12 rounded-2xl bg-sky-50 dark:bg-sky-500/10 flex items-center justify-center shadow-inner">
                                     <Clock size={24} strokeWidth={2.5} />
                                 </div>
                                 <h2 className="text-xl font-black uppercase tracking-widest">Reglas de Negocio</h2>
@@ -154,7 +196,7 @@ export default function NewCoursePage() {
                                     <select 
                                         value={formData.modality}
                                         onChange={(e) => setFormData({...formData, modality: e.target.value})}
-                                        className="w-full bg-slate-50 dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-2xl px-6 py-5 text-sm font-bold outline-none appearance-none cursor-pointer focus:border-purple-500/50 transition-all"
+                                        className="w-full bg-slate-50 dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-2xl px-6 py-5 text-sm font-bold outline-none appearance-none cursor-pointer focus:border-sky-500/50 transition-all"
                                     >
                                         <option value="formal">Academia Formal</option>
                                         <option value="non_formal">Capacitación Libre</option>
@@ -165,7 +207,7 @@ export default function NewCoursePage() {
                                     <input 
                                         type="number" value={formData.duration_hours}
                                         onChange={(e) => setFormData({...formData, duration_hours: parseInt(e.target.value)})}
-                                        className="w-full bg-slate-50 dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-2xl px-6 py-5 text-sm font-bold outline-none focus:border-purple-500/50 transition-all"
+                                        className="w-full bg-slate-50 dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-2xl px-6 py-5 text-sm font-bold outline-none focus:border-sky-500/50 transition-all"
                                     />
                                 </div>
                                 <div className="space-y-3">
@@ -173,7 +215,7 @@ export default function NewCoursePage() {
                                     <input 
                                         type="text" placeholder="Ej: Diplomado" value={formData.certificate_type}
                                         onChange={(e) => setFormData({...formData, certificate_type: e.target.value})}
-                                        className="w-full bg-slate-50 dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-2xl px-6 py-5 text-sm font-bold outline-none focus:border-purple-500/50 transition-all"
+                                        className="w-full bg-slate-50 dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-2xl px-6 py-5 text-sm font-bold outline-none focus:border-sky-500/50 transition-all"
                                     />
                                 </div>
                             </div>
@@ -190,7 +232,7 @@ export default function NewCoursePage() {
                                         className="size-8 rounded-xl accent-blue-600 transition-transform active:scale-90"
                                     />
                                 </label>
-                                <label className="flex items-center justify-between p-6 rounded-[2rem] bg-slate-50 dark:bg-black/20 border-2 border-transparent cursor-pointer hover:border-purple-500/20 transition-all group/toggle">
+                                <label className="flex items-center justify-between p-6 rounded-[2rem] bg-slate-50 dark:bg-black/20 border-2 border-transparent cursor-pointer hover:border-sky-500/20 transition-all group/toggle">
                                     <div className="space-y-1">
                                         <p className="text-lg font-black text-slate-800 dark:text-white leading-none">Autogestionado</p>
                                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sin restricciones de fecha o cohorte</p>
@@ -198,7 +240,7 @@ export default function NewCoursePage() {
                                     <input 
                                         type="checkbox" checked={formData.is_self_paced}
                                         onChange={(e) => setFormData({...formData, is_self_paced: e.target.checked})}
-                                        className="size-8 rounded-xl accent-purple-600 transition-transform active:scale-90"
+                                        className="size-8 rounded-xl accent-sky-600 transition-transform active:scale-90"
                                     />
                                 </label>
                             </div>
@@ -221,6 +263,7 @@ export default function NewCoursePage() {
                         </div>
                     </form>
                 </motion.div>
+                )}
             </main>
         </div>
     );

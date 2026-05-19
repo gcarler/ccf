@@ -6,37 +6,27 @@ import { apiFetch } from '@/lib/http';
 import { 
     Home, 
     MapPin, 
-    TrendingUp, 
-    History, 
     Plus, 
-    Search, 
-    Users, 
-    MoreHorizontal,
-    ChevronRight,
-    Sparkles
+    TrendingUp,
+    MoreHorizontal
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { DSCard } from '@/design/components/DSCard';
-import { DSBadge } from '@/design/components/DSBadge';
 import { DSMetric } from '@/design/components/DSMetric';
 import { toast } from 'sonner';
 
 export default function GroupsPage() {
     const { token } = useAuth();
     const [groups, setGroups] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!token) return;
         const loadGroups = async () => {
             try {
-                setLoading(true);
-                const data = await apiFetch<any[]>('/crm/glory-houses', { token }).catch(() => []);
+                const data = await apiFetch<any[]>('/evangelism/glory-houses', { token }).catch(() => []);
                 setGroups(data);
             } catch (err) {
                 toast.error('Error al cargar Casas de Bendición');
-            } finally {
-                setLoading(false);
             }
         };
         loadGroups();

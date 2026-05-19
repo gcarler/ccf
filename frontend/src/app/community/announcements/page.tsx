@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Megaphone, Bell, Calendar, Sparkles, Pin } from 'lucide-react';
+import { Megaphone, Sparkles, Pin } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 
@@ -54,9 +54,9 @@ export default function AnnouncementsPage() {
                         id: Number(item.id || index + 1),
                         title: item.title || 'Anuncio',
                         excerpt: item.content || item.excerpt || '',
-                        date: item.created_at ? new Date(item.created_at).toLocaleDateString('es-MX') : 'Reciente',
+                        date: (item.published_at || item.created_at) ? new Date(item.published_at || item.created_at).toLocaleDateString('es-MX') : 'Reciente',
                         category: item.category || 'General',
-                        isPinned: Boolean(item.featured || item.is_pinned)
+                        isPinned: Boolean(item.is_featured || item.featured || item.is_pinned)
                     }))
                 );
             } catch {

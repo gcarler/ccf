@@ -1,8 +1,7 @@
 "use client";
 
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Search, MapPin, Compass, Sparkles, Plus } from 'lucide-react';
+import { MapPin, Compass, Sparkles, Plus } from 'lucide-react';
 
 export default function DiscoverPage() {
     return (

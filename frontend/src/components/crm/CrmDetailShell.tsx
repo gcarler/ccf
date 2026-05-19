@@ -21,7 +21,7 @@ const VARIANT_PRESETS: Record<Variant, { primary: string; accent: string }> = {
     },
     rose: {
         primary: "from-rose-500/20",
-        accent: "from-purple-500/15"
+        accent: "from-sky-500/15"
     }
 };
 
@@ -45,8 +45,7 @@ export default function CrmDetailShell({
     children,
     variant = "indigo",
     onBack,
-    contentClassName,
-    appearance = 'dark'
+    contentClassName
 }: CrmDetailShellProps) {
     const router = useRouter();
     const preset = VARIANT_PRESETS[variant] || VARIANT_PRESETS.indigo;
@@ -81,7 +80,7 @@ export default function CrmDetailShell({
                             <ArrowLeft size={18} />
                         </button>
                         <div className="flex-1 text-center">
-                            <p className={`text-[10px] font-black uppercase tracking-[0.35em] ${accentText}`}>CRM Pastoral</p>
+                            <p className={`text-[10px] font-black uppercase tracking-[0.35em] ${accentText}`}>Consolidación</p>
                             <h1 className={`text-2xl font-black tracking-tight ${isDark ? 'text-[hsl(var(--text-primary))]' : 'text-[hsl(var(--text-primary))]'}`}>{title}</h1>
                             {description && <p className={`text-xs mt-1 font-medium ${subtleText}`}>{description}</p>}
                         </div>

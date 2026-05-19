@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
+import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { Search, UserPlus, Phone, MessageSquare, Link2, Users, Plus, Loader2, Send, Calendar, BarChart3, BookOpen } from 'lucide-react';
 import CrmShell from '@/components/crm/CrmShell';
 import Skeleton from '@/components/ui/Skeleton';
@@ -27,7 +28,7 @@ function getStatusStyles(stage: string) {
     switch (stage) {
         case 'new':          return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
         case 'call':         return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
-        case 'visit':        return 'bg-purple-500/10 text-purple-600 border-purple-500/20';
+        case 'visit':        return 'bg-sky-500/10 text-sky-600 border-sky-500/20';
         case 'discipleship': return 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20';
         case 'consolidated': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
         default:             return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
@@ -37,7 +38,7 @@ function getStatusDot(stage: string) {
     switch (stage) {
         case 'new':          return 'bg-blue-500';
         case 'call':         return 'bg-amber-500';
-        case 'visit':        return 'bg-purple-500';
+        case 'visit':        return 'bg-sky-500';
         case 'discipleship': return 'bg-indigo-500';
         case 'consolidated': return 'bg-emerald-500';
         default:             return 'bg-slate-400';
@@ -54,7 +55,9 @@ export default function ContactsPage() {
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_contacts_view', 'list'));
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
-    const [wikiNotes, setWikiNotes] = useState('');
+    const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('crm_contacts_wiki_notes', {
+        title: 'Wiki de contactos CRM',
+    });
 
     // Create drawer
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -78,14 +81,6 @@ export default function ContactsPage() {
 
     useEffect(() => { fetchLeads(); }, [fetchLeads]);
 
-    useEffect(() => {
-        const saved = localStorage.getItem('crm_contacts_wiki_notes');
-        if (saved) setWikiNotes(saved);
-    }, []);
-
-    useEffect(() => {
-        localStorage.setItem('crm_contacts_wiki_notes', wikiNotes);
-    }, [wikiNotes]);
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -145,7 +140,7 @@ export default function ContactsPage() {
     return (
         <CrmShell
             breadcrumbs={[
-                { label: 'CRM Pastoral', icon: Users },
+                { label: 'Consolidación', icon: Users },
                 { label: 'Contactos / Leads', icon: UserPlus }
             ]}
             viewOptions={['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki']}

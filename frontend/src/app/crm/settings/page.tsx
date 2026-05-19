@@ -2,10 +2,11 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { 
-    Settings as SettingsIcon, Save, Key, Globe, Shield, 
-    Smartphone, Link2, Users, Database, Bell,
-    CheckCircle2, AlertTriangle, ArrowRight, Zap,
-    Lock, Terminal, Server, Sparkles, Activity
+    Settings as SettingsIcon, Save, Globe, Shield,
+    Smartphone, Users, Database, Bell,
+    AlertTriangle, Zap,
+    Lock, Activity,
+    Plus, Pencil
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -19,6 +20,16 @@ export default function CrmSettingsPage() {
     const { addToast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     const [activeSection, setActiveTab] = useState('general');
+    const [positions, setPositions] = useState<any[]>([]);
+    const [isLoadingPositions, setIsLoadingPositions] = useState(false);
+    const [isCreatingPosition, setIsCreatingPosition] = useState(false);
+    const [editingPositionId, setEditingPositionId] = useState<number | null>(null);
+    const [positionForm, setPositionForm] = useState({
+        name: '',
+        description: '',
+        category: 'consolidation',
+        is_active: true,
+    });
 
     const [config, setConfig] = useState<any>({
         churchName: 'Comunidad Cristiana El Faro',
@@ -40,9 +51,28 @@ export default function CrmSettingsPage() {
         }
     }, [token]);
 
+    const fetchPositions = useCallback(async () => {
+        if (!token) return;
+        setIsLoadingPositions(true);
+        try {
+            const data = await apiFetch<any[]>('/crm/positions', { token, cache: 'no-store' });
+            setPositions(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error('Error fetching consolidation positions', err);
+        } finally {
+            setIsLoadingPositions(false);
+        }
+    }, [token]);
+
     useEffect(() => {
         fetchSettings();
     }, [fetchSettings]);
+
+    useEffect(() => {
+        if (activeSection === 'consolidation') {
+            fetchPositions();
+        }
+    }, [activeSection, fetchPositions]);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -54,11 +84,65 @@ export default function CrmSettingsPage() {
                 body: config
             });
             addToast("Configuraciones globales actualizadas", "success");
-        } catch (err) {
+        } catch {
             addToast("Error al guardar en el servidor", "error");
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const resetPositionForm = () => {
+        setPositionForm({
+            name: '',
+            description: '',
+            category: 'consolidation',
+            is_active: true,
+        });
+        setEditingPositionId(null);
+    };
+
+    const handleSavePosition = async () => {
+        if (!token || !positionForm.name.trim()) return;
+        setIsCreatingPosition(true);
+        try {
+            const payload = {
+                name: positionForm.name.trim(),
+                description: positionForm.description.trim() || null,
+                category: positionForm.category.trim() || null,
+                is_active: positionForm.is_active,
+            };
+            if (editingPositionId) {
+                await apiFetch(`/crm/positions/${editingPositionId}`, {
+                    method: 'PATCH',
+                    token,
+                    body: payload,
+                });
+            } else {
+                await apiFetch('/crm/positions', {
+                    method: 'POST',
+                    token,
+                    body: payload,
+                });
+            }
+            await fetchPositions();
+            resetPositionForm();
+            addToast('Cargo actualizado', 'success');
+        } catch (err) {
+            addToast('No se pudo guardar el cargo', 'error');
+        } finally {
+            setIsCreatingPosition(false);
+        }
+    };
+
+    const startEditPosition = (row: any) => {
+        setEditingPositionId(row.id);
+        setPositionForm({
+            name: row.name || '',
+            description: row.description || '',
+            category: row.category || 'consolidation',
+            is_active: Boolean(row.is_active),
+        });
+        setActiveTab('consolidation');
     };
 
     const containerVariants = {
@@ -74,7 +158,7 @@ export default function CrmSettingsPage() {
     return (
         <CrmShell
             breadcrumbs={[
-                { label: 'CRM Pastoral', icon: Users },
+                { label: 'Consolidación', icon: Users },
                 { label: 'Configuración de Sistema', icon: SettingsIcon }
             ]}
             rightActions={
@@ -83,7 +167,7 @@ export default function CrmSettingsPage() {
                     disabled={isSaving}
                     className="flex items-center gap-2 bg-blue-600 px-4 py-1.5 rounded-lg text-[11px] font-black tracking-widest text-white hover:bg-blue-700 transition-all uppercase shadow-xl shadow-blue-500/20 disabled:opacity-50 active:scale-95"
                 >
-                    {isSaving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
+                    {isSaving ? <SpinnerIcon className="animate-spin" size={14} /> : <Save size={14} />}
                     {isSaving ? 'Sincronizando...' : 'Guardar Cambios'}
                 </button>
             }
@@ -109,6 +193,7 @@ export default function CrmSettingsPage() {
                         <SettingsNavButton active={activeSection === 'general'} onClick={() => setActiveTab('general')} icon={Globe} label="Información General" />
                         <SettingsNavButton active={activeSection === 'integrations'} onClick={() => setActiveTab('integrations')} icon={Zap} label="Integraciones" />
                         <SettingsNavButton active={activeSection === 'notifications'} onClick={() => setActiveTab('notifications')} icon={Bell} label="Notificaciones" />
+                        <SettingsNavButton active={activeSection === 'consolidation'} onClick={() => setActiveTab('consolidation')} icon={Users} label="Consolidación" />
                         <SettingsNavButton active={activeSection === 'security'} onClick={() => setActiveTab('security')} icon={Lock} label="Seguridad & Datos" />
                     </motion.aside>
 
@@ -212,6 +297,111 @@ export default function CrmSettingsPage() {
                                     </div>
                                 </motion.div>
                             )}
+
+                            {activeSection === 'consolidation' && (
+                                <motion.div key="consolidation" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6 bg-white dark:bg-[#1E1F21] rounded-2xl border border-slate-200 dark:border-white/5 p-6 md:p-8 shadow-sm">
+                                    <div className="space-y-1 border-b border-slate-100 dark:border-white/5 pb-4">
+                                        <h3 className="text-[15px] font-bold text-slate-800 dark:text-white">Cargos de Consolidación</h3>
+                                        <p className="text-[12px] text-slate-500 font-medium">Define los roles nativos que operan el seguimiento de personas.</p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                                        <div className="space-y-4 p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="text-[13px] font-bold text-slate-800 dark:text-white">
+                                                    {editingPositionId ? 'Editar cargo' : 'Nuevo cargo'}
+                                                </h4>
+                                                {editingPositionId && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={resetPositionForm}
+                                                        className="text-[11px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                                                    >
+                                                        Cancelar
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <SettingInput label="Nombre" value={positionForm.name} onChange={(v: string) => setPositionForm({ ...positionForm, name: v })} placeholder="Pastor de consolidación" />
+                                            <SettingInput label="Categoría" value={positionForm.category} onChange={(v: string) => setPositionForm({ ...positionForm, category: v })} placeholder="consolidation" />
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Descripción</label>
+                                                <textarea
+                                                    value={positionForm.description}
+                                                    onChange={(e) => setPositionForm({ ...positionForm, description: e.target.value })}
+                                                    rows={4}
+                                                    className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-[13px] font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400"
+                                                />
+                                            </div>
+                                            <label className="flex items-center gap-3 text-[13px] font-medium text-slate-700 dark:text-slate-200">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={positionForm.is_active}
+                                                    onChange={(e) => setPositionForm({ ...positionForm, is_active: e.target.checked })}
+                                                    className="size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                                />
+                                                Activo
+                                            </label>
+                                            <button
+                                                type="button"
+                                                onClick={handleSavePosition}
+                                                disabled={isCreatingPosition || !positionForm.name.trim()}
+                                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-[11px] font-black uppercase tracking-widest text-white hover:bg-blue-700 transition-all disabled:opacity-50"
+                                            >
+                                                {isCreatingPosition ? <SpinnerIcon className="animate-spin" size={14} /> : <Plus size={14} />}
+                                                {editingPositionId ? 'Guardar cambios' : 'Crear cargo'}
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-4 p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="text-[13px] font-bold text-slate-800 dark:text-white">Catálogo actual</h4>
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                                    {isLoadingPositions ? 'Cargando...' : `${positions.length} cargos`}
+                                                </span>
+                                            </div>
+
+                                            {isLoadingPositions ? (
+                                                <div className="space-y-3">
+                                                    {[...Array(3)].map((_, i) => (
+                                                        <div key={i} className="h-16 rounded-xl bg-white dark:bg-black/20 border border-slate-100 dark:border-white/10 animate-pulse" />
+                                                    ))}
+                                                </div>
+                                            ) : positions.length === 0 ? (
+                                                <div className="rounded-xl border border-dashed border-slate-200 dark:border-white/10 p-6 text-center text-slate-500">
+                                                    No hay cargos registrados aún.
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+                                                    {positions.map((position) => (
+                                                        <div key={position.id} className="flex items-start justify-between gap-4 rounded-xl bg-white dark:bg-[#111317] border border-slate-100 dark:border-white/10 p-4">
+                                                            <div className="min-w-0">
+                                                                <div className="flex items-center gap-2">
+                                                                    <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{position.name}</p>
+                                                                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest ${position.is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400'}`}>
+                                                                        {position.is_active ? 'Activo' : 'Inactivo'}
+                                                                    </span>
+                                                                </div>
+                                                                <p className="text-[12px] text-slate-500 mt-1">{position.category || 'Sin categoría'}</p>
+                                                                {position.description && (
+                                                                    <p className="text-[12px] text-slate-400 mt-1 line-clamp-2">{position.description}</p>
+                                                                )}
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => startEditPosition(position)}
+                                                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"
+                                                            >
+                                                                <Pencil size={12} />
+                                                                Editar
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
                         </AnimatePresence>
                     </motion.div>
                 </div>
@@ -282,7 +472,7 @@ function ToggleSetting({ icon: Icon, color, title, desc, active, onToggle }: any
     );
 }
 
-function Loader2({ className, size = 24 }: any) {
+function SpinnerIcon({ className, size = 24 }: any) {
     return <Activity size={size} className={clsx("animate-spin", className)} />;
 }
 

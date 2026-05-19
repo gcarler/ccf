@@ -1,0 +1,17 @@
+.next/
+node_modules/
+storybook-static/
+playwright-report/
+test-results/
+coverage/
+next-env.d.ts
+*.bak
+*.tsbuildinfo
+patch_nav.js
+patch_popup.js
+fix_crm.js
+frontend-dev.log
+visual_qa_next.log
+eslint_report.json
+crm-lh.json
+/analytics/

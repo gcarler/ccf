@@ -4,12 +4,10 @@ import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { Search, Calendar, History, Link2, Plus, Users, CheckCircle2, Clock, AlertCircle, Loader2, MoreHorizontal } from 'lucide-react';
+import { Search, Calendar, Plus, Users, CheckCircle2, Clock, AlertCircle, Loader2, MoreHorizontal } from 'lucide-react';
 import CrmShell from '@/components/crm/CrmShell';
 import AdminHero from '@/components/admin/AdminHero';
-import CommunityToolbarChip from '@/components/community/ToolbarChip';
 import CommunityQuickCommentCard from '@/components/community/QuickCommentCard';
-import CommunityListRow from '@/components/community/ListRow';
 import { formatDueLabel } from '@/lib/community/utils';
 import { apiFetch } from '@/lib/http';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -79,7 +77,7 @@ export default function MyTasks() {
 
     return (
         <CrmShell
-            breadcrumbs={[{ label: 'CCF', icon: Calendar }, { label: 'CRM Pastoral', icon: Users }, { label: 'Mis tareas', icon: Calendar }]}
+            breadcrumbs={[{ label: 'CCF', icon: Calendar }, { label: 'Consolidación', icon: Users }, { label: 'Mis tareas', icon: Calendar }]}
             rightActions={
                 <button className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-all">
                     <Search size={20} />
@@ -124,11 +122,11 @@ export default function MyTasks() {
         `}</style>
 
         <AdminHero
-            eyebrow="Tareas Pastorales"
+            eyebrow="Tareas de Consolidación"
             title="Mi Agenda de Seguimiento"
             description="Gestiona tus compromisos pastorales, visitas y llamadas con el respaldo de Optimus Brain."
-            tags={['Enfoque', 'Cuidado Pastoral', 'Fidelidad']}
-            watchers={['Equipo Pastoral', 'Optimus Brain']}
+            tags={['Enfoque', 'Consolidación', 'Fidelidad']}
+            watchers={['Equipo de Consolidación', 'Optimus Brain']}
             primaryAction={{ label: 'Asignar nuevas', icon: Plus, onClick: () => router.push('/crm/tasks/assign') }}
             secondaryAction={{ label: 'Refrescar', icon: Clock, onClick: fetchTasks }}
         />

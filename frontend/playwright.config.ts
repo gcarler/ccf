@@ -2,7 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 const port = Number(process.env.PLAYWRIGHT_PORT || 4173);
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${port}`;
-const useManagedWebServer = !process.env.PLAYWRIGHT_BASE_URL;
+const useManagedWebServer =
+  process.env.PLAYWRIGHT_MANAGED_WEBSERVER === '1' && !process.env.PLAYWRIGHT_BASE_URL;
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -27,6 +28,10 @@ export default defineConfig({
         url: `${baseURL}/login`,
         reuseExistingServer: !process.env.CI,
         timeout: 120000,
+        gracefulShutdown: {
+          signal: 'SIGTERM',
+          timeout: 5000,
+        },
       }
     : undefined,
 });

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import clsx from 'clsx';
-import { typography, motion } from '../tokens';
+import { typography } from '../tokens';
 
 interface DSSectionHeaderProps {
     eyebrow?: string;

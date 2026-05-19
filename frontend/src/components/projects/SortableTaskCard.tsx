@@ -4,7 +4,6 @@ import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { CalendarDays, MessageSquare, Flag, GripVertical } from 'lucide-react';
-import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import { format, isPast, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';

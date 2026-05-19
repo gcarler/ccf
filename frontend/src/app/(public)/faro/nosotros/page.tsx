@@ -1,15 +1,20 @@
 "use client";
 
-import Link from "next/link";
+
 import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { ArrowRight, Target, Users, Heart, Star, Sparkles, Quote } from "lucide-react";
+import { Target, Sparkles, Quote } from "lucide-react";
 import { useContentBlock } from "@/hooks/useContent";
 
 export default function NosotrosPage() {
     const { data: heroContent } = useContentBlock("faro_about_hero");
-    
+    const { data: aboutContent } = useContentBlock("faro_about_feed");
+
+    const aboutData = (aboutContent?.parsed && typeof aboutContent.parsed === "object" && !Array.isArray(aboutContent.parsed))
+        ? aboutContent.parsed as Record<string, unknown>
+        : null;
+
     const heroEyebrow = heroContent?.eyebrow || "Nuestra Identidad";
     const heroTitleLead = heroContent?.title_lead || "Iluminando el";
     const heroTitleAccent = heroContent?.title_accent || "camino juntos";
@@ -113,11 +118,12 @@ export default function NosotrosPage() {
                 <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-20">
                     <div className="w-full lg:w-1/2 relative">
                         <div className="relative z-10 aspect-[4/5] rounded-[3rem] overflow-hidden shadow-2xl">
-                            <Image 
-                                className="object-cover" 
-                                alt="David & Sara Mendoza"
-                                src="https://images.unsplash.com/photo-1516585424602-c210be8163f5?w=800&q=80"
+                            <Image
+                                className="object-cover"
+                                alt={(aboutData?.founder_name as string) || "Fundadores"}
+                                src={(aboutData?.founder_image as string) || "https://picsum.photos/seed/1516585424602-c210be8163f5/800/600"}
                                 fill
+                                priority
                             />
                         </div>
                         <div 
@@ -127,29 +133,31 @@ export default function NosotrosPage() {
                     </div>
                     <div className="w-full lg:w-1/2">
                         <span className="text-xs font-black uppercase tracking-widest mb-4 block" style={{ color: "var(--faro-primary)" }}>
-                            Nuestros Fundadores
+                            {aboutData?.founder_label as string || "Nuestros Fundadores"}
                         </span>
                         <h2 className="text-5xl md:text-6xl font-black mb-8 leading-tight" style={{ color: "var(--faro-on-background)" }}>
-                            David & Sara Mendoza
+                            {(aboutData?.founder_name as string) || "Nuestros Fundadores"}
                         </h2>
                         <div className="space-y-6 text-lg leading-relaxed opacity-80" style={{ color: "var(--faro-on-surface-variant)" }}>
                             <p>
-                                Con más de dos décadas de liderazgo comunitario, David y Sara fundaron FARO con el sueño de crear un espacio donde la fe y la modernidad se encontraran de manera relevante.
+                                {(aboutData?.founder_bio as string) || "Nuestros fundadores han dedicado su vida a construir una comunidad vibrante de fe, amor y servicio."}
                             </p>
                             <p>
                                 Su enfoque editorial y estético no es solo una elección visual, sino una declaración de que la espiritualidad puede ser clara, profesional y profundamente hermosa.
                             </p>
-                            <div className="pt-8 flex gap-12">
-                                <div>
-                                    <span className="text-4xl font-black block" style={{ color: "var(--faro-primary)" }}>25+</span>
-                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-50">Años de Servicio</span>
+                            {aboutData && Array.isArray(aboutData.stats) ? (
+                                <div className="pt-8 flex gap-12">
+                                    {(aboutData.stats as Array<{ value: string; label: string; color?: string }>).map((stat, i) => (
+                                        <React.Fragment key={stat.label}>
+                                            {i > 0 && <div className="w-px h-12 bg-slate-200 dark:bg-white/10" />}
+                                            <div>
+                                                <span className="text-4xl font-black block" style={{ color: stat.color || "var(--faro-primary)" }}>{stat.value}</span>
+                                                <span className="text-[10px] font-black uppercase tracking-widest opacity-50">{stat.label}</span>
+                                            </div>
+                                        </React.Fragment>
+                                    ))}
                                 </div>
-                                <div className="w-px h-12 bg-slate-200 dark:bg-white/10" />
-                                <div>
-                                    <span className="text-4xl font-black block" style={{ color: "var(--faro-secondary)" }}>15k</span>
-                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-50">Vidas Impactadas</span>
-                                </div>
-                            </div>
+                            ) : null}
                         </div>
                     </div>
                 </div>
@@ -169,11 +177,14 @@ export default function NosotrosPage() {
                         />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
-                        {[
-                            { num: "01", title: "Integridad Radial", desc: "Vivir con transparencia absoluta, permitiendo que nuestra luz interior sea coherente con nuestras acciones." },
-                            { num: "02", title: "Innovación Guiada", desc: "Abrazamos el futuro y las nuevas formas de conectar sin perder la esencia de los principios eternos." },
-                            { num: "03", title: "Amor Radical", desc: "Un compromiso inquebrantable de servir a todos, sin importar su origen o camino recorrido." }
-                        ].map((v) => (
+                        {(Array.isArray(aboutData?.valores)
+                            ? aboutData.valores as Array<{ num: string; title: string; desc: string }>
+                            : [
+                                { num: "01", title: "Integridad", desc: "Vivir con transparencia, permitiendo que nuestra luz interior sea coherente con nuestras acciones." },
+                                { num: "02", title: "Innovación", desc: "Abrazamos el futuro y las nuevas formas de conectar sin perder la esencia de los principios eternos." },
+                                { num: "03", title: "Amor Radical", desc: "Un compromiso inquebrantable de servir a todos, sin importar su origen o camino recorrido." }
+                            ]
+                        ).map((v) => (
                             <div key={v.num} className="space-y-4">
                                 <div className="text-7xl font-black opacity-10" style={{ color: "var(--faro-primary)" }}>{v.num}</div>
                                 <h4 className="text-2xl font-black" style={{ color: "var(--faro-on-surface)" }}>{v.title}</h4>
@@ -188,14 +199,14 @@ export default function NosotrosPage() {
             <section className="py-32 px-6 md:px-16 text-center">
                 <div className="max-w-3xl mx-auto">
                     <Quote size={60} className="mx-auto mb-8 opacity-20" style={{ color: "var(--faro-primary)" }} />
-                    <blockquote 
+                    <blockquote
                         className="text-3xl md:text-5xl font-black leading-tight italic mb-10"
                         style={{ color: "var(--faro-on-surface)" }}
                     >
-                        La luz que encontramos en FARO no es para guardarla, es para guiar a otros que aún caminan en la oscuridad.
+                        {aboutData?.quote_text as string || "La luz que encontramos en FARO no es para guardarla, es para guiar a otros que aún caminan en la oscuridad."}
                     </blockquote>
-                    <p className="font-black text-xl" style={{ color: "var(--faro-on-surface)" }}>Pastor David Vance</p>
-                    <p className="text-xs font-black uppercase tracking-[0.4em] mt-2" style={{ color: "var(--faro-primary)" }}>Visión 2026</p>
+                    <p className="font-black text-xl" style={{ color: "var(--faro-on-surface)" }}>{aboutData?.quote_author as string || "Pastor Luis Ricardo Meza Gutiérrez"}</p>
+                    <p className="text-xs font-black uppercase tracking-[0.4em] mt-2" style={{ color: "var(--faro-primary)" }}>{aboutData?.quote_subtitle as string || "Visión 2026"}</p>
                 </div>
             </section>
         </main>

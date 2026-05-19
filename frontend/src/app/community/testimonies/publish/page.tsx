@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { ArrowLeft, Send, Camera, EyeOff, Globe } from 'lucide-react';
+import { ArrowLeft, Send, Camera, Globe } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 
 import { apiFetch } from '@/lib/http';

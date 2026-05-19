@@ -11,7 +11,6 @@ import {
     Users, 
     Megaphone,
     Search,
-    Inbox,
     Star
 } from 'lucide-react';
 

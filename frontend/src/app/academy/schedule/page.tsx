@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useCallback } from 'react';
-import { CalendarDays, MoreHorizontal, Video, Users, MapPin, Download } from 'lucide-react';
+import { MoreHorizontal, Video, Users, MapPin, Download } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useStudentEnrollments } from '@/hooks/useStudentEnrollments';
 import { useCourseLessons } from '@/hooks/useCourseLessons';

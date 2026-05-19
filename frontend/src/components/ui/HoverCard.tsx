@@ -2,7 +2,6 @@
 
 import React from 'react';
 import * as HoverCardPrimitive from '@radix-ui/react-hover-card';
-import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
 interface HoverCardProps {

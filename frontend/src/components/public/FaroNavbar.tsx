@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MapPin, Menu, X, ChevronRight, Sun, Moon, Zap } from "lucide-react";
+import { MapPin, Menu, X, Sun, Moon, Zap } from "lucide-react";
 import { useFaroTheme } from "./FaroThemeProvider";
 import { useContentBlock } from "@/hooks/useContent";
 import { getCmsPublicMenu } from "@/lib/cms/v2";
@@ -11,6 +11,7 @@ import { getCmsPublicMenu } from "@/lib/cms/v2";
 const DEFAULT_NAV_LINKS = [
     { href: "/faro", label: "Inicio" },
     { href: "/faro/nosotros", label: "Sobre Nosotros" },
+    { href: "/faro/pastores", label: "Pastores" },
     { href: "/faro/testimonios", label: "Testimonios" },
     { href: "/faro/eventos", label: "Eventos" },
     { href: "/faro/predicas", label: "Prédicas" },
@@ -19,21 +20,26 @@ const DEFAULT_NAV_LINKS = [
 ];
 
 export default function FaroNavbar() {
-    const { theme, toggle } = useFaroTheme();
+    const { theme, toggle, themeTokens } = useFaroTheme();
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const [menuItemsV2, setMenuItemsV2] = useState<Array<{ id?: number; href: string; label: string; children?: Array<{ id?: number; href: string; label: string }> }>>([]);
 
+    const logoUrl = themeTokens["--faro-logo-url"] || "";
+    const logoName = themeTokens["--faro-logo-name"] || "FARO";
+    const ctaLabel = themeTokens["--faro-header-cta-label"] || "Quiero conocer a Jesús";
+    const ctaHref = themeTokens["--faro-header-cta-href"] || "/faro/conocer-a-jesus";
+
     // Dinamización vía CMS
     const { data: navContent } = useContentBlock("faro_nav_items");
-    const legacyLinks = (Array.isArray(navContent?.items) ? navContent.items : DEFAULT_NAV_LINKS).map((item: any, index: number) => ({
+    const fallbackLinks = (Array.isArray(navContent?.items) ? navContent.items : DEFAULT_NAV_LINKS).map((item: any, index: number) => ({
         id: index,
         href: item.href,
         label: item.label,
         children: [],
     }));
-    const navLinks = menuItemsV2.length > 0 ? menuItemsV2 : legacyLinks;
+    const navLinks = menuItemsV2.length > 0 ? menuItemsV2 : fallbackLinks;
 
     useEffect(() => {
         let mounted = true;
@@ -65,7 +71,7 @@ export default function FaroNavbar() {
                     setMenuItemsV2(next);
                 }
             } catch {
-                // Fallback automatico a bloque legacy
+                // Fallback automatico al bloque de contenido
             }
         };
         loadMenu();
@@ -85,11 +91,7 @@ export default function FaroNavbar() {
             <header
                 className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
                 style={{
-                    background: scrolled
-                        ? theme === "dark"
-                            ? "rgba(0, 13, 42, 0.92)"
-                            : "rgba(248, 249, 255, 0.92)"
-                        : "rgba(0, 13, 42, 0.6)",
+                    background: scrolled ? (theme === "dark" || theme === "institutional") ? "rgba(0, 13, 42, 0.92)" : "rgba(248, 249, 255, 0.92)" : (theme === "dark" || theme === "institutional") ? "rgba(0, 13, 42, 0.6)" : "rgba(255, 255, 255, 0.6)",
                     backdropFilter: "blur(20px)",
                     borderBottom: scrolled ? "1px solid rgba(165, 200, 255, 0.08)" : "none",
                 }}
@@ -97,18 +99,24 @@ export default function FaroNavbar() {
                 <nav className="max-w-[1400px] mx-auto px-6 md:px-10 h-[72px] flex items-center justify-between gap-8">
                     {/* Logo */}
                     <Link href="/faro" className="flex items-center gap-3 shrink-0">
-                        <div className="w-8 h-8 relative">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full text-faro-primary">
-                                <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
-                                <circle cx="12" cy="4" r="1.5" fill="currentColor" />
-                            </svg>
-                        </div>
-                        <span
-                            className="font-black text-xl tracking-tight"
-                            style={{ color: "var(--faro-on-background)" }}
-                        >
-                            FARO
-                        </span>
+                        {logoUrl ? (
+                            <img src={logoUrl} alt={logoName} className="h-8 object-contain" />
+                        ) : (
+                            <div className="w-8 h-8 relative">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full text-faro-primary">
+                                    <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
+                                    <circle cx="12" cy="4" r="1.5" fill="currentColor" />
+                                </svg>
+                            </div>
+                        )}
+                        {logoName && (
+                            <span
+                                className="font-black text-xl tracking-tight"
+                                style={{ color: "var(--faro-on-background)" }}
+                            >
+                                {logoName}
+                            </span>
+                        )}
                     </Link>
 
                     {/* Desktop Nav */}
@@ -185,17 +193,20 @@ export default function FaroNavbar() {
                         </button>
 
                         {/* CTA Principal */}
-                        <Link
-                            href="/faro/conocer-a-jesus"
-                            className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-[0.15em] transition-all hover:scale-105"
-                            style={{
-                                background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
-                                color: "white",
-                                boxShadow: "0 4px 20px rgba(44, 96, 157, 0.35)",
-                            }}
-                        >
-                            Quiero conocer a Jesús
-                        </Link>
+                        {ctaLabel && ctaHref && (
+                            <Link
+                                href={ctaHref}
+                                onClick={() => setMobileOpen && setMobileOpen(false)}
+                                className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-[0.15em] transition-all hover:scale-105"
+                                style={{
+                                    background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
+                                    color: "white",
+                                    boxShadow: "0 4px 20px rgba(44, 96, 157, 0.35)",
+                                }}
+                            >
+                                {ctaLabel}
+                            </Link>
+                        )}
 
                         {/* Mobile Menu Toggle */}
                         <button
@@ -247,19 +258,24 @@ export default function FaroNavbar() {
                                 )}
                             </div>
                         ))}
-                        <Link
-                            href="/faro/conocer-a-jesus"
-                            onClick={() => setMobileOpen(false)}
-                            className="mt-6 px-8 py-4 rounded-full text-sm font-black uppercase tracking-widest text-white"
-                            style={{
-                                background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
-                            }}
-                        >
-                            Quiero conocer a Jesús
-                        </Link>
+                        {ctaLabel && ctaHref && (
+                            <Link
+                                href={ctaHref}
+                                onClick={() => setMobileOpen && setMobileOpen(false)}
+                                className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-[0.15em] transition-all hover:scale-105"
+                                style={{
+                                    background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
+                                    color: "white",
+                                    boxShadow: "0 4px 20px rgba(44, 96, 157, 0.35)",
+                                }}
+                            >
+                                {ctaLabel}
+                            </Link>
+                        )}
                     </div>
                 </div>
             )}
         </>
     );
 }
+

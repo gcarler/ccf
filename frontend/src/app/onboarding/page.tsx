@@ -4,25 +4,18 @@ import React, { useState } from 'react';
 import { 
     BookOpen, 
     Users, 
-    Heart, 
     Bell, 
     ArrowRight, 
-    ChevronLeft, 
     Check, 
     Sparkles, 
     ShieldCheck, 
     MapPin, 
-    Smartphone,
-    UserCircle,
-    Globe,
     Zap,
-    Layout,
     CheckCircle2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
-import Image from 'next/image';
 
 const CAMPUSES = [
     { id: 'central', name: 'Sede Central', location: 'Mocoa', color: 'from-blue-600 to-indigo-700' },
@@ -44,7 +37,7 @@ export default function OnboardingPage() {
             {/* Background Orbs */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20 dark:opacity-40">
                 <div className="absolute top-[-10%] left-[-10%] size-96 bg-blue-500 rounded-full blur-[120px] animate-pulse" />
-                <div className="absolute bottom-[-10%] right-[-10%] size-96 bg-purple-500 rounded-full blur-[120px] animate-pulse delay-700" />
+                <div className="absolute bottom-[-10%] right-[-10%] size-96 bg-sky-500 rounded-full blur-[120px] animate-pulse delay-700" />
             </div>
 
             {/* Stepper Indicator */}

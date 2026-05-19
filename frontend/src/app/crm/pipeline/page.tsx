@@ -3,35 +3,22 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     Phone,
-    Smartphone,
     UserPlus,
-    Search,
-    Filter,
-    Layout,
-    List as ListIcon,
-    MoreHorizontal,
     Target,
-    Bot,
     Sparkles,
-    Calendar,
     ChevronRight,
-    MessageCircle,
-    Send,
     FileText,
-    TrendingUp,
     Users,
-    Zap,
     Clock,
-    CheckCircle2,
     User,
     Mail,
     Loader2,
-    ExternalLink,
     ArrowRight
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
+import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { useRouter } from 'next/navigation';
 import CrmShell from '@/components/crm/CrmShell';
 
@@ -40,7 +27,6 @@ import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import { DataTable } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
 import Skeleton from '@/components/ui/Skeleton';
-import StatusPicker, { StatusOption } from '@/components/ui/StatusPicker';
 import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -69,12 +55,14 @@ export default function ConsolidationPipelinePage() {
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_pipeline_view', 'board'));
     const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'];
     const [selectedLead, setSelectedLead] = useState<any>(null);
-    const { pushSidebarPanel, popSidebarPanel, resetSidebarStack } = useSidebarLayers();
+    const { pushSidebarPanel, resetSidebarStack } = useSidebarLayers();
 
-    const handleLeadSelect = (lead: any) => {
+    const handleLeadSelect = useCallback((lead: any) => {
         setSelectedLead(lead);
-    };
-    const [wikiNotes, setWikiNotes] = useState('');
+    }, []);
+    const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('crm_pipeline_wiki_notes', {
+        title: 'Wiki del pipeline CRM',
+    });
 
     // New Lead drawer
     const [isNewLeadDrawerOpen, setIsNewLeadDrawerOpen] = useState(false);
@@ -98,14 +86,6 @@ export default function ConsolidationPipelinePage() {
 
     useEffect(() => { fetchPipeline(); }, [fetchPipeline]);
 
-    useEffect(() => {
-        const saved = localStorage.getItem('crm_pipeline_wiki_notes');
-        if (saved) setWikiNotes(saved);
-    }, []);
-
-    useEffect(() => {
-        localStorage.setItem('crm_pipeline_wiki_notes', wikiNotes);
-    }, [wikiNotes]);
 
     const handleCreateLead = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -211,7 +191,7 @@ export default function ConsolidationPipelinePage() {
                 </button>
             )
         }
-    ], [router]);
+    ], [handleLeadSelect]);
 
     // Filtered leads
     const filteredLeads = useMemo(() => {
@@ -272,7 +252,7 @@ export default function ConsolidationPipelinePage() {
         if (selectedLead) return; 
         pushSidebarPanel({
             id: 'pipeline-filters',
-            title: 'Pipeline Pastoral',
+            title: 'Pipeline de Consolidación',
             content: (
                 <PipelineFiltersSidebar 
                     stats={stats}
@@ -305,7 +285,7 @@ export default function ConsolidationPipelinePage() {
     return (
         <CrmShell
             breadcrumbs={[
-                { label: 'CRM Pastoral', icon: Users },
+                { label: 'Consolidación', icon: Users },
                 { label: 'Pipeline de Consolidación', icon: Target },
                 ...(selectedLead ? [{ label: `${selectedLead.first_name} ${selectedLead.last_name}`, icon: User }] : [])
             ]}
@@ -319,8 +299,8 @@ export default function ConsolidationPipelinePage() {
                     onMainClick={() => setIsNewLeadDrawerOpen(true)}
                     options={[
                         { id: 'lead', label: 'Nuevo Prospecto', icon: UserPlus, onClick: () => setIsNewLeadDrawerOpen(true) },
-                        { id: 'call', label: 'Registrar Llamada', icon: Phone, onClick: () => {} },
-                        { id: 'mail', label: 'Enviar Email', icon: Mail, onClick: () => {} }
+                        { id: 'call', label: 'Registrar Llamada', icon: Phone, onClick: () => router.push('/crm/tasks/assign') },
+                        { id: 'mail', label: 'Enviar Email', icon: Mail, onClick: () => router.push('/crm/messaging') }
                     ]}
                 />
             }
@@ -427,7 +407,7 @@ export default function ConsolidationPipelinePage() {
                                         </div>
                                         <div className="px-5 py-2 rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-700/30 flex items-center gap-2">
                                             <Sparkles size={16} className="text-blue-600" />
-                                            <span className="text-[10px] font-black text-blue-700 dark:text-blue-300 uppercase tracking-widest">Guía Pastoral IA</span>
+                                            <span className="text-[10px] font-black text-blue-700 dark:text-blue-300 uppercase tracking-widest">Guía de Consolidación IA</span>
                                         </div>
                                     </div>
 
@@ -524,7 +504,7 @@ export default function ConsolidationPipelinePage() {
                 isOpen={isNewLeadDrawerOpen}
                 onClose={() => setIsNewLeadDrawerOpen(false)}
                 title="Nuevo Prospecto"
-                subtitle="Registrar en el pipeline de consolidación pastoral"
+                subtitle="Registrar en el pipeline de consolidación"
                 actions={
                     <>
                         <button

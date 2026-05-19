@@ -7,49 +7,32 @@ import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { 
     GraduationCap, 
-    BookOpen, 
-    CheckCircle2, 
-    Clock, 
     TrendingUp, 
-    Plus, 
-    Search,
     ChevronRight,
     Sparkles,
-    Calendar,
-    Settings,
-    FileText,
-    Users
 } from 'lucide-react';
 import { DSCard } from '@/design/components/DSCard';
-import { DSBadge } from '@/design/components/DSBadge';
 import { DSMetric } from '@/design/components/DSMetric';
 import { toast } from 'sonner';
 
 export default function AcademyClient() {
-    const { token, user } = useAuth();
+    const { token } = useAuth();
     const router = useRouter();
     const [courses, setCourses] = useState<any[]>([]);
     const [stats, setStats] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [aiInsights, setAiInsights] = useState<any[]>([]);
 
     useEffect(() => {
         if (!token) return;
         const loadData = async () => {
             try {
-                setLoading(true);
-                const [coursesData, statsData, aiRes] = await Promise.all([
+                const [coursesData, statsData] = await Promise.all([
                     apiFetch<any[]>('/academy/courses', { token }),
                     apiFetch<any>('/academy/dashboard/metrics', { token }).catch(() => null),
-                    apiFetch<any[]>('/api/agents/analytics/insights', { token }).catch(() => [])
                 ]);
                 setCourses(coursesData);
                 setStats(statsData);
-                setAiInsights((aiRes as any[] || []).filter(i => i.insight_type === 'academy_insight'));
             } catch (err) {
                 toast.error('Error al cargar datos de la Academia');
-            } finally {
-                setLoading(false);
             }
         };
         loadData();

@@ -1,12 +1,12 @@
 "use client";
 
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-    ChevronDown, Plus, Settings2,
-    Hash, ChevronLeft, ChevronRight, Circle
+    ChevronDown, Plus,
+    ChevronLeft, ChevronRight, Circle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -106,12 +106,10 @@ function NavRow({
 }) {
     const Icon = item.icon ?? Circle;
     // Items that have a drill-down chevron (indicated by suffix or specific metadata)
-    const canDrill = item.href.includes(':') || item.id.startsWith('drill-') || item.count !== undefined;
-    
     return (
         <Link 
             href={item.href} 
-            onClick={(e) => {
+            onClick={() => {
                 if (item.onClick) {
                     item.onClick();
                 }
@@ -193,6 +191,28 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
     const currentPanel = isDrillDown ? sidebarStack[currentLevelIndex - 1] : null;
 
     const displayTitle = currentPanel?.title ?? title;
+
+    // Find the single best matching href to prevent multiple active items
+    const activeHref = useMemo(() => {
+        if (!sections || !pathname) return '';
+        let bestMatch = '';
+        sections.forEach(group => {
+            group.items.forEach(item => {
+                if (pathname === item.href) {
+                    bestMatch = item.href;
+                } else if (item.href !== '/' && pathname.startsWith(item.href)) {
+                    // Only match if it's a true subpath (e.g. follows with a slash)
+                    const nextChar = pathname[item.href.length];
+                    if (!nextChar || nextChar === '/' || nextChar === '?') {
+                        if (item.href.length > bestMatch.length) {
+                            bestMatch = item.href;
+                        }
+                    }
+                }
+            });
+        });
+        return bestMatch;
+    }, [pathname, sections]);
 
     return (
         <aside className="h-full flex flex-col bg-white dark:bg-[#0f1113] transition-colors duration-500 ease-in-out relative overflow-hidden">
@@ -295,8 +315,7 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
                                         defaultOpen
                                     >
                                         {group.items.map(item => {
-                                            const isActive = pathname === item.href ||
-                                                !!(item.href !== '/' && pathname?.startsWith(item.href));
+                                            const isActive = item.href === activeHref;
                                             return (
                                                 <NavRow key={item.id} item={item} isActive={isActive} isMini={isMini} />
                                             );

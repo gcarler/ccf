@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import type { ViewType } from '@/components/ViewSwitcher';
 import { apiFetch } from '@/lib/http';
 import { 
     Users, 
@@ -11,13 +12,10 @@ import {
     BookOpen, 
     GraduationCap, 
     Settings, 
-    ChevronRight, 
     Search,
-    UserCheck,
     FileText,
     MoreHorizontal,
     ArrowLeft,
-    CheckCircle2,
     XCircle,
     Clock
 } from 'lucide-react';
@@ -57,6 +55,7 @@ export default function CourseManagementPage() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'content'>('students');
+    const [viewType, setViewType] = useState<ViewType>('grid');
 
     const isStaff = useMemo(() => {
         const role = (user?.role || '').toLowerCase();
@@ -131,8 +130,9 @@ export default function CourseManagementPage() {
                     { label: 'Academia', icon: GraduationCap, href: '/academy' },
                     { label: 'Gestión Operativa', icon: Settings },
                 ]}
-                viewType="grid"
-                setViewType={() => {}}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={['grid', 'list', 'table']}
                 leftActions={
                     <button onClick={() => router.back()} className="p-2.5 hover:bg-white dark:hover:bg-white/5 rounded-xl transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10 shadow-sm">
                         <ArrowLeft size={18} className="text-slate-500" />
@@ -141,6 +141,43 @@ export default function CourseManagementPage() {
             />
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-6 lg:p-10 relative z-10">
+                {viewType === 'list' && (
+                    <div className="space-y-4">
+                        {filteredStudents.map((student) => (
+                            <article key={student.id} className="rounded-3xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div>
+                                        <h3 className="font-black text-slate-900 dark:text-white">{student.username}</h3>
+                                        <p className="mt-1 text-sm text-slate-500">{student.email}</p>
+                                    </div>
+                                    <span className="text-lg font-black text-blue-600">{Math.round(student.progress)}%</span>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                )}
+
+                {viewType === 'table' && (
+                    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+                        <table className="w-full text-left">
+                            <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                <tr><th className="px-6 py-4">Estudiante</th><th className="px-6 py-4">Correo</th><th className="px-6 py-4">Progreso</th><th className="px-6 py-4">Nota</th></tr>
+                            </thead>
+                            <tbody>
+                                {filteredStudents.map((student) => (
+                                    <tr key={student.id} className="border-t border-slate-100 dark:border-white/5">
+                                        <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{student.username}</td>
+                                        <td className="px-6 py-4 text-slate-500">{student.email}</td>
+                                        <td className="px-6 py-4 text-slate-500">{Math.round(student.progress)}%</td>
+                                        <td className="px-6 py-4 text-slate-500">{student.average_grade.toFixed(1)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {viewType === 'grid' && (
                 <motion.div 
                     variants={containerVariants} initial="hidden" animate="show"
                     className="w-full space-y-10"
@@ -324,13 +361,13 @@ export default function CourseManagementPage() {
                                 key="content" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
                                 className="bg-white dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-[4rem] p-16 lg:p-24 text-center space-y-10"
                             >
-                                <div className="size-28 bg-purple-50 dark:bg-purple-500/10 rounded-[2.5rem] flex items-center justify-center mx-auto text-purple-600 shadow-inner">
+                                <div className="size-28 bg-sky-50 dark:bg-sky-500/10 rounded-[2.5rem] flex items-center justify-center mx-auto text-sky-600 shadow-inner">
                                     <BookOpen size={56} strokeWidth={1.5} />
                                 </div>
                                 <div className="max-w-xl mx-auto space-y-6">
                                     <h3 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">Gestión Curricular</h3>
                                     <p className="text-slate-500 text-lg font-medium">Ajusta el contenido de las lecciones, actualiza recursos descargables y configura los criterios de evaluación del programa.</p>
-                                    <button className="px-10 py-5 bg-purple-600 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-purple-500/30 hover:scale-105 transition-all">
+                                    <button className="px-10 py-5 bg-sky-600 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-sky-500/30 hover:scale-105 transition-all">
                                         Abrir Editor Curricular
                                     </button>
                                 </div>
@@ -338,6 +375,7 @@ export default function CourseManagementPage() {
                         )}
                     </AnimatePresence>
                 </motion.div>
+                )}
             </main>
         </div>
     );

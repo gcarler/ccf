@@ -1,171 +1,190 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { 
-    Layout, 
-    FileText, 
-    Save, 
-    ArrowLeft,
-    Eye,
-    History,
-    Settings,
-    Globe,
-    Lock,
-    Plus,
-    ChevronRight,
-    Search,
-    PenTool
-} from 'lucide-react';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/http';
-import { DSCard } from '@/design/components/DSCard';
-import { DSBadge } from '@/design/components/DSBadge';
-import { toast } from 'sonner';
+import React, { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { apiFetch } from "@/lib/http";
+import { Layout, FileText, PenTool, ArrowRight, Globe, Clock, Layers } from "lucide-react";
+import { motion } from "framer-motion";
+import clsx from "clsx";
+
+interface PageData {
+  id: number;
+  slug: string;
+  title: string;
+  status: string;
+  site_key?: string;
+  updated_at?: string;
+  sections_count?: number;
+}
+
+const STATUS_STYLES: Record<string, { label: string; color: string }> = {
+  published:  { label: "Publicado",   color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200" },
+  draft:      { label: "Borrador",    color: "text-slate-500 bg-slate-100 dark:bg-white/5 border-slate-200" },
+  in_review:  { label: "En Revisión", color: "text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-200" },
+  archived:   { label: "Archivado",   color: "text-rose-500 bg-rose-50 dark:bg-rose-900/10 border-rose-200" },
+};
 
 export default function CmsPageDetailPage() {
-    const params = useParams();
-    const id = params?.id as string;
-    const router = useRouter();
-    const { token } = useAuth();
-    
-    const [page, setPage] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
+  const params = useParams();
+  const router = useRouter();
+  const { token } = useAuth();
+  const id = params?.id as string;
 
-    useEffect(() => {
-        if (!token || !id) return;
-        const loadPage = async () => {
-            try {
-                setLoading(true);
-                const data = await apiFetch<any>(`/cms/pages/${id}`, { token }).catch(() => null);
-                setPage(data || {
-                    id,
-                    title: 'Página de Inicio FARO',
-                    slug: 'faro-home',
-                    status: 'published',
-                    last_updated: '2026-04-12T10:00:00Z',
-                    sections: [
-                        { id: 1, name: 'Hero Section', type: 'hero' },
-                        { id: 2, name: 'Features Grid', type: 'grid' },
-                        { id: 3, name: 'Call to Action', type: 'cta' }
-                    ]
-                });
-            } catch (err) {
-                toast.error('Error al cargar la página del CMS');
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadPage();
-    }, [id, token]);
+  const [page, setPage] = useState<PageData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [countdown, setCountdown] = useState(3);
 
-    if (loading) return <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Cargando Editor de Páginas...</div>;
+  useEffect(() => {
+    if (!token || !id) return;
+    const load = async () => {
+      try {
+        setLoading(true);
+        const data = await apiFetch<PageData>(`/cms/pages/${id}`, { token }).catch(() => null);
+        setPage(data ?? {
+          id: Number(id),
+          slug: id,
+          title: "Página",
+          status: "draft",
+          site_key: "faro",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [id, token]);
 
+  // Auto-redirect countdown
+  useEffect(() => {
+    if (!page || loading) return;
+    const siteKey = page.site_key || "faro";
+    const slug = page.slug || id;
+
+    if (countdown <= 0) {
+      router.replace(`/cms/builder?site=${siteKey}&page=${slug}`);
+      return;
+    }
+
+    const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown, page, loading, router, id]);
+
+  const handleGoNow = () => {
+    if (!page) return;
+    const siteKey = page.site_key || "faro";
+    router.replace(`/cms/builder?site=${siteKey}&page=${page.slug}`);
+  };
+
+  if (loading) {
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
-            <WorkspaceToolbar
-                breadcrumbs={[
-                    { label: 'CMS', icon: Layout, href: '/cms' },
-                    { label: 'Páginas', icon: FileText, href: '/cms/pages' },
-                    { label: page.title, icon: PenTool },
-                ]}
-                rightActions={
-                    <div className="flex items-center gap-3">
-                        <button className="px-4 py-2 text-slate-500 text-[10px] font-black uppercase tracking-widest hover:text-slate-700 transition-all flex items-center gap-2">
-                            <Eye size={14} /> Vista Previa
-                        </button>
-                        <button className="px-6 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
-                            <Save size={14} /> Publicar
-                        </button>
-                    </div>
-                }
-            />
-
-            <main className="flex-1 overflow-y-auto p-8 lg:p-12">
-                <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
-                    <div className="lg:col-span-3 space-y-8">
-                        <header className="space-y-4">
-                            <div className="flex items-center gap-3">
-                                <DSBadge tone="violet" label="SITE: FARO" />
-                                <DSBadge tone="emerald" label="PUBLISHED" />
-                            </div>
-                            <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">
-                                {page.title}
-                            </h1>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                                <Globe size={12} /> URL: /faro/{page.slug}
-                            </p>
-                        </header>
-
-                        <section className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-sm font-black uppercase tracking-[0.3em] text-slate-400">Estructura de Secciones</h3>
-                                <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:border-blue-500 transition-all">
-                                    <Plus size={14} /> Agregar Sección
-                                </button>
-                            </div>
-
-                            <div className="space-y-4">
-                                {page.sections.map((section: any) => (
-                                    <div key={section.id} className="group bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-6 flex items-center justify-between hover:border-blue-500/30 transition-all cursor-pointer">
-                                        <div className="flex items-center gap-6">
-                                            <div className="size-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-blue-500 transition-colors">
-                                                <Layout size={24} />
-                                            </div>
-                                            <div>
-                                                <h4 className="text-base font-black text-slate-800 dark:text-white uppercase tracking-tight">{section.name}</h4>
-                                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Componente: {section.type}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <button className="p-2 text-slate-300 hover:text-blue-500 transition-colors">
-                                                <Settings size={18} />
-                                            </button>
-                                            <ChevronRight size={20} className="text-slate-200 group-hover:text-blue-500" />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-                    </div>
-
-                    <aside className="space-y-6">
-                        <DSCard>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Configuración SEO</h3>
-                            <div className="space-y-4">
-                                <div className="space-y-1">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Meta Title</p>
-                                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300">{page.title}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Indexación</p>
-                                    <DSBadge tone="emerald" label="SEARCH_INDEX_OK" />
-                                </div>
-                            </div>
-                        </DSCard>
-
-                        <div className="p-6 bg-slate-900 rounded-[2.5rem] text-white space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">
-                                <History size={14} /> Versiones
-                            </div>
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between text-[10px] font-bold">
-                                    <span className="text-blue-300">v12 (Actual)</span>
-                                    <span className="opacity-50">Hace 2h</span>
-                                </div>
-                                <div className="flex items-center justify-between text-[10px] font-bold opacity-50">
-                                    <span>v11 (Archivo)</span>
-                                    <span>Ayer</span>
-                                </div>
-                            </div>
-                            <button className="w-full py-2 bg-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-white/20">
-                                Comparar Versiones
-                            </button>
-                        </div>
-                    </aside>
-                </div>
-            </main>
+      <div className="flex flex-col h-full items-center justify-center gap-6 bg-white dark:bg-[#0d0e11]">
+        <div className="size-16 rounded-[2rem] bg-slate-100 dark:bg-white/5 flex items-center justify-center animate-pulse">
+          <Layout size={28} strokeWidth={1} className="text-slate-400" />
         </div>
+        <div className="space-y-2 text-center">
+          <div className="h-5 w-48 bg-slate-100 dark:bg-white/5 rounded-xl animate-pulse mx-auto" />
+          <div className="h-3 w-32 bg-slate-100 dark:bg-white/5 rounded-xl animate-pulse mx-auto" />
+        </div>
+      </div>
     );
+  }
+
+  const status = STATUS_STYLES[page?.status ?? "draft"] ?? STATUS_STYLES["draft"];
+
+  return (
+    <div className="flex flex-col h-full items-center justify-center bg-white dark:bg-[#0d0e11] p-8">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-lg space-y-8 text-center"
+      >
+        {/* Icon */}
+        <div className="flex justify-center">
+          <div className="size-20 rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-2xl shadow-blue-500/30">
+            <PenTool size={32} className="text-white" strokeWidth={1.5} />
+          </div>
+        </div>
+
+        {/* Page info */}
+        <div className="space-y-3">
+          <div className="flex justify-center">
+            <span className={clsx("px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border", status.color)}>
+              {status.label}
+            </span>
+          </div>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            {page?.title}
+          </h1>
+          <div className="flex items-center justify-center gap-4 text-[11px] font-bold text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <Globe size={11} /> {page?.site_key || "faro"}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <FileText size={11} /> /{page?.slug}
+            </span>
+            {page?.sections_count !== undefined && (
+              <span className="flex items-center gap-1.5">
+                <Layers size={11} /> {page.sections_count} secciones
+              </span>
+            )}
+            {page?.updated_at && (
+              <span className="flex items-center gap-1.5">
+                <Clock size={11} />
+                {new Date(page.updated_at).toLocaleDateString()}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Redirect card */}
+        <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-6 space-y-5">
+          <div className="space-y-1">
+            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
+              Redirigiendo al Builder
+            </p>
+            <p className="text-slate-600 dark:text-slate-300 text-sm font-medium">
+              Serás redirigido automáticamente al constructor visual donde podrás editar el contenido de esta página.
+            </p>
+          </div>
+
+          {/* Countdown */}
+          <div className="flex items-center justify-center">
+            <div className="relative size-16">
+              <svg className="size-16 -rotate-90" viewBox="0 0 56 56">
+                <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="4" className="text-slate-200 dark:text-white/10" />
+                <circle
+                  cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="4"
+                  strokeDasharray={`${2 * Math.PI * 24}`}
+                  strokeDashoffset={`${2 * Math.PI * 24 * (countdown / 3)}`}
+                  className="text-blue-600 transition-all duration-1000"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-xl font-black text-slate-800 dark:text-white">
+                {countdown}
+              </span>
+            </div>
+          </div>
+
+          {/* CTA button */}
+          <button
+            onClick={handleGoNow}
+            className="w-full flex items-center justify-center gap-3 py-4 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all"
+          >
+            <PenTool size={16} />
+            Abrir en el Builder ahora
+            <ArrowRight size={16} />
+          </button>
+
+          <button
+            onClick={() => router.push("/cms/pages")}
+            className="w-full py-2.5 text-slate-400 hover:text-slate-600 text-[10px] font-black uppercase tracking-widest transition-colors"
+          >
+            ← Volver a páginas
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
 }

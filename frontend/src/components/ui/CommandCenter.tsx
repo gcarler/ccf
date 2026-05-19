@@ -10,7 +10,6 @@ import {
     Settings, 
     LifeBuoy, 
     Plus,
-    Calendar,
     Zap,
     Hash,
     MessageSquare,
@@ -18,17 +17,19 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useCommandCenter } from "@/context/CommandCenterContext";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import clsx from "clsx";
-import type { CommandItem } from "@/context/CommandCenterContext";
+import { useCommandCenter, type CommandItem } from "@/context/CommandCenterContext";
+import { useCreation } from "@/context/CreationContext";
 
 export function CommandCenter() {
     const [open, setOpen] = useState(false);
+    const [showShortcuts, setShowShortcuts] = useState(false);
     const router = useRouter();
-    const { commands: contextualCommands } = useCommandCenter();
-    const { token } = useAuth(); // Añadido para resolver el error de 'token'
+    const { token } = useAuth();
+    const { commands: registeredCommands } = useCommandCenter();
+    const { openModal } = useCreation();
 
     // Toggle the menu when pressing Command+K or Ctrl+K
     useEffect(() => {
@@ -53,13 +54,13 @@ export function CommandCenter() {
         { id: "projects", label: "Gestión de Proyectos", icon: Layers, shortcut: "G P", group: "Acceso Rápido", action: () => router.push('/projects') },
         { id: "academy", label: "Academia Faro", icon: GraduationCap, shortcut: "G A", group: "Acceso Rápido", action: () => router.push('/academy') },
         { id: "cms", label: "Panel CMS", icon: Globe, group: "Acceso Rápido", action: () => router.push('/cms') },
-        { id: "new-task", label: "Nueva Tarea...", icon: Plus, shortcut: "N T", group: "Acciones", action: () => router.push('/projects') },
+        { id: "new-task", label: "Nueva Tarea...", icon: Plus, shortcut: "N T", group: "Acciones", action: () => openModal('task') },
         { id: "new-member", label: "Registrar Miembro...", icon: Plus, shortcut: "N M", group: "Acciones", action: () => router.push('/crm/members') },
         { id: "send-message", label: "Enviar Mensaje...", icon: MessageSquare, group: "Acciones", action: () => router.push('/crm/messaging') },
         { id: "account-settings", label: "Configuración de Cuenta", icon: Settings, group: "Soporte y Ajustes", action: () => router.push('/account') },
         { id: "help-center", label: "Centro de Ayuda", icon: LifeBuoy, group: "Soporte y Ajustes", action: () => router.push('/support') },
-        { id: "shortcuts", label: "Atajos de Teclado", icon: Zap, group: "Soporte y Ajustes", action: () => {} },
-    ]), [router]);
+        { id: "shortcuts", label: "Atajos de Teclado", icon: Zap, group: "Soporte y Ajustes", action: () => setShowShortcuts(true) },
+    ]), [openModal, router]);
 
     const [search, setSearch] = useState("");
     const [results, setResults] = useState<any[]>([]);
@@ -86,6 +87,28 @@ export function CommandCenter() {
         const timer = setTimeout(fetchResults, 300);
         return () => clearTimeout(timer);
     }, [search, token]);
+
+    const normalizedSearch = search.trim().toLowerCase();
+    const visibleCommands = useMemo(() => {
+        const allCommands = [...defaultCommands, ...registeredCommands];
+        if (!normalizedSearch) return allCommands;
+        return allCommands.filter((command) =>
+            [command.label, command.description, command.group]
+                .filter(Boolean)
+                .some((value) => String(value).toLowerCase().includes(normalizedSearch))
+        );
+    }, [defaultCommands, normalizedSearch, registeredCommands]);
+
+    const groupedCommands = useMemo(() => {
+        const groups = new Map<string, CommandItem[]>();
+        visibleCommands.forEach((command) => {
+            const key = command.group || "Otros";
+            const existing = groups.get(key) || [];
+            existing.push(command);
+            groups.set(key, existing);
+        });
+        return Array.from(groups.entries());
+    }, [visibleCommands]);
 
     return (
         <AnimatePresence>
@@ -122,7 +145,7 @@ export function CommandCenter() {
                             <Command.List className="max-h-[450px] overflow-y-auto overflow-x-hidden p-3 scrollbar-hide">
                                 {isSearching && <div className="p-10 text-center text-slate-400 text-xs font-bold uppercase tracking-widest animate-pulse">Consultando Optimus Brain...</div>}
                                 
-                                {!isSearching && search.length > 0 && results.length === 0 && (
+                                {!isSearching && search.length > 0 && results.length === 0 && visibleCommands.length === 0 && (
                                     <Command.Empty className="py-14 text-center">
                                         <div className="size-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center mx-auto mb-4">
                                             <Search className="text-slate-300" />
@@ -146,15 +169,13 @@ export function CommandCenter() {
                                     </Command.Group>
                                 )}
 
-                                <Command.Separator className="my-4 h-[1px] bg-slate-100 dark:border-white/5" />
-                                
-                                {['Acceso Rápido', 'Acciones', 'Soporte y Ajustes'].map((groupName) => (
+                                {groupedCommands.length > 0 && <Command.Separator className="my-4 h-[1px] bg-slate-100 dark:border-white/5" />}
+
+                                {groupedCommands.map(([groupName, commands]) => (
                                     <Command.Group key={groupName} heading={groupName} className="px-3 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">
-                                        {defaultCommands
-                                            .filter((cmd) => cmd.group === groupName)
-                                            .map((cmd) => (
-                                                <Item key={cmd.id} icon={cmd.icon} label={cmd.label} shortcut={cmd.shortcut} description={cmd.description} onSelect={() => runCommand(cmd.action)} />
-                                            ))}
+                                        {commands.map((cmd) => (
+                                            <Item key={cmd.id} icon={cmd.icon} label={cmd.label} shortcut={cmd.shortcut} description={cmd.description} onSelect={() => runCommand(cmd.action)} />
+                                        ))}
                                     </Command.Group>
                                 ))}
                             </Command.List>
@@ -162,6 +183,7 @@ export function CommandCenter() {
                     </motion.div>
                 </div>
             )}
+            {showShortcuts && <ShortcutSheet onClose={() => setShowShortcuts(false)} />}
         </AnimatePresence>
     );
 }
@@ -185,5 +207,46 @@ function Item({ icon: Icon, label, shortcut, description, onSelect }: { icon?: R
                 </div>
             )}
         </Command.Item>
+    );
+}
+
+function ShortcutSheet({ onClose }: { onClose: () => void }) {
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") onClose();
+        };
+        document.addEventListener("keydown", handleKeyDown);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [onClose]);
+
+    return (
+        <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
+            <button className="absolute inset-0 bg-slate-900/45 backdrop-blur-sm" onClick={onClose} aria-label="Cerrar atajos" />
+            <motion.div
+                initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 12, scale: 0.98 }}
+                className="relative w-full max-w-lg rounded-[2rem] border border-slate-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#1e1f21]"
+            >
+                <div className="mb-5">
+                    <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Atajos</p>
+                    <h2 className="mt-1 text-xl font-black text-slate-900 dark:text-white">Productividad global</h2>
+                </div>
+                <div className="space-y-2">
+                    {[
+                        ["Ctrl / Cmd + K", "Abrir centro de comandos"],
+                        ["Esc", "Cerrar panel o volver un nivel"],
+                        ["Modo enfoque", "Disponible desde la barra superior o el centro de comandos"],
+                    ].map(([shortcut, label]) => (
+                        <div key={shortcut} className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 px-4 py-3 dark:bg-white/5">
+                            <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">{label}</span>
+                            <span className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-black text-slate-500 dark:border-white/10 dark:bg-black/20 dark:text-slate-300">
+                                {shortcut}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </motion.div>
+        </div>
     );
 }

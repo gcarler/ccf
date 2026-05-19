@@ -5,11 +5,21 @@ backend:
   image: "ghcr.io/ccf/backend:latest"
   replicaCount: 2
   env:
+    ENVIRONMENT: "production"
     DATABASE_URL: "postgresql+psycopg2://postgres:postgres@postgres:5432/ccf_db"
     REDIS_URL: "redis://redis:6379/0"
     KAFKA_BOOTSTRAP_SERVERS: "redpanda:9092"
-    SECRET_KEY: "replace-me"
+    ACCESS_TOKEN_COOKIE_SECURE: "true"
+    CORS_ORIGINS: "[\"https://app.example.com\"]"
+    RUN_STARTUP_SCHEMA_FIXES: "false"
     ENABLE_OTEL: "false"
+  secrets:
+    existingSecret: "ccf-backend-secrets"
+    create: false
+    secretKeyKey: "SECRET_KEY"
+    encryptionKeyKey: "ENCRYPTION_KEY"
+    secretKey: ""
+    encryptionKey: ""
   resources:
     requests:
       cpu: 200m

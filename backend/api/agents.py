@@ -1,5 +1,4 @@
 from typing import List, Optional
-import json
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -28,15 +27,7 @@ def analytics_summary(
     pending_tasks = db.query(models.AgentTask).filter(models.AgentTask.status == "pending").count()
     unread_insights = db.query(models.AgentInsight).filter(models.AgentInsight.acknowledged == False).count()
 
-    pending_testimonials = 0
-    try:
-        block = crud.get_or_create_page_content(db, "faro_testimonials_feed")
-        if block and block.content:
-            items = json.loads(block.content)
-            if isinstance(items, list):
-                pending_testimonials = sum(1 for t in items if not t.get("is_approved"))
-    except Exception:
-        pass
+    pending_testimonials = sum(1 for row in crud.list_testimonials(db) if not row.is_approved)
 
     return {
         "total_members": total_members,
@@ -97,6 +88,21 @@ def update_task(
     return updated
 
 
+@router.delete("/tasks/{task_id}", status_code=204)
+def delete_task(
+    task_id: int,
+    db=Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    """Elimina una tarea de agente."""
+    task = db.query(models.AgentTask).filter(models.AgentTask.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    db.delete(task)
+    db.commit()
+    return None
+
+
 @router.post("/insights", response_model=schemas.AgentInsight)
 def create_insight(
     insight: schemas.AgentInsightCreate,
@@ -143,6 +149,21 @@ def acknowledge_insight(
     return {"status": "ok"}
 
 
+@router.delete("/insights/{insight_id}", status_code=204)
+def delete_insight(
+    insight_id: int,
+    db=Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    """Elimina un insight de agente."""
+    insight = db.query(models.AgentInsight).filter(models.AgentInsight.id == insight_id).first()
+    if not insight:
+        raise HTTPException(status_code=404, detail="Insight not found")
+    db.delete(insight)
+    db.commit()
+    return None
+
+
 class AskRequest(BaseModel):
     query: str
 
@@ -181,6 +202,8 @@ def ask_optimus(
             "answer": insight.payload,
             "sources": sources
         }
+    except MemoryError:
+        raise
     except Exception as e:
         # Fallback to basic KB retrieval if AI fails or is not configured
         if kb_results:

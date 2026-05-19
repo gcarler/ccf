@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-    Plus, 
     ChevronLeft, 
     Save, 
     Layers, 
@@ -12,9 +11,7 @@ import {
     Award, 
     FileText, 
     ImageIcon, 
-    CheckCircle2,
     Settings,
-    Clock,
     Target
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -22,8 +19,6 @@ import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import AdminShell from '@/components/admin/AdminShell';
 import AdminHero from '@/components/admin/AdminHero';
-import { motion } from 'framer-motion';
-import clsx from 'clsx';
 
 export default function NewCoursePage() {
     const router = useRouter();
@@ -46,7 +41,7 @@ export default function NewCoursePage() {
         }
         setLoading(true);
         try {
-            await apiFetch('/academy/courses/', {
+            await apiFetch('/academy/admin/courses', {
                 method: 'POST',
                 token,
                 body: formData

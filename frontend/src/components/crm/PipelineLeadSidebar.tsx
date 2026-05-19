@@ -8,9 +8,7 @@ import {
     CheckCircle2, 
     Zap, 
     ExternalLink,
-    ChevronLeft,
     User,
-    Mail,
     Smartphone,
     History,
     Clock,
@@ -40,7 +38,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
         const fetchAudit = async () => {
             try {
                 setLoadingAudit(true);
-                const logs = await apiFetch<any[]>(`/consolidation/pipeline/${lead.id}/audit`, { token });
+                const logs = await apiFetch<any[]>(`/crm/consolidation/pipeline/${lead.id}/audit`, { token });
                 setAuditLogs(logs || []);
             } catch (err) {
                 console.error("Error fetching audit:", err);
@@ -110,7 +108,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
             <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
                 <section className="space-y-4">
                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
-                        <Zap size={14} className="text-blue-600" /> Acciones Pastorales
+                        <Zap size={14} className="text-blue-600" /> Acciones de Consolidación
                     </h3>
                     <div className="space-y-2">
                         <button
@@ -125,7 +123,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                                 <MessageCircle size={14} className="text-emerald-500" /> WhatsApp
                             </button>
                             <button className="flex items-center justify-center gap-2 p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-[1.8rem] text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-white/[0.05] transition-all">
-                                <FileText size={14} className="text-purple-500" /> Notas
+                                <FileText size={14} className="text-sky-500" /> Notas
                             </button>
                         </div>
                     </div>

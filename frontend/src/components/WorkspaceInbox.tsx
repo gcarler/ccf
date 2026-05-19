@@ -3,10 +3,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-    X, Check, Bell, MessageSquare, Star, Info, 
-    MoreHorizontal, Settings, Inbox, User, 
-    Trash2, Archive, CheckCircle2, Clock, 
-    ChevronRight, Sparkles, Filter, Search
+    X, Bell, 
+    Settings, Inbox, User, 
+    Archive, CheckCircle2, Filter, Search
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
@@ -24,7 +23,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<any[]>('/notifications', { token });
+            const data = await apiFetch<any[]>('/messaging/notifications', { token });
             if (Array.isArray(data)) setNotifications(data);
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
@@ -52,7 +51,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
 
     const handleClear = async (id: number) => {
         try {
-            await apiFetch(`/notifications/${id}`, { method: 'PATCH', token });
+            await apiFetch(`/messaging/notifications/${id}`, { method: 'PATCH', token });
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
             toast.success("Notificación marcada como leída");
         } catch (err) {
@@ -159,7 +158,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                             <div className="shrink-0 pt-1">
                                                 <div className={clsx(
                                                     "size-10 rounded-2xl flex items-center justify-center shadow-sm",
-                                                    notif.notif_type === 'mention' ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600" :
+                                                    notif.notif_type === 'mention' ? "bg-sky-100 dark:bg-sky-900/30 text-sky-600" :
                                                     notif.notif_type === 'task' ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600" :
                                                     "bg-slate-100 dark:bg-white/10 text-slate-500"
                                                 )}>

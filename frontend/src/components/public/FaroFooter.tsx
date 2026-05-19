@@ -16,23 +16,23 @@ export default function FaroFooter() {
                 <div className="space-y-6">
                     <h4 className="text-faro-primary-fixed-dim font-bold uppercase text-xs tracking-widest">Navegación</h4>
                     <ul className="space-y-4">
-                        <li><Link className="text-faro-on-background/60 hover:text-faro-primary-fixed-dim underline-offset-4 hover:underline text-sm font-body" href="#">Facebook</Link></li>
-                        <li><Link className="text-faro-on-background/60 hover:text-faro-primary-fixed-dim underline-offset-4 hover:underline text-sm font-body" href="#">Instagram</Link></li>
-                        <li><Link className="text-faro-on-background/60 hover:text-faro-primary-fixed-dim underline-offset-4 hover:underline text-sm font-body" href="#">YouTube</Link></li>
+                        <li><Link className="text-faro-on-background/60 hover:text-faro-primary-fixed-dim underline-offset-4 hover:underline text-sm font-body" href="https://facebook.com/comunidadfaro" target="_blank">Facebook</Link></li>
+                        <li><Link className="text-faro-on-background/60 hover:text-faro-primary-fixed-dim underline-offset-4 hover:underline text-sm font-body" href="https://instagram.com/comunidadfaro" target="_blank">Instagram</Link></li>
+                        <li><Link className="text-faro-on-background/60 hover:text-faro-primary-fixed-dim underline-offset-4 hover:underline text-sm font-body" href="https://youtube.com/comunidadfaro" target="_blank">YouTube</Link></li>
                     </ul>
                 </div>
                 <div className="space-y-6">
                     <h4 className="text-faro-primary-fixed-dim font-bold uppercase text-xs tracking-widest">Recursos</h4>
                     <ul className="space-y-4">
-                        <li><Link className="text-faro-on-background/60 hover:text-faro-primary-fixed-dim underline-offset-4 hover:underline text-sm font-body" href="#">Newsletter Signup</Link></li>
-                        <li><Link className="text-faro-on-background/60 hover:text-faro-primary-fixed-dim underline-offset-4 hover:underline text-sm font-body" href="#">Contact Us</Link></li>
+                        <li><Link className="text-faro-on-background/60 hover:text-faro-primary-fixed-dim underline-offset-4 hover:underline text-sm font-body" href="/faro/boletin">Newsletter Signup</Link></li>
+                        <li><Link className="text-faro-on-background/60 hover:text-faro-primary-fixed-dim underline-offset-4 hover:underline text-sm font-body" href="/faro/conocer-a-jesus#contacto">Contact Us</Link></li>
                     </ul>
                 </div>
                 <div className="space-y-6">
                     <h4 className="text-faro-primary-fixed-dim font-bold uppercase text-xs tracking-widest">Legal</h4>
                     <p className="text-faro-on-background/60 text-sm font-body leading-relaxed">© 2024 FARO. The Radiant Guide.</p>
                     <div className="pt-4">
-                        <button className="text-faro-secondary-fixed-dim font-semibold text-xs uppercase tracking-widest hover:text-faro-primary-fixed-dim transition-all">Política de Privacidad</button>
+                        <Link href="/faro/privacidad" className="text-faro-secondary-fixed-dim font-semibold text-xs uppercase tracking-widest hover:text-faro-primary-fixed-dim transition-all">Política de Privacidad</Link>
                     </div>
                 </div>
             </div>

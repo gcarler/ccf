@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Palette, Save } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { activateCmsTheme, createCmsTheme, listCmsSites, listCmsThemes, patchCmsTheme } from "@/lib/cms/v2";
+import { activateCmsTheme, createCmsTheme, deleteCmsTheme, listCmsSites, listCmsThemes, patchCmsTheme } from "@/lib/cms/v2";
 import { canEditCms, canPublishCms } from "@/lib/cms/permissions";
 
 const DEFAULT_TOKENS = {
@@ -184,6 +184,20 @@ export default function CmsThemesPage() {
                     {!theme.is_active && (
                       <button onClick={() => activate(theme.id)} disabled={!canPublish} className="rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest disabled:opacity-50">
                         Activar
+                      </button>
+                    )}
+                    {!theme.is_active && (
+                      <button
+                        onClick={async () => {
+                          if (!token || !canEdit) return;
+                          if (!confirm("Eliminar este tema?")) return;
+                          await deleteCmsTheme(siteKey, theme.id, token);
+                          await load(siteKey);
+                        }}
+                        disabled={!canEdit}
+                        className="rounded-lg border border-red-200 dark:border-red-500/20 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-red-600 disabled:opacity-50"
+                      >
+                        Eliminar
                       </button>
                     )}
                   </div>

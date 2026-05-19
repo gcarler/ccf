@@ -12,28 +12,27 @@ class DummyUser:
     email = "dummy@example.com"
 
 
-app.dependency_overrides[require_active_user] = lambda: DummyUser()
-
-
 @pytest.fixture(autouse=True)
 def clear_manager_state():
+    app.dependency_overrides[require_active_user] = lambda: DummyUser()
     manager.rooms.clear()
     manager.active_connections.clear()
     yield
+    app.dependency_overrides.pop(require_active_user, None)
     manager.rooms.clear()
     manager.active_connections.clear()
 
 
 def test_presence_endpoint(client: TestClient):
     manager.rooms["room"].add("client-a")
-    response = client.get("/messaging/presence/room")
+    response = client.get("/api/messaging/presence/room")
     assert response.status_code == 200
     assert "client-a" in response.json()["clients"]
 
 
 def test_notification_endpoint(client: TestClient):
     response = client.post(
-        "/messaging/notifications",
+        "/api/messaging/notifications",
         json={"event": "test", "body": {"foo": "bar"}},
     )
     assert response.status_code == 200

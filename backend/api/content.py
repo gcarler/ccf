@@ -26,6 +26,23 @@ BLOCK_REQUIRED_FIELDS: dict[str, list[str]] = {
     "faro_locations_hero": ["eyebrow", "title", "search_placeholder"],
 }
 
+STRUCTURED_CONTENT_KEYS = set(BLOCK_REQUIRED_FIELDS) | {
+    "faro_public_events",
+    "faro_media_gallery",
+    "faro_testimonials_feed",
+    "faro_announcements_feed",
+    "faro_nav_items",
+}
+
+PLAIN_TEXT_SUFFIXES = (
+    "_body",
+    "_body_html",
+    "_copy",
+    "_html",
+    "_rich_text",
+    "_text",
+)
+
 
 ALLOWED_TRANSITIONS: dict[str, set[str]] = {
     "draft": {"in_review", "archived"},
@@ -36,9 +53,18 @@ ALLOWED_TRANSITIONS: dict[str, set[str]] = {
 }
 
 
-def _parse_content_payload(payload: schemas.PageContentUpdate) -> Any:
+def _allows_plain_text(page_key: str) -> bool:
+    normalized = page_key.strip().lower()
+    if normalized in STRUCTURED_CONTENT_KEYS:
+        return False
+    return "wiki" in normalized or normalized.endswith(PLAIN_TEXT_SUFFIXES)
+
+
+def _parse_content_payload(page_key: str, payload: schemas.PageContentUpdate) -> Any:
     if payload.content is None:
         return None
+    if _allows_plain_text(page_key):
+        return payload.content
     try:
         return json.loads(payload.content)
     except json.JSONDecodeError as exc:
@@ -103,7 +129,7 @@ def put_content_block(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    parsed = _parse_content_payload(payload)
+    parsed = _parse_content_payload(page_key, payload)
     _validate_content_shape(page_key, parsed)
     row = crud.update_page_content(db, page_key, payload)
     crud.update_content_publication(db, page_key, status="draft", updated_by=current_user.id)
@@ -125,7 +151,7 @@ def patch_content_block(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    parsed = _parse_content_payload(payload)
+    parsed = _parse_content_payload(page_key, payload)
     _validate_content_shape(page_key, parsed)
     row = crud.update_page_content(db, page_key, payload)
     crud.update_content_publication(db, page_key, status="draft", updated_by=current_user.id)
@@ -147,7 +173,7 @@ def post_content_block(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    parsed = _parse_content_payload(payload)
+    parsed = _parse_content_payload(page_key, payload)
     _validate_content_shape(page_key, parsed)
     row = crud.update_page_content(db, page_key, payload)
     crud.update_content_publication(db, page_key, status="draft", updated_by=current_user.id)
@@ -259,20 +285,8 @@ def get_content_metrics(
     for item in publications:
         status_counter[item.status] = status_counter.get(item.status, 0) + 1
 
-    def _json_rows(page_key: str) -> list[dict[str, Any]]:
-        block = crud.get_or_create_page_content(db, page_key)
-        if not block.content:
-            return []
-        try:
-            payload = json.loads(block.content)
-            if isinstance(payload, list):
-                return [row for row in payload if isinstance(row, dict)]
-        except json.JSONDecodeError:
-            return []
-        return []
-
-    testimonials = _json_rows("faro_testimonials_feed")
-    announcements = _json_rows("faro_announcements_feed")
+    testimonials = crud.list_testimonials(db)
+    announcements = crud.list_announcements(db)
 
     return schemas.CmsMetrics(
         total_blocks=len(crud.list_page_contents(db, limit=500)),
@@ -282,7 +296,7 @@ def get_content_metrics(
         published_blocks=status_counter.get("published", 0),
         archived_blocks=status_counter.get("archived", 0),
         testimonials_total=len(testimonials),
-        testimonials_approved=sum(1 for row in testimonials if row.get("is_approved")),
+        testimonials_approved=sum(1 for row in testimonials if row.is_approved),
         announcements_total=len(announcements),
-        announcements_active=sum(1 for row in announcements if row.get("is_active", True)),
+        announcements_active=sum(1 for row in announcements if row.status == "published"),
     )

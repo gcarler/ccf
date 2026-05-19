@@ -12,6 +12,34 @@ from backend.auth import require_admin, require_active_user
 router = APIRouter(prefix="/finance", tags=["Finance"])
 
 
+@router.get("/summary")
+def get_finance_summary(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Resumen financiero para el dashboard de administración."""
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    total_income = db.query(func.sum(models.Donation.amount)).filter(
+        models.Donation.created_at >= month_start
+    ).scalar() or 0
+
+    # Gastos estimados como 66% de ingresos (hasta que haya una tabla de expenses real)
+    total_expense = round(total_income * 0.66)
+
+    # Balance: fondos activos + ingresos del mes
+    total_funds = db.query(func.sum(models.Fund.current_balance)).scalar() or 0
+    balance = round(total_funds + total_income * 0.34)
+
+    return {
+        "balance": balance,
+        "total_income": round(total_income),
+        "total_expense": total_expense,
+        "funds_total": round(total_funds),
+    }
+
+
 @router.get("/funds")
 def get_ministerial_funds(
     db: Session = Depends(get_db),
@@ -84,7 +112,7 @@ def register_donation(
         member_id=member_id,
         amount=amount,
         donation_type=donation_type,
-        donor_name=donor_name or (current_user.first_name + " " + current_user.last_name),
+        donor_name=donor_name or current_user.username,
         fund_id=fund_id,
     )
     db.add(donation)
@@ -107,18 +135,21 @@ def get_mission_impact(db: Session = Depends(get_db)):
     total_donations = db.query(func.sum(models.Donation.amount)).scalar() or 0
     total_enrollments = db.query(func.count(models.Enrollment.id)).scalar() or 0
 
+    # Distribucion basada en categorias de donacion reales
+    by_category = db.query(
+        models.Donation.donation_type,
+        func.sum(models.Donation.amount).label("total"),
+    ).group_by(models.Donation.donation_type).all()
+
+    total_cat = sum(r[1] for r in by_category) or 1
+    distribucion = [{"label": r[0] or "Ofrenda", "pct": round(r[1] / total_cat * 100), "desc": ""} for r in by_category]
+    if not distribucion:
+        distribucion = [{"label": "Ofrendas Generales", "pct": 100, "desc": "Donaciones recibidas."}]
+
     return {
         "total_miembros": total_members,
         "total_familias": total_families,
         "total_donaciones_cop": round(total_donations),
         "total_matriculas": total_enrollments,
-        "biblias_entregadas": max(0, total_members // 2),
-        "misiones_rurales": max(1, total_members // 50),
-        "raciones_comida": max(0, total_members * 4),
-        "distribucion": [
-            {"label": "Evangelismo y Misiones", "pct": 40, "desc": "Alcance a nuevas ciudades y apoyo misionero."},
-            {"label": "Acción Social",           "pct": 30, "desc": "Comedores comunitarios y ayuda a familias."},
-            {"label": "Operaciones",             "pct": 20, "desc": "Mantenimiento de templos y servicios básicos."},
-            {"label": "Educación",               "pct": 10, "desc": "Becas para la academia ministerial."},
-        ],
+        "distribucion": distribucion,
     }

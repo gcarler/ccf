@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { LayoutGrid, List, Kanban, Table2, GanttChart, CalendarDays, BookOpen } from "lucide-react";
+import { LayoutGrid, List, Kanban, Table2, GanttChart, CalendarDays, BookOpen, LayoutDashboard } from "lucide-react";
 import clsx from "clsx";
 
-export type ViewType = "grid" | "list" | "kanban" | "table" | "gantt" | "calendar" | "board" | "wiki";
+export type ViewType = "dashboard" | "grid" | "list" | "kanban" | "table" | "gantt" | "calendar" | "board" | "wiki";
 
 interface ViewOption {
     id: ViewType;
@@ -13,6 +13,7 @@ interface ViewOption {
 }
 
 const ALL_VIEWS: ViewOption[] = [
+    { id: "dashboard", label: "Resumen", icon: LayoutDashboard },
     { id: "table", label: "Tabla", icon: Table2 },
     { id: "list", label: "Lista", icon: List },
     { id: "grid", label: "Grid", icon: LayoutGrid },

@@ -1,47 +1,37 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/http';
-import CrmShell from '@/components/crm/CrmShell';
-import { 
-    MessageSquare, 
-    Send, 
-    Users, 
-    BarChart3, 
-    Clock, 
-    CheckCircle2, 
-    LayoutDashboard,
-    ArrowLeft,
-    AlertCircle,
-    Smartphone,
-    Mail
-} from 'lucide-react';
-import { DSCard } from '@/design/components/DSCard';
-import { DSBadge } from '@/design/components/DSBadge';
-import { DSMetric } from '@/design/components/DSMetric';
-import { toast } from 'sonner';
+import React, { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { apiFetch } from "@/lib/http";
+import CrmShell from "@/components/crm/CrmShell";
+import { MessageSquare, Send, Clock, LayoutDashboard, Mail } from "lucide-react";
+import { DSCard } from "@/design/components/DSCard";
+import { DSBadge } from "@/design/components/DSBadge";
+import { DSMetric } from "@/design/components/DSMetric";
+import { toast } from "sonner";
 
-const MOCK_CAMPAIGN = {
-    id: 1,
-    name: 'Invitación Noche de Milagros',
-    channel: 'whatsapp',
-    status: 'sent',
-    sent_at: '2026-04-12T09:00:00',
-    target_count: 350,
-    delivered_count: 342,
-    failed_count: 8,
-    content: 'Hola! Te esperamos este sábado en nuestra Noche de Milagros. ¡No faltes!'
+type MessagingHistoryDetail = {
+    id: number;
+    name: string;
+    campaign_name?: string | null;
+    member_name?: string | null;
+    channel: string;
+    status: string;
+    sent_at: string | null;
+    target_count: number;
+    delivered_count: number;
+    failed_count: number;
+    content: string;
+    recipient_phone?: string | null;
+    external_id?: string | null;
 };
 
 export default function MessagingDetailPage() {
     const params = useParams();
     const id = params?.id as string;
-    const router = useRouter();
     const { token } = useAuth();
-    
-    const [campaign, setCampaign] = useState<any>(null);
+    const [campaign, setCampaign] = useState<MessagingHistoryDetail | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -49,10 +39,11 @@ export default function MessagingDetailPage() {
         const loadCampaign = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<any>(`/crm/messaging/history/${id}`, { token }).catch(() => MOCK_CAMPAIGN);
+                const data = await apiFetch<MessagingHistoryDetail>(`/crm/messaging/history/${id}`, { token });
                 setCampaign(data);
             } catch (err) {
-                toast.error('Error al cargar detalle de campaña');
+                console.error(err);
+                toast.error("Error al cargar detalle de campana");
             } finally {
                 setLoading(false);
             }
@@ -60,28 +51,56 @@ export default function MessagingDetailPage() {
         loadCampaign();
     }, [id, token]);
 
-    if (loading) return <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Analizando métricas de comunicación...</div>;
+    if (loading) {
+        return (
+            <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">
+                Analizando metricas de comunicacion...
+            </div>
+        );
+    }
+
+    if (!campaign) {
+        return (
+            <div className="p-20 text-center font-black uppercase tracking-widest text-slate-400">
+                No se pudo cargar la campana.
+            </div>
+        );
+    }
+
+    const title = campaign.name ?? campaign.campaign_name ?? "Campana";
+    const sentAtLabel = campaign.sent_at ? new Date(campaign.sent_at).toLocaleString() : "Sin fecha";
+    const deliveryRate = Math.round((campaign.delivered_count / Math.max(campaign.target_count, 1)) * 100);
 
     return (
         <CrmShell
             breadcrumbs={[
-                { label: 'CRM', icon: LayoutDashboard, href: '/crm' },
-                { label: 'Mensajería', icon: MessageSquare, href: '/crm/messaging' },
-                { label: campaign.name, icon: Send },
+                { label: "CRM", icon: LayoutDashboard, href: "/crm" },
+                { label: "Mensajeria", icon: MessageSquare, href: "/crm/messaging" },
+                { label: title, icon: Send },
             ]}
         >
             <main className="flex-1 overflow-y-auto p-8 lg:p-12 space-y-10">
                 <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div className="space-y-4">
-                        <DSBadge tone={campaign.status === 'sent' ? 'emerald' : 'blue'} label={campaign.status.toUpperCase()} />
+                        <DSBadge
+                            tone={campaign.status === "sent" ? "emerald" : "blue"}
+                            label={String(campaign.status || "sent").toUpperCase()}
+                        />
                         <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">
-                            {campaign.name}
+                            {title}
                         </h1>
                         <div className="flex items-center gap-6 text-sm font-bold text-slate-500">
-                            <span className="flex items-center gap-2"><Clock size={18} /> Enviado el {new Date(campaign.sent_at).toLocaleString()}</span>
                             <span className="flex items-center gap-2">
-                                {campaign.channel === 'whatsapp' ? <MessageSquare size={18} className="text-emerald-500" /> : <Mail size={18} className="text-blue-500" />}
-                                {campaign.channel.toUpperCase()}
+                                <Clock size={18} />
+                                Enviado el {sentAtLabel}
+                            </span>
+                            <span className="flex items-center gap-2">
+                                {campaign.channel === "whatsapp" ? (
+                                    <MessageSquare size={18} className="text-emerald-500" />
+                                ) : (
+                                    <Mail size={18} className="text-blue-500" />
+                                )}
+                                {String(campaign.channel || "whatsapp").toUpperCase()}
                             </span>
                         </div>
                     </div>
@@ -89,8 +108,13 @@ export default function MessagingDetailPage() {
 
                 <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <DSMetric label="Destinatarios" value={String(campaign.target_count)} trend="Total alcance" tone="blue" />
-                    <DSMetric label="Entregados" value={String(campaign.delivered_count)} trend={`${Math.round(campaign.delivered_count/campaign.target_count*100)}% éxito`} tone="emerald" />
-                    <DSMetric label="Fallidos" value={String(campaign.failed_count)} trend="Revisar números" tone="violet" />
+                    <DSMetric
+                        label="Entregados"
+                        value={String(campaign.delivered_count)}
+                        trend={`${deliveryRate}% exito`}
+                        tone="emerald"
+                    />
+                    <DSMetric label="Fallidos" value={String(campaign.failed_count)} trend="Revisar numeros" tone="violet" />
                 </section>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -111,10 +135,10 @@ export default function MessagingDetailPage() {
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between text-xs font-bold">
                                     <span className="text-slate-500">Completado</span>
-                                    <span className="text-emerald-500">98%</span>
+                                    <span className="text-emerald-500">{deliveryRate}%</span>
                                 </div>
                                 <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: '98%' }} />
+                                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${deliveryRate}%` }} />
                                 </div>
                             </div>
                         </DSCard>

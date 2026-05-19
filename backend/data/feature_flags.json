@@ -1,0 +1,78 @@
+{
+  "features_enabled": {
+    "command_center": true,
+    "knowledge_graph": true,
+    "web_vitals_dashboard": true,
+    "automation_builder": false,
+    "collaborative_editor": false,
+    "presence_live": true
+  },
+  "ui_theme_config": {
+    "density": "comfortable",
+    "accent": "blue"
+  },
+  "navigation_schema": [],
+  "feature_rules": {
+    "knowledge_graph": {
+      "roles_allow": [],
+      "roles_deny": [],
+      "users_allow": [],
+      "users_deny": [],
+      "rollout_percent": 100
+    },
+    "web_vitals_dashboard": {
+      "roles_allow": [
+        "admin",
+        "coordinador"
+      ],
+      "roles_deny": [],
+      "users_allow": [],
+      "users_deny": [],
+      "rollout_percent": 100
+    }
+  },
+  "compliance_policy": {
+    "active_environment": "production",
+    "environments": {
+      "development": {
+        "incident_spike_delta": 10,
+        "mtta_regression_pct": 0.5,
+        "mttr_regression_pct": 0.5,
+        "critical_feature_change_count_high": 3,
+        "critical_feature_disabled_force": true
+      },
+      "staging": {
+        "incident_spike_delta": 7,
+        "mtta_regression_pct": 0.35,
+        "mttr_regression_pct": 0.35,
+        "critical_feature_change_count_high": 2,
+        "critical_feature_disabled_force": true
+      },
+      "production": {
+        "incident_spike_delta": 5,
+        "mtta_regression_pct": 0.25,
+        "mttr_regression_pct": 0.25,
+        "critical_feature_change_count_high": 2,
+        "critical_feature_disabled_force": true
+      }
+    },
+    "critical_feature_flags": [
+      "automation_builder",
+      "collaborative_editor",
+      "command_center",
+      "knowledge_graph",
+      "presence_live",
+      "web_vitals_dashboard"
+    ],
+    "suppressions": []
+  },
+  "features_raw": {
+    "command_center": true,
+    "knowledge_graph": true,
+    "web_vitals_dashboard": true,
+    "automation_builder": false,
+    "collaborative_editor": false,
+    "presence_live": false
+  },
+  "requested_by": "1"
+}

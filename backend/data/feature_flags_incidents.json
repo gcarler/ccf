@@ -1,0 +1,88 @@
+[
+  {
+    "id": "8f61151b2b7f",
+    "fingerprint": "e3ffc1ab8ba6ddea5cfa6d02266c50ab",
+    "kind": "actor_spike",
+    "key": "1",
+    "count": 22,
+    "threshold": 2,
+    "status": "acknowledged",
+    "severity": "critical",
+    "created_at": "2026-05-09T19:13:05.579848+00:00",
+    "updated_at": "2026-05-09T21:21:52.152367+00:00",
+    "last_seen_at": "2026-05-09T21:21:52.152367+00:00",
+    "ack_by": "1",
+    "ack_at": "2026-05-09T19:13:05.594633+00:00",
+    "closed_by": null,
+    "closed_at": null,
+    "silenced_until": null,
+    "note": "triaged",
+    "history": [
+      {
+        "at": "2026-05-09T19:13:05.579848+00:00",
+        "event": "created_by_scan",
+        "by": "system",
+        "metadata": {
+          "count": 3,
+          "threshold": 2
+        }
+      },
+      {
+        "at": "2026-05-09T19:13:05.581827+00:00",
+        "event": "severity_changed",
+        "by": "system",
+        "metadata": {
+          "from": "low",
+          "to": "medium",
+          "reason": "created_by_scan"
+        }
+      },
+      {
+        "at": "2026-05-09T19:13:05.594641+00:00",
+        "event": "acknowledged",
+        "by": "1",
+        "note": "triaged"
+      },
+      {
+        "at": "2026-05-09T19:27:26.627247+00:00",
+        "event": "scan_update",
+        "by": "system",
+        "metadata": {
+          "previous_count": 3,
+          "count": 10,
+          "threshold": 2
+        }
+      },
+      {
+        "at": "2026-05-09T19:27:26.627257+00:00",
+        "event": "severity_changed",
+        "by": "system",
+        "metadata": {
+          "from": "medium",
+          "to": "critical",
+          "reason": "scan"
+        }
+      },
+      {
+        "at": "2026-05-09T21:19:33.081187+00:00",
+        "event": "scan_update",
+        "by": "system",
+        "metadata": {
+          "previous_count": 10,
+          "count": 16,
+          "threshold": 2
+        }
+      },
+      {
+        "at": "2026-05-09T21:21:52.152412+00:00",
+        "event": "scan_update",
+        "by": "system",
+        "metadata": {
+          "previous_count": 16,
+          "count": 22,
+          "threshold": 2
+        }
+      }
+    ]
+  }
+]

@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { apiFetch } from '@/lib/http';
-import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
@@ -17,8 +16,6 @@ export default function RegisterPage() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const router = useRouter();
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);

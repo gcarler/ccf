@@ -6,7 +6,7 @@ import {
     SortableContext, 
     verticalListSortingStrategy 
 } from '@dnd-kit/sortable';
-import { UserPlus, MoreHorizontal, Sparkles } from 'lucide-react';
+import { UserPlus, MoreHorizontal } from 'lucide-react';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SortableLeadCard } from './SortableLeadCard';

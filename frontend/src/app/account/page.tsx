@@ -1,32 +1,32 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { 
-    User, Mail, Shield, Palette, Bell, Save, Camera, ChevronRight, Key, UserCircle, 
+import {
+    User, Mail, Shield, Palette, Bell, Save, Camera, ChevronRight, UserCircle,
     Fingerprint, Moon, Sun, Monitor, Globe, Lock, ShieldCheck, Smartphone, Layout,
-    Sparkles, Trash2, LogOut, Settings as SettingsIcon, Zap
+    Sparkles, LogOut, Settings as SettingsIcon, Zap
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import type { ViewType } from '@/components/ViewSwitcher';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
-import Tooltip from '@/components/ui/Tooltip';
 
 export default function AccountSettingsPage() {
-    const { user, token, logout } = useAuth();
+    const { user, logout } = useAuth();
     const { addToast } = useToast();
     const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'appearance' | 'notifications'>('profile');
     const [isSaving, setIsSaving] = useState(false);
-
-    const [formData, setFormData] = useState({
+    const [viewType, setViewType] = useState<ViewType>('grid');
+    const formData = {
         username: user?.username || '',
         email: user?.email || '',
         firstName: '',
         lastName: '',
         phone: ''
-    });
+    };
 
     const tabs = [
         { id: 'profile', label: 'Mi Perfil', icon: UserCircle },
@@ -47,7 +47,9 @@ export default function AccountSettingsPage() {
         <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: 'CCF Platform', icon: Layout }, { label: 'Ajustes de Cuenta', icon: SettingsIcon }]}
-                viewType="grid" setViewType={() => {}}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={['grid', 'list', 'table']}
                 rightActions={
                     <button 
                         onClick={handleSave} disabled={isSaving}
@@ -58,6 +60,46 @@ export default function AccountSettingsPage() {
                 }
             />
 
+            {viewType === 'list' && (
+                <main className="flex-1 overflow-y-auto p-8">
+                    <div className="mx-auto max-w-4xl space-y-4">
+                        {tabs.map((tab) => (
+                            <button key={tab.id} onClick={() => setActiveTab(tab.id as typeof activeTab)} className="w-full rounded-3xl border border-slate-200 bg-white p-6 text-left dark:border-white/10 dark:bg-white/5">
+                                <div className="flex items-center gap-4">
+                                    <tab.icon size={20} className="text-blue-600" />
+                                    <div>
+                                        <h3 className="font-black text-slate-900 dark:text-white">{tab.label}</h3>
+                                        <p className="mt-1 text-sm text-slate-500">Configurar {tab.label.toLowerCase()}</p>
+                                    </div>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </main>
+            )}
+
+            {viewType === 'table' && (
+                <main className="flex-1 overflow-y-auto p-8">
+                    <div className="mx-auto max-w-4xl overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+                        <table className="w-full text-left">
+                            <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                <tr><th className="px-6 py-4">Sección</th><th className="px-6 py-4">Estado</th><th className="px-6 py-4">Acción</th></tr>
+                            </thead>
+                            <tbody>
+                                {tabs.map((tab) => (
+                                    <tr key={tab.id} className="border-t border-slate-100 dark:border-white/5">
+                                        <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{tab.label}</td>
+                                        <td className="px-6 py-4 text-slate-500">{activeTab === tab.id ? 'Activa' : 'Disponible'}</td>
+                                        <td className="px-6 py-4"><button onClick={() => setActiveTab(tab.id as typeof activeTab)} className="text-xs font-black uppercase tracking-widest text-blue-600">Abrir</button></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </main>
+            )}
+
+            {viewType === 'grid' && (
             <div className="flex-1 flex overflow-hidden">
                 {/* Internal Sidebar 3.0 */}
                 <aside className="w-72 lg:w-80 border-r border-slate-100 dark:border-white/5 bg-slate-50/30 dark:bg-black/10 p-6 space-y-1 shrink-0 relative z-10">
@@ -206,6 +248,7 @@ export default function AccountSettingsPage() {
                     </div>
                 </main>
             </div>
+            )}
         </div>
     );
 }

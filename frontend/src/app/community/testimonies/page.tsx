@@ -1,17 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Star, Plus, Loader2, Share2, HeartHandshake, Search, ArrowLeft } from 'lucide-react';
+import { Star, Plus, Loader2, Share2, HeartHandshake } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import Link from 'next/link';
-
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function TestimoniesWall() {
-    const { isAuthenticated, token, user } = useAuth();
-    const router = useRouter();
+    const { isAuthenticated, token } = useAuth();
     const [activeTab, setActiveTab] = useState('Todos');
     const [testimonials, setTestimonials] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -63,7 +60,7 @@ export default function TestimoniesWall() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="relative flex flex-col justify-end overflow-hidden rounded-[3rem] min-h-[360px] shadow-2xl group border border-[hsl(var(--border))]"
             >
-                <div className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1438232992991-995b7058bbb3?q=80&w=2073&auto=format&fit=crop")' }}>
+                <div className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: 'url("https://picsum.photos/seed/1438232992991-995b7058bbb3/800/600")' }}>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-[hsl(var(--bg-primary))] via-[hsl(var(--bg-primary)/0.4)] to-transparent"></div>
                 <div className="relative p-10 md:p-16">

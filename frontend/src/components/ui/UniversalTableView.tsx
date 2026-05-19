@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
-    Plus, Flag, Calendar, User, MoreHorizontal, ChevronDown,
+    Plus, Flag, Calendar, User, ChevronDown,
     Search, Filter, ArrowUpDown, Circle, X, Check, GripVertical,
     Trash2, ArrowUp, ArrowDown, Settings2, Columns as ColumnsIcon,
     FileText, Link2, ChevronRight, Maximize2, Paperclip, Sparkles,
-    Expand, Clock, Hash, Eye, EyeOff, SlidersHorizontal,
+    Hash, Eye,
     Users, LayoutGrid, Table2, RefreshCw, Undo2, Redo2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,7 +17,7 @@ const STATUS_MAP: Record<string, { label: string; bg: string; text: string; bord
     todo:        { label: 'No iniciada',  bg: 'bg-amber-50',   text: 'text-amber-700',   border: 'border-amber-200',   dot: 'bg-amber-400' },
     pending:     { label: 'No iniciada',  bg: 'bg-amber-50',   text: 'text-amber-700',   border: 'border-amber-200',   dot: 'bg-amber-400' },
     in_progress: { label: 'Iniciada',     bg: 'bg-green-50',   text: 'text-green-700',   border: 'border-green-200',   dot: 'bg-green-500' },
-    review:      { label: 'En revisión',  bg: 'bg-violet-50',  text: 'text-violet-700',  border: 'border-violet-200',  dot: 'bg-violet-500' },
+    review:      { label: 'En revisión',  bg: 'bg-blue-50',  text: 'text-blue-700',  border: 'border-blue-200',  dot: 'bg-blue-500' },
     done:        { label: 'Terminada',    bg: 'bg-cyan-50',    text: 'text-cyan-700',    border: 'border-cyan-200',    dot: 'bg-cyan-500' },
     blocked:     { label: 'Bloqueada',    bg: 'bg-rose-50',    text: 'text-rose-700',    border: 'border-rose-200',    dot: 'bg-rose-500' },
 };
@@ -135,7 +135,7 @@ function TableCell<T>({ column, value, item }: { column: TableColumn<T>; value: 
                 <div className="flex items-center gap-2 w-full max-w-[120px]">
                     <div className="flex-1 h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                         <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }}
-                            className={clsx("h-full rounded-full", pct === 100 ? "bg-emerald-500" : "bg-violet-500")} />
+                            className={clsx("h-full rounded-full", pct === 100 ? "bg-emerald-500" : "bg-blue-500")} />
                     </div>
                     <span className="text-[10px] font-black text-slate-400 tabular-nums">{pct}%</span>
                 </div>
@@ -474,7 +474,7 @@ function RowDetailPanel<T>({ item, columns, onClose, onSave, renderContent }: {
                     <button className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
                         <Paperclip size={14} />
                     </button>
-                    <button className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors">
+                    <button className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors">
                         <Sparkles size={14} />
                     </button>
                     <button className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
@@ -608,7 +608,7 @@ function DefaultDetailContent<T>({
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function UniversalTableView<T extends { id: string | number }>({
-    data, columns, groupBy, title, viewName = 'Vista 1', onRowClick, onAddItem, onUpdateItem,
+    data, columns, groupBy, viewName = 'Vista 1', onRowClick, onAddItem, onUpdateItem,
     isLoading, emptyMessage = "No hay registros para mostrar", renderDetailPanel,
 }: UniversalTableViewProps<T>) {
     const [searchTerm, setSearchTerm]           = useState('');
@@ -684,8 +684,6 @@ export default function UniversalTableView<T extends { id: string | number }>({
     }, [processed, activeGroupBy]);
 
     const visibleColumns = columns.filter(c => !c.hidden && !hiddenCols.has(String(c.key)));
-    const hasDetail = !!selectedItem;
-
     const handleRowClick = (item: T) => {
         setSelectedItem(item);
         onRowClick?.(item);
@@ -860,7 +858,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                         {sorts.map((s, i) => {
                             const col = columns.find(c => String(c.key) === s.key);
                             return (
-                                <span key={`s-${i}`} className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-violet-50 border border-violet-200 text-violet-700 text-[11px] font-bold rounded-lg">
+                                <span key={`s-${i}`} className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-bold rounded-lg">
                                     {s.dir === 'asc' ? <ArrowUp size={10} /> : <ArrowDown size={10} />}
                                     {col?.label ?? s.key}
                                     <button onClick={() => setSorts(p => p.filter((_, idx) => idx !== i))}><X size={10} /></button>
@@ -1086,7 +1084,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                     {filters.length > 0 && ` · ${filters.length} filtro${filters.length > 1 ? 's' : ''}`}
                 </span>
                 {sorts.length > 0 && (
-                    <span className="text-[10px] font-bold text-violet-500 flex items-center gap-1">
+                    <span className="text-[10px] font-bold text-blue-500 flex items-center gap-1">
                         <ArrowUpDown size={10} /> {sorts.length} criterio{sorts.length > 1 ? 's' : ''}
                     </span>
                 )}

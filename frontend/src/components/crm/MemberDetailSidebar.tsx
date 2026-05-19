@@ -17,9 +17,6 @@ import {
     Plus, 
     Loader2, 
     ChevronRight,
-    PlayCircle,
-    FileText,
-    CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiFetch } from '@/lib/http';
@@ -48,24 +45,19 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
     const [history, setHistory] = useState<any[]>([]);
     const [donations, setDonations] = useState<any[]>([]);
     const [tasks, setTasks] = useState<any[]>([]);
-    const [academyProfile, setAcademyProfile] = useState<any>(null);
     
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [loadingFinance, setLoadingFinance] = useState(false);
     const [loadingTasks, setLoadingTasks] = useState(false);
-    const [loadingAcademy, setLoadingAcademy] = useState(false);
 
     // Messaging State
     const [newMessageContent, setNewMessageContent] = useState('');
     const [messageChannel, setMessageChannel] = useState('whatsapp');
 
-    // Academy Account
-    const [isCreatingAccount, setIsCreatingAccount] = useState(false);
-    const [academyPassword, setAcademyPassword] = useState('CCF123**');
-
     useEffect(() => {
         if (!initialMember) return;
         loadMemberData(initialMember.id);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialMember]);
 
     const loadMemberData = async (memberId: number) => {
@@ -74,7 +66,6 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
         fetchTimeline(memberId);
         fetchFinance(memberId);
         fetchTasks(memberId);
-        fetchAcademyProfile(memberId);
     };
 
     const fetchTimeline = async (id: number) => {
@@ -110,18 +101,6 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
             setTasks([]);
         } finally {
             setLoadingTasks(false);
-        }
-    };
-
-    const fetchAcademyProfile = async (id: number) => {
-        setLoadingAcademy(true);
-        try {
-            const data = await apiFetch(`/academy/members/${id}/profile`, { token, cache: 'no-store' });
-            setAcademyProfile(data);
-        } catch (err) {
-            setAcademyProfile(null);
-        } finally {
-            setLoadingAcademy(false);
         }
     };
 
@@ -249,7 +228,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                     {[
                         { label: 'Salud Esp.', value: `${Math.round(selectedMember.spiritual_health * 100)}%`, color: 'text-emerald-600', bg: 'bg-emerald-500/5', border: 'border-emerald-500/10' },
                         { label: 'Academia', value: `${Math.round(selectedMember.academy_progress)}%`, color: 'text-indigo-600', bg: 'bg-indigo-500/5', border: 'border-indigo-500/10' },
-                        { label: 'Asistencia', value: '92%', color: 'text-purple-600', bg: 'bg-purple-500/5', border: 'border-purple-500/10' }
+                        { label: 'Asistencia', value: '92%', color: 'text-sky-600', bg: 'bg-sky-500/5', border: 'border-sky-500/10' }
                     ].map((kpi, i) => (
                         <div key={i} className={clsx(
                             "p-4 rounded-3xl border backdrop-blur-sm transition-all hover:scale-105 cursor-default",
@@ -347,7 +326,9 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                                                     </span>
                                                 </div>
                                                 <div className="p-5 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-[2rem] group-hover:bg-white dark:group-hover:bg-white/[0.05] transition-all group-hover:shadow-xl group-hover:shadow-blue-500/5 group-hover:border-blue-500/20">
-                                                    <h4 className="text-[13px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">{event.title}</h4>
+                                                    <h4 className="text-[13px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">
+                                                        {event.title || event.name || event.event_name || 'Evento'}
+                                                    </h4>
                                                     <p className="text-[12px] text-slate-500 dark:text-slate-400 font-medium mt-1 leading-relaxed">{event.description}</p>
                                                 </div>
                                             </motion.div>

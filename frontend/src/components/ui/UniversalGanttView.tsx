@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-    ChevronLeft, ChevronRight, Filter, 
-    MoreHorizontal, Calendar, Info, 
+    ChevronLeft, ChevronRight, Calendar, Info, 
     Clock, Zap, Layout
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -23,18 +22,19 @@ interface UniversalGanttViewProps {
     items: GanttItem[];
     moduleName?: string;
     onItemClick?: (item: GanttItem) => void;
+    onOptimize?: () => void;
 }
 
 const COLORS = {
     blue: 'bg-blue-500 shadow-blue-500/20',
-    purple: 'bg-purple-500 shadow-purple-500/20',
+    purple: 'bg-sky-500 shadow-sky-500/20',
     emerald: 'bg-emerald-500 shadow-emerald-500/20',
     amber: 'bg-amber-500 shadow-amber-500/20',
     rose: 'bg-rose-500 shadow-rose-500/20',
     indigo: 'bg-indigo-600 shadow-indigo-500/20',
 };
 
-export default function UniversalGanttView({ items, moduleName = "Módulo", onItemClick }: UniversalGanttViewProps) {
+export default function UniversalGanttView({ items, moduleName = "Módulo", onItemClick, onOptimize }: UniversalGanttViewProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [zoom, setZoom] = useState<'day' | 'week' | 'month'>('week');
     
@@ -101,9 +101,14 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                         <button onClick={() => scroll('left')} className="p-2.5 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 hover:text-blue-600 transition-all shadow-sm"><ChevronLeft size={16} /></button>
                         <button onClick={() => scroll('right')} className="p-2.5 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 hover:text-blue-600 transition-all shadow-sm"><ChevronRight size={16} /></button>
                     </div>
-                    <button className="px-6 py-2.5 bg-slate-900 dark:bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-blue-500/10 hover:scale-105 transition-all">
-                        <Zap size={14} /> Optimus Brain
-                    </button>
+                    {onOptimize && (
+                        <button
+                            onClick={onOptimize}
+                            className="px-6 py-2.5 bg-slate-900 dark:bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-blue-500/10 hover:scale-105 transition-all"
+                        >
+                            <Zap size={14} /> Optimus Brain
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -202,7 +207,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">En Curso</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="size-2 rounded-full bg-purple-500" />
+                        <div className="size-2 rounded-full bg-sky-500" />
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Planificado</span>
                     </div>
                     <div className="flex items-center gap-2">

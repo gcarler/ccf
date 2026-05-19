@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -25,7 +25,7 @@ class MessageSendPayload(BaseModel):
 router = APIRouter()
 
 
-@router.websocket("/ws/{client_id}")
+@router.websocket("/messaging/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str):
     rooms_param = websocket.query_params.get("rooms")
     rooms = rooms_param.split(",") if rooms_param else None
@@ -52,7 +52,7 @@ async def send_notification(
     return {"status": "queued"}
 
 
-@router.get("/notifications", response_model=List[schemas.Notification])
+@router.get("/messaging/notifications", response_model=List[schemas.Notification])
 def get_notifications(
     limit: int = 20,
     db: Session = Depends(get_db),
@@ -61,7 +61,7 @@ def get_notifications(
     return crud.get_user_notifications(db, user_id=int(getattr(current_user, "id", 0)), limit=limit)
 
 
-@router.patch("/notifications/{notification_id}", response_model=schemas.Notification)
+@router.patch("/messaging/notifications/{notification_id}", response_model=schemas.Notification)
 def update_notification(
     notification_id: int,
     db: Session = Depends(get_db),
@@ -73,7 +73,7 @@ def update_notification(
     return updated
 
 
-@router.post("/notifications/mark-all-read")
+@router.post("/messaging/notifications/mark-all-read")
 def mark_all_read(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),

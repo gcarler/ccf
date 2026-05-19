@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
     Home, Inbox, Users, GraduationCap, Target, Settings, Bell, 
-    ChevronDown, Plus, ChevronRight, Layout, Folder, ChevronLeft
+    ChevronDown, ChevronRight, Layout, Folder, ChevronLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -45,7 +45,7 @@ export default function UnifiedSidebar({
 
     // Global items matching the mock structure roughly
     const GLOBAL_MAIN = [
-        { id: 'dashboard', label: 'Inicio', href: '/', icon: Home },
+        { id: 'dashboard', label: 'Inicio', href: '/mi-vista', icon: Home },
         { id: 'inbox', label: 'Bandeja de Entrada', href: '/inbox', icon: Inbox },
         { id: 'crm', label: 'CRM / Equipos', href: '/crm', icon: Users },
         { id: 'academy', label: 'Academia', href: '/academy', icon: GraduationCap },
@@ -54,8 +54,8 @@ export default function UnifiedSidebar({
 
     const GLOBAL_SETTINGS = [
         { id: 'goals', label: 'Metas', href: '/admin', icon: Target },
-        { id: 'notifications', label: 'Notificaciones', href: '#', icon: Bell },
-        { id: 'settings', label: 'Ajustes', href: '#', icon: Settings },
+        { id: 'notifications', label: 'Notificaciones', href: '/inbox', icon: Bell },
+        { id: 'settings', label: 'Ajustes', href: '/settings', icon: Settings },
     ];
 
     const renderItem = (item: any, depth = 0, hasChildren = false, isExpanded = false, onToggle?: (e: React.MouseEvent) => void) => {
@@ -196,19 +196,11 @@ export default function UnifiedSidebar({
                                         exit={{ height: 0, opacity: 0 }}
                                         className="overflow-hidden relative pl-4 ml-6 border-l border-slate-200 dark:border-white/10 mt-1 space-y-0.5"
                                     >
-                                        {/* Injecting some dummy nested items to showcase the visual requested in the image */}
-                                        <Link href="#" className="flex items-center px-2 py-1.5 text-[12px] text-slate-500 hover:text-slate-800 dark:hover:text-white rounded-md transition-colors w-full group">
-                                            <span className="truncate">Earnings</span>
-                                        </Link>
-                                        <Link href="#" className="flex items-center px-2 py-1.5 text-[12px] bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-bold rounded-md transition-colors w-full group relative">
-                                            <span className="truncate">Refunds</span>
-                                        </Link>
-                                        <Link href="#" className="flex items-center px-2 py-1.5 text-[12px] text-slate-500 hover:text-slate-800 dark:hover:text-white rounded-md transition-colors w-full group">
-                                            <span className="truncate">Declines</span>
-                                        </Link>
-                                        <Link href="#" className="flex items-center px-2 py-1.5 text-[12px] text-slate-500 hover:text-slate-800 dark:hover:text-white rounded-md transition-colors w-full group">
-                                            <span className="truncate">Payouts</span>
-                                        </Link>
+                                        {sections.flatMap((section: any) => section.items || []).map((item: any) => (
+                                            <Link key={item.id} href={item.href || '/'} className="flex items-center px-2 py-1.5 text-[12px] text-slate-500 hover:text-slate-800 dark:hover:text-white rounded-md transition-colors w-full group">
+                                                <span className="truncate">{item.label}</span>
+                                            </Link>
+                                        ))}
                                     </motion.div>
                                 )}
                             </AnimatePresence>

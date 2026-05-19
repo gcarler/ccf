@@ -24,6 +24,9 @@
 - Editar `faro_public_events` en `/cms/events` y validar `/faro/eventos`.
 - Crear anuncio en `/admin/announcements/new` y validar `/community/announcements`.
 - Moderar testimonio en `/admin/testimonials` y validar feed publico.
+- Verificar aliases retirados:
+  - `GET /api/testimonials` debe responder `404`.
+  - `GET /api/announcements` debe responder `404`.
 
 ## Rollback
 - Si smoke falla, no publicar cambios editoriales nuevos.

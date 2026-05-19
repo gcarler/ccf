@@ -1,242 +1,232 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-    Bell, MessageSquare, CheckCircle2, AtSign, AlertCircle,
-    Zap, Users, BookOpen, Layout, Calendar, MoreHorizontal,
-    Check, Trash2, Filter, Search, Circle, Star, Archive,
-    ChevronRight, Bot, TrendingUp, Clock, X, RefreshCcw
+    Bell,
+    MessageSquare,
+    CheckCircle2,
+    AtSign,
+    Layout,
+    Search,
+    Check,
+    Clock,
+    Bot,
+    RefreshCw,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
+import { useNotifications } from '@/hooks/useNotifications';
+import { NotificationKind, formatNotificationTime } from '@/lib/notifications';
 
-// ─── Types ──────────────────────────────────────────────────────────────────
-type NotifType = 'mention' | 'comment' | 'task' | 'system' | 'ai' | 'reminder';
+type InboxFilter = 'all' | 'unread' | 'mention' | 'task' | 'ai';
 
-interface Notification {
-    id: number;
-    type: NotifType;
-    title: string;
-    body: string;
-    time: string;
-    read: boolean;
-    starred: boolean;
-    module: string;
-    avatar?: string;
-    sender?: string;
-}
-
-// ─── Mock notifications ──────────────────────────────────────────────────────
-const INITIAL: Notification[] = [
-    { id: 1,  type: 'mention',  title: 'Te mencionaron en un comentario',  body: '@admin ¿puedes revisar el reporte de Casas de Gloria esta semana?', time: 'Hace 5 min',    read: false, starred: true,  module: 'CRM',      sender: 'Carlos Díaz' },
-    { id: 2,  type: 'task',     title: 'Tarea asignada a ti',               body: 'Llamar a visitantes nuevos — Sede Norte (vence hoy)', time: 'Hace 12 min',   read: false, starred: false, module: 'Tareas',    sender: 'Sistema' },
-    { id: 3,  type: 'ai',       title: 'MESH AI tiene un hallazgo',         body: 'He detectado un patrón de reducción en la retención de visitantes (Sede Sur). ¿Deseas revisar el análisis?', time: 'Hace 20 min', read: false, starred: false, module: 'MESH AI' },
-    { id: 4,  type: 'reminder', title: 'Recordatorio: Reunión hoy',         body: 'Reunión de liderazgo pastoral a las 7:00 PM en Sede Principal', time: 'Hace 1 hora',  read: false, starred: false, module: 'Calendario' },
-    { id: 5,  type: 'comment',  title: 'Nuevo comentario en tarea',         body: 'La diapositiva del domingo quedó espectacular, gracias por el trabajo!', time: 'Hace 2 horas', read: true, starred: false, module: 'Proyectos', sender: 'Laura Méndez' },
-    { id: 6,  type: 'system',   title: 'Academia: Nuevo módulo disponible', body: 'El módulo "Liderazgo Transformacional" ha sido publicado en la Academia Digital.', time: 'Hace 3 horas', read: true, starred: false, module: 'Academia' },
-    { id: 7,  type: 'task',     title: 'Tarea completada por tu equipo',    body: 'Preparar diapositivas del domingo — Completada por Juan Ruiz', time: 'Hace 5 horas', read: true, starred: false, module: 'Proyectos', sender: 'Juan Ruiz' },
-    { id: 8,  type: 'mention',  title: 'Mención en documento Wiki',         body: 'Se te ha asignado como responsable del protocolo de visitas.', time: 'Ayer', read: true, starred: false, module: 'Wiki', sender: 'Coord. Pastoral' },
-];
-
-const TYPE_CONFIG: Record<NotifType, { icon: React.ElementType; color: string; bg: string }> = {
-    mention:  { icon: AtSign,       color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-900/20' },
-    comment:  { icon: MessageSquare,color: 'text-blue-600',   bg: 'bg-blue-50 dark:bg-blue-900/20' },
-    task:     { icon: CheckCircle2, color: 'text-emerald-600',bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-    system:   { icon: Bell,         color: 'text-slate-500',  bg: 'bg-slate-100 dark:bg-white/5' },
-    ai:       { icon: Bot,          color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
-    reminder: { icon: Clock,        color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20' },
+const TYPE_CONFIG: Record<NotificationKind, { icon: React.ElementType; color: string; bg: string }> = {
+    mention: { icon: AtSign, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+    comment: { icon: MessageSquare, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+    task: { icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+    system: { icon: Bell, color: 'text-slate-500', bg: 'bg-slate-100 dark:bg-white/5' },
+    ai: { icon: Bot, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+    reminder: { icon: Clock, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20' },
 };
+
+const FILTER_LABEL: Record<InboxFilter, string> = {
+    all: 'Todo',
+    unread: 'No leidos',
+    mention: 'Menciones',
+    task: 'Tareas',
+    ai: 'MESH AI',
+};
+
+function hashToFilter(hash: string): InboxFilter {
+    if (hash === '#menciones') return 'mention';
+    if (hash === '#tareas') return 'task';
+    if (hash === '#ai') return 'ai';
+    return 'all';
+}
 
 export default function InboxPage() {
     const { user } = useAuth();
-    const [notifications, setNotifications] = useState(INITIAL);
-    const [filter, setFilter] = useState<'all' | 'unread' | 'starred'>('all');
+    const { notifications, loading, error, refresh, markRead, markAllRead } = useNotifications();
+    const [filter, setFilter] = useState<InboxFilter>('all');
     const [search, setSearch] = useState('');
-    const [selected, setSelected] = useState<number[]>([]);
+
+    useEffect(() => {
+        const syncHash = () => setFilter(hashToFilter(window.location.hash));
+        syncHash();
+        window.addEventListener('hashchange', syncHash);
+        return () => window.removeEventListener('hashchange', syncHash);
+    }, []);
 
     const displayName = user?.username?.includes('@')
         ? user.username.split('@')[0]
         : user?.username || 'Miembro';
 
-    const filtered = notifications.filter(n => {
-        if (filter === 'unread' && n.read) return false;
-        if (filter === 'starred' && !n.starred) return false;
-        if (search && !n.title.toLowerCase().includes(search.toLowerCase()) && !n.body.toLowerCase().includes(search.toLowerCase())) return false;
+    const filtered = useMemo(() => notifications.filter((notification) => {
+        if (filter === 'unread' && notification.read) return false;
+        if (['mention', 'task', 'ai'].includes(filter) && notification.kind !== filter) return false;
+        if (
+            search &&
+            !notification.title.toLowerCase().includes(search.toLowerCase()) &&
+            !notification.body.toLowerCase().includes(search.toLowerCase())
+        ) {
+            return false;
+        }
         return true;
-    });
+    }), [filter, notifications, search]);
 
-    const unreadCount = notifications.filter(n => !n.read).length;
-
-    const markAllRead = () => setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-
-    const toggleRead = (id: number) =>
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: !n.read } : n));
-
-    const toggleStar = (id: number) =>
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, starred: !n.starred } : n));
-
-    const deleteNotif = (id: number) =>
-        setNotifications(prev => prev.filter(n => n.id !== id));
+    const unreadCount = notifications.filter((notification) => !notification.read).length;
 
     return (
         <div className="h-full flex flex-col bg-white dark:bg-[#141517] overflow-hidden font-display">
-
-                {/* Subheader */}
-                <div className="h-12 border-b border-slate-100 dark:border-white/5 flex items-center px-6 gap-3 shrink-0 bg-slate-50/50 dark:bg-[#141517]">
-                    <h1 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                        <Bell size={13} />
-                        Bandeja de Entrada
-                        {unreadCount > 0 && (
-                            <span className="inline-flex items-center justify-center size-5 rounded-full bg-rose-500 text-white text-[9px] font-black">
-                                {unreadCount}
-                            </span>
-                        )}
-                    </h1>
-                    <div className="flex-1" />
-
-                    {/* Search */}
-                    <div className="relative">
-                        <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            placeholder="Buscar..."
-                            className="pl-8 pr-3 py-1.5 text-[11px] bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 w-48 transition-all"
-                        />
-                    </div>
-
-                    {/* Filter pills */}
-                    <div className="flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10">
-                        {(['all', 'unread', 'starred'] as const).map(f => (
-                            <button
-                                key={f}
-                                onClick={() => setFilter(f)}
-                                className={clsx(
-                                    'px-3 py-1.5 text-[10px] font-black uppercase tracking-wide transition-colors',
-                                    filter === f
-                                        ? 'bg-blue-600 text-white'
-                                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                                )}
-                            >
-                                {f === 'all' ? 'Todo' : f === 'unread' ? 'No leídos' : 'Guardados'}
-                            </button>
-                        ))}
-                    </div>
-
+            <div className="h-12 border-b border-slate-100 dark:border-white/5 flex items-center px-6 gap-3 shrink-0 bg-slate-50/50 dark:bg-[#141517]">
+                <h1 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                    <Bell size={13} />
+                    Bandeja de Entrada
                     {unreadCount > 0 && (
-                        <button
-                            onClick={markAllRead}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors"
-                        >
-                            <Check size={12} />
-                            Marcar todo como leído
-                        </button>
+                        <span className="inline-flex items-center justify-center size-5 rounded-full bg-rose-500 text-white text-[9px] font-black">
+                            {unreadCount}
+                        </span>
                     )}
+                </h1>
+                <div className="flex-1" />
+
+                <div className="relative">
+                    <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                        type="text"
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                        placeholder="Buscar..."
+                        className="pl-8 pr-3 py-1.5 text-[11px] bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 w-48 transition-all"
+                    />
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto scrollbar-thin">
-                    <AnimatePresence initial={false}>
-                        {filtered.length === 0 ? (
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="flex flex-col items-center justify-center h-full gap-4 text-center px-8"
-                            >
-                                <div className="size-16 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center">
-                                    <Bell size={28} className="text-slate-300 dark:text-slate-600" />
-                                </div>
-                                <p className="text-sm font-bold text-slate-500">Sin notificaciones</p>
-                                <p className="text-xs text-slate-400">Todo limpio por aquí, {displayName} 🎉</p>
-                            </motion.div>
-                        ) : (
-                            <div className="divide-y divide-slate-50 dark:divide-white/[0.03]">
-                                {filtered.map((notif, idx) => {
-                                    const cfg = TYPE_CONFIG[notif.type];
-                                    const Icon = cfg.icon;
-                                    return (
-                                        <motion.div
-                                            key={notif.id}
-                                            initial={{ opacity: 0, x: -8 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            exit={{ opacity: 0, height: 0 }}
-                                            transition={{ delay: idx * 0.02 }}
-                                            className={clsx(
-                                                'flex items-start gap-4 px-6 py-4 cursor-pointer group relative transition-colors',
-                                                notif.read
-                                                    ? 'hover:bg-slate-50/50 dark:hover:bg-white/[0.02]'
-                                                    : 'bg-blue-50/30 dark:bg-blue-500/[0.04] hover:bg-blue-50/50 dark:hover:bg-blue-500/[0.07]'
-                                            )}
-                                            onClick={() => toggleRead(notif.id)}
-                                        >
-                                            {/* Unread dot */}
-                                            {!notif.read && (
-                                                <div className="absolute left-2.5 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-blue-500" />
-                                            )}
+                <div className="flex rounded-lg overflow-hidden border border-slate-200 dark:border-white/10">
+                    {(['all', 'unread'] as const).map((item) => (
+                        <button
+                            key={item}
+                            onClick={() => setFilter(item)}
+                            className={clsx(
+                                'px-3 py-1.5 text-[10px] font-black uppercase tracking-wide transition-colors',
+                                filter === item
+                                    ? 'bg-blue-600 text-white'
+                                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
+                            )}
+                        >
+                            {FILTER_LABEL[item]}
+                        </button>
+                    ))}
+                </div>
 
-                                            {/* Icon */}
-                                            <div className={clsx('size-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5', cfg.bg)}>
-                                                <Icon size={16} className={cfg.color} />
-                                            </div>
+                <button
+                    onClick={() => void refresh()}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors"
+                >
+                    <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+                    Actualizar
+                </button>
 
-                                            {/* Content */}
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-0.5">
-                                                    <p className={clsx(
-                                                        'text-[13px] font-semibold truncate flex-1',
-                                                        notif.read ? 'text-slate-600 dark:text-slate-400' : 'text-slate-900 dark:text-white font-bold'
-                                                    )}>
-                                                        {notif.title}
-                                                    </p>
-                                                    <span className="text-[10px] text-slate-400 shrink-0 font-medium">{notif.time}</span>
-                                                </div>
-                                                <p className="text-[12px] text-slate-500 dark:text-slate-400 leading-snug line-clamp-2">
-                                                    {notif.body}
-                                                </p>
-                                                <div className="flex items-center gap-3 mt-2">
-                                                    <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                                                        <Layout size={10} />
-                                                        {notif.module}
-                                                    </span>
-                                                    {notif.sender && (
-                                                        <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                                                            <Users size={10} />
-                                                            {notif.sender}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
+                {unreadCount > 0 && (
+                    <button
+                        onClick={() => void markAllRead()}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors"
+                    >
+                        <Check size={12} />
+                        Marcar todo como leido
+                    </button>
+                )}
+            </div>
 
-                                            {/* Actions (visible on hover) */}
-                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                                                <button
-                                                    onClick={e => { e.stopPropagation(); toggleStar(notif.id); }}
-                                                    className={clsx(
-                                                        'p-1.5 rounded-lg transition-colors',
-                                                        notif.starred
-                                                            ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20'
-                                                            : 'text-slate-300 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'
-                                                    )}
-                                                >
-                                                    <Star size={13} fill={notif.starred ? 'currentColor' : 'none'} />
-                                                </button>
-                                                <button
-                                                    onClick={e => { e.stopPropagation(); deleteNotif(notif.id); }}
-                                                    className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
-                                                >
-                                                    <X size={13} />
-                                                </button>
-                                            </div>
-                                        </motion.div>
-                                    );
-                                })}
+            <div className="px-6 py-2 border-b border-slate-100 dark:border-white/5 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                {FILTER_LABEL[filter]}
+            </div>
+
+            <div className="flex-1 overflow-y-auto scrollbar-thin">
+                <AnimatePresence initial={false}>
+                    {loading ? (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="flex h-full items-center justify-center text-xs font-black uppercase tracking-[0.2em] text-slate-400"
+                        >
+                            Sincronizando notificaciones...
+                        </motion.div>
+                    ) : filtered.length === 0 ? (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="flex flex-col items-center justify-center h-full gap-4 text-center px-8"
+                        >
+                            <div className="size-16 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+                                <Bell size={28} className="text-slate-300 dark:text-slate-600" />
                             </div>
-                        )}
-                    </AnimatePresence>
-                </div>
+                            <p className="text-sm font-bold text-slate-500">Sin notificaciones</p>
+                            <p className="text-xs text-slate-400">Todo limpio por aqui, {displayName}.</p>
+                            {error && <p className="text-xs font-semibold text-rose-500">{error}</p>}
+                        </motion.div>
+                    ) : (
+                        <div className="divide-y divide-slate-50 dark:divide-white/[0.03]">
+                            {filtered.map((notification, index) => {
+                                const config = TYPE_CONFIG[notification.kind];
+                                const Icon = config.icon;
+                                return (
+                                    <motion.button
+                                        key={notification.id}
+                                        type="button"
+                                        initial={{ opacity: 0, x: -8 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        transition={{ delay: index * 0.02 }}
+                                        className={clsx(
+                                            'w-full text-left flex items-start gap-4 px-6 py-4 group relative transition-colors',
+                                            notification.read
+                                                ? 'hover:bg-slate-50/50 dark:hover:bg-white/[0.02]'
+                                                : 'bg-blue-50/30 dark:bg-blue-500/[0.04] hover:bg-blue-50/50 dark:hover:bg-blue-500/[0.07]',
+                                        )}
+                                        onClick={() => void markRead(notification.id)}
+                                    >
+                                        {!notification.read && (
+                                            <div className="absolute left-2.5 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-blue-500" />
+                                        )}
+
+                                        <div className={clsx('size-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5', config.bg)}>
+                                            <Icon size={16} className={config.color} />
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-0.5">
+                                                <p
+                                                    className={clsx(
+                                                        'text-[13px] font-semibold truncate flex-1',
+                                                        notification.read
+                                                            ? 'text-slate-600 dark:text-slate-400'
+                                                            : 'text-slate-900 dark:text-white font-bold',
+                                                    )}
+                                                >
+                                                    {notification.title}
+                                                </p>
+                                                <span className="text-[10px] text-slate-400 shrink-0 font-medium">
+                                                    {formatNotificationTime(notification.createdAt)}
+                                                </span>
+                                            </div>
+                                            <p className="text-[12px] text-slate-500 dark:text-slate-400 leading-snug line-clamp-2">
+                                                {notification.body || 'Sin detalle adicional.'}
+                                            </p>
+                                            <div className="flex items-center gap-3 mt-2">
+                                                <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                                                    <Layout size={10} />
+                                                    {notification.module}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </motion.button>
+                                );
+                            })}
+                        </div>
+                    )}
+                </AnimatePresence>
+            </div>
         </div>
     );
 }
-

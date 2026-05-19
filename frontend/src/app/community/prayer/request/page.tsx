@@ -35,18 +35,33 @@ export default function PrayerRequestForm() {
 
         setIsSubmitting(true);
         try {
-            await apiFetch('/prayer/', {
-                method: 'POST',
-                token,
-                body: {
-                    name: user?.username || 'Anónimo',
-                    request: requestText,
-                    category: selectedCategory,
-                    is_anonymous: isAnonymous,
-                    user_id: user?.id
-                },
-            });
-            addToast('Tu petición de oración ha sido compartida.', 'success');
+            const requesterName = isAnonymous ? 'Anónimo' : (user?.username || 'Anónimo');
+
+            if (isConfidential) {
+                // Confidencial → CRM directo, no se publica en el muro
+                await apiFetch('/crm/prayer-requests/public', {
+                    method: 'POST',
+                    body: {
+                        requester_name: requesterName,
+                        request_text: requestText,
+                        category: selectedCategory,
+                    },
+                });
+                addToast('Tu petición ha sido enviada al equipo pastoral de forma confidencial.', 'success');
+            } else {
+                // Público → muro de oración comunitario
+                await apiFetch('/prayer/', {
+                    method: 'POST',
+                    token,
+                    body: {
+                        requester_name: requesterName,
+                        request_text: requestText,
+                        category: selectedCategory,
+                        is_public: true,
+                    },
+                });
+                addToast('Tu petición de oración ha sido compartida en el muro.', 'success');
+            }
             router.push('/community/prayer');
         } catch (error) {
             console.error('prayer request error', error);

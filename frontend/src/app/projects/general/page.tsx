@@ -4,9 +4,15 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import type { ViewType } from '@/components/ViewSwitcher';
+import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
+import UniversalGanttView from '@/components/ui/UniversalGanttView';
+import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import type { ProjectActivityItem, ProjectRecord } from '@/types/projects';
 import { Hash, Layout } from 'lucide-react';
 import Skeleton from '@/components/ui/Skeleton';
+
+const GENERAL_VIEWS: ViewType[] = ['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 export default function ProjectsGeneralPage() {
     const { token } = useAuth();
@@ -16,6 +22,7 @@ export default function ProjectsGeneralPage() {
     const [projectId, setProjectId] = useState<number | ''>('');
     const [content, setContent] = useState('');
     const [saving, setSaving] = useState(false);
+    const [viewType, setViewType] = useState<ViewType>('list');
 
     const load = async () => {
         if (!token) return;
@@ -57,15 +64,23 @@ export default function ProjectsGeneralPage() {
             setSaving(false);
         }
     };
+    const groupedActivities = activities.reduce<Record<string, ProjectActivityItem[]>>((acc, activity) => {
+        if (!acc[activity.project_title]) acc[activity.project_title] = [];
+        acc[activity.project_title].push(activity);
+        return acc;
+    }, {});
+    const calendarEvents = activities.map((activity) => ({ id: activity.id, title: activity.task_title || activity.project_title, date: activity.created_at.split('T')[0], color: 'blue' as const, location: activity.project_title }));
+    const ganttItems = activities.map((activity) => ({ id: activity.id, title: activity.task_title || activity.project_title, subtitle: activity.description, start_date: activity.created_at, end_date: activity.created_at, color: 'blue' as const, progress: 65 }));
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Canal General', icon: Hash }]}
-                viewType="list"
-                setViewType={() => {}}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={GENERAL_VIEWS}
             />
-            <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+            <main className="flex-1 overflow-y-auto p-4 lg:p-6">
                 <section className="rounded-2xl border border-slate-200 dark:border-white/10 p-4 bg-slate-50 dark:bg-white/5 mb-5">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Publicar en canal</p>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
@@ -95,6 +110,18 @@ export default function ProjectsGeneralPage() {
                 </section>
                 {loading ? (
                     <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <Skeleton key={idx} className="h-20 rounded-2xl" />)}</div>
+                ) : viewType === 'table' ? (
+                    <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden"><table className="w-full text-left"><thead className="bg-slate-50 dark:bg-white/5"><tr><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Proyecto</th><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Actividad</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-white/5">{activities.map((activity) => <tr key={activity.id}><td className="px-4 py-3 text-sm font-bold">{activity.project_title}</td><td className="px-4 py-3 hidden md:table-cell text-[11px] text-slate-500">{activity.description}</td></tr>)}</tbody></table></div>
+                ) : viewType === 'grid' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">{activities.map((activity) => <article key={activity.id} className="rounded-2xl border border-slate-200 dark:border-white/10 p-4 bg-slate-50 dark:bg-white/5"><p className="text-[10px] font-black uppercase tracking-widest text-blue-600">{activity.project_title}</p><h3 className="font-black mt-2">{activity.task_title || 'Actividad'}</h3><p className="text-sm mt-2">{activity.description}</p></article>)}</div>
+                ) : viewType === 'board' || viewType === 'kanban' ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">{Object.entries(groupedActivities).map(([project, rows]) => <section key={project} className="rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-4"><div className="flex justify-between mb-4"><span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{project}</span><span className="text-[10px] font-black text-slate-400">{rows.length}</span></div><div className="space-y-3">{rows.map((row) => <div key={row.id} className="rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-3 text-sm">{row.description}</div>)}</div></section>)}</div>
+                ) : viewType === 'calendar' ? (
+                    <UniversalCalendarView events={calendarEvents} title="Calendario del canal general" />
+                ) : viewType === 'gantt' ? (
+                    <UniversalGanttView items={ganttItems} moduleName="Canal general" />
+                ) : viewType === 'wiki' ? (
+                    <UniversalWikiView moduleName="Canal general" storageKey="wiki_projects_general" />
                 ) : (
                     <div className="space-y-3">
                         {activities.map((activity) => (

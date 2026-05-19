@@ -3,11 +3,7 @@
 import React from 'react';
 import { 
     CheckCircle2, 
-    Circle, 
-    Clock, 
-    AlertCircle,
     User,
-    Calendar,
     Flag,
     MoreHorizontal
 } from 'lucide-react';

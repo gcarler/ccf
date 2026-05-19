@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { 
-    DollarSign, ArrowUpCircle, ArrowDownCircle, TrendingUp, Calendar, ChevronRight, PieChart, Filter
+    DollarSign, TrendingUp, Calendar, PieChart, Filter
 } from 'lucide-react';
-import { api } from '@/services/apiService';
+import { apiFetch } from '@/lib/http';
 import { StatCard } from '@/components/StatCard';
 
 export default function AdminTreasuryPage() {
@@ -14,8 +14,8 @@ export default function AdminTreasuryPage() {
 
     useEffect(() => {
         Promise.all([
-            api.get<any[]>('/finance/transactions'),
-            api.get<any[]>('/finance/funds')
+            apiFetch<any[]>('/finance/transactions'),
+            apiFetch<any[]>('/finance/funds')
         ]).then(([txs, fnds]) => {
             setTransactions(txs);
             setFunds(fnds);

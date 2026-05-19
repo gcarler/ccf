@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-    User, Mail, Phone, MapPin, BookOpen, Award,
+    Mail, Phone, MapPin, BookOpen, Award,
     Edit2, Camera, Calendar, ShieldCheck, GraduationCap, Star
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -25,7 +25,7 @@ export default function AcademyAccountPage() {
     const stats = [
         { icon: BookOpen, label: 'Cursos Activos', value: enrollments.length, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-500/10' },
         { icon: Award, label: 'Certificados', value: 2, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10' },
-        { icon: Star, label: 'Promedio', value: '9.4', color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-500/10' },
+        { icon: Star, label: 'Promedio', value: '9.4', color: 'text-sky-600', bg: 'bg-sky-50 dark:bg-sky-500/10' },
         { icon: Calendar, label: 'Días Activo', value: 47, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
     ];
 

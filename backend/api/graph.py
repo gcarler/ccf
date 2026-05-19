@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.database import get_db
+from backend.core.database import get_db
 from backend.auth import get_current_user
 from backend.services.knowledge_graph import build_graph_snapshot
 

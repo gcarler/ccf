@@ -6,11 +6,12 @@ import { useAuth } from '@/context/AuthContext';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { apiFetch } from '@/lib/http';
 import type { CourseSummary, DashboardMetrics, PilotReadiness } from '@/types/academy';
-import { GraduationCap, Target, AlertTriangle, BarChart3, Loader2, Users, ShieldCheck, Download, Filter, Plus } from 'lucide-react';
+import { GraduationCap, AlertTriangle, Loader2, ShieldCheck, Download, Filter, Plus } from 'lucide-react';
 import clsx from 'clsx';
 import { toast } from 'sonner';
 import { DSMetric, DSCard, DSBadge } from '@/design';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
+import { useWikiDocument } from '@/hooks/useWikiDocument';
 
 export default function CoordinationConsole() {
     const { token, user, isAuthenticated } = useAuth();
@@ -22,7 +23,9 @@ export default function CoordinationConsole() {
     const [search, setSearch] = useState('');
     const [modalityFilter, setModalityFilter] = useState<'all' | 'formal' | 'non_formal'>('all');
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('academy_coordination_view', 'grid'));
-    const [wikiNotes, setWikiNotes] = useState('');
+    const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('academy_coordination_wiki_notes', {
+        title: 'Wiki de coordinacion academica',
+    });
 
     const isCoordination = useMemo(() => {
         const role = (user?.role || '').toLowerCase();
@@ -57,19 +60,6 @@ export default function CoordinationConsole() {
             window.localStorage.setItem('academy_coordination_view', viewType);
         }
     }, [viewType]);
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const saved = window.localStorage.getItem('academy_coordination_wiki_notes');
-            if (saved) setWikiNotes(saved);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            window.localStorage.setItem('academy_coordination_wiki_notes', wikiNotes);
-        }
-    }, [wikiNotes]);
 
     const readinessPerc = readiness?.readiness_score != null ? Math.round(readiness.readiness_score * 100) : 0;
     const filteredCourses = useMemo(() => {

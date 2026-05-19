@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Search, Bell, Plus, LayoutGrid, List, Calendar, ChevronRight, Menu, HelpCircle, Share2, MessageSquare, Zap, Target, Clock } from 'lucide-react';
+import { Search, LayoutGrid, List, ChevronRight, MessageSquare, Zap, Target, Clock } from 'lucide-react';
 
 interface CrmTopBarProps {
     title: string;

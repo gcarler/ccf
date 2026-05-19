@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import {
     Award, Download, ShieldCheck, ExternalLink, Waves, FileCheck,
-    Loader2, BookOpen
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
@@ -28,7 +27,7 @@ export default function DigitalCertificatesPage() {
 
     useEffect(() => {
         if (!token || !user?.id) { setLoading(false); return; }
-        apiFetch<Certificate[]>(`/academy/users/${user.id}/certificates`, { token, cache: 'no-store' })
+        apiFetch<Certificate[]>(`/academy/me/certificates`, { token, cache: 'no-store' })
             .then(data => setCertificates(Array.isArray(data) ? data : []))
             .catch(() => setCertificates([]))
             .finally(() => setLoading(false));

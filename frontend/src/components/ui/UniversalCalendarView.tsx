@@ -3,10 +3,9 @@
 import React, { useState } from 'react';
 import { 
     ChevronLeft, ChevronRight, Calendar as CalendarIcon, 
-    MoreHorizontal, Plus, Clock, MapPin, 
-    Sparkles, Filter, Search, Maximize2
+    Plus, Sparkles, Maximize2
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
 interface CalendarEvent {
@@ -23,12 +22,13 @@ interface UniversalCalendarViewProps {
     events: CalendarEvent[];
     onDateClick?: (date: Date) => void;
     onEventClick?: (event: CalendarEvent) => void;
+    onCreate?: () => void;
     title?: string;
 }
 
 const COLORS: any = {
     blue: 'bg-blue-600 shadow-blue-500/20 text-white',
-    purple: 'bg-purple-600 shadow-purple-500/20 text-white',
+    purple: 'bg-sky-600 shadow-sky-500/20 text-white',
     emerald: 'bg-emerald-600 shadow-emerald-500/20 text-white',
     amber: 'bg-amber-600 shadow-amber-500/20 text-white',
     rose: 'bg-rose-600 shadow-rose-500/20 text-white',
@@ -37,7 +37,7 @@ const COLORS: any = {
 
 const DAY_LABELS = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
 
-export default function UniversalCalendarView({ events, onDateClick, onEventClick, title = "Calendario Maestro" }: UniversalCalendarViewProps) {
+export default function UniversalCalendarView({ events, onDateClick, onEventClick, onCreate, title = "Calendario Maestro" }: UniversalCalendarViewProps) {
     const [currentDate, setCurrentDate] = useState(new Date());
     
     // Calendar logic
@@ -88,9 +88,14 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                         <button onClick={() => setCurrentDate(new Date())} className="px-6 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-colors">Hoy</button>
                         <button onClick={nextMonth} className="p-3 bg-white dark:bg-white/10 rounded-xl text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition-all shadow-sm"><ChevronRight size={18} /></button>
                     </div>
-                    <button className="p-4 bg-slate-900 dark:bg-white/10 text-white rounded-2xl shadow-xl shadow-slate-900/20 hover:scale-105 transition-all">
-                        <Plus size={20} />
-                    </button>
+                    {onCreate && (
+                        <button
+                            onClick={onCreate}
+                            className="p-4 bg-slate-900 dark:bg-white/10 text-white rounded-2xl shadow-xl shadow-slate-900/20 hover:scale-105 transition-all"
+                        >
+                            <Plus size={20} />
+                        </button>
+                    )}
                 </div>
             </div>
 

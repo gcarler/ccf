@@ -75,7 +75,6 @@ export function useContentBlock(key?: string, { enabled = true }: { enabled?: bo
 }
 
 export function useContentBlocks(keys: string[], { enabled = true }: { enabled?: boolean } = {}): HookState<Record<string, ParsedContentBlock | null>> {
-  const keysKey = keys.join(',');
   const normalizedKeys = useMemo(() => keys.filter(Boolean), [keys]);
   const [data, setData] = useState<Record<string, ParsedContentBlock | null>>({});
   const [loading, setLoading] = useState<boolean>(normalizedKeys.length > 0 && enabled);

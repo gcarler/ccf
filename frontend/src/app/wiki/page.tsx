@@ -4,12 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     BookOpen, Search, Plus, FileText, 
-    MoreVertical, Edit2, Trash2, ChevronRight,
+    ChevronRight,
     Zap, Bookmark, Clock
 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
-import SidePanel from '@/components/ui/SidePanel';
 import Link from 'next/link';
 
 interface WikiDoc {
@@ -25,7 +24,7 @@ export default function WikiHomePage() {
     const [loading, setLoading] = useState(true);
     const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
     const [newTitle, setNewTitle] = useState("");
-    const [selectedDoc, setSelectedDoc] = useState<WikiDoc | null>(null);
+    const [search, setSearch] = useState("");
 
     useEffect(() => {
         fetchDocs();
@@ -35,10 +34,8 @@ export default function WikiHomePage() {
     const fetchDocs = async () => {
         if (!token) return;
         try {
-            // Reutilizamos el endpoint de content para la wiki
             const data = await apiFetch<WikiDoc[]>('/content', { token });
-            // Filtramos para mostrar solo los que no son hero/nav (simulando docs de wiki)
-            setDocs(Array.isArray(data) ? data.filter(d => !d.page_key.startsWith('faro_')) : []);
+            setDocs(Array.isArray(data) ? data.filter((doc) => doc.page_key.includes('wiki')) : []);
         } catch (error) {
             console.error("Error fetching docs:", error);
         } finally {
@@ -55,10 +52,10 @@ export default function WikiHomePage() {
             await apiFetch(`/content/${page_key}`, {
                 method: 'POST',
                 token,
-                body: JSON.stringify({
+                body: {
                     title: newTitle,
-                    content: "<h1>" + newTitle + "</h1><p>Comienza a escribir aquí...</p>"
-                })
+                    content: "<h1>" + newTitle + "</h1><p>Comienza a escribir aqui...</p>"
+                }
             });
             setNewTitle("");
             setIsQuickAddOpen(false);
@@ -84,6 +81,8 @@ export default function WikiHomePage() {
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input 
                             type="text" 
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
                             placeholder="Buscar en la wiki..."
                             className="pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-white/5 border-none rounded-lg text-[12px] focus:ring-2 focus:ring-indigo-500/20 w-64 transition-all"
                         />
@@ -105,13 +104,13 @@ export default function WikiHomePage() {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="bg-violet-50 dark:bg-violet-900/10 border-b-2 border-violet-300 dark:border-violet-500/30 overflow-hidden shrink-0"
+                        className="bg-blue-50 dark:bg-blue-900/10 border-b-2 border-blue-300 dark:border-blue-500/30 overflow-hidden shrink-0"
                     >
                         <form 
                             onSubmit={handleCreateDoc}
                             className="px-6 py-4 flex items-center gap-4"
                         >
-                            <div className="size-8 rounded-lg bg-violet-600 text-white flex items-center justify-center shrink-0">
+                            <div className="size-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
                                 <Zap size={16} />
                             </div>
                             <input 
@@ -119,7 +118,7 @@ export default function WikiHomePage() {
                                 value={newTitle}
                                 onChange={(e) => setNewTitle(e.target.value)}
                                 placeholder="Nombre del documento (Enter para crear...)"
-                                className="flex-1 bg-transparent border-none text-[15px] font-bold text-violet-900 dark:text-violet-200 placeholder:text-violet-400 focus:ring-0"
+                                className="flex-1 bg-transparent border-none text-[15px] font-bold text-blue-900 dark:text-blue-200 placeholder:text-blue-400 focus:ring-0"
                             />
                         </form>
                     </motion.div>
@@ -143,7 +142,9 @@ export default function WikiHomePage() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {docs.map((doc, index) => (
+                                {docs
+                                    .filter((doc) => doc.title.toLowerCase().includes(search.trim().toLowerCase()))
+                                    .map((doc, index) => (
                                     <motion.div
                                         key={doc.id}
                                         initial={{ opacity: 0, y: 20 }}
@@ -152,7 +153,7 @@ export default function WikiHomePage() {
                                         className="group relative bg-white dark:bg-[#252528] rounded-2xl border border-slate-200/70 dark:border-white/5 p-6 shadow-sm hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full"
                                     >
                                         {/* Acento de color top */}
-                                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-violet-600 to-indigo-600" />
+                                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-600 to-indigo-600" />
                                         
                                         <div className="flex-1 space-y-4">
                                             <div className="flex items-start justify-between">

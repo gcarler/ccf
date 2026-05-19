@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import {
     ChevronLeft, ChevronRight, Plus, Search, Settings2,
@@ -11,7 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     format, startOfWeek, endOfWeek, eachDayOfInterval,
     isSameDay, addWeeks, subWeeks, addDays, isToday,
-    startOfMonth, endOfMonth, eachWeekOfInterval, addMonths, subMonths,
+    startOfMonth, endOfMonth, addMonths, subMonths,
     isSameMonth, getHours, getMinutes
 } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -35,9 +36,37 @@ interface CalEvent {
     start: Date;
     end?: Date;
     color: string;
-    type: 'task' | 'event' | 'reminder';
+    type: 'task' | 'agenda_event' | 'evangelism_event' | 'reminder';
     allDay?: boolean;
     priority?: string;
+    href?: string;
+}
+
+const EVENT_TYPE_META: Record<CalEvent['type'], { label: string; chip: string }> = {
+    task: {
+        label: 'Tarea',
+        chip: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300',
+    },
+    agenda_event: {
+        label: 'Agenda simple',
+        chip: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300',
+    },
+    evangelism_event: {
+        label: 'Evangelismo',
+        chip: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300',
+    },
+    reminder: {
+        label: 'Recordatorio',
+        chip: 'bg-slate-50 text-slate-700 dark:bg-white/10 dark:text-slate-300',
+    },
+};
+
+const CALENDAR_EVENT_TYPES: CalEvent['type'][] = ['agenda_event', 'evangelism_event', 'task'];
+
+function getEventTypeColor(eventType: CalEvent['type']) {
+    if (eventType === 'task') return '#7c3aed';
+    if (eventType === 'evangelism_event') return '#10b981';
+    return '#ef4444';
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -52,8 +81,11 @@ function formatHour(h: number) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function PlanificadorPage() {
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const { openModal } = useCreation();
+    const router = useRouter();
+    const role = (user?.role || '').toLowerCase();
+    const canAccessEvangelism = role === 'admin' || role === 'pastor';
     const [viewMode, setViewMode] = useState<ViewMode>('semana');
     const [currentDate, setCurrentDate] = useState(new Date());
     const [events, setEvents] = useState<CalEvent[]>([]);
@@ -61,7 +93,58 @@ export default function PlanificadorPage() {
     const [nowLine, setNowLine] = useState<number>(minutesToTop(new Date()));
     const [showViewDropdown, setShowViewDropdown] = useState(false);
     const [openPopoverDay, setOpenPopoverDay] = useState<string | null>(null);
+    const [activeTypes, setActiveTypes] = useState<CalEvent['type'][]>(['task', 'agenda_event', 'evangelism_event']);
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const saved = window.localStorage.getItem('calendar_active_event_types');
+        if (!saved) return;
+        try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.every((value) => ['task', 'agenda_event', 'evangelism_event', 'reminder'].includes(value))) {
+                setActiveTypes(parsed as CalEvent['type'][]);
+            }
+        } catch {
+            window.localStorage.removeItem('calendar_active_event_types');
+        }
+    }, []);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        window.localStorage.setItem('calendar_active_event_types', JSON.stringify(activeTypes));
+    }, [activeTypes]);
+
+    const visibleEvents = useMemo(
+        () => events.filter((event) => activeTypes.includes(event.type)),
+        [activeTypes, events]
+    );
+    const isCalendarFullyVisible = activeTypes.length === CALENDAR_EVENT_TYPES.length;
+
+    const todayVisibleEvents = useMemo(
+        () => visibleEvents.filter((event) => isSameDay(event.start, new Date())),
+        [visibleEvents]
+    );
+
+    const upcomingVisibleEvents = useMemo(
+        () => [...visibleEvents]
+            .filter((event) => event.start.getTime() >= Date.now())
+            .sort((a, b) => a.start.getTime() - b.start.getTime())
+            .slice(0, 3),
+        [visibleEvents]
+    );
+
+    const eventTypeCounts = useMemo(() => {
+        return visibleEvents.reduce<Record<CalEvent['type'], number>>((acc, event) => {
+            acc[event.type] = (acc[event.type] || 0) + 1;
+            return acc;
+        }, {
+            task: 0,
+            agenda_event: 0,
+            evangelism_event: 0,
+            reminder: 0,
+        });
+    }, [visibleEvents]);
 
     const fetchSystemCalendar = useCallback(async () => {
         if (!token) return;
@@ -73,13 +156,20 @@ export default function PlanificadorPage() {
                     title: e.title,
                     start: new Date(e.start),
                     end: e.end ? new Date(e.end) : undefined,
-                    color: e.type === 'task' ? '#7c3aed' : e.type === 'crm' ? '#10b981' : '#ef4444',
+                    color: getEventTypeColor(e.type),
                     type: e.type,
                     allDay: e.allDay ?? false,
+                    href: e.href,
                 })));
             }
         } catch { }
     }, [token]);
+
+    const handleEventClick = useCallback((event: CalEvent) => {
+        if (event.href) {
+            router.push(event.href);
+        }
+    }, [router]);
 
     const fetchTasks = useCallback(async () => {
         if (!token) return;
@@ -89,7 +179,15 @@ export default function PlanificadorPage() {
         } catch { }
     }, [token]);
 
-    const handleSaveInlineEvent = async (data: { title: string; type: 'event'|'task'; description: string; guests: string; date: Date }) => {
+    const toggleTypeFilter = useCallback((eventType: CalEvent['type']) => {
+        setActiveTypes((prev) => (
+            prev.includes(eventType)
+                ? prev.filter((item) => item !== eventType)
+                : [...prev, eventType]
+        ));
+    }, []);
+
+    const handleSaveInlineEvent = async (data: { title: string; type: 'event'|'task'; description: string; location: string; date: Date }) => {
         try {
             if (data.type === 'task') {
                 const projs = await apiFetch<any[]>('/projects', { token }).catch(() => []);
@@ -102,13 +200,15 @@ export default function PlanificadorPage() {
                     body: { title: data.title, description: data.description, status: 'todo', priority: 'normal', due_date: data.date.toISOString() }
                 });
             } else {
-                await apiFetch('/crm/events/', {
+                await apiFetch('/agenda/events', {
                     method: 'POST', token,
                     body: { 
                         title: data.title, 
                         description: data.description, 
-                        event_date: data.date.toISOString(), 
-                        location: data.guests 
+                        start_at: data.date.toISOString(),
+                        end_at: data.date.toISOString(),
+                        location: data.location,
+                        is_all_day: true,
                     }
                 });
             }
@@ -154,12 +254,12 @@ export default function PlanificadorPage() {
 
     // Events for each day
     const getEventsForDay = useCallback((day: Date) =>
-        events.filter(e => !e.allDay && isSameDay(e.start, day)),
-        [events]
+        events.filter(e => !e.allDay && activeTypes.includes(e.type) && isSameDay(e.start, day)),
+        [activeTypes, events]
     );
     const getAllDayForDay = useCallback((day: Date) =>
-        events.filter(e => e.allDay && isSameDay(e.start, day)),
-        [events]
+        events.filter(e => e.allDay && activeTypes.includes(e.type) && isSameDay(e.start, day)),
+        [activeTypes, events]
     );
 
     // Nav
@@ -177,92 +277,6 @@ export default function PlanificadorPage() {
     return (
         <WorkspaceLayout sidebarTitle="Planificador">
             <div className="flex h-full bg-white dark:bg-[#1e1f21] font-display overflow-hidden">
-
-                {/* ── LEFT SIDE PANEL (ClickUp Planificador style) ──────────────── */}
-                <aside className="w-[230px] shrink-0 border-r border-slate-100 dark:border-white/5 flex flex-col overflow-hidden">
-                    {/* Panel header */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/5 shrink-0">
-                        <h2 className="text-[13px] font-bold text-slate-800 dark:text-white">Planificador</h2>
-                        <button className="flex items-center gap-0.5 px-1.5 py-1 rounded-lg text-[11px] font-medium text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
-                            <Plus size={13} />
-                            <ChevronDown size={11} />
-                        </button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto scrollbar-hide py-3 space-y-4 px-3">
-                        {/* Prioridades */}
-                        <PanelSection title="Prioridades">
-                            <div className="bg-slate-50 dark:bg-white/[0.03] rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-white/5">
-                                <Flag size={18} className="text-slate-300 mx-auto mb-2" />
-                                <p className="text-[11px] text-slate-400 leading-snug">
-                                    Prioriza una tarea para verla aparecer aquí.
-                                </p>
-                            </div>
-                            <button className="w-full flex items-center gap-1.5 px-2 py-1.5 text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                                <Plus size={12} /> Añadir prioridad
-                            </button>
-                        </PanelSection>
-
-                        {/* Reunión con */}
-                        <PanelSection title="Reunión con">
-                            <div className="relative">
-                                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300" />
-                                <input
-                                    placeholder="Buscar personas..."
-                                    className="w-full pl-8 pr-3 py-1.5 text-[11px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600 text-slate-700 dark:text-slate-300"
-                                />
-                            </div>
-                        </PanelSection>
-
-                        {/* Asignadas a mí */}
-                        <PanelSection title="Asignadas a mí" collapsible>
-                            <div />
-                        </PanelSection>
-
-                        {/* Hoy y Con atraso */}
-                        <PanelSection title="Hoy y Con atraso" collapsible>
-                            <div />
-                        </PanelSection>
-
-                        {/* Tareas pendientes */}
-                        <PanelSection title="Tareas pendientes">
-                            {/* Filter bar */}
-                            <div className="flex items-center gap-1.5 mb-2">
-                                <button className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                                    <Workflow size={10} />
-                                    Lista personal
-                                </button>
-                                <button className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5">
-                                    <Settings2 size={11} />
-                                </button>
-                                <input
-                                    placeholder="Buscar..."
-                                    className="flex-1 min-w-0 px-2 py-1 text-[10px] bg-transparent border border-slate-200 dark:border-white/10 rounded-lg outline-none placeholder:text-slate-300 text-slate-600 dark:text-slate-300"
-                                />
-                            </div>
-
-                            {/* Task list */}
-                            {tasks.length === 0 ? (
-                                <div className="bg-slate-50 dark:bg-white/[0.03] rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-white/5">
-                                    <p className="text-[11px] text-slate-400">
-                                        Ninguna tarea coincide con estos filtros.
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="space-y-0.5 max-h-[300px] overflow-y-auto scrollbar-thin">
-                                    {tasks.slice(0, 15).map(t => (
-                                        <div key={t.id}
-                                            className="flex items-center gap-2 px-1.5 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer group"
-                                        >
-                                            <Circle size={13} className="text-slate-300 shrink-0 group-hover:text-blue-400 transition-colors" />
-                                            <span className="text-[11px] text-slate-600 dark:text-slate-300 truncate">{t.title}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </PanelSection>
-                    </div>
-                </aside>
 
                 {/* ── MAIN CALENDAR ─────────────────────────────────────────────── */}
                 <div className="flex-1 flex flex-col overflow-hidden">
@@ -283,18 +297,50 @@ export default function PlanificadorPage() {
                             >
                                 Hoy
                             </button>
-                            <h2 className="text-[15px] font-bold text-slate-800 dark:text-white ml-1 capitalize">
+                            <div className="ml-1 flex items-center gap-2">
+                                <h2 className={clsx(
+                                    "text-[15px] font-bold capitalize transition-colors",
+                                    isCalendarFullyVisible ? "text-slate-800 dark:text-white" : "text-amber-600 dark:text-amber-400"
+                                )}>
                                 {viewMode === 'semana'
                                     ? format(currentDate, 'MMMM yyyy', { locale: es })
                                     : viewMode === 'mes'
                                         ? format(currentDate, 'MMMM yyyy', { locale: es })
                                         : format(currentDate, "EEEE d 'de' MMMM", { locale: es })
                                 }
-                            </h2>
+                                </h2>
+                                <span className={clsx(
+                                    "rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-widest",
+                                    isCalendarFullyVisible
+                                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                                        : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
+                                )}>
+                                    {isCalendarFullyVisible ? "Completo" : "Filtrado"}
+                                </span>
+                            </div>
                         </div>
 
                         {/* Right actions */}
                         <div className="flex items-center gap-1">
+                            <div className="mr-2 flex items-center gap-1">
+                                {CALENDAR_EVENT_TYPES.map((eventType) => (
+                                    <button
+                                        key={eventType}
+                                        onClick={() => toggleTypeFilter(eventType)}
+                                        className={clsx(
+                                            "rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest transition-all",
+                                            activeTypes.includes(eventType)
+                                                ? EVENT_TYPE_META[eventType].chip
+                                                : "bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-slate-500"
+                                        )}
+                                    >
+                                        {EVENT_TYPE_META[eventType].label} ({eventTypeCounts[eventType]})
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="hidden md:flex items-center rounded-full bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:bg-white/5 dark:text-slate-300">
+                                {visibleEvents.length} visibles
+                            </div>
                             <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
                                 <StickyNote size={13} />
                                 Notas IA
@@ -389,9 +435,18 @@ export default function PlanificadorPage() {
                                     return (
                                         <div key={i} className="flex-1 border-l border-slate-100 dark:border-white/5 px-1 py-0.5 first:border-l-0">
                                             {dayAllDay.map(e => (
-                                                <div key={e.id} className="truncate text-[10px] font-bold rounded px-1.5 py-0.5 text-white"
-                                                    style={{ backgroundColor: e.color }}>
-                                                    {e.title}
+                                                <div
+                                                    key={e.id}
+                                                    onClick={() => handleEventClick(e)}
+                                                    className="truncate cursor-pointer rounded px-1.5 py-0.5 text-white"
+                                                    style={{ backgroundColor: e.color }}
+                                                >
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-[8px] font-black uppercase tracking-widest opacity-80">
+                                                            {EVENT_TYPE_META[e.type].label}
+                                                        </span>
+                                                        <span className="truncate text-[10px] font-bold">{e.title}</span>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -463,10 +518,15 @@ export default function PlanificadorPage() {
                                                         const height = Math.max(20, durationMins * (HOUR_HEIGHT / 60));
                                                         return (
                                                             <div key={e.id}
-                                                                onClick={(evt) => evt.stopPropagation()}
+                                                                onClick={(evt) => { evt.stopPropagation(); handleEventClick(e); }}
                                                                 className="absolute left-1 right-1 rounded-lg px-2 py-1 overflow-hidden cursor-pointer hover:brightness-95 transition-all z-20 shadow-sm"
                                                                 style={{ top, height, backgroundColor: e.color + '22', borderLeft: `3px solid ${e.color}` }}
                                                             >
+                                                                <div className="mb-1">
+                                                                    <span className={clsx("inline-flex rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest", EVENT_TYPE_META[e.type].chip)}>
+                                                                        {EVENT_TYPE_META[e.type].label}
+                                                                    </span>
+                                                                </div>
                                                                 <p className="text-[10px] font-bold truncate" style={{ color: e.color }}>
                                                                     {format(e.start, 'h:mm a')} · {e.title}
                                                                 </p>
@@ -483,7 +543,7 @@ export default function PlanificadorPage() {
                     )}
 
                     {/* ── MONTH VIEW ─────────────────────────────────────────────── */}
-                    {viewMode === 'mes' && <MonthView currentDate={currentDate} events={events} onSave={handleSaveInlineEvent} />}
+                    {viewMode === 'mes' && <MonthView currentDate={currentDate} events={events} onSave={handleSaveInlineEvent} onEventClick={handleEventClick} />}
 
                     {/* ── DAY VIEW ───────────────────────────────────────────────── */}
                     {viewMode === 'dia' && (
@@ -529,9 +589,14 @@ export default function PlanificadorPage() {
                                                 const h = Math.max(24, ((e.end?.getTime() ?? e.start.getTime() + 3600000) - e.start.getTime()) / 60000 * (HOUR_HEIGHT / 60));
                                                 return (
                                                     <div key={e.id} 
-                                                        onClick={(evt) => evt.stopPropagation()}
+                                                        onClick={(evt) => { evt.stopPropagation(); handleEventClick(e); }}
                                                         className="absolute left-1 right-4 rounded-xl px-3 py-2 shadow-md cursor-pointer hover:brightness-95 transition-all"
                                                         style={{ top, height: h, backgroundColor: e.color + '20', borderLeft: `4px solid ${e.color}` }}>
+                                                        <div className="mb-1">
+                                                            <span className={clsx("inline-flex rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest", EVENT_TYPE_META[e.type].chip)}>
+                                                                {EVENT_TYPE_META[e.type].label}
+                                                            </span>
+                                                        </div>
                                                         <p className="text-[11px] font-bold" style={{ color: e.color }}>{e.title}</p>
                                                         <p className="text-[10px] text-slate-400">{format(e.start, 'h:mm a')}</p>
                                                     </div>
@@ -552,19 +617,236 @@ export default function PlanificadorPage() {
                                 placeholder="Busca eventos, compañeros de equipo, comandos..."
                                 className="flex-1 text-[12px] bg-transparent outline-none text-slate-600 dark:text-slate-300 placeholder:text-slate-300 dark:placeholder:text-slate-600"
                             />
-                            <div className="size-5 rounded-full bg-violet-600 flex items-center justify-center shrink-0">
+                            <div className="size-5 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
                                 <span className="text-[8px] text-white font-black">✦</span>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+{/* ── RIGHT SIDE PANEL (ClickUp Planificador style) ──────────────── */}
+                <aside className="w-[230px] shrink-0 border-l border-slate-100 dark:border-white/5 flex flex-col overflow-hidden">
+                    {/* Panel header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/5 shrink-0">
+                        <h2 className="text-[13px] font-bold text-slate-800 dark:text-white">Planificador</h2>
+                        <button className="flex items-center gap-0.5 px-1.5 py-1 rounded-lg text-[11px] font-medium text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+                            <Plus size={13} />
+                            <ChevronDown size={11} />
+                        </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto scrollbar-hide py-3 space-y-4 px-3">
+                        {/* Resumen de hoy */}
+                        <PanelSection title="Hoy">
+                            <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Eventos visibles</p>
+                                        <p className="text-2xl font-black text-slate-900 dark:text-white">{todayVisibleEvents.length}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hoy</p>
+                                        <p className="text-[11px] font-bold text-slate-600 dark:text-slate-300">{format(new Date(), 'dd MMM', { locale: es })}</p>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {CALENDAR_EVENT_TYPES.map((eventType) => (
+                                        <div key={eventType} className="rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 px-2 py-2 text-center">
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">{EVENT_TYPE_META[eventType].label}</p>
+                                            <p className="mt-1 text-sm font-black text-slate-900 dark:text-white">
+                                                {todayVisibleEvents.filter((event) => event.type === eventType).length}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <button
+                                        onClick={() => setActiveTypes([...CALENDAR_EVENT_TYPES])}
+                                        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 transition-all hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+                                    >
+                                        Limpiar filtros
+                                    </button>
+                                    <button
+                                        onClick={() => router.push('/agenda/events')}
+                                        className="rounded-xl bg-blue-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-blue-700"
+                                    >
+                                        Agenda simple
+                                    </button>
+                                    {canAccessEvangelism && (
+                                        <button
+                                            onClick={() => router.push('/evangelism/events')}
+                                            className="rounded-xl bg-emerald-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-emerald-700"
+                                        >
+                                            Evangelismo
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex items-center justify-between rounded-xl border border-dashed border-slate-200 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+                                    <span>Estado de filtros</span>
+                                    <span className={clsx(
+                                        "rounded-full px-2 py-1",
+                                        activeTypes.length === CALENDAR_EVENT_TYPES.length
+                                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                                            : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
+                                    )}>
+                                        {activeTypes.length === CALENDAR_EVENT_TYPES.length ? "Todos visibles" : `${activeTypes.length} activos`}
+                                    </span>
+                                </div>
+                            </div>
+                        </PanelSection>
+
+                        {/* Próximos */}
+                        <PanelSection title="Próximos">
+                            <div className="space-y-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3">
+                                {upcomingVisibleEvents.length === 0 ? (
+                                    <p className="text-[11px] text-slate-400">No hay eventos visibles próximos.</p>
+                                ) : upcomingVisibleEvents.map((event) => (
+                                    <button
+                                        key={event.id}
+                                        onClick={() => handleEventClick(event)}
+                                        className="flex w-full items-start gap-2 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-500/30 transition-all"
+                                    >
+                                        <span
+                                            className="mt-0.5 size-2.5 rounded-full shrink-0"
+                                            style={{ backgroundColor: event.color }}
+                                        />
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className={clsx("rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest", EVENT_TYPE_META[event.type].chip)}>
+                                                    {EVENT_TYPE_META[event.type].label}
+                                                </span>
+                                                <span className="truncate text-[11px] font-bold text-slate-700 dark:text-slate-300">{event.title}</span>
+                                            </div>
+                                            <p className="mt-1 text-[10px] text-slate-400">
+                                                {format(event.start, "dd MMM, h:mm a", { locale: es })}
+                                            </p>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </PanelSection>
+
+                        {/* Prioridades */}
+                        <PanelSection title="Prioridades">
+                            <div className="bg-slate-50 dark:bg-white/[0.03] rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-white/5">
+                                <Flag size={18} className="text-slate-300 mx-auto mb-2" />
+                                <p className="text-[11px] text-slate-400 leading-snug">
+                                    Prioriza una tarea para verla aparecer aquí.
+                                </p>
+                            </div>
+                            <button className="w-full flex items-center gap-1.5 px-2 py-1.5 text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                                <Plus size={12} /> Añadir prioridad
+                            </button>
+                        </PanelSection>
+
+                        {/* Reunión con */}
+                        <PanelSection title="Reunión con">
+                            <div className="relative">
+                                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300" />
+                                <input
+                                    placeholder="Buscar personas..."
+                                    className="w-full pl-8 pr-3 py-1.5 text-[11px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600 text-slate-700 dark:text-slate-300"
+                                />
+                            </div>
+                        </PanelSection>
+
+                        {/* Asignadas a mí */}
+                        <PanelSection title="Asignadas a mí" collapsible>
+                            <div />
+                        </PanelSection>
+
+                        {/* Hoy y Con atraso */}
+                        <PanelSection title="Hoy y Con atraso" collapsible>
+                            <div />
+                        </PanelSection>
+
+                        {/* Tareas pendientes */}
+                        <PanelSection title="Tareas pendientes">
+                            {/* Filter bar */}
+                            <div className="flex items-center gap-1.5 mb-2">
+                                <button className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                                    <Workflow size={10} />
+                                    Lista personal
+                                </button>
+                                <button className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5">
+                                    <Settings2 size={11} />
+                                </button>
+                                <input
+                                    placeholder="Buscar..."
+                                    className="flex-1 min-w-0 px-2 py-1 text-[10px] bg-transparent border border-slate-200 dark:border-white/10 rounded-lg outline-none placeholder:text-slate-300 text-slate-600 dark:text-slate-300"
+                                />
+                            </div>
+
+                            {/* Task list */}
+                            {tasks.length === 0 ? (
+                                <div className="bg-slate-50 dark:bg-white/[0.03] rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-white/5">
+                                    <p className="text-[11px] text-slate-400">
+                                        Ninguna tarea coincide con estos filtros.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="space-y-0.5 max-h-[300px] overflow-y-auto scrollbar-thin">
+                                    {tasks.slice(0, 15).map(t => (
+                                        <div key={t.id}
+                                            className="flex items-center gap-2 px-1.5 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer group"
+                                        >
+                                            <Circle size={13} className="text-slate-300 shrink-0 group-hover:text-blue-400 transition-colors" />
+                                            <span className="text-[11px] text-slate-600 dark:text-slate-300 truncate">{t.title}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </PanelSection>
+
+                        {/* Leyenda */}
+                        <PanelSection title="Leyenda">
+                            <div className="space-y-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3">
+                                {CALENDAR_EVENT_TYPES.map((eventType) => (
+                                    <button
+                                        key={eventType}
+                                        onClick={() => toggleTypeFilter(eventType)}
+                                        className={clsx(
+                                            "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition-all",
+                                            activeTypes.includes(eventType)
+                                                ? "bg-white dark:bg-white/5"
+                                                : "opacity-50 hover:opacity-80"
+                                        )}
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <span
+                                                className="size-2.5 rounded-full"
+                                                style={{ backgroundColor: getEventTypeColor(eventType) }}
+                                            />
+                                            <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                                                {EVENT_TYPE_META[eventType].label}
+                                            </span>
+                                        </span>
+                                        <span className={clsx("rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest", EVENT_TYPE_META[eventType].chip)}>
+                                            {eventTypeCounts[eventType]}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </PanelSection>
+                    </div>
+                </aside>
+
+                            </div>
         </WorkspaceLayout>
     );
 }
 
 // ── Month View ────────────────────────────────────────────────────────────────
-function MonthView({ currentDate, events, onSave }: { currentDate: Date; events: CalEvent[]; onSave?: (data: any) => void }) {
+function MonthView({
+    currentDate,
+    events,
+    onSave,
+    onEventClick,
+}: {
+    currentDate: Date;
+    events: CalEvent[];
+    onSave?: (data: any) => void;
+    onEventClick: (event: CalEvent) => void;
+}) {
     const [openPopoverDay, setOpenPopoverDay] = useState<string | null>(null);
 
     const days = useMemo(() => {
@@ -613,9 +895,18 @@ function MonthView({ currentDate, events, onSave }: { currentDate: Date; events:
                             </span>
                             <div className="mt-1 space-y-0.5">
                                 {dayEvents.slice(0, 2).map(e => (
-                                    <div key={e.id} className="truncate text-[9px] font-bold rounded px-1 py-0.5 text-white"
-                                        style={{ backgroundColor: e.color }}>
-                                        {e.title}
+                                    <div
+                                        key={e.id}
+                                        onClick={(evt) => { evt.stopPropagation(); onEventClick(e); }}
+                                        className="truncate cursor-pointer rounded px-1 py-0.5 text-white"
+                                        style={{ backgroundColor: e.color }}
+                                    >
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-[7px] font-black uppercase tracking-widest opacity-80">
+                                                {EVENT_TYPE_META[e.type].label}
+                                            </span>
+                                            <span className="truncate text-[9px] font-bold">{e.title}</span>
+                                        </div>
                                     </div>
                                 ))}
                                 {dayEvents.length > 2 && (

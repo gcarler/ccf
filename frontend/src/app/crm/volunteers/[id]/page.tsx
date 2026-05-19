@@ -1,44 +1,32 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/http';
-import CrmShell from '@/components/crm/CrmShell';
-import { 
-    User, 
-    Calendar, 
-    Shield, 
-    Clock, 
-    CheckCircle2, 
-    LayoutDashboard,
-    ArrowLeft,
-    Heart,
-    Star,
-    Award
-} from 'lucide-react';
-import { DSCard } from '@/design/components/DSCard';
-import { DSBadge } from '@/design/components/DSBadge';
-import { toast } from 'sonner';
+import React, { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { apiFetch } from "@/lib/http";
+import CrmShell from "@/components/crm/CrmShell";
+import { User, LayoutDashboard, Heart, Star } from "lucide-react";
+import { DSCard } from "@/design/components/DSCard";
+import { DSBadge } from "@/design/components/DSBadge";
+import { toast } from "sonner";
 
-const MOCK_VOLUNTEER = {
-    id: 1,
-    name: 'Ana María Restrepo',
-    role: 'Líder de Alabanza',
-    team: 'Ministerio de Música',
-    status: 'active',
-    joined_date: '2024-05-10',
-    total_hours: 120,
-    skills: ['Canto', 'Guitarra', 'Liderazgo']
+type VolunteerDetail = {
+    id: number;
+    name: string;
+    role: string;
+    team: string;
+    status: string;
+    joined_date: string | null;
+    total_hours: number;
+    skills: string[];
 };
 
 export default function VolunteerDetailPage() {
     const params = useParams();
     const id = params?.id as string;
-    const router = useRouter();
     const { token } = useAuth();
-    
-    const [volunteer, setVolunteer] = useState<any>(null);
+
+    const [volunteer, setVolunteer] = useState<VolunteerDetail | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -46,10 +34,11 @@ export default function VolunteerDetailPage() {
         const loadVolunteer = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<any>(`/crm/volunteers/${id}`, { token }).catch(() => MOCK_VOLUNTEER);
+                const data = await apiFetch<VolunteerDetail>(`/crm/volunteers/${id}`, { token });
                 setVolunteer(data);
             } catch (err) {
-                toast.error('Error al cargar perfil de servidor');
+                console.error(err);
+                toast.error("Error al cargar perfil de servidor");
             } finally {
                 setLoading(false);
             }
@@ -57,13 +46,19 @@ export default function VolunteerDetailPage() {
         loadVolunteer();
     }, [id, token]);
 
-    if (loading) return <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Consultando registro de servidores...</div>;
+    if (loading) {
+        return <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Consultando registro de servidores...</div>;
+    }
+
+    if (!volunteer) {
+        return <div className="p-20 text-center font-black uppercase tracking-widest text-slate-400">No se pudo cargar el servidor.</div>;
+    }
 
     return (
         <CrmShell
             breadcrumbs={[
-                { label: 'CRM', icon: LayoutDashboard, href: '/crm' },
-                { label: 'Voluntariado', icon: Heart, href: '/crm/volunteers' },
+                { label: "CRM", icon: LayoutDashboard, href: "/crm" },
+                { label: "Voluntariado", icon: Heart, href: "/crm/volunteers" },
                 { label: volunteer.name, icon: User },
             ]}
         >
@@ -85,7 +80,7 @@ export default function VolunteerDetailPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 space-y-8">
                             <DSCard>
-                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Información del Servidor</h3>
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Informacion del Servidor</h3>
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-1">
                                         <p className="text-[9px] font-black text-slate-400 uppercase">Equipo</p>
@@ -93,7 +88,7 @@ export default function VolunteerDetailPage() {
                                     </div>
                                     <div className="space-y-1">
                                         <p className="text-[9px] font-black text-slate-400 uppercase">Miembro desde</p>
-                                        <p className="text-sm font-bold">{volunteer.joined_date}</p>
+                                        <p className="text-sm font-bold">{volunteer.joined_date || "Sin fecha"}</p>
                                     </div>
                                 </div>
                             </DSCard>
@@ -101,16 +96,18 @@ export default function VolunteerDetailPage() {
                             <DSCard>
                                 <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Habilidades y Dones</h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {volunteer.skills?.map((skill: string) => (
+                                    {volunteer.skills.length > 0 ? volunteer.skills.map((skill) => (
                                         <DSBadge key={skill} tone="violet" label={skill} />
-                                    ))}
+                                    )) : (
+                                        <p className="text-sm text-slate-400">Sin habilidades registradas.</p>
+                                    )}
                                 </div>
                             </DSCard>
                         </div>
 
                         <aside className="space-y-6">
                             <DSCard>
-                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Métricas de Servicio</h3>
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Metricas de Servicio</h3>
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-medium text-slate-500">Horas Totales</span>

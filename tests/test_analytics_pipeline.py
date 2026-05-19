@@ -1,3 +1,4 @@
+import uuid
 from pathlib import Path
 
 import pytest
@@ -6,13 +7,11 @@ from backend.analytics import event_sink, queries
 
 
 @pytest.fixture(autouse=True)
-def temp_analytics_db(tmp_path, monkeypatch):
-    db_path = tmp_path / "warehouse.duckdb"
+def temp_analytics_db(monkeypatch):
+    db_path = Path("D:/ccf/test_artifacts") / f"analytics-test-{uuid.uuid4().hex}.duckdb"
     monkeypatch.setattr(event_sink, "WAREHOUSE_PATH", db_path)
     monkeypatch.setattr(queries, "WAREHOUSE_PATH", db_path)
     yield
-    if db_path.exists():
-        db_path.unlink()
 
 
 def test_event_persistence_and_summary():

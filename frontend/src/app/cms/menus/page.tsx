@@ -3,15 +3,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Link2, Search, Plus, Trash2, 
+    Link2, Plus, Trash2,
     ExternalLink, ChevronRight, Zap,
-    GripVertical, Settings2, Save
+    GripVertical, Save
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import SidePanel from '@/components/ui/SidePanel';
 import clsx from 'clsx';
-import { createCmsMenu, createCmsMenuItem, deleteCmsMenuItem, listCmsMenuItems, patchCmsMenuItem, reorderCmsMenuItems } from '@/lib/cms/v2';
-import { CmsMenuItem } from '@/types/cms-v2';
+import { createCmsMenu, createCmsMenuItem, deleteCmsMenuItem, listCmsMenuItems, listCmsMenus, listCmsSites, patchCmsMenuItem, reorderCmsMenuItems } from '@/lib/cms/v2';
+import { CmsMenu, CmsMenuItem, CmsSite } from '@/types/cms-v2';
 import { ApiError } from '@/lib/http';
 import { canEditCms } from '@/lib/cms/permissions';
 
@@ -30,15 +30,24 @@ interface NavConfig {
     items: MenuItem[];
 }
 
+function sanitizeKey(value: string) {
+    return value.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9_-]/g, "");
+}
+
 export default function CmsMenusManagement() {
     const { token, user } = useAuth();
-    const SITE_KEY = 'faro';
-    const MENU_KEY = 'main';
+    const [sites, setSites] = useState<CmsSite[]>([]);
+    const [siteKey, setSiteKey] = useState("faro");
+    const [menus, setMenus] = useState<CmsMenu[]>([]);
+    const [menuKey, setMenuKey] = useState("main");
     const [navConfig, setNavConfig] = useState<NavConfig>({ items: [] });
     const [loading, setLoading] = useState(true);
+    const [menuLoading, setMenuLoading] = useState(false);
     const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
     const [newItemLabel, setNewItemLabel] = useState("");
     const [newItemHref, setNewItemHref] = useState("");
+    const [newMenuName, setNewMenuName] = useState("");
+    const [newMenuKey, setNewMenuKey] = useState("");
     const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const [draggedId, setDraggedId] = useState<number | null>(null);
@@ -82,14 +91,71 @@ export default function CmsMenusManagement() {
     }, [navConfig.items]);
 
     useEffect(() => {
-        fetchNav();
+        loadSites();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token]);
 
-    const fetchNav = async () => {
+    useEffect(() => {
+        loadMenus();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [token, siteKey]);
+
+    useEffect(() => {
+        fetchNav();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [token, siteKey, menuKey]);
+
+    const loadSites = async () => {
         if (!token) return;
         try {
-            const items = await listCmsMenuItems(SITE_KEY, MENU_KEY, token);
+            const rows = await listCmsSites(token);
+            const nextSites = Array.isArray(rows) ? rows : [];
+            setSites(nextSites);
+            if (nextSites.length > 0 && !nextSites.some((site) => site.site_key === siteKey)) {
+                setSiteKey(nextSites[0].site_key);
+            }
+        } catch (error) {
+            console.error("Error fetching CMS sites:", error);
+        }
+    };
+
+    const loadMenus = async () => {
+        if (!token || !siteKey) return;
+        setMenuLoading(true);
+        setSelectedItem(null);
+        setSelectedIndex(null);
+        try {
+            const rows = await listCmsMenus(siteKey, token);
+            const nextMenus = Array.isArray(rows) ? rows : [];
+            setMenus(nextMenus);
+            if (nextMenus.length === 0) {
+                setMenuKey("");
+                setNavConfig({ items: [] });
+                return;
+            }
+            if (!nextMenus.some((menu) => menu.menu_key === menuKey)) {
+                const mainMenu = nextMenus.find((menu) => menu.menu_key === "main");
+                setMenuKey((mainMenu || nextMenus[0]).menu_key);
+            }
+        } catch (error) {
+            console.error("Error fetching CMS menus:", error);
+            setMenus([]);
+            setMenuKey("");
+            setNavConfig({ items: [] });
+        } finally {
+            setMenuLoading(false);
+        }
+    };
+
+    const fetchNav = async () => {
+        if (!token || !siteKey || !menuKey) {
+            setLoading(false);
+            setNavConfig({ items: [] });
+            return;
+        }
+        setLoading(true);
+        try {
+            const items = await listCmsMenuItems(siteKey, menuKey, token);
             const sorted = (Array.isArray(items) ? items : [])
                 .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
                 .map((item: CmsMenuItem) => ({
@@ -104,42 +170,41 @@ export default function CmsMenusManagement() {
                 }));
             setNavConfig({ items: sorted });
         } catch (error) {
-            if (error instanceof ApiError && error.status === 404) {
-                try {
-                    await createCmsMenu(SITE_KEY, { menu_key: MENU_KEY, name: 'Menu principal', is_active: true }, token);
-                    const items = await listCmsMenuItems(SITE_KEY, MENU_KEY, token);
-                    const sorted = (Array.isArray(items) ? items : [])
-                        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-                        .map((item: CmsMenuItem) => ({
-                            id: item.id,
-                            parent_id: item.parent_id,
-                            label: item.label,
-                            href: item.href,
-                            is_external: item.is_external,
-                            target: item.target,
-                            visibility: item.visibility,
-                            sort_order: item.sort_order,
-                        }));
-                    setNavConfig({ items: sorted });
-                } catch (nestedError) {
-                    console.error('Error creating default menu:', nestedError);
-                }
-            } else {
+            if (!(error instanceof ApiError && error.status === 404)) {
                 console.error("Error fetching nav:", error);
             }
+            setNavConfig({ items: [] });
         } finally {
             setLoading(false);
         }
     };
 
+    const handleCreateMenu = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!token || !siteKey || !canEdit) return;
+        const key = sanitizeKey(newMenuKey || newMenuName);
+        const name = newMenuName.trim() || key;
+        if (!key || !name) return;
+        try {
+            const created = await createCmsMenu(siteKey, { menu_key: key, name, is_active: true }, token);
+            setMenus((prev) => [...prev.filter((menu) => menu.menu_key !== created.menu_key), created]);
+            setMenuKey(created.menu_key);
+            setNewMenuName("");
+            setNewMenuKey("");
+            setNavConfig({ items: [] });
+        } catch (error) {
+            console.error("Error creating menu:", error);
+        }
+    };
+
     const handleAddItem = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
-        if (!newItemLabel.trim() || !newItemHref.trim() || !canEdit) return;
+        if (!newItemLabel.trim() || !newItemHref.trim() || !canEdit || !siteKey || !menuKey) return;
 
         try {
             await createCmsMenuItem(
-                SITE_KEY,
-                MENU_KEY,
+                siteKey,
+                menuKey,
                 {
                     label: newItemLabel,
                     href: newItemHref,
@@ -159,11 +224,11 @@ export default function CmsMenusManagement() {
     };
 
     const handleDeleteItem = async (index: number) => {
-        if (!canEdit) return;
+        if (!canEdit || !siteKey || !menuKey) return;
         const target = navConfig.items[index];
         if (!target) return;
         try {
-            await deleteCmsMenuItem(SITE_KEY, MENU_KEY, target.id, token);
+            await deleteCmsMenuItem(siteKey, menuKey, target.id, token);
             fetchNav();
         } catch (error) {
             console.error('Error deleting menu item:', error);
@@ -175,13 +240,13 @@ export default function CmsMenusManagement() {
     };
 
     const handleUpdateItem = async (index: number, updatedItem: MenuItem) => {
-        if (!canEdit) return;
+        if (!canEdit || !siteKey || !menuKey) return;
         const target = navConfig.items[index];
         if (!target) return;
         try {
             await patchCmsMenuItem(
-                SITE_KEY,
-                MENU_KEY,
+                siteKey,
+                menuKey,
                 target.id,
                 {
                     label: updatedItem.label,
@@ -200,7 +265,7 @@ export default function CmsMenusManagement() {
     };
 
     const moveItem = async (index: number, direction: 'up' | 'down') => {
-        if (!canEdit) return;
+        if (!canEdit || !siteKey || !menuKey) return;
         const targetIndex = direction === 'up' ? index - 1 : index + 1;
         if (targetIndex < 0 || targetIndex >= navConfig.items.length) return;
         const reordered = [...navConfig.items];
@@ -211,8 +276,8 @@ export default function CmsMenusManagement() {
         setNavConfig({ items: normalized });
         try {
             await reorderCmsMenuItems(
-                SITE_KEY,
-                MENU_KEY,
+                siteKey,
+                menuKey,
                 normalized.map((item) => ({ id: item.id, parent_id: item.parent_id ?? null, sort_order: item.sort_order ?? 0 })),
                 token,
             );
@@ -223,13 +288,13 @@ export default function CmsMenusManagement() {
     };
 
     const applyMenuReorder = async (items: MenuItem[]) => {
-        if (!canEdit) return;
+        if (!canEdit || !siteKey || !menuKey) return;
         const normalized = items.map((item, index) => ({ ...item, sort_order: index }));
         setNavConfig({ items: normalized });
         try {
             await reorderCmsMenuItems(
-                SITE_KEY,
-                MENU_KEY,
+                siteKey,
+                menuKey,
                 normalized.map((item) => ({ id: item.id, parent_id: item.parent_id ?? null, sort_order: item.sort_order ?? 0 })),
                 token,
             );
@@ -279,25 +344,77 @@ export default function CmsMenusManagement() {
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#141517]">
             {/* TOOLBAR */}
-            <header className="h-14 border-b border-slate-100 dark:border-white/5 flex items-center px-6 gap-4 shrink-0">
+            <header className="min-h-14 border-b border-slate-100 dark:border-white/5 flex flex-wrap items-center px-6 py-3 gap-3 shrink-0">
                 <div className="flex items-center gap-2 flex-1">
-                    <Link2 size={16} className="text-violet-600" />
+                    <Link2 size={16} className="text-blue-600" />
                     <h2 className="text-[11px] font-black uppercase tracking-widest text-slate-400">
-                        NAVEGACIÓN PRINCIPAL
+                        NAVEGACION CMS
                     </h2>
                 </div>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    <select
+                        value={siteKey}
+                        onChange={(event) => setSiteKey(event.target.value)}
+                        className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#252528] px-3 py-1.5 text-[11px] font-bold"
+                    >
+                        {sites.length === 0 && <option value={siteKey}>{siteKey}</option>}
+                        {sites.map((site) => (
+                            <option key={site.site_key} value={site.site_key}>{site.name} ({site.site_key})</option>
+                        ))}
+                    </select>
+                    <select
+                        value={menuKey}
+                        onChange={(event) => setMenuKey(event.target.value)}
+                        disabled={menus.length === 0 || menuLoading}
+                        className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#252528] px-3 py-1.5 text-[11px] font-bold disabled:opacity-50"
+                    >
+                        {menus.length === 0 && <option value="">Sin menus</option>}
+                        {menus.map((menu) => (
+                            <option key={menu.id} value={menu.menu_key}>{menu.name} ({menu.menu_key})</option>
+                        ))}
+                    </select>
                     <button 
                         onClick={() => setIsQuickAddOpen(!isQuickAddOpen)}
-                        disabled={!canEdit}
-                        className="bg-violet-600 text-white px-4 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-violet-500/20 hover:bg-violet-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
+                        disabled={!canEdit || !menuKey}
+                        className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
                     >
                         <Plus size={14} />
                         Añadir Enlace
                     </button>
                 </div>
             </header>
+
+            <form
+                onSubmit={handleCreateMenu}
+                className="border-b border-slate-100 dark:border-white/5 px-6 py-3 flex flex-wrap items-center gap-3 bg-slate-50/60 dark:bg-white/[0.02]"
+            >
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nuevo menu</p>
+                <input
+                    value={newMenuName}
+                    onChange={(event) => {
+                        setNewMenuName(event.target.value);
+                        if (!newMenuKey.trim()) setNewMenuKey(sanitizeKey(event.target.value));
+                    }}
+                    placeholder="Nombre del menu"
+                    disabled={!canEdit}
+                    className="min-w-48 flex-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#252528] px-3 py-2 text-xs disabled:opacity-50"
+                />
+                <input
+                    value={newMenuKey}
+                    onChange={(event) => setNewMenuKey(sanitizeKey(event.target.value))}
+                    placeholder="menu_key"
+                    disabled={!canEdit}
+                    className="w-40 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#252528] px-3 py-2 text-xs disabled:opacity-50"
+                />
+                <button
+                    type="submit"
+                    disabled={!canEdit || !siteKey || !sanitizeKey(newMenuKey || newMenuName)}
+                    className="rounded-lg border border-blue-200 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-blue-600 disabled:opacity-50"
+                >
+                    Crear menu
+                </button>
+            </form>
 
             {/* QUICK ADD BAR (VIOLET) */}
             <AnimatePresence>
@@ -306,13 +423,13 @@ export default function CmsMenusManagement() {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="bg-violet-50 dark:bg-violet-900/10 border-b-2 border-violet-300 dark:border-violet-500/30 overflow-hidden shrink-0"
+                        className="bg-blue-50 dark:bg-blue-900/10 border-b-2 border-blue-300 dark:border-blue-500/30 overflow-hidden shrink-0"
                     >
                         <form 
                             onSubmit={handleAddItem}
                             className="px-6 py-4 flex items-center gap-4"
                         >
-                            <div className="size-8 rounded-lg bg-violet-600 text-white flex items-center justify-center shrink-0">
+                            <div className="size-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
                                 <Zap size={16} />
                             </div>
                             <div className="flex-1 flex gap-3">
@@ -322,28 +439,28 @@ export default function CmsMenusManagement() {
                                     onChange={(e) => setNewItemLabel(e.target.value)}
                                     placeholder="Nombre del enlace..."
                                     disabled={!canEdit}
-                                    className="flex-1 bg-transparent border-none text-[15px] font-bold text-violet-900 dark:text-violet-200 placeholder:text-violet-400 focus:ring-0"
+                                    className="flex-1 bg-transparent border-none text-[15px] font-bold text-blue-900 dark:text-blue-200 placeholder:text-blue-400 focus:ring-0"
                                 />
                                 <input 
                                     value={newItemHref}
                                     onChange={(e) => setNewItemHref(e.target.value)}
                                     placeholder="URL (ej: /contacto o https://...)"
                                     disabled={!canEdit}
-                                    className="flex-1 bg-transparent border-none text-[15px] font-medium text-violet-700 dark:text-violet-300 placeholder:text-violet-400 focus:ring-0"
+                                    className="flex-1 bg-transparent border-none text-[15px] font-medium text-blue-700 dark:text-blue-300 placeholder:text-blue-400 focus:ring-0"
                                 />
                             </div>
                             <div className="flex items-center gap-2">
                                 <button 
                                     type="submit"
-                                    disabled={!canEdit}
-                                    className="bg-violet-600 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                                    disabled={!canEdit || !menuKey}
+                                    className="bg-blue-600 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
                                 >
                                     GUARDAR
                                 </button>
                                 <button 
                                     type="button"
                                     onClick={() => setIsQuickAddOpen(false)}
-                                    className="p-1.5 hover:bg-violet-200 dark:hover:bg-violet-800/30 rounded-lg text-violet-500 transition-all"
+                                    className="p-1.5 hover:bg-blue-200 dark:hover:bg-blue-800/30 rounded-lg text-blue-500 transition-all"
                                 >
                                     <Trash2 size={14} />
                                 </button>
@@ -360,6 +477,16 @@ export default function CmsMenusManagement() {
                         {[1, 2, 3].map(i => (
                             <div key={i} className="h-16 bg-slate-50 dark:bg-white/5 rounded-2xl animate-pulse" />
                         ))}
+                    </div>
+                ) : !menuKey ? (
+                    <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-60">
+                        <div className="size-16 rounded-[2rem] bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
+                            <Link2 size={32} />
+                        </div>
+                        <div>
+                            <p className="font-bold text-slate-900 dark:text-white">Sin menu seleccionado</p>
+                            <p className="text-sm text-slate-500">Crea un menu para este sitio y luego agrega enlaces.</p>
+                        </div>
                     </div>
                 ) : navConfig.items.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-50">
@@ -393,7 +520,7 @@ export default function CmsMenusManagement() {
                                         await moveRelativeTo(draggedId, item.id, 'before');
                                         setDraggedId(null);
                                     }}
-                                    className="h-2 rounded-md border border-dashed border-transparent hover:border-violet-300 dark:hover:border-violet-500/40"
+                                    className="h-2 rounded-md border border-dashed border-transparent hover:border-blue-300 dark:hover:border-blue-500/40"
                                     style={{ marginLeft: `${depth * 16}px` }}
                                 />
                                 <motion.div
@@ -482,7 +609,7 @@ export default function CmsMenusManagement() {
                                         await moveRelativeTo(draggedId, item.id, 'after');
                                         setDraggedId(null);
                                     }}
-                                    className="h-2 rounded-md border border-dashed border-transparent hover:border-violet-300 dark:hover:border-violet-500/40"
+                                    className="h-2 rounded-md border border-dashed border-transparent hover:border-blue-300 dark:hover:border-blue-500/40"
                                     style={{ marginLeft: `${depth * 16}px` }}
                                 />
                             </React.Fragment>
@@ -513,7 +640,7 @@ export default function CmsMenusManagement() {
                                     value={selectedItem.label}
                                     onChange={(e) => handleUpdateItem(selectedIndex, { ...selectedItem, label: e.target.value })}
                                     disabled={!canEdit}
-                                    className="w-full px-3 py-2.5 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-violet-500/30 transition-all font-bold"
+                                    className="w-full px-3 py-2.5 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-blue-500/30 transition-all font-bold"
                                 />
                             </div>
                             
@@ -526,7 +653,7 @@ export default function CmsMenusManagement() {
                                     value={selectedItem.href}
                                     onChange={(e) => handleUpdateItem(selectedIndex, { ...selectedItem, href: e.target.value })}
                                     disabled={!canEdit}
-                                    className="w-full px-3 py-2.5 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-violet-500/30 transition-all"
+                                    className="w-full px-3 py-2.5 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-blue-500/30 transition-all"
                                 />
                             </div>
 
@@ -543,7 +670,7 @@ export default function CmsMenusManagement() {
                                             : null,
                                     })}
                                     disabled={!canEdit}
-                                    className="w-full px-3 py-2.5 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-violet-500/30 transition-all"
+                                    className="w-full px-3 py-2.5 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-blue-500/30 transition-all"
                                 >
                                     <option value="">Sin padre (nivel raíz)</option>
                                     {navConfig.items
@@ -562,14 +689,14 @@ export default function CmsMenusManagement() {
                                 className={clsx(
                                     "w-full flex items-center justify-between p-4 rounded-2xl border transition-all",
                                     selectedItem.is_external 
-                                        ? "bg-violet-50 dark:bg-violet-500/10 border-violet-200 dark:border-violet-500/30" 
+                                        ? "bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30" 
                                         : "bg-slate-50 dark:bg-white/5 border-transparent"
                                 )}
                             >
                                 <div className="flex items-center gap-3 text-left">
                                     <div className={clsx(
                                         "size-10 rounded-xl flex items-center justify-center transition-all",
-                                        selectedItem.is_external ? "bg-violet-600 text-white" : "bg-slate-200 dark:bg-white/10 text-slate-400"
+                                        selectedItem.is_external ? "bg-blue-600 text-white" : "bg-slate-200 dark:bg-white/10 text-slate-400"
                                     )}>
                                         <ExternalLink size={18} />
                                     </div>
@@ -580,9 +707,9 @@ export default function CmsMenusManagement() {
                                 </div>
                                 <div className={clsx(
                                     "size-6 rounded-full border-2 flex items-center justify-center transition-all",
-                                    selectedItem.is_external ? "border-violet-600" : "border-slate-300 dark:border-white/10"
+                                    selectedItem.is_external ? "border-blue-600" : "border-slate-300 dark:border-white/10"
                                 )}>
-                                    {selectedItem.is_external && <div className="size-3 bg-violet-600 rounded-full" />}
+                                    {selectedItem.is_external && <div className="size-3 bg-blue-600 rounded-full" />}
                                 </div>
                             </button>
                         </section>

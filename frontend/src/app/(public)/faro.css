@@ -26,7 +26,7 @@
   --faro-outline: #72777f;
 }
 
-/* 2. TEMA INSTITUCIONAL (Azul actual - Mapeado a .dark para compatibilidad) */
+/* 2. TEMA INSTITUCIONAL (Azul actual - Mapeado a .dark) */
 .dark, .theme-institutional {
   --faro-surface-container-lowest: #000d2a;
   --faro-surface-tint: #a5c8ff;

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import {
-    Zap, Bot, Bell, Clock, ShieldAlert, ToggleLeft, ToggleRight,
+    Bot, Bell, Clock, ShieldAlert, ToggleLeft, ToggleRight,
     ArrowRight, Sparkles, Plus
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -12,7 +12,7 @@ const INITIAL_RULES = [
     { id: 1, name: 'Alerta de Sobrecarga',        trigger: 'Carga > 8 tareas activas',   active: true,  icon: ShieldAlert, color: 'text-rose-500',  bg: 'bg-rose-50 dark:bg-rose-900/20' },
     { id: 2, name: 'Recordatorio 24h',              trigger: 'Tarea cerca de su deadline',  active: true,  icon: Bell,        color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20' },
     { id: 3, name: 'Detector de Estancamiento',     trigger: 'Sin cambios por 3 días',      active: false, icon: Clock,       color: 'text-amber-500',bg: 'bg-amber-50 dark:bg-amber-900/20'},
-    { id: 4, name: 'Resumen Semanal MESH',          trigger: 'Cada lunes a las 08:00 AM',   active: true,  icon: Bot,         color: 'text-violet-500',bg: 'bg-violet-50 dark:bg-violet-900/20'},
+    { id: 4, name: 'Resumen Semanal MESH',          trigger: 'Cada lunes a las 08:00 AM',   active: true,  icon: Bot,         color: 'text-blue-500',bg: 'bg-blue-50 dark:bg-blue-900/20'},
 ];
 
 export default function AutomationsPage() {
@@ -24,7 +24,7 @@ export default function AutomationsPage() {
 
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-[#0f1012] overflow-y-auto font-display">
-            <div className="max-w-5xl mx-auto w-full p-6 space-y-6 pb-20">
+            <div className="w-full mx-auto p-6 space-y-6 pb-20">
 
                 {/* Sub-header */}
                 <div className="flex items-center justify-between">

@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import type { ViewType } from '@/components/ViewSwitcher';
+import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
+import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import { apiFetch } from '@/lib/http';
 import { 
     GraduationCap, 
@@ -13,10 +16,8 @@ import {
     Clock, 
     Trophy, 
     Star, 
-    Calendar,
     ArrowRight,
     Search,
-    ChevronRight,
     BarChart3
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -40,6 +41,7 @@ export default function StudentProgressPage() {
     const { token, user, isAuthenticated } = useAuth();
     const [progress, setProgress] = useState<CourseProgress[]>([]);
     const [loading, setLoading] = useState(true);
+    const [viewType, setViewType] = useState<ViewType>('grid');
     const [stats, setStats] = useState({
         total_courses: 0,
         completed_courses: 0,
@@ -95,18 +97,79 @@ export default function StudentProgressPage() {
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden font-sans relative">
             {/* Ambient Background Glows */}
             <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-600/5 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-sky-600/5 rounded-full blur-[100px] pointer-events-none" />
 
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Academia', icon: GraduationCap, href: '/academy' },
                     { label: 'Mi Progreso', icon: BarChart3 },
                 ]}
-                viewType="grid"
-                setViewType={() => {}}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={['grid', 'list', 'table', 'calendar', 'gantt']}
             />
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-6 lg:p-10 relative z-10">
+                {viewType === 'calendar' && (
+                    <UniversalCalendarView
+                        title="Actividad académica"
+                        events={progress.map((course) => ({
+                            id: course.id,
+                            title: course.title,
+                            date: new Date(course.last_activity).toISOString().slice(0, 10),
+                            color: course.status === 'completed' ? 'emerald' : 'blue'
+                        }))}
+                    />
+                )}
+                {viewType === 'gantt' && (
+                    <UniversalGanttView
+                        moduleName="Progreso académico"
+                        items={progress.map((course) => ({
+                            id: course.id,
+                            title: course.title,
+                            subtitle: course.status,
+                            start_date: course.last_activity,
+                            end_date: new Date(new Date(course.last_activity).getTime() + 86400000).toISOString(),
+                            progress: course.progress_percent,
+                            color: course.status === 'completed' ? 'emerald' : 'blue'
+                        }))}
+                    />
+                )}
+                {viewType === 'table' && (
+                    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+                        <table className="w-full text-left">
+                            <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                <tr><th className="px-6 py-4">Curso</th><th className="px-6 py-4">Estado</th><th className="px-6 py-4">Progreso</th><th className="px-6 py-4">Nota</th></tr>
+                            </thead>
+                            <tbody>
+                                {progress.map((course) => (
+                                    <tr key={course.id} className="border-t border-slate-100 dark:border-white/5">
+                                        <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{course.title}</td>
+                                        <td className="px-6 py-4 text-slate-500">{course.status}</td>
+                                        <td className="px-6 py-4 text-slate-500">{course.progress_percent}%</td>
+                                        <td className="px-6 py-4 text-slate-500">{course.average_grade.toFixed(1)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+                {viewType === 'list' && (
+                    <div className="space-y-5">
+                        {progress.map((course) => (
+                            <article key={course.id} className="rounded-3xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div>
+                                        <h3 className="text-lg font-black text-slate-900 dark:text-white">{course.title}</h3>
+                                        <p className="mt-2 text-sm text-slate-500">{course.lessons_completed}/{course.total_lessons} lecciones</p>
+                                    </div>
+                                    <span className="text-lg font-black text-blue-600">{course.progress_percent}%</span>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                )}
+                {viewType === 'grid' && (
                 <motion.div 
                     variants={containerVariants}
                     initial="hidden"
@@ -135,7 +198,7 @@ export default function StudentProgressPage() {
                                 <HeaderStat label="Promedio" value={stats.average_grade.toFixed(1)} icon={Star} color="text-amber-400" bg="bg-amber-400/20" />
                                 <HeaderStat label="Certificados" value={stats.certificates} icon={Award} color="text-emerald-400" bg="bg-emerald-400/20" />
                                 <HeaderStat label="Pendientes" value={stats.total_courses - stats.completed_courses} icon={BookOpen} color="text-blue-400" bg="bg-blue-400/20" />
-                                <HeaderStat label="Logros" value={stats.completed_courses} icon={CheckCircle2} color="text-purple-400" bg="bg-purple-400/20" />
+                                <HeaderStat label="Logros" value={stats.completed_courses} icon={CheckCircle2} color="text-sky-400" bg="bg-sky-400/20" />
                             </div>
                         </div>
                     </motion.section>
@@ -240,6 +303,7 @@ export default function StudentProgressPage() {
                         </div>
                     </motion.section>
                 </motion.div>
+                )}
             </main>
         </div>
     );

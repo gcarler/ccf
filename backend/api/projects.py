@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import logging
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
@@ -20,6 +21,7 @@ settings = get_settings()
 
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.get("/tasks", response_model=List[schemas.ProjectTask])
@@ -68,9 +70,62 @@ def _ensure_task(db: Session, task_id: int) -> models.ProjectTask:
     return task
 
 
+def _ensure_task_in_project(db: Session, project_id: int, task_id: int) -> models.ProjectTask:
+    task = _ensure_task(db, task_id)
+    if task.project_id != project_id:
+        raise HTTPException(status_code=404, detail="Task not found in project")
+    return task
+
+
+def _ensure_supply_in_task(
+    db: Session,
+    project_id: int,
+    task_id: int,
+    supply_id: int,
+) -> models.TaskSupply:
+    _ensure_task_in_project(db, project_id, task_id)
+    supply = db.query(models.TaskSupply).filter(
+        models.TaskSupply.id == supply_id,
+        models.TaskSupply.task_id == task_id,
+    ).first()
+    if not supply:
+        raise HTTPException(status_code=404, detail="Supply not found in task")
+    return supply
+
+
+def _ensure_milestone_in_project(
+    db: Session,
+    project_id: int,
+    milestone_id: int,
+) -> models.ProjectMilestone:
+    milestone = db.query(models.ProjectMilestone).filter(
+        models.ProjectMilestone.id == milestone_id,
+        models.ProjectMilestone.project_id == project_id,
+    ).first()
+    if not milestone:
+        raise HTTPException(status_code=404, detail="Milestone not found in project")
+    return milestone
+
+
+def _serialize_task_attachments(task: models.ProjectTask) -> models.ProjectTask:
+    task.__dict__["attachments"] = [
+        {
+            "id": attachment.id,
+            "task_id": attachment.task_id,
+            "filename": attachment.filename,
+            "file_url": attachment.file_url,
+            "file_type": attachment.file_type,
+            "file_size": attachment.file_size,
+            "created_at": attachment.created_at,
+        }
+        for attachment in (task.attachments or [])
+    ]
+    return task
+
+
 def _normalize_dates(obj):
     if not obj: return obj
-    # Soporte mejorado para múltiples formatos de fecha de SQLite
+    # Soporte mejorado para multiples formatos de fecha de SQLite
     for attr in ['created_at', 'target_date', 'due_date', 'start_date', 'updated_at', 'last_edited_at']:
         val = getattr(obj, attr, None)
         if val and isinstance(val, str):
@@ -78,8 +133,10 @@ def _normalize_dates(obj):
                 # Limpiar milisegundos si es necesario
                 clean_val = val.split('.')[0] if '.' in val and 'T' not in val else val
                 setattr(obj, attr, datetime.fromisoformat(clean_val.replace(' ', 'T').replace('Z', '+00:00')))
-            except Exception as e:
-                print(f"Error normalizing {attr}: {e}")
+            except MemoryError:
+                raise
+            except Exception:
+                logger.debug("Failed to normalize project date", extra={"attribute": attr, "value": val})
                 if attr == 'created_at': setattr(obj, attr, datetime.now())
     return obj
 
@@ -104,6 +161,12 @@ def list_projects(
         for m in p.milestones: _normalize_dates(m)
         for t in p.tasks:
             _normalize_dates(t)
+            # Backward compatibility for legacy rows where labels were stored as a scalar.
+            labels = getattr(t, "labels", None)
+            if isinstance(labels, str):
+                t.__dict__["labels"] = [labels] if labels.strip() else []
+            elif labels is None:
+                t.__dict__["labels"] = []
             # Normalize attachments from ORM objects to dicts for Pydantic serialization
             if hasattr(t, 'attachments') and t.attachments:
                 t.__dict__['attachments'] = [
@@ -134,11 +197,53 @@ def create_project(
     db.commit()
     db.refresh(db_project)
     
-    # Auditoría real
+    # Auditoria real
     record_admin_action(db, current_user, action="create_project", resource_type="project", resource_id=str(db_project.id))
     
     _normalize_dates(db_project)
     return db_project
+
+
+# --- COMMENTS ---
+
+@router.get("/comments", response_model=List[schemas.ProjectCommentItem])
+def list_all_comments(
+    unresolved_only: bool = False,
+    limit: int = Query(120, le=500),
+    project_id: Optional[int] = None,
+    task_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Lista todos los comentarios de proyectos con filtros opcionales."""
+    q = db.query(models.ProjectComment)
+    if unresolved_only:
+        q = q.filter(models.ProjectComment.is_resolved == False)
+    if project_id:
+        q = q.filter(models.ProjectComment.project_id == project_id)
+    if task_id:
+        q = q.filter(models.ProjectComment.task_id == task_id)
+    rows = q.order_by(models.ProjectComment.created_at.desc()).limit(limit).all()
+    # Batch-fetch authors to avoid N+1 queries
+    author_ids = {row.author_id for row in rows if row.author_id}
+    authors_map = {}
+    if author_ids:
+        authors = db.query(models.User).filter(models.User.id.in_(author_ids)).all()
+        authors_map = {u.id: u.username for u in authors}
+    result = []
+    for row in rows:
+        result.append(schemas.ProjectCommentItem(
+            id=row.id,
+            project_id=row.project_id,
+            task_id=row.task_id,
+            content=row.content,
+            author_id=row.author_id,
+            author_name=authors_map.get(row.author_id, "Usuario"),
+            is_resolved=row.is_resolved,
+            created_at=row.created_at,
+            updated_at=row.updated_at,
+        ))
+    return result
 
 
 @router.post("/{project_id}/tasks", response_model=schemas.ProjectTask, status_code=status.HTTP_201_CREATED)
@@ -156,16 +261,138 @@ def create_project_task(
     db_task = models.ProjectTask(**payload)
     db.add(db_task)
     
-    # Bitácora Ministerial
+    # Bitacora Ministerial
     activity = models.ProjectActivityLog(
         project_id=project_id, user_id=current_user.id, action_type='task_created',
-        description=f"Tarea '{db_task.title}' lanzada por {current_user.username}"
+        description=f"Tarea '{db_task.title}' lanzada por {getattr(current_user, 'username', getattr(current_user, 'email', 'usuario'))}"
     )
     db.add(activity)
     db.commit()
     db.refresh(db_task)
     return db_task
 
+
+
+
+# ── PORTFOLIO SUMMARY ──────────────────────────────────────────────────────────
+
+@router.get("/summary", response_model=List[schemas.ProjectPortfolioSummaryRow])
+def portfolio_summary(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Resumen de portafolio agrupado por estatus de proyecto."""
+    rows = db.query(
+        models.Project.status,
+        func.count(models.Project.id).label("total_projects"),
+        func.count(models.ProjectTask.id).label("total_tasks"),
+        func.sum(
+            func.iif(models.ProjectTask.status == "done", 1, 0)
+        ).label("completed_tasks"),
+    ).outerjoin(
+        models.ProjectTask, models.ProjectTask.project_id == models.Project.id
+    ).group_by(models.Project.status).all()
+
+    return [
+        schemas.ProjectPortfolioSummaryRow(
+            project_status=row[0] or "unknown",
+            total_projects=row[1],
+            total_tasks=row[2] or 0,
+            completed_tasks=row[3] or 0,
+            completion_ratio=round((row[3] or 0) / max(row[2] or 1, 1), 2),
+        )
+        for row in rows
+    ]
+
+
+@router.get("/workload", response_model=List[schemas.ProjectWorkloadSummaryRow])
+def workload_summary(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Resumen de carga de trabajo por persona."""
+    rows = db.query(
+        models.ProjectTask.assignee_id,
+        func.count(models.ProjectTask.id).label("open_tasks"),
+        func.sum(
+            func.iif(models.ProjectTask.status == "review", 1, 0)
+        ).label("in_review"),
+    ).filter(
+        models.ProjectTask.status.in_(["todo", "in_progress", "review"]),
+        models.ProjectTask.assignee_id.isnot(None),
+    ).group_by(models.ProjectTask.assignee_id).all()
+
+    result = []
+    for row in rows:
+        overdue = db.query(func.count(models.ProjectTask.id)).filter(
+            models.ProjectTask.assignee_id == row[0],
+            models.ProjectTask.due_date < func.now(),
+            models.ProjectTask.status.in_(["todo", "in_progress", "review"]),
+        ).scalar() or 0
+        result.append(schemas.ProjectWorkloadSummaryRow(
+            assignee_id=row[0],
+            open_tasks=row[1] or 0,
+            in_review=row[2] or 0,
+            overdue_tasks=overdue,
+        ))
+    return result
+
+
+@router.get("/activities", response_model=List[schemas.ProjectActivityItem])
+def list_activities(
+    limit: int = Query(20, le=200),
+    project_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Feed de actividad global de proyectos."""
+    q = db.query(models.ProjectActivityLog).order_by(models.ProjectActivityLog.created_at.desc())
+    if project_id:
+        q = q.filter(models.ProjectActivityLog.project_id == project_id)
+    logs = q.limit(limit).all()
+
+    result = []
+    for log in logs:
+        _normalize_dates(log)
+        project = db.query(models.Project).filter(models.Project.id == log.project_id).first()
+        result.append(schemas.ProjectActivityItem(
+            id=str(log.id),
+            kind=log.action_type,
+            project_id=log.project_id,
+            project_title=project.title if project else "Proyecto",
+            description=log.description or "",
+            created_at=log.created_at or _utcnow(),
+        ))
+    return result
+
+
+@router.get("/tasks/{task_id}", response_model=schemas.ProjectTask)
+def get_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Obtiene una tarea por ID."""
+    task = _ensure_task(db, task_id)
+    _normalize_dates(task)
+    return task
+
+
+@router.patch("/tasks/{task_id}", response_model=schemas.ProjectTask)
+def update_task(
+    task_id: int,
+    payload: schemas.ProjectTaskUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Actualiza una tarea usando ruta plana (sin project_id)."""
+    task = _ensure_task(db, task_id)
+    update_data = payload.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(task, key, value)
+    db.commit()
+    db.refresh(task)
+    return task
 
 @router.get("/{project_id}", response_model=schemas.Project)
 def get_project(
@@ -190,57 +417,73 @@ def get_project_wiki(project_id: int, db: Session = Depends(get_db)):
     doc = db.query(models.ProjectDocument).filter(models.ProjectDocument.project_id == project_id).first()
     return _normalize_dates(doc)
 
-@router.post("/{project_id}/wiki")
+@router.post("/{project_id}/wiki", response_model=schemas.ProjectDocument)
 def update_project_wiki(
     project_id: int, 
-    payload: Dict[str, Any], 
+    payload: schemas.ProjectDocumentUpdate, 
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user)
 ):
+    _ensure_project(db, project_id) # Validates project exists
     doc = db.query(models.ProjectDocument).filter(models.ProjectDocument.project_id == project_id).first()
-    content = payload.get("content", "")
+    title = payload.title or "Wiki Ministerial"
+    content = payload.content or ""
     
     if not doc:
-        doc = models.ProjectDocument(project_id=project_id, title="Wiki Ministerial", content=content, author_id=current_user.id)
+        doc = models.ProjectDocument(project_id=project_id, title=title, content=content, author_id=current_user.id)
         db.add(doc)
     else:
+        doc.title = title
         doc.content = content
         doc.author_id = current_user.id
         doc.last_edited_at = datetime.now()
     
-    # Registrar cambio en la bitácora
+    # Registrar cambio en la bitacora
     activity = models.ProjectActivityLog(
         project_id=project_id, user_id=current_user.id, action_type='wiki_updated',
-        description=f"Documentación Wiki actualizada."
+        description="Documentacion Wiki actualizada."
     )
     db.add(activity)
     db.commit()
-    return {"status": "success"}
+    db.refresh(doc)
+    return _normalize_dates(doc)
 
 @router.get("/{project_id}/whiteboard", response_model=Optional[schemas.ProjectWhiteboard])
-def get_project_whiteboard(project_id: int, db: Session = Depends(get_db)):
-    board = db.query(models.ProjectWhiteboard).filter(models.ProjectWhiteboard.project_id == project_id).first()
-    return _normalize_dates(board)
-
-@router.post("/{project_id}/whiteboard")
-def update_project_whiteboard(
+def get_project_whiteboard(
     project_id: int, 
-    payload: Dict[str, Any], 
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user)
 ):
+    _ensure_project(db, project_id)
     board = db.query(models.ProjectWhiteboard).filter(models.ProjectWhiteboard.project_id == project_id).first()
-    elements = payload.get("elements_json", "[]")
+    return _normalize_dates(board)
+
+@router.post("/{project_id}/whiteboard", response_model=schemas.ProjectWhiteboard)
+def update_project_whiteboard(
+    project_id: int, 
+    payload: schemas.ProjectWhiteboardUpdate, 
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user)
+):
+    _ensure_project(db, project_id)
+    board = db.query(models.ProjectWhiteboard).filter(models.ProjectWhiteboard.project_id == project_id).first()
+    title = payload.title or "Pizarra Estrategica"
+    elements = payload.elements_json or "[]"
     
     if not board:
-        board = models.ProjectWhiteboard(project_id=project_id, title="Pizarra Estratégica", elements_json=elements)
+        board = models.ProjectWhiteboard(project_id=project_id, title=title, elements_json=elements)
         db.add(board)
     else:
         board.elements_json = elements
         board.updated_at = datetime.now()
     
+    board.title = title
+    if payload.thumbnail_url is not None:
+        board.thumbnail_url = payload.thumbnail_url
+
     db.commit()
-    return {"status": "success"}
+    db.refresh(board)
+    return _normalize_dates(board)
 
 # --- ATTACHMENTS & SUPPLIES ---
 
@@ -252,7 +495,7 @@ async def upload_task_attachment(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    task = _ensure_task(db, task_id)
+    task = _ensure_task_in_project(db, project_id, task_id)
     filename = sanitize_filename(file.filename or "file")
     unique_name = f"task_{task_id}_{uuid.uuid4().hex[:8]}_{filename}"
     contents = await file.read()
@@ -268,9 +511,15 @@ async def upload_task_attachment(
         uploader_id=current_user.id
     )
     db.add(attachment)
+    db.add(models.ProjectActivityLog(
+        project_id=project_id,
+        user_id=current_user.id,
+        action_type="attachment_added",
+        description=f"Archivo '{filename}' adjuntado a '{task.title}'",
+    ))
     db.commit()
     db.refresh(task)
-    return task
+    return _serialize_task_attachments(task)
 
 @router.patch("/{project_id}/tasks/{task_id}", response_model=schemas.ProjectTask)
 def update_project_task(
@@ -281,7 +530,7 @@ def update_project_task(
     current_user: models.User = Depends(require_active_user),
 ):
     """Actualiza una tarea con auditoría ministerial automática."""
-    task = _ensure_task(db, task_id)
+    task = _ensure_task_in_project(db, project_id, task_id)
     update_data = payload.model_dump(exclude_unset=True)
     
     for key, value in update_data.items():
@@ -292,38 +541,191 @@ def update_project_task(
     return task
 
 
-# ── COMMENTS ──────────────────────────────────────────────────────────────────
-
-@router.get("/comments", response_model=List[schemas.ProjectCommentItem])
-def list_all_comments(
-    unresolved_only: bool = False,
-    limit: int = Query(120, le=500),
-    project_id: Optional[int] = None,
+@router.get("/{project_id}/tasks/{task_id}/supplies", response_model=List[schemas.TaskSupply])
+def list_task_supplies(
+    project_id: int,
+    task_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    """Lista todos los comentarios de proyectos con filtros opcionales."""
-    q = db.query(models.ProjectComment)
-    if unresolved_only:
-        q = q.filter(models.ProjectComment.is_resolved == False)
-    if project_id:
-        q = q.filter(models.ProjectComment.project_id == project_id)
-    rows = q.order_by(models.ProjectComment.created_at.desc()).limit(limit).all()
-    result = []
-    for row in rows:
-        author = db.query(models.User).filter(models.User.id == row.author_id).first()
-        result.append(schemas.ProjectCommentItem(
-            id=row.id,
-            project_id=row.project_id,
-            task_id=row.task_id,
-            content=row.content,
-            author_id=row.author_id,
-            author_name=f"{author.first_name} {author.last_name}" if author else "Usuario",
-            is_resolved=row.is_resolved,
-            created_at=row.created_at,
-            updated_at=row.updated_at,
-        ))
-    return result
+    """Lista los insumos de una tarea."""
+    _ensure_task_in_project(db, project_id, task_id)
+    return db.query(models.TaskSupply).filter(
+        models.TaskSupply.task_id == task_id
+    ).order_by(models.TaskSupply.id.asc()).all()
+
+
+@router.post(
+    "/{project_id}/tasks/{task_id}/supplies",
+    response_model=schemas.TaskSupply,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_task_supply(
+    project_id: int,
+    task_id: int,
+    payload: schemas.TaskSupplyCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Crea un insumo requerido para una tarea."""
+    task = _ensure_task_in_project(db, project_id, task_id)
+    supply = models.TaskSupply(task_id=task_id, **payload.model_dump())
+    db.add(supply)
+    db.add(models.ProjectActivityLog(
+        project_id=project_id,
+        user_id=current_user.id,
+        action_type="supply_added",
+        description=f"Insumo '{supply.item_name}' agregado a '{task.title}'",
+    ))
+    db.commit()
+    db.refresh(supply)
+    return supply
+
+
+@router.patch(
+    "/{project_id}/tasks/{task_id}/supplies/{supply_id}",
+    response_model=schemas.TaskSupply,
+)
+def update_task_supply(
+    project_id: int,
+    task_id: int,
+    supply_id: int,
+    payload: schemas.TaskSupplyUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Actualiza nombre, cantidad o estado de un insumo."""
+    task = _ensure_task_in_project(db, project_id, task_id)
+    supply = _ensure_supply_in_task(db, project_id, task_id, supply_id)
+    update_data = payload.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(supply, key, value)
+    db.add(models.ProjectActivityLog(
+        project_id=project_id,
+        user_id=current_user.id,
+        action_type="supply_updated",
+        description=f"Insumo '{supply.item_name}' actualizado en '{task.title}'",
+    ))
+    db.commit()
+    db.refresh(supply)
+    return supply
+
+
+# ── SUBTASKS ───────────────────────────────────────────────────────────────────
+
+@router.post("/{project_id}/tasks/{task_id}/subtasks", response_model=schemas.ProjectTask, status_code=status.HTTP_201_CREATED)
+def create_subtask(
+    project_id: int,
+    task_id: int,
+    subtask: schemas.ProjectTaskCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Crea una subtarea (nivel 2 o 3) bajo una tarea existente."""
+    _ensure_project(db, project_id)
+    parent_task = _ensure_task_in_project(db, project_id, task_id)
+    max_order = db.query(func.max(models.ProjectTask.order_index)).filter(
+        models.ProjectTask.parent_id == task_id
+    ).scalar() or 0
+    payload = subtask.model_dump()
+    payload["project_id"] = project_id
+    payload["parent_id"] = task_id
+    payload["order_index"] = max_order + 1
+    db_subtask = models.ProjectTask(**payload)
+    db.add(db_subtask)
+    activity = models.ProjectActivityLog(
+        project_id=project_id, user_id=current_user.id, action_type='subtask_created',
+        description=f"Sub-actividad '{db_subtask.title}' creada bajo '{parent_task.title}'"
+    )
+    db.add(activity)
+    db.commit()
+    db.refresh(db_subtask)
+    return db_subtask
+
+
+@router.patch("/{project_id}/tasks/{task_id}/subtasks/{subtask_id}", response_model=schemas.ProjectTask)
+def update_subtask(
+    project_id: int,
+    task_id: int,
+    subtask_id: int,
+    payload: schemas.ProjectTaskUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Actualiza una subtarea."""
+    _ensure_project(db, project_id)
+    _ensure_task_in_project(db, project_id, task_id)
+    subtask = _ensure_task_in_project(db, project_id, subtask_id)
+    if subtask.parent_id != task_id:
+        raise HTTPException(status_code=404, detail="Subtask not found under task")
+    update_data = payload.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(subtask, key, value)
+    db.commit()
+    db.refresh(subtask)
+    return subtask
+
+
+@router.delete("/{project_id}/tasks/{task_id}/subtasks/{subtask_id}")
+def delete_subtask(
+    project_id: int,
+    task_id: int,
+    subtask_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Elimina una subtarea."""
+    _ensure_project(db, project_id)
+    _ensure_task_in_project(db, project_id, task_id)
+    subtask = _ensure_task_in_project(db, project_id, subtask_id)
+    if subtask.parent_id != task_id:
+        raise HTTPException(status_code=404, detail="Subtask not found under task")
+    db.delete(subtask)
+    db.commit()
+    return {"ok": True, "deleted": subtask_id}
+
+
+# ── COMMENTS ──────────────────────────────────────────────────────────────────
+
+@router.post("/comments", response_model=schemas.ProjectCommentItem)
+def create_comment(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Crea un comentario usando project_id en el body (ruta legacy)."""
+    project_id = payload.get("project_id")
+    content = (payload.get("content") or "").strip()
+    if not project_id or not content:
+        raise HTTPException(status_code=400, detail="project_id and content are required")
+    task_id = payload.get("task_id")
+    _ensure_project(db, int(project_id))
+    comment = models.ProjectComment(
+        project_id=int(project_id),
+        task_id=int(task_id) if task_id else None,
+        author_id=current_user.id,
+        content=content,
+    )
+    db.add(comment)
+    db.add(models.ProjectActivityLog(
+        project_id=int(project_id),
+        user_id=current_user.id,
+        action_type="comment_added",
+        description=content,
+    ))
+    db.commit()
+    db.refresh(comment)
+    return schemas.ProjectCommentItem(
+        id=comment.id,
+        project_id=comment.project_id,
+        task_id=comment.task_id,
+        content=comment.content,
+        author_id=comment.author_id,
+        author_name=getattr(current_user, "username", "Usuario"),
+        is_resolved=comment.is_resolved,
+        created_at=comment.created_at,
+        updated_at=comment.updated_at,
+    )
 
 
 @router.post("/{project_id}/comments", response_model=schemas.ProjectCommentItem)
@@ -342,6 +744,12 @@ def create_project_comment(
         content=payload.content,
     )
     db.add(comment)
+    db.add(models.ProjectActivityLog(
+        project_id=project_id,
+        user_id=current_user.id,
+        action_type="comment_added",
+        description=payload.content,
+    ))
     db.commit()
     db.refresh(comment)
     return schemas.ProjectCommentItem(
@@ -350,7 +758,7 @@ def create_project_comment(
         task_id=comment.task_id,
         content=comment.content,
         author_id=comment.author_id,
-        author_name=f"{current_user.first_name} {current_user.last_name}",
+        author_name=getattr(current_user, "username", "Usuario"),
         is_resolved=comment.is_resolved,
         created_at=comment.created_at,
         updated_at=comment.updated_at,
@@ -381,7 +789,7 @@ def update_project_comment(
         task_id=comment.task_id,
         content=comment.content,
         author_id=comment.author_id,
-        author_name=f"{author.first_name} {author.last_name}" if author else "Usuario",
+        author_name=author.username if author else "Usuario",
         is_resolved=comment.is_resolved,
         created_at=comment.created_at,
         updated_at=comment.updated_at,
@@ -424,7 +832,7 @@ def list_inbox(
         inbox_items.append(schemas.ProjectInboxItem(
             id=f"comment-{comment.id}",
             type="comment",
-            user=f"{author.first_name} {author.last_name}" if author else "Usuario",
+            user=author.username if author else "Usuario",
             content=comment.content[:120],
             project=project.title,
             project_id=project.id,
@@ -458,3 +866,194 @@ def mark_inbox_read(
         db.add(state)
     db.commit()
     return {"ok": True, "item_id": item_id}
+
+# ── TASK LIST PER PROJECT ──────────────────────────────────────────────────────
+
+@router.get("/{project_id}/tasks", response_model=List[schemas.ProjectTask])
+def list_project_tasks(
+    project_id: int,
+    status_filter: Optional[str] = Query(None, alias="status"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Lista todas las tareas de un proyecto."""
+    _ensure_project(db, project_id)
+    q = db.query(models.ProjectTask).options(
+        selectinload(models.ProjectTask.attachments),
+        selectinload(models.ProjectTask.supplies),
+        selectinload(models.ProjectTask.subtasks)
+    ).filter(models.ProjectTask.project_id == project_id)
+    
+    if status_filter:
+        q = q.filter(models.ProjectTask.status == status_filter)
+        
+    tasks = q.order_by(models.ProjectTask.order_index.asc()).all()
+    
+    for t in tasks: 
+        _normalize_dates(t)
+        if hasattr(t, 'attachments') and t.attachments:
+            t.__dict__['attachments'] = [
+                {
+                    "id": a.id,
+                    "task_id": a.task_id,
+                    "filename": a.filename,
+                    "file_url": a.file_url,
+                    "file_type": a.file_type,
+                    "file_size": a.file_size,
+                }
+                for a in t.attachments
+            ]
+        else:
+            t.__dict__.setdefault('attachments', [])
+            
+    return tasks
+
+
+
+
+
+# ── PROJECT UPDATE & DELETE ────────────────────────────────────────────────────
+
+@router.patch("/{project_id}", response_model=schemas.Project)
+def update_project(
+    project_id: int,
+    payload: schemas.ProjectUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Actualiza los metadatos de un proyecto."""
+    project = _ensure_project(db, project_id)
+    update_data = payload.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(project, key, value)
+    project.updated_at = _utcnow()
+    db.commit()
+    db.refresh(project)
+    _normalize_dates(project)
+    return project
+
+
+@router.delete("/{project_id}")
+def delete_project(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_staff_or_admin),
+):
+    """Elimina un proyecto y todos sus datos relacionados."""
+    project = _ensure_project(db, project_id)
+    db.delete(project)
+    db.commit()
+    return {"ok": True, "deleted": project_id}
+
+
+@router.delete("/{project_id}/tasks/{task_id}")
+def delete_project_task(
+    project_id: int,
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Elimina una tarea de un proyecto."""
+    _ensure_project(db, project_id)
+    task = _ensure_task_in_project(db, project_id, task_id)
+    db.delete(task)
+    db.commit()
+    return {"ok": True, "deleted": task_id}
+
+
+@router.delete("/comments/{comment_id}")
+def delete_project_comment(
+    comment_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Elimina un comentario."""
+    comment = db.query(models.ProjectComment).filter(models.ProjectComment.id == comment_id).first()
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    db.delete(comment)
+    db.commit()
+    return {"ok": True, "deleted": comment_id}
+
+
+# ── MILESTONES ─────────────────────────────────────────────────────────────────
+
+@router.get("/{project_id}/milestones", response_model=List[schemas.ProjectMilestone])
+def list_project_milestones(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Lista los hitos de un proyecto."""
+    _ensure_project(db, project_id)
+    milestones = db.query(models.ProjectMilestone).filter(
+        models.ProjectMilestone.project_id == project_id
+    ).order_by(models.ProjectMilestone.target_date.asc()).all()
+    for m in milestones: _normalize_dates(m)
+    return milestones
+
+
+@router.post("/{project_id}/milestones", response_model=schemas.ProjectMilestone, status_code=status.HTTP_201_CREATED)
+def create_project_milestone(
+    project_id: int,
+    payload: schemas.ProjectMilestoneBase,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Crea un hito en un proyecto."""
+    _ensure_project(db, project_id)
+    milestone = models.ProjectMilestone(project_id=project_id, **payload.model_dump())
+    db.add(milestone)
+    db.add(models.ProjectActivityLog(
+        project_id=project_id,
+        user_id=current_user.id,
+        action_type="milestone_created",
+        description=f"Hito '{milestone.title}' creado",
+    ))
+    db.commit()
+    db.refresh(milestone)
+    _normalize_dates(milestone)
+    return milestone
+
+
+@router.patch("/{project_id}/milestones/{milestone_id}", response_model=schemas.ProjectMilestone)
+def update_project_milestone(
+    project_id: int,
+    milestone_id: int,
+    payload: schemas.ProjectMilestoneUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Actualiza un hito y registra cambios relevantes en la bitacora."""
+    _ensure_project(db, project_id)
+    milestone = _ensure_milestone_in_project(db, project_id, milestone_id)
+    previous_completed = milestone.is_completed
+    update_data = payload.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(milestone, key, value)
+
+    if "is_completed" in update_data and milestone.is_completed != previous_completed:
+        action_type = "milestone_completed" if milestone.is_completed else "milestone_reopened"
+        description = (
+            f"Hito '{milestone.title}' completado"
+            if milestone.is_completed
+            else f"Hito '{milestone.title}' reabierto"
+        )
+    else:
+        action_type = "milestone_updated"
+        description = f"Hito '{milestone.title}' actualizado"
+
+    db.add(models.ProjectActivityLog(
+        project_id=project_id,
+        user_id=current_user.id,
+        action_type=action_type,
+        description=description,
+    ))
+    db.commit()
+    db.refresh(milestone)
+    _normalize_dates(milestone)
+    return milestone
+
+
+
+

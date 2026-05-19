@@ -7,7 +7,7 @@ import {
     MoreHorizontal, Sparkles, Loader2, ChevronDown, AlignLeft,
     Clock, Zap, Trash2, Copy, ExternalLink,
     Save, MessageSquare, Link2, AlertTriangle, CheckCheck,
-    Hash, ArrowRight
+    Hash
 } from 'lucide-react';
 import clsx from 'clsx';
 import { apiFetch } from '@/lib/http';
@@ -33,6 +33,7 @@ interface TaskEditDrawerProps {
     onClose: () => void;
     onTaskUpdated: (updatedTask: TaskDetail) => void;
     onTaskDeleted: (taskId: number) => void;
+    onTaskDuplicated?: (duplicatedTask: TaskDetail) => void;
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -86,6 +87,7 @@ export default function TaskEditDrawer({
     onClose,
     onTaskUpdated,
     onTaskDeleted,
+    onTaskDuplicated,
 }: TaskEditDrawerProps) {
     const { token } = useAuth();
     const [form, setForm]                   = useState<TaskDetail | null>(null);
@@ -162,6 +164,31 @@ export default function TaskEditDrawer({
         } catch { /* silent */ }
         onTaskDeleted(form.id);
         onClose();
+    };
+
+    const handleDuplicate = async () => {
+        if (!form) return;
+        try {
+            const duplicated = await apiFetch<TaskDetail>(`/projects/${form.project_id}/tasks`, {
+                method: 'POST',
+                token,
+                body: {
+                    title: `${form.title} (copia)`,
+                    status: form.status,
+                    priority: form.priority,
+                    due_date: form.due_date,
+                    description: form.description,
+                },
+            });
+            onTaskDuplicated?.(duplicated);
+            setForm(duplicated);
+            setDirty(false);
+        } catch {
+            const duplicated = { ...form, id: Date.now(), title: `${form.title} (copia)` };
+            onTaskDuplicated?.(duplicated);
+            setForm(duplicated);
+            setDirty(false);
+        }
     };
 
     const handleAiSuggest = async () => {
@@ -404,20 +431,20 @@ export default function TaskEditDrawer({
 
                             {/* ─ MESH AI ─ */}
                             <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.05]">
-                                <div className="rounded-2xl bg-gradient-to-br from-violet-50 via-indigo-50/50 to-blue-50/30 dark:from-violet-900/15 dark:via-indigo-900/10 dark:to-transparent border border-violet-200/60 dark:border-violet-500/20 overflow-hidden">
+                                <div className="rounded-2xl bg-gradient-to-br from-blue-50 via-indigo-50/50 to-blue-50/30 dark:from-blue-900/15 dark:via-indigo-900/10 dark:to-transparent border border-blue-200/60 dark:border-blue-500/20 overflow-hidden">
                                     {/* AI header */}
-                                    <div className="flex items-center justify-between px-4 py-3 border-b border-violet-200/40 dark:border-violet-500/15">
+                                    <div className="flex items-center justify-between px-4 py-3 border-b border-blue-200/40 dark:border-blue-500/15">
                                         <div className="flex items-center gap-2">
-                                            <div className="size-6 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-sm">
+                                            <div className="size-6 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-sm">
                                                 <Sparkles size={11} className="text-white" />
                                             </div>
-                                            <span className="text-[11px] font-black text-violet-700 dark:text-violet-300 tracking-wide uppercase">MESH AI</span>
-                                            <span className="px-1.5 py-0.5 bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 text-[9px] font-black rounded-md uppercase tracking-wider">Beta</span>
+                                            <span className="text-[11px] font-black text-blue-700 dark:text-blue-300 tracking-wide uppercase">MESH AI</span>
+                                            <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-[9px] font-black rounded-md uppercase tracking-wider">Beta</span>
                                         </div>
                                         <button
                                             onClick={handleAiSuggest}
                                             disabled={aiLoading}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-[10px] font-bold shadow-md shadow-violet-500/25 hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] font-bold shadow-md shadow-blue-500/25 hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
                                         >
                                             {aiLoading ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
                                             {aiLoading ? 'Analizando...' : 'Sugerir'}
@@ -436,13 +463,13 @@ export default function TaskEditDrawer({
                                                 </motion.p>
                                             ) : aiLoading ? (
                                                 <motion.div key="ai-loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                                    className="flex items-center gap-2 text-violet-500">
+                                                    className="flex items-center gap-2 text-blue-500">
                                                     <Loader2 size={14} className="animate-spin" />
                                                     <span className="text-[12px] font-medium">Analizando la tarea...</span>
                                                 </motion.div>
                                             ) : (
                                                 <motion.p key="ai-placeholder" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                                    className="text-[12px] text-violet-400/70 dark:text-violet-400/50 font-medium">
+                                                    className="text-[12px] text-blue-400/70 dark:text-blue-400/50 font-medium">
                                                     Haz clic en &quot;Sugerir&quot; para recibir orientación contextual de MESH sobre esta tarea.
                                                 </motion.p>
                                             )}
@@ -457,7 +484,7 @@ export default function TaskEditDrawer({
                                 <div className="grid grid-cols-2 gap-2">
                                     <QuickBtn icon={MessageSquare} label="Comentar" />
                                     <QuickBtn icon={Link2} label="Adjuntar" />
-                                    <QuickBtn icon={Copy} label="Duplicar" onClick={() => {}} />
+                                    <QuickBtn icon={Copy} label="Duplicar" onClick={handleDuplicate} />
                                     <QuickBtn icon={Trash2} label="Eliminar" danger onClick={() => setShowDeleteConfirm(true)} />
                                 </div>
 

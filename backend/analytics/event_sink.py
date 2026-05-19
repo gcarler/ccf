@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, TYPE_CHECKING
 
@@ -21,6 +22,7 @@ from backend.core.config import get_settings
 settings = get_settings()
 WAREHOUSE_PATH = Path(settings.analytics_db_path)
 WAREHOUSE_PATH.parent.mkdir(parents=True, exist_ok=True)
+_RESOLVED_WAREHOUSE_PATH: Path | None = None
 
 CREATE_EVENTS_SQL = """
 CREATE TABLE IF NOT EXISTS domain_events (
@@ -34,7 +36,18 @@ CREATE TABLE IF NOT EXISTS domain_events (
 def _connect():
     if duckdb is None:  # pragma: no cover
         raise RuntimeError("duckdb dependency is required for analytics")
-    conn = duckdb.connect(str(WAREHOUSE_PATH))
+    global _RESOLVED_WAREHOUSE_PATH
+    target = _RESOLVED_WAREHOUSE_PATH or WAREHOUSE_PATH
+    try:
+        conn = duckdb.connect(str(target))
+    except Exception:
+        fallback_dir = Path(tempfile.gettempdir()) / "ccf_analytics"
+        fallback_dir.mkdir(parents=True, exist_ok=True)
+        target = fallback_dir / WAREHOUSE_PATH.name
+        _RESOLVED_WAREHOUSE_PATH = target
+        conn = duckdb.connect(str(target))
+    else:
+        _RESOLVED_WAREHOUSE_PATH = target
     conn.execute(CREATE_EVENTS_SQL)
     return conn
 

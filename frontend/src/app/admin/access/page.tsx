@@ -5,38 +5,36 @@ import {
     Shield, 
     Users, 
     Lock, 
-    Key, 
     ChevronRight, 
     Plus, 
-    Search, 
-    Filter, 
-    MoreHorizontal,
-    CheckCircle2,
     XCircle,
     Eye,
     Edit3,
-    Trash2,
     Settings,
     Layout,
-    Globe,
     BookOpen,
     ClipboardList,
     AlertCircle,
     UserCircle,
     Loader2,
     Save,
-    X
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import type { ViewType } from '@/components/ViewSwitcher';
+import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
+import UniversalGanttView from '@/components/ui/UniversalGanttView';
+import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { DataTable } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
 import Skeleton from '@/components/ui/Skeleton';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import clsx from 'clsx';
+
+const ACCESS_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 const MODULES = [
     { id: 'crm', label: 'CRM Pastoral', icon: Users, color: 'text-blue-500' },
@@ -55,6 +53,8 @@ export default function AccessManagementPage() {
     const [selectedEntity, setSelectedEntity] = useState<any>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [isSaving, setIsAssigning] = useState(false);
+    const [viewType, setViewType] = useState<ViewType>('table');
+    const [search, setSearch] = useState('');
 
     // State for local permission editing
     const [localPermissions, setLocalPermissions] = useState<Record<string, string>>({});
@@ -95,7 +95,7 @@ export default function AccessManagementPage() {
                 await apiFetch(`/admin/roles/${selectedEntity.id}`, {
                     method: 'PATCH',
                     token,
-                    body: localPermissions
+                    body: { permissions: localPermissions }
                 });
                 addToast("Permisos del rol actualizados", "success");
             } else {
@@ -104,7 +104,7 @@ export default function AccessManagementPage() {
             }
             setIsDrawerOpen(false);
             fetchData();
-        } catch (err) {
+        } catch {
             addToast("Error al guardar cambios", "error");
         } finally {
             setIsAssigning(false);
@@ -185,6 +185,94 @@ export default function AccessManagementPage() {
 
     if (!isAuthenticated) return null;
 
+    const currentRows = (activeTab === 'roles' ? roles : users).filter((row) => {
+        const term = search.trim().toLowerCase();
+        if (!term) return true;
+        return `${row.name || ''} ${row.username || ''} ${row.email || ''} ${row.role || ''}`.toLowerCase().includes(term);
+    });
+
+    const groupedRows = activeTab === 'roles'
+        ? [
+            { id: 'admin', label: 'Administración', rows: currentRows.filter(row => `${row.name || ''}`.toLowerCase().includes('admin')) },
+            { id: 'ministry', label: 'Ministeriales', rows: currentRows.filter(row => !`${row.name || ''}`.toLowerCase().includes('admin')) },
+        ]
+        : [
+            { id: 'active', label: 'Activos', rows: currentRows.filter(row => row.is_active !== false) },
+            { id: 'inactive', label: 'Inactivos', rows: currentRows.filter(row => row.is_active === false) },
+        ];
+
+    const calendarEvents = currentRows.map((row, index) => ({
+        id: row.id || index,
+        title: activeTab === 'roles' ? row.name || `Rol #${row.id}` : row.username || row.email || `Usuario #${row.id}`,
+        date: (row.created_at || row.updated_at || new Date().toISOString()).split('T')[0],
+        color: activeTab === 'roles' ? 'blue' as const : row.is_active === false ? 'rose' as const : 'emerald' as const,
+        location: activeTab === 'roles' ? `${row.users_count || 0} usuarios` : row.role,
+    }));
+
+    const ganttItems = currentRows.map((row, index) => {
+        const start = row.created_at || row.updated_at || new Date().toISOString();
+        return {
+            id: row.id || index,
+            title: activeTab === 'roles' ? row.name || `Rol #${row.id}` : row.username || row.email || `Usuario #${row.id}`,
+            subtitle: activeTab === 'roles' ? `${row.users_count || 0} usuarios` : row.role || row.email,
+            start_date: start,
+            end_date: row.updated_at || start,
+            color: activeTab === 'roles' ? 'blue' as const : row.is_active === false ? 'rose' as const : 'emerald' as const,
+            progress: activeTab === 'roles' ? 80 : row.is_active === false ? 20 : 100,
+        };
+    });
+
+    const renderAccessCards = (mode: 'grid' | 'list') => (
+        <div className={clsx(mode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5' : 'space-y-4')}>
+            {currentRows.map((row) => {
+                const title = activeTab === 'roles' ? row.name : row.username || row.email;
+                const subtitle = activeTab === 'roles' ? `${row.users_count || 0} usuarios vinculados` : `${row.email || 'Sin email'} · ${row.role || 'Sin rol'}`;
+                return (
+                    <button
+                        key={row.id || title}
+                        onClick={() => handleOpenEntity(row)}
+                        className={clsx(
+                            'text-left bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[2rem] p-6 hover:border-blue-300 hover:shadow-xl transition-all',
+                            mode === 'list' && 'flex items-center justify-between gap-4'
+                        )}
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className="size-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
+                                {activeTab === 'roles' ? <Shield size={22} /> : <UserCircle size={22} />}
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{title}</h3>
+                                <p className="mt-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{subtitle}</p>
+                            </div>
+                        </div>
+                        {mode === 'list' && <ChevronRight size={18} className="text-slate-300" />}
+                    </button>
+                );
+            })}
+        </div>
+    );
+
+    const renderAccessBoard = () => (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {groupedRows.map((group) => (
+                <section key={group.id} className="rounded-[2.5rem] bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-5">
+                    <div className="flex items-center justify-between mb-5">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{group.label}</span>
+                        <span className="text-[10px] font-black text-slate-400">{group.rows.length}</span>
+                    </div>
+                    <div className="space-y-3">
+                        {group.rows.map((row) => (
+                            <button key={row.id || row.name || row.username} onClick={() => handleOpenEntity(row)} className="w-full text-left bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-[1.5rem] p-4 hover:border-blue-300 transition-all">
+                                <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{activeTab === 'roles' ? row.name : row.username || row.email}</p>
+                                <p className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{activeTab === 'roles' ? `${row.users_count || 0} usuarios` : row.role}</p>
+                            </button>
+                        ))}
+                    </div>
+                </section>
+            ))}
+        </div>
+    );
+
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <style jsx global>{`
@@ -199,7 +287,10 @@ export default function AccessManagementPage() {
 
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: 'CCF Platform', icon: Settings }, { label: 'Seguridad y Accesos', icon: Lock }]}
-                viewType="table" setViewType={() => {}}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={ACCESS_VIEWS}
+                onSearch={setSearch}
                 rightActions={
                     <button className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all hover:bg-blue-700">
                         <Plus size={14} /> Crear Nuevo
@@ -220,16 +311,42 @@ export default function AccessManagementPage() {
                         <div className="space-y-6">
                             {[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-16 w-full rounded-2xl" />)}
                         </div>
+                    ) : viewType === 'grid' ? (
+                        renderAccessCards('grid')
+                    ) : viewType === 'list' ? (
+                        renderAccessCards('list')
+                    ) : viewType === 'board' || viewType === 'kanban' ? (
+                        renderAccessBoard()
+                    ) : viewType === 'calendar' ? (
+                        <UniversalCalendarView
+                            events={calendarEvents}
+                            title={activeTab === 'roles' ? 'Calendario de roles' : 'Calendario de usuarios'}
+                            onEventClick={(event) => {
+                                const row = currentRows.find((entry, index) => (entry.id || index) === event.id);
+                                if (row) handleOpenEntity(row);
+                            }}
+                        />
+                    ) : viewType === 'gantt' ? (
+                        <UniversalGanttView
+                            items={ganttItems}
+                            moduleName={activeTab === 'roles' ? 'Roles y permisos' : 'Usuarios y accesos'}
+                            onItemClick={(item) => {
+                                const row = currentRows.find((entry, index) => (entry.id || index) === item.id);
+                                if (row) handleOpenEntity(row);
+                            }}
+                        />
+                    ) : viewType === 'wiki' ? (
+                        <UniversalWikiView moduleName="Seguridad y accesos" storageKey={`wiki_admin_access_${activeTab}`} />
                     ) : (
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             className="bg-white dark:bg-white/5 rounded-[2.5rem] border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm"
                         >
-                            <DataTable 
-                                data={activeTab === 'roles' ? roles : users} 
-                                columns={activeTab === 'roles' ? roleColumns : userColumns} 
-                                onRowClick={handleOpenEntity} 
+                            <DataTable
+                                data={currentRows}
+                                columns={activeTab === 'roles' ? roleColumns : userColumns}
+                                onRowClick={handleOpenEntity}
                             />
                         </motion.div>
                     )}

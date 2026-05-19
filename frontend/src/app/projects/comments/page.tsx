@@ -4,9 +4,16 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import type { ViewType } from '@/components/ViewSwitcher';
+import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
+import UniversalGanttView from '@/components/ui/UniversalGanttView';
+import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import type { ProjectCommentItem, ProjectRecord } from '@/types/projects';
 import { Layout, MessageCircle } from 'lucide-react';
 import Skeleton from '@/components/ui/Skeleton';
+import clsx from 'clsx';
+
+const COMMENT_VIEWS: ViewType[] = ['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 export default function ProjectsCommentsPage() {
     const { token } = useAuth();
@@ -16,6 +23,7 @@ export default function ProjectsCommentsPage() {
     const [saving, setSaving] = useState(false);
     const [projectId, setProjectId] = useState<number | ''>('');
     const [content, setContent] = useState('');
+    const [viewType, setViewType] = useState<ViewType>('list');
 
     const loadData = async () => {
         if (!token) return;
@@ -49,6 +57,8 @@ export default function ProjectsCommentsPage() {
             return acc;
         }, {});
     }, [comments]);
+    const calendarEvents = comments.map((comment) => ({ id: comment.id, title: comment.author_name, date: comment.created_at.split('T')[0], color: comment.is_resolved ? 'emerald' as const : 'blue' as const, location: comment.content }));
+    const ganttItems = comments.map((comment) => ({ id: comment.id, title: comment.author_name, subtitle: comment.content, start_date: comment.created_at, end_date: comment.updated_at || comment.created_at, color: comment.is_resolved ? 'emerald' as const : 'blue' as const, progress: comment.is_resolved ? 100 : 35 }));
 
     const handleSubmit = async () => {
         if (!token || !projectId || !content.trim()) return;
@@ -86,10 +96,11 @@ export default function ProjectsCommentsPage() {
         <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Comentarios asignados', icon: MessageCircle }]}
-                viewType="list"
-                setViewType={() => {}}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={COMMENT_VIEWS}
             />
-            <main className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6">
+            <main className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4">
                 <section className="rounded-3xl border border-slate-200 dark:border-white/10 p-5 bg-slate-50 dark:bg-white/5">
                     <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 mb-3">Nuevo comentario</h2>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -122,6 +133,18 @@ export default function ProjectsCommentsPage() {
                     <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <Skeleton key={idx} className="h-20 rounded-2xl" />)}</div>
                 ) : comments.length === 0 ? (
                     <div className="rounded-3xl border border-slate-200 dark:border-white/10 p-8 text-center text-slate-500">Sin comentarios pendientes.</div>
+                ) : viewType === 'table' ? (
+                    <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden"><table className="w-full text-left"><thead className="bg-slate-50 dark:bg-white/5"><tr><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Autor</th><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Comentario</th><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Estado</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-white/5">{comments.map((item) => <tr key={item.id}><td className="px-4 py-3 text-sm font-bold">{item.author_name}</td><td className="px-4 py-3 hidden md:table-cell text-[11px] text-slate-500">{item.content}</td><td className="px-4 py-3"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", item.is_resolved ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600")}>{item.is_resolved ? 'Resuelto' : 'Pendiente'}</span></td></tr>)}</tbody></table></div>
+                ) : viewType === 'grid' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">{comments.map((item) => <article key={item.id} className="rounded-2xl border border-slate-200 dark:border-white/10 p-4 bg-white dark:bg-white/5"><p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{item.author_name}</p><p className="text-sm mt-2">{item.content}</p></article>)}</div>
+                ) : viewType === 'board' || viewType === 'kanban' ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">{[false, true].map((resolved) => <section key={String(resolved)} className="rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-4"><div className="flex justify-between mb-4"><span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{resolved ? 'Resueltos' : 'Pendientes'}</span><span className="text-[10px] font-black text-slate-400">{comments.filter((item) => item.is_resolved === resolved).length}</span></div><div className="space-y-3">{comments.filter((item) => item.is_resolved === resolved).map((item) => <div key={item.id} className="rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-3 text-sm">{item.content}</div>)}</div></section>)}</div>
+                ) : viewType === 'calendar' ? (
+                    <UniversalCalendarView events={calendarEvents} title="Calendario de comentarios" />
+                ) : viewType === 'gantt' ? (
+                    <UniversalGanttView items={ganttItems} moduleName="Comentarios de proyectos" />
+                ) : viewType === 'wiki' ? (
+                    <UniversalWikiView moduleName="Comentarios de proyectos" storageKey="wiki_projects_comments" />
                 ) : (
                     <div className="space-y-6">
                         {Object.entries(grouped).map(([pid, rows]) => {

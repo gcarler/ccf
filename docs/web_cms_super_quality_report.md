@@ -21,9 +21,7 @@
 - Public endpoints -> PASS
   - `/api/content/{page_key}`
   - `/api/cms/testimonials`
-  - `/api/testimonials`
   - `/api/cms/announcements`
-  - `/api/announcements`
 - Protected endpoints without token -> PASS (401 expected)
   - `/api/admin/testimonials`
   - `/api/content/{page_key}/versions`
@@ -95,3 +93,6 @@ Re-run status:
 - Web+CMS integration scope: READY
 - Recommendation: keep smoke check as post-deploy gate:
   - `python scripts/web_cms_smoke.py --base-url http://127.0.0.1:8000 --username admin_ccf --password admin123`
+Legacy aliases removed (expected 404):
+- `/api/testimonials`
+- `/api/announcements`

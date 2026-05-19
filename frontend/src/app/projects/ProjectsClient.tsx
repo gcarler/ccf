@@ -11,8 +11,11 @@ import {
 
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
+import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
+import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
+import UniversalGanttView from '@/components/ui/UniversalGanttView';
+import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ViewType } from '@/components/ViewSwitcher';
 import type { ProjectRecord } from '@/types/projects';
@@ -21,6 +24,8 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/DataTable';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { toast } from 'sonner';
+
+const PROJECT_VIEWS: ViewType[] = ['grid', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 function formatDate(dateStr: string) {
     if (!dateStr) return '—';
@@ -61,7 +66,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
         if (isCreating) return;
         setIsCreating(true);
         try {
-            const created = await apiFetch<ProjectRecord>('/projects', {
+            const created = await apiFetch<ProjectRecord>('/projects/', {
                 method: 'POST',
                 token,
                 body: {
@@ -73,12 +78,29 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
             });
             setProjects((prev) => [created, ...prev]);
             toast.success('Proyecto creado');
+            window.dispatchEvent(new CustomEvent('project-updated'));
             setTimeout(() => router.push(`/projects/${created.id}`), 200);
         } catch {
             toast.error('Error al crear el proyecto');
         } finally {
             setIsCreating(false);
         }
+    };
+
+    const handleQuickCreate = (type: string) => {
+        if (type === 'whiteboard') {
+            router.push('/whiteboard/new');
+            return;
+        }
+        if (type === 'document') {
+            router.push('/wiki');
+            return;
+        }
+        if (type === 'reminder') {
+            router.push('/calendar');
+            return;
+        }
+        handleCreateProject();
     };
 
     const projectCommands = useMemo(() => filtered.slice(0, 7).map((project) => ({
@@ -141,48 +163,120 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
         },
     ], []);
 
-    return (
-        <WorkspaceLayout
-            breadcrumbs={[{ label: 'Workspace', icon: Layers }, { label: 'Portfolio de Proyectos', icon: Folder }]}
-            viewType={viewType}
-            setViewType={setViewType}
-            availableViews={['grid', 'table']}
-            onSearch={setSearch}
-            rightActions={
-                <div className="flex items-center gap-2">
-                    <SplitDropdownButton
-                        mainLabel={isCreating ? 'Creando...' : 'Nuevo'}
-                        icon={Plus}
-                        onMainClick={handleCreateProject}
-                        onOptionClick={() => {}}
-                    />
-                </div>
-            }
-        >
-            <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
-                <main className="flex-1 overflow-y-auto scrollbar-thin p-6 lg:p-10 relative">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
-                    <div className="max-w-[1400px] mx-auto space-y-10 relative z-10">
-                        <SectionHeader
-                            label="Estado del portfolio"
-                            caption="Supervisa y orquesta todas las iniciativas del ministerio desde un solo lugar."
-                        />
+    const groupedByStatus = useMemo(() => {
+        const statuses = ['active', 'planning', 'on_hold', 'completed', 'archived'];
+        return statuses.map((status) => ({
+            status,
+            projects: filtered.filter((project) => (project.status || 'active') === status),
+        })).filter((column) => column.projects.length > 0 || ['active', 'planning', 'completed'].includes(column.status));
+    }, [filtered]);
 
-                        <AnimatePresence mode="wait">
-                            {viewType === 'grid' ? (
-                                <motion.div key="grid" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 pb-20">
-                                    {filtered.map((p, idx) => <ProjectCard key={p.id} project={p} index={idx} />)}
-                                </motion.div>
-                            ) : (
-                                <motion.div key="table" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-20">
-                                    <DataTable columns={tableColumns} data={filtered} />
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+    const calendarEvents = useMemo(() => filtered.map((project) => ({
+        id: project.id,
+        title: project.title,
+        date: (project.updated_at || project.created_at || new Date().toISOString()).slice(0, 10),
+        color: project.status === 'completed' ? 'emerald' as const : project.status === 'on_hold' ? 'amber' as const : 'blue' as const,
+        location: project.description || undefined,
+    })), [filtered]);
+
+    const ganttItems = useMemo(() => filtered.map((project) => {
+        const start = project.created_at || new Date().toISOString();
+        const end = project.updated_at || start;
+        const tasks = Array.isArray(project.tasks) ? project.tasks : [];
+        const done = tasks.filter((task) => ['done', 'completed'].includes((task.status || '').toLowerCase())).length;
+        return {
+            id: project.id,
+            title: project.title,
+            subtitle: project.status || 'active',
+            start_date: start.slice(0, 10),
+            end_date: end.slice(0, 10),
+            color: project.status === 'completed' ? 'emerald' as const : 'blue' as const,
+            progress: tasks.length ? Math.round((done / tasks.length) * 100) : project.progress_percent ?? 0,
+        };
+    }), [filtered]);
+
+    return (
+        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden">
+            <WorkspaceToolbar
+                breadcrumbs={[{ label: 'Workspace', icon: Layers }, { label: 'Portfolio de Proyectos', icon: Folder }]}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={PROJECT_VIEWS}
+                onSearch={setSearch}
+                rightActions={
+                    <div className="flex items-center gap-2">
+                        <SplitDropdownButton
+                            mainLabel={isCreating ? 'Creando...' : 'Nuevo'}
+                            icon={Plus}
+                            onMainClick={handleCreateProject}
+                            onOptionClick={handleQuickCreate}
+                        />
                     </div>
-                </main>
-            </div>
-        </WorkspaceLayout>
+                }
+            />
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-6 relative">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
+                <div className="w-full space-y-6 relative z-10">
+                    <SectionHeader
+                        label="Estado del portfolio"
+                        caption="Supervisa y orquesta todas las iniciativas del ministerio desde un solo lugar."
+                    />
+
+                    <AnimatePresence mode="wait">
+                        {viewType === 'grid' ? (
+                            <motion.div key="grid" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-20">
+                                {filtered.map((p, idx) => <ProjectCard key={p.id} project={p} index={idx} />)}
+                            </motion.div>
+                        ) : viewType === 'table' ? (
+                            <motion.div key="table" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-20">
+                                <DataTable columns={tableColumns} data={filtered} />
+                            </motion.div>
+                        ) : viewType === 'list' ? (
+                            <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2 pb-20">
+                                {filtered.map((project) => (
+                                    <button key={project.id} onClick={() => router.push(`/projects/${project.id}`)} className="w-full rounded-xl border border-slate-200 bg-white p-4 text-left transition hover:border-blue-300 dark:border-white/10 dark:bg-white/5">
+                                        <div className="flex items-center justify-between gap-4">
+                                            <div className="min-w-0">
+                                                <p className="truncate text-sm font-black text-slate-900 dark:text-white">{project.title}</p>
+                                                <p className="truncate text-xs font-medium text-slate-400">{project.description || 'Sin descripcion'}</p>
+                                            </div>
+                                            <span className="shrink-0 rounded-full border border-slate-200 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:border-white/10">{project.status || 'active'}</span>
+                                        </div>
+                                    </button>
+                                ))}
+                            </motion.div>
+                        ) : viewType === 'board' || viewType === 'kanban' ? (
+                            <motion.div key="board" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex gap-4 overflow-x-auto pb-20">
+                                {groupedByStatus.map((column) => (
+                                    <section key={column.status} className="w-80 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                                        <div className="mb-3 flex items-center justify-between px-1">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{column.status}</p>
+                                            <span className="text-[10px] font-black text-slate-400">{column.projects.length}</span>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {column.projects.map((project, index) => <ProjectCard key={project.id} project={project} index={index} />)}
+                                            {column.projects.length === 0 && <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center text-[10px] font-black uppercase tracking-widest text-slate-400 dark:border-white/10">Vacio</div>}
+                                        </div>
+                                    </section>
+                                ))}
+                            </motion.div>
+                        ) : viewType === 'calendar' ? (
+                            <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-[720px] pb-20">
+                                <UniversalCalendarView events={calendarEvents} title="Calendario de proyectos" onEventClick={(event) => router.push(`/projects/${event.id}`)} />
+                            </motion.div>
+                        ) : viewType === 'gantt' ? (
+                            <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-[720px] pb-20">
+                                <UniversalGanttView items={ganttItems} moduleName="Portfolio" onItemClick={(item) => router.push(`/projects/${item.id}`)} />
+                            </motion.div>
+                        ) : (
+                            <motion.div key="wiki" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-20">
+                                <UniversalWikiView moduleName="Proyectos" storageKey="wiki_projects_portfolio" />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+            </main>
+        </div>
     );
 }
 
@@ -196,7 +290,7 @@ function ProjectCard({ project, index }: { project: ProjectRecord; index: number
 
     const statusMap: Record<string, { label: string; cls: string }> = {
         active:   { label: 'Activo',     cls: 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' },
-        paused:   { label: 'Pausado',    cls: 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' },
+        on_hold:  { label: 'Pausado',    cls: 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' },
         archived: { label: 'Archivado',  cls: 'bg-slate-100 dark:bg-white/5 text-slate-500' },
     };
     const statusCfg = statusMap[project.status ?? 'active'] ?? statusMap.active;

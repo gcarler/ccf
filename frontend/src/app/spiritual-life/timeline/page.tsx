@@ -21,7 +21,7 @@ interface Milestone {
 const MILESTONE_DEFS: Record<string, { label: string; icon: any; color: string; bg: string; border: string }> = {
     Decision_Fe:       { label: 'Decisión de Fe',        icon: Zap,    color: 'text-amber-600',  bg: 'bg-amber-50 dark:bg-amber-900/20',    border: 'border-amber-200 dark:border-amber-500/20' },
     Bautismo_Aguas:    { label: 'Bautismo en Aguas',      icon: Waves,  color: 'text-cyan-600',   bg: 'bg-cyan-50 dark:bg-cyan-900/20',      border: 'border-cyan-200 dark:border-cyan-500/20'   },
-    Bautismo_Espiritu: { label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-900/20',  border: 'border-violet-200 dark:border-violet-500/20'},
+    Bautismo_Espiritu: { label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20',  border: 'border-blue-200 dark:border-blue-500/20'},
     Miembro_Oficial:   { label: 'Membresía Oficial',      icon: Shield, color: 'text-emerald-600',bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-500/20'},
     Liderazgo:         { label: 'Llamado al Liderazgo',   icon: Users,  color: 'text-blue-600',   bg: 'bg-blue-50 dark:bg-blue-900/20',      border: 'border-blue-200 dark:border-blue-500/20'  },
 };
@@ -47,10 +47,10 @@ export default function SpiritualTimelinePage() {
                 <div className="flex items-center justify-between">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <div className="size-7 rounded-lg bg-violet-50 dark:bg-violet-900/30 flex items-center justify-center">
-                                <Calendar size={14} className="text-violet-600" />
+                            <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+                                <Calendar size={14} className="text-blue-600" />
                             </div>
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600">Línea de Tiempo</span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">Línea de Tiempo</span>
                         </div>
                         <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white leading-none">
                             Mi Ruta de Victoria

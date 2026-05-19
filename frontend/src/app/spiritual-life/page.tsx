@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import {
     Heart, Zap, Waves, Star, Shield, Award, ChevronRight,
-    Download, Calendar, BookOpen, TrendingUp, Users, Plus,
+    Calendar, BookOpen, TrendingUp, Users,
     Sparkles, CheckCircle2, Circle, Lock
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import Link from 'next/link';
@@ -23,7 +23,7 @@ interface AcademyProgress {
 const MILESTONE_DEFS = [
     { key: 'Decision_Fe',      label: 'Decisión de Fe',         icon: Zap,    color: 'text-amber-500',  bg: 'bg-amber-50 dark:bg-amber-900/20',  border: 'border-amber-200 dark:border-amber-500/20' },
     { key: 'Bautismo_Aguas',   label: 'Bautismo en Aguas',      icon: Waves,  color: 'text-cyan-600',   bg: 'bg-cyan-50 dark:bg-cyan-900/20',    border: 'border-cyan-200 dark:border-cyan-500/20' },
-    { key: 'Bautismo_Espiritu',label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-900/20',border: 'border-violet-200 dark:border-violet-500/20' },
+    { key: 'Bautismo_Espiritu',label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20',border: 'border-blue-200 dark:border-blue-500/20' },
     { key: 'Miembro_Oficial',  label: 'Membresía Oficial',      icon: Shield, color: 'text-emerald-600',bg: 'bg-emerald-50 dark:bg-emerald-900/20',border: 'border-emerald-200 dark:border-emerald-500/20' },
     { key: 'Liderazgo',        label: 'Llamado al Liderazgo',   icon: Users,  color: 'text-blue-600',   bg: 'bg-blue-50 dark:bg-blue-900/20',    border: 'border-blue-200 dark:border-blue-500/20' },
 ];
@@ -38,7 +38,7 @@ const DISCIPULADO_STEPS = [
 ];
 
 export default function SpiritualLifePage() {
-    const { token, user } = useAuth();
+    const { token } = useAuth();
     const [milestones, setMilestones] = useState<string[]>([]);
     const [academyProgress, setAcademyProgress] = useState<AcademyProgress | null>(null);
     const [loading, setLoading] = useState(true);
@@ -48,7 +48,7 @@ export default function SpiritualLifePage() {
             if (!token) return;
             try {
                 // Try to get milestones from user profile
-                const profile = await apiFetch<any>('/users/me/profile', { token }).catch(() => null);
+                const profile = await apiFetch<any>('/academy/me/profile', { token }).catch(() => null);
                 if (profile?.spiritual_milestones) {
                     setMilestones(profile.spiritual_milestones);
                 } else {
@@ -66,13 +66,11 @@ export default function SpiritualLifePage() {
                     setAcademyProgress({ completed_courses: 2, total_courses: 5, level: 'Fundamentos' });
                 }
             } finally {
-                setLoading(false);
             }
         };
         load();
     }, [token]);
 
-    const completedMilestones = MILESTONE_DEFS.filter(m => milestones.includes(m.key));
     const nextMilestone = MILESTONE_DEFS.find(m => !milestones.includes(m.key));
     const progressPct = Math.round((milestones.length / MILESTONE_DEFS.length) * 100);
     const discipuladoDone = DISCIPULADO_STEPS.filter(s => s.done).length;
@@ -93,6 +91,9 @@ export default function SpiritualLifePage() {
             ]
         }
     ];
+    void loading;
+    void setLoading;
+    void sidebarSections;
 
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-[#111213] overflow-y-auto font-display">
@@ -131,7 +132,7 @@ export default function SpiritualLifePage() {
                             { label: 'Hitos Espirituales', value: `${milestones.length}/${MILESTONE_DEFS.length}`, icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
                             { label: 'Progreso Espiritual', value: `${progressPct}%`, icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
                             { label: 'Cursos en Academia', value: `${academyProgress?.completed_courses ?? '–'}/${academyProgress?.total_courses ?? '–'}`, icon: BookOpen, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-                            { label: 'Nivel de Discipulado', value: `${discipuladoDone}/5`, icon: Star, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-900/20' },
+                            { label: 'Nivel de Discipulado', value: `${discipuladoDone}/5`, icon: Star, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
                         ].map((kpi, i) => (
                             <motion.div key={i}
                                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
@@ -208,7 +209,7 @@ export default function SpiritualLifePage() {
                                 </div>
                                 <div className="h-2.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                                     <motion.div
-                                        className="h-full bg-gradient-to-r from-blue-500 to-violet-600 rounded-full"
+                                        className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"
                                         initial={{ width: 0 }}
                                         animate={{ width: `${progressPct}%` }}
                                         transition={{ duration: 1.2, ease: 'easeOut' }}
@@ -233,7 +234,7 @@ export default function SpiritualLifePage() {
                                     <span className="text-[10px] font-black text-slate-400">{discipuladoDone}/5</span>
                                 </div>
                                 <div className="divide-y divide-slate-100 dark:divide-white/5">
-                                    {DISCIPULADO_STEPS.map((step, i) => (
+                                    {DISCIPULADO_STEPS.map(step => (
                                         <div key={step.id} className={clsx(
                                             "flex items-start gap-3 px-5 py-3 transition-all",
                                             !step.done && "opacity-50"
@@ -262,8 +263,8 @@ export default function SpiritualLifePage() {
                             <div className="space-y-2">
                                 <Link href="/spiritual-life/timeline">
                                     <div className="flex items-center gap-3 p-4 bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-white/15 transition-all cursor-pointer group">
-                                        <div className="size-9 rounded-xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center">
-                                            <Calendar size={16} className="text-violet-600" />
+                                        <div className="size-9 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                                            <Calendar size={16} className="text-blue-600" />
                                         </div>
                                         <div className="flex-1">
                                             <p className="text-[13px] font-bold text-slate-800 dark:text-white">Línea de Tiempo</p>
@@ -287,7 +288,7 @@ export default function SpiritualLifePage() {
                                 </Link>
 
                                 <Link href="/academy">
-                                    <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-600 to-violet-600 rounded-2xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all cursor-pointer group">
+                                    <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-600 to-blue-600 rounded-2xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all cursor-pointer group">
                                         <div className="size-9 rounded-xl bg-white/20 flex items-center justify-center">
                                             <Sparkles size={16} className="text-white" />
                                         </div>

@@ -13,15 +13,11 @@ import {
     Users,
     Loader2,
     Plus,
-    Check,
-    AlertCircle,
     User,
     ShieldCheck
 } from 'lucide-react';
 import CrmShell from '@/components/crm/CrmShell';
 import AdminHero from '@/components/admin/AdminHero';
-import CommunityToolbarChip from '@/components/community/ToolbarChip';
-import CommunityQuickCommentCard from '@/components/community/QuickCommentCard';
 import { apiFetch } from '@/lib/http';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -40,12 +36,6 @@ interface Member {
     spiritual_status: string;
 }
 
-const priorityTones: Record<string, string> = {
-    'high': 'bg-rose-100 text-rose-600 border-rose-200 dark:bg-rose-900/20 dark:border-rose-800',
-    'normal': 'bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800',
-    'low': 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800'
-};
-
 export default function TaskAssignment() {
     const { isAuthenticated, token } = useAuth();
     const { addToast } = useToast();
@@ -60,7 +50,6 @@ export default function TaskAssignment() {
     const [selectedLeaderId, setSelectedLeaderId] = useState<string>('');
     const [taskTitle, setTaskTitle] = useState('Llamada de seguimiento');
     const [taskDescription, setTaskDescription] = useState('');
-    const [taskPriority, setTaskPriority] = useState('normal');
     const [isAssigning, setIsAssigning] = useState(false);
 
     const fetchData = useCallback(async () => {
@@ -68,7 +57,7 @@ export default function TaskAssignment() {
         setLoading(true);
         try {
             const [usersData, membersData] = await Promise.all([
-                apiFetch<any[]>('/users', { token }),
+                apiFetch<any[]>('/auth/user-list', { token }),
                 apiFetch<any[]>('/crm/members', { token })
             ]);
             
@@ -109,7 +98,7 @@ export default function TaskAssignment() {
                     description: taskDescription,
                     member_id: selectedMemberId,
                     assignee_id: parseInt(selectedLeaderId),
-                    priority: taskPriority,
+                    priority: 'normal',
                     due_date: new Date(Date.now() + 86400000 * 2).toISOString() // Default 2 days
                 }
             });
@@ -130,7 +119,7 @@ export default function TaskAssignment() {
 
     return (
         <CrmShell
-            breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'CRM Pastoral', icon: Users }, { label: 'Asignación', icon: UserCheck }]}
+            breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'Consolidación', icon: Users }, { label: 'Asignación', icon: UserCheck }]}
             rightActions={
                 <button className="flex size-10 items-center justify-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all relative">
                     <Bell size={20} />
@@ -161,7 +150,7 @@ export default function TaskAssignment() {
         `}</style>
 
         <AdminHero
-            eyebrow="Despliegue Pastoral"
+            eyebrow="Despliegue de Consolidación"
             title="Asignación de Seguimiento"
             description="Distribuye la carga ministerial entre tus líderes y asegura que nadie se quede sin cuidado."
             tags={['Liderazgo', 'Orden', 'Optimus Brain']}
@@ -269,7 +258,7 @@ export default function TaskAssignment() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 ml-2">Actividad Pastoral</label>
+                                    <label className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 ml-2">Actividad de Consolidación</label>
                                     <div className="grid grid-cols-2 gap-2">
                                         {['Llamada', 'Visita', 'Consejería', 'Bienvenida'].map(type => (
                                             <button 

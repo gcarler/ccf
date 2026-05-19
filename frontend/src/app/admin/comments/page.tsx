@@ -1,32 +1,30 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import {
-    ArrowLeft,
     Bell,
-    Check,
     MessageSquare,
     Trash2,
-    CornerUpRight,
     Search,
-    Filter,
-    Shield,
     CheckCircle2,
-    XCircle,
     Loader2,
     Sparkles,
     Zap,
     Layout,
     Globe,
-    ExternalLink
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
+import UniversalGanttView from '@/components/ui/UniversalGanttView';
+import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import type { ViewType } from '@/components/ViewSwitcher';
+
+const COMMENT_VIEWS: ViewType[] = ['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 interface Comment {
     id: number;
@@ -40,11 +38,11 @@ interface Comment {
 export default function CommentModeration() {
     const { token, isAuthenticated } = useAuth();
     const { addToast } = useToast();
-    const router = useRouter();
     const [comments, setComments] = useState<Comment[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState('Todos');
     const [searchQuery, setSearchQuery] = useState('');
+    const [viewType, setViewType] = useState<ViewType>('list');
 
     const fetchComments = useCallback(async () => {
         if (!token) return;
@@ -69,7 +67,7 @@ export default function CommentModeration() {
             await apiFetch(`/admin/comments/${id}`, { method: 'DELETE', token });
             addToast("Comentario eliminado", "success");
             setComments(prev => prev.filter(c => c.id !== id));
-        } catch (err) {
+        } catch {
             addToast("Error al eliminar", "error");
         }
     };
@@ -80,6 +78,29 @@ export default function CommentModeration() {
                              c.author.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesFilter && matchesSearch;
     });
+    const groupedComments = useMemo(() => {
+        const types = ['Foro', 'Prédicas', 'Cursos', 'General'];
+        return types.map((type) => ({
+            type,
+            items: filteredComments.filter((comment) => comment.type.includes(type) || (type === 'General' && !comment.type)),
+        })).filter((column) => column.items.length > 0 || ['Foro', 'Cursos'].includes(column.type));
+    }, [filteredComments]);
+    const calendarEvents = useMemo(() => filteredComments.map((comment) => ({
+        id: comment.id,
+        title: `${comment.author}: ${comment.context}`,
+        date: (comment.created_at || new Date().toISOString()).slice(0, 10),
+        color: comment.type.includes('Cursos') ? 'indigo' as const : comment.type.includes('Foro') ? 'blue' as const : 'amber' as const,
+        location: comment.type,
+    })), [filteredComments]);
+    const ganttItems = useMemo(() => filteredComments.map((comment) => ({
+        id: comment.id,
+        title: comment.author,
+        subtitle: comment.context,
+        start_date: (comment.created_at || new Date().toISOString()).slice(0, 10),
+        end_date: (comment.created_at || new Date().toISOString()).slice(0, 10),
+        color: comment.type.includes('Cursos') ? 'indigo' as const : comment.type.includes('Foro') ? 'blue' as const : 'amber' as const,
+        progress: 50,
+    })), [filteredComments]);
 
     if (!isAuthenticated) return null;
 
@@ -106,7 +127,7 @@ export default function CommentModeration() {
 
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: 'Admin', icon: Layout }, { label: 'Moderación de Comunidad', icon: MessageSquare }]}
-                viewType="list" setViewType={() => {}}
+                viewType={viewType} setViewType={setViewType} availableViews={COMMENT_VIEWS}
                 rightActions={
                     <button className="p-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-blue-600 relative active:scale-95 transition-all">
                         <Bell size={20} />
@@ -162,6 +183,66 @@ export default function CommentModeration() {
                             <div className="py-40 flex flex-col items-center justify-center gap-6 text-slate-400 font-black uppercase tracking-[0.5em] animate-pulse">
                                 <Loader2 className="animate-spin text-blue-600" size={48} strokeWidth={1.5} /> Sincronizando Comentarios...
                             </div>
+                        ) : viewType === 'table' ? (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="border-b border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:border-white/10">
+                                        <tr><th className="px-5 py-3">Autor</th><th className="px-5 py-3">Contexto</th><th className="px-5 py-3">Tipo</th><th className="px-5 py-3">Fecha</th><th className="px-5 py-3" /></tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredComments.map((comment) => (
+                                            <tr key={comment.id} className="border-b border-slate-50 dark:border-white/5">
+                                                <td className="px-5 py-4 font-black text-slate-900 dark:text-white">{comment.author}</td>
+                                                <td className="px-5 py-4 text-slate-500">{comment.context}</td>
+                                                <td className="px-5 py-4 text-slate-500">{comment.type}</td>
+                                                <td className="px-5 py-4 text-slate-400">{new Date(comment.created_at).toLocaleDateString()}</td>
+                                                <td className="px-5 py-4 text-right"><button onClick={() => handleDelete(comment.id)} className="rounded-xl bg-rose-50 p-2 text-rose-500"><Trash2 size={16} /></button></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </motion.div>
+                        ) : viewType === 'grid' ? (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                {filteredComments.map((comment) => (
+                                    <article key={comment.id} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+                                        <p className="text-sm font-black text-slate-900 dark:text-white">{comment.author}</p>
+                                        <p className="mt-2 line-clamp-3 text-sm font-medium text-slate-500">{comment.text}</p>
+                                        <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-blue-500">{comment.type}</p>
+                                    </article>
+                                ))}
+                            </motion.div>
+                        ) : viewType === 'board' || viewType === 'kanban' ? (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-4 overflow-x-auto">
+                                {groupedComments.map((column) => (
+                                    <section key={column.type} className="w-80 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                                        <div className="mb-3 flex items-center justify-between px-1">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{column.type}</p>
+                                            <span className="text-[10px] font-black text-slate-400">{column.items.length}</span>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {column.items.map((comment) => (
+                                                <article key={comment.id} className="rounded-xl border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+                                                    <p className="text-xs font-black text-slate-900 dark:text-white">{comment.author}</p>
+                                                    <p className="mt-2 line-clamp-2 text-[11px] font-medium text-slate-500">{comment.text}</p>
+                                                </article>
+                                            ))}
+                                        </div>
+                                    </section>
+                                ))}
+                            </motion.div>
+                        ) : viewType === 'calendar' ? (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-[720px]">
+                                <UniversalCalendarView events={calendarEvents} title="Calendario de moderación" />
+                            </motion.div>
+                        ) : viewType === 'gantt' ? (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-[720px]">
+                                <UniversalGanttView items={ganttItems} moduleName="Moderación" />
+                            </motion.div>
+                        ) : viewType === 'wiki' ? (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                                <UniversalWikiView moduleName="Moderación" storageKey="wiki_admin_comments" />
+                            </motion.div>
                         ) : filteredComments.length > 0 ? (
                             <motion.div 
                                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}

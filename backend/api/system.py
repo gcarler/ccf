@@ -2,7 +2,7 @@ from __future__ import annotations
 import math as Math
 from datetime import datetime, timezone
 from typing import List, Optional, Any, Dict
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from backend.core.database import get_db
@@ -32,6 +32,32 @@ def global_search(
 @router.get("/calendar")
 def get_global_calendar(db: Session = Depends(get_db), current_user: models.User = Depends(require_active_user)):
     events = []
+    agenda_events = db.query(models.AgendaEvent).all()
+    for event in agenda_events:
+        events.append({
+            "id": f"agenda-{event.id}",
+            "title": event.title,
+            "start": event.start_at.isoformat(),
+            "end": event.end_at.isoformat() if event.end_at else None,
+            "type": "agenda_event",
+            "color": "red",
+            "allDay": event.is_all_day,
+            "href": f"/agenda/events/{event.id}",
+            "location": event.location,
+        })
+    evangelism_events = db.query(models.CrmEvent).filter(models.CrmEvent.event_date.isnot(None)).all()
+    for event in evangelism_events:
+        events.append({
+            "id": f"evangelism-{event.id}",
+            "title": event.name,
+            "start": event.event_date.isoformat(),
+            "end": None,
+            "type": "evangelism_event",
+            "color": "green",
+            "allDay": False,
+            "href": f"/evangelism/events/{event.id}",
+            "location": event.location,
+        })
     tasks = db.query(models.ProjectTask).filter(models.ProjectTask.due_date.isnot(None)).all()
     for t in tasks:
         events.append({"id": f"task-{t.id}", "title": t.title, "start": t.due_date.isoformat(), "type": "task", "color": "blue", "href": f"/projects/{t.project_id}"})

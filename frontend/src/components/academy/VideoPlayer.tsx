@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Volume2, Maximize, Settings, SkipForward } from 'lucide-react';
-import clsx from 'clsx';
+import { Play, Pause, RotateCcw, Volume2, Maximize, Settings } from 'lucide-react';
 
 interface VideoPlayerProps {
     src: string;
@@ -16,8 +15,6 @@ export default function VideoPlayer({ src, onProgress, onComplete, initialTime =
     const [isPlaying, setIsPlaying] = useState(false);
     const [progress, setProgress] = useState(0);
     const [duration, setDuration] = useState(0);
-    const [showControls, setShowInbox] = useState(true);
-
     useEffect(() => {
         if (videoRef.current && initialTime > 0) {
             videoRef.current.currentTime = initialTime;

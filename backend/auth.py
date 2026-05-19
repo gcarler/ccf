@@ -19,7 +19,7 @@ SECRET_KEY = settings.secret_key
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 ROLE_ALIASES = {
     "student": "estudiante",
@@ -128,6 +128,18 @@ async def get_current_admin_user(
     return current_user
 
 
+async def require_pastor_or_admin(
+    current_user: schemas.User = Depends(get_current_active_user),
+):
+    role = normalize_role(str(getattr(current_user, "role", "")))
+    if role not in {"admin", "pastor"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Permisos insuficientes. Se requiere: crm:manage",
+        )
+    return current_user
+
+
 # Additional required by main.py
 def authenticate_user(db: Session, email: str, password: str):
     user = crud.get_user_by_email(db, email=email)
@@ -139,49 +151,41 @@ def authenticate_user(db: Session, email: str, password: str):
     return user
 
 
+
+def require_permission(permission: str):
+    async def _check(current_user: schemas.User = Depends(get_current_active_user), db: Session = Depends(database.get_db)):
+        role = normalize_role(current_user.role)
+
+        # Hard gate for CRM management: only pastor/admin can pass.
+        if permission.startswith("crm:") and role not in {"admin", "pastor"}:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Permisos insuficientes. Se requiere: {permission}"
+            )
+
+        # Obtener el usuario completo para ver su rol
+        db_user = crud.get_user(db, current_user.id)
+        if db_user and getattr(db_user, 'user_role_obj', None) and getattr(db_user.user_role_obj, 'permissions', None):
+            if permission in db_user.user_role_obj.permissions:
+                return current_user
+            if "system:config" in db_user.user_role_obj.permissions:
+                return current_user
+
+        # Role-based fallback for environments without row-level permissions
+        if role == "admin": return current_user
+        
+        if permission.startswith("crm:") and role == "pastor": return current_user
+        if permission.startswith("academy:") and role in {"coordinador", "docente", "pastor"}: return current_user
+        if permission.startswith("projects:") and role in {"coordinador", "pastor"}: return current_user
+            
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Permisos insuficientes. Se requiere: {permission}"
+        )
+    return _check
+
 require_active_user = get_current_active_user
-require_admin = get_current_admin_user
-
-
-async def require_staff_or_admin(
-    current_user: schemas.User = Depends(get_current_active_user)
-):
-    if not role_in(current_user.role, {"admin", "staff"}):
-        raise HTTPException(
-            status_code=403,
-            detail="Acceso restringido a administradores y personal"
-        )
-    return current_user
-
-
-async def require_pastor_or_admin(
-    current_user: schemas.User = Depends(get_current_active_user)
-):
-    if not role_in(current_user.role, {"admin", "pastor"}):
-        raise HTTPException(
-            status_code=403,
-            detail="Acceso restringido a administradores y pastores"
-        )
-    return current_user
-
-
-async def require_teacher_or_admin(
-    current_user: schemas.User = Depends(get_current_active_user)
-):
-    if not role_in(current_user.role, {"admin", "docente", "pastor"}):
-        raise HTTPException(
-            status_code=403,
-            detail="Acceso restringido a administradores y docentes"
-        )
-    return current_user
-
-
-async def require_coordinator_or_admin(
-    current_user: schemas.User = Depends(get_current_active_user)
-):
-    if not role_in(current_user.role, {"admin", "coordinador", "pastor"}):
-        raise HTTPException(
-            status_code=403,
-            detail="Acceso restringido a coordinadores y administradores"
-        )
-    return current_user
+require_admin = require_permission("system:config")
+require_staff_or_admin = require_permission("academy:manage")
+require_teacher_or_admin = require_permission("academy:manage")
+require_coordinator_or_admin = require_permission("projects:manage")

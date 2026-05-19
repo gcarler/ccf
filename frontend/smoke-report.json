@@ -1,0 +1,1874 @@
+[
+  {
+    "route": "/faro/boletin",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_ABORTED at http://localhost:3002/faro/boletin\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/faro/boletin\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/faro/conocer-a-jesus",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/faro/conocer-a-jesus\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/faro/cursos",
+    "errors": [
+      {
+        "type": "console",
+        "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "console",
+        "msg": "[API_FAILURE] 404 GET /cms/v2/public/sites/faro/theme: {detail: active theme not found}"
+      }
+    ],
+    "hasOverlay": true
+  },
+  {
+    "route": "/faro/eventos",
+    "errors": [
+      {
+        "type": "console",
+        "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "console",
+        "msg": "[API_FAILURE] 404 GET /cms/v2/public/sites/faro/theme: {detail: active theme not found}"
+      }
+    ],
+    "hasOverlay": true
+  },
+  {
+    "route": "/faro/nosotros",
+    "errors": [
+      {
+        "type": "console",
+        "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "console",
+        "msg": "[API_FAILURE] 404 GET /cms/v2/public/sites/faro/theme: {detail: active theme not found}"
+      }
+    ],
+    "hasOverlay": true
+  },
+  {
+    "route": "/faro",
+    "errors": [
+      {
+        "type": "console",
+        "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "console",
+        "msg": "[API_FAILURE] 404 GET /cms/v2/public/sites/faro/theme: {detail: active theme not found}"
+      }
+    ],
+    "hasOverlay": true
+  },
+  {
+    "route": "/faro/pastores",
+    "errors": [
+      {
+        "type": "console",
+        "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "console",
+        "msg": "[API_FAILURE] 404 GET /cms/v2/public/sites/faro/theme: {detail: active theme not found}"
+      }
+    ],
+    "hasOverlay": true
+  },
+  {
+    "route": "/faro/pastores/test",
+    "errors": [
+      {
+        "type": "console",
+        "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "console",
+        "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "console",
+        "msg": "[API_FAILURE] 404 GET /cms/v2/public/sites/faro/theme: {detail: active theme not found}"
+      }
+    ],
+    "hasOverlay": true
+  },
+  {
+    "route": "/faro/predicas",
+    "errors": [
+      {
+        "type": "console",
+        "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "console",
+        "msg": "[API_FAILURE] 404 GET /cms/v2/public/sites/faro/theme: {detail: active theme not found}"
+      }
+    ],
+    "hasOverlay": true
+  },
+  {
+    "route": "/faro/privacidad",
+    "errors": [
+      {
+        "type": "console",
+        "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "console",
+        "msg": "[API_FAILURE] 404 GET /cms/v2/public/sites/faro/theme: {detail: active theme not found}"
+      }
+    ],
+    "hasOverlay": true
+  },
+  {
+    "route": "/faro/sedes",
+    "errors": [
+      {
+        "type": "console",
+        "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "console",
+        "msg": "[API_FAILURE] 404 GET /cms/v2/public/sites/faro/theme: {detail: active theme not found}"
+      }
+    ],
+    "hasOverlay": true
+  },
+  {
+    "route": "/faro/testimonios",
+    "errors": [
+      {
+        "type": "console",
+        "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "console",
+        "msg": "[API_FAILURE] 404 GET /cms/v2/public/sites/faro/theme: {detail: active theme not found}"
+      }
+    ],
+    "hasOverlay": true
+  },
+  {
+    "route": "/faro/test",
+    "errors": [
+      {
+        "type": "console",
+        "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "console",
+        "msg": "%c%s%c [API_FAILURE] 404 GET /cms/v2/public/sites/faro/pages/test: background: #e6e6e6;background: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.25));color: #000000;color: light-dark(#000000, #ffffff);border-radius: 2px  Server   {detail: published page not found}"
+      },
+      {
+        "type": "console",
+        "msg": "%c%s%c [API_FAILURE] 404 GET /cms/v2/public/sites/faro/pages/test: background: #e6e6e6;background: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.25));color: #000000;color: light-dark(#000000, #ffffff);border-radius: 2px  Server   {detail: published page not found}"
+      },
+      {
+        "type": "console",
+        "msg": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      },
+      {
+        "type": "console",
+        "msg": "[API_FAILURE] 404 GET /cms/v2/public/sites/faro/theme: {detail: active theme not found}"
+      }
+    ],
+    "hasOverlay": true
+  },
+  {
+    "route": "/academy/account",
+    "errors": [],
+    "hasOverlay": true
+  },
+  {
+    "route": "/academy/assessments/new",
+    "errors": [],
+    "hasOverlay": true
+  },
+  {
+    "route": "/academy/assessments/1",
+    "errors": [],
+    "hasOverlay": true
+  },
+  {
+    "route": "/academy/certificates",
+    "errors": [],
+    "hasOverlay": true
+  },
+  {
+    "route": "/academy/certificates/test",
+    "errors": [],
+    "hasOverlay": true
+  },
+  {
+    "route": "/academy/coordination/courses/new",
+    "errors": [
+      {
+        "type": "console",
+        "msg": "Failed to load resource: net::ERR_CONNECTION_RESET"
+      },
+      {
+        "type": "console",
+        "msg": "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "type": "console",
+        "msg": "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "type": "console",
+        "msg": "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "type": "console",
+        "msg": "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "type": "console",
+        "msg": "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+      }
+    ],
+    "hasOverlay": false
+  },
+  {
+    "route": "/academy/coordination",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/academy/coordination\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/academy/coordination\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/academy/course/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/academy/course/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/academy/course/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/academy/courses",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/academy/courses\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/academy/courses\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/academy/courses/1/manage",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/academy/courses/1/manage\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/academy/courses/1/manage\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/academy/courses/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/academy/courses/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/academy/courses/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/academy/curriculum",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/academy/curriculum\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/academy/curriculum\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/academy/enroll/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/academy/enroll/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/academy/enroll/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/academy/forum",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/academy/forum\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/academy/forum\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/academy/forum/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/academy/forum/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/academy/forum/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/academy/grades",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/academy/grades\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/academy/grades\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/academy",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/academy\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/academy\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/academy/profile",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/academy/profile\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/academy/profile\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/academy/profile/progress",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/academy/profile/progress\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/academy/profile/progress\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/academy/resources",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/academy/resources\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/academy/resources\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/academy/schedule",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/academy/schedule\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/academy/schedule\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/academy/teacher",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/academy/teacher\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/academy/teacher\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/account/ministry-profile",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/account/ministry-profile\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/account/ministry-profile\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/account",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/account\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/account\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/access",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/access\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/access\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/actas",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/actas\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/actas\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/analytics/candidates",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/analytics/candidates\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/analytics/candidates\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/analytics/web-vitals",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/analytics/web-vitals\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/analytics/web-vitals\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/announcements/new",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/announcements/new\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/announcements/new\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/announcements",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/announcements\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/announcements\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/assets",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/assets\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/assets\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/audit",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/audit\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/audit\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/audit/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/audit/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/audit/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/cms",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/cms\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/cms\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/comments",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/comments\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/comments\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/content/courses/new",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/content/courses/new\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/content/courses/new\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/content/courses/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/content/courses/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/content/courses/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/content/courses/1/upload",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/content/courses/1/upload\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/content/courses/1/upload\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/content/list",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/content/list\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/content/list\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/content",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/content\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/content\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/dashboard",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/dashboard\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/dashboard\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/dashboard/radar",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/dashboard/radar\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/dashboard/radar\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/donations/config",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/donations/config\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/donations/config\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/donations",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/donations\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/donations\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/finance",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/finance\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/finance\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/finance/treasury",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/finance/treasury\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/finance/treasury\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/intelligence",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/intelligence\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/intelligence\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/inventory",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/inventory\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/inventory\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/maintenance",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/maintenance\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/maintenance\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/members",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/members\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/members\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/members/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/members/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/members/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/mission-impact",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/mission-impact\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/mission-impact\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/reports",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/reports\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/reports\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/roles",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/roles\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/roles\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/settings/contact",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/settings/contact\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/settings/contact\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/settings/experience",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/settings/experience\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/settings/experience\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/settings/locations",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/settings/locations\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/settings/locations\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/settings",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/settings\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/settings\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/settings/profile",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/settings/profile\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/settings/profile\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/settings/socials",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/settings/socials\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/settings/socials\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/settings/system",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/settings/system\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/settings/system\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/spiritual-life/milestones",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/spiritual-life/milestones\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/spiritual-life/milestones\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/submissions",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/submissions\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/submissions\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/talents",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/talents\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/talents\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/testimonials",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/testimonials\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/testimonials\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/theme",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/theme\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/theme\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/users",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/users\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/users\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/admin/users/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/admin/users/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/admin/users/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/agenda/events",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/agenda/events\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/agenda/events\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/agenda/events/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/agenda/events/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/agenda/events/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/auth/forgot",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/auth/forgot\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/auth/forgot\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/auth/reset",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/auth/reset\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/auth/reset\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/auth/verify",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/auth/verify\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/auth/verify\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/books",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/books\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/books\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/calendar",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/calendar\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/calendar\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/cms/builder",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/cms/builder\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/cms/builder\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/cms/content",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/cms/content\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/cms/content\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/cms/events",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/cms/events\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/cms/events\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/cms/media",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/cms/media\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/cms/media\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/cms/media/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/cms/media/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/cms/media/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/cms/menus",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/cms/menus\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/cms/menus\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/cms",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/cms\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/cms\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/cms/pages",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/cms/pages\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/cms/pages\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/cms/pages/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/cms/pages/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/cms/pages/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/cms/sites",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/cms/sites\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/cms/sites\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/cms/testimonials",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/cms/testimonials\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/cms/testimonials\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/cms/testimonials/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/cms/testimonials/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/cms/testimonials/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/cms/themes",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/cms/themes\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/cms/themes\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/cms/ui-kit",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/cms/ui-kit\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/cms/ui-kit\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/community/announcements",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/community/announcements\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/community/announcements\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/community/discover",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/community/discover\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/community/discover\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/community/events",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/community/events\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/community/events\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/community/give",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/community/give\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/community/give\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/community/groups",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/community/groups\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/community/groups\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/community/messages",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/community/messages\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/community/messages\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/community/notifications",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/community/notifications\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/community/notifications\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/community",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/community\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/community\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/community/prayer",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/community/prayer\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/community/prayer\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/community/prayer/request",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/community/prayer/request\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/community/prayer/request\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/community/testimonies",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/community/testimonies\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/community/testimonies\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/community/testimonies/publish",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/community/testimonies/publish\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/community/testimonies/publish\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/analytics",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/analytics\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/analytics\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/contacts",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/contacts\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/contacts\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/contacts/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/contacts/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/contacts/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/counseling",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/counseling\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/counseling\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/counseling/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/counseling/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/counseling/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/groups/admin",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/groups/admin\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/groups/admin\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/groups",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/groups\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/groups\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/groups/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/groups/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/groups/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/members",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/members\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/members\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/members/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/members/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/members/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/messaging/automations",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/messaging/automations\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/messaging/automations\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/messaging",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/messaging\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/messaging\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/messaging/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/messaging/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/messaging/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/my-card",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/my-card\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/my-card\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/pipeline",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/pipeline\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/pipeline\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/pipeline/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/pipeline/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/pipeline/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/prayers",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/prayers\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/prayers\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/prayers/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/prayers/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/prayers/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/settings",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/settings\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/settings\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/tasks/assign",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/tasks/assign\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/tasks/assign\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/tasks/mine",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/tasks/mine\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/tasks/mine\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/tasks",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/tasks\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/tasks\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/tasks/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/tasks/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/tasks/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/volunteers",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/volunteers\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/volunteers\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/crm/volunteers/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/crm/volunteers/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/crm/volunteers/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/donate",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/donate\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/donate\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/evangelism/events/analytics",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/evangelism/events/analytics\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/evangelism/events/analytics\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/evangelism/events",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/evangelism/events\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/evangelism/events\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/evangelism/events/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/evangelism/events/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/evangelism/events/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/evangelism/faro/groups",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/evangelism/faro/groups\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/evangelism/faro/groups\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/evangelism/faro",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/evangelism/faro\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/evangelism/faro\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/evangelism/faro/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/evangelism/faro/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/evangelism/faro/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/evangelism/scanner",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/evangelism/scanner\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/evangelism/scanner\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/events",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/events\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/events\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/finances",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/finances\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/finances\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/finances/transparency",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/finances/transparency\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/finances/transparency\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/graph",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/graph\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/graph\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/groups/analytics",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/groups/analytics\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/groups/analytics\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/groups/family",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/groups/family\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/groups/family\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/groups/history",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/groups/history\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/groups/history\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/groups/map",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/groups/map\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/groups/map\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/groups",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/groups\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/groups\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/inbox",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/inbox\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/inbox\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/login",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/login\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/onboarding",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/onboarding\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/onboarding\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/pastores",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/pastores\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/pastores\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/pastores/test",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/pastores/test\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/pastores/test\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/privacy",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/privacy\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/privacy\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/projects/automations",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/projects/automations\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/projects/automations\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/projects/comments",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/projects/comments\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/projects/comments\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/projects/general",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/projects/general\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/projects/general\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/projects/inbox",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/projects/inbox\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/projects/inbox\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/projects/more",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/projects/more\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/projects/more\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/projects",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/projects\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/projects\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/projects/responses",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/projects/responses\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/projects/responses\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/projects/tasks",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/projects/tasks\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/projects/tasks\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/projects/team",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/projects/team\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/projects/team\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/projects/welcome",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/projects/welcome\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/projects/welcome\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/projects/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/projects/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/projects/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/public/register",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/public/register\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/public/register\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/register",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/register\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/register\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/sermons",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/sermons\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/sermons\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/settings",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/settings\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/settings\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/settings/roles",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/settings/roles\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/settings/roles\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/spiritual-life/certificates",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/spiritual-life/certificates\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/spiritual-life/certificates\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/spiritual-life",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/spiritual-life\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/spiritual-life\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/spiritual-life/timeline",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/spiritual-life/timeline\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/spiritual-life/timeline\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/support/contact",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/support/contact\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/support/contact\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/support/history",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/support/history\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/support/history\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/support/kb",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/support/kb\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/support/kb\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/support",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/support\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/support\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/support/tickets",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/support/tickets\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/support/tickets\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/support/tutorials",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/support/tutorials\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/support/tutorials\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/tasks",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/tasks\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/tasks\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/tasks/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/tasks/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/tasks/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/terms",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/terms\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/terms\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/testimonials",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/testimonials\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/testimonials\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/theme",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/theme\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/theme\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/whiteboard",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/whiteboard\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/whiteboard\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/whiteboard/1",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/whiteboard/1\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/whiteboard/1\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/wiki/docs",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/wiki/docs\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/wiki/docs\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/wiki/docs/test",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/wiki/docs/test\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/wiki/docs/test\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  },
+  {
+    "route": "/wiki",
+    "errors": [
+      {
+        "type": "navigation",
+        "msg": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/wiki\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/wiki\", waiting until \"networkidle\"\u001b[22m\n"
+      }
+    ]
+  }
+]

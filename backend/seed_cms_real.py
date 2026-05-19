@@ -72,9 +72,12 @@ def ensure_tables():
     """)
     conn.commit()
 
+ALLOWED_TABLES = {"announcements", "sermons", "books", "testimonials", "page_contents"}
+
+
 def clean_tables():
-    for table in ["announcements", "sermons", "books", "testimonials", "page_contents"]:
-        cursor.execute(f"DELETE FROM {table}")
+    for table in sorted(ALLOWED_TABLES):
+        cursor.execute(f'DELETE FROM \"{table}\"')
     conn.commit()
 
 def seed_announcements():
@@ -107,7 +110,7 @@ def seed_books():
 def seed_testimonials():
     testimonials = [
         (1, "Desde que llegu?? a CC El Faro, mi familia ha encontrado un prop??sito real. La comunidad nos abraz?? en nuestro momento m??s dif??cil.", "Agradecimiento"),
-        (1, "Literalmente vi la mano de Dios sanando mi cuerpo despu??s de una oraci??n un??nime en mi Casa de Gloria.", "Sanidad"),
+        (1, "Literalmente vi la mano de Dios sanando mi cuerpo despu??s de una oraci??n un??nime en mi Faro en Casa.", "Sanidad"),
         (1, "La Academia Faro me dio las herramientas teol??gicas que necesitaba para servir con excelencia en el ministerio de alabanza.", "Crecimiento")
     ]
     cursor.executemany("INSERT INTO testimonials (author_id, content, emotion, is_approved) VALUES (?, ?, ?, 1)", testimonials)
@@ -119,7 +122,7 @@ def seed_page_contents():
         ("home_hero", "Servicio de Adoraci??n Dominical", "??nete a nuestra transmisi??n en vivo y experimenta la presencia de Dios desde donde est??s.", "https://images.unsplash.com/photo-1438032005730-c779502df39b?auto=format&fit=crop&q=80"),
         ("home_academy_card", "Academia Faro", "Formaci??n teol??gica y ministerial profunda para el liderazgo del siglo XXI.", None),
         ("home_giving_card", "Ofrendar", "Tu generosidad permite que el mensaje de esperanza llegue a m??s corazones.", None),
-        ("home_community_card", "Comunidad", "Encuentra tu lugar en una Casa de Gloria y crece junto a otros creyentes.", None),
+        ("home_community_card", "Comunidad", "Encuentra tu lugar en un Faro en Casa y crece junto a otros creyentes.", None),
         ("home_prayer_banner", "Peticiones de Oraci??n", "??Podemos orar por ti hoy? Env??anos tu petici??n y nos uniremos en fe por tu milagro.", None),
         ("home_impact_stats", "Impacto Ministerial", json.dumps({"courses": 15, "impact": "2.8k", "churches": 4}), None),
         

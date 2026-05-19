@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { ShieldCheck, User, QrCode, Sparkles, Church, Share2, Download, ArrowLeft, Loader2, Link2, Users } from 'lucide-react';
+import { ShieldCheck, User, QrCode, Sparkles, Church, Share2, Download, Loader2, Link2, Users } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -72,11 +72,11 @@ export default function MyCardPage() {
             case 'pastor':
                 return {
                     name: 'PASTORAL ELITE',
-                    primary: 'from-purple-600 to-indigo-900',
-                    border: 'border-purple-500/50',
-                    badge: 'bg-purple-500',
-                    glow: 'shadow-purple-500/20',
-                    accent: 'text-purple-300'
+                    primary: 'from-sky-600 to-indigo-900',
+                    border: 'border-sky-500/50',
+                    badge: 'bg-sky-500',
+                    glow: 'shadow-sky-500/20',
+                    accent: 'text-sky-300'
                 };
             case 'ministro':
                 return {
@@ -121,7 +121,7 @@ export default function MyCardPage() {
 
     return (
         <CrmShell
-            breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'CRM Pastoral', icon: Users }, { label: 'Mi carnet', icon: QrCode }]}
+            breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'Consolidación', icon: Users }, { label: 'Mi carnet', icon: QrCode }]}
             rightActions={
                 <button className="flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-2xl text-[11px] font-black text-white hover:bg-black transition-all">
                     <Share2 size={16} /> Compartir
@@ -134,8 +134,8 @@ export default function MyCardPage() {
             description="Comparte tu código personal para validar asistencia y servir. Añádelo a Google Wallet o compártelo en segundos."
             tags={['QR', 'Wallet', 'Seguridad']}
             watchers={['Equipo Identidad', 'Optimus Brain']}
-            primaryAction={{ label: 'Descargar PDF', icon: Download, onClick: () => {} }}
-            secondaryAction={{ label: 'Ver políticas', icon: Link2, onClick: () => {} }}
+            primaryAction={{ label: 'Descargar PDF', icon: Download, onClick: () => window.print() }}
+            secondaryAction={{ label: 'Ver políticas', icon: Link2, onClick: () => router.push('/privacy') }}
         />
         <div className="flex flex-col items-center justify-center space-y-12 pb-20 relative overflow-hidden">
             <div className={`absolute -top-40 -right-40 w-[600px] h-[600px] bg-gradient-to-br ${theme.primary} opacity-20 blur-[120px] rounded-full pointer-events-none`}></div>

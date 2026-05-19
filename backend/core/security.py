@@ -1,13 +1,14 @@
 import bcrypt
 import base64
-import os
+import hashlib
 from cryptography.fernet import Fernet
 from backend.core.config import get_settings
 
 settings = get_settings()
 
-# Deterministic key from SECRET_KEY (simplified for MVP, ideally a separate ENCRYPTION_KEY)
-_key = base64.urlsafe_b64encode(settings.secret_key.encode().ljust(32)[:32])
+# Derive a deterministic 32-byte key using SHA-256 so any length secret works safely.
+raw_key = settings.encryption_key or settings.secret_key
+_key = base64.urlsafe_b64encode(hashlib.sha256(raw_key.encode()).digest())
 _fernet = Fernet(_key)
 
 def encrypt_data(data: str) -> str:

@@ -47,8 +47,8 @@ export default function StudentCurriculum() {
                 description="Administra tus rutas según el nivel de formación (fundamentos, intermedio, avanzado)."
                 tags={['Fundamentos', 'Intermedio', 'Avanzado']}
                 watchers={['Coordinación Académica', 'Optimus Brain']}
-                primaryAction={{ label: 'Editar plan', icon: LinkIcon, onClick: () => {} }}
-                secondaryAction={{ label: 'Ver cronograma', icon: Calendar, onClick: () => {} }}
+                primaryAction={{ label: 'Editar plan', icon: LinkIcon, onClick: () => router.push('/academy/coordination') }}
+                secondaryAction={{ label: 'Ver cronograma', icon: Calendar, onClick: () => router.push('/academy/schedule') }}
             />
             <div className="rounded-[2.5rem] border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] shadow-xl overflow-hidden">
                 <div className="flex overflow-x-auto hide-scrollbar gap-3 p-6 border-b border-slate-100 dark:border-white/5">
@@ -130,7 +130,7 @@ export default function StudentCurriculum() {
 function SummaryCard({ label, value, tone }: { label: string; value: string | number; tone: 'blue' | 'violet' | 'emerald' }) {
     const colors: Record<'blue' | 'violet' | 'emerald', string> = {
         blue: 'bg-blue-50 text-blue-600 dark:bg-blue-500/10',
-        violet: 'bg-violet-50 text-violet-600 dark:bg-violet-500/10',
+        violet: 'bg-blue-50 text-blue-600 dark:bg-blue-500/10',
         emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10',
     };
     return (

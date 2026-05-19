@@ -3,10 +3,23 @@ from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.core.database import get_db
+from backend.core.permissions import get_all_permissions
 from backend.auth import require_admin
 from backend import models, schemas, crud
 
 router = APIRouter()
+
+
+def _serialize_automation(rule: models.AutomationRule) -> schemas.AutomationRuleRead:
+    return schemas.AutomationRuleRead(
+        id=rule.id,
+        name=rule.name,
+        trigger_type=rule.trigger_type,
+        action_type=rule.action_type,
+        action_payload=rule.action_payload or {},
+        is_active=rule.is_active,
+        last_run=rule.last_run,
+    )
 
 @router.get("/roles", response_model=List[Dict[str, Any]])
 def list_roles(
@@ -54,6 +67,28 @@ def update_role(
     role.permissions = permissions
     db.commit()
     return {"status": "success"}
+
+
+@router.delete("/roles/{role_id}", status_code=204)
+def delete_role(
+    role_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin)
+):
+    """Elimina un rol ministerial (no usado por usuarios activos)."""
+    role = db.query(models.Role).filter(models.Role.role_id == role_id).first()
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
+    assigned = db.query(models.User).filter(models.User.role_id == role_id).count()
+    if assigned > 0:
+        raise HTTPException(status_code=409, detail=f"Cannot delete role with {assigned} assigned users")
+    db.delete(role)
+    db.commit()
+
+
+@router.get("/permissions", response_model=List[str])
+def read_all_permissions(current_user: models.User = Depends(require_admin)):
+    return get_all_permissions()
 
 # --- CHURCH LOCATIONS ---
 
@@ -104,6 +139,28 @@ def set_variable(key: str, value: str, db: Session = Depends(get_db), current_us
     db.commit()
     return {"status": "success"}
 
+# --- MEMBER MANAGEMENT ---
+
+@router.get("/members", response_model=List[Dict[str, Any]])
+def list_admin_members(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin)
+):
+    """Lista miembros para administracion."""
+    members = db.query(models.Member).all()
+    return [
+        {
+            "id": m.id,
+            "first_name": m.first_name,
+            "last_name": m.last_name,
+            "email": m.email,
+            "phone": m.phone,
+            "church_role": m.church_role,
+        }
+        for m in members
+    ]
+
+
 # --- USER MANAGEMENT ---
 
 @router.get("/users", response_model=List[Dict[str, Any]])
@@ -125,6 +182,39 @@ def list_admin_users(
         })
     return result
 
+
+@router.post("/users", response_model=Dict[str, Any])
+def create_admin_user(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    """Crea un nuevo usuario desde el panel de administracion."""
+    from backend.auth import hash_password
+    username = str(payload.get("username", "")).strip()
+    email = str(payload.get("email", "")).strip()
+    password = str(payload.get("password", ""))
+    role = str(payload.get("role", "estudiante")).strip()
+    if not username or not email or not password:
+        raise HTTPException(status_code=400, detail="username, email y password son requeridos")
+    existing = db.query(models.User).filter(
+        (models.User.username == username) | (models.User.email == email)
+    ).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="Usuario o email ya existe")
+    user = models.User(
+        username=username,
+        email=email,
+        password_hash=hash_password(password),
+        role=role,
+        is_active=True,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return {"id": user.id, "username": user.username, "email": user.email, "role": user.role, "is_active": user.is_active}
+
+
 @router.patch("/users/{user_id}/role")
 def change_user_role(
     user_id: int,
@@ -142,7 +232,7 @@ def change_user_role(
         raise HTTPException(status_code=404, detail="Role not found")
         
     user.role_id = role_id
-    user.role = role.name.lower().replace(" ", "_") # Sync legacy field
+    user.role = role.name.lower().replace(" ", "_") # Keep the flat role field aligned with the role catalog
     db.commit()
     return {"status": "success", "new_role": role.name}
 
@@ -196,65 +286,6 @@ def delete_comment(comment_id: int, db: Session = Depends(get_db), current_user:
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
     db.delete(comment)
-    db.commit()
-    return {"status": "success"}
-
-# --- ANNOUNCEMENTS ---
-
-@router.get("/announcements", response_model=List[Dict[str, Any]])
-def list_announcements(db: Session = Depends(get_db)):
-    """Lista todos los anuncios ministeriales."""
-    anns = db.query(models.Announcement).order_by(models.Announcement.published_at.desc()).all()
-    return [{
-        "id": a.id,
-        "title": a.title,
-        "content": a.content,
-        "category": a.category,
-        "featured": a.is_featured,
-        "date": a.published_at.isoformat()
-    } for a in anns]
-
-@router.post("/announcements")
-def create_announcement(payload: Dict[str, Any], db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
-    """Crea un nuevo comunicado global."""
-    ann = models.Announcement(
-        title=payload["title"],
-        content=payload["content"],
-        category=payload.get("category", "General"),
-        is_featured=payload.get("featured", False)
-    )
-    db.add(ann)
-    db.commit()
-    return {"status": "success"}
-
-# --- TESTIMONIALS ---
-
-@router.get("/testimonials", response_model=List[Dict[str, Any]])
-def list_testimonials(db: Session = Depends(get_db)):
-    """Lista todos los testimonios para moderación."""
-    tests = db.query(models.Testimonial).order_by(models.Testimonial.created_at.desc()).all()
-    return [{
-        "id": t.id,
-        "content": t.content,
-        "emotion": t.emotion,
-        "is_approved": t.is_approved,
-        "show_on_home": t.show_on_home,
-        "author_id": t.author_id,
-        "created_at": t.created_at.isoformat()
-    } for t in tests]
-
-@router.patch("/testimonials/{test_id}")
-def update_testimonial(test_id: int, payload: Dict[str, Any], db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
-    """Aprueba o destaca un testimonio."""
-    test = db.query(models.Testimonial).filter(models.Testimonial.id == test_id).first()
-    if not test:
-        raise HTTPException(status_code=404, detail="Testimonial not found")
-    
-    if "is_approved" in payload:
-        test.is_approved = payload["is_approved"]
-    if "show_on_home" in payload:
-        test.show_on_home = payload["show_on_home"]
-        
     db.commit()
     return {"status": "success"}
 
@@ -329,59 +360,56 @@ def create_donation_category(payload: Dict[str, Any], db: Session = Depends(get_
 
 # --- CRM AUTOMATIONS ---
 
-@router.get("/automations", response_model=List[Dict[str, Any]])
+@router.get("/automations", response_model=List[schemas.AutomationRuleRead])
 def list_automations(db: Session = Depends(get_db)):
     """Lista reglas de automatización configuradas."""
-    rules = db.query(models.CrmAutomation).all()
-    return [{
-        "id": r.id,
-        "name": r.name,
-        "trigger": r.trigger_event,
-        "action": r.action_type,
-        "payload": r.action_payload or {},
-        "active": r.is_active
-    } for r in rules]
+    rules = db.query(models.AutomationRule).all()
+    return [_serialize_automation(rule) for rule in rules]
 
-@router.post("/automations")
-def create_automation(payload: Dict[str, Any], db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
+@router.post("/automations", response_model=schemas.AutomationRuleRead)
+def create_automation(payload: schemas.AutomationRuleCreate, db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
     """Crea una nueva regla de automatización pastoral."""
-    rule = models.CrmAutomation(
-        name=payload["name"],
-        trigger_event=payload["trigger"],
-        action_type=payload["action"],
-        action_payload=payload.get("payload", {})
+    rule = models.AutomationRule(
+        name=payload.name,
+        trigger_type=payload.trigger_type,
+        action_type=payload.action_type,
+        action_payload=payload.action_payload,
+        is_active=payload.is_active,
     )
     db.add(rule)
     db.commit()
     db.refresh(rule)
-    return {"status": "success", "id": rule.id}
+    return _serialize_automation(rule)
 
-@router.patch("/automations/{rule_id}")
-def update_automation(rule_id: int, payload: Dict[str, Any], db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
+@router.patch("/automations/{rule_id}", response_model=schemas.AutomationRuleRead)
+def update_automation(rule_id: int, payload: schemas.AutomationRuleUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
     """Actualiza una regla de automatización (nombre, trigger, acción, activo)."""
-    rule = db.query(models.CrmAutomation).filter(models.CrmAutomation.id == rule_id).first()
+    rule = db.query(models.AutomationRule).filter(models.AutomationRule.id == rule_id).first()
     if not rule:
         raise HTTPException(status_code=404, detail="Automation rule not found")
-    if "name" in payload:
-        rule.name = payload["name"]
-    if "trigger" in payload:
-        rule.trigger_event = payload["trigger"]
-    if "action" in payload:
-        rule.action_type = payload["action"]
-    if "payload" in payload:
-        rule.action_payload = payload["payload"]
-    if "active" in payload:
-        rule.is_active = payload["active"]
+    if payload.name is not None:
+        rule.name = payload.name
+    if payload.trigger_type is not None:
+        rule.trigger_type = payload.trigger_type
+    if payload.action_type is not None:
+        rule.action_type = payload.action_type
+    if payload.action_payload is not None:
+        rule.action_payload = payload.action_payload
+    if payload.is_active is not None:
+        rule.is_active = payload.is_active
     db.commit()
-    return {"status": "success"}
+    db.refresh(rule)
+    return _serialize_automation(rule)
 
 @router.delete("/automations/{rule_id}")
 def delete_automation(rule_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
     """Elimina una regla de automatización permanentemente."""
-    rule = db.query(models.CrmAutomation).filter(models.CrmAutomation.id == rule_id).first()
+    rule = db.query(models.AutomationRule).filter(models.AutomationRule.id == rule_id).first()
     if not rule:
         raise HTTPException(status_code=404, detail="Automation rule not found")
     db.delete(rule)
     db.commit()
     return {"status": "success"}
+
+
 

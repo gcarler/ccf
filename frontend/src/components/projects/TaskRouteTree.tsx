@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    ChevronRight, ChevronDown, Folder, FolderOpen,
+    ChevronRight, ChevronDown, FolderOpen,
     Target, FileText, CheckSquare, Home, ArrowRight
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -43,7 +43,7 @@ const TYPE_ICON: Record<RouteNode['type'], React.ElementType> = {
 
 const TYPE_COLOR: Record<RouteNode['type'], string> = {
     workspace: 'text-slate-400',
-    portfolio: 'text-violet-500',
+    portfolio: 'text-blue-500',
     project:   'text-blue-500',
     section:   'text-amber-500',
     task:      'text-emerald-500',

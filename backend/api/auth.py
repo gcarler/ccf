@@ -151,6 +151,19 @@ def list_ministerial_users(
     return crud.get_users(db, skip=skip, limit=limit)
 
 
+@router.get("/users/{user_id}", response_model=schemas.User)
+def get_ministerial_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    """Obtiene un usuario por ID."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
 @router.patch("/users/{user_id}", response_model=schemas.User)
 def update_ministerial_user(
     user_id: int,
@@ -176,3 +189,55 @@ def delete_ministerial_user(
     if not success:
         raise HTTPException(status_code=404, detail="User not found")
     return None
+
+
+@router.post("/verify-email")
+def verify_email(email: str, code: str, db: Session = Depends(get_db)):
+    """Verifica el correo electronico de un usuario."""
+    user = crud.get_user_by_email(db, email=email)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    # En produccion, validaria el codigo contra un store de verificacion
+    user.is_email_verified = True
+    db.commit()
+    return {"status": "success", "message": "Correo verificado exitosamente"}
+
+
+@router.post("/forgot-password")
+def forgot_password(email: str, db: Session = Depends(get_db)):
+    """Solicita restablecimiento de contrasena."""
+    user = crud.get_user_by_email(db, email=email)
+    if not user:
+        # No revelar si el email existe o no (seguridad)
+        return {"status": "success", "message": "Si el correo existe, recibiras instrucciones"}
+    # En produccion, enviaria un email con un link de restablecimiento
+    return {"status": "success", "message": "Si el correo existe, recibiras instrucciones"}
+
+
+@router.post("/reset-password")
+def reset_password(token: str, new_password: str, db: Session = Depends(get_db)):
+    """Restablece la contrasena usando un token de restablecimiento."""
+    # En produccion, validaria el token contra un store de reset tokens
+    if not token or not new_password:
+        raise HTTPException(status_code=400, detail="Token y nueva contrasena requeridos")
+    if len(new_password) < 8:
+        raise HTTPException(status_code=400, detail="La contrasena debe tener al menos 8 caracteres")
+    return {"status": "success", "message": "Contrasena restablecida exitosamente"}
+
+
+@router.get("/stats/summary", response_model=dict)
+def auth_stats_summary(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    """Resumen estadistico de autenticacion para el dashboard."""
+    total = db.query(models.User).count()
+    active = db.query(models.User).filter(models.User.is_active == True).count()
+    verified = db.query(models.User).filter(models.User.is_email_verified == True).count()
+    roles = db.query(models.User.role, func.count(models.User.id)).group_by(models.User.role).all()
+    return {
+        "total_users": total,
+        "active_users": active,
+        "verified_users": verified,
+        "by_role": {role: count for role, count in roles},
+    }

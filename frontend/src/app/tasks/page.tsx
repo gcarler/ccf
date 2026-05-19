@@ -4,16 +4,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import UniversalTableView from '@/components/ui/UniversalTableView';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { 
-    CheckCircle2, Circle, Clock, AlertCircle, Search,
-    Filter, ChevronRight, MoreHorizontal, Zap, Bot,
-    Flag, CalendarDays, Tag, Inbox, ListChecks, Star,
-    SortAsc, ArrowUpDown, FolderOpen, Table2, LayoutGrid,
-    KanbanSquare, BarChart3, Sparkles
+    CheckCircle2, Circle, Search,
+    ChevronRight, Zap, Bot,
+    CalendarDays, ListChecks,
+    FolderOpen
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
 import TaskEditDrawer, { TaskDetail } from '@/components/ui/TaskEditDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -47,7 +45,7 @@ const STATUS_LABEL: Record<string, string> = {
 const XP_MAP: Record<string, number> = { urgent: 100, high: 60, medium: 40, low: 20 };
 
 export default function UserTasksPage() {
-    const { token, isAuthenticated, user } = useAuth();
+    const { token, isAuthenticated } = useAuth();
     const { addToast } = useToast();
     const [tasks, setTasks]           = useState<Task[]>([]);
     const [query, setQuery]           = useState('');
@@ -67,7 +65,8 @@ export default function UserTasksPage() {
             t.id === updated.id ? { ...t, ...updated } : t
         ));
         if (updated.status === 'done') {
-            addToast(`✓ Tarea completada! +${XP_MAP[updated.priority || 'low']} XP`, 'success');
+            const priorityKey = updated.priority ?? 'low';
+            addToast(`✓ Tarea completada! +${(XP_MAP[priorityKey] || XP_MAP['low'])} XP`, 'success');
         }
     };
 
@@ -130,7 +129,8 @@ export default function UserTasksPage() {
         const task = tasks.find(t => t.id === id);
         setTasks(prev => prev.filter(t => t.id !== id));
         setCompleting(null);
-        addToast(`✓ ${task?.title?.slice(0, 36)}... completada! +${XP_MAP[task?.priority || 'low']} XP`, 'success');
+        const priorityKey = task?.priority ?? 'low';
+        addToast(`✓ ${task?.title?.slice(0, 36)}... completada! +${(XP_MAP[priorityKey] || XP_MAP['low'])} XP`, 'success');
     };
 
     const filtered = useMemo(() => tasks.filter(t => {
@@ -213,7 +213,8 @@ export default function UserTasksPage() {
                 {viewType === 'grid' && (
                     <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {filtered.map((task, idx) => {
-                            const pc = PRIORITY_CONFIG[task.priority || 'low'];
+                            const priorityKey = task.priority ?? 'low';
+                            const pc = PRIORITY_CONFIG[priorityKey] || PRIORITY_CONFIG['low'];
                             return (
                                 <motion.div key={task.id}
                                     initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
@@ -232,7 +233,7 @@ export default function UserTasksPage() {
                                             <FolderOpen size={10}/> {task.project_title || 'Sin proyecto'}
                                         </span>
                                         <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-lg text-[9px] font-black">
-                                            <Zap size={9} fill="currentColor" /> +{XP_MAP[task.priority || 'low']} XP
+                                            <Zap size={9} fill="currentColor" /> +{XP_MAP[priorityKey] || XP_MAP['low']} XP
                                         </span>
                                     </div>
                                 </motion.div>
@@ -254,7 +255,8 @@ export default function UserTasksPage() {
                                     </div>
                                     <div className="flex-1 p-3 space-y-2 overflow-y-auto">
                                         {colTasks.map((task, idx) => {
-                                            const pc = PRIORITY_CONFIG[task.priority || 'low'];
+                                            const priorityKey = task.priority ?? 'low';
+                                            const pc = PRIORITY_CONFIG[priorityKey] || PRIORITY_CONFIG['low'];
                                             return (
                                                 <motion.div key={task.id}
                                                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
@@ -283,7 +285,7 @@ export default function UserTasksPage() {
 
                 {/* ── LIST VIEW (default) ── */}
                 {(viewType === 'list' || (viewType !== 'table' && viewType !== 'grid' && viewType !== 'kanban')) && (
-                <div className="max-w-7xl mx-auto p-6 lg:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 pb-24">
+                <div className="w-full p-6 lg:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 pb-24">
 
                     {/* ── LEFT COLUMN ── */}
                     <div className="lg:col-span-8 space-y-6">
@@ -363,8 +365,9 @@ export default function UserTasksPage() {
                         ) : (
                             <AnimatePresence mode="popLayout">
                                 {filtered.map((task, idx) => {
-                                    const pc = PRIORITY_CONFIG[task.priority || 'low'];
-                                    const xp = XP_MAP[task.priority || 'low'];
+                                    const priorityKey = task.priority ?? 'low';
+                                    const pc = PRIORITY_CONFIG[priorityKey] || PRIORITY_CONFIG['low'];
+                                    const xp = XP_MAP[priorityKey] || XP_MAP['low'];
                                     const isDone = completing === task.id;
                                     return (
                                         <motion.div
@@ -436,26 +439,26 @@ export default function UserTasksPage() {
                     <aside className="lg:col-span-4 space-y-6">
 
                         {/* Stats */}
-                        <div className="bg-gradient-to-br from-slate-900 to-[#1a1d28] border border-white/[0.06] rounded-2xl p-6 shadow-xl space-y-6">
-                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Resumen de Hoy</h3>
+                        <div className="bg-white dark:bg-gradient-to-br dark:from-slate-900 dark:to-[#1a1d28] border border-slate-200 dark:border-white/[0.06] rounded-2xl p-6 shadow-sm dark:shadow-xl space-y-6">
+                            <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.3em]">Resumen de Hoy</h3>
                             <div className="grid grid-cols-3 gap-2">
                                 {[
-                                    { label: 'Pendientes', value: pending, color: 'text-blue-400' },
-                                    { label: 'Vencen hoy', value: dueToday, color: 'text-amber-400' },
-                                    { label: 'Urgentes', value: urgent, color: 'text-rose-400' },
+                                    { label: 'Pendientes', value: pending, color: 'text-blue-600 dark:text-blue-400' },
+                                    { label: 'Vencen hoy', value: dueToday, color: 'text-amber-500 dark:text-amber-400' },
+                                    { label: 'Urgentes', value: urgent, color: 'text-rose-500 dark:text-rose-400' },
                                 ].map(s => (
-                                    <div key={s.label} className="text-center p-3 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+                                    <div key={s.label} className="text-center p-3 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/[0.06]">
                                         <p className={clsx("text-2xl font-black tracking-tighter", s.color)}>{s.value}</p>
                                         <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">{s.label}</p>
                                     </div>
                                 ))}
                             </div>
-                            <div className="pt-2 border-t border-white/[0.06]">
-                                <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-2">
+                            <div className="pt-2 border-t border-slate-100 dark:border-white/[0.06]">
+                                <div className="flex justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                                     <span>Progreso</span>
-                                    <span className="text-blue-400">{tasks.length > 0 ? Math.round(((30 - tasks.length) / 30) * 100) : 100}%</span>
+                                    <span className="text-blue-600 dark:text-blue-400">{tasks.length > 0 ? Math.round(((30 - tasks.length) / 30) * 100) : 100}%</span>
                                 </div>
-                                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
                                     <motion.div
                                         className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"
                                         initial={{ width: 0 }}
@@ -467,19 +470,19 @@ export default function UserTasksPage() {
                         </div>
 
                         {/* MESH AI card */}
-                        <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 dark:from-[#0f1117] dark:to-[#1a1b1e] rounded-[2.5rem] p-8 shadow-2xl space-y-5 border border-white/5">
-                            <div className="absolute top-0 right-0 -mr-8 -mt-8 size-32 bg-blue-600/20 rounded-full blur-2xl" />
+                        <div className="relative overflow-hidden bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-[#0f1117] dark:to-[#1a1b1e] rounded-[2.5rem] p-8 shadow-sm dark:shadow-2xl space-y-5 border border-blue-100 dark:border-white/5">
+                            <div className="absolute top-0 right-0 -mr-8 -mt-8 size-32 bg-blue-500/10 dark:bg-blue-600/20 rounded-full blur-2xl" />
                             <div className="relative z-10 space-y-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="size-9 rounded-2xl bg-blue-600/20 flex items-center justify-center">
-                                        <Bot size={18} className="text-blue-400" />
+                                    <div className="size-9 rounded-2xl bg-blue-100 dark:bg-blue-600/20 flex items-center justify-center">
+                                        <Bot size={18} className="text-blue-600 dark:text-blue-400" />
                                     </div>
-                                    <h4 className="text-[11px] font-black uppercase tracking-widest text-blue-400">Optimus Tasks</h4>
+                                    <h4 className="text-[11px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">Optimus Tasks</h4>
                                 </div>
-                                <p className="text-[13px] font-medium leading-relaxed italic text-slate-300">
+                                <p className="text-[13px] font-medium leading-relaxed italic text-slate-700 dark:text-slate-300">
                                     &ldquo;Tienes {urgent} tarea{urgent !== 1 ? 's' : ''} urgente{urgent !== 1 ? 's' : ''} hoy. ¿Quieres que organice tu agenda automáticamente?&rdquo;
                                 </p>
-                                <button className="flex items-center gap-2 text-[10px] font-black text-white uppercase tracking-widest hover:gap-3 transition-all group/btn">
+                                <button className="flex items-center gap-2 text-[10px] font-black text-blue-700 dark:text-white uppercase tracking-widest hover:gap-3 transition-all group/btn">
                                     Organizar agenda <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
                                 </button>
                             </div>

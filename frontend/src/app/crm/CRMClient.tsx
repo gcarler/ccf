@@ -4,8 +4,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
     Users, 
     UserPlus, 
-    Search, 
-    Filter, 
     MoreHorizontal,
     Heart,
     GraduationCap,
@@ -18,15 +16,14 @@ import {
     ChevronRight,
     Loader2,
     ArrowUpRight,
-    Star,
     Sparkles,
+    Search,
     User,
     Users as FamilyIcon
 } from 'lucide-react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
 import { motion, AnimatePresence } from 'framer-motion';
-import clsx from 'clsx';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -36,7 +33,7 @@ import { ViewType } from '@/components/ViewSwitcher';
 import { CrmGridView, CrmTableView, CrmKanbanView, CrmCalendarView, CrmGanttView } from '@/components/crm/CrmViews';
 import RightPanel from '@/components/ui/RightPanel';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
-import { CrmMember } from './types';
+import { CrmAnalyticsSummary, CrmMember } from './types';
 
 interface Member {
     id: number;
@@ -55,12 +52,13 @@ interface CrmClientProps {
     initialMembers?: CrmMember[];
 }
 
-export default function CRMClient({ initialMembers: _initialMembers = [] }: CrmClientProps) {
+export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
     const { token } = useAuth();
     const router = useRouter();
     const { openLayer, closeLayer, setRightMode, layers } = useSidebarLayers();
-    const [members, setMembers] = useState<Member[]>([]);
+    const [members, setMembers] = useState<Member[]>(() => initialMembers as unknown as Member[]);
     const [loading, setLoading] = useState(true);
+    const [analytics, setAnalytics] = useState<CrmAnalyticsSummary | null>(null);
     const [search, setSearch] = useState('');
     const [selectedMember, setSelectedMember] = useState<Member | null>(null);
     const [viewType, setViewType] = useState<ViewType>('grid');
@@ -91,15 +89,43 @@ export default function CRMClient({ initialMembers: _initialMembers = [] }: CrmC
         return () => clearTimeout(timer);
     }, [token, search]);
 
-    const stats = useMemo(() => ({
-        total: members.length,
-        baptized: Math.round(members.length * 0.65), // Simulado para dashboard
-        leaders: members.filter(m => m.church_role?.toLowerCase().includes('líder')).length
-    }), [members]);
+    useEffect(() => {
+        if (!token) return;
+
+        let alive = true;
+        const fetchAnalytics = async () => {
+            try {
+                const data = await apiFetch<CrmAnalyticsSummary>('/crm/analytics', {
+                    token,
+                    cache: 'no-store',
+                });
+                if (alive) setAnalytics(data);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        fetchAnalytics();
+        return () => {
+            alive = false;
+        };
+    }, [token]);
+
+    const stats = useMemo(() => {
+        const activeMembersFromRows = members.filter(member =>
+            ['activo', 'active', 'miembro activo'].includes(member.spiritual_status?.toLowerCase() ?? '')
+        ).length;
+
+        return {
+            total: analytics?.total_members ?? members.length,
+            active: analytics?.active_members ?? activeMembersFromRows,
+            leaders: members.filter(m => m.church_role?.toLowerCase().includes('líder')).length,
+        };
+    }, [analytics, members]);
 
     return (
         <WorkspaceLayout
-            breadcrumbs={[{ label: 'CRM Pastoral', icon: Users }, { label: 'Comunidad Viva', icon: Heart }]}
+            breadcrumbs={[{ label: 'Consolidación', icon: Users }, { label: 'Comunidad Viva', icon: Heart }]}
             viewType={viewType}
             setViewType={setViewType}
             onSearch={setSearch}
@@ -126,7 +152,7 @@ export default function CRMClient({ initialMembers: _initialMembers = [] }: CrmC
                     {/* Metrics Bento Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <MetricCard title="Membresía Total" value={stats.total} icon={Users} color="text-blue-600" bg="bg-blue-50 dark:bg-blue-500/10" />
-                        <MetricCard title="Estudiantes Activos" value={stats.baptized} icon={GraduationCap} color="text-emerald-600" bg="bg-emerald-50 dark:bg-emerald-500/10" />
+                        <MetricCard title="Miembros Activos" value={stats.active} icon={GraduationCap} color="text-emerald-600" bg="bg-emerald-50 dark:bg-emerald-500/10" />
                         <MetricCard title="Liderazgo" value={stats.leaders} icon={ShieldCheck} color="text-orange-600" bg="bg-orange-50 dark:bg-orange-500/10" />
                     </div>
 
@@ -134,7 +160,7 @@ export default function CRMClient({ initialMembers: _initialMembers = [] }: CrmC
                     <section className="space-y-5">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-[18px] font-bold text-slate-900 dark:text-white tracking-tight">Directorio Pastoral</h3>
+                                <h3 className="text-[18px] font-bold text-slate-900 dark:text-white tracking-tight">Directorio de Consolidación</h3>
                                 <p className="text-[11px] text-slate-400 font-medium mt-0.5">Gestión de miembros en tiempo real</p>
                             </div>
                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 dark:bg-white/5 px-3 py-1.5 rounded-lg">
@@ -166,7 +192,7 @@ export default function CRMClient({ initialMembers: _initialMembers = [] }: CrmC
 
             {/* Panel lateral sin modales usando RightPanel (Estándar Clean Productivity) */}
             {selectedMember && (
-                <RightPanel title="Ficha Pastoral" width={500}>
+                <RightPanel title="Ficha de Consolidación" width={500}>
                     <MemberDetailView member={selectedMember} onClose={() => {
                         setSelectedMember(null);
                         closeLayer('RIGHT');
@@ -177,7 +203,7 @@ export default function CRMClient({ initialMembers: _initialMembers = [] }: CrmC
     );
 }
 
-function MetricCard({ title, value, icon: Icon, color, bg, accent }: any) {
+function MetricCard({ title, value, icon: Icon, color, bg }: any) {
     return (
         <div className="relative p-6 rounded-2xl bg-white dark:bg-[#1e2025] border border-slate-100 dark:border-white/[0.06] shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer overflow-hidden">
             {/* Subtle gradient glow top-right */}
@@ -202,6 +228,84 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
     const { token } = useAuth();
     const [aiInsight, setAiInsight] = useState<string | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [consolidationProfile, setConsolidationProfile] = useState<{
+        member: {
+            id: number;
+            first_name: string;
+            last_name: string;
+            church_role: string | null;
+            spiritual_status: string | null;
+        };
+        positions: Array<{
+            id: number;
+            position_name: string | null;
+            category: string | null;
+            start_date: string | null;
+            end_date: string | null;
+            is_active: boolean;
+            notes: string | null;
+        }>;
+        cases: Array<{
+            id: number;
+            stage: string;
+            status: string;
+            source: string | null;
+            last_contact_at: string | null;
+            next_contact_at: string | null;
+            assignments_count: number;
+            interactions_count: number;
+            open_tasks_count: number;
+        }>;
+    } | null>(null);
+    const [loadingProfile, setLoadingProfile] = useState(false);
+    const [attendanceHistory, setAttendanceHistory] = useState<{
+        total_records: number;
+        history: Array<{
+            event_id: number;
+            event_name: string | null;
+            event_date: string | null;
+            session_date: string | null;
+            status: string;
+            check_in_at: string | null;
+        }>;
+    } | null>(null);
+    const [loadingAttendance, setLoadingAttendance] = useState(false);
+
+    useEffect(() => {
+        if (!token) return;
+        let alive = true;
+
+        const loadProfile = async () => {
+            setLoadingProfile(true);
+            try {
+                const data = await apiFetch<any>(`/crm/members/${member.id}/consolidation`, { token, cache: 'no-store' });
+                if (alive) setConsolidationProfile(data);
+            } catch {
+                if (alive) setConsolidationProfile(null);
+            } finally {
+                if (alive) setLoadingProfile(false);
+            }
+        };
+
+        const loadAttendance = async () => {
+            setLoadingAttendance(true);
+            try {
+                const data = await apiFetch<any>(`/evangelism/members/${member.id}/attendance-history`, { token, cache: 'no-store' });
+                if (alive) setAttendanceHistory(data);
+            } catch {
+                if (alive) setAttendanceHistory(null);
+            } finally {
+                if (alive) setLoadingAttendance(false);
+            }
+        };
+
+        loadProfile();
+        loadAttendance();
+
+        return () => {
+            alive = false;
+        };
+    }, [member.id, token]);
 
     const handleAiAnalysis = async () => {
         setIsAnalyzing(true);
@@ -228,7 +332,7 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
             <header className="p-8 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-black/20 shrink-0">
                 <div className="flex items-center gap-4">
                     <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-white/5 rounded-full transition-colors text-slate-400"><ChevronRight size={20} /></button>
-                    <h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-800 dark:text-white">Ficha Pastoral</h3>
+                    <h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-800 dark:text-white">Ficha de Consolidación</h3>
                 </div>
                 <div className="flex items-center gap-2">
                     <button className="p-2.5 text-slate-400 hover:text-blue-600 transition-all"><MessageCircle size={18} /></button>
@@ -260,7 +364,7 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
                             </div>
                         )}
                         <div>
-                            <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-900 dark:text-white mb-1">Optimus Pastoral</h4>
+                            <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-900 dark:text-white mb-1">Optimus Consolidación</h4>
                             <p className="text-xs text-slate-500 font-medium">Haz clic para generar un análisis espiritual con IA basado en su métrica.</p>
                         </div>
                         
@@ -302,6 +406,117 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
                         <ContactItem icon={Calendar} value={`Alta: ${new Date(member.created_at).toLocaleDateString()}`} />
                     </div>
                 </section>
+
+                <section className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Consolidación</h4>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            {loadingProfile ? 'Cargando...' : `${consolidationProfile?.cases?.length ?? 0} casos`}
+                        </span>
+                    </div>
+                    <div className="space-y-3">
+                        {loadingProfile ? (
+                            <div className="rounded-2xl border border-slate-100 dark:border-white/5 p-4 text-sm text-slate-400">
+                                Cargando perfil...
+                            </div>
+                        ) : (
+                            <>
+                                <div className="rounded-2xl border border-slate-100 dark:border-white/5 bg-white dark:bg-white/5 p-4">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Cargos actuales</h5>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">{consolidationProfile?.positions?.filter(p => p.is_active).length ?? 0}</span>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {consolidationProfile?.positions?.length ? (
+                                            consolidationProfile.positions.map((row) => (
+                                                <div key={row.id} className="rounded-xl bg-slate-50 dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 px-3 py-2">
+                                                    <div className="flex items-center justify-between gap-3">
+                                                        <div className="min-w-0">
+                                                            <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{row.position_name || 'Cargo'}</p>
+                                                            <p className="text-[10px] uppercase font-black tracking-widest text-slate-400">{row.category || 'Sin categoría'}</p>
+                                                        </div>
+                                                        <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${row.is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400'}`}>
+                                                            {row.is_active ? 'Activo' : 'Histórico'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className="text-sm text-slate-400">Sin cargos registrados.</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="rounded-2xl border border-slate-100 dark:border-white/5 bg-white dark:bg-white/5 p-4">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Casos de consolidación</h5>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">{consolidationProfile?.cases?.length ?? 0}</span>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {consolidationProfile?.cases?.length ? (
+                                            consolidationProfile.cases.map((row) => (
+                                                <div key={row.id} className="rounded-xl bg-slate-50 dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 px-3 py-2">
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        <div className="min-w-0">
+                                                            <p className="text-sm font-bold text-slate-800 dark:text-white truncate">Etapa {row.stage}</p>
+                                                            <p className="text-[10px] uppercase font-black tracking-widest text-slate-400">{row.source || 'Sin origen'}</p>
+                                                        </div>
+                                                        <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${row.status === 'active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400'}`}>
+                                                            {row.status}
+                                                        </span>
+                                                    </div>
+                                                    <div className="mt-2 flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                                        <span>{row.assignments_count} asignaciones</span>
+                                                        <span>{row.interactions_count} interacciones</span>
+                                                        <span>{row.open_tasks_count} tareas</span>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className="text-sm text-slate-400">Sin casos abiertos.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </section>
+
+                <section className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Asistencia a Eventos</h4>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            {loadingAttendance ? 'Cargando...' : `${attendanceHistory?.total_records ?? 0} registros`}
+                        </span>
+                    </div>
+                    <div className="space-y-2">
+                        {loadingAttendance ? (
+                            <div className="rounded-2xl border border-slate-100 dark:border-white/5 p-4 text-sm text-slate-400">
+                                Cargando historial...
+                            </div>
+                        ) : attendanceHistory?.history?.length ? (
+                            attendanceHistory.history.slice(0, 6).map((row) => (
+                                <div key={`${row.event_id}-${row.session_date}`} className="rounded-2xl border border-slate-100 dark:border-white/5 bg-white dark:bg-white/5 p-4">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{row.event_name || 'Evento'}</p>
+                                            <p className="text-[11px] text-slate-500 mt-0.5">
+                                                {row.event_date ? new Date(row.event_date).toLocaleDateString() : 'Sin fecha'} Â· {row.status}
+                                            </p>
+                                        </div>
+                                        <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${row.status === 'present' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400'}`}>
+                                            {row.status}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 p-4 text-sm text-slate-400">
+                                Sin asistencia registrada.
+                            </div>
+                        )}
+                    </div>
+                </section>
             </div>
             
             <footer className="p-6 border-t border-slate-100 dark:border-white/5 flex gap-4 bg-white dark:bg-[#1e1f21] shrink-0">
@@ -320,4 +535,5 @@ function ContactItem({ icon: Icon, value }: any) {
         </div>
     );
 }
+
 

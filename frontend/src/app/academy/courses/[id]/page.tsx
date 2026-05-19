@@ -7,24 +7,16 @@ import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { 
     GraduationCap, 
     ShieldCheck, 
-    Users, 
     BookOpen, 
-    CheckCircle2, 
-    Clock, 
-    TrendingUp, 
     ArrowLeft,
     FileText,
     Calendar,
-    Settings,
-    MoreHorizontal,
     ChevronRight
 } from 'lucide-react';
 import { DSBadge } from '@/design/components/DSBadge';
 import { DSCard } from '@/design/components/DSCard';
 import { DSMetric } from '@/design/components/DSMetric';
 import { toast } from 'sonner';
-import clsx from 'clsx';
-import { motion } from 'framer-motion';
 
 interface CourseStats {
     total_enrolled: number;
@@ -37,7 +29,7 @@ export default function CourseCoordinationPage() {
     const params = useParams();
     const id = params?.id as string;
     const router = useRouter();
-    const { token, user, isAuthenticated } = useAuth();
+    const { token, isAuthenticated } = useAuth();
     
     const [course, setCourse] = useState<any>(null);
     const [stats, setStats] = useState<CourseStats | null>(null);

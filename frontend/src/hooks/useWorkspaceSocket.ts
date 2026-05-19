@@ -35,7 +35,7 @@ export function useWorkspaceSocket({ clientId, rooms = [], enabled = true, onEve
         }
 
         const roomQuery = roomsKey ? `?rooms=${encodeURIComponent(roomsKey)}` : '';
-        const socket = new WebSocket(buildWsUrl(`/ws/${encodeURIComponent(resolvedClientId)}${roomQuery}`));
+        const socket = new WebSocket(buildWsUrl(`/messaging/ws/${encodeURIComponent(resolvedClientId)}${roomQuery}`));
         socketRef.current = socket;
         setStatus('connecting');
 

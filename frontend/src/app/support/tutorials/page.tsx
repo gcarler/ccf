@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Play, Clock, Star, Filter, Search, BookMarked, ChevronRight, Lock } from 'lucide-react';
+import { FileText, Play, Clock, Star, Filter, Search, ChevronRight, Lock } from 'lucide-react';
 import clsx from 'clsx';
 
 const TUTORIALS = [
     { id: 1, title: 'Primeros pasos en CCF Platform', category: 'Inicio', duration: '5 min', level: 'Básico', views: 512, rating: 4.9, free: true, thumbnail: 'from-blue-500 to-indigo-600' },
-    { id: 2, title: 'Cómo usar el CRM Pastoral correctamente', category: 'CRM', duration: '12 min', level: 'Intermedio', views: 341, rating: 4.8, free: true, thumbnail: 'from-purple-500 to-pink-600' },
+    { id: 2, title: 'Cómo usar el CRM Pastoral correctamente', category: 'CRM', duration: '12 min', level: 'Intermedio', views: 341, rating: 4.8, free: true, thumbnail: 'from-sky-500 to-pink-600' },
     { id: 3, title: 'Gestionar el pipeline de consolidación paso a paso', category: 'CRM', duration: '18 min', level: 'Intermedio', views: 289, rating: 4.7, free: false, thumbnail: 'from-emerald-500 to-teal-600' },
     { id: 4, title: 'Crear cursos y contenido en la Academia', category: 'Academia', duration: '22 min', level: 'Avanzado', views: 198, rating: 4.6, free: false, thumbnail: 'from-amber-500 to-orange-600' },
     { id: 5, title: 'Configurar finanzas y transparencia', category: 'Finanzas', duration: '15 min', level: 'Intermedio', views: 167, rating: 4.5, free: true, thumbnail: 'from-rose-500 to-red-600' },
@@ -32,13 +32,13 @@ export default function SupportTutorialsPage() {
     return (
         <div className="h-full flex flex-col bg-slate-50 dark:bg-[#0f1117]">
             <header className="h-14 border-b border-slate-200/60 dark:border-white/5 flex items-center px-6 gap-4 shrink-0 bg-white dark:bg-[#1a1d27]">
-                <FileText size={16} className="text-purple-500" />
+                <FileText size={16} className="text-sky-500" />
                 <h1 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex-1">Tutoriales de la Plataforma</h1>
                 <div className="relative">
                     <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input value={search} onChange={e => setSearch(e.target.value)}
                         placeholder="Buscar tutorial..."
-                        className="pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-white/5 border-none rounded-xl text-[12px] focus:ring-2 focus:ring-purple-500/20 w-56 transition-all text-slate-700 dark:text-slate-200" />
+                        className="pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-white/5 border-none rounded-xl text-[12px] focus:ring-2 focus:ring-sky-500/20 w-56 transition-all text-slate-700 dark:text-slate-200" />
                 </div>
             </header>
 
@@ -48,7 +48,7 @@ export default function SupportTutorialsPage() {
                 {['all', 'Básico', 'Intermedio', 'Avanzado'].map(level => (
                     <button key={level} onClick={() => setSelectedLevel(level)}
                         className={clsx("px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                            selectedLevel === level ? "bg-purple-50 dark:bg-purple-500/10 text-purple-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300")}>
+                            selectedLevel === level ? "bg-sky-50 dark:bg-sky-500/10 text-sky-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300")}>
                         {level === 'all' ? 'Todos' : level}
                     </button>
                 ))}
@@ -87,7 +87,7 @@ export default function SupportTutorialsPage() {
                                     </span>
                                     <span className="text-[9px] text-slate-400 font-bold">{t.category}</span>
                                 </div>
-                                <p className="text-[13px] font-bold text-slate-700 dark:text-slate-200 leading-snug group-hover:text-purple-600 transition-colors">
+                                <p className="text-[13px] font-bold text-slate-700 dark:text-slate-200 leading-snug group-hover:text-sky-600 transition-colors">
                                     {t.title}
                                 </p>
                                 <div className="flex items-center justify-between">
@@ -96,7 +96,7 @@ export default function SupportTutorialsPage() {
                                         <span className="text-[11px] font-bold text-slate-500">{t.rating}</span>
                                         <span className="text-[10px] text-slate-300 ml-1">{t.views} vistas</span>
                                     </div>
-                                    <ChevronRight size={14} className="text-slate-300 group-hover:text-purple-500 transition-colors" />
+                                    <ChevronRight size={14} className="text-slate-300 group-hover:text-sky-500 transition-colors" />
                                 </div>
                             </div>
                         </motion.div>

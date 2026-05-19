@@ -1,42 +1,30 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/http';
-import CrmShell from '@/components/crm/CrmShell';
-import { 
-    Heart, 
-    Calendar, 
-    MessageSquare, 
-    User, 
-    Clock, 
-    CheckCircle2, 
-    LayoutDashboard,
-    ArrowLeft,
-    HandHelping,
-    Sparkles
-} from 'lucide-react';
-import { DSCard } from '@/design/components/DSCard';
-import { DSBadge } from '@/design/components/DSBadge';
-import { toast } from 'sonner';
+import React, { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { apiFetch } from "@/lib/http";
+import CrmShell from "@/components/crm/CrmShell";
+import { Heart, Calendar, User, LayoutDashboard, HandHelping, Sparkles } from "lucide-react";
+import { DSCard } from "@/design/components/DSCard";
+import { DSBadge } from "@/design/components/DSBadge";
+import { toast } from "sonner";
 
-const MOCK_PRAYER = {
-    id: 1,
-    requester_name: 'Roberto Gómez',
-    request_text: 'Petición por la salud de mi madre que se encuentra en cirugía.',
-    category: 'Salud',
-    status: 'praying',
-    created_at: '2026-04-13T10:00:00'
+type PrayerDetail = {
+    id: number;
+    requester_name: string;
+    request_text: string;
+    category: string | null;
+    is_public: boolean;
+    status: string;
+    created_at: string | null;
 };
 
 export default function PrayerDetailPage() {
     const params = useParams();
     const id = params?.id as string;
-    const router = useRouter();
     const { token } = useAuth();
-    
-    const [prayer, setPrayer] = useState<any>(null);
+    const [prayer, setPrayer] = useState<PrayerDetail | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -44,10 +32,11 @@ export default function PrayerDetailPage() {
         const loadPrayer = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<any>(`/crm/prayer-requests/${id}`, { token }).catch(() => MOCK_PRAYER);
+                const data = await apiFetch<PrayerDetail>(`/crm/prayer-requests/${id}`, { token });
                 setPrayer(data);
             } catch (err) {
-                toast.error('Error al cargar detalle de intercesión');
+                console.error(err);
+                toast.error("Error al cargar detalle de intercesion");
             } finally {
                 setLoading(false);
             }
@@ -55,13 +44,19 @@ export default function PrayerDetailPage() {
         loadPrayer();
     }, [id, token]);
 
-    if (loading) return <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Accediendo al muro de intercesión...</div>;
+    if (loading) {
+        return <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Accediendo al muro de intercesion...</div>;
+    }
+
+    if (!prayer) {
+        return <div className="p-20 text-center font-black uppercase tracking-widest text-slate-400">No se pudo cargar la peticion.</div>;
+    }
 
     return (
         <CrmShell
             breadcrumbs={[
-                { label: 'CRM', icon: LayoutDashboard, href: '/crm' },
-                { label: 'Intercesión', icon: Heart, href: '/crm/prayers' },
+                { label: "CRM", icon: LayoutDashboard, href: "/crm" },
+                { label: "Intercesion", icon: Heart, href: "/crm/prayers" },
                 { label: prayer.requester_name, icon: User },
             ]}
         >
@@ -69,14 +64,14 @@ export default function PrayerDetailPage() {
                 <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div className="space-y-4">
                         <div className="flex items-center gap-3">
-                            <DSBadge tone="violet" label={prayer.category.toUpperCase()} />
-                            <DSBadge tone={prayer.status === 'answered' ? 'emerald' : 'amber'} label={prayer.status.toUpperCase()} />
+                            <DSBadge tone="violet" label={(prayer.category || "General").toUpperCase()} />
+                            <DSBadge tone={prayer.status === "answered" ? "emerald" : "amber"} label={prayer.status.toUpperCase()} />
                         </div>
                         <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">
                             {prayer.requester_name}
                         </h1>
                         <p className="flex items-center gap-2 text-sm font-bold text-slate-500">
-                            <Calendar size={18} className="text-blue-600" /> Recibida el {new Date(prayer.created_at).toLocaleDateString()}
+                            <Calendar size={18} className="text-blue-600" /> Recibida el {prayer.created_at ? new Date(prayer.created_at).toLocaleDateString() : "Sin fecha"}
                         </p>
                     </div>
                     <button className="px-6 py-3 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/30 hover:scale-105 transition-all flex items-center gap-2">
@@ -87,7 +82,7 @@ export default function PrayerDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 space-y-8">
                         <DSCard>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Motivo de Oración</h3>
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Motivo de Oracion</h3>
                             <p className="text-xl font-medium text-slate-700 dark:text-slate-200 italic leading-relaxed">
                                 &quot;{prayer.request_text}&quot;
                             </p>
@@ -100,7 +95,7 @@ export default function PrayerDetailPage() {
                                 <Sparkles size={14} /> AI Context
                             </div>
                             <p className="text-[11px] font-bold leading-relaxed opacity-90">
-                                Esta es la tercera petición de Roberto este mes relacionada con temas de salud familiar. Se recomienda una llamada de seguimiento pastoral directo.
+                                Esta es una peticion pastoral cargada desde el backend. Se puede agregar seguimiento y clasificacion despues.
                             </p>
                         </div>
                     </aside>

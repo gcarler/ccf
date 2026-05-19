@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-    Users, AlertTriangle, CheckCircle2, ShieldCheck,
+    Users, AlertTriangle,
     ChevronRight, UserPlus
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -52,7 +52,7 @@ export default function TeamPage() {
     return (
         <div className="flex h-full overflow-hidden">
             <div className="flex-1 flex flex-col bg-slate-50 dark:bg-[#0f1012] overflow-y-auto font-display">
-                <div className="max-w-5xl mx-auto w-full p-6 space-y-6 pb-20">
+                <div className="w-full mx-auto p-6 space-y-6 pb-20">
 
                     {/* Sub-header */}
                     <div className="flex items-center justify-between">

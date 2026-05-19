@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     Target, 
     Zap, 
@@ -8,36 +8,160 @@ import {
     Globe, 
     Plus, 
     TrendingUp,
-    ChevronRight,
     MapPin,
     Sparkles,
-    ShieldCheck,
-    Loader2,
-    Check,
     History,
     ArrowUpRight,
     FileText
 } from 'lucide-react';
-import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/context/ToastContext';
+import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import { motion, AnimatePresence } from 'framer-motion';
+import type { ViewType } from '@/components/ViewSwitcher';
+import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
+import UniversalGanttView from '@/components/ui/UniversalGanttView';
+import UniversalWikiView from '@/components/ui/UniversalWikiView';
+import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
+const MISSION_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
+
+const IMPACT_ITEMS = [
+    { id: 1, title: 'Misión Amazonas 2026', place: 'Leticia, Colombia', metric: '150 Biblias entregadas', date: '2026-05-12', status: 'Activo', tone: 'blue', progress: 70 },
+    { id: 2, title: 'Comedor Comunitario Sur', place: 'Barrio El Sol', metric: '200 Almuerzos servidos', date: '2026-05-13', status: 'En seguimiento', tone: 'emerald', progress: 85 },
+    { id: 3, title: 'Brigada de Salud Integral', place: 'Vereda La Unión', metric: '80 Atenciones médicas', date: '2026-05-07', status: 'Completado', tone: 'indigo', progress: 100 },
+];
+
+interface MissionImpactSummary {
+    total_miembros: number;
+    total_familias: number;
+    total_donaciones_cop: number;
+    total_matriculas: number;
+    distribucion: Array<{ label: string; pct: number; desc: string }>;
+}
+
 export default function AdminMissionImpactPage() {
-    const { token, isAuthenticated } = useAuth();
-    const { addToast } = useToast();
-    const [stats, setStats] = useState({ projects: 8, families: 450, souls: 850 });
-    const [loading, setLoading] = useState(true);
+    const { isAuthenticated } = useAuth();
+    const [stats, setStats] = useState({
+        projects: IMPACT_ITEMS.filter((item) => item.status !== 'Completado').length,
+        families: 0,
+        members: 0,
+    });
+    const [viewType, setViewType] = useState<ViewType>('grid');
 
     useEffect(() => {
-        // Sync with dashboard metrics if possible, otherwise keep premium mocks
-        const timer = setTimeout(() => setLoading(false), 800);
-        return () => clearTimeout(timer);
+        let alive = true;
+        const loadImpact = async () => {
+            try {
+                const data = await apiFetch<MissionImpactSummary>('/finance/impact', { cache: 'no-store' });
+                if (!alive) return;
+                setStats((current) => ({
+                    ...current,
+                    families: data.total_familias,
+                    members: data.total_miembros,
+                }));
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        loadImpact();
+        return () => {
+            alive = false;
+        };
     }, []);
 
     if (!isAuthenticated) return null;
+
+    const calendarEvents = IMPACT_ITEMS.map((item) => ({
+        id: item.id,
+        title: item.title,
+        date: item.date,
+        color: item.status === 'Completado' ? 'emerald' as const : item.status === 'En seguimiento' ? 'amber' as const : 'blue' as const,
+        location: item.place,
+    }));
+
+    const ganttItems = IMPACT_ITEMS.map((item) => ({
+        id: item.id,
+        title: item.title,
+        subtitle: `${item.place} · ${item.metric}`,
+        start_date: item.date,
+        end_date: item.date,
+        color: item.status === 'Completado' ? 'emerald' as const : item.status === 'En seguimiento' ? 'amber' as const : 'blue' as const,
+        progress: item.progress,
+    }));
+
+    const groupedItems = [
+        { id: 'active', label: 'Activo', items: IMPACT_ITEMS.filter(item => item.status === 'Activo') },
+        { id: 'tracking', label: 'En seguimiento', items: IMPACT_ITEMS.filter(item => item.status === 'En seguimiento') },
+        { id: 'done', label: 'Completado', items: IMPACT_ITEMS.filter(item => item.status === 'Completado') },
+    ];
+
+    const renderList = () => (
+        <div className="space-y-4">
+            {IMPACT_ITEMS.map((item) => (
+                <div key={item.id} className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[2rem] p-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="flex items-center gap-5">
+                        <div className="size-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
+                            <MapPin size={24} />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">{item.title}</h3>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{item.place} · {item.date}</p>
+                        </div>
+                    </div>
+                    <div className="text-sm font-black text-blue-600 italic">{item.metric}</div>
+                </div>
+            ))}
+        </div>
+    );
+
+    const renderTable = () => (
+        <div className="rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+            <table className="w-full text-left">
+                <thead className="bg-slate-50 dark:bg-white/5">
+                    <tr>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Hito</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Lugar</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Métrica</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Estado</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                    {IMPACT_ITEMS.map((item) => (
+                        <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03]">
+                            <td className="px-5 py-4 text-sm font-bold text-slate-800 dark:text-slate-100">{item.title}</td>
+                            <td className="px-5 py-4 hidden md:table-cell text-[11px] text-slate-500">{item.place}</td>
+                            <td className="px-5 py-4 hidden lg:table-cell text-[11px] text-blue-600 font-bold">{item.metric}</td>
+                            <td className="px-5 py-4"><span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[9px] font-black uppercase">{item.status}</span></td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+
+    const renderBoard = () => (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {groupedItems.map((group) => (
+                <section key={group.id} className="rounded-[2.5rem] bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-5">
+                    <div className="flex items-center justify-between mb-5">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{group.label}</span>
+                        <span className="text-[10px] font-black text-slate-400">{group.items.length}</span>
+                    </div>
+                    <div className="space-y-4">
+                        {group.items.map((item) => (
+                            <div key={item.id} className="bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-[1.5rem] p-5">
+                                <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{item.title}</p>
+                                <p className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.place}</p>
+                                <p className="mt-4 text-xs font-black text-blue-600 italic">{item.metric}</p>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            ))}
+        </div>
+    );
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#0a0f16] font-display overflow-hidden">
@@ -62,7 +186,9 @@ export default function AdminMissionImpactPage() {
 
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: 'Admin', icon: Globe }, { label: 'Impacto Misionero', icon: Target }]}
-                viewType="grid" setViewType={() => {}}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={MISSION_VIEWS}
                 rightActions={
                     <button className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
                         <Plus size={14} /> Registrar Hito
@@ -88,17 +214,30 @@ export default function AdminMissionImpactPage() {
                                 Alcance <br/> <span className="text-blue-600">Misionero.</span>
                             </h1>
                             <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-xl leading-relaxed">
-                                Registro y monitoreo de impacto espiritual y social. Cada dato representa una vida tocada por la visión CCF.
+                                Monitoreo de impacto espiritual y social con métricas operativas reales y bitácoras editoriales de misión.
                             </p>
                         </div>
                     </div>
 
+                    {viewType === 'list' ? (
+                        renderList()
+                    ) : viewType === 'table' ? (
+                        renderTable()
+                    ) : viewType === 'board' || viewType === 'kanban' ? (
+                        renderBoard()
+                    ) : viewType === 'calendar' ? (
+                        <UniversalCalendarView events={calendarEvents} title="Calendario de impacto misionero" />
+                    ) : viewType === 'gantt' ? (
+                        <UniversalGanttView items={ganttItems} moduleName="Impacto misionero" />
+                    ) : viewType === 'wiki' ? (
+                        <UniversalWikiView moduleName="Impacto misionero" storageKey="wiki_admin_mission_impact" />
+                    ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                         {/* Stats & Log */}
                         <div className="lg:col-span-8 space-y-10">
                             <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <ImpactStat label="Proyectos Activos" value={stats.projects} icon={Globe} color="blue" />
-                                <ImpactStat label="Familias Alcanzadas" value={stats.families} icon={Heart} color="rose" />
+                                <ImpactStat label="Familias Registradas" value={stats.families} icon={Heart} color="rose" />
                             </section>
 
                             {/* Activity Log Cinematic */}
@@ -107,7 +246,7 @@ export default function AdminMissionImpactPage() {
                                     <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-3">
                                         <History size={16} className="text-blue-600" /> Bitácora de Impacto Real
                                     </h3>
-                                    <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-widest border border-blue-100">Live feed</span>
+                                    <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-widest border border-blue-100">Hitos editoriales</span>
                                 </div>
                                 <div className="divide-y divide-slate-50 dark:divide-white/5">
                                     {[
@@ -153,7 +292,7 @@ export default function AdminMissionImpactPage() {
                                 </h3>
                                 
                                 <div className="space-y-10 relative z-10">
-                                    <GoalProgress label="Almas para Cristo" current={stats.souls} target={1000} color="bg-blue-500" />
+                                    <GoalProgress label="Miembros registrados" current={stats.members} target={1000} color="bg-blue-500" />
                                     <GoalProgress label="Impacto Social" current={12000} target={20000} color="bg-indigo-500" />
                                     <GoalProgress label="Nuevas Sedes" current={3} target={5} color="bg-emerald-500" />
                                 </div>
@@ -179,6 +318,7 @@ export default function AdminMissionImpactPage() {
                             </div>
                         </aside>
                     </div>
+                    )}
                 </div>
             </main>
         </div>

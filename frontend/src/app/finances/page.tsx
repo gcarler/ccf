@@ -2,25 +2,19 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-    DollarSign, TrendingUp, TrendingDown, BarChart3, PiggyBank,
-    ArrowUpRight, ArrowDownLeft, Filter, Download, Plus,
-    Calendar, Search, ChevronRight, Landmark, ShoppingCart,
-    Gift, HeartHandshake, BookOpen, Zap, MoreHorizontal,
-    CreditCard, Wallet, CircleDollarSign, AlertCircle, Loader2
+    TrendingUp, TrendingDown, BarChart3, PiggyBank,
+    Download, Plus,
+    Search, ChevronRight, Landmark,
+    Gift, HeartHandshake, Zap,
+    Wallet, CircleDollarSign, Loader2
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
-function daysAgo(n: number) {
-    const d = new Date();
-    d.setDate(d.getDate() - n);
-    return d.toISOString().slice(0, 10);
-}
-
 // ─── Tipo local ───────────────────────────────────────────────────────────────
 interface TxRecord {
     id: number;
@@ -159,7 +153,7 @@ export default function FinancesPage() {
                         <StatCard label="Ingresos Mes"  value={loading ? '...' : fmt(summary.ingresos_mes)} sub="Mes en curso" trend="up"   icon={TrendingUp}   colorClass="bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600" />
                         <StatCard label="Egresos Est."  value={loading ? '...' : fmt(summary.egresos_mes)}  sub="Estimado"       trend="down" icon={TrendingDown}  colorClass="bg-rose-100 dark:bg-rose-500/10 text-rose-500" />
                         <StatCard label="Balance Neto"  value={loading ? '...' : fmt(summary.balance)}      sub="Saldo disponible" trend="up" icon={Wallet}        colorClass="bg-blue-100 dark:bg-blue-500/10 text-blue-600" />
-                        <StatCard label="Fondo Reserva" value={loading ? '...' : fmt(summary.reserva)}      sub="10% histórico"              icon={PiggyBank}     colorClass="bg-violet-100 dark:bg-violet-500/10 text-violet-600" />
+                        <StatCard label="Fondo Reserva" value={loading ? '...' : fmt(summary.reserva)}      sub="10% histórico"              icon={PiggyBank}     colorClass="bg-blue-100 dark:bg-blue-500/10 text-blue-600" />
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -250,7 +244,7 @@ export default function FinancesPage() {
                                         const cats: Record<string, number> = {};
                                         transactions.forEach(t => { cats[t.category] = (cats[t.category] || 0) + t.amount; });
                                         const total = Object.values(cats).reduce((s, v) => s + v, 0) || 1;
-                                        const COLORS = ['bg-blue-500', 'bg-indigo-500', 'bg-violet-500', 'bg-emerald-500', 'bg-amber-500'];
+                                        const COLORS = ['bg-blue-500', 'bg-indigo-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500'];
                                         return Object.entries(cats).slice(0, 5).map(([label, amount], i) => {
                                             const pct = Math.round((amount / total) * 100);
                                             return (

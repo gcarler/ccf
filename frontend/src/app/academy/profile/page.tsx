@@ -23,6 +23,7 @@ import {
     Target
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import type { ViewType } from '@/components/ViewSwitcher';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import type { AcademyStudentProfile, CertificateRecord, EnrollmentRecord } from '@/types/academy';
@@ -35,6 +36,7 @@ export default function StudentProfilePage() {
     const [certificates, setCertificates] = useState<CertificateRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [viewType, setViewType] = useState<ViewType>('grid');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -44,7 +46,7 @@ export default function StudentProfilePage() {
                 setError(null);
                 const [profileData, certsData] = await Promise.all([
                     apiFetch<AcademyStudentProfile>(`/academy/me/profile`, { token, cache: 'no-store' }),
-                    apiFetch<CertificateRecord[]>(`/academy/users/${user.id}/certificates`, { token, cache: 'no-store' })
+                    apiFetch<CertificateRecord[]>(`/academy/me/certificates`, { token, cache: 'no-store' })
                 ]);
                 setProfile(profileData);
                 setCertificates(Array.isArray(certsData) ? certsData : []);
@@ -72,7 +74,9 @@ export default function StudentProfilePage() {
                         { label: 'Academia', icon: GraduationCap },
                         { label: 'Mi Perfil Pastoral', icon: ShieldCheck }
                     ]}
-                    viewType="grid" setViewType={() => {}}
+                    viewType={viewType}
+                    setViewType={setViewType}
+                    availableViews={['grid', 'list', 'table']}
                 />
                 <div className="flex-1 p-10 space-y-8">
                     <Skeleton className="h-72 rounded-[3rem]" />
@@ -93,7 +97,9 @@ export default function StudentProfilePage() {
                     { label: 'Academia', icon: GraduationCap },
                     { label: 'Mi Perfil Pastoral', icon: ShieldCheck }
                 ]}
-                viewType="grid" setViewType={() => {}}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={['grid', 'list', 'table']}
                 rightActions={
                     <button className="flex items-center gap-2 px-6 py-2 bg-white dark:bg-white/5 hover:bg-slate-50 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-all border border-slate-200 dark:border-white/10 shadow-sm active:scale-95">
                         <Edit3 size={14} /> Editar Perfil
@@ -110,6 +116,52 @@ export default function StudentProfilePage() {
                     </div>
                 )}
                 
+                {viewType === 'list' && (
+                    <div className="relative z-10 mx-auto max-w-5xl space-y-5">
+                        {activeCourses.map((enrollment) => (
+                            <article key={enrollment.id} className="rounded-3xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                                <h3 className="text-lg font-black text-slate-900 dark:text-white">{enrollment.course.title}</h3>
+                                <p className="mt-2 text-sm text-slate-500">Progreso {Math.round(enrollment.progress_percent)}% · Asistencia {Math.round(enrollment.attendance_percent)}%</p>
+                            </article>
+                        ))}
+                        {certificates.map((certificate, index) => (
+                            <article key={`${certificate.course_title}-${index}`} className="rounded-3xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                                <h3 className="text-lg font-black text-slate-900 dark:text-white">{certificate.course_title || certificate.certificate_type || 'Certificado'}</h3>
+                                <p className="mt-2 text-sm text-slate-500">Expedido {new Date(certificate.issued_at).toLocaleDateString()}</p>
+                            </article>
+                        ))}
+                    </div>
+                )}
+
+                {viewType === 'table' && (
+                    <div className="relative z-10 mx-auto max-w-6xl overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+                        <table className="w-full text-left">
+                            <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                <tr><th className="px-6 py-4">Tipo</th><th className="px-6 py-4">Nombre</th><th className="px-6 py-4">Progreso</th><th className="px-6 py-4">Detalle</th></tr>
+                            </thead>
+                            <tbody>
+                                {activeCourses.map((enrollment) => (
+                                    <tr key={enrollment.id} className="border-t border-slate-100 dark:border-white/5">
+                                        <td className="px-6 py-4 font-bold text-blue-600">Curso</td>
+                                        <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{enrollment.course.title}</td>
+                                        <td className="px-6 py-4 text-slate-500">{Math.round(enrollment.progress_percent)}%</td>
+                                        <td className="px-6 py-4 text-slate-500">Asistencia {Math.round(enrollment.attendance_percent)}%</td>
+                                    </tr>
+                                ))}
+                                {certificates.map((certificate, index) => (
+                                    <tr key={`${certificate.course_title}-${index}`} className="border-t border-slate-100 dark:border-white/5">
+                                        <td className="px-6 py-4 font-bold text-emerald-600">Certificado</td>
+                                        <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{certificate.course_title || certificate.certificate_type || 'Certificado'}</td>
+                                        <td className="px-6 py-4 text-slate-500">100%</td>
+                                        <td className="px-6 py-4 text-slate-500">{new Date(certificate.issued_at).toLocaleDateString()}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {viewType === 'grid' && (
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 relative z-10">
                     
                     {/* Left Column: Identity Card */}
@@ -165,7 +217,7 @@ export default function StudentProfilePage() {
                                         { icon: Star, color: 'from-amber-400 to-orange-500', locked: false, title: 'Excelencia' },
                                         { icon: BookOpen, color: 'from-blue-400 to-indigo-600', locked: false, title: 'Sabiduría' },
                                         { icon: Heart, color: 'from-rose-400 to-pink-600', locked: false, title: 'Servicio' },
-                                        { icon: Zap, color: 'from-indigo-400 to-purple-600', locked: false, title: 'Poder' },
+                                        { icon: Zap, color: 'from-indigo-400 to-sky-600', locked: false, title: 'Poder' },
                                         { icon: ShieldCheck, color: 'from-emerald-400 to-teal-600', locked: false, title: 'Fidelidad' },
                                         { icon: Target, color: 'from-slate-400 to-slate-600', locked: true, title: 'Misiones' },
                                     ].map((badge, i) => (
@@ -281,6 +333,7 @@ export default function StudentProfilePage() {
                         </section>
                     </div>
                 </div>
+                )}
             </main>
         </div>
     );

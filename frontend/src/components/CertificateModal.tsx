@@ -8,13 +8,9 @@ import {
     Award, 
     ShieldCheck, 
     Calendar, 
-    User, 
-    BookOpen,
-    CheckCircle2,
     QrCode,
     Verified
 } from 'lucide-react';
-import clsx from 'clsx';
 
 interface Certificate {
     id: number;
@@ -90,7 +86,7 @@ export default function CertificateModal({ certificate, enrollment, userName, on
                                 </div>
                             </div>
                             <div className="flex items-start gap-3">
-                                <div className="p-2 bg-purple-50 dark:bg-purple-500/10 rounded-xl text-purple-600">
+                                <div className="p-2 bg-sky-50 dark:bg-sky-500/10 rounded-xl text-sky-600">
                                     <Calendar size={18} />
                                 </div>
                                 <div className="min-w-0">

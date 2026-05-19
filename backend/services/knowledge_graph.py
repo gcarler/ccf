@@ -26,17 +26,17 @@ def _course_nodes(db: Session, limit: int) -> List[Dict[str, Any]]:
 
 
 def _person_nodes(db: Session, limit: int) -> List[Dict[str, Any]]:
-    persons = db.query(models.Person).order_by(models.Person.created_at.desc()).limit(limit).all()
+    persons = db.query(models.Member).order_by(models.Member.created_at.desc()).limit(limit).all()
     nodes: List[Dict[str, Any]] = []
     for person in persons:
         nodes.append({
-            "id": f"person-{person.person_id}",
+            "id": f"person-{person.id}",
             "type": "person",
             "label": f"{person.first_name} {person.last_name}",
             "detail": person.email,
             "meta": {
-                "status": person.status,
-                "gender": person.gender,
+                "status": person.spiritual_status,
+                "gender": getattr(person, "gender", ""),
             }
         })
     return nodes
@@ -154,9 +154,9 @@ def build_graph_snapshot(db: Session, limit: int = 50, types: Optional[Iterable[
     for enrollment in enrollments:
         person_id = None
         if enrollment.user_id is not None:
-            person = db.query(models.Person).filter(models.Person.user_id == enrollment.user_id).first()
+            person = db.query(models.Member).filter(models.Member.user_id == enrollment.user_id).first()
             if person:
-                person_id = f"person-{person.person_id}"
+                person_id = f"person-{person.id}"
         if person_id and f"course-{enrollment.course_id}" in seen:
             edges.append({
                 "from": person_id,
@@ -182,9 +182,9 @@ def build_graph_snapshot(db: Session, limit: int = 50, types: Optional[Iterable[
             })
 
     # Family membership edges
-    family_members = db.query(models.Person).filter(models.Person.family_id.isnot(None)).limit(limit).all()
+    family_members = db.query(models.Member).filter(models.Member.family_id.isnot(None)).limit(limit).all()
     for person in family_members:
-        pid = f"person-{person.person_id}"
+        pid = f"person-{person.id}"
         fid = f"family-{person.family_id}"
         if pid in seen and fid in seen:
             edges.append({

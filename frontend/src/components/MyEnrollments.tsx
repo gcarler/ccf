@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { apiUrl } from "../lib/api";
-import { apiFetch, ApiError } from "@/lib/http";
+import { apiFetch } from "@/lib/http";
 
 interface Enrollment {
   id: number;
@@ -38,7 +38,7 @@ interface MyEnrollmentsProps {
   initialEnrollments?: Enrollment[];
 }
 
-import { CheckCircle, Award, FileText, Send, AlertCircle, Info, ArrowRight, Play, BookOpen, ChevronRight, X as CloseIcon, Loader2, BookMarked, School, Paperclip, Upload, File, Clock } from "lucide-react";
+import { Award, FileText, ArrowRight, Play, BookOpen, ChevronRight, X as CloseIcon, Loader2, School, Paperclip, Upload, File, Clock } from "lucide-react";
 import { useToast } from "@/context/ToastContext";
 import { useMeshSocket } from "@/hooks/useMeshSocket";
 import CertificateModal from "./CertificateModal";
@@ -114,7 +114,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
       setAssessmentsByCourse(Object.fromEntries(assessmentsEntries));
 
       try {
-        const certificates = await apiFetch<Certificate[]>(`/academy/users/${userId}/certificates`, {
+        const certificates = await apiFetch<Certificate[]>(`/academy/me/certificates`, {
           token,
           cache: "no-store",
         });

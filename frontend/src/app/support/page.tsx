@@ -1,26 +1,19 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { 
+import React, { useState, useEffect, useMemo } from 'react';
+import {
     LifeBuoy, 
     Mail, 
-    Loader2, 
-    Send, 
-    X, 
-    ExternalLink, 
+    Loader2,
+    Send,
     MessageSquare, 
-    Book, 
-    FileText, 
-    Search, 
-    Filter, 
-    Plus, 
+    FileText,
+    Book,
     Layout, 
-    CheckCircle, 
-    Clock, 
+    CheckCircle,
+    Clock,
     AlertCircle,
     ChevronRight,
-    MoreHorizontal,
-    Edit3,
     History
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -29,18 +22,15 @@ import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { ViewType } from '@/components/ViewSwitcher';
-import StatusPicker, { StatusOption } from '@/components/ui/StatusPicker';
 import clsx from 'clsx';
 import UniversalTableView from '@/components/ui/UniversalTableView';
+import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
+import UniversalGanttView from '@/components/ui/UniversalGanttView';
+import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
 import { useRouter } from 'next/navigation';
 
-const TICKET_STATUS_OPTIONS: StatusOption[] = [
-    { label: 'ABIERTO', value: 'abierto', color: 'bg-blue-500', text: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-    { label: 'EN PROGRESO', value: 'proceso', color: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20' },
-    { label: 'RESUELTO', value: 'resuelto', color: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-    { label: 'CERRADO', value: 'cerrado', color: 'bg-slate-400', text: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-100 dark:bg-white/5' },
-];
+const SUPPORT_VIEWS: ViewType[] = ['grid', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 export default function SupportPage() {
     const { token, user } = useAuth();
@@ -57,8 +47,8 @@ export default function SupportPage() {
     // New ticket form state
     const [newTicket, setNewTicket] = useState({ subject: '', description: '', category: 'General' });
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const isStaff = user?.role === 'admin' || user?.role === 'staff';
+    void loading;
+    void setLoading;
 
     useEffect(() => {
         const fetchTickets = async () => {
@@ -76,22 +66,6 @@ export default function SupportPage() {
         };
         fetchTickets();
     }, [token]);
-
-    const updateTicketStatus = useCallback(async (id: number, newStatus: string) => {
-        setTickets(prev => prev.map(t => t.id === id ? { ...t, status: newStatus } : t));
-        if (!token) return;
-        try {
-            await apiFetch(`/support/${id}`, {
-                method: 'PATCH',
-                token,
-                body: { status: newStatus }
-            });
-            addToast('Estado de ticket actualizado', 'success');
-        } catch (err) {
-            console.error("Failed to update ticket status:", err);
-            addToast('Error al actualizar estado', 'error');
-        }
-    }, [token, addToast]);
 
     const handleCreateTicket = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -131,6 +105,32 @@ export default function SupportPage() {
         );
     }, [tickets, search]);
 
+    const groupedTickets = useMemo(() => {
+        const statuses = ['abierto', 'pendiente', 'en_progreso', 'resuelto', 'cerrado'];
+        return statuses.map((status) => ({
+            status,
+            tickets: filteredTickets.filter((ticket) => (ticket.status || 'abierto') === status),
+        })).filter((column) => column.tickets.length > 0 || ['abierto', 'pendiente', 'resuelto'].includes(column.status));
+    }, [filteredTickets]);
+
+    const calendarEvents = useMemo(() => filteredTickets.map((ticket) => ({
+        id: ticket.id,
+        title: ticket.subject,
+        date: (ticket.created_at || new Date().toISOString()).slice(0, 10),
+        color: ticket.status === 'resuelto' || ticket.status === 'cerrado' ? 'emerald' as const : ticket.priority === 'urgent' ? 'rose' as const : 'blue' as const,
+        location: ticket.category,
+    })), [filteredTickets]);
+
+    const ganttItems = useMemo(() => filteredTickets.map((ticket) => ({
+        id: ticket.id,
+        title: ticket.subject,
+        subtitle: ticket.category || ticket.status,
+        start_date: (ticket.created_at || new Date().toISOString()).slice(0, 10),
+        end_date: (ticket.updated_at || ticket.created_at || new Date().toISOString()).slice(0, 10),
+        color: ticket.status === 'resuelto' || ticket.status === 'cerrado' ? 'emerald' as const : ticket.priority === 'urgent' ? 'rose' as const : 'blue' as const,
+        progress: ticket.status === 'resuelto' || ticket.status === 'cerrado' ? 100 : ticket.status === 'en_progreso' ? 55 : 20,
+    })), [filteredTickets]);
+
     const supportBaseCommands = useMemo(() => [
         { id: 'support-new-ticket', label: 'Crear ticket de soporte', description: 'Reportar incidente o duda', group: 'Soporte', action: () => setIsCreateDrawerOpen(true) },
         { id: 'support-view-table', label: 'Vista tabla', description: 'Gestionar tickets en lista', group: 'Soporte', action: () => setViewType('table') },
@@ -159,13 +159,13 @@ export default function SupportPage() {
                 ]}
                 viewType={viewType}
                 setViewType={setViewType}
-                availableViews={['grid', 'table']}
+                availableViews={SUPPORT_VIEWS}
                 onSearch={setSearch}
                 onAdd={() => setIsCreateDrawerOpen(true)}
             />
 
             <main className="flex-1 overflow-y-auto scrollbar-thin">
-                {isStaff && viewType === 'table' ? (
+                {viewType === 'table' ? (
                     <UniversalTableView
                         data={filteredTickets}
                         columns={[
@@ -201,6 +201,59 @@ export default function SupportPage() {
                         groupBy="status"
                         onRowClick={handleOpenTicket}
                     />
+                ) : viewType === 'list' ? (
+                    <div className="mx-auto max-w-5xl space-y-3 p-6">
+                        {filteredTickets.map((ticket) => (
+                            <button key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="w-full rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:border-blue-300 dark:border-white/10 dark:bg-white/5">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="min-w-0">
+                                        <p className="truncate text-sm font-black text-slate-900 dark:text-white">{ticket.subject}</p>
+                                        <p className="truncate text-xs font-medium text-slate-400">{ticket.description}</p>
+                                    </div>
+                                    <span className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:bg-white/10">{ticket.status || 'abierto'}</span>
+                                </div>
+                            </button>
+                        ))}
+                        {filteredTickets.length === 0 && <div className="py-16 text-center text-sm font-semibold text-slate-400">Sin tickets para mostrar.</div>}
+                    </div>
+                ) : viewType === 'board' || viewType === 'kanban' ? (
+                    <div className="flex gap-4 overflow-x-auto p-6">
+                        {groupedTickets.map((column) => (
+                            <section key={column.status} className="w-80 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                                <div className="mb-3 flex items-center justify-between px-1">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{column.status}</p>
+                                    <span className="text-[10px] font-black text-slate-400">{column.tickets.length}</span>
+                                </div>
+                                <div className="space-y-2">
+                                    {column.tickets.map((ticket) => (
+                                        <button key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm dark:border-white/10 dark:bg-white/5">
+                                            <p className="line-clamp-2 text-xs font-black text-slate-900 dark:text-white">{ticket.subject}</p>
+                                            <p className="mt-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">{ticket.category || 'General'}</p>
+                                        </button>
+                                    ))}
+                                    {column.tickets.length === 0 && <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center text-[10px] font-black uppercase tracking-widest text-slate-400 dark:border-white/10">Vacio</div>}
+                                </div>
+                            </section>
+                        ))}
+                    </div>
+                ) : viewType === 'calendar' ? (
+                    <div className="h-[720px] p-6">
+                        <UniversalCalendarView events={calendarEvents} title="Calendario de soporte" onEventClick={(event) => {
+                            const ticket = filteredTickets.find((item) => item.id === event.id);
+                            if (ticket) handleOpenTicket(ticket);
+                        }} />
+                    </div>
+                ) : viewType === 'gantt' ? (
+                    <div className="h-[720px] p-6">
+                        <UniversalGanttView items={ganttItems} moduleName="Soporte" onItemClick={(item) => {
+                            const ticket = filteredTickets.find((entry) => entry.id === item.id);
+                            if (ticket) handleOpenTicket(ticket);
+                        }} />
+                    </div>
+                ) : viewType === 'wiki' ? (
+                    <div className="p-6">
+                        <UniversalWikiView moduleName="Soporte" storageKey="wiki_support" />
+                    </div>
                 ) : (
                     <div className="p-6 max-w-4xl mx-auto space-y-10">
                         {/* User View */}

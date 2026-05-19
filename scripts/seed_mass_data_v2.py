@@ -9,13 +9,14 @@ import uuid
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backend import models, schemas, crud
-from backend.core.database import SessionLocal, engine, Base
+from backend.core.database import SessionLocal
+from backend.management.schema import upgrade_with_optional_bootstrap
 from backend.core.security import get_password_hash
 
 def seed_mass_data():
     print("🚀 Iniciando Operación 'Crecimiento Exponencial' (600+ registros)...")
     
-    Base.metadata.create_all(bind=engine)
+    upgrade_with_optional_bootstrap()
     db = SessionLocal()
     
     # Listas para generación aleatoria

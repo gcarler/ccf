@@ -7,9 +7,7 @@ import {
     ChevronRight, 
     Phone, 
     MessageCircle, 
-    MoreHorizontal,
-    Clock,
-    Zap
+    Clock
 } from 'lucide-react';
 import clsx from 'clsx';
 import { SOURCES, STAGE_PROGRESS } from '@/app/crm/pipeline/constants';

@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-    Users, Shield, UserPlus, Search, Filter, 
-    MoreHorizontal, Mail, ShieldCheck, Zap, 
-    Trash2, Edit3, CheckCircle2, XCircle, 
-    ArrowRight, Loader2, Key, Star
+    Users, Shield, UserPlus,
+    ShieldCheck, Zap,
+    Trash2, CheckCircle2, XCircle,
+    Key, Star
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -23,7 +23,7 @@ export default function AdminUsersPage() {
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedUser, setSelectedUser] = useState<any>(null);
+    const [selectedUser] = useState<any>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     const fetchUsers = async () => {
@@ -145,7 +145,7 @@ export default function AdminUsersPage() {
                                             <td className="px-8 py-5">
                                                 <span className={clsx(
                                                     "inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest",
-                                                    user.role === 'admin' ? "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400" :
+                                                    user.role === 'admin' ? "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400" :
                                                     user.role === 'pastor' ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400" :
                                                     "bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400"
                                                 )}>

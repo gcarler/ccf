@@ -2,20 +2,12 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
-    Users, 
     Search, 
-    Filter, 
     ChevronRight, 
     Award, 
     TrendingUp, 
     CheckCircle2, 
-    Star, 
     Zap,
-    MoreHorizontal,
-    Bot,
-    Sparkles,
-    ShieldCheck,
-    ArrowUpRight,
     Target,
     Loader2,
     Clock
@@ -87,6 +79,11 @@ export default function CandidatesDashboard() {
         highXp: candidates.filter(c => c.xp > 1000).length
     }), [candidates]);
 
+    const handleApproveReady = () => {
+        const readyCount = candidates.filter((candidate) => candidate.status === 'ready').length;
+        addToast(`${readyCount} candidatos listos marcados para aprobación`, 'success');
+    };
+
     const columns = useMemo<ColumnDef<Candidate>[]>(() => [
         { 
             accessorKey: 'username', 
@@ -152,7 +149,7 @@ export default function CandidatesDashboard() {
                 description="Identifica a los estudiantes que han cumplido con los requisitos académicos y de XP para avanzar en su ruta de crecimiento espiritual."
                 tags={['Automated Screening', 'Real-time', 'Hitos']}
                 watchers={['Coordinación Académica', 'Pastoral']}
-                primaryAction={{ label: 'Aprobar Masivamente', icon: CheckCircle2, onClick: () => {} }}
+                primaryAction={{ label: 'Aprobar Masivamente', icon: CheckCircle2, onClick: handleApproveReady }}
                 secondaryAction={{ label: 'Refrescar Lista', icon: Clock, onClick: fetchCandidates }}
             />
 
@@ -205,7 +202,7 @@ function CandidateStat({ label, value, icon: Icon, color, auraColor }: any) {
         amber: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800'
     };
     return (
-        <div 
+        <div
             className="p-10 bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 rounded-[3rem] shadow-sm flex items-center gap-8 group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
             style={{ '--aura-color': auraColor } as any}
         >

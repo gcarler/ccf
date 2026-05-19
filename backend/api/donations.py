@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from backend import crud, schemas, models
 from backend.auth import require_admin, require_active_user
@@ -47,12 +49,17 @@ def donations_summary(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    # Simulated monthly summary for now
-    return [
-        {"month": "Ene", "amount": 10500},
-        {"month": "Feb", "amount": 11200},
-        {"month": "Mar", "amount": 12450}
-    ]
+    """Resumen mensual de donaciones calculado desde la base de datos."""
+    monthly = db.query(
+        func.strftime("%m", models.Donation.created_at).label("month_num"),
+        func.sum(models.Donation.amount).label("total"),
+    ).filter(
+        models.Donation.created_at >= datetime(timezone.utc).replace(year=datetime.now(timezone.utc).year, month=1, day=1, tzinfo=None)
+    ).group_by("month_num").order_by("month_num").all()
+
+    month_names = {1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr", 5: "May", 6: "Jun",
+                   7: "Jul", 8: "Ago", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic"}
+    return [{"month": month_names.get(int(r[0]), r[0]), "amount": round(r[1])} for r in monthly]
 
 
 @router.get("/{donation_id}/certificate")

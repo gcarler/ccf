@@ -3,29 +3,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
     Award, 
-    Search, 
-    Filter, 
     Plus, 
     ChevronRight, 
-    CheckCircle2, 
-    Users, 
-    Calendar, 
     Zap,
     Heart,
     Star,
     Sparkles,
     Flame,
-    Navigation,
-    MoreHorizontal,
-    Loader2,
     Check
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import type { ViewType } from '@/components/ViewSwitcher';
+import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
+import UniversalGanttView from '@/components/ui/UniversalGanttView';
+import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { motion, AnimatePresence } from 'framer-motion';
-import clsx from 'clsx';
+import { Loader2 } from 'lucide-react';
 
 const iconMap: Record<string, any> = {
     'zap': Zap,
@@ -35,12 +31,14 @@ const iconMap: Record<string, any> = {
     'sparkles': Sparkles,
     'heart': Heart
 };
+const MILESTONE_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 export default function SpiritualMilestones() {
     const { token, isAuthenticated } = useAuth();
     const { addToast } = useToast();
     const [milestones, setMilestones] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [viewType, setViewType] = useState<ViewType>('grid');
 
     const fetchMilestones = useCallback(async () => {
         if (!token) return;
@@ -61,6 +59,98 @@ export default function SpiritualMilestones() {
     }, [isAuthenticated, fetchMilestones]);
 
     if (!isAuthenticated) return null;
+
+    const groupedMilestones = [
+        { id: 'high', label: 'Alto alcance', rows: milestones.filter((m) => (m.count || 0) >= 100) },
+        { id: 'growth', label: 'En crecimiento', rows: milestones.filter((m) => (m.count || 0) < 100) },
+    ];
+
+    const calendarEvents = milestones.map((m, index) => ({
+        id: m.id,
+        title: m.name,
+        date: (m.created_at || new Date(Date.now() + index * 86400000).toISOString()).split('T')[0],
+        color: (m.count || 0) >= 100 ? 'emerald' as const : 'blue' as const,
+        location: `${m.count || 0} personas`,
+    }));
+
+    const ganttItems = milestones.map((m, index) => {
+        const date = m.created_at || new Date(Date.now() + index * 86400000).toISOString();
+        return {
+            id: m.id,
+            title: m.name,
+            subtitle: `${m.xp || 0} XP · ${m.count || 0} personas`,
+            start_date: date,
+            end_date: date,
+            color: (m.count || 0) >= 100 ? 'emerald' as const : 'blue' as const,
+            progress: Math.min(100, Math.max(20, Number(m.count || 0))),
+        };
+    });
+
+    const renderList = () => (
+        <div className="space-y-4">
+            {milestones.map((m) => {
+                const Icon = iconMap[m.icon?.toLowerCase()] || Award;
+                return (
+                    <div key={m.id} className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[2rem] p-6 flex items-center justify-between gap-5">
+                        <div className="flex items-center gap-5">
+                            <div className="size-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center"><Icon size={24} /></div>
+                            <div>
+                                <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{m.name}</h3>
+                                <p className="mt-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{m.description || 'Hito ministerial'}</p>
+                            </div>
+                        </div>
+                        <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{m.count} personas</span>
+                    </div>
+                );
+            })}
+        </div>
+    );
+
+    const renderTable = () => (
+        <div className="rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+            <table className="w-full text-left">
+                <thead className="bg-slate-50 dark:bg-white/5">
+                    <tr>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Hito</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Descripción</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">XP</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Alcance</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                    {milestones.map((m) => (
+                        <tr key={m.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03]">
+                            <td className="px-5 py-4 text-sm font-bold text-slate-800 dark:text-slate-100">{m.name}</td>
+                            <td className="px-5 py-4 hidden md:table-cell text-[11px] text-slate-500">{m.description || '—'}</td>
+                            <td className="px-5 py-4 hidden lg:table-cell text-[11px] text-blue-600 font-bold">{m.xp || 0}</td>
+                            <td className="px-5 py-4 text-[11px] font-black text-slate-500">{m.count || 0}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+
+    const renderBoard = () => (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {groupedMilestones.map((group) => (
+                <section key={group.id} className="rounded-[2.5rem] bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-5">
+                    <div className="flex items-center justify-between mb-5">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{group.label}</span>
+                        <span className="text-[10px] font-black text-slate-400">{group.rows.length}</span>
+                    </div>
+                    <div className="space-y-3">
+                        {group.rows.map((m) => (
+                            <div key={m.id} className="bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-[1.5rem] p-4">
+                                <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{m.name}</p>
+                                <p className="mt-2 text-[10px] font-bold text-slate-400">{m.count || 0} personas · {m.xp || 0} XP</p>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            ))}
+        </div>
+    );
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#0a0f16] font-display overflow-hidden">
@@ -85,7 +175,9 @@ export default function SpiritualMilestones() {
 
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: 'Vida Espiritual', icon: Heart }, { label: 'Insignias e Hitos', icon: Award }]}
-                viewType="grid" setViewType={() => {}}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={MILESTONE_VIEWS}
                 rightActions={
                     <button className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
                         <Plus size={14} /> Nueva Insignia
@@ -116,6 +208,18 @@ export default function SpiritualMilestones() {
                             <div className="py-40 flex flex-col items-center justify-center gap-6 text-slate-400 font-black uppercase tracking-[0.5em] animate-pulse">
                                 <Loader2 className="animate-spin text-blue-600" size={48} strokeWidth={1.5} /> Sincronizando Conquistas...
                             </div>
+                        ) : viewType === 'list' ? (
+                            renderList()
+                        ) : viewType === 'table' ? (
+                            renderTable()
+                        ) : viewType === 'board' || viewType === 'kanban' ? (
+                            renderBoard()
+                        ) : viewType === 'calendar' ? (
+                            <UniversalCalendarView events={calendarEvents} title="Calendario de hitos" />
+                        ) : viewType === 'gantt' ? (
+                            <UniversalGanttView items={ganttItems} moduleName="Hitos de fe" />
+                        ) : viewType === 'wiki' ? (
+                            <UniversalWikiView moduleName="Hitos de fe" storageKey="wiki_admin_milestones" />
                         ) : (
                             <div className="space-y-16">
                                 {/* Milestone Summary Cards */}

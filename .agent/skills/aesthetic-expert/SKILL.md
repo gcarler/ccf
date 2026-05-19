@@ -59,8 +59,8 @@ La plataforma usa un sistema de **3 capas laterales apiladas** en el eje X:
 | Uso | Color | Tailwind |
 |-----|-------|----------|
 | Acción primaria / CTA | `#2563EB` | `blue-600` |
-| Acción secundaria / hover | `#7C3AED` | `violet-600` |
-| CTA degradado | `from-violet-600 to-indigo-600` | gradient |
+| Acción secundaria / hover | `#2563EB` | `blue-600` |
+| CTA degradado | `from-blue-600 to-indigo-600` | gradient |
 | Éxito / completado | `#10B981` | `emerald-500` |
 | Advertencia / en curso | `#F59E0B` | `amber-500` |
 | Error / bloqueado | `#EF4444` | `rose-500` |
@@ -106,7 +106,7 @@ La plataforma usa un sistema de **3 capas laterales apiladas** en el eje X:
 className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all"
 
 // CTA gradiente (Ask AI, acciones de impacto)
-className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold hover:opacity-90 transition-all"
+className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold hover:opacity-90 transition-all"
 
 // Ghost / secundario
 className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
@@ -130,7 +130,7 @@ className="group relative bg-white dark:bg-[#252528] rounded-2xl border border-s
 className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400"
 
 // En Curso
-className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 dark:bg-violet-900/20 text-violet-700 dark:text-violet-400"
+className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
 
 // Bloqueado
 className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"
@@ -216,7 +216,7 @@ En módulos con múltiples entidades (Proyectos, Tareas, CRM), SIEMPRE ofrecer m
 | Tabla | `Table2` | Spreadsheet ordenable, sticky quick-add |
 | Wiki | `BookOpen` | Editor Tiptap rich-text con autosave |
 
-**Quick-add unificado:** Toda vista debe tener un mecanismo de creación rápida — preferiblemente una **barra sticky violeta en el tope** del área de contenido que aparece al activarse.
+**Quick-add unificado:** Toda vista debe tener un mecanismo de creación rápida — preferiblemente una **barra sticky azul en el tope** del área de contenido que aparece al activarse.
 
 ---
 

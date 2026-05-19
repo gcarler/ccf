@@ -3,11 +3,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import AdminHero from '@/components/admin/AdminHero';
 import CommunityToolbarChip from '@/components/community/ToolbarChip';
-import { LayoutDashboard, MessageCircle, Feather, CalendarRange, Link2, FileText, Globe, ChevronRight, Palette, PanelsTopLeft } from 'lucide-react';
+import { LayoutDashboard, MessageCircle, Feather, CalendarRange, Link2, FileText, Globe, ChevronRight, Palette, PanelsTopLeft, ImageIcon } from 'lucide-react';
 import { FARO_BLOCKS } from '@/lib/cms/blocks';
 import clsx from 'clsx';
 import { canEditCms, canManageSites } from '@/lib/cms/permissions';
@@ -20,6 +21,7 @@ const CMS_TABS = [
     { id: 'hero',        label: 'Landing Hero', href: '/cms/content',      icon: Feather },
     { id: 'eventos',     label: 'Eventos',      href: '/cms/events',       icon: CalendarRange },
     { id: 'menus',       label: 'Menús',        href: '/cms/menus',        icon: Link2 },
+    { id: 'media',       label: 'Media',        href: '/cms/media',        icon: ImageIcon },
     { id: 'builder',     label: 'Builder',      href: '/cms/builder',      icon: PanelsTopLeft },
     { id: 'themes',      label: 'Temas',        href: '/cms/themes',       icon: Palette },
     { id: 'sites',       label: 'Sitios',       href: '/cms/sites',        icon: Globe },
@@ -45,18 +47,17 @@ interface TestimonialPreview {
 export default function CmsHomePage() {
     const { token, isAuthenticated, user } = useAuth();
     const pathname = usePathname();
+    const router = useRouter();
     const [stats, setStats] = useState<CmsStats | null>(null);
     const [recentTestimonials, setRecentTestimonials] = useState<TestimonialPreview[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeFilter, setActiveFilter] = useState('Todos');
-
     const canEdit = canEditCms(user?.role);
     const canManage = canManageSites(user?.role);
 
     const availableTabs = useMemo(
         () => CMS_TABS.filter((tab) => {
             if (tab.id === 'sites') return canManage;
-            if (['paginas', 'hero', 'eventos', 'menus', 'builder', 'themes', 'testimonios'].includes(tab.id)) return canEdit;
+            if (['paginas', 'hero', 'eventos', 'menus', 'media', 'builder', 'themes', 'testimonios'].includes(tab.id)) return canEdit;
             return true;
         }),
         [canEdit, canManage]
@@ -76,7 +77,7 @@ export default function CmsHomePage() {
             }
             setLoading(true);
             try {
-                const testimonials = await apiFetch<TestimonialPreview[]>('/cms/testimonials', {
+                const testimonials = await apiFetch<TestimonialPreview[]>('/admin/testimonials', {
                     token,
                     cache: 'no-store'
                 });
@@ -110,6 +111,7 @@ export default function CmsHomePage() {
             { label: 'Menús del sitio', href: '/cms/menus', description: 'Estructura la navegación', icon: Link2 },
             { label: 'Testimonios', href: '/cms/testimonials', description: 'Aprueba y publica historias', icon: MessageCircle },
             { label: 'Landing hero', href: '/cms/content', description: 'Actualiza copys y assets hero', icon: Feather },
+            { label: 'Media', href: '/cms/media', description: 'Sube y reutiliza archivos', icon: ImageIcon },
             { label: 'Builder visual', href: '/cms/builder', description: 'Arma páginas por secciones', icon: PanelsTopLeft },
             { label: 'Temas multisitio', href: '/cms/themes', description: 'Edita paletas por sitio', icon: Palette },
             { label: 'Sitios', href: '/cms/sites', description: 'Crea y administra portales', icon: Globe },
@@ -179,7 +181,7 @@ export default function CmsHomePage() {
                 tags={['Landing', 'Testimonios', 'Eventos']}
                 watchers={['Equipo Comunicación', 'Optimus Brain']}
                 primaryAction={{ label: 'Abrir landing', icon: Link2, onClick: () => window.open('/', '_blank') }}
-                secondaryAction={{ label: 'Ver pauta', icon: LayoutDashboard, onClick: () => {} }}
+                secondaryAction={{ label: 'Ver pauta', icon: LayoutDashboard, onClick: () => router.push('/cms/builder') }}
             />
 
             <section className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">

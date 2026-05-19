@@ -2,13 +2,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-    FileText, 
-    Download, 
-    CheckCircle2, 
-    Clock, 
-    User, 
-    BookOpen, 
-    Search,
+    FileText,
+    Download,
+    Clock,
+    User,
+    BookOpen,
     Loader2,
     ExternalLink,
     AlertCircle,

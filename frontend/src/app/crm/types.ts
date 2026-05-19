@@ -10,6 +10,17 @@ export interface CrmMember {
     family_id?: number | null;
 }
 
+export interface CrmAnalyticsSummary {
+    total_members: number;
+    active_members: number;
+    total_leads: number;
+    pipeline_by_stage: Record<string, number>;
+    open_counseling: number;
+    events_this_month: number;
+    total_groups: number;
+    total_families: number;
+}
+
 export function normalizeMembers(payload: any[]): CrmMember[] {
     if (!Array.isArray(payload)) return [];
     return payload.map((m) => ({

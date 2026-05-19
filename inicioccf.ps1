@@ -23,8 +23,8 @@ if (Test-Path $VenvPath) {
 }
 
 # 2. Levantar Backend (Puerto 8000)
-Write-Host "[1/2] Iniciando Backend en http://localhost:8000..." -ForegroundColor Cyan
-Start-Process -FilePath $PythonCmd -ArgumentList "-m uvicorn backend.main:app --reload --port 8000" -WindowStyle Normal
+Write-Host "[1/2] Iniciando Backend en http://0.0.0.0:8000 (Accesible en Red Local)..." -ForegroundColor Cyan
+Start-Process -FilePath $PythonCmd -ArgumentList "-m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000" -WindowStyle Normal
 
 # 3. Levantar Frontend (Puerto 3000)
 Write-Host "[2/2] Iniciando Frontend en http://localhost:3000..." -ForegroundColor Cyan

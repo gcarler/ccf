@@ -17,8 +17,8 @@ export const useMeshSocket = (clientId: string) => {
         const isSyntheticAudit = /HeadlessChrome|Lighthouse/i.test(ua);
         if (isSyntheticAudit) return;
 
-        // Connect to the Mesh WebSocket Gateway
-        const socket = new WebSocket(`ws://localhost:8000/mesh/ws/${clientId}`);
+        const wsBaseUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
+        const socket = new WebSocket(`${wsBaseUrl}/mesh/ws/${clientId}`);
 
         socket.onopen = () => {
             console.log('🔗 Connected to Agentic Mesh Nervous System');

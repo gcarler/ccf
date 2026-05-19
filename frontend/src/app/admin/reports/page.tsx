@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/http';
 import AdminShell from '@/components/admin/AdminShell';
 import AdminHero from '@/components/admin/AdminHero';
@@ -11,7 +12,6 @@ import {
     DollarSign,
     ArrowUpRight,
     Download,
-    Link2,
     Bell,
     Users,
     GraduationCap,
@@ -25,29 +25,22 @@ import {
     BrainCircuit,
     Layers
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
 type ReportTab = 'academic' | 'financial' | 'operational';
 
 export default function AdvancedBIReports() {
     const { isAuthenticated, token } = useAuth();
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState<ReportTab>('academic');
-    const [analytics, setAnalytics] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-
     useEffect(() => {
         const fetchAnalytics = async () => {
             if (!token) return;
-            setLoading(true);
             try {
                 // Simulamos carga de datos complejos de BI
-                const data = await apiFetch('/analytics/events/summary', { token });
-                setAnalytics(data);
+                await apiFetch('/analytics/events/summary', { token });
             } catch (e) {
                 console.error('BI Analytics fetch failed', e);
-            } finally {
-                setLoading(false);
             }
         };
         fetchAnalytics();
@@ -74,8 +67,8 @@ export default function AdvancedBIReports() {
                 description="Visualiza el impacto real de la plataforma a través de métricas cruzadas. Optimus BI analiza tendencias de retención, ingresos y efectividad académica."
                 tags={['BI Core', 'Machine Learning', 'Real-time']}
                 watchers={['Dirección General', 'Comité Académico']}
-                primaryAction={{ label: 'Exportar Reporte Full', icon: Download, onClick: () => {} }}
-                secondaryAction={{ label: 'Configurar Alertas', icon: Zap, onClick: () => {} }}
+                primaryAction={{ label: 'Exportar Reporte Full', icon: Download, onClick: () => window.print() }}
+                secondaryAction={{ label: 'Configurar Alertas', icon: Zap, onClick: () => router.push('/admin/settings/system') }}
             />
 
             {/* Sub-navigation Tabs */}

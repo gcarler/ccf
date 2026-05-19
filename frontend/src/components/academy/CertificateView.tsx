@@ -2,8 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Award, CheckCircle2, Download, Share2, ShieldCheck, Calendar, User, BookOpen } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Award, Download, Share2 } from 'lucide-react';
 
 interface CertificateProps {
     data: {

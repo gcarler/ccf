@@ -3,7 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { PlayCircle, Clock, ChevronRight, Bookmark, Share2, Play } from "lucide-react";
+import { ChevronRight, Bookmark, Play } from "lucide-react";
 import { useContentBlock } from "@/hooks/useContent";
 
 export default function PredicasPage() {
@@ -15,31 +15,32 @@ export default function PredicasPage() {
     const heroAccent = heroContent?.title_accent || "Alma";
     const heroDescription = heroContent?.description || "Explora nuestra biblioteca de mensajes que iluminan el camino. Una guía espiritual diseñada para nutrir tu fe.";
 
-    const fallbackSermons = [
-        { title: "La paz que sobrepasa entendimiento", img: "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?w=600&q=80", author: "Pr. David Miller", duration: "32 min" },
-        { title: "Principios de sabiduría eterna", img: "https://images.unsplash.com/photo-1504052434569-70ad5836ab65?w=600&q=80", author: "Dra. Sarah Jenkins", duration: "45 min" }
-    ];
+    interface SermonItem {
+        title?: string;
+        img?: string;
+        thumbnail?: string;
+        author?: string;
+        speaker?: string;
+        duration?: string;
+        series?: string;
+        excerpt?: string;
+        featured?: boolean;
+    }
 
-    const sermons = (Array.isArray(sermonsContent?.parsed) && sermonsContent.parsed.length > 0 
-        ? sermonsContent.parsed 
-        : fallbackSermons) as any[];
+    const sermons: SermonItem[] = Array.isArray(sermonsContent?.parsed) && sermonsContent.parsed.length > 0 
+        ? sermonsContent.parsed as SermonItem[]
+        : [];
 
-    const featuredSermon = sermons.find(s => s.featured) || {
-        title: "Encontrando luz en el desierto",
-        speaker: "Pr. David Mendoza",
-        duration: "45 min",
-        series: "Renacer",
-        thumbnail: "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=1000&q=80"
-    };
+    const featuredSermon = sermons.find((s) => s.featured);
 
-    const secondarySermons = sermons.filter(s => !s.featured).slice(0, 4);
+    const secondarySermons = sermons.filter((s) => !s.featured).slice(0, 4);
     return (
         <main className="pt-[88px] bg-faro-surface">
             {/* ── HERO CINEMATOGRÁFICO ─────────────────────────── */}
             <section className="relative min-h-[80vh] flex items-end overflow-hidden">
                 <div className="absolute inset-0">
                     <Image 
-                        src="https://images.unsplash.com/photo-1507692049790-de58290a4334?w=1600&q=80" 
+                        src="https://picsum.photos/seed/1507692049790-de58290a4334/800/600" 
                         alt="Background"
                         fill
                         className="object-cover scale-105"
@@ -137,7 +138,7 @@ export default function PredicasPage() {
                         >
                             <div className="aspect-video relative overflow-hidden">
                                 <Image 
-                                    src="https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=1000&q=80" 
+                                    src="https://picsum.photos/seed/1493225255756-d9584f8606e9/800/600" 
                                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                                     alt="Video thumbnail"
                                     fill
@@ -152,18 +153,18 @@ export default function PredicasPage() {
                             </div>
                             <div className="p-10">
                                 <div className="flex items-center gap-4 mb-4 text-[10px] font-black uppercase tracking-widest opacity-50">
-                                    <span style={{ color: "var(--faro-primary)" }}>Serie: {featuredSermon.series || "FARO"}</span>
+                                    <span style={{ color: "var(--faro-primary)" }}>Serie: {featuredSermon?.series ?? ""}</span>
                                     <span>•</span>
-                                    <span>{featuredSermon.duration || "45 MIN"}</span>
+                                    <span>{featuredSermon?.duration ?? ""}</span>
                                 </div>
-                                <h3 className="text-3xl font-black mb-4 group-hover:text-faro-primary transition-colors">{featuredSermon.title}</h3>
-                                <p className="text-lg opacity-70 line-clamp-2 max-w-2xl">{featuredSermon.excerpt || "Un mensaje profundo sobre la fe y la perseverancia cuando los caminos parecen cerrarse."}</p>
+                                <h3 className="text-3xl font-black mb-4 group-hover:text-faro-primary transition-colors">{featuredSermon?.title ?? ""}</h3>
+                                <p className="text-lg opacity-70 line-clamp-2 max-w-2xl">{featuredSermon?.excerpt ?? ""}</p>
                             </div>
                         </motion.div>
 
                         {/* Secondary Videos */}
                         <div className="md:col-span-4 flex flex-col gap-8">
-                            {secondarySermons.map((v: any, i: number) => (
+                            {secondarySermons.map((v: SermonItem, i: number) => (
                                 <motion.div 
                                     key={i}
                                     whileHover={{ x: 10 }}
@@ -174,7 +175,7 @@ export default function PredicasPage() {
                                     }}
                                 >
                                     <div className="aspect-video relative">
-                                        <Image src={v.thumbnail || v.img || "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=1000&q=80"} alt="Thumbnail" fill className="object-cover group-hover:scale-105 transition-transform" />
+                                        <Image src={v.thumbnail || v.img || "https://picsum.photos/seed/1493225255756-d9584f8606e9/800/600"} alt="Thumbnail" fill className="object-cover group-hover:scale-105 transition-transform" />
                                         <div className="absolute inset-0 bg-black/20" />
                                         <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md text-[10px] px-2 py-1 rounded text-white font-black">{v.duration || "45:00"}</div>
                                     </div>
@@ -191,4 +192,5 @@ export default function PredicasPage() {
         </main>
     );
 }
+
 

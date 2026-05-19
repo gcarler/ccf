@@ -3,7 +3,7 @@
 import React from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Maximize2, MoreHorizontal, MessageSquare, Clock, Link as LinkIcon, Sparkles } from 'lucide-react';
+import { X, MoreHorizontal, MessageSquare, Clock, Sparkles } from 'lucide-react';
 
 interface WorkspaceDrawerProps {
     isOpen: boolean;
@@ -68,7 +68,7 @@ export default function WorkspaceDrawer({
                             </div>
 
                             <div className="flex items-center gap-1">
-                                <button className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-all border border-purple-100 dark:border-purple-900/50">
+                                <button className="flex items-center gap-2 px-3 py-1.5 bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 rounded-lg text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-all border border-sky-100 dark:border-sky-900/50">
                                     <Sparkles size={14} /> Resumir
                                 </button>
                                 <div className="h-5 w-[1px] bg-slate-200 dark:bg-white/10 mx-2" />
@@ -98,6 +98,7 @@ export default function WorkspaceDrawer({
 }
 
 function HeaderButton({ icon: Icon, onClick, tooltip }: { icon: any, onClick?: () => void, tooltip: string }) {
+    void tooltip;
     return (
         <div className="relative group/drawer-btn">
             <button 

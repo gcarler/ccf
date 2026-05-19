@@ -12,7 +12,6 @@ import {
     isSameDay, 
     addMonths, 
     subMonths,
-    addDays,
     isToday
 } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -20,25 +19,21 @@ import {
     ChevronLeft, 
     ChevronRight, 
     Plus, 
-    MoreHorizontal, 
-    Calendar as CalendarIcon,
     Clock,
     CheckCircle2,
     Users,
     AlignLeft
 } from 'lucide-react';
 import * as Popover from '@radix-ui/react-popover';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import { useCreation } from '@/context/CreationContext';
 
 interface CalendarProps {
     tasks: any[];
     onTaskClick: (task: any) => void;
-    onAddTask?: (status: string, date?: string, title?: string) => void;
 }
 
-export default function ProjectCalendarView({ tasks, onTaskClick, onAddTask }: CalendarProps) {
+export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProps) {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [openPopoverDay, setOpenPopoverDay] = useState<string | null>(null);
 

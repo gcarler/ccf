@@ -4,19 +4,11 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { 
-    Search, 
     UserPlus, 
     MoreHorizontal, 
-    Edit3, 
-    Loader2, 
     Users, 
     Shield, 
-    Lock, 
     Mail, 
-    ChevronRight,
-    Filter,
-    Layout,
-    Settings,
     CheckCircle2,
     XCircle,
     Fingerprint,
@@ -28,17 +20,20 @@ import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { DataTable } from '@/components/ui/DataTable';
+import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
+import UniversalGanttView from '@/components/ui/UniversalGanttView';
+import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { ColumnDef } from '@tanstack/react-table';
 import Skeleton from '@/components/ui/Skeleton';
 import StatusPicker, { StatusOption } from '@/components/ui/StatusPicker';
-import InlineEdit from '@/components/ui/InlineEdit';
-import { motion, AnimatePresence } from 'framer-motion';
-import clsx from 'clsx';
+import type { ViewType } from '@/components/ViewSwitcher';
+
+const MEMBER_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 const ROLE_OPTIONS: StatusOption[] = [
     { label: 'ADMIN', value: 'admin', color: 'bg-rose-500', text: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-900/20' },
     { label: 'STAFF', value: 'staff', color: 'bg-blue-500', text: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-    { label: 'PASTOR', value: 'pastor', color: 'bg-purple-500', text: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+    { label: 'PASTOR', value: 'pastor', color: 'bg-sky-500', text: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-50 dark:bg-sky-900/20' },
     { label: 'MIEMBRO', value: 'estudiante', color: 'bg-slate-400', text: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-100 dark:bg-white/5' },
 ];
 
@@ -48,9 +43,11 @@ export default function AdminMembersPage() {
     const [members, setMembers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [viewType, setViewType] = useState<ViewType>('table');
     const [selectedMember, setSelectedMember] = useState<any>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [newMember, setNewMember] = useState({ username: '', email: '', role: 'estudiante', password: '' });
 
     const fetchUsers = useCallback(async () => {
         if (!token) return;
@@ -67,7 +64,7 @@ export default function AdminMembersPage() {
     const updateRole = useCallback(async (id: number, newRole: string) => {
         setMembers(prev => prev.map(m => m.id === id ? { ...m, role: newRole } : m));
         try {
-            await apiFetch(`/auth/users/${id}/role`, { method: 'PATCH', token, body: { role: newRole } });
+            await apiFetch(`/admin/users/${id}/role`, { method: 'PATCH', token, body: { role: newRole } });
             addToast('Rol actualizado correctamente', 'success');
         } catch (e) { addToast('Error al actualizar rol', 'error'); }
     }, [token, addToast]);
@@ -123,19 +120,59 @@ export default function AdminMembersPage() {
         m.username.toLowerCase().includes(search.toLowerCase()) || 
         m.email.toLowerCase().includes(search.toLowerCase())
     );
+    const groupedMembers = useMemo(() => {
+        const roles = ['admin', 'pastor', 'staff', 'estudiante'];
+        return roles.map((role) => ({
+            role,
+            items: filtered.filter((member) => (member.role || 'estudiante') === role),
+        })).filter((column) => column.items.length > 0 || ['admin', 'staff', 'estudiante'].includes(column.role));
+    }, [filtered]);
+    const calendarEvents = useMemo(() => filtered.map((member) => ({
+        id: member.id,
+        title: member.username,
+        date: (member.created_at || new Date().toISOString()).slice(0, 10),
+        color: member.is_active ? 'emerald' as const : 'rose' as const,
+        location: member.role,
+    })), [filtered]);
+    const ganttItems = useMemo(() => filtered.map((member) => ({
+        id: member.id,
+        title: member.username,
+        subtitle: member.role,
+        start_date: (member.created_at || new Date().toISOString()).slice(0, 10),
+        end_date: (member.updated_at || member.created_at || new Date().toISOString()).slice(0, 10),
+        color: member.is_active ? 'emerald' as const : 'rose' as const,
+        progress: member.is_active ? 100 : 30,
+    })), [filtered]);
 
     const handleOpenMember = (member: any) => {
         setSelectedMember(member);
         setIsDrawerOpen(true);
     };
 
+    const handleCreateMember = async () => {
+        if (!newMember.username.trim() || !newMember.email.trim() || !newMember.password.trim()) return;
+        try {
+            const created = await apiFetch<any>('/admin/users', {
+                method: 'POST',
+                token,
+                body: newMember,
+            });
+            setMembers((prev) => [created, ...prev]);
+            setIsCreateOpen(false);
+            setNewMember({ username: '', email: '', role: 'estudiante', password: '' });
+            addToast('Usuario creado correctamente', 'success');
+        } catch {
+            addToast('No se pudo crear el usuario', 'error');
+        }
+    };
+
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in">
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: 'Gestión Central', icon: Shield }, { label: 'Usuarios y Roles', icon: Users }]}
-                viewType="table" setViewType={() => {}} onSearch={setSearch}
+                viewType={viewType} setViewType={setViewType} availableViews={MEMBER_VIEWS} onSearch={setSearch}
                 rightActions={
-                    <button onClick={() => setIsCreateModalOpen(true)} className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                    <button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
                         <UserPlus size={14} /> Añadir Usuario
                     </button>
                 }
@@ -146,8 +183,55 @@ export default function AdminMembersPage() {
                     <div className="p-8 space-y-4">
                         {[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-14 w-full rounded-2xl" />)}
                     </div>
-                ) : (
+                ) : viewType === 'table' ? (
                     <DataTable data={filtered} columns={columns} onRowClick={handleOpenMember} />
+                ) : viewType === 'list' ? (
+                    <div className="divide-y divide-slate-100 p-6 dark:divide-white/5">
+                        {filtered.map((member) => (
+                            <button key={member.id} onClick={() => handleOpenMember(member)} className="flex w-full items-center justify-between gap-4 rounded-xl px-4 py-4 text-left hover:bg-slate-50 dark:hover:bg-white/5">
+                                <div>
+                                    <p className="text-sm font-black text-slate-900 dark:text-white">{member.username}</p>
+                                    <p className="text-xs font-semibold text-slate-400">{member.email}</p>
+                                </div>
+                                <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:bg-white/10">{member.role}</span>
+                            </button>
+                        ))}
+                    </div>
+                ) : viewType === 'grid' ? (
+                    <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2 xl:grid-cols-4">
+                        {filtered.map((member) => (
+                            <button key={member.id} onClick={() => handleOpenMember(member)} className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-left dark:border-white/10 dark:bg-white/[0.03]">
+                                <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-blue-600 text-sm font-black text-white">{member.username?.slice(0, 2).toUpperCase()}</div>
+                                <p className="truncate text-sm font-black text-slate-900 dark:text-white">{member.username}</p>
+                                <p className="truncate text-xs font-semibold text-slate-400">{member.email}</p>
+                            </button>
+                        ))}
+                    </div>
+                ) : viewType === 'board' || viewType === 'kanban' ? (
+                    <div className="flex gap-4 overflow-x-auto p-6">
+                        {groupedMembers.map((column) => (
+                            <section key={column.role} className="w-80 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                                <div className="mb-3 flex items-center justify-between px-1">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{column.role}</p>
+                                    <span className="text-[10px] font-black text-slate-400">{column.items.length}</span>
+                                </div>
+                                <div className="space-y-2">
+                                    {column.items.map((member) => (
+                                        <button key={member.id} onClick={() => handleOpenMember(member)} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-left dark:border-white/10 dark:bg-white/5">
+                                            <p className="text-xs font-black text-slate-900 dark:text-white">{member.username}</p>
+                                            <p className="mt-1 truncate text-[10px] font-semibold text-slate-400">{member.email}</p>
+                                        </button>
+                                    ))}
+                                </div>
+                            </section>
+                        ))}
+                    </div>
+                ) : viewType === 'calendar' ? (
+                    <div className="h-[720px] p-6"><UniversalCalendarView events={calendarEvents} title="Calendario de usuarios" /></div>
+                ) : viewType === 'gantt' ? (
+                    <div className="h-[720px] p-6"><UniversalGanttView items={ganttItems} moduleName="Usuarios y roles" /></div>
+                ) : (
+                    <div className="p-6"><UniversalWikiView moduleName="Usuarios y roles" storageKey="wiki_admin_members" /></div>
                 )}
             </main>
 
@@ -185,6 +269,28 @@ export default function AdminMembersPage() {
                         </div>
                         <div className="h-6 w-11 bg-slate-200 dark:bg-white/10 rounded-full relative cursor-pointer"><div className="absolute left-1 top-1 size-4 bg-white rounded-full" /></div>
                     </section>
+                </div>
+            </WorkspaceDrawer>
+
+            <WorkspaceDrawer
+                isOpen={isCreateOpen}
+                onClose={() => setIsCreateOpen(false)}
+                title="Nuevo Usuario"
+                subtitle="Alta de cuenta y rol inicial"
+                actions={
+                    <>
+                        <button onClick={() => setIsCreateOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500">Cancelar</button>
+                        <button onClick={handleCreateMember} className="px-6 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-bold shadow-lg">Crear usuario</button>
+                    </>
+                }
+            >
+                <div className="space-y-4">
+                    <input value={newMember.username} onChange={(e) => setNewMember((prev) => ({ ...prev, username: e.target.value }))} placeholder="Usuario" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none dark:border-white/10 dark:bg-white/5" />
+                    <input value={newMember.email} onChange={(e) => setNewMember((prev) => ({ ...prev, email: e.target.value }))} placeholder="Correo" type="email" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none dark:border-white/10 dark:bg-white/5" />
+                    <input value={newMember.password} onChange={(e) => setNewMember((prev) => ({ ...prev, password: e.target.value }))} placeholder="Contraseña inicial" type="password" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none dark:border-white/10 dark:bg-white/5" />
+                    <select value={newMember.role} onChange={(e) => setNewMember((prev) => ({ ...prev, role: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none dark:border-white/10 dark:bg-white/5">
+                        {ROLE_OPTIONS.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}
+                    </select>
                 </div>
             </WorkspaceDrawer>
         </div>

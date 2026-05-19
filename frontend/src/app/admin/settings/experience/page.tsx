@@ -20,16 +20,21 @@ import {
     RotateCcw
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import type { ViewType } from '@/components/ViewSwitcher';
+import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
+import UniversalGanttView from '@/components/ui/UniversalGanttView';
+import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import clsx from 'clsx';
 
 const FEATURE_CARDS = [
     { id: 'gantt', label: 'Vista de Gantt', desc: 'Habilita el cronograma interactivo en proyectos.', icon: GanttChart, color: 'text-blue-500' },
-    { id: 'ai_coach', label: 'Optimus Brain Coach', desc: 'Asistente de IA para academia y CRM.', icon: Bot, color: 'text-purple-500' },
+    { id: 'ai_coach', label: 'Optimus Brain Coach', desc: 'Asistente de IA para academia y CRM.', icon: Bot, color: 'text-sky-500' },
     { id: 'call_center', label: 'Call Center Pastoral', icon: Smartphone, desc: 'Gestión de llamadas y mensajes masivos.', color: 'text-amber-500' },
     { id: 'prayer_wall', label: 'Muro de Intercesión', icon: Heart, desc: 'Registro público de peticiones de oración.', color: 'text-rose-500' },
     { id: 'kanban', label: 'Tableros Kanban', icon: KanbanSquare, desc: 'Visualización de procesos por arrastre.', color: 'text-emerald-500' },
     { id: 'audit_logs', label: 'Auditoría de Staff', icon: Shield, desc: 'Registro detallado de acciones administrativas.', color: 'text-indigo-500' },
 ];
+const EXPERIENCE_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 export default function WorkspaceExperienceManager() {
     const { token } = useAuth();
@@ -38,6 +43,7 @@ export default function WorkspaceExperienceManager() {
     const [loading, setLoading] = useState(true);
     const [config, setConfig] = useState<any>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [viewType, setViewType] = useState<ViewType>('grid');
 
     useEffect(() => {
         const fetchConfig = async () => {
@@ -82,11 +88,105 @@ export default function WorkspaceExperienceManager() {
 
     if (loading) return <div className="p-20 text-center text-slate-500 font-black uppercase tracking-[0.4em] animate-pulse">Cargando Brain...</div>;
 
+    const featureRows = FEATURE_CARDS.map((feature, index) => ({
+        ...feature,
+        enabled: !!config?.features_enabled?.[feature.id],
+        date: new Date(Date.now() + index * 86400000).toISOString(),
+    }));
+
+    const groupedFeatures = [
+        { id: 'enabled', label: 'Activas', rows: featureRows.filter(feature => feature.enabled) },
+        { id: 'disabled', label: 'Inactivas', rows: featureRows.filter(feature => !feature.enabled) },
+    ];
+
+    const calendarEvents = featureRows.map((feature) => ({
+        id: feature.id,
+        title: feature.label,
+        date: feature.date.split('T')[0],
+        color: feature.enabled ? 'emerald' as const : 'amber' as const,
+        location: feature.enabled ? 'Activo' : 'Inactivo',
+    }));
+
+    const ganttItems = featureRows.map((feature) => ({
+        id: feature.id,
+        title: feature.label,
+        subtitle: feature.desc,
+        start_date: feature.date,
+        end_date: feature.date,
+        color: feature.enabled ? 'emerald' as const : 'amber' as const,
+        progress: feature.enabled ? 100 : 35,
+    }));
+
+    const renderList = () => (
+        <div className="space-y-4">
+            {featureRows.map((feature) => (
+                <button key={feature.id} onClick={() => toggleFeature(feature.id)} className="w-full text-left bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[2rem] p-6 flex items-center justify-between gap-6 hover:border-blue-300 transition-all">
+                    <div className="flex items-center gap-5">
+                        <div className={clsx("size-12 rounded-2xl flex items-center justify-center", feature.enabled ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-400")}>
+                            <feature.icon size={24} />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{feature.label}</h3>
+                            <p className="mt-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{feature.desc}</p>
+                        </div>
+                    </div>
+                    <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", feature.enabled ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500")}>{feature.enabled ? 'Activo' : 'Inactivo'}</span>
+                </button>
+            ))}
+        </div>
+    );
+
+    const renderTable = () => (
+        <div className="rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+            <table className="w-full text-left">
+                <thead className="bg-slate-50 dark:bg-white/5">
+                    <tr>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Feature</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Descripción</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Estado</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                    {featureRows.map((feature) => (
+                        <tr key={feature.id} onClick={() => toggleFeature(feature.id)} className="hover:bg-slate-50 dark:hover:bg-white/[0.03] cursor-pointer">
+                            <td className="px-5 py-4 text-sm font-bold text-slate-800 dark:text-slate-100">{feature.label}</td>
+                            <td className="px-5 py-4 hidden md:table-cell text-[11px] text-slate-500">{feature.desc}</td>
+                            <td className="px-5 py-4"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", feature.enabled ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500")}>{feature.enabled ? 'Activo' : 'Inactivo'}</span></td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+
+    const renderBoard = () => (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {groupedFeatures.map((group) => (
+                <section key={group.id} className="rounded-[2.5rem] bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-5">
+                    <div className="flex items-center justify-between mb-5">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{group.label}</span>
+                        <span className="text-[10px] font-black text-slate-400">{group.rows.length}</span>
+                    </div>
+                    <div className="space-y-3">
+                        {group.rows.map((feature) => (
+                            <button key={feature.id} onClick={() => toggleFeature(feature.id)} className="w-full text-left bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-[1.5rem] p-4 hover:border-blue-300 transition-all">
+                                <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{feature.label}</p>
+                                <p className="mt-2 text-[10px] font-bold text-slate-400">{feature.desc}</p>
+                            </button>
+                        ))}
+                    </div>
+                </section>
+            ))}
+        </div>
+    );
+
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: 'Ajustes', icon: Settings }, { label: 'Experiencia de Usuario', icon: Sparkles }]}
-                viewType="grid" setViewType={() => {}}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={EXPERIENCE_VIEWS}
                 rightActions={
                     <div className="flex items-center gap-2">
                         <button onClick={() => router.back()} className="px-4 py-2 text-[11px] font-black text-slate-500 uppercase tracking-widest hover:text-slate-800">Cancelar</button>
@@ -107,7 +207,7 @@ export default function WorkspaceExperienceManager() {
                     
                     {/* Header */}
                     <header className="space-y-4">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-purple-100 dark:border-purple-900/30">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-sky-50 dark:bg-sky-900/20 text-sky-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-sky-100 dark:border-sky-900/30">
                             <Zap size={14} /> Workspace Experience Manager v3.0
                         </div>
                         <h1 className="text-4xl lg:text-6xl font-black text-slate-800 dark:text-white tracking-tighter leading-none">
@@ -118,6 +218,20 @@ export default function WorkspaceExperienceManager() {
                         </p>
                     </header>
 
+                    {viewType === 'list' ? (
+                        renderList()
+                    ) : viewType === 'table' ? (
+                        renderTable()
+                    ) : viewType === 'board' || viewType === 'kanban' ? (
+                        renderBoard()
+                    ) : viewType === 'calendar' ? (
+                        <UniversalCalendarView events={calendarEvents} title="Calendario de experiencia" />
+                    ) : viewType === 'gantt' ? (
+                        <UniversalGanttView items={ganttItems} moduleName="Experiencia de usuario" />
+                    ) : viewType === 'wiki' ? (
+                        <UniversalWikiView moduleName="Experiencia de usuario" storageKey="wiki_admin_experience" />
+                    ) : (
+                    <>
                     {/* Features Grid (The "ClickApps" style) */}
                     <section className="space-y-8">
                         <div className="flex items-center justify-between px-2">
@@ -169,7 +283,7 @@ export default function WorkspaceExperienceManager() {
                                     <p className="text-slate-400 text-sm font-medium leading-relaxed italic">&ldquo;Configura el ADN visual de la plataforma para que refleje la identidad de Centro Cristiano de Fe.&rdquo;</p>
                                     <div className="flex gap-4">
                                         <div className="size-10 rounded-full bg-blue-600 cursor-pointer border-2 border-white ring-4 ring-blue-600/20 shadow-xl" />
-                                        <div className="size-10 rounded-full bg-purple-600 cursor-pointer hover:scale-110 transition-all" />
+                                        <div className="size-10 rounded-full bg-sky-600 cursor-pointer hover:scale-110 transition-all" />
                                         <div className="size-10 rounded-full bg-emerald-600 cursor-pointer hover:scale-110 transition-all" />
                                         <div className="size-10 rounded-full bg-rose-600 cursor-pointer hover:scale-110 transition-all" />
                                     </div>
@@ -187,6 +301,8 @@ export default function WorkspaceExperienceManager() {
                             </div>
                         </div>
                     </section>
+                    </>
+                    )}
                 </div>
             </main>
         </div>

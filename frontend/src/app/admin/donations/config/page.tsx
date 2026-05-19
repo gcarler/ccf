@@ -1,12 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import {
-    ArrowLeft,
     CreditCard,
     Smartphone,
     Banknote,
@@ -14,39 +12,40 @@ import {
     Edit3,
     Mail,
     FileText,
-    CheckCircle2,
     Settings,
     ShieldCheck,
     Layout,
     DollarSign,
     Zap,
     Palette,
-    ToggleLeft,
-    ToggleRight,
-    Loader2,
     Sparkles,
     Check
 } from 'lucide-react';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import type { ViewType } from '@/components/ViewSwitcher';
+import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
+import UniversalGanttView from '@/components/ui/UniversalGanttView';
+import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import Skeleton from '@/components/ui/Skeleton';
 
-interface Category {
+interface Category {
     id: number;
     name: string;
     description: string;
     color: string;
     active: boolean;
-}
+}
+const DONATION_CONFIG_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 export default function DonationConfig() {
     const { token, isAuthenticated } = useAuth();
     const { addToast } = useToast();
-    const router = useRouter();
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [titheEnabled, setTitheEnabled] = useState(true);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [titheEnabled, setTitheEnabled] = useState(true);
+    const [viewType, setViewType] = useState<ViewType>('grid');
 
     const fetchCategories = useCallback(async () => {
         if (!token) return;
@@ -66,7 +65,91 @@ export default function DonationConfig() {
         if (isAuthenticated) fetchCategories();
     }, [isAuthenticated, fetchCategories]);
 
-    if (!isAuthenticated) return null;
+    if (!isAuthenticated) return null;
+
+    const groupedCategories = [
+        { id: 'active', label: 'Activos', rows: categories.filter((cat) => cat.active) },
+        { id: 'inactive', label: 'Inactivos', rows: categories.filter((cat) => !cat.active) },
+    ];
+
+    const calendarEvents = categories.map((cat, index) => ({
+        id: cat.id,
+        title: cat.name,
+        date: new Date(Date.now() + index * 86400000).toISOString().split('T')[0],
+        color: cat.active ? 'emerald' as const : 'amber' as const,
+        location: cat.description,
+    }));
+
+    const ganttItems = categories.map((cat, index) => {
+        const date = new Date(Date.now() + index * 86400000).toISOString();
+        return {
+            id: cat.id,
+            title: cat.name,
+            subtitle: cat.description,
+            start_date: date,
+            end_date: date,
+            color: cat.active ? 'emerald' as const : 'amber' as const,
+            progress: cat.active ? 100 : 35,
+        };
+    });
+
+    const renderList = () => (
+        <div className="space-y-4">
+            {categories.map((cat) => (
+                <div key={cat.id} className="config-aura p-6 bg-white dark:bg-white/5 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center justify-between gap-5" style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as any}>
+                    <div>
+                        <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{cat.name}</h3>
+                        <p className="mt-1 text-[10px] text-slate-400 font-bold uppercase tracking-widest">{cat.description || 'Fondo ministerial'}</p>
+                    </div>
+                    <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", cat.active ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{cat.active ? 'Activo' : 'Inactivo'}</span>
+                </div>
+            ))}
+        </div>
+    );
+
+    const renderTable = () => (
+        <div className="rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+            <table className="w-full text-left">
+                <thead className="bg-slate-50 dark:bg-white/5">
+                    <tr>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Fondo</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Descripción</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Estado</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                    {categories.map((cat) => (
+                        <tr key={cat.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03]">
+                            <td className="px-5 py-4 text-sm font-bold text-slate-800 dark:text-slate-100">{cat.name}</td>
+                            <td className="px-5 py-4 hidden md:table-cell text-[11px] text-slate-500">{cat.description || '—'}</td>
+                            <td className="px-5 py-4"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", cat.active ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{cat.active ? 'Activo' : 'Inactivo'}</span></td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+
+    const renderBoard = () => (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {groupedCategories.map((group) => (
+                <section key={group.id} className="rounded-[2.5rem] bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-5">
+                    <div className="flex items-center justify-between mb-5">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{group.label}</span>
+                        <span className="text-[10px] font-black text-slate-400">{group.rows.length}</span>
+                    </div>
+                    <div className="space-y-3">
+                        {group.rows.map((cat) => (
+                            <div key={cat.id} className="bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-[1.5rem] p-4">
+                                <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{cat.name}</p>
+                                <p className="mt-2 text-[10px] font-bold text-slate-400">{cat.description || 'Fondo ministerial'}</p>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            ))}
+        </div>
+    );
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#0a0f16] overflow-hidden animate-fade-in font-display">
@@ -91,7 +174,9 @@ export default function DonationConfig() {
 
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: 'Ajustes', icon: Settings }, { label: 'Finanzas', icon: DollarSign }, { label: 'Estructura de Recaudación', icon: ShieldCheck }]}
-                viewType="grid" setViewType={() => {}}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={DONATION_CONFIG_VIEWS}
                 rightActions={
                     <button className="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
                         <Zap size={16} /> Aplicar Protocolo
@@ -120,7 +205,21 @@ export default function DonationConfig() {
                         </p>
                     </header>
 
-                    {/* Master Switch Cinematic */}
+                    {viewType === 'list' ? (
+                        renderList()
+                    ) : viewType === 'table' ? (
+                        renderTable()
+                    ) : viewType === 'board' || viewType === 'kanban' ? (
+                        renderBoard()
+                    ) : viewType === 'calendar' ? (
+                        <UniversalCalendarView events={calendarEvents} title="Calendario de fondos" />
+                    ) : viewType === 'gantt' ? (
+                        <UniversalGanttView items={ganttItems} moduleName="Estructura de recaudación" />
+                    ) : viewType === 'wiki' ? (
+                        <UniversalWikiView moduleName="Estructura de recaudación" storageKey="wiki_admin_donation_config" />
+                    ) : (
+                    <>
+                    {/* Master Switch Cinematic */}
                     <motion.section 
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -207,7 +306,7 @@ export default function DonationConfig() {
                         </section>
                     </div>
 
-                    {/* Certs Automation Cinematic */}
+                    {/* Certs Automation Cinematic */}
                     <motion.section 
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -231,7 +330,9 @@ export default function DonationConfig() {
                                 <button className="flex-1 px-10 py-5 bg-slate-900 dark:bg-blue-600 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-widest shadow-2xl hover:translate-y-[-4px] transition-all active:scale-95 flex items-center justify-center gap-3 shadow-blue-500/20"><Mail size={18} /> Validar Email</button>
                             </div>
                         </div>
-                    </motion.section>
+                    </motion.section>
+                    </>
+                    )}
                 </div>
             </main>
         </div>

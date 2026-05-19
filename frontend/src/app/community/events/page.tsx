@@ -1,17 +1,13 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Calendar, Bell, ChevronRight, MapPin, Clock, Video, Share2, Plus, CalendarDays, User, Users } from 'lucide-react';
-
-import Link from 'next/link';
+import { ChevronRight, MapPin, Plus, CalendarDays, User, Users, Clock } from 'lucide-react';
 
 import { motion } from 'framer-motion';
 
 export default function EventsCalendar() {
-    const { isAuthenticated, user } = useAuth();
-    const router = useRouter();
+    const { isAuthenticated } = useAuth();
     const [activeTab, setActiveTab] = useState('Todos');
 
     if (!isAuthenticated) return null;

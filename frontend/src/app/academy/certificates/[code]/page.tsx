@@ -5,8 +5,6 @@ import { useParams } from 'next/navigation';
 import { apiFetch } from '@/lib/http';
 import CertificateView from '@/components/academy/CertificateView';
 import { Loader2, ShieldAlert } from 'lucide-react';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import { GraduationCap } from 'lucide-react';
 
 export default function PublicCertificatePage() {
     const params = useParams();

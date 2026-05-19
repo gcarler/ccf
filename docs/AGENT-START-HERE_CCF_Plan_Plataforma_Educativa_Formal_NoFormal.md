@@ -7,6 +7,10 @@
 - Meta: Lanzar una plataforma unica con rutas academicas para cursos formales y no formales
 - Modalidad de ejecucion: Flujo continuo, sin horarios fijos
 
+## Lectura obligatoria antes de tocar arquitectura
+- [Contratos Estructurales de la Plataforma](</D:/ccf/docs/2026-05-05_Contratos_Estructurales_Plataforma.md>)
+- [Deploy Rollback Checklist](</D:/ccf/docs/2026-05-05_Deploy_Rollback_Checklist.md>)
+
 ## Lo ya realizado
 - Plan macro de 6 fases definido
 - Diferenciacion inicial de alcance entre modalidad formal y no formal
@@ -152,7 +156,7 @@ Criterio de terminado:
 - [x] **MVP-008: Material del Docente:** Capacidad de adjuntar archivos (PDF, DOC, Multimedia) a las lecciones.
 - [x] **MVP-009: Entrega de Trabajos:** Espacio para que el estudiante suba sus evidencias y tareas por lección.
 
-Backend (`backend/main.py`, `backend/models.py`, `backend/crud.py`, `backend/schemas.py`):
+Backend (`backend/app.py`, `backend/models.py`, `backend/crud.py`, `backend/schemas.py`):
 - Gestión de seguridad robusta (JWT + Roles).
 - Lógica de Cierre de Actas y Certificación Masiva.
 - Endpoints para intentos de evaluación y validación de prerrequisitos.
@@ -161,4 +165,3 @@ Frontend (`frontend/src/app/page.tsx`, `frontend/src/components/MyEnrollments.ts
 - Sidebar administrativo y protección de rutas.
 - Modal de Certificados con funcionalidad de impresión.
 - Gestión de Actas para personal administrativo.
-

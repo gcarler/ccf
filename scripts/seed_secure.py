@@ -43,7 +43,7 @@ def seed_secure():
         ]
         
         for t in test_testimonials:
-            requests.post(f"{BASE_URL}/testimonials/", json=t)
+            requests.post(f"{BASE_URL}/api/cms/testimonials", json=t)
         
         print("Seed completed successfully.")
         

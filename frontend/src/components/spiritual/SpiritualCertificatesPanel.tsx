@@ -26,7 +26,7 @@ export default function SpiritualCertificatesPanel() {
 
     useEffect(() => {
         if (!token || !user?.id) { setLoading(false); return; }
-        apiFetch<Certificate[]>(`/academy/users/${user.id}/certificates`, { token, cache: 'no-store' })
+        apiFetch<Certificate[]>(`/academy/me/certificates`, { token, cache: 'no-store' })
             .then(data => setCertificates(Array.isArray(data) ? data : []))
             .catch(() => setCertificates([]))
             .finally(() => setLoading(false));

@@ -6,28 +6,28 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import {
-    ArrowLeft,
     Plus,
     Search,
     Edit3,
-    Eye,
-    EyeOff,
     BookOpen,
     Video,
     FileText,
-    TrendingUp,
-    MoreVertical,
     Clock,
     CheckCircle2,
     Loader2,
     Sparkles,
-    Zap,
     Layout,
     Globe
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import { ViewType } from '@/components/ViewSwitcher';
+import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
+import UniversalGanttView from '@/components/ui/UniversalGanttView';
+import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+
+const CONTENT_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 export default function AdminContentList() {
     const { token, isAuthenticated } = useAuth();
@@ -37,6 +37,7 @@ export default function AdminContentList() {
     const [items, setItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [viewType, setViewType] = useState<ViewType>('list');
 
     const fetchData = useCallback(async () => {
         if (!token) return;
@@ -65,6 +66,37 @@ export default function AdminContentList() {
         (item.title || item.name || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const groupedItems = [
+        { id: 'published', label: 'Publicado', items: filteredItems.filter(item => item.is_published) },
+        { id: 'draft', label: 'Borrador', items: filteredItems.filter(item => !item.is_published) },
+    ];
+
+    const calendarEvents = filteredItems.map(item => ({
+        id: item.id,
+        title: item.title || item.name || `Contenido #${item.id}`,
+        date: (item.updated_at || item.created_at || new Date().toISOString()).split('T')[0],
+        color: item.is_published ? 'emerald' as const : 'amber' as const,
+        location: item.modality || activeTab,
+    }));
+
+    const ganttItems = filteredItems.map(item => {
+        const start = item.created_at || item.updated_at || new Date().toISOString();
+        const end = item.updated_at || start;
+        return {
+            id: item.id,
+            title: item.title || item.name || `Contenido #${item.id}`,
+            subtitle: item.code || item.modality || activeTab,
+            start_date: start,
+            end_date: end,
+            color: item.is_published ? 'emerald' as const : 'amber' as const,
+            progress: item.is_published ? 100 : 45,
+        };
+    });
+
+    const openItem = (item: any) => {
+        if (activeTab === 'courses') router.push(`/admin/content/courses/${item.id}`);
+    };
+
     if (!isAuthenticated) return null;
 
     return (
@@ -90,7 +122,10 @@ export default function AdminContentList() {
 
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: 'Admin', icon: Layout }, { label: 'Fábrica de Contenidos', icon: BookOpen }]}
-                viewType="list" setViewType={() => {}}
+                viewType={viewType}
+                setViewType={setViewType}
+                availableViews={CONTENT_VIEWS}
+                onSearch={setSearchQuery}
                 rightActions={
                     <button 
                         onClick={() => router.push('/admin/content/courses/new')}
@@ -128,6 +163,88 @@ export default function AdminContentList() {
                             <div className="py-40 flex flex-col items-center justify-center gap-6 text-slate-400 font-black uppercase tracking-[0.5em] animate-pulse">
                                 <Loader2 className="animate-spin" size={48} strokeWidth={1.5} /> Sincronizando Biblioteca...
                             </div>
+                        ) : filteredItems.length > 0 && viewType === 'grid' ? (
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                {filteredItems.map((item, i) => (
+                                    <motion.button
+                                        key={item.id}
+                                        initial={{ opacity: 0, y: 18 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: i * 0.04 }}
+                                        onClick={() => openItem(item)}
+                                        className="text-left content-aura bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-7 rounded-[2.5rem] shadow-sm hover:shadow-2xl transition-all"
+                                    >
+                                        <div className={clsx("size-16 rounded-[1.5rem] flex items-center justify-center mb-8", item.is_published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>
+                                            <BookOpen size={30} strokeWidth={1.5} />
+                                        </div>
+                                        <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight line-clamp-2">{item.title}</h3>
+                                        <p className="mt-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.code || activeTab} · {item.duration_hours || 0} horas</p>
+                                        <span className={clsx("inline-flex mt-6 px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest", item.is_published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{item.is_published ? 'Publicado' : 'Borrador'}</span>
+                                    </motion.button>
+                                ))}
+                            </motion.div>
+                        ) : filteredItems.length > 0 && viewType === 'table' ? (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+                                <table className="w-full text-left">
+                                    <thead className="bg-slate-50 dark:bg-white/5">
+                                        <tr>
+                                            <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Contenido</th>
+                                            <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Código</th>
+                                            <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Estado</th>
+                                            <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Editar</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                                        {filteredItems.map(item => (
+                                            <tr key={item.id} onClick={() => openItem(item)} className="hover:bg-slate-50 dark:hover:bg-white/[0.03] cursor-pointer">
+                                                <td className="px-5 py-4 text-sm font-bold text-slate-800 dark:text-slate-100">{item.title}</td>
+                                                <td className="px-5 py-4 hidden md:table-cell text-[11px] font-mono text-slate-400">{item.code || '—'}</td>
+                                                <td className="px-5 py-4 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", item.is_published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{item.is_published ? 'Publicado' : 'Borrador'}</span></td>
+                                                <td className="px-5 py-4"><Edit3 size={16} className="text-blue-600" /></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </motion.div>
+                        ) : filteredItems.length > 0 && (viewType === 'board' || viewType === 'kanban') ? (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {groupedItems.map(group => (
+                                    <section key={group.id} className="rounded-[2.5rem] bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-5">
+                                        <div className="flex items-center justify-between mb-5">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{group.label}</span>
+                                            <span className="text-[10px] font-black text-slate-400">{group.items.length}</span>
+                                        </div>
+                                        <div className="space-y-4">
+                                            {group.items.map(item => (
+                                                <button key={item.id} onClick={() => openItem(item)} className="w-full text-left bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-[1.5rem] p-5 hover:border-blue-300 transition-all">
+                                                    <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{item.title}</p>
+                                                    <p className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.code || item.modality || activeTab}</p>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </section>
+                                ))}
+                            </motion.div>
+                        ) : filteredItems.length > 0 && viewType === 'calendar' ? (
+                            <UniversalCalendarView
+                                title="Calendario de contenidos"
+                                events={calendarEvents}
+                                onEventClick={(event) => {
+                                    const item = filteredItems.find(entry => entry.id === event.id);
+                                    if (item) openItem(item);
+                                }}
+                            />
+                        ) : filteredItems.length > 0 && viewType === 'gantt' ? (
+                            <UniversalGanttView
+                                moduleName="Fábrica de contenidos"
+                                items={ganttItems}
+                                onItemClick={(item) => {
+                                    const entry = filteredItems.find(content => content.id === item.id);
+                                    if (entry) openItem(entry);
+                                }}
+                            />
+                        ) : filteredItems.length > 0 && viewType === 'wiki' ? (
+                            <UniversalWikiView moduleName="Fábrica de contenidos" storageKey={`admin-content-wiki-${activeTab}`} />
                         ) : filteredItems.length > 0 ? (
                             <motion.div 
                                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}

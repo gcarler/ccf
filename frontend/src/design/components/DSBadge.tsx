@@ -11,7 +11,7 @@ const toneStyles: Record<Tone, string> = {
     blue: 'bg-blue-500/15 text-blue-400',
     emerald: 'bg-emerald-500/15 text-emerald-400',
     amber: 'bg-amber-500/15 text-amber-400',
-    violet: 'bg-violet-500/15 text-violet-300',
+    violet: 'bg-blue-500/15 text-blue-300',
 };
 
 interface DSBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {

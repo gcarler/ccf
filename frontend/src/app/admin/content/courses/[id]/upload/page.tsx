@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -11,14 +11,13 @@ import {
     CloudUpload,
     CheckCircle2,
     Plus,
-    HelpCircle,
-    Loader2
+    HelpCircle
 } from 'lucide-react';
 
 export default function UploadMaterials() {
     const { isAuthenticated } = useAuth();
     const router = useRouter();
-    const [uploadProgress, setUploadProgress] = useState(75);
+    const uploadProgress = 75;
 
     if (!isAuthenticated) return null;
 

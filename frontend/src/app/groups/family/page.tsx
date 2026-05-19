@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { 
     Users, 
     Heart, 
@@ -60,7 +60,7 @@ export default function FamilyNucleusPage() {
                                     { name: 'Ricardo Gomez', role: 'Padre / Cabeza', status: 'Activo', icon: Smile, color: 'text-blue-400' },
                                     { name: 'Maria Sanchez', role: 'Madre', status: 'Activo', icon: Heart, color: 'text-rose-400' },
                                     { name: 'Samuel Gomez', role: 'Hijo', status: 'Estudiante', icon: Baby, color: 'text-amber-400' },
-                                    { name: 'Lucia Gomez', role: 'Hija', status: 'Estudiante', icon: Star, color: 'text-purple-400' },
+                                    { name: 'Lucia Gomez', role: 'Hija', status: 'Estudiante', icon: Star, color: 'text-sky-400' },
                                 ].map((member, i) => (
                                     <div key={i} className="bg-white/5 border border-white/5 p-5 rounded-3xl hover:border-white/10 transition-all flex items-center justify-between group/item">
                                         <div className="flex items-center gap-4">
@@ -95,10 +95,10 @@ export default function FamilyNucleusPage() {
                         </div>
                         <div className="bg-[#1e1f21] border border-white/5 p-6 rounded-3xl space-y-4">
                             <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
-                                <Users size={14} className="text-rose-500" /> Casa de Gloria
+                                <Users size={14} className="text-rose-500" /> Faro en Casa
                             </h3>
                             <p className="text-[11px] text-muted-foreground leading-relaxed">
-                                Su familia está vinculada a la <span className="text-white font-bold">Casa de Gloria &quot;Norte 1&quot;</span> dirigida por Juan y Paula.
+                                Su familia está vinculada a la <span className="text-white font-bold">Faro en Casa &quot;Norte 1&quot;</span> dirigida por Juan y Paula.
                             </p>
                             <button className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border border-white/5">
                                 Contactar Líder

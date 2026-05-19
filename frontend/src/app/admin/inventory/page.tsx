@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { 
     Package, Plus, CheckCircle2, Wrench, AlertTriangle, ChevronRight,
-    Box, Cog, History, ShieldCheck, Zap, Sparkles, Tag, QrCode
+    Box, Cog, History, ShieldCheck, Zap, Tag, QrCode
 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
@@ -13,6 +13,12 @@ import clsx from 'clsx';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import Skeleton from '@/components/ui/Skeleton';
+import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
+import UniversalGanttView from '@/components/ui/UniversalGanttView';
+import UniversalWikiView from '@/components/ui/UniversalWikiView';
+import type { ViewType } from '@/components/ViewSwitcher';
+
+const INVENTORY_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 export default function AdminInventoryPage() {
     const { token } = useAuth();
@@ -20,6 +26,7 @@ export default function AdminInventoryPage() {
     const [assets, setAssets] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [viewType, setViewType] = useState<ViewType>('table');
     const [selectedAsset, setSelectedAsset] = useState<any>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -50,6 +57,33 @@ export default function AdminInventoryPage() {
         mantenimiento: assets.filter(a => a.current_status === 'Mantenimiento').length,
         daniado: assets.filter(a => a.current_status === 'Dañado').length,
     };
+    const filteredAssets = useMemo(() => assets.filter((asset) =>
+        [asset.name, asset.brand, asset.category, asset.current_status, asset.serial_number]
+            .some((field) => String(field ?? '').toLowerCase().includes(searchTerm.toLowerCase()))
+    ), [assets, searchTerm]);
+    const groupedAssets = useMemo(() => {
+        const statuses = ['Disponible', 'Mantenimiento', 'Dañado', 'Asignado'];
+        return statuses.map((status) => ({
+            status,
+            items: filteredAssets.filter((asset) => (asset.current_status || 'Disponible') === status),
+        })).filter((column) => column.items.length > 0 || ['Disponible', 'Mantenimiento'].includes(column.status));
+    }, [filteredAssets]);
+    const calendarEvents = useMemo(() => filteredAssets.map((asset) => ({
+        id: asset.id,
+        title: asset.name,
+        date: (asset.updated_at || asset.created_at || new Date().toISOString()).slice(0, 10),
+        color: asset.current_status === 'Disponible' ? 'emerald' as const : asset.current_status === 'Dañado' ? 'rose' as const : 'amber' as const,
+        location: asset.category,
+    })), [filteredAssets]);
+    const ganttItems = useMemo(() => filteredAssets.map((asset) => ({
+        id: asset.id,
+        title: asset.name,
+        subtitle: asset.current_status || asset.category,
+        start_date: (asset.created_at || new Date().toISOString()).slice(0, 10),
+        end_date: (asset.updated_at || asset.created_at || new Date().toISOString()).slice(0, 10),
+        color: asset.current_status === 'Disponible' ? 'emerald' as const : asset.current_status === 'Dañado' ? 'rose' as const : 'amber' as const,
+        progress: asset.current_status === 'Disponible' ? 100 : asset.current_status === 'Mantenimiento' ? 60 : 25,
+    })), [filteredAssets]);
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
@@ -106,7 +140,7 @@ export default function AdminInventoryPage() {
 
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: 'Infraestructura', icon: Package }, { label: 'Inventario de Activos', icon: Box }]}
-                viewType="table" setViewType={() => {}} onSearch={setSearchTerm}
+                viewType={viewType} setViewType={setViewType} availableViews={INVENTORY_VIEWS} onSearch={setSearchTerm}
                 rightActions={
                     <div className="flex items-center gap-2">
                         <button className="flex items-center gap-2 px-5 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 rounded-[1.25rem] text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-all"><QrCode size={14} /> Escanear QR</button>
@@ -145,7 +179,7 @@ export default function AdminInventoryPage() {
                             <div className="p-20 space-y-4">
                                 {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-16 w-full rounded-2xl" />)}
                             </div>
-                        ) : (
+                        ) : viewType === 'table' ? (
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
@@ -157,7 +191,7 @@ export default function AdminInventoryPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                                        {assets.filter(a => a.name.toLowerCase().includes(searchTerm.toLowerCase())).map((asset, i) => (
+                                        {filteredAssets.map((asset, i) => (
                                             <motion.tr 
                                                 key={i}
                                                 initial={{ opacity: 0, x: -10 }}
@@ -210,6 +244,53 @@ export default function AdminInventoryPage() {
                                     </tbody>
                                 </table>
                             </div>
+                        ) : viewType === 'list' ? (
+                            <div className="divide-y divide-slate-100 dark:divide-white/5">
+                                {filteredAssets.map((asset) => (
+                                    <button key={asset.id} onClick={() => handleOpenAsset(asset)} className="flex w-full items-center justify-between gap-4 px-8 py-5 text-left hover:bg-slate-50 dark:hover:bg-white/5">
+                                        <div>
+                                            <p className="text-sm font-black text-slate-900 dark:text-white">{asset.name}</p>
+                                            <p className="text-xs font-semibold text-slate-400">{asset.category || 'Sin categoria'} - {asset.brand || 'Generico'}</p>
+                                        </div>
+                                        <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:bg-white/10">{asset.current_status || 'Disponible'}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        ) : viewType === 'grid' ? (
+                            <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2 xl:grid-cols-3">
+                                {filteredAssets.map((asset) => (
+                                    <button key={asset.id} onClick={() => handleOpenAsset(asset)} className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-left transition hover:border-blue-300 dark:border-white/10 dark:bg-white/[0.03]">
+                                        <Box className="mb-4 text-blue-500" size={24} />
+                                        <p className="text-sm font-black text-slate-900 dark:text-white">{asset.name}</p>
+                                        <p className="mt-1 text-xs font-semibold text-slate-400">{asset.serial_number || `INTERNO-${asset.id}`}</p>
+                                    </button>
+                                ))}
+                            </div>
+                        ) : viewType === 'board' || viewType === 'kanban' ? (
+                            <div className="flex gap-4 overflow-x-auto p-6">
+                                {groupedAssets.map((column) => (
+                                    <section key={column.status} className="w-80 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                                        <div className="mb-3 flex items-center justify-between px-1">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{column.status}</p>
+                                            <span className="text-[10px] font-black text-slate-400">{column.items.length}</span>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {column.items.map((asset) => (
+                                                <button key={asset.id} onClick={() => handleOpenAsset(asset)} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-left dark:border-white/10 dark:bg-white/5">
+                                                    <p className="text-xs font-black text-slate-900 dark:text-white">{asset.name}</p>
+                                                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-widest text-slate-400">{asset.category || 'Activo'}</p>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </section>
+                                ))}
+                            </div>
+                        ) : viewType === 'calendar' ? (
+                            <div className="h-[720px] p-6"><UniversalCalendarView events={calendarEvents} title="Calendario de inventario" /></div>
+                        ) : viewType === 'gantt' ? (
+                            <div className="h-[720px] p-6"><UniversalGanttView items={ganttItems} moduleName="Inventario" /></div>
+                        ) : (
+                            <div className="p-6"><UniversalWikiView moduleName="Inventario" storageKey="wiki_admin_inventory" /></div>
                         )}
                     </div>
                 </div>

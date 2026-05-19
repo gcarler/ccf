@@ -5,15 +5,10 @@ import {
     Search, 
     Filter, 
     MoreHorizontal, 
-    Plus, 
-    Download, 
-    Share2, 
     ChevronRight,
     Home,
-    Settings,
     Columns,
-    Layers,
-    Clock
+    Layers
 } from 'lucide-react';
 import ViewSwitcher, { ViewType } from './ViewSwitcher';
 import { motion } from 'framer-motion';
@@ -35,6 +30,9 @@ interface WorkspaceToolbarProps {
     rightActions?: React.ReactNode;
     onSearch?: (query: string) => void;
     onFilter?: () => void;
+    onColumns?: () => void;
+    onGroup?: () => void;
+    onMore?: () => void;
     onAdd?: () => void;
     onAddOption?: (type: 'task' | 'document' | 'reminder' | 'whiteboard' | 'panel') => void;
 }
@@ -48,6 +46,9 @@ export default function WorkspaceToolbar({
     rightActions,
     onSearch,
     onFilter,
+    onColumns,
+    onGroup,
+    onMore,
     onAdd,
     onAddOption
 }: WorkspaceToolbarProps) {
@@ -111,11 +112,13 @@ export default function WorkspaceToolbar({
                 </div>
 
                 <div className="flex items-center gap-0.5">
-                    <ToolbarButton icon={Filter} onClick={onFilter} tooltip="Filtrar" />
-                    <ToolbarButton icon={Columns} tooltip="Columnas" />
-                    <ToolbarButton icon={Layers} tooltip="Agrupar" />
-                    
-                    <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
+                    {onFilter && <ToolbarButton icon={Filter} onClick={onFilter} tooltip="Filtrar" />}
+                    {onColumns && <ToolbarButton icon={Columns} onClick={onColumns} tooltip="Columnas" />}
+                    {onGroup && <ToolbarButton icon={Layers} onClick={onGroup} tooltip="Agrupar" />}
+
+                    {(onFilter || onColumns || onGroup) && (
+                        <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
+                    )}
                     
                     {rightActions}
                     
@@ -126,7 +129,7 @@ export default function WorkspaceToolbar({
                         />
                     )}
 
-                    <ToolbarButton icon={MoreHorizontal} tooltip="Más opciones" />
+                    {onMore && <ToolbarButton icon={MoreHorizontal} onClick={onMore} tooltip="Más opciones" />}
                 </div>
             </div>
         </div>

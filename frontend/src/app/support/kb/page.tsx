@@ -8,7 +8,7 @@ import clsx from 'clsx';
 const CATEGORIES = [
     { id: 'getting-started', label: 'Primeros Pasos', icon: Zap, color: 'text-amber-500 bg-amber-50 dark:bg-amber-500/10', count: 12 },
     { id: 'crm', label: 'CRM Pastoral', icon: Users, color: 'text-blue-500 bg-blue-50 dark:bg-blue-500/10', count: 18 },
-    { id: 'academy', label: 'Academia CCF', icon: BookOpen, color: 'text-purple-500 bg-purple-50 dark:bg-purple-500/10', count: 9 },
+    { id: 'academy', label: 'Academia CCF', icon: BookOpen, color: 'text-sky-500 bg-sky-50 dark:bg-sky-500/10', count: 9 },
     { id: 'projects', label: 'Proyectos', icon: Layout, color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10', count: 7 },
     { id: 'finances', label: 'Finanzas', icon: TrendingUp, color: 'text-rose-500 bg-rose-50 dark:bg-rose-500/10', count: 5 },
     { id: 'admin', label: 'Configuración', icon: FileText, color: 'text-slate-500 bg-slate-100 dark:bg-white/5', count: 14 },

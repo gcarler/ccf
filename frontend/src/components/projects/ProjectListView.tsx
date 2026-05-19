@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-    ChevronDown, ChevronRight, Plus, Calendar, Flag,
+    ChevronDown, ChevronRight, Plus, Calendar,
     MessageSquare, MoreHorizontal, CheckCircle2, X, Send,
     Paperclip, AtSign, Smile, User, Check, Search, Loader2,
     AlertCircle, ChevronLeft,
@@ -41,13 +41,10 @@ function formatRelative(date: Date): string {
 const STATUS_OPTIONS = [
     { value: 'todo',        label: 'Pendiente',   dot: 'bg-slate-400',   bg: 'bg-slate-100 dark:bg-white/5',           text: 'text-slate-600 dark:text-slate-300',    border: 'border-slate-200 dark:border-white/10' },
     { value: 'pending',     label: 'Pendiente',   dot: 'bg-slate-400',   bg: 'bg-slate-100 dark:bg-white/5',           text: 'text-slate-600 dark:text-slate-300',    border: 'border-slate-200 dark:border-white/10' },
-    { value: 'in_progress', label: 'En Progreso', dot: 'bg-violet-500',  bg: 'bg-violet-100 dark:bg-violet-500/20',    text: 'text-violet-700 dark:text-violet-300',  border: 'border-violet-200 dark:border-violet-500/30' },
+    { value: 'in_progress', label: 'En Progreso', dot: 'bg-blue-500',  bg: 'bg-blue-100 dark:bg-blue-500/20',    text: 'text-blue-700 dark:text-blue-300',  border: 'border-blue-200 dark:border-blue-500/30' },
     { value: 'blocked',     label: 'Bloqueado',   dot: 'bg-rose-500',    bg: 'bg-rose-100 dark:bg-rose-500/20',        text: 'text-rose-700 dark:text-rose-300',      border: 'border-rose-200 dark:border-rose-500/30' },
     { value: 'done',        label: 'Completado',  dot: 'bg-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-500/20',  text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-500/30' },
 ] as const;
-
-type StatusValue = typeof STATUS_OPTIONS[number]['value'];
-
 function getStatus(val: string) {
     return STATUS_OPTIONS.find(s => s.value === val) ?? STATUS_OPTIONS[0];
 }
@@ -59,16 +56,13 @@ const PRIORITY_OPTIONS = [
     { value: 'high',   label: 'Alta',    color: 'text-orange-500',  fill: '#f97316' },
     { value: 'urgent', label: 'Urgente', color: 'text-rose-500',    fill: '#ef4444' },
 ] as const;
-
-type PriorityValue = typeof PRIORITY_OPTIONS[number]['value'];
-
 function getPriority(val: string) {
     return PRIORITY_OPTIONS.find(p => p.value === val) ?? PRIORITY_OPTIONS[1];
 }
 
 // ─── Group header pill styles ─────────────────────────────────────────────────
 const GROUP_PILL: Record<string, string> = {
-    in_progress: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300',
+    in_progress: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
     pending:     'bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-slate-300',
     todo:        'bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-slate-300',
     done:        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
@@ -91,7 +85,6 @@ interface LocalTask extends ProjectTaskRecord {
 
 interface Props {
     tasks: ProjectTaskRecord[];
-    projectId: string | number;
     onOpenTask: (task: ProjectTaskRecord) => void;
     onAddTask: (status: string) => void;
     onTasksChange?: (tasks: ProjectTaskRecord[]) => void;
@@ -145,17 +138,17 @@ function InlineUserPicker({
                     className={clsx(
                         'group flex items-center justify-center min-w-[40px] min-h-[40px] rounded-lg transition-all',
                         'hover:bg-slate-100 dark:hover:bg-white/5',
-                        open && 'bg-violet-50 dark:bg-violet-500/10 ring-1 ring-violet-300 dark:ring-violet-500/40'
+                        open && 'bg-blue-50 dark:bg-blue-500/10 ring-1 ring-blue-300 dark:ring-blue-500/40'
                     )}
                     title={currentUser ? `Asignado a ${currentUser.username}` : 'Asignar persona'}
                     aria-label="Selector de persona asignada"
                 >
                     {currentUser ? (
-                        <div className="size-6 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-[9px] font-black text-white shrink-0 shadow-sm">
+                        <div className="size-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[9px] font-black text-white shrink-0 shadow-sm">
                             {initials}
                         </div>
                     ) : (
-                        <div className="size-6 rounded-full bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-400 group-hover:bg-violet-100 dark:group-hover:bg-violet-500/20 group-hover:text-violet-500 transition-colors">
+                        <div className="size-6 rounded-full bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-500/20 group-hover:text-blue-500 transition-colors">
                             <User size={12} />
                         </div>
                     )}
@@ -186,7 +179,7 @@ function InlineUserPicker({
                     <div className="max-h-52 overflow-y-auto p-1 scrollbar-thin">
                         {loading ? (
                             <div className="flex items-center justify-center py-6">
-                                <Loader2 size={16} className="animate-spin text-violet-500" />
+                                <Loader2 size={16} className="animate-spin text-blue-500" />
                             </div>
                         ) : filtered.length === 0 ? (
                             <p className="text-center text-[11px] text-slate-400 py-4">
@@ -199,7 +192,7 @@ function InlineUserPicker({
                                 className={clsx(
                                     'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[12px] font-medium transition-colors text-left',
                                     currentUser?.id === user.id
-                                        ? 'bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300'
+                                        ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300'
                                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
                                 )}
                             >
@@ -210,7 +203,7 @@ function InlineUserPicker({
                                     <p className="truncate font-semibold">{user.username}</p>
                                     <p className="truncate text-[10px] text-slate-400">{user.email}</p>
                                 </div>
-                                {currentUser?.id === user.id && <Check size={13} className="text-violet-500 shrink-0" />}
+                                {currentUser?.id === user.id && <Check size={13} className="text-blue-500 shrink-0" />}
                             </button>
                         ))}
                     </div>
@@ -317,7 +310,7 @@ function InlineDatePicker({
                                     className={clsx(
                                         'size-8 rounded-lg text-[12px] font-medium transition-all mx-auto flex items-center justify-center',
                                         isSelected
-                                            ? 'bg-violet-600 text-white font-bold shadow-sm'
+                                            ? 'bg-blue-600 text-white font-bold shadow-sm'
                                             : isTodayCell
                                             ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold ring-1 ring-blue-200 dark:ring-blue-500/30'
                                             : isPast
@@ -335,7 +328,7 @@ function InlineDatePicker({
                     <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-100 dark:border-white/5">
                         <button
                             onClick={() => selectDay(today.getDate())}
-                            className="flex-1 text-[11px] font-bold text-violet-600 dark:text-violet-400 py-1.5 rounded-lg hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors"
+                            className="flex-1 text-[11px] font-bold text-blue-600 dark:text-blue-400 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
                         >
                             Hoy
                         </button>
@@ -505,13 +498,13 @@ function CommentPopover({ onClose }: { onClose: () => void }) {
             </div>
             {/* Toolbar */}
             <div className="flex items-center gap-1 px-3 pb-3">
-                <button className="p-1.5 rounded-lg text-slate-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors" title="Adjuntar">
+                <button className="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Adjuntar">
                     <Paperclip size={13} />
                 </button>
-                <button className="p-1.5 rounded-lg text-slate-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors" title="Mencionar">
+                <button className="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Mencionar">
                     <AtSign size={13} />
                 </button>
-                <button className="p-1.5 rounded-lg text-slate-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors" title="Emoji">
+                <button className="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Emoji">
                     <Smile size={13} />
                 </button>
                 <div className="flex-1" />
@@ -521,7 +514,7 @@ function CommentPopover({ onClose }: { onClose: () => void }) {
                     className={clsx(
                         'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all',
                         text.trim()
-                            ? 'bg-violet-600 text-white hover:bg-violet-700 shadow-md shadow-violet-500/20 active:scale-95'
+                            ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/20 active:scale-95'
                             : 'bg-slate-100 dark:bg-white/5 text-slate-400 cursor-not-allowed'
                     )}
                     disabled={!text.trim()}
@@ -605,7 +598,7 @@ function TaskRow({
                     'text-[13px] font-medium truncate transition-colors',
                     status === 'done'
                         ? 'line-through text-slate-400 dark:text-slate-600'
-                        : 'text-slate-800 dark:text-slate-200 group-hover:text-violet-600 dark:group-hover:text-violet-400'
+                        : 'text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400'
                 )}>
                     {task.title}
                 </span>
@@ -650,8 +643,8 @@ function TaskRow({
                     className={clsx(
                         'flex items-center justify-center size-8 rounded-lg border transition-all min-h-[40px] min-w-[32px]',
                         commentOpen
-                            ? 'border-violet-300 dark:border-violet-500/40 bg-violet-50 dark:bg-violet-500/10 text-violet-600'
-                            : 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-slate-600 hover:border-violet-200 dark:hover:border-violet-500/30 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-500/10'
+                            ? 'border-blue-300 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-500/10 text-blue-600'
+                            : 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-slate-600 hover:border-blue-200 dark:hover:border-blue-500/30 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10'
                     )}
                     aria-label="Ver comentarios y actividad"
                 >
@@ -777,7 +770,7 @@ function StatusGroup({
                         {isAddingHere ? (
                             <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-100 dark:border-white/[0.04] bg-blue-50/30 dark:bg-blue-500/5 min-h-[40px]">
                                 <div className="w-8 flex-shrink-0 flex items-center justify-center">
-                                    <div className="size-4 rounded-full border-2 border-violet-400 dark:border-violet-500" />
+                                    <div className="size-4 rounded-full border-2 border-blue-400 dark:border-blue-500" />
                                 </div>
                                 <input
                                     ref={inputRef}
@@ -794,7 +787,7 @@ function StatusGroup({
                                 />
                                 <button
                                     onClick={onQuickAddConfirm}
-                                    className="px-3 py-1.5 bg-violet-600 text-white text-[11px] font-bold rounded-lg hover:bg-violet-700 active:scale-95 transition-all"
+                                    className="px-3 py-1.5 bg-blue-600 text-white text-[11px] font-bold rounded-lg hover:bg-blue-700 active:scale-95 transition-all"
                                 >
                                     Guardar
                                 </button>
@@ -808,7 +801,7 @@ function StatusGroup({
                         ) : (
                             <button
                                 onClick={() => onAddTask(status)}
-                                className="flex items-center gap-2 px-4 py-2.5 text-[12px] font-medium text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-50 dark:hover:bg-white/[0.02] w-full transition-colors border-b border-slate-100 dark:border-white/[0.04] min-h-[40px]"
+                                className="flex items-center gap-2 px-4 py-2.5 text-[12px] font-medium text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-white/[0.02] w-full transition-colors border-b border-slate-100 dark:border-white/[0.04] min-h-[40px]"
                             >
                                 <Plus size={13} />
                                 Nuevo
@@ -826,7 +819,6 @@ const STATUS_ORDER = ['in_progress', 'pending', 'todo', 'done', 'blocked'];
 
 export default function ProjectListView({
     tasks: propTasks,
-    projectId,
     onOpenTask,
     onAddTask,
     onTasksChange,
@@ -887,7 +879,7 @@ export default function ProjectListView({
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.15 }}
-                        className="overflow-hidden sticky top-0 z-30 border-b-2 border-violet-300 dark:border-violet-500/40 bg-violet-50 dark:bg-violet-900/10"
+                        className="overflow-hidden sticky top-0 z-30 border-b-2 border-blue-300 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-900/10"
                     >
                         <QuickAddBar
                             quickAddTitle={quickAddTitle || ''}
@@ -958,7 +950,7 @@ function QuickAddBar({
 
     return (
         <div className="flex items-center gap-3 px-4 py-3 min-h-[40px]">
-            <div className="size-5 rounded-full border-2 border-violet-400 dark:border-violet-500 shrink-0" />
+            <div className="size-5 rounded-full border-2 border-blue-400 dark:border-blue-500 shrink-0" />
             <input
                 ref={inputRef}
                 type="text"
@@ -973,7 +965,7 @@ function QuickAddBar({
             />
             <button
                 onClick={onQuickAddConfirm}
-                className="px-4 py-1.5 bg-violet-600 text-white text-[11px] font-bold rounded-lg hover:bg-violet-700 active:scale-95 transition-all shrink-0"
+                className="px-4 py-1.5 bg-blue-600 text-white text-[11px] font-bold rounded-lg hover:bg-blue-700 active:scale-95 transition-all shrink-0"
             >
                 Guardar
             </button>

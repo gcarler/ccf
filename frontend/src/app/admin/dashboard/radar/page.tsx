@@ -6,19 +6,16 @@ import {
     Waves, 
     BookOpen, 
     DollarSign, 
-    TrendingUp, 
     Target,
     Shield,
     Zap,
     Sparkles,
     BarChart3,
-    Heart,
-    ArrowUpRight,
     Loader2
 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
 interface RadarData {

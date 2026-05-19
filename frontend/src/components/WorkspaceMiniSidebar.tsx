@@ -1,9 +1,10 @@
 "use client";
 
 
-import React, { useCallback } from 'react';
+import React from 'react';
 import {
     Layout,
+    LayoutDashboard,
     Users,
     GraduationCap,
     Globe,
@@ -17,20 +18,26 @@ import {
     Heart,
     BookOpen,
     Shield,
+    Flame,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Tooltip from '@/components/ui/Tooltip';
 import clsx from 'clsx';
 import { useCreation } from '@/context/CreationContext';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
+import { useAuth } from '@/context/AuthContext';
 
 export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void }) {
     const pathname = usePathname();
+    const { user } = useAuth();
     const { openModal } = useCreation();
     const { resetSidebarStack } = useSidebarLayers();
+    const role = (user?.role || '').toLowerCase();
+    const canAccessEvangelism = role === 'admin' || role === 'pastor';
 
     const primaryItems = [
+        { id: 'my-view',  icon: LayoutDashboard, href: '/mi-vista',  label: 'Mi Vista' },
         { id: 'projects', icon: Target,       href: '/projects',  label: 'Proyectos' },
         { id: 'tasks',    icon: Layout,        href: '/tasks',     label: 'Mis Tareas' },
         { id: 'calendar', icon: CalendarDays,  href: '/calendar',  label: 'Calendario' },
@@ -38,7 +45,8 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
 
     const moduleItems = [
         { id: 'academy',       icon: GraduationCap, href: '/academy',        label: 'Academia' },
-        { id: 'crm',           icon: Users,         href: '/crm',            label: 'Pastoral' },
+        { id: 'crm',           icon: Users,         href: '/crm',            label: 'Consolidación' },
+        { id: 'evangelism',    icon: Flame,         href: '/evangelism',     label: 'Evangelismo' },
         { id: 'community',     icon: Globe,         href: '/community',      label: 'Comunidad' },
         { id: 'finances',      icon: DollarSign,    href: '/finances',       label: 'Finanzas' },
         { id: 'cms',           icon: Globe,         href: '/cms',            label: 'Sitio Web' },
@@ -46,6 +54,11 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
         { id: 'spiritual-life',icon: Heart,         href: '/spiritual-life', label: 'Vida Espiritual' },
         { id: 'admin',         icon: Shield,        href: '/admin',          label: 'Admin' },
     ];
+
+    const visibleModuleItems = moduleItems.filter((item) => {
+        if (item.id === 'evangelism') return canAccessEvangelism;
+        return true;
+    });
 
     const NavItem = ({ id, icon: Icon, href, label, badge }: any) => {
         const isActive = pathname?.startsWith(href);
@@ -90,7 +103,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
             <div className="w-6 h-px bg-slate-100 dark:bg-white/10 my-2" />
 
             {/* Module items */}
-            {moduleItems.map(item => <NavItem key={item.id} {...item} />)}
+            {visibleModuleItems.map(item => <NavItem key={item.id} {...item} />)}
 
             {/* Separator */}
             <div className="w-6 h-px bg-slate-100 dark:bg-white/10 my-2" />

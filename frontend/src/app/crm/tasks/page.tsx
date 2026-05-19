@@ -6,27 +6,20 @@ import {
     CheckSquare,
     Circle,
     Clock,
-    AlertCircle,
     UserCircle,
     Plus,
     Loader2,
     Send,
     Calendar,
-    Tag,
     Users,
-    MoreHorizontal,
-    ChevronDown,
     CheckCircle2,
     Flame,
-    Target,
-    LayoutList,
-    Kanban,
-    Table2,
     Heart
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
+import { useWikiDocument } from '@/hooks/useWikiDocument';
 import CrmShell from '@/components/crm/CrmShell';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import Skeleton from '@/components/ui/Skeleton';
@@ -39,7 +32,7 @@ import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
 const STATUS_PROGRESS: Record<string, number> = { urgent: 15, pending: 35, in_progress: 70, done: 100 };
 
 // ─── Types ───────────────────────────────────────────────
-interface PastoralTask {
+interface ConsolidationTask {
     id: number;
     title: string;
     description?: string;
@@ -60,7 +53,7 @@ const STATUS_COLUMNS = [
     { key: 'done', label: 'Completada', icon: CheckCircle2, color: 'emerald', bg: 'bg-emerald-50 dark:bg-emerald-900/10', border: 'border-emerald-200 dark:border-emerald-800/30', dot: 'bg-emerald-500' },
 ];
 
-const CATEGORIES = ['Pastoral', 'Seguimiento', 'Oración', 'Consolidación', 'Administrativa', 'Otro'];
+const CATEGORIES = ['Consolidación', 'Seguimiento', 'Oración', 'Administrativa', 'Otro'];
 
 const PRIORITY_STYLES: Record<string, string> = {
     high: 'bg-rose-50 text-rose-600 dark:bg-rose-900/20',
@@ -69,9 +62,7 @@ const PRIORITY_STYLES: Record<string, string> = {
 };
 
 // ─── Sub-components ──────────────────────────────────────
-function TaskCard({ task, onClick, onStatusChange }: { task: PastoralTask; onClick: () => void; onStatusChange: (id: number, status: string) => void }) {
-    const col = STATUS_COLUMNS.find(c => c.key === task.status)!;
-    const Icon = col.icon;
+function TaskCard({ task, onStatusChange }: { task: ConsolidationTask; onStatusChange: (id: number, status: string) => void }) {
     return (
         <motion.div
             layout
@@ -125,17 +116,19 @@ export default function CrmTasksPage() {
     const router = useRouter();
     const { token } = useAuth();
     const { addToast } = useToast();
-    const [tasks, setTasks] = useState<PastoralTask[]>([]);
+    const [tasks, setTasks] = useState<ConsolidationTask[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_tasks_view', 'board'));
-    const [selectedTask, setSelectedTask] = useState<PastoralTask | null>(null);
+    const [selectedTask, setSelectedTask] = useState<ConsolidationTask | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [members, setMembers] = useState<any[]>([]);
-    const [wikiNotes, setWikiNotes] = useState('');
+    const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('crm_tasks_wiki_notes', {
+        title: 'Wiki de tareas CRM',
+    });
     const [newTask, setNewTask] = useState({
-        title: '', description: '', category: 'Pastoral',
+        title: '', description: '', category: 'Consolidación',
         priority: 'medium', status: 'pending', due_date: '', member_id: ''
     });
 
@@ -143,7 +136,7 @@ export default function CrmTasksPage() {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<PastoralTask[]>('/crm/tasks', { token, cache: 'no-store' });
+            const data = await apiFetch<ConsolidationTask[]>('/crm/tasks', { token, cache: 'no-store' });
             setTasks(Array.isArray(data) ? data : []);
         } catch {
             addToast('Error al cargar tareas', 'error');
@@ -165,14 +158,6 @@ export default function CrmTasksPage() {
         fetchMembers();
     }, [fetchTasks, fetchMembers]);
 
-    useEffect(() => {
-        const saved = localStorage.getItem('crm_tasks_wiki_notes');
-        if (saved) setWikiNotes(saved);
-    }, []);
-
-    useEffect(() => {
-        localStorage.setItem('crm_tasks_wiki_notes', wikiNotes);
-    }, [wikiNotes]);
 
     const updateTaskStatus = useCallback(async (id: number, status: string) => {
         setTasks(prev => prev.map(t => t.id === id ? { ...t, status: status as any } : t));
@@ -188,11 +173,11 @@ export default function CrmTasksPage() {
         if (!newTask.title.trim()) return;
         setIsSaving(true);
         try {
-            const created = await apiFetch<PastoralTask>('/crm/tasks', { method: 'POST', token, body: newTask });
+            const created = await apiFetch<ConsolidationTask>('/crm/tasks', { method: 'POST', token, body: newTask });
             setTasks(prev => [created, ...prev]);
             addToast('Tarea creada', 'success');
             setIsCreateOpen(false);
-            setNewTask({ title: '', description: '', category: 'Pastoral', priority: 'medium', status: 'pending', due_date: '', member_id: '' });
+            setNewTask({ title: '', description: '', category: 'Consolidación', priority: 'medium', status: 'pending', due_date: '', member_id: '' });
         } catch {
             addToast('Error al crear tarea', 'error');
         } finally {
@@ -201,24 +186,17 @@ export default function CrmTasksPage() {
     };
 
     useRegisterCommands('crm-tasks', [
-        { id: 'crm-task-new', label: 'Nueva tarea pastoral', group: 'Tareas', action: () => setIsCreateOpen(true) },
+        { id: 'crm-task-new', label: 'Nueva tarea de consolidación', group: 'Tareas', action: () => setIsCreateOpen(true) },
     ]);
 
     const tasksByStatus = useMemo(() => {
-        const map: Record<string, PastoralTask[]> = {};
+        const map: Record<string, ConsolidationTask[]> = {};
         STATUS_COLUMNS.forEach(c => { map[c.key] = tasks.filter(t => t.status === c.key); });
         return map;
     }, [tasks]);
 
-    const stats = useMemo(() => ({
-        urgent: tasks.filter(t => t.status === 'urgent').length,
-        pending: tasks.filter(t => t.status === 'pending').length,
-        in_progress: tasks.filter(t => t.status === 'in_progress').length,
-        done: tasks.filter(t => t.status === 'done').length,
-    }), [tasks]);
-
     const dueBuckets = useMemo(() => {
-        const map: Record<string, PastoralTask[]> = {};
+        const map: Record<string, ConsolidationTask[]> = {};
         for (const task of tasks) {
             if (!task.due_date) continue;
             const date = new Date(task.due_date);
@@ -230,7 +208,7 @@ export default function CrmTasksPage() {
     }, [tasks]);
 
     if (loading) return (
-        <CrmShell breadcrumbs={[{ label: 'CRM', icon: Heart }, { label: 'Tareas Pastorales', icon: CheckSquare }]}>
+        <CrmShell breadcrumbs={[{ label: 'Consolidación', icon: Heart }, { label: 'Tareas de Consolidación', icon: CheckSquare }]}>
             <div className="p-6 space-y-3">
                 {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-2xl" />)}
             </div>
@@ -241,8 +219,8 @@ export default function CrmTasksPage() {
         <CrmShell
             breadcrumbs={[
                 { label: 'CCF', icon: Heart },
-                { label: 'CRM Pastoral', icon: Users },
-                { label: 'Tareas Pastorales', icon: CheckSquare }
+                { label: 'Consolidación', icon: Users },
+                { label: 'Tareas de Consolidación', icon: CheckSquare }
             ]}
             viewOptions={['board', 'list', 'table', 'grid', 'kanban', 'calendar', 'gantt', 'wiki']}
             viewType={viewType}
@@ -300,12 +278,11 @@ export default function CrmTasksPage() {
                                         <div className="flex-1 overflow-y-auto space-y-2 scrollbar-thin min-h-[200px]">
                                             <AnimatePresence>
                                                 {colTasks.map(task => (
-                                                    <TaskCard
-                                                        key={task.id}
-                                                        task={task}
-                                                        onClick={() => { setSelectedTask(task); setIsDetailOpen(true); }}
-                                                        onStatusChange={updateTaskStatus}
-                                                    />
+                                                <TaskCard
+                                                    key={task.id}
+                                                    task={task}
+                                                    onStatusChange={updateTaskStatus}
+                                                />
                                                 ))}
                                             </AnimatePresence>
                                             {colTasks.length === 0 && (
@@ -456,7 +433,7 @@ export default function CrmTasksPage() {
                 {viewType === 'wiki' && (
                     <motion.div key="wiki" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-6">
                         <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Wiki de tareas pastorales</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Wiki de tareas de consolidación</p>
                             <textarea
                                 value={wikiNotes}
                                 onChange={(e) => setWikiNotes(e.target.value)}
@@ -469,7 +446,7 @@ export default function CrmTasksPage() {
 
                 {!['board', 'kanban', 'grid', 'list', 'table', 'calendar', 'gantt', 'wiki'].includes(viewType) && (
                     <motion.div key="pending-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6">
-                        <CrmViewPlaceholder moduleName="Tareas pastorales" viewType={viewType} />
+                        <CrmViewPlaceholder moduleName="Tareas de consolidación" viewType={viewType} />
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -541,7 +518,7 @@ export default function CrmTasksPage() {
             <WorkspaceDrawer
                 isOpen={isCreateOpen}
                 onClose={() => setIsCreateOpen(false)}
-                title="Nueva Tarea Pastoral"
+                title="Nueva Tarea de Consolidación"
                 subtitle="Seguimiento y gestión ministerial"
                 actions={
                     <>

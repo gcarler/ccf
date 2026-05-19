@@ -4,6 +4,7 @@ import Link from "next/link";
 import React from "react";
 import Image from "next/image";
 import { ArrowRight, Play, Calendar, MapPin, BookOpen } from "lucide-react";
+import { motion } from "framer-motion";
 import { useContentBlock } from "@/hooks/useContent";
 import { FARO_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
 
@@ -19,31 +20,17 @@ export default function PublicHomePage() {
     const heroPrimaryCta = heroContent?.primary_cta || "Empezar mi viaje";
     const heroSecondaryCta = heroContent?.secondary_cta || "Ver Prédicas";
 
-    const publicEvents: any[] = Array.isArray(eventsContent?.parsed)
-        ? (eventsContent?.parsed as any[])
-        : [
-            {
-                img: "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&q=80",
-                tag: "Música",
-                date: "12 OCT 2025",
-                title: "Noche de Adoración: Luz en Casa",
-                desc: "Una experiencia inmersiva de música y oración para toda la familia.",
-            },
-            {
-                img: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&q=80",
-                tag: "Liderazgo",
-                date: "15 OCT 2025",
-                title: "Curso: Liderazgo con Propósito",
-                desc: "Herramientas prácticas para influir en tu entorno con propósito.",
-            },
-            {
-                img: "https://images.unsplash.com/photo-1593113630400-ea4288922559?w=600&q=80",
-                tag: "Social",
-                date: "20 OCT 2025",
-                title: "Proyecto: Manos que Iluminan",
-                desc: "Jornada mensual de apoyo comunitario y entrega de alimentos.",
-            },
-        ];
+    interface PublicEventItem {
+        img?: string;
+        tag?: string;
+        date?: string;
+        title?: string;
+        desc?: string;
+    }
+
+    const publicEvents: PublicEventItem[] = Array.isArray(eventsContent?.parsed)
+        ? (eventsContent?.parsed as PublicEventItem[])
+        : [];
 
     return (
         <main>
@@ -54,7 +41,7 @@ export default function PublicHomePage() {
                     className="absolute inset-0 bg-cover bg-center"
                     style={{
                         backgroundImage:
-                            "url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80')",
+                            "url('https://picsum.photos/seed/1506905925346-21bda4d32df4/800/600')",
                         filter: "brightness(0.35) saturate(0.6)",
                     }}
                 />
@@ -152,21 +139,31 @@ export default function PublicHomePage() {
                 </div>
 
                 {/* Scroll indicator */}
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40">
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.4 }}
+                    transition={{ delay: 1, duration: 1 }}
+                    className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+                >
                     <div className="w-px h-12 bg-white animate-pulse" />
                     <span className="text-white text-[9px] uppercase tracking-[0.3em]">
                         Descubrir
                     </span>
-                </div>
+                </motion.div>
             </section>
 
             {/* ─── BENTO: Bienvenidos a Casa ────────────────────────── */}
             <section
-                className="py-24 px-6 md:px-16 lg:px-24"
+                className="py-24 px-6 md:px-16 lg:px-24 overflow-hidden"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
                 <div className="max-w-6xl mx-auto">
-                    <div className="mb-14">
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: "-100px" }}
+                        className="mb-14"
+                    >
                         <span
                             className="text-xs font-black uppercase tracking-[0.25em] block mb-4"
                             style={{ color: "var(--faro-primary)" }}
@@ -179,10 +176,14 @@ export default function PublicHomePage() {
                         >
                             Bienvenidos a Casa
                         </h2>
-                    </div>
+                    </motion.div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Feature grande */}
-                        <div
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.1 }}
                             className="md:col-span-2 rounded-3xl p-10 flex flex-col justify-between group relative overflow-hidden min-h-[280px]"
                             style={{ background: "var(--faro-surface-container)" }}
                         >
@@ -224,50 +225,20 @@ export default function PublicHomePage() {
                                     <ArrowRight size={16} />
                                 </Link>
                             </div>
-                        </div>
-
-                        {/* Testimonio */}
-                        <div
-                            className="rounded-3xl p-10 flex flex-col items-center justify-center text-center"
-                            style={{
-                                background: "var(--faro-primary-container)",
-                                opacity: 0.9,
-                            }}
-                        >
-                            <span
-                                className="text-5xl mb-4 block"
-                                style={{ color: "var(--faro-primary)" }}
-                            >
-                                99
-                            </span>
-                            <h3
-                                className="text-xl font-black mb-4"
-                                style={{ color: "var(--faro-on-primary-container)" }}
-                            >
-                                Testimonios
-                            </h3>
-                            <p
-                                className="text-sm italic leading-relaxed mb-6"
-                                style={{ color: "var(--faro-on-surface-variant)" }}
-                            >
-                                &quot;Encontré una familia y un propósito cuando más lo necesitaba.&quot;
-                            </p>
-                            <span
-                                className="font-black text-sm"
-                                style={{ color: "var(--faro-primary)" }}
-                            >
-                                — Elena M.
-                            </span>
-                        </div>
+                        </motion.div>
 
                         {/* Mini cards */}
                         {[
                             { icon: <BookOpen size={22} />, title: "Librería", desc: "Recursos para profundizar en tu estudio bíblico." },
                             { icon: <Calendar size={22} />, title: "Horarios", desc: "Reuniones presenciales y online cada semana." },
                             { icon: <MapPin size={22} />, title: "Sedes", desc: "Encuéntranos en tu ciudad." },
-                        ].map(({ icon, title, desc }) => (
-                            <div
+                        ].map(({ icon, title, desc }, idx) => (
+                            <motion.div
                                 key={title}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: 0.1 * (idx + 1) }}
                                 className="rounded-2xl p-7 flex items-center gap-5 transition-all hover:scale-[1.02]"
                                 style={{ background: "var(--faro-surface-container)" }}
                             >
@@ -294,7 +265,7 @@ export default function PublicHomePage() {
                                         {desc}
                                     </p>
                                 </div>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
                 </div>
@@ -302,11 +273,16 @@ export default function PublicHomePage() {
 
             {/* ─── ACTIVIDADES RECIENTES ────────────────────────────── */}
             <section
-                className="py-24 px-6 md:px-16 lg:px-24"
+                className="py-24 px-6 md:px-16 lg:px-24 overflow-hidden"
                 style={{ background: "var(--faro-surface)" }}
             >
                 <div className="max-w-6xl mx-auto">
-                    <div className="flex justify-between items-end mb-14">
+                    <motion.div 
+                        initial={{ opacity: 0, x: -30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        className="flex justify-between items-end mb-14"
+                    >
                         <div>
                             <span
                                 className="text-xs font-black uppercase tracking-[0.25em] block mb-4"
@@ -323,7 +299,7 @@ export default function PublicHomePage() {
                         </div>
                         <Link
                             href="/faro/eventos"
-                            className="hidden md:block text-sm font-black uppercase tracking-widest border-b-2 pb-1 transition-all"
+                            className="hidden md:block text-sm font-black uppercase tracking-widest border-b-2 pb-1 transition-all hover:-translate-y-1"
                             style={{
                                 color: "var(--faro-primary)",
                                 borderColor: "var(--faro-primary)",
@@ -331,16 +307,28 @@ export default function PublicHomePage() {
                         >
                             Ver calendario →
                         </Link>
-                    </div>
+                    </motion.div>
+                    {publicEvents.length === 0 ? (
+                        <p className="text-center py-12" style={{ color: "var(--faro-on-surface-variant)" }}>
+                            Próximamente encontrarás aquí nuestras actividades. Mientras tanto, síguenos en redes sociales.
+                        </p>
+                    ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                        {publicEvents.slice(0, 3).map(({ img, tag, date, title, desc }: any) => (
-                            <div key={title} className="group cursor-pointer">
+                        {publicEvents.slice(0, 3).map(({ img, tag, date, title, desc }, idx: number) => (
+                            <motion.div 
+                                key={title} 
+                                initial={{ opacity: 0, y: 40 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true, margin: "-50px" }}
+                                transition={{ delay: idx * 0.15 }}
+                                className="group cursor-pointer"
+                            >
                                 <div
-                                    className="relative aspect-video rounded-2xl overflow-hidden mb-6"
+                                    className="relative aspect-video rounded-3xl overflow-hidden mb-6 shadow-md"
                                     style={{ background: "var(--faro-surface-container-high)" }}
                                 >
                                     <Image
-                                        src={img || "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80"}
+                                        src={img || "https://picsum.photos/seed/1506905925346-21bda4d32df4/800/600"}
                                         alt={title || "Image"}
                                         fill
                                         className="object-cover group-hover:scale-105 transition-transform duration-700"
@@ -375,9 +363,10 @@ export default function PublicHomePage() {
                                 >
                                     {desc}
                                 </p>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
+                    )}
                 </div>
             </section>
 
@@ -386,16 +375,20 @@ export default function PublicHomePage() {
                 className="py-24 px-6 md:px-16 lg:px-24"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
-                <div
-                    className="max-w-4xl mx-auto rounded-[2.5rem] p-12 md:p-20 relative overflow-hidden text-center"
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    className="max-w-4xl mx-auto rounded-[3rem] p-12 md:p-20 relative overflow-hidden text-center shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] backdrop-blur-2xl"
                     style={{
                         background:
-                            "linear-gradient(135deg, var(--faro-primary-container) 0%, var(--faro-surface-container-high) 100%)",
-                        border: "1px solid var(--faro-outline-variant)",
+                            "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.02) 100%)",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        backgroundColor: "var(--faro-primary-container)"
                     }}
                 >
                     <div
-                        className="absolute inset-0 opacity-20 pointer-events-none"
+                        className="absolute inset-0 opacity-40 pointer-events-none mix-blend-overlay"
                         style={{
                             background:
                                 "radial-gradient(circle at 30% 50%, rgba(165, 200, 255, 0.5) 0%, transparent 60%)",
@@ -438,7 +431,7 @@ export default function PublicHomePage() {
                             </button>
                         </form>
                     </div>
-                </div>
+                </motion.div>
             </section>
         </main>
     );

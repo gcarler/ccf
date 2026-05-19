@@ -5,14 +5,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     X, ChevronRight, ChevronDown, Paperclip, Star, Maximize2, Trash2,
     UserRound, CalendarDays, Flag, Tag, AlignLeft, MessageSquare,
-    Plus, Check, Sparkles, MoreHorizontal, Map, Send, Circle,
-    CheckCircle2, Loader2, GitBranch, Home, FolderOpen
+    Plus, Check, Send, Circle,
+    CheckCircle2, Loader2, GitBranch, Home, FolderOpen, Boxes
 } from 'lucide-react';
 import clsx from 'clsx';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
-import { useSidebarLayers } from '@/context/SidebarLayerContext';
-import type { ProjectTaskRecord } from '@/types/projects';
+import type { ProjectTaskRecord, TaskSupplyRecord } from '@/types/projects';
 
 // Paleta de colores para etiquetas
 const LABEL_COLORS = [
@@ -21,7 +20,7 @@ const LABEL_COLORS = [
     { bg: 'bg-amber-100 dark:bg-amber-900/30',  text: 'text-amber-700 dark:text-amber-300',  border: 'border-amber-300/50 dark:border-amber-500/30',  dot: 'bg-amber-500' },
     { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-300/50 dark:border-emerald-500/30', dot: 'bg-emerald-500' },
     { bg: 'bg-blue-100 dark:bg-blue-900/30',   text: 'text-blue-700 dark:text-blue-300',   border: 'border-blue-300/50 dark:border-blue-500/30',   dot: 'bg-blue-500' },
-    { bg: 'bg-violet-100 dark:bg-violet-900/30', text: 'text-violet-700 dark:text-violet-300', border: 'border-violet-300/50 dark:border-violet-500/30', dot: 'bg-violet-500' },
+    { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-300/50 dark:border-blue-500/30', dot: 'bg-blue-500' },
     { bg: 'bg-pink-100 dark:bg-pink-900/30',   text: 'text-pink-700 dark:text-pink-300',   border: 'border-pink-300/50 dark:border-pink-500/30',   dot: 'bg-pink-500' },
     { bg: 'bg-slate-100 dark:bg-slate-800/60', text: 'text-slate-600 dark:text-slate-300', border: 'border-slate-300/50 dark:border-slate-600/30', dot: 'bg-slate-400' },
 ];
@@ -57,6 +56,7 @@ interface TaskDetailPanelProps {
     onClose: () => void;
     onUpdate?: (updated: ProjectTaskRecord) => void;
     onDelete?: (taskId: number) => void;
+    onActivityCreated?: () => void;
     onVerRutaClick?: () => void; // abre S3 con el árbol
 }
 
@@ -93,12 +93,14 @@ function ActivityItem({
     onToggle,
     onAddChild,
     onUpdateTitle,
+    onDelete,
 }: {
     activity: Activity;
     depth?: number;
     onToggle: (id: number) => void;
     onAddChild: (parentId: number) => void;
     onUpdateTitle: (id: number, title: string) => void;
+    onDelete: (id: number) => void;
 }) {
     const [expanded, setExpanded] = useState(depth === 0);
     const [editing, setEditing] = useState(false);
@@ -200,6 +202,15 @@ function ActivityItem({
                 >
                     <Plus size={10} strokeWidth={2.5} />
                 </button>
+
+                {/* Delete button */}
+                <button
+                    onClick={() => onDelete(activity.id)}
+                    className="size-4 rounded flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                    title="Eliminar actividad"
+                >
+                    <X size={10} strokeWidth={2.5} />
+                </button>
             </div>
 
             {/* Children */}
@@ -220,6 +231,7 @@ function ActivityItem({
                                 onToggle={onToggle}
                                 onAddChild={onAddChild}
                                 onUpdateTitle={onUpdateTitle}
+                                onDelete={onDelete}
                             />
                         ))}
                     </motion.div>
@@ -265,9 +277,10 @@ export default function TaskDetailPanel({
     onClose,
     onUpdate,
     onDelete,
+    onActivityCreated,
     onVerRutaClick,
 }: TaskDetailPanelProps) {
-    const { token } = useAuth();
+    const { token, user } = useAuth();
 
     // ── Width / resize state ──────────────────────────────────────
     const [width, setWidth] = useState<number>(() => {
@@ -315,7 +328,13 @@ export default function TaskDetailPanel({
     const [title, setTitle]         = useState(task?.title ?? '');
     const [description, setDesc]    = useState(task?.description ?? '');
     const [starred, setStarred]     = useState(false);
-    const [saving, setSaving]       = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [supplies, setSupplies] = useState<TaskSupplyRecord[]>(task?.supplies ?? []);
+    const [newSupplyName, setNewSupplyName] = useState('');
+    const [newSupplyQuantity, setNewSupplyQuantity] = useState(1);
+    const [creatingSupply, setCreatingSupply] = useState(false);
+    const [savingSupplyId, setSavingSupplyId] = useState<number | null>(null);
 
     // ── Labels / Etiquetas ─────────────────────────────────────────
     const [labels, setLabels]         = useState<string[]>((task as any)?.labels ?? []);
@@ -354,36 +373,126 @@ export default function TaskDetailPanel({
     const [activities, setActivities] = useState<Activity[]>([]);
     const [newActivityTitle, setNewActivityTitle] = useState('');
 
-    const handleToggle = (id: number) => setActivities(prev => toggleActivity(prev, id));
-    const handleAddChild = (parentId: number) => {
-        const item: Activity = { id: uid(), title: 'Nueva sub-actividad', completed: false };
-        setActivities(prev => addChild(prev, parentId, item));
+    const handleToggle = async (id: number) => {
+        if (!task || !token) return;
+        const findActivity = (items: Activity[], targetId: number): Activity | null => {
+            for (const a of items) {
+                if (a.id === targetId) return a;
+                if (a.children) { const found = findActivity(a.children, targetId); if (found) return found; }
+            }
+            return null;
+        };
+        const activity = findActivity(activities, id);
+        if (!activity) return;
+        const newStatus = activity.completed ? 'todo' : 'done';
+        setActivities(prev => toggleActivity(prev, id));
+        try {
+            await apiFetch(`/projects/${task.project_id}/tasks/${task.id}/subtasks/${id}`, {
+                method: 'PATCH', token, body: { status: newStatus },
+            });
+        } catch { /* optimistic */ }
     };
-    const handleUpdateTitle = (id: number, t: string) => setActivities(prev => updateTitle(prev, id, t));
-    const handleAddTopLevel = () => {
-        if (!newActivityTitle.trim()) return;
-        setActivities(prev => [...prev, { id: uid(), title: newActivityTitle.trim(), completed: false }]);
+
+    const handleAddChild = async (parentId: number) => {
+        if (!task || !token) return;
+        try {
+            const created = await apiFetch<any>(`/projects/${task.project_id}/tasks/${parentId}/subtasks`, {
+                method: 'POST', token, body: { title: 'Nueva sub-actividad', status: 'todo', priority: 'normal' },
+            });
+            const item: Activity = { id: created.id || uid(), title: created.title || 'Nueva sub-actividad', completed: false };
+            setActivities(prev => addChild(prev, parentId, item));
+            onActivityCreated?.();
+        } catch {
+            const item: Activity = { id: uid(), title: 'Nueva sub-actividad', completed: false };
+            setActivities(prev => addChild(prev, parentId, item));
+        }
+    };
+
+    const handleUpdateTitle = async (id: number, t: string) => {
+        setActivities(prev => updateTitle(prev, id, t));
+        if (!task || !token) return;
+        try {
+            await apiFetch(`/projects/${task.project_id}/tasks/${task.id}/subtasks/${id}`, {
+                method: 'PATCH', token, body: { title: t },
+            });
+        } catch { /* optimistic */ }
+    };
+
+    const handleAddTopLevel = async () => {
+        if (!newActivityTitle.trim() || !task || !token) return;
+        try {
+            const created = await apiFetch<any>(`/projects/${task.project_id}/tasks/${task.id}/subtasks`, {
+                method: 'POST', token, body: { title: newActivityTitle.trim(), status: 'todo', priority: 'normal' },
+            });
+            setActivities(prev => [...prev, { id: created.id || uid(), title: newActivityTitle.trim(), completed: false }]);
+            onActivityCreated?.();
+        } catch {
+            setActivities(prev => [...prev, { id: uid(), title: newActivityTitle.trim(), completed: false }]);
+        }
         setNewActivityTitle('');
+    };
+
+    const handleDeleteActivity = async (activityId: number) => {
+        if (!task || !token) return;
+        setActivities(prev => {
+            const filterOut = (items: Activity[]): Activity[] =>
+                items.filter(a => a.id !== activityId).map(a => a.children ? { ...a, children: filterOut(a.children) } : a);
+            return filterOut(prev);
+        });
+        try {
+            await apiFetch(`/projects/${task.project_id}/tasks/${task.id}/subtasks/${activityId}`, {
+                method: 'DELETE', token,
+            });
+        } catch { /* optimistic */ }
     };
 
     // ── Comments ──────────────────────────────────────────────────
     const [comments, setComments] = useState<Comment[]>([]);
     const [commentInput, setCommentInput] = useState('');
     const [sendingComment, setSendingComment] = useState(false);
+    const [loadingComments, setLoadingComments] = useState(false);
+
+    const loadComments = useCallback(async () => {
+        if (!task || !token) return;
+        setLoadingComments(true);
+        try {
+            const data = await apiFetch<any[]>(`/projects/comments?task_id=${task.id}`, { token });
+            if (Array.isArray(data)) {
+                setComments(data.map((c: any) => ({
+                    id: c.id,
+                    author: c.author_name || 'Usuario',
+                    text: c.content,
+                    timestamp: new Date(c.created_at),
+                })));
+            }
+        } catch { /* ignore */ }
+        finally { setLoadingComments(false); }
+    }, [task, token]);
+
+    useEffect(() => { loadComments(); }, [loadComments]);
 
     const handleSendComment = async () => {
-        if (!commentInput.trim()) return;
+        if (!commentInput.trim() || !task || !token) return;
         setSendingComment(true);
-        await new Promise(r => setTimeout(r, 300)); // simulate network
-        setComments(prev => [...prev, {
-            id: uid(),
-            author: 'Tú',
-            authorColor: '#6366f1',
-            text: commentInput.trim(),
-            timestamp: new Date(),
-        }]);
-        setCommentInput('');
-        setSendingComment(false);
+        try {
+            const created = await apiFetch<any>(`/projects/${task.project_id}/comments`, {
+                method: 'POST',
+                token,
+                body: { content: commentInput.trim(), task_id: task.id },
+            });
+            setComments(prev => [...prev, {
+                id: created.id,
+                author: created.author_name || 'Tú',
+                text: created.content,
+                timestamp: new Date(created.created_at),
+            }]);
+            onActivityCreated?.();
+        } catch {
+            // silently fail
+        } finally {
+            setSendingComment(false);
+            setCommentInput('');
+        }
     };
 
     // ── Sync on task change ───────────────────────────────────────
@@ -391,12 +500,24 @@ export default function TaskDetailPanel({
         if (task) {
             setTitle(task.title ?? '');
             setDesc((task as any).description ?? '');
-            setComments([]);
-            // Reset activities per-task (never show hardcoded data)
-            setActivities([]);
+            // Load activities from task subtasks
+            const subs = (task as any).subtasks || [];
+            setActivities(subs.map((s: any) => ({
+                id: s.id,
+                title: s.title,
+                completed: s.status === 'done',
+                children: (s.subtasks || []).map((ss: any) => ({
+                    id: ss.id,
+                    title: ss.title,
+                    completed: ss.status === 'done',
+                })),
+            })));
             setNewActivityTitle('');
             // Sync labels from task
             setLabels((task as any).labels ?? []);
+            setSupplies(task.supplies ?? []);
+            setNewSupplyName('');
+            setNewSupplyQuantity(1);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [task?.id]);
@@ -421,11 +542,149 @@ export default function TaskDetailPanel({
     // ── File attach ───────────────────────────────────────────────
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0 || !task || !token) return;
+        setUploading(true);
+        for (const file of Array.from(files)) {
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                const res = await fetch(`/api/projects/${task.project_id}/tasks/${task.id}/attachments`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData,
+                });
+                if (res.ok) {
+                    const updated = await res.json();
+                    onUpdate?.({ ...task, ...updated });
+                    onActivityCreated?.();
+                }
+            } catch (err) {
+                console.error('Error uploading file', err);
+            }
+        }
+        setUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    const handleAddSupply = async () => {
+        if (!task || !token || !newSupplyName.trim()) return;
+        setCreatingSupply(true);
+        try {
+            const created = await apiFetch<TaskSupplyRecord>(
+                `/projects/${task.project_id}/tasks/${task.id}/supplies`,
+                {
+                    method: 'POST',
+                    token,
+                    body: {
+                        item_name: newSupplyName.trim(),
+                        quantity: Math.max(1, newSupplyQuantity || 1),
+                        status: 'pending',
+                    },
+                }
+            );
+            const nextSupplies = [...supplies, created];
+            setSupplies(nextSupplies);
+            onUpdate?.({ ...task, supplies: nextSupplies });
+            onActivityCreated?.();
+            setNewSupplyName('');
+            setNewSupplyQuantity(1);
+        } finally {
+            setCreatingSupply(false);
+        }
+    };
+
+    const handleUpdateSupply = async (
+        supply: TaskSupplyRecord,
+        patch: Partial<Pick<TaskSupplyRecord, 'item_name' | 'quantity' | 'status'>>,
+    ) => {
+        if (!task || !token) return;
+        const optimistic = supplies.map((item) => (
+            item.id === supply.id ? { ...item, ...patch } : item
+        ));
+        setSupplies(optimistic);
+        onUpdate?.({ ...task, supplies: optimistic });
+        setSavingSupplyId(supply.id);
+        try {
+            const updated = await apiFetch<TaskSupplyRecord>(
+                `/projects/${task.project_id}/tasks/${task.id}/supplies/${supply.id}`,
+                {
+                    method: 'PATCH',
+                    token,
+                    body: patch,
+                }
+            );
+            const nextSupplies = optimistic.map((item) => (
+                item.id === updated.id ? updated : item
+            ));
+            setSupplies(nextSupplies);
+            onUpdate?.({ ...task, supplies: nextSupplies });
+            onActivityCreated?.();
+        } finally {
+            setSavingSupplyId(null);
+        }
+    };
+
+    // ── Status / Priority / Assignee handlers ──────────────────────
+    const STATUS_CYCLE = ['todo', 'in_progress', 'review', 'done'];
+    const PRIORITY_CYCLE = ['low', 'normal', 'high', 'urgent'];
+
+    const handleStatusCycle = async () => {
+        if (!task) return;
+        const currentIdx = STATUS_CYCLE.indexOf(task.status || 'todo');
+        const nextStatus = STATUS_CYCLE[(currentIdx + 1) % STATUS_CYCLE.length];
+        const updated = { ...task, status: nextStatus };
+        onUpdate?.(updated);
+        try {
+            await apiFetch(`/projects/tasks/${task.id}`, {
+                method: 'PATCH', token, body: { status: nextStatus },
+            });
+        } catch { /* optimistic */ }
+    };
+
+    const handlePriorityCycle = async () => {
+        if (!task) return;
+        const currentIdx = PRIORITY_CYCLE.indexOf(task.priority || 'normal');
+        const nextPriority = PRIORITY_CYCLE[(currentIdx + 1) % PRIORITY_CYCLE.length];
+        const updated = { ...task, priority: nextPriority };
+        onUpdate?.(updated);
+        try {
+            await apiFetch(`/projects/tasks/${task.id}`, {
+                method: 'PATCH', token, body: { priority: nextPriority },
+            });
+        } catch { /* optimistic */ }
+    };
+
+    const handleAssigneeToggle = async () => {
+        if (!task || !token) return;
+        const newAssigneeId = task.assignee_id ? null : user?.id;
+        const updated = { ...task, assignee_id: newAssigneeId as any };
+        onUpdate?.(updated);
+        try {
+            await apiFetch(`/projects/tasks/${task.id}`, {
+                method: 'PATCH', token, body: { assignee_id: newAssigneeId },
+            });
+        } catch { /* optimistic */ }
+    };
+
+    const handleDeleteTask = async () => {
+        if (!task || !token) return;
+        onDelete?.(task.id);
+        try {
+            await apiFetch(`/projects/${task.project_id}/tasks/${task.id}`, {
+                method: 'DELETE', token,
+            });
+        } catch { /* ignore */ }
+        onClose();
+    };
+
     if (!task) return null;
 
     const status   = STATUS_MAP[task.status ?? 'todo'] ?? STATUS_MAP.todo;
     const priority = PRIORITY_MAP[task.priority ?? 'normal'] ?? PRIORITY_MAP.normal;
     const StatusIcon = status.icon;
+    const attachments = task.attachments ?? [];
 
     return (
         <AnimatePresence>
@@ -471,7 +730,7 @@ export default function TaskDetailPanel({
                             <button
                                 onClick={onVerRutaClick}
                                 title="Ver ruta jerárquica"
-                                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-violet-600 bg-violet-50 dark:bg-violet-500/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-all border border-violet-200/50 dark:border-violet-500/20"
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all border border-blue-200/50 dark:border-blue-500/20"
                             >
                                 <GitBranch size={11} />
                                 Ver Ruta
@@ -480,12 +739,13 @@ export default function TaskDetailPanel({
                             {/* Attach */}
                             <button
                                 onClick={() => fileInputRef.current?.click()}
-                                title="Adjuntar archivo"
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+                                disabled={uploading}
+                                title={uploading ? "Subiendo archivo" : "Adjuntar archivo"}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-all disabled:cursor-wait disabled:opacity-60"
                             >
-                                <Paperclip size={14} />
+                                {uploading ? <Loader2 size={14} className="animate-spin" /> : <Paperclip size={14} />}
                             </button>
-                            <input ref={fileInputRef} type="file" multiple className="hidden" />
+                            <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileUpload} />
 
                             {/* Star / Priority toggle */}
                             <button
@@ -515,7 +775,7 @@ export default function TaskDetailPanel({
 
                             {/* Delete */}
                             <button
-                                onClick={() => { onDelete?.(task.id); onClose(); }}
+                                onClick={handleDeleteTask}
                                 title="Eliminar tarea"
                                 className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
                             >
@@ -535,8 +795,11 @@ export default function TaskDetailPanel({
 
                     {/* Status chip */}
                     <div className="mb-2.5">
-                        <button className={clsx(
-                            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border border-current/15 transition-all hover:border-current/30',
+                        <button
+                            onClick={handleStatusCycle}
+                            title="Click para cambiar estado"
+                            className={clsx(
+                            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border border-current/15 transition-all hover:border-current/30 cursor-pointer',
                             status.color, status.bg
                         )}>
                             <StatusIcon size={11} strokeWidth={2.5}
@@ -560,6 +823,11 @@ export default function TaskDetailPanel({
                             t.style.height = t.scrollHeight + 'px';
                         }}
                     />
+                    {saving && (
+                        <p className="pb-3 text-[10px] font-bold uppercase tracking-widest text-blue-500">
+                            Guardando cambios...
+                        </p>
+                    )}
                 </header>
 
                 {/* ── BODY (scrollable) ──────────────────────────── */}
@@ -569,11 +837,15 @@ export default function TaskDetailPanel({
                     <section className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.05] space-y-2">
 
                         <MetaRow icon={<UserRound size={13} className="text-slate-400" />} label="Persona asignada">
-                            <button className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] border border-transparent hover:border-slate-200 dark:hover:border-white/[0.08] transition-all">
-                                <div className="size-5 rounded-full bg-violet-600/20 border border-violet-300/30 flex items-center justify-center">
-                                    <UserRound size={10} className="text-violet-500" />
+                            <button
+                                onClick={handleAssigneeToggle}
+                                title="Click para auto-asignar o liberar"
+                                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] font-medium hover:bg-slate-50 dark:hover:bg-white/[0.04] border border-transparent hover:border-slate-200 dark:hover:border-white/[0.08] transition-all cursor-pointer"
+                            >
+                                <div className={task.assignee_id ? 'size-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px] font-black' : 'size-5 rounded-full bg-blue-600/20 border border-blue-300/30 flex items-center justify-center'}>
+                                    {task.assignee_id ? (user?.username?.charAt(0).toUpperCase() || 'U') : <UserRound size={10} className="text-blue-500" />}
                                 </div>
-                                Sin asignar
+                                {task.assignee_id ? (user?.id === task.assignee_id ? user?.username || 'Tú' : `Asignado #${task.assignee_id}`) : 'Sin asignar'}
                             </button>
                         </MetaRow>
 
@@ -587,7 +859,10 @@ export default function TaskDetailPanel({
                         </MetaRow>
 
                         <MetaRow icon={<Flag size={13} className="text-slate-400" />} label="Prioridad">
-                            <button className={clsx('flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] font-bold border border-transparent hover:border-slate-200 dark:hover:border-white/[0.08] transition-all', priority.color)}>
+                            <button
+                                onClick={handlePriorityCycle}
+                                title="Click para cambiar prioridad"
+                                className={clsx('flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] font-bold border border-transparent hover:border-slate-200 dark:hover:border-white/[0.08] transition-all cursor-pointer', priority.color)}>
                                 <span className={clsx('size-2 rounded-full', priority.dot)} />
                                 {priority.label}
                             </button>
@@ -696,7 +971,143 @@ export default function TaskDetailPanel({
                         />
                     </section>
 
+                    {/* ─ ARCHIVOS ─ */}
+                    <section className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.05]">
+                        <div className="mb-3 flex items-center justify-between">
+                            <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+                                <Paperclip size={11} /> Archivos
+                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
+                                    {attachments.length}
+                                </span>
+                            </p>
+                        </div>
+
+                        {attachments.length === 0 ? (
+                            <p className="text-[11px] italic text-slate-300 dark:text-slate-600">
+                                Sin archivos adjuntos aun.
+                            </p>
+                        ) : (
+                            <div className="space-y-2">
+                                {attachments.map((attachment) => (
+                                    <a
+                                        key={attachment.id}
+                                        href={attachment.file_url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-left transition hover:border-blue-200 hover:bg-blue-50/60 dark:border-white/[0.06] dark:bg-white/[0.03] dark:hover:border-blue-500/30 dark:hover:bg-blue-500/10"
+                                    >
+                                        <div className="min-w-0">
+                                            <p className="truncate text-[12px] font-bold text-slate-700 dark:text-slate-200">
+                                                {attachment.filename}
+                                            </p>
+                                            <p className="text-[10px] text-slate-400">
+                                                {attachment.file_size ? `${Math.max(1, Math.round(attachment.file_size / 1024))} KB` : 'Archivo adjunto'}
+                                            </p>
+                                        </div>
+                                        <span className="shrink-0 text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">
+                                            Abrir
+                                        </span>
+                                    </a>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+
                     {/* ─ ACTIVIDADES ─ */}
+                    <section className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.05]">
+                        <div className="mb-3 flex items-center justify-between">
+                            <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+                                <Boxes size={11} /> Insumos
+                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
+                                    {supplies.length}
+                                </span>
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            {supplies.length === 0 && (
+                                <p className="text-[11px] italic text-slate-300 dark:text-slate-600">
+                                    Sin insumos registrados.
+                                </p>
+                            )}
+
+                            {supplies.map((supply) => (
+                                <div
+                                    key={supply.id}
+                                    className="grid grid-cols-[minmax(0,1fr)_72px_110px] items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 dark:border-white/[0.06] dark:bg-white/[0.03]"
+                                >
+                                    <input
+                                        value={supply.item_name}
+                                        onChange={(event) => setSupplies((prev) => prev.map((item) => (
+                                            item.id === supply.id ? { ...item, item_name: event.target.value } : item
+                                        )))}
+                                        onBlur={(event) => {
+                                            const value = event.target.value.trim();
+                                            const original = task.supplies?.find((item) => item.id === supply.id);
+                                            if (value && value !== original?.item_name) {
+                                                handleUpdateSupply(supply, { item_name: value });
+                                            }
+                                        }}
+                                        className="min-w-0 bg-transparent text-[12px] font-bold text-slate-700 outline-none dark:text-slate-200"
+                                    />
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        value={supply.quantity}
+                                        onChange={(event) => {
+                                            const quantity = Math.max(1, Number(event.target.value) || 1);
+                                            setSupplies((prev) => prev.map((item) => (
+                                                item.id === supply.id ? { ...item, quantity } : item
+                                            )));
+                                        }}
+                                        onBlur={(event) => {
+                                            const quantity = Math.max(1, Number(event.target.value) || 1);
+                                            const original = task.supplies?.find((item) => item.id === supply.id);
+                                            if (quantity !== original?.quantity) {
+                                                handleUpdateSupply(supply, { quantity });
+                                            }
+                                        }}
+                                        className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
+                                    />
+                                    <select
+                                        value={supply.status}
+                                        disabled={savingSupplyId === supply.id}
+                                        onChange={(event) => handleUpdateSupply(supply, { status: event.target.value })}
+                                        className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
+                                    >
+                                        <option value="pending">Pendiente</option>
+                                        <option value="ready">Listo</option>
+                                        <option value="unavailable">No disponible</option>
+                                    </select>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-3 grid grid-cols-[minmax(0,1fr)_72px_auto] gap-2">
+                            <input
+                                value={newSupplyName}
+                                onChange={(event) => setNewSupplyName(event.target.value)}
+                                onKeyDown={(event) => event.key === 'Enter' && handleAddSupply()}
+                                placeholder="Nuevo insumo"
+                                className="min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] font-medium outline-none dark:border-white/10 dark:bg-white/5"
+                            />
+                            <input
+                                type="number"
+                                min={1}
+                                value={newSupplyQuantity}
+                                onChange={(event) => setNewSupplyQuantity(Math.max(1, Number(event.target.value) || 1))}
+                                className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-[12px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
+                            />
+                            <button
+                                onClick={handleAddSupply}
+                                disabled={creatingSupply || !newSupplyName.trim()}
+                                className="rounded-xl bg-blue-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-50"
+                            >
+                                {creatingSupply ? '...' : 'Agregar'}
+                            </button>
+                        </div>
+                    </section>
+
                     <section className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.05]">
                         <div className="flex items-center justify-between mb-3">
                             <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 flex items-center gap-1.5">
@@ -717,6 +1128,7 @@ export default function TaskDetailPanel({
                                     onToggle={handleToggle}
                                     onAddChild={handleAddChild}
                                     onUpdateTitle={handleUpdateTitle}
+                                    onDelete={handleDeleteActivity}
                                 />
                             ))}
                         </div>
@@ -751,7 +1163,12 @@ export default function TaskDetailPanel({
 
                         {/* Comment list */}
                         <div className="space-y-3 mb-4">
-                            {comments.length === 0 && (
+                            {loadingComments && (
+                                <p className="text-[11px] text-slate-300 dark:text-slate-600 italic text-center py-2">
+                                    Cargando actividad...
+                                </p>
+                            )}
+                            {!loadingComments && comments.length === 0 && (
                                 <p className="text-[11px] text-slate-300 dark:text-slate-600 italic text-center py-2">
                                     Sin comentarios aún. Menciona a alguien con @
                                 </p>
@@ -779,7 +1196,7 @@ export default function TaskDetailPanel({
 
                         {/* Comment input */}
                         <div className="flex items-end gap-2">
-                            <div className="size-6 rounded-full bg-violet-600 flex items-center justify-center text-[9px] font-black text-white shrink-0">
+                            <div className="size-6 rounded-full bg-blue-600 flex items-center justify-center text-[9px] font-black text-white shrink-0">
                                 T
                             </div>
                             <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.07] focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400/40 transition-all">

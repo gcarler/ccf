@@ -1,22 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { 
     User, 
-    Calendar, 
-    Shield, 
     Phone, 
     Mail, 
     MapPin, 
-    Heart, 
-    Award, 
-    History, 
-    ArrowLeft,
-    CheckCircle2,
     LayoutDashboard,
     Briefcase,
     Zap
@@ -25,22 +18,9 @@ import { DSCard } from '@/design/components/DSCard';
 import { DSBadge } from '@/design/components/DSBadge';
 import { toast } from 'sonner';
 
-const MOCK_MEMBER = {
-    id: 1,
-    first_name: 'Ana María',
-    last_name: 'Restrepo',
-    email: 'ana.restrepo@example.com',
-    phone: '+57 310 987 6543',
-    church_role: 'Servidor',
-    spiritual_status: 'Discípulo',
-    is_baptized: true,
-    joined_date: '2023-11-20'
-};
-
 export default function MemberDetailPage() {
     const params = useParams();
     const id = params?.id as string;
-    const router = useRouter();
     const { token } = useAuth();
     
     const [member, setMember] = useState<any>(null);
@@ -51,9 +31,10 @@ export default function MemberDetailPage() {
         const loadMember = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<any>(`/crm/members/${id}`, { token }).catch(() => MOCK_MEMBER);
+                const data = await apiFetch<any>(`/crm/members/${id}`, { token });
                 setMember(data);
             } catch (err) {
+                console.error(err);
                 toast.error('Error al cargar expediente de miembro');
             } finally {
                 setLoading(false);
@@ -148,7 +129,7 @@ export default function MemberDetailPage() {
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-3">
                                         <MapPin size={18} className="text-rose-500" />
-                                        <span className="text-sm font-bold">Sector Sur - Casa de Gloria #12</span>
+                                        <span className="text-sm font-bold">Sector Sur - Faro en Casa #12</span>
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <Briefcase size={18} className="text-blue-500" />

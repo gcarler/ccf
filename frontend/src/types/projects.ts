@@ -29,9 +29,11 @@ export interface ProjectAttachment {
   filename: string;
   file_url: string;
   file_size?: number | null;
+  file_type?: string | null;
   content_type?: string | null;
+  uploader_id?: number | null;
   uploaded_by?: number | null;
-  created_at: string;
+  created_at?: string;
 }
 
 export interface ProjectTaskRecord {
@@ -39,6 +41,7 @@ export interface ProjectTaskRecord {
   project_id: number;
   title: string;
   description?: string | null;
+  created_at?: string;
   status: string;
   priority: string;
   assignee_id?: number | null;
@@ -92,7 +95,7 @@ export interface ProjectCommentItem {
   content: string;
   author_id: number;
   author_name: string;
-  author: string;       // alias de author_name para compatibilidad
+  author: string;       // author display name
   is_resolved: boolean;
   created_at: string;
   updated_at: string;

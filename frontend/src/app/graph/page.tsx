@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { Network, Search, RefreshCw } from "lucide-react";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
+import type { ViewType } from "@/components/ViewSwitcher";
 import Skeleton from "@/components/ui/Skeleton";
 import { useRegisterCommands } from "@/context/CommandCenterContext";
 import { useGraphInsights } from "@/hooks/useGraphInsights";
@@ -31,6 +32,7 @@ export default function KnowledgeGraphPage() {
   const [query, setQuery] = useState("");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+  const [viewType, setViewType] = useState<ViewType>("grid");
   const enabled = isFeatureEnabled('knowledge_graph');
   const { snapshot, loading, error, refresh } = useGraphInsights({ limit: 240, enabled });
 
@@ -71,13 +73,49 @@ export default function KnowledgeGraphPage() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-white font-display dark:bg-[#0f1114]">
-      <WorkspaceToolbar breadcrumbs={[{ label: "Insights", icon: Network }, { label: "Knowledge Graph", icon: Network }]} viewType="grid" setViewType={() => {}} />
+      <WorkspaceToolbar
+        breadcrumbs={[{ label: "Insights", icon: Network }, { label: "Knowledge Graph", icon: Network }]}
+        viewType={viewType}
+        setViewType={setViewType}
+        availableViews={["grid", "list", "table"]}
+      />
       <main className="relative flex flex-1 flex-col gap-5 overflow-hidden p-6 lg:p-8">
         <header className="space-y-2">
           <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Knowledge Graph</h1>
           <p className="max-w-3xl text-sm text-slate-500 dark:text-slate-400">Vista interactiva con pan/zoom, busqueda de nodos y filtros por tipo para insights de CRM, Academy y Projects.</p>
         </header>
 
+        {viewType === "list" && (
+          <section className="space-y-4 overflow-y-auto">
+            {filtered.nodes.map((node) => (
+              <article key={node.id} className="rounded-3xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+                <h3 className="font-black text-slate-900 dark:text-white">{node.label}</h3>
+                <p className="mt-1 text-sm text-slate-500">{node.type}</p>
+              </article>
+            ))}
+          </section>
+        )}
+
+        {viewType === "table" && (
+          <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:bg-white/5">
+                <tr><th className="px-6 py-4">Nodo</th><th className="px-6 py-4">Tipo</th><th className="px-6 py-4">Conexiones</th></tr>
+              </thead>
+              <tbody>
+                {filtered.nodes.map((node) => (
+                  <tr key={node.id} className="border-t border-slate-100 dark:border-white/5">
+                    <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{node.label}</td>
+                    <td className="px-6 py-4 text-slate-500">{node.type}</td>
+                    <td className="px-6 py-4 text-slate-500">{filtered.edges.filter((edge) => edge.from === node.id || edge.to === node.id).length}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
+
+        {viewType === "grid" && (
         <section className="grid gap-4 lg:grid-cols-[1fr_320px]">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
@@ -185,6 +223,7 @@ export default function KnowledgeGraphPage() {
             </div>
           </aside>
         </section>
+        )}
       </main>
     </div>
   );

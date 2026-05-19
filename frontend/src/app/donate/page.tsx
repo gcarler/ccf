@@ -6,14 +6,10 @@ import {
     ChevronLeft,
     Heart,
     CreditCard,
-    Smartphone,
     Building,
     ShieldCheck,
-    ChevronRight,
-    ArrowRight,
     Globe,
     CheckCircle2,
-    DollarSign,
     Sparkles,
     HandHeart,
     Lock
@@ -21,7 +17,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
 const AMOUNTS = ['20', '50', '100', '200'];

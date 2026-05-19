@@ -6,9 +6,7 @@ import {
     Plus, 
     RefreshCcw, 
     MessageSquare, 
-    CheckCircle2, 
     Clock,
-    User,
     ArrowRight
 } from 'lucide-react';
 import clsx from 'clsx';

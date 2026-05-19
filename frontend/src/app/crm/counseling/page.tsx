@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import { Users, Plus, Calendar, Clock, Heart, Search, MessageSquare, History, Link2, ShieldCheck, CheckCircle2, XCircle, Loader2, ChevronRight, MoreHorizontal, BookOpen } from 'lucide-react';
 import UniversalTableView from '@/components/ui/UniversalTableView';
 import { useTheme } from '@/app/theme/ThemeContext';
 import { apiFetch } from '@/lib/http';
+import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import CrmShell from '@/components/crm/CrmShell';
@@ -16,6 +16,7 @@ import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import CounselingDetailSidebar from '@/components/crm/CounselingDetailSidebar';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import { useRouter } from 'next/navigation';
 
 const STATUS_ORDER = ['Pendiente', 'Realizada', 'Cancelada'];
 const STATUS_PROGRESS: Record<string, number> = { Pendiente: 30, Realizada: 100, Cancelada: 0 };
@@ -36,9 +37,9 @@ interface CounselingSession {
 
 export default function CounselingPage() {
     const { token, user } = useAuth();
-    const router = useRouter();
     const { theme } = useTheme();
     const { addToast } = useToast();
+    const router = useRouter();
     const [sessions, setSessions] = useState<CounselingSession[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -48,7 +49,9 @@ export default function CounselingPage() {
     const [isSaving, setIsSaving] = useState(false);
     const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'];
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_counseling_view', 'grid'));
-    const [wikiNotes, setWikiNotes] = useState('');
+    const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('crm_counseling_wiki_notes', {
+        title: 'Wiki de consejeria CRM',
+    });
 
     const [members, setMembers] = useState<any[]>([]);
     const [newSession, setNewSession] = useState({
@@ -69,7 +72,7 @@ export default function CounselingPage() {
         });
     }, [sessions, searchTerm, filterStatus]);
 
-    const heroWatchers = ['Equipo Pastoral', 'Optimus Brain'];
+    const heroWatchers = ['Equipo de Consolidación', 'Optimus Brain'];
 
     const fetchSessions = useCallback(async () => {
         if (!token) {
@@ -97,14 +100,6 @@ export default function CounselingPage() {
         fetchSessions();
     }, [fetchSessions]);
 
-    useEffect(() => {
-        const saved = localStorage.getItem('crm_counseling_wiki_notes');
-        if (saved) setWikiNotes(saved);
-    }, []);
-
-    useEffect(() => {
-        localStorage.setItem('crm_counseling_wiki_notes', wikiNotes);
-    }, [wikiNotes]);
 
     const handleCreateSession = async () => {
         if (!token) return;
@@ -167,7 +162,7 @@ export default function CounselingPage() {
 
     return (
         <CrmShell
-            breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'CRM Pastoral', icon: Users }, { label: 'Consejería', icon: Heart }]}
+            breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'Consolidación', icon: Users }, { label: 'Consejería', icon: Heart }]}
             viewOptions={ALL_VIEWS}
             viewType={viewType}
             onViewChange={setViewType}
@@ -190,7 +185,7 @@ export default function CounselingPage() {
             tags={['Consejería', 'Seguimiento', 'IA']}
             watchers={heroWatchers}
             primaryAction={{ label: 'Agendar sesión', icon: Plus, onClick: () => setIsDrawerOpen(true) }}
-            secondaryAction={{ label: 'Ver políticas', icon: Link2, onClick: () => {} }}
+            secondaryAction={{ label: 'Ver políticas', icon: Link2, onClick: () => router.push('/privacy') }}
         />
 
         {/* Filters Global */}
@@ -200,7 +195,7 @@ export default function CounselingPage() {
                 <input
                     type="text"
                     placeholder="Buscar por tema..."
-                    className="w-full bg-white dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-purple-500 transition-all"
+                    className="w-full bg-white dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 transition-all"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -210,7 +205,7 @@ export default function CounselingPage() {
                     <button
                         key={status}
                         onClick={() => setFilterStatus(status)}
-                        className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${filterStatus === status ? 'bg-purple-600 text-white shadow-lg' : 'bg-slate-200 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-white/10'}`}
+                        className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${filterStatus === status ? 'bg-sky-600 text-white shadow-lg' : 'bg-slate-200 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-white/10'}`}
                     >
                         {status === 'All' ? 'Todos' : status}
                     </button>
@@ -250,9 +245,9 @@ export default function CounselingPage() {
                         <div 
                             key={session.id} 
                             onClick={() => openSessionDetail(session)}
-                            className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-[40px] p-8 space-y-6 hover:border-purple-500/40 hover:shadow-2xl hover:shadow-purple-500/5 transition-all group relative overflow-hidden cursor-pointer"
+                            className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-[40px] p-8 space-y-6 hover:border-sky-500/40 hover:shadow-2xl hover:shadow-sky-500/5 transition-all group relative overflow-hidden cursor-pointer"
                         >
-                            <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity text-purple-500">
+                            <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity text-sky-500">
                                 <MessageSquare size={80} />
                             </div>
 
@@ -273,9 +268,9 @@ export default function CounselingPage() {
                             </div>
 
                             <div className="space-y-2 relative z-10">
-                                <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{session.topic || 'Sin tema definido'}</h3>
+                                <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">{session.topic || 'Sin tema definido'}</h3>
                                 <p className="text-[13px] text-slate-500 dark:text-slate-400 font-medium flex items-center gap-2">
-                                    <Calendar size={14} className="text-purple-500" />
+                                    <Calendar size={14} className="text-sky-500" />
                                     {session.scheduled_at ? new Date(session.scheduled_at).toLocaleString('es-CO', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' }) : '—'}
                                 </p>
                             </div>
@@ -336,10 +331,10 @@ export default function CounselingPage() {
                                     {session.member_id ? 'MB' : 'LD'}
                                 </div>
                                 <div className="min-w-0">
-                                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{session.topic || 'Sin tema definido'}</h3>
+                                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">{session.topic || 'Sin tema definido'}</h3>
                                     <div className="flex items-center gap-3 mt-1">
                                         <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-1.5">
-                                            <Calendar size={12} className="text-purple-500" />
+                                            <Calendar size={12} className="text-sky-500" />
                                             {session.scheduled_at ? new Date(session.scheduled_at).toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
                                         </p>
                                         <p className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
@@ -352,7 +347,7 @@ export default function CounselingPage() {
 
                             {/* Actions */}
                             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity absolute right-4 sm:static">
-                                <button className="p-2 text-slate-400 hover:text-purple-500 bg-white dark:bg-black rounded-lg shadow-sm border border-slate-200 dark:border-white/10 transition-all">
+                                <button className="p-2 text-slate-400 hover:text-sky-500 bg-white dark:bg-black rounded-lg shadow-sm border border-slate-200 dark:border-white/10 transition-all">
                                     <MessageSquare size={14} />
                                 </button>
                                 {session.status === 'Pendiente' && (
@@ -398,7 +393,7 @@ export default function CounselingPage() {
                         width: '200px',
                         render: (val, session) => (
                             <div className="flex items-center gap-2 text-slate-500">
-                                <Calendar size={12} className="text-purple-500" />
+                                <Calendar size={12} className="text-sky-500" />
                                 <span>{session.scheduled_at ? new Date(session.scheduled_at).toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}</span>
                             </div>
                         )
@@ -472,7 +467,7 @@ export default function CounselingPage() {
                         </div>
                         <div className="p-4 space-y-3 overflow-y-auto flex-1 custom-scrollbar">
                             {filteredSessions.filter(s => s.status === status).map(session => (
-                                <div key={session.id} onClick={() => openSessionDetail(session)} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1A1A] p-5 space-y-4 shadow-sm hover:shadow-xl hover:shadow-purple-500/5 hover:border-purple-500/40 transition-all duration-300 group relative overflow-hidden flex flex-col cursor-pointer">
+                                <div key={session.id} onClick={() => openSessionDetail(session)} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1A1A] p-5 space-y-4 shadow-sm hover:shadow-xl hover:shadow-sky-500/5 hover:border-sky-500/40 transition-all duration-300 group relative overflow-hidden flex flex-col cursor-pointer">
                                     <div className="flex justify-between items-start">
                                         <div className="flex gap-1.5 flex-wrap">
                                             {(session as any).priority_level && (
@@ -485,10 +480,10 @@ export default function CounselingPage() {
                                             <MoreHorizontal size={16} />
                                         </button>
                                     </div>
-                                    <h3 className="text-[15px] font-black text-slate-800 dark:text-slate-100 leading-snug group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{session.topic || 'Sin tema definido'}</h3>
+                                    <h3 className="text-[15px] font-black text-slate-800 dark:text-slate-100 leading-snug group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">{session.topic || 'Sin tema definido'}</h3>
                                     <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100 dark:border-white/[0.05]">
                                         <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                                            <Calendar size={13} className="text-purple-500" />
+                                            <Calendar size={13} className="text-sky-500" />
                                             {session.scheduled_at ? new Date(session.scheduled_at).toLocaleDateString('es-CO', { month: 'short', day: 'numeric' }) : '—'}
                                         </p>
                                         <p className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
@@ -525,7 +520,7 @@ export default function CounselingPage() {
                 {groupedByDate.map(([dateKey, payload]) => (
                     <div key={dateKey} className="relative z-10">
                         <div className="sticky top-0 bg-white/95 dark:bg-[#141517]/95 backdrop-blur-md z-20 py-4 mb-5 -mx-4 px-4 flex items-center gap-3 border-b border-slate-100 dark:border-white/5">
-                            <div className="size-8 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600">
+                            <div className="size-8 rounded-xl bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center text-sky-600">
                                 <Calendar size={14} />
                             </div>
                             <h3 className="text-[13px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest">{payload.label}</h3>
@@ -535,7 +530,7 @@ export default function CounselingPage() {
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                             {payload.items.map(session => (
-                                <div key={session.id} onClick={() => openSessionDetail(session)} className="group rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] p-5 hover:border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/5 transition-all flex gap-5 cursor-pointer">
+                                <div key={session.id} onClick={() => openSessionDetail(session)} className="group rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] p-5 hover:border-sky-500/30 hover:shadow-lg hover:shadow-sky-500/5 transition-all flex gap-5 cursor-pointer">
                                     <div className="flex flex-col items-center justify-center min-w-[50px] shrink-0">
                                         <p className="text-xl font-black text-slate-800 dark:text-slate-100 leading-none tracking-tighter">
                                             {new Date(session.scheduled_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: false })}
@@ -594,7 +589,7 @@ export default function CounselingPage() {
                             </div>
                             <div className="h-3.5 rounded-full bg-slate-100 dark:bg-white/5 overflow-hidden border border-slate-200/50 dark:border-white/5 relative">
                                 <div 
-                                    className={`h-full transition-all duration-1000 ease-out relative overflow-hidden ${session.status === 'Realizada' ? 'bg-emerald-500' : session.status === 'Cancelada' ? 'bg-rose-500' : 'bg-gradient-to-r from-purple-600 to-indigo-500'}`}
+                                    className={`h-full transition-all duration-1000 ease-out relative overflow-hidden ${session.status === 'Realizada' ? 'bg-emerald-500' : session.status === 'Cancelada' ? 'bg-rose-500' : 'bg-gradient-to-r from-sky-600 to-indigo-500'}`}
                                     style={{ width: `${STATUS_PROGRESS[session.status] ?? 0}%` }}
                                 >
                                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent w-full h-full -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
@@ -625,7 +620,7 @@ export default function CounselingPage() {
                     </div>
                     <div className="flex gap-2">
                         <button className="px-3 py-1.5 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-md text-[11px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-colors">Plantillas</button>
-                        <button className="px-3 py-1.5 bg-purple-600 text-white rounded-md text-[11px] font-black uppercase tracking-widest shadow-lg shadow-purple-500/20 hover:bg-purple-500 transition-colors">Exportar</button>
+                        <button className="px-3 py-1.5 bg-sky-600 text-white rounded-md text-[11px] font-black uppercase tracking-widest shadow-lg shadow-sky-500/20 hover:bg-sky-500 transition-colors">Exportar</button>
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-8 md:p-12 lg:p-16 custom-scrollbar bg-white dark:bg-transparent">
@@ -660,7 +655,7 @@ export default function CounselingPage() {
                     <button
                         onClick={handleCreateSession}
                         disabled={isSaving}
-                        className="px-8 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-60 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-purple-500/20 active:scale-95 transition-all flex items-center gap-2"
+                        className="px-8 py-2 bg-sky-600 hover:bg-sky-500 disabled:opacity-60 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-sky-500/20 active:scale-95 transition-all flex items-center gap-2"
                     >
                         {isSaving ? <Loader2 size={14} className="animate-spin" /> : null}
                         Agendar Ahora
@@ -674,7 +669,7 @@ export default function CounselingPage() {
                     <div className="relative">
                         <select
                             required
-                            className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-semibold appearance-none"
+                            className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold appearance-none"
                             value={newSession.member_id}
                             onChange={(e) => setNewSession({ ...newSession, member_id: e.target.value })}
                         >
@@ -691,7 +686,7 @@ export default function CounselingPage() {
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Tema de la Sesión</label>
                     <input
                         type="text"
-                        className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-semibold"
+                        className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold"
                         placeholder="Ej: Orientación Familiar, Fortaleza..."
                         value={newSession.topic}
                         onChange={(e) => setNewSession({ ...newSession, topic: e.target.value })}
@@ -701,7 +696,7 @@ export default function CounselingPage() {
                 <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Notas Iniciales</label>
                     <textarea
-                        className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-semibold min-h-[120px] resize-none"
+                        className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold min-h-[120px] resize-none"
                         placeholder="Describe brevemente el caso..."
                         value={newSession.notes}
                         onChange={(e) => setNewSession({ ...newSession, notes: e.target.value })}
@@ -713,7 +708,7 @@ export default function CounselingPage() {
                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Fecha y Hora</label>
                         <input
                             type="datetime-local"
-                            className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-4 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-semibold"
+                            className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-4 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold"
                             style={{ colorScheme: theme === 'night' ? 'dark' : 'light' }}
                             value={newSession.scheduled_at}
                             onChange={(e) => setNewSession({ ...newSession, scheduled_at: e.target.value })}
@@ -723,7 +718,7 @@ export default function CounselingPage() {
                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Duración</label>
                         <div className="relative">
                             <select
-                                className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-4 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-semibold appearance-none"
+                                className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-4 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold appearance-none"
                                 value={newSession.duration_minutes}
                                 onChange={(e) => setNewSession({ ...newSession, duration_minutes: parseInt(e.target.value) })}
                             >

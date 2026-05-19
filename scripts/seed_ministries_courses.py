@@ -8,13 +8,14 @@ from datetime import datetime, timedelta
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backend import models, schemas, crud
-from backend.core.database import SessionLocal, engine, Base
+from backend.core.database import SessionLocal
+from backend.management.schema import upgrade_with_optional_bootstrap
 
 def seed_ministries_and_courses():
     print("🎭 Iniciando Semilla de Ministerios y Cursos Reales...")
     
-    # Asegurar tablas creadas
-    Base.metadata.create_all(bind=engine)
+    # Aplicar migraciones y bootstrap explícito si es necesario.
+    upgrade_with_optional_bootstrap()
     db = SessionLocal()
     
     try:
