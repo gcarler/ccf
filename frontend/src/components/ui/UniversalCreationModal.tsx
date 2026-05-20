@@ -16,7 +16,7 @@ import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
 import type { ProjectRecord } from '@/types/projects';
 
-type CreationType = 'task' | 'event' | 'doc' | 'reminder' | 'whiteboard' | 'panel';
+type CreationType = 'task' | 'event' | 'doc' | 'reminder' | 'whiteboard' | 'panel' | 'evangelism_strategy';
 
 interface Props {
     isOpen: boolean;
@@ -28,6 +28,7 @@ interface Props {
 const TABS: { id: CreationType; label: string; icon: React.ElementType; color?: string }[] = [
     { id: 'task',       label: 'Tarea',        icon: CheckSquare,    color: 'text-blue-600' },
     { id: 'event',      label: 'Evento',       icon: Calendar,       color: 'text-blue-600' },
+    { id: 'evangelism_strategy', label: 'Estrategia', icon: Sparkles, color: 'text-orange-500' },
     { id: 'doc',        label: 'Documento',    icon: FileText,       color: 'text-slate-500' },
     { id: 'reminder',   label: 'Recordatorio', icon: Bell,           color: 'text-slate-500' },
     { id: 'whiteboard', label: 'Pizarra',      icon: LayoutDashboard,color: 'text-slate-500' },
@@ -148,6 +149,19 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                     }).catch(() => {});
                 }
                 toast.success('Pizarra inicializada');
+            } else if (type === 'evangelism_strategy') {
+                await apiFetch('/evangelism/strategies/', {
+                    method: 'POST', token,
+                    body: {
+                        name: title.trim(),
+                        description: description,
+                        strategy_type: 'General',
+                        start_date: new Date(eventDate).toISOString(),
+                        end_date: new Date(eventEndDate).toISOString(),
+                        status: 'active'
+                    }
+                });
+                toast.success('Estrategia de evangelismo creada');
             } else if (type === 'panel') {
                 toast.success('Panel creado (Boceto)');
             } else {
@@ -362,6 +376,56 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                                 value={description}
                                                                 onChange={e => setDescription(e.target.value)}
                                                                 placeholder="Añadir descripción o enlace de la reunión" 
+                                                                className="text-[12px] flex-1 min-h-[60px] bg-transparent border border-slate-200 dark:border-white/10 rounded p-2 text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 placeholder:text-slate-400 resize-none"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* ─── ESTRATEGIA EVANGELISMO ─── */}
+                                            {type === 'evangelism_strategy' && (
+                                                <div className="flex flex-col">
+                                                    <div className="flex items-center gap-2 px-5 pt-3 pb-2 text-[12px] text-slate-500">
+                                                        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                                            <Sparkles size={12} />
+                                                            Campaña de Alcance
+                                                            <ChevronDown size={11} />
+                                                        </button>
+                                                    </div>
+
+                                                    <input
+                                                        ref={titleRef as React.RefObject<HTMLInputElement>}
+                                                        value={title}
+                                                        onChange={e => setTitle(e.target.value)}
+                                                        onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSubmit()}
+                                                        placeholder="Nombre de la estrategia..."
+                                                        className="px-5 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
+                                                    />
+
+                                                    <div className="px-5 py-3 space-y-2">
+                                                        <div className="flex items-center gap-3">
+                                                            <Calendar size={14} className="text-slate-400" />
+                                                            <input 
+                                                                type="date"
+                                                                value={eventDate}
+                                                                onChange={e => setEventDate(e.target.value)}
+                                                                className="text-[12px] bg-transparent border border-slate-200 dark:border-white/10 rounded px-2 py-1 text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500" 
+                                                            />
+                                                            <span className="text-slate-400 text-[11px]">hasta</span>
+                                                            <input 
+                                                                type="date"
+                                                                value={eventEndDate}
+                                                                onChange={e => setEventEndDate(e.target.value)}
+                                                                className="text-[12px] bg-transparent border border-slate-200 dark:border-white/10 rounded px-2 py-1 text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500" 
+                                                            />
+                                                        </div>
+                                                        <div className="flex items-start gap-3 pt-3">
+                                                            <FileText size={14} className="text-slate-400 mt-1" />
+                                                            <textarea 
+                                                                value={description}
+                                                                onChange={e => setDescription(e.target.value)}
+                                                                placeholder="Propósito u objetivos de la estrategia" 
                                                                 className="text-[12px] flex-1 min-h-[60px] bg-transparent border border-slate-200 dark:border-white/10 rounded p-2 text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 placeholder:text-slate-400 resize-none"
                                                             />
                                                         </div>

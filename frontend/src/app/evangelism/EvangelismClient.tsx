@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import Skeleton from '@/components/ui/Skeleton';
+import { useCreation } from '@/context/CreationContext';
 
 export interface EvangelismStrategy {
     id: string;
@@ -23,6 +24,7 @@ export interface EvangelismStrategy {
 
 export default function EvangelismClient() {
     const { token } = useAuth();
+    const { openModal } = useCreation();
     const [data, setData] = useState<EvangelismStrategy[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -34,7 +36,7 @@ export default function EvangelismClient() {
             setData(Array.isArray(result) ? result : []);
         } catch (err) {
             toast.error('Error al cargar estrategias de evangelismo');
-            setData([]); // Fallback to empty instead of mock for realism
+            setData([]);
         } finally {
             setLoading(false);
         }
@@ -54,11 +56,10 @@ export default function EvangelismClient() {
     ];
 
     const handleAddItem = () => {
-        toast.info("Función en desarrollo: Abre el formulario de nueva estrategia de evangelismo.");
+        openModal('evangelism_strategy');
     };
 
     const handleUpdateItem = async (id: string, field: keyof EvangelismStrategy, value: any) => {
-        // Optimistic update
         setData(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
         try {
             await apiFetch(`/evangelism/strategies/${id}`, {
@@ -69,7 +70,7 @@ export default function EvangelismClient() {
             toast.success('Estrategia actualizada');
         } catch {
             toast.error('Error al actualizar');
-            fetchStrategies(); // Revert
+            fetchStrategies();
         }
     };
 

@@ -893,9 +893,16 @@ def crm_analytics(
         pipeline_by_stage[normalized_stage] = pipeline_by_stage.get(normalized_stage, 0) + count
     total_leads = sum(pipeline_by_stage.values())
 
-    # ConsejerÃ­a
+    # Consejería
     open_counseling = db.query(models.CounselingTicket).filter(
-        models.CounselingTicket.    events_this_month = db.query(models.CrmEvent).filter(
+        models.CounselingTicket.status == "open"
+    ).count()
+
+    # Eventos del mes
+    from datetime import timezone, datetime
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=None)
+    events_this_month = db.query(models.CrmEvent).filter(
         models.CrmEvent.event_date >= month_start
     ).count()
 
@@ -916,7 +923,9 @@ def crm_analytics(
         "total_families": total_families,
     }
 
+
 # --- EVANGELISM STRATEGIES ---
+
 from backend.schemas.crm import EvangelismStrategy, EvangelismStrategyCreate, EvangelismStrategyUpdate
 from backend.crud.crm import (
     get_evangelism_strategies,
@@ -925,11 +934,12 @@ from backend.crud.crm import (
     delete_evangelism_strategy
 )
 
-@router.get("/strategies/", response_model=List[EvangelismStrategy])
+
+@router.get("/strategies", response_model=List[EvangelismStrategy])
 def read_evangelism_strategies(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return get_evangelism_strategies(db, skip=skip, limit=limit)
 
-@router.post("/strategies/", response_model=EvangelismStrategy)
+@router.post("/strategies", response_model=EvangelismStrategy)
 def create_strategy(strategy: EvangelismStrategyCreate, db: Session = Depends(get_db)):
     return create_evangelism_strategy(db=db, strategy=strategy)
 
@@ -942,10 +952,6 @@ def update_strategy(strategy_id: int, strategy: EvangelismStrategyUpdate, db: Se
 
 @router.delete("/strategies/{strategy_id}", response_model=EvangelismStrategy)
 def delete_strategy(strategy_id: int, db: Session = Depends(get_db)):
-    db_obj = delete_evangelism_strategy(db=db, strategy_id=strategy_id)
-    if not db_obj:
-        raise HTTPException(status_code=404, detail="Evangelism strategy not found")
-    return db_objategy(strategy_id: int, db: Session = Depends(get_db)):
     db_obj = delete_evangelism_strategy(db=db, strategy_id=strategy_id)
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
