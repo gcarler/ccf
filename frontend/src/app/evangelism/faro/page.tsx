@@ -140,11 +140,11 @@ export default function FaroPage() {
         <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', icon: Home }, { label: 'Faro en Casa', icon: Home }]}>
             <main className="flex-1 overflow-y-auto">
                 {/* Page Header */}
-                <div className="px-8 pt-8 pb-6 border-b border-slate-100 dark:border-white/5">
+                <div className="px-5 pt-8 pb-6 border-b border-slate-100 dark:border-white/5">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-1">Evangelismo Â· Estrategia</p>
-                            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Faro en Casa</h1>
+                            <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Faro en Casa</h1>
                             {activeSeason
                                 ? <p className="text-slate-500 dark:text-slate-400 text-sm font-medium flex items-center gap-1.5 mt-1">
                                     <span className="inline-block size-2 rounded-full bg-emerald-500" />
@@ -171,17 +171,17 @@ export default function FaroPage() {
                 </div>
 
                 {/* KPIs */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-8 pt-6 pb-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-5 pt-6 pb-2">
                     {kpis.map(k => (
                         <div key={k.label} className="bg-white dark:bg-[#252528] rounded-2xl border border-slate-200/70 dark:border-white/5 p-5 shadow-sm">
-                            <div className={`inline-flex size-10 rounded-xl ${k.color} items-center justify-center text-white mb-3 shadow-md`}><k.icon size={18} /></div>
+                            <div className={`inline-flex size-8 rounded-xl ${k.color} items-center justify-center text-white mb-3 shadow-md`}><k.icon size={18} /></div>
                             <div className="text-3xl font-black text-slate-900 dark:text-white">{loading ? 'â€”' : k.value}</div>
                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">{k.label}</p>
                         </div>
                     ))}
                 </div>
 
-                <div className="px-8 pb-12 space-y-8">
+                <div className="px-5 pb-12 space-y-3">
                     <div>
                         <h2 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-4">Mis Faros en Casa</h2>
                         {houses.length === 0 && !loading ? (
@@ -216,7 +216,7 @@ export default function FaroPage() {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {seasons.map(s => (
-                                    <div key={s.id} className={`bg-white dark:bg-[#252528] rounded-2xl border p-6 shadow-sm ${s.status === 'Activa' ? 'border-blue-400/50 ring-1 ring-blue-400/30' : 'border-slate-200 dark:border-white/5'}`}>
+                                    <div key={s.id} className={`bg-white dark:bg-[#252528] rounded-2xl border p-4 shadow-sm ${s.status === 'Activa' ? 'border-blue-400/50 ring-1 ring-blue-400/30' : 'border-slate-200 dark:border-white/5'}`}>
                                         <div className="flex items-start justify-between mb-3">
                                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${s.status === 'Activa' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-400 dark:bg-white/5'}`}>
                                                 {s.status}
@@ -238,14 +238,14 @@ export default function FaroPage() {
                     {isPrivileged && Boolean(analytics && analytics.per_faro && analytics.per_faro.length > 0) && (
                         <div>
                             <h2 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-4">DesempeÃ±o por Faro Â· {activeSeason?.name}</h2>
-                            <div className="bg-white dark:bg-[#252528] rounded-[2rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
+                            <div className="bg-white dark:bg-[#252528] rounded-xl border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
                                 <table className="w-full">
                                     <thead>
                                         <tr className="border-b border-slate-100 dark:border-white/5">
-                                            <th className="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Faro</th>
-                                            <th className="text-center px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Sesiones</th>
-                                            <th className="text-center px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Asistentes</th>
-                                            <th className="text-center px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Prom.</th>
+                                            <th className="text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Faro</th>
+                                            <th className="text-center px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Sesiones</th>
+                                            <th className="text-center px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Asistentes</th>
+                                            <th className="text-center px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Prom.</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -253,15 +253,15 @@ export default function FaroPage() {
                                             const house = houses.find(h => h.id === row.glory_house_id);
                                             return (
                                                 <tr key={row.glory_house_id} onClick={() => router.push(`/evangelism/faro/${row.glory_house_id}`)} className="border-b border-slate-50 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer">
-                                                    <td className="px-6 py-4">
+                                                    <td className="px-4 py-2">
                                                         <div className="flex items-center gap-3">
                                                             <div className="size-8 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center"><Home size={14} /></div>
                                                             <span className="text-sm font-bold text-slate-800 dark:text-white">{house?.name || `Faro #${row.glory_house_id}`}</span>
                                                         </div>
                                                     </td>
-                                                    <td className="text-center px-6 py-4 text-sm font-bold text-slate-600 dark:text-slate-400">{row.total_sessions}</td>
-                                                    <td className="text-center px-6 py-4"><span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg text-sm font-black">{row.total_attendance}</span></td>
-                                                    <td className="text-center px-6 py-4 text-sm font-bold text-slate-600 dark:text-slate-400">{row.avg}</td>
+                                                    <td className="text-center px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-400">{row.total_sessions}</td>
+                                                    <td className="text-center px-4 py-2"><span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg text-sm font-black">{row.total_attendance}</span></td>
+                                                    <td className="text-center px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-400">{row.avg}</td>
                                                 </tr>
                                             );
                                         })}
@@ -285,13 +285,13 @@ export default function FaroPage() {
                         <button disabled={savingSeason} onClick={() => setShowNewSeason(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-60">
                             Cancelar
                         </button>
-                        <button onClick={handleCreateSeason} disabled={savingSeason || !isSeasonFormValid} className="flex items-center gap-2 px-8 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-60">
+                        <button onClick={handleCreateSeason} disabled={savingSeason || !isSeasonFormValid} className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-60">
                             {savingSeason ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />} Crear
                         </button>
                     </>
                 }
             >
-                <div className="space-y-6 mt-4">
+                <div className="space-y-3 mt-4">
                     {[
                         { label: 'Nombre de la CampaÃ±a', key: 'name', type: 'text', placeholder: 'Faro en Casa Temporada 2026' },
                         { label: 'Fecha de Inicio', key: 'start_date', type: 'date', placeholder: '' },
@@ -299,12 +299,12 @@ export default function FaroPage() {
                     ].map(f => (
                         <div key={f.key} className="space-y-1.5">
                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">{f.label}</label>
-                            <input type={f.type} placeholder={f.placeholder} value={seasonForm[f.key as keyof SeasonForm]} onChange={e => setSeasonForm(p => ({ ...p, [f.key]: e.target.value } as SeasonForm))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" />
+                            <input type={f.type} placeholder={f.placeholder} value={seasonForm[f.key as keyof SeasonForm]} onChange={e => setSeasonForm(p => ({ ...p, [f.key]: e.target.value } as SeasonForm))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" />
                         </div>
                     ))}
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Periodicidad de Reporte</label>
-                        <select value={seasonForm.periodicity} onChange={e => setSeasonForm(p => ({ ...p, periodicity: e.target.value as SeasonForm['periodicity'] }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
+                        <select value={seasonForm.periodicity} onChange={e => setSeasonForm(p => ({ ...p, periodicity: e.target.value as SeasonForm['periodicity'] }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
                             <option value="SEMANAL">Semanal (Reporte cada semana)</option>
                             <option value="MENSUAL">Mensual (Reporte cada mes)</option>
                         </select>
@@ -323,13 +323,13 @@ export default function FaroPage() {
                         <button disabled={savingSession} onClick={() => setShowNewSession(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-60">
                             Cancelar
                         </button>
-                        <button onClick={handleCreateSession} disabled={savingSession || !isSessionFormValid} className="flex items-center gap-2 px-8 py-2 bg-emerald-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 active:scale-95 transition-all disabled:opacity-60">
+                        <button onClick={handleCreateSession} disabled={savingSession || !isSessionFormValid} className="flex items-center gap-2 px-5 py-2 bg-emerald-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 active:scale-95 transition-all disabled:opacity-60">
                             {savingSession ? <Loader2 size={14} className="animate-spin" /> : <ChevronRight size={14} />} Registrar
                         </button>
                     </>
                 }
             >
-                <div className="space-y-6 mt-4">
+                <div className="space-y-3 mt-4">
                     <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-900/30">
                         <p className="text-[10px] font-black uppercase tracking-widest text-blue-400 dark:text-blue-300 mb-1">Temporada Activa</p>
                         <p className="text-sm font-bold text-blue-700 dark:text-blue-400">{activeSeason?.name}</p>
@@ -337,7 +337,7 @@ export default function FaroPage() {
                     
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Faro en Casa</label>
-                        <select value={sessionForm.glory_house_id} onChange={e => setSessionForm(p => ({ ...p, glory_house_id: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
+                        <select value={sessionForm.glory_house_id} onChange={e => setSessionForm(p => ({ ...p, glory_house_id: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
                             <option value="">â€” Seleccionar Faro â€”</option>
                             {isPrivileged && <option value="all" className="font-bold">âœ¨ TODOS LOS FAROS ACTIVOS</option>}
                             {houses.map(h => <option key={h.id} value={h.id}>{h.name} {h.leader_name ? `Â· LÃ­der: ${h.leader_name}` : ''}</option>)}
@@ -350,11 +350,11 @@ export default function FaroPage() {
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Nombre / Alias (Ej. S1)</label>
-                            <input type="text" placeholder="S1" value={sessionForm.topic} onChange={e => setSessionForm(p => ({ ...p, topic: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" />
+                            <input type="text" placeholder="S1" value={sessionForm.topic} onChange={e => setSessionForm(p => ({ ...p, topic: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" />
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Fecha de la ReuniÃ³n</label>
-                            <input type="date" value={sessionForm.session_date} onChange={e => setSessionForm(p => ({ ...p, session_date: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" />
+                            <input type="date" value={sessionForm.session_date} onChange={e => setSessionForm(p => ({ ...p, session_date: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" />
                         </div>
                     </div>
 
@@ -362,7 +362,7 @@ export default function FaroPage() {
                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block flex items-center gap-2">
                             Fecha y Hora LÃ­mite para Reportar <span className="px-1.5 py-0.5 rounded-md bg-slate-200 dark:bg-white/10 text-[8px] font-bold">OPCIONAL</span>
                         </label>
-                        <input type="datetime-local" value={sessionForm.report_deadline} onChange={e => setSessionForm(p => ({ ...p, report_deadline: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" />
+                        <input type="datetime-local" value={sessionForm.report_deadline} onChange={e => setSessionForm(p => ({ ...p, report_deadline: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" />
                         <p className="text-[10px] text-slate-500 mt-1">Si configuras este lÃ­mite, los lÃ­deres no podrÃ¡n guardar asistencia despuÃ©s de esta hora.</p>
                     </div>
                 </div>

@@ -89,7 +89,7 @@ function MentorAssignmentDrawer({
                         <button disabled={saving} onClick={onClose} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-50">
                             Cancelar
                         </button>
-                        <button disabled={!selected || saving} onClick={handleConfirm} className="flex items-center gap-2 px-8 py-2 bg-indigo-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50">
+                        <button disabled={!selected || saving} onClick={handleConfirm} className="flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50">
                             {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />} 
                             {saving ? 'Guardando...' : 'Confirmar'}
                         </button>
@@ -99,11 +99,11 @@ function MentorAssignmentDrawer({
         >
             <div className="mt-4 flex-1 overflow-hidden flex flex-col">
                 {saved ? (
-                    <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
+                    <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
                         <div className="size-20 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 flex items-center justify-center mb-6">
                             <Check size={40} strokeWidth={3} />
                         </div>
-                        <p className="text-xl font-black text-slate-800 dark:text-white">Mentor Asignado</p>
+                        <p className="text-base font-black text-slate-800 dark:text-white">Mentor Asignado</p>
                         <p className="text-sm text-slate-400 mt-2">El proceso de mentoría ha sido inicializado correctamente.</p>
                     </div>
                 ) : (
@@ -116,7 +116,7 @@ function MentorAssignmentDrawer({
                                     value={search}
                                     onChange={e => setSearch(e.target.value)}
                                     placeholder="Buscar por nombre o especialidad..."
-                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                    className="w-full pl-10 pr-4 py-1.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                                 />
                             </div>
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -126,7 +126,7 @@ function MentorAssignmentDrawer({
 
                         <div className="flex-1 overflow-y-auto space-y-3 pb-6">
                             {filtered.length === 0 ? (
-                                <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
+                                <div className="p-4 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
                                     <p className="text-sm font-bold text-slate-500">No hay mentores que coincidan.</p>
                                 </div>
                             ) : (
@@ -140,7 +140,7 @@ function MentorAssignmentDrawer({
                                             selected === m.id ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 cursor-pointer" : "border-slate-100 dark:border-white/5 bg-white dark:bg-[#15171c] hover:border-indigo-200 cursor-pointer"
                                         )}
                                     >
-                                        <div className="size-12 rounded-full bg-slate-100 dark:bg-white/10 flex flex-col items-center justify-center font-black text-slate-400">
+                                        <div className="size-9 rounded-full bg-slate-100 dark:bg-white/10 flex flex-col items-center justify-center font-black text-slate-400">
                                             {m.name.charAt(0)}
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -194,7 +194,7 @@ function formatCurrency(val?: number | null): string {
 
 function QuickStat({ label, value, icon: Icon, color }: any) {
     return (
-        <div className="px-6 py-4 bg-slate-50 dark:bg-black/20 rounded-2xl flex items-center gap-4 border border-slate-100 dark:border-white/5 min-w-[180px]">
+        <div className="px-4 py-2 bg-slate-50 dark:bg-black/20 rounded-2xl flex items-center gap-4 border border-slate-100 dark:border-white/5 min-w-[180px]">
             <Icon size={20} className={color} />
             <div>
                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
@@ -220,12 +220,12 @@ function HealthIndicator({ label, value, color }: { label: string; value: number
 
 function EmptyState({ icon: Icon, title, description, action }: { icon: any; title: string; description: string; action?: React.ReactNode }) {
     return (
-        <div className="lg:col-span-12 py-20 flex flex-col items-center gap-6 text-center">
-            <div className="size-20 rounded-[2rem] bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+        <div className="lg:col-span-12 py-20 flex flex-col items-center gap-4 text-center">
+            <div className="size-20 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center">
                 <Icon size={36} className="text-slate-300" />
             </div>
             <div className="space-y-2">
-                <p className="text-lg font-black text-slate-600 dark:text-slate-300 tracking-tight">{title}</p>
+                <p className="text-sm font-black text-slate-600 dark:text-slate-300 tracking-tight">{title}</p>
                 <p className="text-sm text-slate-400 max-w-xs">{description}</p>
             </div>
             {action}
@@ -235,7 +235,7 @@ function EmptyState({ icon: Icon, title, description, action }: { icon: any; tit
 
 function InfoGrid({ items }: { items: { label: string; value: string | React.ReactNode; icon?: any }[] }) {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {items.map((item, i) => (
                 <div key={i} className="space-y-1">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</p>
@@ -331,7 +331,7 @@ export default function MemberDetailPage() {
 
     if (loading) return (
         <div className="h-full flex flex-col items-center justify-center space-y-4">
-            <div className="size-12 rounded-2xl bg-blue-600/10 flex items-center justify-center">
+            <div className="size-9 rounded-2xl bg-blue-600/10 flex items-center justify-center">
                 <Activity size={24} className="text-blue-600 animate-spin" />
             </div>
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Accediendo al Expediente...</p>
@@ -339,13 +339,13 @@ export default function MemberDetailPage() {
     );
 
     if (!member) return (
-        <div className="h-full flex flex-col items-center justify-center gap-6 text-center p-20">
+        <div className="h-full flex flex-col items-center justify-center gap-4 text-center p-20">
             <AlertCircle size={48} className="text-slate-300" />
             <div>
-                <p className="text-xl font-black text-slate-600 dark:text-slate-300">Miembro no encontrado</p>
+                <p className="text-base font-black text-slate-600 dark:text-slate-300">Miembro no encontrado</p>
                 <p className="text-sm text-slate-400 mt-1">El expediente #{id} no existe o no tienes acceso.</p>
             </div>
-            <button onClick={() => router.push('/crm/members')} className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-700 transition-all">
+            <button onClick={() => router.push('/crm/members')} className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-700 transition-all">
                 <ArrowLeft size={16} /> Volver a Miembros
             </button>
         </div>
@@ -376,33 +376,33 @@ export default function MemberDetailPage() {
                 </div>
             }
         >
-        <div className="max-w-[1400px] mx-auto space-y-8 pb-20 p-4 lg:p-6">
+        <div className="max-w-[1400px] mx-auto space-y-3 pb-20 p-4 lg:p-4">
 
             {/* ── 1. Profile Hero ── */}
             <motion.section
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                className="relative bg-white dark:bg-[#15171c] rounded-[3rem] border border-slate-100 dark:border-white/5 p-10 lg:p-14 shadow-xl shadow-slate-200/20 dark:shadow-none overflow-hidden group"
+                className="relative bg-white dark:bg-[#15171c] rounded-2xl border border-slate-100 dark:border-white/5 p-5 lg:p-14 shadow-xl shadow-slate-200/20 dark:shadow-none overflow-hidden group"
             >
                 <div className="absolute top-0 right-0 w-[500px] h-full bg-gradient-to-l from-blue-600/5 to-transparent pointer-events-none" />
-                <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-10">
+                <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-5">
                     {/* Avatar */}
                     <div className="relative shrink-0">
-                        <div className="size-36 lg:size-44 rounded-[2.5rem] bg-gradient-to-tr from-blue-600 to-indigo-700 flex items-center justify-center text-white text-5xl font-black shadow-2xl shadow-blue-500/30 group-hover:scale-105 transition-transform duration-500">
+                        <div className="size-36 lg:size-44 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-700 flex items-center justify-center text-white text-5xl font-black shadow-2xl shadow-blue-500/30 group-hover:scale-105 transition-transform duration-500">
                             {initials}
                         </div>
-                        <div className="absolute -bottom-3 -right-3 size-12 bg-white dark:bg-[#15171c] rounded-2xl flex items-center justify-center shadow-xl border border-slate-50 dark:border-white/10">
+                        <div className="absolute -bottom-3 -right-3 size-9 bg-white dark:bg-[#15171c] rounded-2xl flex items-center justify-center shadow-xl border border-slate-50 dark:border-white/10">
                             <ShieldCheck size={24} className="text-blue-600" />
                         </div>
                     </div>
 
                     {/* Info */}
-                    <div className="flex-1 space-y-5">
+                    <div className="flex-1 space-y-2">
                         <div className="space-y-2">
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-500/10 rounded-full text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest border border-blue-100 dark:border-blue-500/20">
                                 ID: #{member.id} <span className="text-slate-300">•</span> {member.status}
                             </div>
                             <h1 className="text-4xl lg:text-5xl font-black text-slate-800 dark:text-white tracking-tighter">{fullName}</h1>
-                            <p className="text-lg text-slate-500 font-semibold">{member.church_role}</p>
+                            <p className="text-sm text-slate-500 font-semibold">{member.church_role}</p>
                         </div>
                         <div className="flex flex-wrap gap-5 items-center">
                             {member.email !== '—' && <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm"><Mail size={16} className="text-blue-500" /> {member.email}</span>}
@@ -429,7 +429,7 @@ export default function MemberDetailPage() {
                             key={tabId}
                             onClick={() => setActiveTab(tabId)}
                             className={clsx(
-                                "flex items-center gap-2 px-6 py-4 text-[11px] font-black uppercase tracking-[0.15em] transition-all relative whitespace-nowrap shrink-0",
+                                "flex items-center gap-2 px-4 py-2 text-[11px] font-black uppercase tracking-[0.15em] transition-all relative whitespace-nowrap shrink-0",
                                 active ? "text-blue-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                             )}
                         >
@@ -449,13 +449,13 @@ export default function MemberDetailPage() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -12 }}
                     transition={{ duration: 0.2 }}
-                    className="grid grid-cols-1 lg:grid-cols-12 gap-8"
+                    className="grid grid-cols-1 lg:grid-cols-12 gap-4"
                 >
                     {/* ── RESUMEN ── */}
                     {activeTab === 'overview' && <>
-                        <div className="lg:col-span-8 space-y-8">
+                        <div className="lg:col-span-8 space-y-3">
                             {/* Perfil de Consolidación */}
-                            <div className="bg-white dark:bg-[#15171c] rounded-[2.5rem] p-10 border border-slate-100 dark:border-white/5 shadow-sm space-y-8">
+                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-5 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                 <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Perfil de Consolidación</h3>
                                 <InfoGrid items={[
                                     { label: 'Fecha de Ingreso', value: formatDate(member.joinedAt), icon: Calendar },
@@ -464,7 +464,7 @@ export default function MemberDetailPage() {
                                     { label: 'Rol en Ministerio', value: member.church_role, icon: ShieldCheck },
                                 ]} />
                                 {member.pastoral_notes && (
-                                    <div className="p-6 bg-slate-50 dark:bg-black/20 rounded-[1.5rem] border border-slate-100 dark:border-white/5">
+                                    <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-[1.5rem] border border-slate-100 dark:border-white/5">
                                         <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Notas Pastorales</p>
                                         <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed italic">&ldquo;{member.pastoral_notes}&rdquo;</p>
                                     </div>
@@ -472,7 +472,7 @@ export default function MemberDetailPage() {
                             </div>
 
                             {/* Núcleo Familiar */}
-                            <div className="bg-white dark:bg-[#15171c] rounded-[2.5rem] p-10 border border-slate-100 dark:border-white/5 shadow-sm space-y-6">
+                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-5 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Núcleo Familiar</h3>
                                     <button className="flex items-center gap-1.5 text-[10px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-all">
@@ -497,7 +497,7 @@ export default function MemberDetailPage() {
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="py-10 text-center rounded-2xl bg-slate-50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10">
+                                    <div className="py-6 text-center rounded-2xl bg-slate-50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10">
                                         <Users size={28} className="mx-auto text-slate-300 mb-3" />
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sin núcleo familiar registrado</p>
                                         <p className="text-xs text-slate-400 mt-1">Este miembro aún no pertenece a una familia</p>
@@ -506,11 +506,11 @@ export default function MemberDetailPage() {
                             </div>
                         </div>
 
-                        <div className="lg:col-span-4 space-y-6">
+                        <div className="lg:col-span-4 space-y-3">
                             {/* MESH Insight */}
-                            <div className="p-8 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700"><Sparkles size={100} /></div>
-                                <div className="relative z-10 space-y-5">
+                            <div className="p-4 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-xl text-white shadow-xl relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-700"><Sparkles size={100} /></div>
+                                <div className="relative z-10 space-y-2">
                                     <div className="flex items-center gap-2">
                                         <Flame size={18} className="text-amber-300" />
                                         <h4 className="text-base font-black tracking-tight uppercase">MESH Insight</h4>
@@ -526,7 +526,7 @@ export default function MemberDetailPage() {
                                             });
                                             setMentorDrawerOpen(true);
                                         }}
-                                        className="w-full py-3 bg-white text-indigo-900 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all"
+                                        className="w-full py-1.5 bg-white text-indigo-900 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all"
                                     >
                                         Asignar Mentoría
                                     </button>
@@ -534,7 +534,7 @@ export default function MemberDetailPage() {
                             </div>
 
                             {/* Indicadores de Salud */}
-                            <div className="bg-white dark:bg-[#15171c] rounded-[2.5rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm space-y-5">
+                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-4 border border-slate-100 dark:border-white/5 shadow-sm space-y-2">
                                 <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Indicadores de Salud</h3>
                                 <HealthIndicator label="Asistencia Mensual" value={85} color="bg-emerald-500" />
                                 <HealthIndicator label="Progreso Academia" value={65} color="bg-blue-500" />
@@ -545,8 +545,8 @@ export default function MemberDetailPage() {
 
                     {/* ── VIDA ESPIRITUAL ── */}
                     {activeTab === 'spiritual' && <>
-                        <div className="lg:col-span-8 space-y-8">
-                            <div className="bg-white dark:bg-[#15171c] rounded-[2.5rem] p-10 border border-slate-100 dark:border-white/5 shadow-sm space-y-8">
+                        <div className="lg:col-span-8 space-y-3">
+                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-5 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                 <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Datos Espirituales</h3>
                                 <InfoGrid items={[
                                     { label: 'Fecha de Bautismo', value: formatDate(member.baptism_date), icon: CheckCircle2 },
@@ -566,7 +566,7 @@ export default function MemberDetailPage() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 text-center">
+                                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 text-center">
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Dones espirituales no registrados</p>
                                     </div>
                                 )}
@@ -578,9 +578,9 @@ export default function MemberDetailPage() {
                                 ) : null}
                             </div>
                         </div>
-                        <div className="lg:col-span-4 space-y-6">
-                            <div className="p-8 bg-gradient-to-br from-rose-500 to-pink-600 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-6 opacity-10"><Heart size={80} /></div>
+                        <div className="lg:col-span-4 space-y-3">
+                            <div className="p-4 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl text-white shadow-xl relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-4 opacity-10"><Heart size={80} /></div>
                                 <div className="relative z-10 space-y-4">
                                     <h4 className="text-sm font-black uppercase tracking-widest">Cuidado Pastoral</h4>
                                     <p className="text-sm text-rose-100 leading-relaxed">Este miembro está siendo acompañado activamente en su proceso espiritual.</p>
@@ -592,7 +592,7 @@ export default function MemberDetailPage() {
                                             });
                                             setMentorDrawerOpen(true);
                                         }}
-                                        className="w-full py-3 bg-white text-rose-700 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all"
+                                        className="w-full py-1.5 bg-white text-rose-700 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all"
                                     >
                                         Asignar Pastor
                                     </button>
@@ -604,7 +604,7 @@ export default function MemberDetailPage() {
                     {/* ── ACADEMIA ── */}
                     {activeTab === 'academy' && <>
                         <div className="lg:col-span-12">
-                            <div className="bg-white dark:bg-[#15171c] rounded-[2.5rem] p-10 border border-slate-100 dark:border-white/5 shadow-sm">
+                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-5 border border-slate-100 dark:border-white/5 shadow-sm">
                                 <div className="flex items-center justify-between mb-8">
                                     <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Progreso Académico</h3>
                                     <a href="/academy" className="flex items-center gap-1.5 text-[10px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-all">
@@ -616,7 +616,7 @@ export default function MemberDetailPage() {
                                     title="Sin cursos registrados"
                                     description={`${fullName} aún no está inscrito en ningún curso de la Academia CCF.`}
                                     action={
-                                        <a href="/academy" className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-700 transition-all mt-2">
+                                        <a href="/academy" className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-700 transition-all mt-2">
                                             <BookOpen size={16} /> Explorar Cursos
                                         </a>
                                     }
@@ -627,7 +627,7 @@ export default function MemberDetailPage() {
 
                     {/* ── CONTRIBUCIONES ── */}
                     {activeTab === 'financial' && <>
-                        <div className="lg:col-span-12 space-y-6">
+                        <div className="lg:col-span-12 space-y-3">
                             {/* Summary Cards */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {[
@@ -635,21 +635,21 @@ export default function MemberDetailPage() {
                                     { label: 'Total Ofrendas', value: donations.filter(d => d.donation_type === 'ofrenda').reduce((s: number, d: any) => s + d.amount, 0), color: 'bg-blue-500', icon: DollarSign },
                                     { label: 'Total Registrado', value: donations.reduce((s: number, d: any) => s + d.amount, 0), color: 'bg-indigo-500', icon: Award },
                                 ].map((stat, i) => (
-                                    <div key={i} className="bg-white dark:bg-[#15171c] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
-                                        <div className={clsx('size-10 rounded-xl flex items-center justify-center text-white', stat.color)}>
+                                    <div key={i} className="bg-white dark:bg-[#15171c] rounded-xl p-4 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                                        <div className={clsx('size-8 rounded-xl flex items-center justify-center text-white', stat.color)}>
                                             <stat.icon size={18} />
                                         </div>
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
-                                        <p className="text-2xl font-black text-slate-800 dark:text-white">{formatCurrency(stat.value)}</p>
+                                        <p className="text-lg font-black text-slate-800 dark:text-white">{formatCurrency(stat.value)}</p>
                                     </div>
                                 ))}
                             </div>
 
                             {/* Transactions */}
-                            <div className="bg-white dark:bg-[#15171c] rounded-[2.5rem] p-10 border border-slate-100 dark:border-white/5 shadow-sm">
+                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-5 border border-slate-100 dark:border-white/5 shadow-sm">
                                 <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-6">Historial de Siembras</h3>
                                 {loadingDonations ? (
-                                    <div className="py-10 text-center text-slate-400 text-sm">Cargando...</div>
+                                    <div className="py-6 text-center text-slate-400 text-sm">Cargando...</div>
                                 ) : donations.length > 0 ? (
                                     <div className="space-y-3">
                                         {donations.map((d: any, i: number) => (
@@ -681,16 +681,16 @@ export default function MemberDetailPage() {
                     {/* ── HISTORIAL ── */}
                     {activeTab === 'history' && <>
                         <div className="lg:col-span-12">
-                            <div className="bg-white dark:bg-[#15171c] rounded-[2.5rem] p-10 border border-slate-100 dark:border-white/5 shadow-sm">
+                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-5 border border-slate-100 dark:border-white/5 shadow-sm">
                                 <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-6">Línea de Tiempo Pastoral</h3>
                                 {loadingHistory ? (
-                                    <div className="py-10 text-center text-slate-400 text-sm">Cargando historial...</div>
+                                    <div className="py-6 text-center text-slate-400 text-sm">Cargando historial...</div>
                                 ) : history.length > 0 ? (
                                     <div className="relative space-y-0">
                                         <div className="absolute left-5 top-0 bottom-0 w-px bg-slate-100 dark:bg-white/5" />
                                         {history.map((event: any, i: number) => (
-                                            <div key={i} className="flex gap-6 pl-12 pb-8 relative">
-                                                <div className="absolute left-0 top-1 size-10 rounded-xl bg-white dark:bg-[#15171c] border border-slate-100 dark:border-white/10 flex items-center justify-center shadow-sm z-10">
+                                            <div key={i} className="flex gap-4 pl-12 pb-8 relative">
+                                                <div className="absolute left-0 top-1 size-8 rounded-xl bg-white dark:bg-[#15171c] border border-slate-100 dark:border-white/10 flex items-center justify-center shadow-sm z-10">
                                                     <MessageSquare size={16} className="text-blue-500" />
                                                 </div>
                                                 <div className="flex-1 bg-slate-50 dark:bg-white/5 rounded-2xl p-5">
@@ -709,7 +709,7 @@ export default function MemberDetailPage() {
                                         title="Sin historial registrado"
                                         description={`No se han registrado eventos pastorales para ${fullName} aún.`}
                                         action={
-                                            <button className="flex items-center gap-2 px-6 py-3 bg-slate-800 dark:bg-white text-white dark:text-slate-800 rounded-2xl font-black text-sm hover:opacity-90 transition-all mt-2">
+                                            <button className="flex items-center gap-2 px-4 py-1.5 bg-slate-800 dark:bg-white text-white dark:text-slate-800 rounded-2xl font-black text-sm hover:opacity-90 transition-all mt-2">
                                                 <Plus size={16} /> Registrar Evento
                                             </button>
                                         }

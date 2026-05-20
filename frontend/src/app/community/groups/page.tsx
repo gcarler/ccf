@@ -40,8 +40,8 @@ export default function GroupsPage() {
     ];
 
     return (
-        <div className="max-w-6xl mx-auto space-y-10 pb-20 animate-in fade-in duration-700">
-            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="max-w-6xl mx-auto space-y-4 pb-20 animate-in fade-in duration-700">
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-black uppercase tracking-[0.3em] text-[10px]">
                         <div className="size-2 rounded-full bg-current shadow-[0_0_10px_currentColor]"></div>
@@ -59,24 +59,24 @@ export default function GroupsPage() {
                             className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-2xl h-12 pl-12 pr-6 text-sm font-medium w-64 focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] outline-none transition-all"
                         />
                     </div>
-                    <button className="size-12 rounded-2xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all">
+                    <button className="size-9 rounded-2xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all">
                         <Filter size={18} />
                     </button>
-                    <button className="h-12 px-6 rounded-2xl bg-[hsl(var(--primary))] text-white font-black uppercase tracking-widest text-[10px] flex items-center gap-2 shadow-lg shadow-primary/20 hover:opacity-90 transition-all">
+                    <button className="h-12 px-4 rounded-2xl bg-[hsl(var(--primary))] text-white font-black uppercase tracking-widest text-[10px] flex items-center gap-2 shadow-lg shadow-primary/20 hover:opacity-90 transition-all">
                         <Plus size={16} strokeWidth={3} />
                         Unirse a un Grupo
                     </button>
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {groups.map((group, idx) => (
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: idx * 0.1 }}
                         key={group.id}
-                        className="group bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-[2.5rem] overflow-hidden hover:border-[hsl(var(--primary)/0.3)] hover:shadow-2xl transition-all shadow-sm flex flex-col"
+                        className="group bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-xl overflow-hidden hover:border-[hsl(var(--primary)/0.3)] hover:shadow-2xl transition-all shadow-sm flex flex-col"
                     >
                         <div className="h-48 relative overflow-hidden">
                             <Image
@@ -93,9 +93,9 @@ export default function GroupsPage() {
                             </div>
                         </div>
 
-                        <div className="p-8 space-y-6 flex-1 flex flex-col">
+                        <div className="p-4 space-y-3 flex-1 flex flex-col">
                             <div className="space-y-1">
-                                <h3 className="text-xl font-black text-[hsl(var(--text-primary))] tracking-tighter group-hover:text-[hsl(var(--primary))] transition-colors">
+                                <h3 className="text-base font-black text-[hsl(var(--text-primary))] tracking-tighter group-hover:text-[hsl(var(--primary))] transition-colors">
                                     {group.name}
                                 </h3>
                                 <p className="text-[hsl(var(--text-secondary))] text-xs font-bold uppercase tracking-widest">

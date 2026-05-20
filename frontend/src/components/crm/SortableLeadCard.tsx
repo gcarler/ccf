@@ -103,7 +103,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                     </svg>
 
                     <div className={clsx(
-                        "size-10 rounded-2xl flex items-center justify-center text-white font-black text-xs shadow-lg relative z-10 transition-transform group-hover:scale-105",
+                        "size-8 rounded-2xl flex items-center justify-center text-white font-black text-xs shadow-lg relative z-10 transition-transform group-hover:scale-105",
                         stage.color,
                         glowColor
                     )}>

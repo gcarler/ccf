@@ -36,9 +36,9 @@ export default function TestimoniesWall() {
     );
 
     return (
-        <div className="p-8 lg:p-12 space-y-12 max-w-5xl mx-auto animate-in fade-in duration-700">
+        <div className="p-4 lg:p-4 space-y-12 max-w-5xl mx-auto animate-in fade-in duration-700">
             {/* Header Section */}
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
                     <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-black uppercase tracking-[0.3em] text-[10px]">
                         <Star size={14} className="fill-current shadow-[0_0_8px_currentColor]" />
@@ -48,7 +48,7 @@ export default function TestimoniesWall() {
                     <p className="text-[hsl(var(--text-secondary))] text-sm font-medium mt-1">Lo que Dios ha hecho, lo volverá a hacer.</p>
                 </div>
                 
-                <Link href="/community/testimonies/publish" className="h-14 px-8 bg-[hsl(var(--primary))] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/30 hover:bg-[hsl(var(--primary)/0.9)] transition-all active:scale-95 flex items-center gap-3">
+                <Link href="/community/testimonies/publish" className="h-14 px-5 bg-[hsl(var(--primary))] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/30 hover:bg-[hsl(var(--primary)/0.9)] transition-all active:scale-95 flex items-center gap-3">
                     <Plus size={20} strokeWidth={2.5} />
                     Publicar Milagro
                 </Link>
@@ -58,12 +58,12 @@ export default function TestimoniesWall() {
             <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="relative flex flex-col justify-end overflow-hidden rounded-[3rem] min-h-[360px] shadow-2xl group border border-[hsl(var(--border))]"
+                className="relative flex flex-col justify-end overflow-hidden rounded-2xl min-h-[360px] shadow-2xl group border border-[hsl(var(--border))]"
             >
                 <div className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: 'url("https://picsum.photos/seed/1438232992991-995b7058bbb3/800/600")' }}>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-[hsl(var(--bg-primary))] via-[hsl(var(--bg-primary)/0.4)] to-transparent"></div>
-                <div className="relative p-10 md:p-16">
+                <div className="relative p-5 md:p-16">
                     <motion.span 
                         initial={{ x: -20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
@@ -84,9 +84,9 @@ export default function TestimoniesWall() {
             </motion.div>
 
             {/* Content Area */}
-            <div className="space-y-8">
+            <div className="space-y-3">
                 {/* Filter Tabs */}
-                <div className="flex gap-8 border-b border-[hsl(var(--border))] px-2 overflow-x-auto hide-scrollbar">
+                <div className="flex gap-4 border-b border-[hsl(var(--border))] px-2 overflow-x-auto hide-scrollbar">
                     {tabs.map((tab) => (
                         <button
                             key={tab}
@@ -108,10 +108,10 @@ export default function TestimoniesWall() {
                 </div>
 
                 {/* Testimonies List */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-24">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-24">
                     <AnimatePresence mode="popLayout">
                         {loading ? (
-                            <div className="col-span-full flex flex-col items-center justify-center py-20 gap-6">
+                            <div className="col-span-full flex flex-col items-center justify-center py-20 gap-4">
                                 <Loader2 className="w-12 h-12 animate-spin text-[hsl(var(--primary))]" strokeWidth={1.5} />
                                 <p className="text-[hsl(var(--text-secondary))] font-black uppercase tracking-[0.2em] text-[10px]">Cargando Historias...</p>
                             </div>
@@ -122,11 +122,11 @@ export default function TestimoniesWall() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: idx * 0.05 }}
                                     key={testimony.id} 
-                                    className="surface-card p-8 bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)] hover:shadow-xl transition-all flex flex-col gap-6"
+                                    className="surface-card p-4 bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)] hover:shadow-xl transition-all flex flex-col gap-4"
                                 >
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-4">
-                                            <div className="size-12 rounded-2xl bg-[hsl(var(--surface-3))] flex items-center justify-center text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] shadow-inner font-black text-xs">
+                                            <div className="size-9 rounded-2xl bg-[hsl(var(--surface-3))] flex items-center justify-center text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] shadow-inner font-black text-xs">
                                                 {testimony.author?.username?.substring(0, 2).toUpperCase() || "AN"}
                                             </div>
                                             <div>
@@ -167,7 +167,7 @@ export default function TestimoniesWall() {
                                 </motion.article>
                             ))
                         ) : (
-                            <div className="col-span-full text-center py-24 bg-[hsl(var(--surface-2))] rounded-[3rem] border border-dashed border-[hsl(var(--border))]">
+                            <div className="col-span-full text-center py-24 bg-[hsl(var(--surface-2))] rounded-2xl border border-dashed border-[hsl(var(--border))]">
                                 <p className="text-[hsl(var(--text-secondary))] font-black uppercase tracking-widest text-[10px]">No hay testimonios en esta categoría.</p>
                                 <p className="text-[hsl(var(--text-secondary))] text-[12px] mt-2 font-medium opacity-60">¡Sé el primero en compartir lo que Dios ha hecho!</p>
                             </div>

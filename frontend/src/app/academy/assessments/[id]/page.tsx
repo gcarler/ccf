@@ -89,7 +89,7 @@ export default function AssessmentPage() {
     };
 
     if (loading) return <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-blue-500" /></div>;
-    if (!assessment) return <div className="p-10 text-center">Evaluación no encontrada.</div>;
+    if (!assessment) return <div className="p-5 text-center">Evaluación no encontrada.</div>;
 
     if (result) {
         return (
@@ -103,11 +103,11 @@ export default function AssessmentPage() {
                     setViewType={setViewType}
                     availableViews={['grid', 'list', 'table']}
                 />
-                <main className="flex-1 overflow-y-auto flex items-center justify-center p-6">
+                <main className="flex-1 overflow-y-auto flex items-center justify-center p-4">
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="max-w-md w-full text-center space-y-8 p-10 bg-slate-50 dark:bg-white/5 rounded-3xl border border-slate-200 dark:border-white/5 shadow-xl"
+                        className="max-w-md w-full text-center space-y-3 p-5 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 shadow-xl"
                     >
                         <div className={clsx(
                             "size-20 rounded-full mx-auto flex items-center justify-center shadow-lg",
@@ -126,14 +126,14 @@ export default function AssessmentPage() {
                         <div className="space-y-3">
                             <button 
                                 onClick={() => router.push('/academy')}
-                                className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+                                className="w-full py-2 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
                             >
                                 Volver a la Academia
                             </button>
                             {!result.passed && (
                                 <button 
                                     onClick={() => window.location.reload()}
-                                    className="w-full py-4 text-slate-500 font-bold text-sm uppercase tracking-widest hover:text-slate-700 transition-colors"
+                                    className="w-full py-2 text-slate-500 font-bold text-sm uppercase tracking-widest hover:text-slate-700 transition-colors"
                                 >
                                     Reintentar Evaluación
                                 </button>
@@ -166,7 +166,7 @@ export default function AssessmentPage() {
                 }
             />
 
-            <main className="flex-1 overflow-y-auto scrollbar-thin p-6 lg:p-12">
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4">
                 {viewType === 'list' && (
                     <div className="max-w-5xl mx-auto space-y-4">
                         {assessment.questions.map((question: any, index: number) => (
@@ -174,7 +174,7 @@ export default function AssessmentPage() {
                                 key={question.id}
                                 onClick={() => setCurrentStep(index)}
                                 className={clsx(
-                                    "w-full rounded-3xl border p-6 text-left transition-all",
+                                    "w-full rounded-xl border p-4 text-left transition-all",
                                     currentStep === index
                                         ? "border-blue-500 bg-blue-50/70 dark:bg-blue-500/10"
                                         : "border-slate-200 bg-white hover:border-blue-200 dark:border-white/10 dark:bg-white/5"
@@ -200,23 +200,23 @@ export default function AssessmentPage() {
                 )}
 
                 {viewType === 'table' && (
-                    <div className="max-w-5xl mx-auto overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+                    <div className="max-w-5xl mx-auto overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:bg-white/5">
                                 <tr>
-                                    <th className="px-6 py-4">#</th>
-                                    <th className="px-6 py-4">Pregunta</th>
-                                    <th className="px-6 py-4">Opciones</th>
-                                    <th className="px-6 py-4">Estado</th>
+                                    <th className="px-4 py-2">#</th>
+                                    <th className="px-4 py-2">Pregunta</th>
+                                    <th className="px-4 py-2">Opciones</th>
+                                    <th className="px-4 py-2">Estado</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {assessment.questions.map((question: any, index: number) => (
                                     <tr key={question.id} className="border-t border-slate-100 dark:border-white/5">
-                                        <td className="px-6 py-4 font-black text-slate-400">{index + 1}</td>
-                                        <td className="px-6 py-4 font-bold text-slate-800 dark:text-white">{question.question_text}</td>
-                                        <td className="px-6 py-4 text-slate-500">{question.options.length}</td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-4 py-2 font-black text-slate-400">{index + 1}</td>
+                                        <td className="px-4 py-2 font-bold text-slate-800 dark:text-white">{question.question_text}</td>
+                                        <td className="px-4 py-2 text-slate-500">{question.options.length}</td>
+                                        <td className="px-4 py-2">
                                             <button
                                                 onClick={() => setCurrentStep(index)}
                                                 className="text-xs font-black uppercase tracking-widest text-blue-600"
@@ -238,7 +238,7 @@ export default function AssessmentPage() {
                         <div className="flex justify-between items-end">
                             <div>
                                 <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Pregunta {currentStep + 1} de {assessment.questions.length}</p>
-                                <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight leading-tight">
+                                <h3 className="text-lg font-black text-slate-800 dark:text-white tracking-tight leading-tight">
                                     {currentQuestion.question_text}
                                 </h3>
                             </div>
@@ -268,7 +268,7 @@ export default function AssessmentPage() {
                                         key={option.id}
                                         onClick={() => handleSelectOption(currentQuestion.id, option.id)}
                                         className={clsx(
-                                            "w-full p-6 text-left rounded-3xl border-2 transition-all group relative overflow-hidden",
+                                            "w-full p-4 text-left rounded-xl border-2 transition-all group relative overflow-hidden",
                                             answers.find(a => a.selected_option_id === option.id)
                                                 ? "border-blue-600 bg-blue-50/50 dark:bg-blue-500/10 shadow-lg shadow-blue-500/5"
                                                 : "border-slate-100 dark:border-white/5 hover:border-blue-200 dark:hover:border-white/10 bg-white dark:bg-[#1e1f21]"
@@ -305,7 +305,7 @@ export default function AssessmentPage() {
                             <button 
                                 onClick={handleSubmit}
                                 disabled={isSubmitting || answers.length < assessment.questions.length}
-                                className="px-10 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50"
+                                className="px-6 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50"
                             >
                                 {isSubmitting ? 'Enviando...' : 'Finalizar Evaluación'}
                             </button>
@@ -313,7 +313,7 @@ export default function AssessmentPage() {
                             <button 
                                 onClick={() => setCurrentStep(prev => prev + 1)}
                                 disabled={!answers.find(a => a.question_id === currentQuestion.id)}
-                                className="px-10 py-4 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
+                                className="px-6 py-2 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
                             >
                                 Siguiente <ArrowRight size={16} />
                             </button>

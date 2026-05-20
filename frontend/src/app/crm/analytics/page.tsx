@@ -198,7 +198,7 @@ export default function CrmAnalyticsPage() {
                             <motion.section variants={itemVariants} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#15171c] p-5 shadow-sm">
                                 <div className="mb-4 flex items-center justify-between gap-4">
                                     <div>
-                                        <h1 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">
+                                        <h1 className="text-sm font-black tracking-tight text-slate-900 dark:text-white">
                                             Resumen operativo
                                         </h1>
                                         <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
@@ -251,7 +251,7 @@ export default function CrmAnalyticsPage() {
                                 </div>
 
                                 {funnelRows.length === 0 ? (
-                                    <p className="rounded-xl bg-slate-50 px-3 py-4 text-sm font-medium text-slate-400 dark:bg-white/[0.03]">
+                                    <p className="rounded-xl bg-slate-50 px-3 py-2 text-sm font-medium text-slate-400 dark:bg-white/[0.03]">
                                         No hay leads registrados.
                                     </p>
                                 ) : (
@@ -277,7 +277,7 @@ function ListView({ rows }: { rows: KpiRow[] }) {
                 <div key={row.label} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{row.label}</p>
-                        <p className="text-xl font-black text-slate-800 dark:text-slate-100">{row.value}</p>
+                        <p className="text-base font-black text-slate-800 dark:text-slate-100">{row.value}</p>
                     </div>
                     <Badge tone={row.tone}>{row.context}</Badge>
                 </div>
@@ -292,17 +292,17 @@ function TableView({ rows }: { rows: KpiRow[] }) {
             <table className="w-full text-left">
                 <thead className="bg-slate-50 dark:bg-white/5">
                     <tr>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Metrica</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Valor</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Contexto</th>
+                        <th className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Metrica</th>
+                        <th className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Valor</th>
+                        <th className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Contexto</th>
                     </tr>
                 </thead>
                 <tbody>
                     {rows.map((row) => (
                         <tr key={row.label} className="border-t border-slate-100 dark:border-white/5">
-                            <td className="px-4 py-3 text-sm font-bold text-slate-800 dark:text-slate-100">{row.label}</td>
-                            <td className="px-4 py-3 text-xs text-slate-500">{row.value}</td>
-                            <td className="px-4 py-3"><Badge tone={row.tone}>{row.context}</Badge></td>
+                            <td className="px-4 py-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">{row.label}</td>
+                            <td className="px-4 py-1.5 text-xs text-slate-500">{row.value}</td>
+                            <td className="px-4 py-1.5"><Badge tone={row.tone}>{row.context}</Badge></td>
                         </tr>
                     ))}
                 </tbody>
@@ -426,7 +426,7 @@ function SummaryTile({
                 <Icon size={16} />
             </div>
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white">{value}</p>
+            <p className="text-lg font-black text-slate-900 dark:text-white">{value}</p>
         </div>
     );
 }
@@ -476,7 +476,7 @@ function StatusBanner({
     return (
         <div
             className={clsx(
-                'rounded-2xl border px-4 py-3 text-sm font-medium',
+                'rounded-2xl border px-4 py-1.5 text-sm font-medium',
                 tone === 'neutral' && 'border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-300',
                 tone === 'warning' && 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200',
             )}

@@ -563,7 +563,7 @@ export default function CommunityHubPage() {
 
     const renderBoardView = () => (
         <>
-            <div className="flex flex-col gap-4 rounded-[2.5rem] border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-6">
+            <div className="flex flex-col gap-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div className="flex flex-wrap gap-3">
                         {filterPills.map(({ label, icon }) => (
@@ -591,7 +591,7 @@ export default function CommunityHubPage() {
                                 <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.4em] text-[hsl(var(--text-secondary))]">
                                     <Icon size={14} /> {stage.label}
                                 </div>
-                                <p className="text-2xl font-semibold text-[hsl(var(--text-primary))]">{stage.count}</p>
+                                <p className="text-lg font-semibold text-[hsl(var(--text-primary))]">{stage.count}</p>
                                 <div className="w-full h-1 rounded-full bg-gradient-to-r from-[hsl(var(--primary))] to-transparent"></div>
                             </div>
                         );
@@ -599,21 +599,21 @@ export default function CommunityHubPage() {
                 </div>
             </div>
 
-            <div className="-mx-4 sm:-mx-6 px-4 sm:px-6 pb-2 overflow-x-auto">
-                <div className="flex gap-4 sm:gap-6 min-w-full snap-x snap-mandatory">
+            <div className="-mx-4 sm:-mx-6 px-4 sm:px-4 pb-2 overflow-x-auto">
+                <div className="flex gap-4 sm:gap-4 min-w-full snap-x snap-mandatory">
                     {columns.map((column) => {
                         const Icon = columnIcons[column.id];
                         return (
                             <div key={column.id} className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
-                                <div className="bg-white dark:bg-slate-900/80 border border-[hsl(var(--border))] rounded-[2.5rem] p-6 shadow-xl flex flex-col h-full transition-transform duration-300 hover:-translate-y-1">
+                                <div className="bg-white dark:bg-slate-900/80 border border-[hsl(var(--border))] rounded-xl p-4 shadow-xl flex flex-col h-full transition-transform duration-300 hover:-translate-y-1">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex items-center gap-3">
-                                            <div className={`size-12 rounded-2xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center ${column.accent}`}>
+                                            <div className={`size-9 rounded-2xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center ${column.accent}`}>
                                                 <Icon size={22} />
                                             </div>
                                             <div>
                                                 <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[hsl(var(--text-secondary))]">Lista</p>
-                                                <h3 className="text-xl font-semibold text-[hsl(var(--text-primary))]">{column.title}</h3>
+                                                <h3 className="text-base font-semibold text-[hsl(var(--text-primary))]">{column.title}</h3>
                                             </div>
                                         </div>
                                         <div className="text-right">
@@ -700,7 +700,7 @@ export default function CommunityHubPage() {
     );
 
     const renderListView = () => (
-        <div className="rounded-[2.5rem] border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-6 space-y-8">
+        <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 space-y-3">
             <div className="flex flex-wrap gap-2">
                 {['Grupo: Estado', 'Subtareas', 'Columnas'].map((pill) => (
                     <CommunityToolbarChip key={pill} label={pill} size="md" />
@@ -721,7 +721,7 @@ export default function CommunityHubPage() {
                     </div>
 
                     <div className="rounded-2xl border border-[hsl(var(--border))] overflow-hidden bg-white">
-                        <div className={`${listGridClass} text-[10px] font-semibold uppercase tracking-[0.3em] text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] px-6 py-3`}>
+                        <div className={`${listGridClass} text-[10px] font-semibold uppercase tracking-[0.3em] text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] px-4 py-1.5`}>
                             <div className="text-center">#</div>
                             {listColumnHeaders.map((header) => (
                                 <div key={header}>{header}</div>
@@ -752,7 +752,7 @@ export default function CommunityHubPage() {
             {allItems.map((item) => (
                 <div key={`${item.columnTitle}-${item.id}-cal`} className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-5 space-y-2">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[hsl(var(--text-secondary))]">{item.due || 'Sin fecha'}</p>
-                    <h4 className="text-lg font-semibold text-[hsl(var(--text-primary))]">{item.name}</h4>
+                    <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))]">{item.name}</h4>
                     <p className="text-[12px] text-[hsl(var(--text-secondary))]">{item.columnTitle} · {item.stage}</p>
                     <div className="flex justify-between items-center text-[11px] text-[hsl(var(--text-secondary))]">
                         <span>{item.owner}</span>
@@ -764,7 +764,7 @@ export default function CommunityHubPage() {
     );
 
     const renderGanttView = () => (
-        <div className="space-y-4 rounded-[2.5rem] border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-6">
+        <div className="space-y-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
             {allItems.map((item, idx) => {
                 const progress = Math.min(100, 30 + (idx / (allItems.length || 1)) * 70);
                 return (
@@ -786,29 +786,29 @@ export default function CommunityHubPage() {
     );
 
     const renderTableView = () => (
-        <div className="overflow-x-auto rounded-[2.5rem] border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
+        <div className="overflow-x-auto rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
             <table className="min-w-full text-sm">
                 <thead className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[hsl(var(--text-secondary))]">
                     <tr>
-                        <th className="text-left px-6 py-3">Nombre</th>
-                        <th className="text-left px-6 py-3">Lista</th>
-                        <th className="text-left px-6 py-3">Persona</th>
-                        <th className="text-left px-6 py-3">Prioridad</th>
-                        <th className="text-left px-6 py-3">Estado</th>
-                        <th className="text-left px-6 py-3">Entrega</th>
+                        <th className="text-left px-4 py-1.5">Nombre</th>
+                        <th className="text-left px-4 py-1.5">Lista</th>
+                        <th className="text-left px-4 py-1.5">Persona</th>
+                        <th className="text-left px-4 py-1.5">Prioridad</th>
+                        <th className="text-left px-4 py-1.5">Estado</th>
+                        <th className="text-left px-4 py-1.5">Entrega</th>
                     </tr>
                 </thead>
                 <tbody>
                     {allItems.map((item) => (
                         <tr key={`${item.columnTitle}-${item.id}-table`} className="border-t border-[hsl(var(--border))]">
-                            <td className="px-6 py-3 font-semibold text-[hsl(var(--text-primary))]">{item.name}</td>
-                            <td className="px-6 py-3 text-[hsl(var(--text-secondary))]">{item.columnTitle}</td>
-                            <td className="px-6 py-3 text-[hsl(var(--text-secondary))]">{item.owner}</td>
-                            <td className="px-6 py-3">
+                            <td className="px-4 py-1.5 font-semibold text-[hsl(var(--text-primary))]">{item.name}</td>
+                            <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{item.columnTitle}</td>
+                            <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{item.owner}</td>
+                            <td className="px-4 py-1.5">
                                 <span className={`px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-[0.4em] ${priorityTone[item.priority]}`}>{item.priority}</span>
                             </td>
-                            <td className="px-6 py-3 text-[hsl(var(--text-secondary))]">{item.status}</td>
-                            <td className="px-6 py-3 text-[hsl(var(--text-secondary))]">{item.due}</td>
+                            <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{item.status}</td>
+                            <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{item.due}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -832,8 +832,8 @@ export default function CommunityHubPage() {
     };
 
     return (
-        <div className="space-y-10 animate-in fade-in duration-500 px-4 sm:px-6 pb-16 w-full">
-            <div className="rounded-[24px] border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between text-[10px] uppercase tracking-[0.2em] text-[hsl(var(--text-secondary))]">
+        <div className="space-y-4 animate-in fade-in duration-500 px-4 sm:px-4 pb-16 w-full">
+            <div className="rounded-[24px] border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between text-[10px] uppercase tracking-[0.2em] text-[hsl(var(--text-secondary))]">
                 <div className="flex items-center gap-2">
                     <button type="button" onClick={navigateTo('/')} className="font-medium text-[hsl(var(--text-primary))] hover:text-[hsl(var(--primary))]">
                         CCF
@@ -866,8 +866,8 @@ export default function CommunityHubPage() {
                     <button className="px-3 h-8 rounded-full bg-slate-900 text-white text-[9px] font-semibold uppercase tracking-[0.25em]">+ Nuevo</button>
                 </div>
             </div>
-            <header className="rounded-[3.5rem] border border-[hsl(var(--border))] bg-gradient-to-br from-[hsl(var(--surface-2))] to-[hsl(var(--surface-1))] p-8 md:p-10 space-y-8">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <header className="rounded-[3.5rem] border border-[hsl(var(--border))] bg-gradient-to-br from-[hsl(var(--surface-2))] to-[hsl(var(--surface-1))] p-4 md:p-5 space-y-3">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div className="flex items-center gap-3 text-[9px] font-medium uppercase tracking-[0.35em] text-[hsl(var(--text-secondary))]">
                         <button
                             type="button"
@@ -895,12 +895,12 @@ export default function CommunityHubPage() {
                     <div className="flex flex-wrap items-center gap-2">
                         <div className="flex -space-x-2 items-center">
                             {visibleSharedTeams.map((team, idx) => (
-                                <div key={team} className={`size-10 rounded-full border border-white shadow-sm flex items-center justify-center text-[10px] font-semibold ${palette[idx % palette.length]}`}>
+                                <div key={team} className={`size-8 rounded-full border border-white shadow-sm flex items-center justify-center text-[10px] font-semibold ${palette[idx % palette.length]}`}>
                                     {team.slice(0, 2).toUpperCase()}
                                 </div>
                             ))}
                             {extraSharedTeams > 0 && (
-                                <div className="size-10 rounded-full border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[10px] font-medium flex items-center justify-center text-[hsl(var(--text-secondary))]">
+                                <div className="size-8 rounded-full border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[10px] font-medium flex items-center justify-center text-[hsl(var(--text-secondary))]">
                                     +{extraSharedTeams}
                                 </div>
                             )}
@@ -970,7 +970,7 @@ export default function CommunityHubPage() {
                         <div>
                             <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[hsl(var(--primary))]">Centro Comunitario</p>
                             <h1 className="text-[26px] md:text-[30px] font-semibold text-[hsl(var(--text-primary))] tracking-tight leading-tight">Tablero maestro tipo ClickUp para la comunidad.</h1>
-                            <p className="text-[hsl(var(--text-secondary))] text-[13px] md:text-sm font-medium max-w-2xl">
+                            <p className="text-[hsl(var(--text-secondary))] text-xs md:text-sm font-medium max-w-2xl">
                                 Los mismos patrones visuales del CRM ahora aplicados a notificaciones, cuidado pastoral y generosidad.
                             </p>
                         </div>
@@ -1006,12 +1006,12 @@ export default function CommunityHubPage() {
                         {metrics.map(({ label, value, detail, icon: Icon }) => (
                             <div key={label} className="rounded-2xl bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-5 space-y-2.5">
                                 <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.4em] text-[hsl(var(--text-secondary))]">
-                                    <div className="size-10 rounded-2xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--primary))]">
+                                    <div className="size-8 rounded-2xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--primary))]">
                                         <Icon size={16} />
                                     </div>
                                     <span>{label}</span>
                                 </div>
-                                <p className="text-2xl md:text-3xl font-semibold text-[hsl(var(--text-primary))]">{value}</p>
+                                <p className="text-lg md:text-3xl font-semibold text-[hsl(var(--text-primary))]">{value}</p>
                                 <p className="text-xs text-[hsl(var(--text-secondary))] font-medium">{detail}</p>
                                 <div className="h-[3px] rounded-full bg-gradient-to-r from-[hsl(var(--primary))] via-transparent to-[hsl(var(--primary)/0.2)]"></div>
                             </div>
@@ -1123,7 +1123,7 @@ export default function CommunityHubPage() {
                                 <button
                                     type="submit"
                                     disabled={isSubmittingCard}
-                                    className="px-6 h-10 rounded-2xl bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] text-[10px] font-semibold uppercase tracking-[0.3em] disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="px-4 h-10 rounded-2xl bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] text-[10px] font-semibold uppercase tracking-[0.3em] disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     {isSubmittingCard ? 'Guardando...' : 'Guardar tarjeta'}
                                 </button>
@@ -1133,11 +1133,11 @@ export default function CommunityHubPage() {
                 </div>
             </header>
 
-            <section className="space-y-5">
+            <section className="space-y-2">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
                         <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[hsl(var(--text-secondary))]">Vista tipo ClickUp</p>
-                        <h2 className="text-2xl font-semibold text-[hsl(var(--text-primary))]">Tablero operativo</h2>
+                        <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))]">Tablero operativo</h2>
                         <p className="text-[hsl(var(--text-secondary))] text-sm font-medium">Etapa, prioridad, responsables y comentarios agrupados por columna.</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -1150,7 +1150,7 @@ export default function CommunityHubPage() {
                     </div>
                 </div>
 
-                <div className="rounded-[2.5rem] border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 space-y-4">
+                <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 space-y-4">
                     <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-3" aria-label="Vista toolbar">
                         <CommunityToolbarChip label="Añadir canal" icon={Plus} size="sm" />
@@ -1196,19 +1196,19 @@ export default function CommunityHubPage() {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
                         <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[hsl(var(--text-secondary))]">Atajos rápidos</p>
-                        <h2 className="text-2xl font-semibold text-[hsl(var(--text-primary))]">Explora los módulos</h2>
+                        <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))]">Explora los módulos</h2>
                     </div>
                     <div className="text-sm text-[hsl(var(--text-secondary))] font-medium">
                         Selecciona una tarjeta para ir directamente al área correspondiente.
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {featureCards.map(({ title, description, icon: Icon, href, tone }) => (
                         <Link
                             key={title}
                             href={href}
-                            className="group relative rounded-[2.5rem] border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-6 overflow-hidden"
+                            className="group relative rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 overflow-hidden"
                         >
                             <div className={`absolute inset-0 bg-gradient-to-br ${tone} opacity-0 group-hover:opacity-100 transition-opacity`} />
                             <div className="relative flex items-start gap-4">
@@ -1217,7 +1217,7 @@ export default function CommunityHubPage() {
                                 </div>
                                 <div className="flex-1 space-y-2">
                                     <div className="flex items-center gap-2">
-                                        <h3 className="text-xl font-semibold text-[hsl(var(--text-primary))] group-hover:text-[hsl(var(--primary))] transition-colors">{title}</h3>
+                                        <h3 className="text-base font-semibold text-[hsl(var(--text-primary))] group-hover:text-[hsl(var(--primary))] transition-colors">{title}</h3>
                                         <ArrowUpRight size={18} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]" />
                                     </div>
                                     <p className="text-sm text-[hsl(var(--text-secondary))] font-medium">{description}</p>
@@ -1228,13 +1228,13 @@ export default function CommunityHubPage() {
                 </div>
             </section>
 
-            <section className="rounded-[3rem] border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] p-10 text-center space-y-4">
+            <section className="rounded-2xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] p-5 text-center space-y-4">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.5em] text-[hsl(var(--text-secondary))]">¿Falta algo?</p>
-                <h3 className="text-2xl font-semibold text-[hsl(var(--text-primary))]">Súmate al roadmap comunitario</h3>
+                <h3 className="text-lg font-semibold text-[hsl(var(--text-primary))]">Súmate al roadmap comunitario</h3>
                 <p className="text-[hsl(var(--text-secondary))] max-w-xl mx-auto font-medium">
                     Mándanos tus ideas para mejorar este hub. Puedes proponer nuevos módulos, integraciones o métricas que faciliten la colaboración.
                 </p>
-                <button className="px-8 h-12 rounded-2xl bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] font-semibold uppercase tracking-[0.4em] text-[10px]">
+                <button className="px-5 h-12 rounded-2xl bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] font-semibold uppercase tracking-[0.4em] text-[10px]">
                     Enviar propuesta
                 </button>
             </section>
@@ -1243,7 +1243,7 @@ export default function CommunityHubPage() {
                 <div
                     role="status"
                     aria-live="polite"
-                    className={`fixed bottom-6 right-6 z-20 rounded-2xl px-5 py-3 text-sm font-medium text-white shadow-lg ${
+                    className={`fixed bottom-6 right-6 z-20 rounded-2xl px-5 py-1.5 text-sm font-medium text-white shadow-lg ${
                         toast.type === 'success' ? 'bg-emerald-500' : 'bg-slate-600'
                     }`}
                 >

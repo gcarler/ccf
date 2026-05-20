@@ -57,12 +57,12 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#0f1113]">
             {/* Header Cinematic */}
-            <div className="p-8 border-b border-slate-100 dark:border-white/[0.04] bg-slate-50/50 dark:bg-[#0f1113]/50 backdrop-blur-3xl shrink-0 relative overflow-hidden rounded-t-[2.5rem]">
-                <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none text-blue-600 dark:text-white">
+            <div className="p-4 border-b border-slate-100 dark:border-white/[0.04] bg-slate-50/50 dark:bg-[#0f1113]/50 backdrop-blur-3xl shrink-0 relative overflow-hidden rounded-t-[2.5rem]">
+                <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-blue-600 dark:text-white">
                     <User size={160} />
                 </div>
 
-                <div className="flex items-center gap-6 relative z-10">
+                <div className="flex items-center gap-4 relative z-10">
                     <div className="relative">
                         <motion.div 
                             whileHover={{ scale: 1.05 }}
@@ -75,7 +75,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                         </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-[-0.04em] leading-[0.9] mb-2">
+                        <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-[-0.04em] leading-[0.9] mb-2">
                             {lead.first_name} <br/>
                             <span className="text-blue-600 dark:text-blue-400">{lead.last_name}</span>
                         </h2>
@@ -90,7 +90,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                     </div>
                 </div>
 
-                <div className="p-4 bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm rounded-3xl border border-slate-100 dark:border-white/[0.05] shadow-sm mt-8 relative z-10 flex items-center justify-between">
+                <div className="p-4 bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm rounded-xl border border-slate-100 dark:border-white/[0.05] shadow-sm mt-8 relative z-10 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-600"><Smartphone size={16} /></div>
                         <div>
@@ -105,7 +105,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
             </div>
 
             {/* Actions & Detail */}
-            <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 <section className="space-y-4">
                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
                         <Zap size={14} className="text-blue-600" /> Acciones de Consolidación
@@ -113,7 +113,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                     <div className="space-y-2">
                         <button
                             onClick={() => onViewFullProfile(lead.id)}
-                            className="w-full flex items-center gap-4 p-5 bg-blue-600 text-white rounded-[2rem] text-[11px] font-black uppercase tracking-[0.1em] hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 active:scale-95 group"
+                            className="w-full flex items-center gap-4 p-5 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-[0.1em] hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 active:scale-95 group"
                         >
                             <ExternalLink size={16} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /> 
                             Ver Expediente Completo
@@ -139,7 +139,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                                 key={s.value}
                                 onClick={() => onUpdateStage(lead.id, s.value)}
                                 className={clsx(
-                                    "w-full flex items-center gap-3 px-4 py-3.5 rounded-[1.8rem] text-[10px] font-black uppercase tracking-widest transition-all group",
+                                    "w-full flex items-center gap-3 px-4 py-1.5.5 rounded-[1.8rem] text-[10px] font-black uppercase tracking-widest transition-all group",
                                     lead.stage === s.value
                                         ? `${s.bg} ${s.text} shadow-sm border border-current/20`
                                         : 'bg-transparent text-slate-500 hover:bg-white dark:hover:bg-white/5'
@@ -155,12 +155,12 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                 
 
 
-                <section className="space-y-6 pb-12">
+                <section className="space-y-3 pb-12">
                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
                         <History size={14} className="text-blue-600" /> Historial de Actividad
                     </h3>
                     
-                    <div className="relative pl-4 space-y-8 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-px before:bg-slate-100 dark:before:bg-white/5">
+                    <div className="relative pl-4 space-y-3 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-px before:bg-slate-100 dark:before:bg-white/5">
                         <AnimatePresence mode="popLayout">
                             {auditLogs.length > 0 ? (
                                 auditLogs.map((log, idx) => (
@@ -185,7 +185,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                                                 </span>
                                             </div>
                                             
-                                            <div className="p-4 rounded-3xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.04] text-[11px] leading-relaxed">
+                                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.04] text-[11px] leading-relaxed">
                                                 <p className="text-slate-600 dark:text-slate-400 font-medium">
                                                     {log.metadata?.stage ? (
                                                         <>Se movió a <span className="font-black text-blue-600 dark:text-blue-400">{STAGE_LABEL[log.metadata.stage] || log.metadata.stage}</span></>

@@ -66,13 +66,13 @@ export default function ScannerPage() {
             primaryAction={undefined}
             secondaryAction={scannedData ? { label: 'Escanear de nuevo', icon: RefreshCcw, onClick: resetScanner } : undefined}
         />
-        <div className="flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        <div className="flex flex-col items-center justify-center p-4 relative overflow-hidden">
             {/* Background elements */}
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
             <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-primary/20 blur-[120px] rounded-full"></div>
             <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full"></div>
 
-            <div className="w-full max-w-md relative z-10 space-y-8">
+            <div className="w-full max-w-md relative z-10 space-y-3">
                 {/* Header */}
                 <div className="text-center space-y-2">
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 text-primary mb-4">
@@ -84,14 +84,14 @@ export default function ScannerPage() {
                 </div>
 
                 {/* Scanner Interface */}
-                <div className="relative aspect-square w-full bg-slate-900/50 backdrop-blur-xl rounded-[3rem] border-2 border-dashed border-white/10 flex flex-col items-center justify-center overflow-hidden group shadow-2xl">
+                <div className="relative aspect-square w-full bg-slate-900/50 backdrop-blur-xl rounded-2xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center overflow-hidden group shadow-2xl">
 
                     {isScanning ? (
                         <>
                             {/* Scanning Overlay */}
                             <div className="absolute inset-0 z-10 pointer-events-none">
-                                <div className="absolute top-10 left-10 w-12 h-12 border-t-4 border-l-4 border-primary rounded-tl-2xl"></div>
-                                <div className="absolute top-10 right-10 w-12 h-12 border-t-4 border-r-4 border-primary rounded-tr-2xl"></div>
+                                <div className="absolute top-5 left-10 w-12 h-12 border-t-4 border-l-4 border-primary rounded-tl-2xl"></div>
+                                <div className="absolute top-5 right-10 w-12 h-12 border-t-4 border-r-4 border-primary rounded-tr-2xl"></div>
                                 <div className="absolute bottom-10 left-10 w-12 h-12 border-b-4 border-l-4 border-primary rounded-bl-2xl"></div>
                                 <div className="absolute bottom-10 right-10 w-12 h-12 border-b-4 border-r-4 border-primary rounded-br-2xl"></div>
 
@@ -99,12 +99,12 @@ export default function ScannerPage() {
                                 <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent shadow-[0_0_15px_rgba(66,66,240,0.8)] animate-scan"></div>
                             </div>
 
-                            <div className="flex flex-col items-center gap-6 p-12 text-center relative z-20">
-                                <div className="p-8 bg-primary/10 rounded-full text-primary scale-125 group-hover:scale-150 transition-transform duration-700">
+                            <div className="flex flex-col items-center gap-4 p-4 text-center relative z-20">
+                                <div className="p-4 bg-primary/10 rounded-full text-primary scale-125 group-hover:scale-150 transition-transform duration-700">
                                     <QrCode size={64} />
                                 </div>
                                 <div>
-                                    <p className="text-white font-bold text-lg mb-2">Buscando Código...</p>
+                                    <p className="text-white font-bold text-sm mb-2">Buscando Código...</p>
                                     <p className="text-slate-500 text-xs">Apunta la cámara al código QR del feligrés</p>
                                 </div>
 
@@ -116,13 +116,13 @@ export default function ScannerPage() {
                                             placeholder="Ingresar Token Manualmente"
                                             value={manualToken}
                                             onChange={(e) => setManualToken(e.target.value)}
-                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white text-sm focus:outline-none focus:border-primary transition-all text-center"
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2 text-white text-sm focus:outline-none focus:border-primary transition-all text-center"
                                         />
                                     </div>
                                     <button
                                         onClick={() => handleScan(manualToken)}
                                         disabled={!manualToken || loading}
-                                        className="w-full py-4 bg-primary hover:bg-primary-600 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                        className="w-full py-2 bg-primary hover:bg-primary-600 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                                     >
                                         {loading ? <RefreshCcw className="animate-spin" size={16} /> : <UserCheck size={16} />}
                                         Validar Token
@@ -132,12 +132,12 @@ export default function ScannerPage() {
                         </>
                     ) : (
                         /* SUCCESS STATE */
-                        <div className="animate-in zoom-in-95 duration-500 flex flex-col items-center justify-center p-12 text-center space-y-6">
-                            <div className="p-8 bg-emerald-500/20 rounded-full text-emerald-500 shadow-[0_0_40px_rgba(16,185,129,0.2)]">
+                        <div className="animate-in zoom-in-95 duration-500 flex flex-col items-center justify-center p-4 text-center space-y-3">
+                            <div className="p-4 bg-emerald-500/20 rounded-full text-emerald-500 shadow-[0_0_40px_rgba(16,185,129,0.2)]">
                                 <ShieldCheck size={80} />
                             </div>
                             <div className="space-y-2">
-                                <h2 className="text-2xl font-black text-white">{scannedData?.member_name}</h2>
+                                <h2 className="text-lg font-black text-white">{scannedData?.member_name}</h2>
                                 <p className="text-emerald-500 font-extrabold uppercase tracking-[0.2em] text-xs px-3 py-1 bg-emerald-500/10 rounded-full inline-block">
                                     {scannedData?.role} â€¢ VALIDADO
                                 </p>
@@ -147,7 +147,7 @@ export default function ScannerPage() {
                             </p>
                             <button
                                 onClick={resetScanner}
-                                className="mt-6 px-10 py-4 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 transition-all"
+                                className="mt-6 px-6 py-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 transition-all"
                             >
                                 <RefreshCcw size={16} /> Escanear Siguiente
                             </button>

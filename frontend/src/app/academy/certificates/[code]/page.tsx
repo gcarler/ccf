@@ -41,14 +41,14 @@ export default function PublicCertificatePage() {
     );
 
     if (error || !certificate) return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#1e1f21] p-6">
-            <div className="max-w-md w-full text-center space-y-6 p-10 bg-white dark:bg-white/5 rounded-3xl border border-slate-200 dark:border-white/5 shadow-xl">
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#1e1f21] p-4">
+            <div className="max-w-md w-full text-center space-y-3 p-5 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 shadow-xl">
                 <ShieldAlert size={64} className="text-rose-500 mx-auto" />
-                <h2 className="text-2xl font-black text-slate-800 dark:text-white">Certificado No Válido</h2>
+                <h2 className="text-lg font-black text-slate-800 dark:text-white">Certificado No Válido</h2>
                 <p className="text-slate-500 dark:text-slate-400">El código de certificado proporcionado no existe en nuestros registros oficiales.</p>
                 <button 
                     onClick={() => window.location.href = '/'}
-                    className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest"
+                    className="w-full py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest"
                 >
                     Volver al Inicio
                 </button>
@@ -57,13 +57,13 @@ export default function PublicCertificatePage() {
     );
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-[#1e1f21] overflow-y-auto py-12 px-6">
+        <div className="min-h-screen bg-slate-50 dark:bg-[#1e1f21] overflow-y-auto py-12 px-4">
             <div className="max-w-5xl mx-auto space-y-12">
                 <div className="flex flex-col items-center text-center space-y-4">
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100 dark:border-emerald-900/40">
                         ✓ Certificado Verificado por CCF
                     </div>
-                    <h1 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">Validación Oficial de Logro</h1>
+                    <h1 className="text-lg font-black text-slate-800 dark:text-white tracking-tight">Validación Oficial de Logro</h1>
                 </div>
                 
                 <CertificateView data={certificate} />

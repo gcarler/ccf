@@ -73,8 +73,8 @@ export default function GivingAndConnection() {
 
     if (step === 2) {
         return (
-            <div className="flex flex-col items-center justify-center py-12 px-6 animate-in fade-in zoom-in-95 duration-700">
-                <div className="w-24 h-24 rounded-[2.5rem] bg-[hsl(var(--primary))] flex items-center justify-center shadow-[0_20px_40px_rgba(var(--primary-rgb),0.3)] mb-8 rotate-3">
+            <div className="flex flex-col items-center justify-center py-12 px-4 animate-in fade-in zoom-in-95 duration-700">
+                <div className="w-24 h-24 rounded-xl bg-[hsl(var(--primary))] flex items-center justify-center shadow-[0_20px_40px_rgba(var(--primary-rgb),0.3)] mb-8 rotate-3">
                     <CheckCircle2 size={48} className="text-white" />
                 </div>
 
@@ -82,11 +82,11 @@ export default function GivingAndConnection() {
                     Generosidad en Acción
                 </h1>
 
-                <div className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-[3rem] p-10 max-w-lg w-full shadow-sm mb-12 relative overflow-hidden">
+                <div className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-2xl p-5 max-w-lg w-full shadow-sm mb-12 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-[hsl(var(--primary)/0.05)] rounded-full blur-3xl"></div>
                     <div className="flex flex-col items-center text-center relative z-10">
                         <Heart className="text-[hsl(var(--primary))] mb-6 opacity-80" size={32} />
-                        <p className="text-[hsl(var(--text-secondary))] text-xl italic leading-relaxed font-medium mb-8">
+                        <p className="text-[hsl(var(--text-secondary))] text-base italic leading-relaxed font-medium mb-8">
                             &quot;Cada uno dé como propuso en su corazón: no con tristeza, ni por necesidad, porque Dios ama al dador alegre.&quot;
                         </p>
 
@@ -119,10 +119,10 @@ export default function GivingAndConnection() {
     return (
         <div className="max-w-4xl mx-auto space-y-12 pb-20 animate-in fade-in duration-1000">
             {/* Hero Section */}
-            <div className="relative overflow-hidden rounded-[3rem] bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] p-10 md:p-14 group">
+            <div className="relative overflow-hidden rounded-2xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] p-5 md:p-14 group">
                 <div className="absolute top-0 right-0 -mr-16 -mt-16 bg-[hsl(var(--primary)/0.05)] size-80 rounded-full blur-[100px] transition-all duration-1000 group-hover:bg-[hsl(var(--primary)/0.1)]"></div>
                 
-                <div className="relative z-10 flex flex-col md:flex-row gap-10 items-center">
+                <div className="relative z-10 flex flex-col md:flex-row gap-5 items-center">
                     <div className="flex-1 space-y-4">
                         <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-black uppercase tracking-[0.3em] text-[10px]">
                             <div className="size-2 rounded-full bg-current shadow-[0_0_10px_currentColor]"></div>
@@ -131,27 +131,27 @@ export default function GivingAndConnection() {
                         <h1 className="text-4xl md:text-5xl font-black text-[hsl(var(--text-primary))] tracking-tighter leading-none">
                             Siembra en tierra <br/><span className="text-[hsl(var(--primary))]">Fértil</span>
                         </h1>
-                        <p className="text-[hsl(var(--text-secondary))] text-lg leading-relaxed max-w-sm font-medium">
+                        <p className="text-[hsl(var(--text-secondary))] text-sm leading-relaxed max-w-sm font-medium">
                             Tu generosidad impulsa nuestro alcance comunitario y nos ayuda a difundir el mensaje de esperanza.
                         </p>
                     </div>
                     
-                    <div className="size-40 rounded-[2.5rem] bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--primary))] shadow-sm rotate-3 group-hover:rotate-6 transition-transform duration-500">
+                    <div className="size-40 rounded-xl bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--primary))] shadow-sm rotate-3 group-hover:rotate-6 transition-transform duration-500">
                         <HeartHandshake size={60} strokeWidth={1} />
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
                 {/* Donation Form */}
-                <div className="lg:col-span-3 space-y-8">
-                    <section className="space-y-6">
+                <div className="lg:col-span-3 space-y-3">
+                    <section className="space-y-3">
                         <h4 className="text-[hsl(var(--primary))] text-[11px] uppercase font-black tracking-[0.3em] flex items-center gap-2">
                             <div className="size-1.5 rounded-full bg-current"></div>
                             Ofrenda Voluntaria
                         </h4>
 
-                        <div className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-[2.5rem] p-10 shadow-sm space-y-8">
+                        <div className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-xl p-5 shadow-sm space-y-3">
                             <div className="grid grid-cols-4 gap-4">
                                 {quickAmounts.map((amt) => (
                                     <button
@@ -217,14 +217,14 @@ export default function GivingAndConnection() {
                 </div>
 
                 {/* Connection / Prayer */}
-                <div className="lg:col-span-2 space-y-8">
-                    <section className="space-y-6">
+                <div className="lg:col-span-2 space-y-3">
+                    <section className="space-y-3">
                         <h4 className="text-[hsl(var(--primary))] text-[11px] uppercase font-black tracking-[0.3em] flex items-center gap-2">
                             <div className="size-1.5 rounded-full bg-current"></div>
                             Intercesión
                         </h4>
 
-                        <div className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-[2.5rem] p-8 shadow-sm space-y-6">
+                        <div className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-xl p-4 shadow-sm space-y-3">
                             <p className="text-[hsl(var(--text-secondary))] text-xs font-semibold leading-relaxed">
                                 Comparte tus peticiones con nuestro equipo. Estamos creyendo junto a ti por cada milagro.
                             </p>
@@ -249,8 +249,8 @@ export default function GivingAndConnection() {
 
                     {/* Contact Pills */}
                     <section className="space-y-4">
-                        <div className="flex items-center gap-4 bg-[hsl(var(--surface-2))] px-6 py-5 rounded-[2rem] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)] transition-all cursor-pointer group">
-                            <div className="size-10 rounded-xl bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))] group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all">
+                        <div className="flex items-center gap-4 bg-[hsl(var(--surface-2))] px-4 py-5 rounded-xl border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)] transition-all cursor-pointer group">
+                            <div className="size-8 rounded-xl bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))] group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all">
                                 <Mail size={18} />
                             </div>
                             <div className="flex flex-col">
@@ -259,8 +259,8 @@ export default function GivingAndConnection() {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4 bg-[hsl(var(--surface-2))] px-6 py-5 rounded-[2rem] border border-[hsl(var(--border))] hover:border-emerald-500/30 transition-all cursor-pointer group">
-                            <div className="size-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                        <div className="flex items-center gap-4 bg-[hsl(var(--surface-2))] px-4 py-5 rounded-xl border border-[hsl(var(--border))] hover:border-emerald-500/30 transition-all cursor-pointer group">
+                            <div className="size-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-all">
                                 <Phone size={18} />
                             </div>
                             <div className="flex flex-col">
@@ -273,7 +273,7 @@ export default function GivingAndConnection() {
             </div>
 
             {/* Social Hub */}
-            <footer className="pt-10 flex justify-center gap-8 border-t border-[hsl(var(--border))]">
+            <footer className="pt-10 flex justify-center gap-4 border-t border-[hsl(var(--border))]">
                 {[Globe, Youtube, Users, Podcast].map((Icon, idx) => (
                     <motion.a 
                         key={idx} 

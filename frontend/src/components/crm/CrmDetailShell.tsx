@@ -69,7 +69,7 @@ export default function CrmDetailShell({
                 </div>
             )}
 
-            <div className="relative z-10 max-w-6xl mx-auto flex flex-col min-h-screen px-6">
+            <div className="relative z-10 max-w-6xl mx-auto flex flex-col min-h-screen px-4">
                 <header className={`sticky top-0 backdrop-blur-2xl border-b py-5 flex flex-col gap-4 ${headerBg}`}>
                     <div className="flex items-center justify-between gap-4">
                         <button
@@ -81,7 +81,7 @@ export default function CrmDetailShell({
                         </button>
                         <div className="flex-1 text-center">
                             <p className={`text-[10px] font-black uppercase tracking-[0.35em] ${accentText}`}>Consolidación</p>
-                            <h1 className={`text-2xl font-black tracking-tight ${isDark ? 'text-[hsl(var(--text-primary))]' : 'text-[hsl(var(--text-primary))]'}`}>{title}</h1>
+                            <h1 className={`text-lg font-black tracking-tight ${isDark ? 'text-[hsl(var(--text-primary))]' : 'text-[hsl(var(--text-primary))]'}`}>{title}</h1>
                             {description && <p className={`text-xs mt-1 font-medium ${subtleText}`}>{description}</p>}
                         </div>
                         <div className="flex items-center justify-end min-w-[44px]">
@@ -92,7 +92,7 @@ export default function CrmDetailShell({
                     {headerContent && <div>{headerContent}</div>}
                 </header>
 
-                <main className={`flex-1 py-10 ${contentClassName ?? "space-y-8"}`}>
+                <main className={`flex-1 py-6 ${contentClassName ?? "space-y-3"}`}>
                     {children}
                 </main>
             </div>

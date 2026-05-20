@@ -94,7 +94,7 @@ export default function StudentProgressPage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden font-sans relative">
+        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden font-sans relative">
             {/* Ambient Background Glows */}
             <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-sky-600/5 rounded-full blur-[100px] pointer-events-none" />
@@ -109,7 +109,7 @@ export default function StudentProgressPage() {
                 availableViews={['grid', 'list', 'table', 'calendar', 'gantt']}
             />
 
-            <main className="flex-1 overflow-y-auto scrollbar-thin p-6 lg:p-10 relative z-10">
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-5 relative z-10">
                 {viewType === 'calendar' && (
                     <UniversalCalendarView
                         title="Actividad académica"
@@ -136,18 +136,18 @@ export default function StudentProgressPage() {
                     />
                 )}
                 {viewType === 'table' && (
-                    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                <tr><th className="px-6 py-4">Curso</th><th className="px-6 py-4">Estado</th><th className="px-6 py-4">Progreso</th><th className="px-6 py-4">Nota</th></tr>
+                                <tr><th className="px-4 py-2">Curso</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2">Progreso</th><th className="px-4 py-2">Nota</th></tr>
                             </thead>
                             <tbody>
                                 {progress.map((course) => (
                                     <tr key={course.id} className="border-t border-slate-100 dark:border-white/5">
-                                        <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{course.title}</td>
-                                        <td className="px-6 py-4 text-slate-500">{course.status}</td>
-                                        <td className="px-6 py-4 text-slate-500">{course.progress_percent}%</td>
-                                        <td className="px-6 py-4 text-slate-500">{course.average_grade.toFixed(1)}</td>
+                                        <td className="px-4 py-2 font-bold text-slate-900 dark:text-white">{course.title}</td>
+                                        <td className="px-4 py-2 text-slate-500">{course.status}</td>
+                                        <td className="px-4 py-2 text-slate-500">{course.progress_percent}%</td>
+                                        <td className="px-4 py-2 text-slate-500">{course.average_grade.toFixed(1)}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -155,15 +155,15 @@ export default function StudentProgressPage() {
                     </div>
                 )}
                 {viewType === 'list' && (
-                    <div className="space-y-5">
+                    <div className="space-y-2">
                         {progress.map((course) => (
-                            <article key={course.id} className="rounded-3xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                            <article key={course.id} className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
-                                        <h3 className="text-lg font-black text-slate-900 dark:text-white">{course.title}</h3>
+                                        <h3 className="text-sm font-black text-slate-900 dark:text-white">{course.title}</h3>
                                         <p className="mt-2 text-sm text-slate-500">{course.lessons_completed}/{course.total_lessons} lecciones</p>
                                     </div>
-                                    <span className="text-lg font-black text-blue-600">{course.progress_percent}%</span>
+                                    <span className="text-sm font-black text-blue-600">{course.progress_percent}%</span>
                                 </div>
                             </article>
                         ))}
@@ -181,15 +181,15 @@ export default function StudentProgressPage() {
                         <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.05] mix-blend-overlay" />
                         <div className="absolute top-[-50%] right-[-10%] w-[80%] h-[200%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-400/20 via-blue-900/10 to-transparent blur-3xl pointer-events-none" />
                         
-                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between p-12 lg:p-16 gap-12">
-                            <div className="space-y-6 max-w-xl">
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between p-4 lg:p-16 gap-4">
+                            <div className="space-y-3 max-w-xl">
                                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-xl rounded-full text-[10px] font-black uppercase tracking-[0.3em] text-blue-100 border border-white/10">
                                     <Trophy size={14} className="text-amber-400" /> Rendimiento Académico
                                 </div>
                                 <h1 className="text-5xl lg:text-7xl font-black text-white tracking-tighter leading-[0.9] mb-4">
                                     Tu camino <br /> al <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-500">Propósito.</span>
                                 </h1>
-                                <p className="text-blue-100/60 text-lg font-medium leading-relaxed">
+                                <p className="text-blue-100/60 text-sm font-medium leading-relaxed">
                                     Estás en el nivel <strong>{Math.floor(stats.average_grade / 10)}</strong>. Tu constancia está dando frutos, continúa así.
                                 </p>
                             </div>
@@ -204,7 +204,7 @@ export default function StudentProgressPage() {
                     </motion.section>
 
                     {/* Courses Progress List */}
-                    <motion.section variants={itemVariants} className="space-y-8">
+                    <motion.section variants={itemVariants} className="space-y-3">
                         <div className="flex items-end justify-between px-4">
                             <div>
                                 <h2 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight">Detalle por Curso</h2>
@@ -215,16 +215,16 @@ export default function StudentProgressPage() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-6">
+                        <div className="grid grid-cols-1 gap-4">
                             {loading ? (
                                 Array(3).fill(0).map((_, i) => (
-                                    <div key={i} className="h-40 bg-slate-100 dark:bg-white/5 rounded-[2.5rem] animate-pulse" />
+                                    <div key={i} className="h-40 bg-slate-100 dark:bg-white/5 rounded-xl animate-pulse" />
                                 ))
                             ) : progress.length > 0 ? (
                                 progress.map(course => (
                                     <div 
                                         key={course.id} 
-                                        className="bg-white dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-[3rem] p-8 lg:p-10 flex flex-col lg:flex-row lg:items-center justify-between gap-10 group hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500"
+                                        className="bg-white dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-2xl p-4 lg:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-5 group hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500"
                                     >
                                         <div className="flex-1 space-y-4">
                                             <div className="flex items-center gap-3">
@@ -239,7 +239,7 @@ export default function StudentProgressPage() {
                                                 </span>
                                             </div>
                                             <h3 className="text-3xl font-black text-slate-800 dark:text-white group-hover:text-blue-600 transition-colors leading-none tracking-tight">{course.title}</h3>
-                                            <div className="flex items-center gap-6">
+                                            <div className="flex items-center gap-4">
                                                 <div className="flex items-center gap-2 text-slate-500">
                                                     <Clock size={14} strokeWidth={2.5} />
                                                     <span className="text-xs font-bold">Activo: {new Date(course.last_activity).toLocaleDateString()}</span>
@@ -253,7 +253,7 @@ export default function StudentProgressPage() {
                                             </div>
                                         </div>
 
-                                        <div className="w-full lg:w-[400px] flex flex-col md:flex-row items-center gap-10">
+                                        <div className="w-full lg:w-[400px] flex flex-col md:flex-row items-center gap-5">
                                             <div className="flex-1 w-full space-y-4">
                                                 <div className="flex items-center justify-between">
                                                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Progreso General</span>
@@ -271,7 +271,7 @@ export default function StudentProgressPage() {
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-8 md:border-l border-slate-100 dark:border-white/5 md:pl-8 shrink-0">
+                                            <div className="flex items-center gap-4 md:border-l border-slate-100 dark:border-white/5 md:pl-8 shrink-0">
                                                 <div className="text-center">
                                                     <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Nota</p>
                                                     <p className={clsx("text-3xl font-black tracking-tighter", course.average_grade >= 70 ? "text-emerald-500" : "text-rose-500")}>
@@ -289,14 +289,14 @@ export default function StudentProgressPage() {
                                     </div>
                                 ))
                             ) : (
-                                <div className="bg-white dark:bg-[#15171c] rounded-[4rem] p-20 text-center space-y-8 border border-slate-100 dark:border-white/5 shadow-inner">
-                                    <div className="size-24 bg-slate-100 dark:bg-white/5 rounded-[2.5rem] flex items-center justify-center mx-auto text-slate-300">
+                                <div className="bg-white dark:bg-[#15171c] rounded-[4rem] p-20 text-center space-y-3 border border-slate-100 dark:border-white/5 shadow-inner">
+                                    <div className="size-24 bg-slate-100 dark:bg-white/5 rounded-xl flex items-center justify-center mx-auto text-slate-300">
                                         <BookOpen size={48} />
                                     </div>
                                     <div className="max-w-md mx-auto space-y-4">
-                                        <h3 className="text-2xl font-black text-slate-800 dark:text-white">Aún no tienes progreso registrado</h3>
+                                        <h3 className="text-lg font-black text-slate-800 dark:text-white">Aún no tienes progreso registrado</h3>
                                         <p className="text-slate-500 font-medium">Inscríbete en un curso de nuestro catálogo para comenzar tu formación espiritual hoy mismo.</p>
-                                        <button onClick={() => router.push('/academy')} className="mt-6 px-10 py-5 bg-blue-600 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-blue-500/30 hover:scale-105 transition-all">Explorar Catálogo</button>
+                                        <button onClick={() => router.push('/academy')} className="mt-6 px-6 py-5 bg-blue-600 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-blue-500/30 hover:scale-105 transition-all">Explorar Catálogo</button>
                                     </div>
                                 </div>
                             )}
@@ -311,8 +311,8 @@ export default function StudentProgressPage() {
 
 function HeaderStat({ label, value, icon: Icon, color, bg }: any) {
     return (
-        <div className="p-6 bg-white/5 backdrop-blur-2xl rounded-[2rem] border border-white/10 flex items-center gap-5 group hover:bg-white/10 transition-all cursor-default">
-            <div className={clsx('size-12 rounded-2xl flex items-center justify-center shadow-inner transition-transform group-hover:scale-110', bg, color)}>
+        <div className="p-4 bg-white/5 backdrop-blur-2xl rounded-xl border border-white/10 flex items-center gap-5 group hover:bg-white/10 transition-all cursor-default">
+            <div className={clsx('size-9 rounded-2xl flex items-center justify-center shadow-inner transition-transform group-hover:scale-110', bg, color)}>
                 <Icon size={22} strokeWidth={2.5} />
             </div>
             <div>

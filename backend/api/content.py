@@ -287,6 +287,7 @@ def get_content_metrics(
 
     testimonials = crud.list_testimonials(db)
     announcements = crud.list_announcements(db)
+    media = crud.list_cms_media_items(db, limit=500)
 
     return schemas.CmsMetrics(
         total_blocks=len(crud.list_page_contents(db, limit=500)),
@@ -299,4 +300,8 @@ def get_content_metrics(
         testimonials_approved=sum(1 for row in testimonials if row.is_approved),
         announcements_total=len(announcements),
         announcements_active=sum(1 for row in announcements if row.status == "published"),
+        media_total=len(media),
+        media_images=sum(1 for row in media if (row.mime_type or "").startswith("image/")),
+        media_videos=sum(1 for row in media if (row.mime_type or "").startswith("video/")),
+        media_audio=sum(1 for row in media if (row.mime_type or "").startswith("audio/")),
     )

@@ -121,7 +121,7 @@ export default function TaskAssignment() {
         <CrmShell
             breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'Consolidación', icon: Users }, { label: 'Asignación', icon: UserCheck }]}
             rightActions={
-                <button className="flex size-10 items-center justify-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all relative">
+                <button className="flex size-8 items-center justify-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all relative">
                     <Bell size={20} />
                     <span className="absolute top-2 right-2 size-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
                 </button>
@@ -159,21 +159,21 @@ export default function TaskAssignment() {
             secondaryAction={{ label: 'Actualizar', icon: Clock, onClick: fetchData }}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
             {/* Left Column: Search & List */}
-            <div className="lg:col-span-7 space-y-8">
+            <div className="lg:col-span-7 space-y-3">
                 <div className="relative group">
                     <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
                     <input
                         type="text"
                         placeholder="Buscar miembro para seguimiento..."
-                        className="w-full bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[2rem] py-5 pl-14 pr-6 text-sm font-bold shadow-sm focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
+                        className="w-full bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl py-5 pl-14 pr-6 text-sm font-bold shadow-sm focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
 
-                <div className="bg-white dark:bg-[#1e1f21] rounded-[3rem] p-8 shadow-sm border border-slate-50 dark:border-white/5 overflow-hidden">
+                <div className="bg-white dark:bg-[#1e1f21] rounded-2xl p-4 shadow-sm border border-slate-50 dark:border-white/5 overflow-hidden">
                     <div className="flex items-center justify-between mb-8">
                         <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Resultados de Búsqueda</h3>
                         <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[9px] font-black uppercase">{filteredMembers.length} Personas</span>
@@ -193,13 +193,13 @@ export default function TaskAssignment() {
                                 key={m.id}
                                 onClick={() => setSelectedMemberId(m.id)}
                                 className={clsx(
-                                    "p-5 rounded-[2rem] border transition-all cursor-pointer flex items-center justify-between group",
+                                    "p-5 rounded-xl border transition-all cursor-pointer flex items-center justify-between group",
                                     selectedMemberId === m.id ? "bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-500/20" : "bg-slate-50 dark:bg-white/5 border-transparent hover:border-blue-200"
                                 )}
                             >
                                 <div className="flex items-center gap-5">
                                     <div className={clsx(
-                                        "size-12 rounded-2xl flex items-center justify-center font-black text-lg shadow-sm",
+                                        "size-9 rounded-2xl flex items-center justify-center font-black text-sm shadow-sm",
                                         selectedMemberId === m.id ? "bg-white/20" : "bg-white dark:bg-white/10 text-blue-600"
                                     )}>
                                         {m.first_name.charAt(0)}
@@ -230,7 +230,7 @@ export default function TaskAssignment() {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="glass-panel p-10 rounded-[3.5rem] shadow-2xl space-y-10 sticky top-10"
+                            className="glass-panel p-5 rounded-[3.5rem] shadow-2xl space-y-4 sticky top-5"
                         >
                             <div className="space-y-4">
                                 <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-blue-600/10 text-blue-600 border border-blue-600/20 rounded-full text-[10px] font-black uppercase tracking-[0.2em]">
@@ -242,13 +242,13 @@ export default function TaskAssignment() {
                                 </h3>
                             </div>
 
-                            <div className="space-y-6">
+                            <div className="space-y-3">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 ml-2">Líder Responsable</label>
                                     <select
                                         value={selectedLeaderId}
                                         onChange={(e) => setSelectedLeaderId(e.target.value)}
-                                        className="w-full bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all appearance-none"
+                                        className="w-full bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl py-2 px-4 text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all appearance-none"
                                     >
                                         <option value="">Seleccionar responsable...</option>
                                         {leaders.map(l => (
@@ -265,7 +265,7 @@ export default function TaskAssignment() {
                                                 key={type}
                                                 onClick={() => setTaskTitle(`Seguimiento: ${type}`)}
                                                 className={clsx(
-                                                    "py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all",
+                                                    "py-1.5 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all",
                                                     taskTitle.includes(type) ? "bg-blue-600 border-blue-600 text-white shadow-lg" : "bg-white dark:bg-white/5 border-slate-100 dark:border-white/10 text-slate-500"
                                                 )}
                                             >
@@ -280,7 +280,7 @@ export default function TaskAssignment() {
                                     <textarea
                                         rows={4}
                                         placeholder="Ej: Dar bienvenida, preguntar por su familia..."
-                                        className="w-full bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-[2rem] py-5 px-6 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                        className="w-full bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl py-5 px-4 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
                                         value={taskDescription}
                                         onChange={(e) => setTaskDescription(e.target.value)}
                                     />
@@ -289,7 +289,7 @@ export default function TaskAssignment() {
                                 <button
                                     onClick={handleAssign}
                                     disabled={isAssigning}
-                                    className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] shadow-2xl hover:translate-y-[-4px] active:scale-95 transition-all flex items-center justify-center gap-4 group"
+                                    className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black text-xs uppercase tracking-[0.3em] shadow-2xl hover:translate-y-[-4px] active:scale-95 transition-all flex items-center justify-center gap-4 group"
                                 >
                                     {isAssigning ? <Loader2 className="animate-spin" /> : <UserCheck size={20} className="group-hover:rotate-12 transition-transform" />}
                                     Confirmar Misión
@@ -297,10 +297,10 @@ export default function TaskAssignment() {
                             </div>
                         </motion.div>
                     ) : (
-                        <div className="h-full flex flex-col items-center justify-center p-12 text-center space-y-6 bg-slate-50/50 dark:bg-white/5 rounded-[4rem] border-2 border-dashed border-slate-200 dark:border-white/10">
+                        <div className="h-full flex flex-col items-center justify-center p-4 text-center space-y-3 bg-slate-50/50 dark:bg-white/5 rounded-[4rem] border-2 border-dashed border-slate-200 dark:border-white/10">
                             <div className="size-32 rounded-[3.5rem] bg-white dark:bg-white/10 shadow-2xl flex items-center justify-center text-slate-200"><User size={64} strokeWidth={1} /></div>
                             <div className="space-y-2">
-                                <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight">Esperando selección</h4>
+                                <h4 className="text-base font-black text-slate-800 dark:text-white uppercase tracking-tight">Esperando selección</h4>
                                 <p className="text-sm text-slate-400 font-medium max-w-[240px] mx-auto leading-relaxed">Selecciona un miembro de la congregación para iniciar el proceso de asignación pastoral.</p>
                             </div>
                         </div>

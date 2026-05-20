@@ -30,10 +30,15 @@ const CMS_TABS = [
 interface CmsStats {
     testimonials: number;
     pendingTestimonials: number;
+    approvedTestimonials: number;
     sections: number;
     publishedBlocks: number;
     inReviewBlocks: number;
     activeAnnouncements: number;
+    mediaTotal: number;
+    mediaImages: number;
+    mediaVideos: number;
+    mediaAudio: number;
 }
 
 interface TestimonialPreview {
@@ -85,15 +90,25 @@ export default function CmsHomePage() {
                     published_blocks: number;
                     in_review_blocks: number;
                     announcements_active: number;
+                    testimonials_approved: number;
+                    media_total: number;
+                    media_images: number;
+                    media_videos: number;
+                    media_audio: number;
                 }>('/cms/metrics', { token, cache: 'no-store' });
                 setRecentTestimonials(Array.isArray(testimonials) ? testimonials.slice(0, 5) : []);
                 setStats({
                     testimonials: testimonials.length,
                     pendingTestimonials: testimonials.filter((testimony) => !testimony.is_approved).length,
+                    approvedTestimonials: metrics?.testimonials_approved ?? testimonials.filter((testimony) => testimony.is_approved).length,
                     sections: FARO_BLOCKS.length,
                     publishedBlocks: metrics?.published_blocks ?? 0,
                     inReviewBlocks: metrics?.in_review_blocks ?? 0,
-                    activeAnnouncements: metrics?.announcements_active ?? 0
+                    activeAnnouncements: metrics?.announcements_active ?? 0,
+                    mediaTotal: metrics?.media_total ?? 0,
+                    mediaImages: metrics?.media_images ?? 0,
+                    mediaVideos: metrics?.media_videos ?? 0,
+                    mediaAudio: metrics?.media_audio ?? 0
                 });
             } catch (error) {
                 console.error('CMS home fetch', error);
@@ -184,11 +199,15 @@ export default function CmsHomePage() {
                 secondaryAction={{ label: 'Ver pauta', icon: LayoutDashboard, onClick: () => router.push('/cms/builder') }}
             />
 
-            <section className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
+            <section className="grid grid-cols-1 md:grid-cols-4 xl:grid-cols-8 gap-4">
                 {[
-                    { label: 'Testimonios publicados', value: stats?.testimonials ?? '—' },
+                    { label: 'Testimonios publicados', value: stats?.approvedTestimonials ?? '—' },
                     { label: 'Pendientes', value: stats?.pendingTestimonials ?? '—' },
-                    { label: 'Secciones hero activas', value: stats?.sections ?? '—' },
+                    { label: 'Media total', value: stats?.mediaTotal ?? '—' },
+                    { label: 'Imagenes', value: stats?.mediaImages ?? '—' },
+                    { label: 'Videos', value: stats?.mediaVideos ?? '—' },
+                    { label: 'Podcasts', value: stats?.mediaAudio ?? '—' },
+                    { label: 'Bloques FARO', value: stats?.sections ?? '—' },
                     { label: 'Bloques publicados', value: stats?.publishedBlocks ?? '—' },
                     { label: 'En revision', value: stats?.inReviewBlocks ?? '—' },
                     { label: 'Anuncios activos', value: stats?.activeAnnouncements ?? '—' }

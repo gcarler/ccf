@@ -60,6 +60,10 @@ class CmsMetrics(BaseModel):
     testimonials_approved: int
     announcements_total: int
     announcements_active: int
+    media_total: int = 0
+    media_images: int = 0
+    media_videos: int = 0
+    media_audio: int = 0
 
 
 class CmsMediaCreate(BaseModel):

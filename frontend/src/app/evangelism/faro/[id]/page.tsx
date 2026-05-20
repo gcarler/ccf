@@ -165,7 +165,7 @@ export default function FaroDetailPage() {
                             <Plus size={12} /> Registrar sesiÃ³n de esta semana
                         </button>}
                     </div>
-                    <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1 scrollbar-thin">
+                    <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1 scrollbar-thin">
                         {house.sessions.length === 0 ? (
                             <div className="py-12 text-center text-slate-400">
                                 <Calendar size={24} className="mx-auto mb-3 opacity-30" />
@@ -184,7 +184,7 @@ export default function FaroDetailPage() {
                                 >
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className={`text-[13px] font-bold ${isActive ? 'text-blue-700 dark:text-blue-400' : 'text-slate-800 dark:text-white'}`}>
+                                            <p className={`text-xs font-bold ${isActive ? 'text-blue-700 dark:text-blue-400' : 'text-slate-800 dark:text-white'}`}>
                                                 {s.topic ? s.topic : new Date(s.session_date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short' })}
                                             </p>
                                             {s.topic && <p className="text-[10px] font-medium text-slate-400 mt-0.5">{new Date(s.session_date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short' })}</p>}
@@ -393,14 +393,14 @@ export default function FaroDetailPage() {
         ]}>
             <main className="flex-1 overflow-y-auto">
                 {/* Page Header */}
-                <div className="px-8 pt-8 pb-6 border-b border-slate-100 dark:border-white/5">
+                <div className="px-5 pt-8 pb-6 border-b border-slate-100 dark:border-white/5">
                     <button onClick={() => router.back()} className="flex items-center gap-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors mb-4 text-xs font-bold uppercase tracking-widest">
                         <ArrowLeft size={14} /> Volver
                     </button>
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-1">Faro en Casa</p>
-                            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{house.name}</h1>
+                            <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">{house.name}</h1>
                             <div className="flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400 font-medium mt-1.5">
                                 {house.code && <span className="flex items-center gap-1.5"><Activity size={12} /> CÃ³digo: {house.code}</span>}
                                 {house.leader_name && <span className="flex items-center gap-1.5"><Users size={12} /> LÃ­der: {house.leader_name}</span>}
@@ -409,23 +409,23 @@ export default function FaroDetailPage() {
                             </div>
                         </div>
                         <div className="flex gap-3 shrink-0">
-                            <div className="text-center px-5 py-3 bg-white dark:bg-[#252528] rounded-xl border border-slate-200 dark:border-white/5 shadow-sm">
-                                <p className="text-xl font-black text-slate-900 dark:text-white">{house.total_sessions}</p>
+                            <div className="text-center px-5 py-1.5 bg-white dark:bg-[#252528] rounded-xl border border-slate-200 dark:border-white/5 shadow-sm">
+                                <p className="text-base font-black text-slate-900 dark:text-white">{house.total_sessions}</p>
                                 <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Sesiones</p>
                             </div>
-                            <div className="text-center px-5 py-3 bg-white dark:bg-[#252528] rounded-xl border border-slate-200 dark:border-white/5 shadow-sm">
-                                <p className="text-xl font-black text-slate-900 dark:text-white">{house.total_attendance}</p>
+                            <div className="text-center px-5 py-1.5 bg-white dark:bg-[#252528] rounded-xl border border-slate-200 dark:border-white/5 shadow-sm">
+                                <p className="text-base font-black text-slate-900 dark:text-white">{house.total_attendance}</p>
                                 <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Asistentes</p>
                             </div>
-                            <div className="text-center px-5 py-3 bg-white dark:bg-[#252528] rounded-xl border border-slate-200 dark:border-white/5 shadow-sm">
-                                <p className="text-xl font-black text-slate-900 dark:text-white">{avgAttendance}</p>
+                            <div className="text-center px-5 py-1.5 bg-white dark:bg-[#252528] rounded-xl border border-slate-200 dark:border-white/5 shadow-sm">
+                                <p className="text-base font-black text-slate-900 dark:text-white">{avgAttendance}</p>
                                 <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Promedio</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="p-8">
+                <div className="p-4">
                     {/* ATTENDANCE PANEL */}
                     <div className="w-full">
                         {!activeSession ? (
@@ -436,10 +436,10 @@ export default function FaroDetailPage() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="space-y-5">
+                            <div className="space-y-2">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <h2 className="text-lg font-black text-slate-900 dark:text-white">
+                                        <h2 className="text-sm font-black text-slate-900 dark:text-white">
                                             {activeSession.topic ? activeSession.topic : new Date(activeSession.session_date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                                         </h2>
                                         {activeSession.topic && <p className="text-xs text-slate-400 font-bold mt-0.5">{new Date(activeSession.session_date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>}
@@ -456,22 +456,22 @@ export default function FaroDetailPage() {
                                 {/* Stat strip */}
                                 <div className="flex gap-4">
                                     <div className="flex-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 text-center">
-                                        <p className="text-2xl font-black text-blue-600 dark:text-blue-400">{loadingAtt ? 'â€”' : attendance?.total ?? 0}</p>
+                                        <p className="text-lg font-black text-blue-600 dark:text-blue-400">{loadingAtt ? 'â€”' : attendance?.total ?? 0}</p>
                                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Presentes</p>
                                     </div>
                                     <div className="flex-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 text-center">
-                                        <p className="text-2xl font-black text-slate-700 dark:text-slate-300">{house.capacity ?? 'â€”'}</p>
+                                        <p className="text-lg font-black text-slate-700 dark:text-slate-300">{house.capacity ?? 'â€”'}</p>
                                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Capacidad</p>
                                     </div>
                                     <div className="flex-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 text-center">
-                                        <p className="text-2xl font-black text-emerald-600 dark:emerald-400">
+                                        <p className="text-lg font-black text-emerald-600 dark:emerald-400">
                                             {house.capacity && attendance ? `${Math.round(attendance.total / house.capacity * 100)}%` : 'â€”'}
                                         </p>
                                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">OcupaciÃ³n</p>
                                     </div>
                                 </div>
 
-                                <div className="bg-white dark:bg-white/5 rounded-[2rem] border border-slate-200 dark:border-white/5 p-6 shadow-sm space-y-5">
+                                <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 p-4 shadow-sm space-y-2">
                                     <div className="flex items-center justify-between gap-4">
                                         <h3 className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-white flex items-center gap-2">
                                             <BarChart3 className="text-indigo-500" size={18} /> Monitoreo de la casa
@@ -484,15 +484,15 @@ export default function FaroDetailPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div className="rounded-2xl border border-slate-200 dark:border-white/10 p-4 bg-slate-50 dark:bg-black/20">
                                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Promedio de presencia</p>
-                                            <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">{monitoring?.average_attendance ?? avgAttendance}</p>
+                                            <p className="mt-2 text-lg font-black text-slate-900 dark:text-white">{monitoring?.average_attendance ?? avgAttendance}</p>
                                         </div>
                                         <div className="rounded-2xl border border-slate-200 dark:border-white/10 p-4 bg-slate-50 dark:bg-black/20">
                                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tasa promedio</p>
-                                            <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">{monitoring?.average_attendance_rate ?? 0}%</p>
+                                            <p className="mt-2 text-lg font-black text-slate-900 dark:text-white">{monitoring?.average_attendance_rate ?? 0}%</p>
                                         </div>
                                         <div className="rounded-2xl border border-slate-200 dark:border-white/10 p-4 bg-slate-50 dark:bg-black/20">
                                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Alertas activas</p>
-                                            <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">{alerts.length}</p>
+                                            <p className="mt-2 text-lg font-black text-slate-900 dark:text-white">{alerts.length}</p>
                                         </div>
                                     </div>
 
@@ -506,7 +506,7 @@ export default function FaroDetailPage() {
                                                 {trendRows.length === 0 ? (
                                                     <p className="text-sm text-slate-400">No hay datos de tendencia todavÃ­a.</p>
                                                 ) : trendRows.map((row) => (
-                                                    <div key={row.session_id} className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 dark:bg-black/20 px-4 py-3">
+                                                    <div key={row.session_id} className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 dark:bg-black/20 px-4 py-1.5">
                                                         <div className="min-w-0">
                                                             <p className="text-sm font-bold text-slate-800 dark:text-white truncate">
                                                                 {new Date(row.session_date + 'T12:00:00').toLocaleDateString('es-CO', { month: 'short', day: 'numeric' })}
@@ -533,12 +533,12 @@ export default function FaroDetailPage() {
                                                 ) : (
                                                     <>
                                                         {alerts.map((alert, index) => (
-                                                            <div key={`${alert.type}-${index}`} className="rounded-2xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-3">
+                                                            <div key={`${alert.type}-${index}`} className="rounded-2xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-1.5">
                                                                 <p className="text-sm font-bold text-amber-800 dark:text-amber-200">{alert.message}</p>
                                                             </div>
                                                         ))}
                                                         {repeatAbsentees.slice(0, 4).map((item) => (
-                                                            <div key={item.member_id} className="rounded-2xl border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-4 py-3">
+                                                            <div key={item.member_id} className="rounded-2xl border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-4 py-1.5">
                                                                 <p className="text-sm font-bold text-rose-800 dark:text-rose-200">{item.name}</p>
                                                                 <p className="text-[10px] font-black uppercase tracking-widest text-rose-500 mt-1">{item.absences} ausencias recurrentes</p>
                                                             </div>
@@ -564,7 +564,7 @@ export default function FaroDetailPage() {
                                             <input
                                                 value={reportTopic}
                                                 onChange={(e) => setReportTopic(e.target.value)}
-                                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
+                                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
                                                 placeholder="Unidad familiar, fe, oraciÃ³n..."
                                             />
                                         </div>
@@ -574,7 +574,7 @@ export default function FaroDetailPage() {
                                                 type="number"
                                                 value={reportOfferingAmount}
                                                 onChange={(e) => setReportOfferingAmount(e.target.value)}
-                                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
+                                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
                                                 placeholder="0"
                                                 min="0"
                                                 step="0.01"
@@ -591,7 +591,7 @@ export default function FaroDetailPage() {
                                                             : 'Realizada';
                                                     setReportStatus(nextStatus);
                                                 }}
-                                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
+                                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
                                             >
                                                 <option value="Realizada">Realizada</option>
                                                 <option value="No realizada">No realizada</option>
@@ -603,7 +603,7 @@ export default function FaroDetailPage() {
                                             <select
                                                 value={reportNoveltyType}
                                                 onChange={(e) => setReportNoveltyType(e.target.value)}
-                                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
+                                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
                                             >
                                                 <option value="">Sin novedad</option>
                                                 <option value="weather">Clima</option>
@@ -711,7 +711,7 @@ export default function FaroDetailPage() {
 
                                      <div className="flex justify-end">
                                         {activeSession?.report_deadline && new Date() > new Date(activeSession.report_deadline) ? (
-                                            <div className="flex items-center gap-2 text-rose-500 bg-rose-50 dark:bg-rose-500/10 px-4 py-3 rounded-2xl">
+                                            <div className="flex items-center gap-2 text-rose-500 bg-rose-50 dark:bg-rose-500/10 px-4 py-1.5 rounded-2xl">
                                                 <Clock size={16} />
                                                 <span className="text-[11px] font-black uppercase tracking-widest">Plazo de reporte vencido ({new Date(activeSession.report_deadline).toLocaleString()})</span>
                                             </div>
@@ -719,7 +719,7 @@ export default function FaroDetailPage() {
                                             <button
                                                 onClick={handleSaveReport}
                                                 disabled={savingReport || !activeSession}
-                                                className="inline-flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+                                                className="inline-flex items-center gap-2 px-5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
                                             >
                                                 {savingReport ? <Loader2 className="animate-spin" size={14} /> : <CheckCircle2 size={14} />}
                                                 Guardar reporte
@@ -738,8 +738,8 @@ export default function FaroDetailPage() {
                                         <p className="text-xs mt-1">Usa el botÃ³n &ldquo;AÃ±adir Asistentes&rdquo; para marcar presentes</p>
                                     </div>
                                 ) : (
-                                    <div className="bg-white dark:bg-[#252528] rounded-[2rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
-                                        <div className="px-6 py-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+                                    <div className="bg-white dark:bg-[#252528] rounded-xl border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
+                                        <div className="px-4 py-2 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
                                             <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
                                                 <CheckCircle2 size={14} className="text-emerald-500" /> Lista de Asistencia
                                             </h3>
@@ -747,7 +747,7 @@ export default function FaroDetailPage() {
                                         </div>
                                         <div className="divide-y divide-slate-50 dark:divide-white/5">
                                             {attendance.attendees.map((a) => (
-                                                <div key={a.member_id} className="flex items-center gap-4 px-6 py-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                                <div key={a.member_id} className="flex items-center gap-4 px-4 py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                                                     <div className="size-8 rounded-xl bg-gradient-to-br from-blue-400 to-sky-600 text-white flex items-center justify-center text-xs font-black shrink-0">
                                                         {a.name.charAt(0)}
                                                     </div>
@@ -769,7 +769,7 @@ export default function FaroDetailPage() {
 
             {/* ADD ATTENDEES INLINE SECTION */}
             {showAddAttendee && (
-                <div className="mx-8 mb-8 bg-white dark:bg-[#1e1f21] border border-blue-200 dark:border-blue-500/30 rounded-2xl p-6 shadow-sm animate-in slide-in-from-top-2 fade-in duration-200">
+                <div className="mx-8 mb-8 bg-white dark:bg-[#1e1f21] border border-blue-200 dark:border-blue-500/30 rounded-2xl p-4 shadow-sm animate-in slide-in-from-top-2 fade-in duration-200">
                     <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-100 dark:border-white/5">
                         <div>
                             <h3 className="text-sm font-black text-slate-900 dark:text-white">Registrar Asistentes</h3>
@@ -809,12 +809,12 @@ export default function FaroDetailPage() {
                                             value={memberQuery}
                                             onChange={e => setMemberQuery(e.target.value)}
                                             placeholder="Buscar por nombre..."
-                                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-3 pl-10 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 pl-10 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
                                         />
                                     </div>
                                     <button
                                         onClick={() => setIsCreatingMember(true)}
-                                        className="px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 transition-colors shrink-0 flex items-center gap-2"
+                                        className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 transition-colors shrink-0 flex items-center gap-2"
                                     >
                                         <Plus size={14} /> Nuevo
                                     </button>
@@ -831,23 +831,23 @@ export default function FaroDetailPage() {
                             <div className="flex-1 overflow-y-auto pb-6 space-y-4 pt-2">
                                 <div>
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Nombres *</label>
-                                    <input value={newMemberForm.first_name} onChange={e => setNewMemberForm(p => ({ ...p, first_name: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej. Juan" />
+                                    <input value={newMemberForm.first_name} onChange={e => setNewMemberForm(p => ({ ...p, first_name: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej. Juan" />
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Apellidos *</label>
-                                    <input value={newMemberForm.last_name} onChange={e => setNewMemberForm(p => ({ ...p, last_name: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej. PÃ©rez" />
+                                    <input value={newMemberForm.last_name} onChange={e => setNewMemberForm(p => ({ ...p, last_name: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej. PÃ©rez" />
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">TelÃ©fono</label>
-                                    <input value={newMemberForm.phone} onChange={e => setNewMemberForm(p => ({ ...p, phone: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Opcional" />
+                                    <input value={newMemberForm.phone} onChange={e => setNewMemberForm(p => ({ ...p, phone: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Opcional" />
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Correo ElectrÃ³nico</label>
-                                    <input type="email" value={newMemberForm.email} onChange={e => setNewMemberForm(p => ({ ...p, email: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-3 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Opcional" />
+                                    <input type="email" value={newMemberForm.email} onChange={e => setNewMemberForm(p => ({ ...p, email: e.target.value }))} className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Opcional" />
                                 </div>
                                 <div className="flex gap-3 pt-4">
-                                    <button onClick={() => setIsCreatingMember(false)} className="flex-1 py-3 bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-white rounded-2xl text-sm font-bold hover:bg-slate-200 transition-all">Cancelar</button>
-                                    <button onClick={handleCreateMember} disabled={creatingMember || !newMemberForm.first_name || !newMemberForm.last_name} className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                                    <button onClick={() => setIsCreatingMember(false)} className="flex-1 py-1.5 bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-white rounded-2xl text-sm font-bold hover:bg-slate-200 transition-all">Cancelar</button>
+                                    <button onClick={handleCreateMember} disabled={creatingMember || !newMemberForm.first_name || !newMemberForm.last_name} className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50">
                                         {creatingMember ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Crear
                                     </button>
                                 </div>
@@ -855,7 +855,7 @@ export default function FaroDetailPage() {
                         ) : (
                             <div className="flex-1 overflow-y-auto pb-6 space-y-1 border-t border-slate-100 dark:border-white/5 pt-4">
                                 {filteredMembers.length === 0 ? (
-                                    <p className="text-center text-slate-400 text-sm py-8">No se encontraron miembros</p>
+                                    <p className="text-center text-slate-400 text-sm py-4">No se encontraron miembros</p>
                                 ) : filteredMembers.map(m => {
                                     const isSelected = selectedIds.has(m.id);
                                     return (

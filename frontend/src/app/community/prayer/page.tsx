@@ -46,7 +46,7 @@ export default function PrayerWall() {
     const tabs = ['Recientes', 'Urgentes', 'Mis Pedidos'];
 
     return (
-        <div className="p-8 lg:p-12 space-y-12 max-w-6xl mx-auto font-display overflow-hidden">
+        <div className="p-4 lg:p-4 space-y-12 max-w-6xl mx-auto font-display overflow-hidden">
             <style jsx global>{`
                 .ethereal-aura {
                     position: relative;
@@ -90,7 +90,7 @@ export default function PrayerWall() {
             `}</style>
 
             {/* Header Section Cinematic */}
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-10 relative">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-5 relative">
                 <div className="absolute -top-20 -left-20 size-64 bg-primary/5 blur-[100px] rounded-full pointer-events-none" />
                 
                 <motion.div 
@@ -103,7 +103,7 @@ export default function PrayerWall() {
                         Interacción Celestial
                     </div>
                     <h1 className="text-5xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">Muro de <span className="italic text-primary">Oración</span></h1>
-                    <p className="text-slate-500 dark:text-slate-400 text-lg font-medium max-w-lg">Comparte tus cargas y apóyanos en intercesión. Tu fe activa el movimiento de Dios.</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium max-w-lg">Comparte tus cargas y apóyanos en intercesión. Tu fe activa el movimiento de Dios.</p>
                 </motion.div>
                 
                 <motion.div 
@@ -112,7 +112,7 @@ export default function PrayerWall() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                 >
-                    <Link href="/community/prayer/request" className="h-16 px-10 bg-primary text-white rounded-[2rem] text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/40 hover:shadow-primary/50 transition-all flex items-center gap-4 group">
+                    <Link href="/community/prayer/request" className="h-16 px-6 bg-primary text-white rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/40 hover:shadow-primary/50 transition-all flex items-center gap-4 group">
                         <PlusCircle size={24} strokeWidth={2.5} className="group-hover:rotate-90 transition-transform duration-500" />
                         Levantar Petición
                     </Link>
@@ -120,9 +120,9 @@ export default function PrayerWall() {
             </header>
 
             {/* Content Area */}
-            <div className="space-y-10 relative z-10">
+            <div className="space-y-4 relative z-10">
                 {/* Tabs Cinematic */}
-                <div className="flex gap-10 border-b border-slate-100 dark:border-white/5 px-4 overflow-x-auto no-scrollbar">
+                <div className="flex gap-5 border-b border-slate-100 dark:border-white/5 px-4 overflow-x-auto no-scrollbar">
                     {tabs.map((tab) => (
                         <button
                             key={tab}
@@ -144,7 +144,7 @@ export default function PrayerWall() {
                 </div>
 
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-32 gap-8">
+                    <div className="flex flex-col items-center justify-center py-1.52 gap-4">
                         <div className="relative">
                             <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full animate-pulse" />
                             <Loader2 className="animate-spin text-primary relative z-10" size={64} strokeWidth={1.5} />
@@ -155,18 +155,18 @@ export default function PrayerWall() {
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="flex flex-col items-center justify-center py-40 text-center space-y-8 bg-slate-50/50 dark:bg-white/5 rounded-[4rem] border-2 border-dashed border-slate-200 dark:border-white/10"
+                        className="flex flex-col items-center justify-center py-20 text-center space-y-3 bg-slate-50/50 dark:bg-white/5 rounded-[4rem] border-2 border-dashed border-slate-200 dark:border-white/10"
                     >
-                        <div className="size-28 rounded-[3rem] bg-white dark:bg-white/5 flex items-center justify-center text-slate-300 dark:text-slate-600 border border-slate-100 dark:border-white/5 shadow-xl">
+                        <div className="size-28 rounded-2xl bg-white dark:bg-white/5 flex items-center justify-center text-slate-300 dark:text-slate-600 border border-slate-100 dark:border-white/5 shadow-xl">
                             <HandHeart size={48} strokeWidth={1} />
                         </div>
                         <div className="space-y-2">
-                            <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight">El muro está en silencio</h3>
+                            <h3 className="text-base font-black text-slate-800 dark:text-white uppercase tracking-tight">El muro está en silencio</h3>
                             <p className="text-slate-500 dark:text-slate-400 text-sm font-medium max-w-xs mx-auto leading-relaxed">Este es un espacio sagrado. Sé el primero en compartir tu necesidad.</p>
                         </div>
                     </motion.div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <AnimatePresence mode="popLayout">
                             {requests.map((request, idx) => (
                                 <motion.div 
@@ -180,7 +180,7 @@ export default function PrayerWall() {
                                         ease: [0.23, 1, 0.32, 1]
                                     }}
                                     key={request.id} 
-                                    className="ethereal-aura group p-10 stacked-glass-prayer rounded-[3.5rem] shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col gap-8 relative overflow-hidden"
+                                    className="ethereal-aura group p-5 stacked-glass-prayer rounded-[3.5rem] shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col gap-4 relative overflow-hidden"
                                 >
                                     <div className="absolute top-0 left-0 w-full h-1 shimmer-prayer opacity-0 group-hover:opacity-100 transition-opacity" />
                                     
@@ -213,7 +213,7 @@ export default function PrayerWall() {
                                             <div className="size-2.5 rounded-full bg-current animate-pulse shadow-[0_0_12px_currentColor]"></div>
                                             <span className="text-[10px] font-black uppercase tracking-[0.25em]">En intercesión</span>
                                         </div>
-                                        <button className="h-12 px-8 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-xl flex items-center gap-3 group/btn hover:shadow-primary/20">
+                                        <button className="h-12 px-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-xl flex items-center gap-3 group/btn hover:shadow-primary/20">
                                             <Heart size={16} className="group-hover/btn:fill-rose-500 group-hover/btn:text-rose-500 transition-all duration-500" />
                                             Me uno
                                         </button>

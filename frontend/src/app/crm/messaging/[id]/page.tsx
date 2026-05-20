@@ -79,8 +79,8 @@ export default function MessagingDetailPage() {
                 { label: title, icon: Send },
             ]}
         >
-            <main className="flex-1 overflow-y-auto p-8 lg:p-12 space-y-10">
-                <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <main className="flex-1 overflow-y-auto p-4 lg:p-4 space-y-4">
+                <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div className="space-y-4">
                         <DSBadge
                             tone={campaign.status === "sent" ? "emerald" : "blue"}
@@ -89,7 +89,7 @@ export default function MessagingDetailPage() {
                         <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">
                             {title}
                         </h1>
-                        <div className="flex items-center gap-6 text-sm font-bold text-slate-500">
+                        <div className="flex items-center gap-4 text-sm font-bold text-slate-500">
                             <span className="flex items-center gap-2">
                                 <Clock size={18} />
                                 Enviado el {sentAtLabel}
@@ -106,7 +106,7 @@ export default function MessagingDetailPage() {
                     </div>
                 </header>
 
-                <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <DSMetric label="Destinatarios" value={String(campaign.target_count)} trend="Total alcance" tone="blue" />
                     <DSMetric
                         label="Entregados"
@@ -117,19 +117,19 @@ export default function MessagingDetailPage() {
                     <DSMetric label="Fallidos" value={String(campaign.failed_count)} trend="Revisar numeros" tone="violet" />
                 </section>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div className="lg:col-span-2 space-y-3">
                         <DSCard>
                             <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Contenido del Mensaje</h3>
-                            <div className="p-6 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                                <p className="text-lg font-medium text-slate-800 dark:text-slate-200 leading-relaxed">
+                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                                <p className="text-sm font-medium text-slate-800 dark:text-slate-200 leading-relaxed">
                                     {campaign.content}
                                 </p>
                             </div>
                         </DSCard>
                     </div>
 
-                    <aside className="space-y-6">
+                    <aside className="space-y-3">
                         <DSCard>
                             <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Estado de Entrega</h3>
                             <div className="space-y-4">

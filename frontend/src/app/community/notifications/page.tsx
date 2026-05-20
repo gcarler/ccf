@@ -42,7 +42,7 @@ export default function NotificationsCenter() {
     };
 
     return (
-        <div className="p-8 lg:p-12 animate-in fade-in duration-700 max-w-4xl mx-auto">
+        <div className="p-4 lg:p-4 animate-in fade-in duration-700 max-w-4xl mx-auto">
             <header className="flex items-center justify-between mb-12">
                 <div>
                     <h1 className="text-3xl font-black text-[hsl(var(--text-primary))] tracking-tighter">Centro de Notificaciones</h1>
@@ -67,7 +67,7 @@ export default function NotificationsCenter() {
             </header>
 
             {error && (
-                <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600">
+                <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-1.5 text-sm font-semibold text-rose-600">
                     {error}
                 </div>
             )}
@@ -82,8 +82,8 @@ export default function NotificationsCenter() {
                     <NotificationSection title="Anteriormente" notifications={previous} onOpen={markRead} faded />
                 </div>
             ) : (
-                <div className="flex flex-col items-center justify-center py-24 text-center space-y-6">
-                    <div className="size-24 rounded-[2.5rem] bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] animate-pulse">
+                <div className="flex flex-col items-center justify-center py-24 text-center space-y-3">
+                    <div className="size-24 rounded-xl bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] animate-pulse">
                         <Inbox size={40} />
                     </div>
                     <div className="space-y-1">
@@ -125,11 +125,11 @@ function NotificationSection({
                         transition={{ delay: (faded ? 0.3 : 0) + index * 0.1 }}
                         key={notification.id}
                         onClick={() => void onOpen(notification.id)}
-                        className={`w-full text-left group surface-card p-5 bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] flex gap-6 cursor-pointer hover:bg-[hsl(var(--surface-2))] transition-all relative ${
+                        className={`w-full text-left group surface-card p-5 bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] flex gap-4 cursor-pointer hover:bg-[hsl(var(--surface-2))] transition-all relative ${
                             !notification.read ? 'border-l-4 border-l-[hsl(var(--primary))]' : ''
                         } ${faded ? 'opacity-80 hover:opacity-100' : ''}`}
                     >
-                        <div className={`size-12 rounded-2xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform ${TYPE_COLOR[notification.kind]}`}>
+                        <div className={`size-9 rounded-2xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform ${TYPE_COLOR[notification.kind]}`}>
                             {TYPE_ICON[notification.kind]}
                         </div>
                         <div className="flex-1 pr-8">

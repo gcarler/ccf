@@ -54,13 +54,13 @@ export default function MyCardPage() {
 
     if (!member) {
         return (
-            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-8 text-center space-y-6">
-                <div className="p-6 bg-rose-500/10 rounded-full text-rose-500">
+            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-center space-y-3">
+                <div className="p-4 bg-rose-500/10 rounded-full text-rose-500">
                     <ShieldCheck size={48} />
                 </div>
-                <h1 className="text-2xl font-black text-white">Perfil no Encontrado</h1>
+                <h1 className="text-lg font-black text-white">Perfil no Encontrado</h1>
                 <p className="text-slate-400 max-w-sm">No hemos podido encontrar tu perfil de miembro vinculado a este usuario. Contacta con administración.</p>
-                <button onClick={() => router.back()} className="px-8 py-3 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all">
+                <button onClick={() => router.back()} className="px-5 py-1.5 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all">
                     Volver
                 </button>
             </div>
@@ -141,7 +141,7 @@ export default function MyCardPage() {
             <div className={`absolute -top-40 -right-40 w-[600px] h-[600px] bg-gradient-to-br ${theme.primary} opacity-20 blur-[120px] rounded-full pointer-events-none`}></div>
             <div className={`absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-gradient-to-tr ${theme.primary} opacity-10 blur-[120px] rounded-full pointer-events-none`}></div>
 
-            <div className={`relative z-10 w-full max-w-[340px] aspect-[4/6] bg-gradient-to-br ${theme.primary} ${theme.border} border rounded-[3rem] shadow-2xl ${theme.glow} overflow-hidden p-8 flex flex-col animate-in zoom-in-95 duration-700 group`}>
+            <div className={`relative z-10 w-full max-w-[340px] aspect-[4/6] bg-gradient-to-br ${theme.primary} ${theme.border} border rounded-2xl shadow-2xl ${theme.glow} overflow-hidden p-4 flex flex-col animate-in zoom-in-95 duration-700 group`}>
 
                 {/* Textures/Overlays */}
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
@@ -164,7 +164,7 @@ export default function MyCardPage() {
                         </div>
                     </div>
                     <div>
-                        <h1 className="text-2xl font-black text-white tracking-tight leading-tight">
+                        <h1 className="text-lg font-black text-white tracking-tight leading-tight">
                             {member.first_name}<br />{member.last_name}
                         </h1>
                         <p className={`text-[10px] font-black uppercase tracking-widest mt-2 ${theme.accent}`}>
@@ -175,7 +175,7 @@ export default function MyCardPage() {
 
                 {/* QR Code Container */}
                 <div className="flex-1 flex flex-col items-center justify-center relative z-10">
-                    <div className="p-4 bg-white rounded-[2.5rem] shadow-2xl relative group-hover:rotate-1 transition-transform duration-500">
+                    <div className="p-4 bg-white rounded-xl shadow-2xl relative group-hover:rotate-1 transition-transform duration-500">
                         <QRCodeSVG
                             value={member.qr_token}
                             size={140}
@@ -210,20 +210,20 @@ export default function MyCardPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4 w-full max-w-sm relative z-10">
-                <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-3xl transition-all active:scale-95 group">
+                <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-xl transition-all active:scale-95 group">
                     <Share2 size={18} className="text-slate-400 group-hover:text-primary transition-colors" />
                     <span className="text-[10px] font-black uppercase tracking-widest">Compartir</span>
                 </button>
-                <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-3xl transition-all active:scale-95 group">
+                <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-xl transition-all active:scale-95 group">
                     <Download size={18} className="text-slate-400 group-hover:text-emerald-500 transition-colors" />
                     <span className="text-[10px] font-black uppercase tracking-widest">Descargar</span>
                 </button>
-                <button className="col-span-2 flex items-center justify-center gap-3 bg-white text-slate-900 p-5 rounded-[2rem] font-black uppercase tracking-widest text-[11px] shadow-2xl hover:scale-105 transition-all active:scale-95">
+                <button className="col-span-2 flex items-center justify-center gap-3 bg-white text-slate-900 p-5 rounded-xl font-black uppercase tracking-widest text-[11px] shadow-2xl hover:scale-105 transition-all active:scale-95">
                     <Sparkles size={20} className="text-amber-500" /> Añadir a Google Wallet
                 </button>
             </div>
 
-            <div className="w-full max-w-[340px] text-center px-8 relative z-10">
+            <div className="w-full max-w-[340px] text-center px-5 relative z-10">
                 <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest leading-relaxed">
                     Esta credencial es personal e intransferible. El uso indebido será reportado a la administración del ministerio.
                 </p>

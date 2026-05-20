@@ -143,10 +143,10 @@ export default function MembersPage() {
         >
             <main className="flex-1 overflow-y-auto scrollbar-thin">
                 {/* Header Hero */}
-                <div className="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 px-8 py-10 overflow-hidden">
+                <div className="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 px-5 py-6 overflow-hidden">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.1)_0%,_transparent_60%)] pointer-events-none" />
                     <div className="absolute -bottom-8 -right-8 size-64 rounded-full bg-white/5 blur-2xl" />
-                    <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-200 mb-2">Consolidación</p>
                             <h1 className="text-4xl font-black text-white tracking-tight mb-1">Base de Membresía</h1>
@@ -154,14 +154,14 @@ export default function MembersPage() {
                         </div>
                         <button 
                             onClick={() => setIsCreateOpen(true)}
-                            className="flex items-center gap-2 px-6 py-3 bg-white text-blue-700 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl hover:shadow-2xl hover:scale-105 transition-all active:scale-95 shrink-0"
+                            className="flex items-center gap-2 px-4 py-1.5 bg-white text-blue-700 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl hover:shadow-2xl hover:scale-105 transition-all active:scale-95 shrink-0"
                         >
                             <Plus size={16} /> Nuevo Miembro
                         </button>
                     </div>
                 </div>
 
-                <div className="p-8 lg:p-12 space-y-10 max-w-7xl mx-auto">
+                <div className="p-4 lg:p-4 space-y-4 max-w-7xl mx-auto">
                     {/* Metrics */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {[
@@ -170,8 +170,8 @@ export default function MembersPage() {
                             { label: 'Bautizados', value: stats.baptized, icon: Filter, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
                             { label: 'Nuevos (Mes)', value: stats.newThisMonth, icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
                         ].map((s, i) => (
-                            <div key={i} className="p-5 rounded-3xl border border-slate-100 dark:border-white/5 bg-white dark:bg-white/5 flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition-all">
-                                <div className={clsx("size-10 rounded-xl flex items-center justify-center", s.bg, s.color)}>
+                            <div key={i} className="p-5 rounded-xl border border-slate-100 dark:border-white/5 bg-white dark:bg-white/5 flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition-all">
+                                <div className={clsx("size-8 rounded-xl flex items-center justify-center", s.bg, s.color)}>
                                     <s.icon size={20} />
                                 </div>
                                 <div>
@@ -183,14 +183,14 @@ export default function MembersPage() {
                     </div>
 
                     {/* Filters Toolbar */}
-                    <div className="sticky top-0 z-10 bg-slate-50/80 dark:bg-[#121212]/80 backdrop-blur-xl py-4 flex flex-col md:flex-row gap-4">
+                    <div className="sticky top-0 z-10 bg-slate-50/80 dark:bg-[#121212]/80 backdrop-blur-xl py-2 flex flex-col md:flex-row gap-4">
                         <div className="relative flex-1">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                             <input 
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 placeholder="Buscar por nombre, correo o ministerio..."
-                                className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-sm"
+                                className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5.5 pl-12 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-sm"
                             />
                         </div>
                         
@@ -198,7 +198,7 @@ export default function MembersPage() {
                             <button
                                 onClick={() => setRoleFilter('Todos')}
                                 className={clsx(
-                                    "px-4 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest whitespace-nowrap transition-all shrink-0 snap-start",
+                                    "px-4 py-1.5 rounded-2xl text-[11px] font-black uppercase tracking-widest whitespace-nowrap transition-all shrink-0 snap-start",
                                     roleFilter === 'Todos' ? "bg-slate-800 text-white dark:bg-white dark:text-slate-900 shadow-md" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10"
                                 )}
                             >Todos</button>
@@ -207,7 +207,7 @@ export default function MembersPage() {
                                     key={role.id}
                                     onClick={() => setRoleFilter(role.name)}
                                     className={clsx(
-                                        "px-4 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest whitespace-nowrap transition-all shrink-0 snap-start",
+                                        "px-4 py-1.5 rounded-2xl text-[11px] font-black uppercase tracking-widest whitespace-nowrap transition-all shrink-0 snap-start",
                                         roleFilter === role.name 
                                             ? "bg-slate-800 text-white dark:bg-white dark:text-slate-900 shadow-md"
                                             : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10"
@@ -226,7 +226,7 @@ export default function MembersPage() {
                             Sincronizando base de datos...
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <AnimatePresence>
                                 {filteredMembers.map(member => (
                                     <motion.div
@@ -239,11 +239,11 @@ export default function MembersPage() {
                                     >
                                         <div 
                                             onClick={() => router.push(`/crm/members/${member.id}`)}
-                                            className="group p-5 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/5 rounded-3xl hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 transition-all cursor-pointer flex items-center justify-between"
+                                            className="group p-5 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/5 rounded-xl hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 transition-all cursor-pointer flex items-center justify-between"
                                         >
                                             <div className="flex items-center gap-4">
                                                 <div className="relative">
-                                                    <div className="size-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-white/5 dark:to-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 font-black text-lg">
+                                                    <div className="size-9 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-white/5 dark:to-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 font-black text-sm">
                                                         {member.first_name[0]}{member.last_name[0]}
                                                     </div>
                                                     <div className={clsx("absolute -bottom-1 -right-1 size-4 rounded-full border-2 border-white dark:border-[#1e1f21]", member.spiritual_health > 0.7 ? "bg-emerald-500" : member.spiritual_health > 0.4 ? "bg-amber-500" : "bg-red-500")} />
@@ -283,14 +283,14 @@ export default function MembersPage() {
                         <button type="button" onClick={() => setIsCreateOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700">
                             Cancelar
                         </button>
-                        <button form="create-member-form" type="submit" disabled={isSaving} className="flex items-center gap-2 rounded-lg bg-blue-600 px-8 py-2 text-[11px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700 active:scale-95 disabled:opacity-60">
+                        <button form="create-member-form" type="submit" disabled={isSaving} className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-[11px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700 active:scale-95 disabled:opacity-60">
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Registrar
                         </button>
                     </>
                 }
             >
-                <form id="create-member-form" onSubmit={handleCreateMember} className="space-y-5">
+                <form id="create-member-form" onSubmit={handleCreateMember} className="space-y-2">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <MemberField label="Nombre *" value={newMember.first_name} onChange={value => setNewMember(prev => ({ ...prev, first_name: value }))} placeholder="Juan" required />
                         <MemberField label="Apellido *" value={newMember.last_name} onChange={value => setNewMember(prev => ({ ...prev, last_name: value }))} placeholder="Pérez" required />
@@ -300,7 +300,7 @@ export default function MembersPage() {
                         <MemberField label="Teléfono" value={newMember.phone} onChange={value => setNewMember(prev => ({ ...prev, phone: value }))} placeholder="+57 300 000 0000" />
                         <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Rol</label>
-                            <select value={newMember.church_role} onChange={event => setNewMember(prev => ({ ...prev, church_role: event.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white">
+                            <select value={newMember.church_role} onChange={event => setNewMember(prev => ({ ...prev, church_role: event.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white">
                                 <option value="Miembro">Miembro</option>
                                 {roles.map(role => <option key={role.id} value={role.name}>{role.name}</option>)}
                             </select>
@@ -330,7 +330,7 @@ function MemberField({
     return (
         <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</label>
-            <input required={required} type={type} value={value} onChange={event => onChange(event.target.value)} placeholder={placeholder} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white" />
+            <input required={required} type={type} value={value} onChange={event => onChange(event.target.value)} placeholder={placeholder} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white" />
         </div>
     );
 }

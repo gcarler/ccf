@@ -145,10 +145,10 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
                 />
             }
         >
-            <main className="flex-1 overflow-y-auto scrollbar-thin p-10 relative">
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-5 relative">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
                 
-                <div className="max-w-[1400px] mx-auto space-y-10 relative z-10">
+                <div className="max-w-[1400px] mx-auto space-y-4 relative z-10">
                     {/* Metrics Bento Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <MetricCard title="Membresía Total" value={stats.total} icon={Users} color="text-blue-600" bg="bg-blue-50 dark:bg-blue-500/10" />
@@ -157,7 +157,7 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
                     </div>
 
                     {/* Member Directory */}
-                    <section className="space-y-5">
+                    <section className="space-y-2">
                         <div className="flex items-center justify-between">
                             <div>
                                 <h3 className="text-[18px] font-bold text-slate-900 dark:text-white tracking-tight">Directorio de Consolidación</h3>
@@ -169,13 +169,13 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
                         </div>
 
                         {loading ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {[...Array(6)].map((_, i) => <DSSkeleton key={i} className="h-48 rounded-[2.5rem]" />)}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {[...Array(6)].map((_, i) => <DSSkeleton key={i} className="h-48 rounded-xl" />)}
                             </div>
                         ) : members.length === 0 ? (
                             <div className="p-20 text-center bg-slate-50 dark:bg-white/5 rounded-[3.5rem] border-2 border-dashed border-slate-200">
-                                <Search className="size-12 text-slate-300 mx-auto mb-4" />
-                                <p className="text-lg font-black text-slate-400 uppercase">No se encontraron miembros</p>
+                                <Search className="size-9 text-slate-300 mx-auto mb-4" />
+                                <p className="text-sm font-black text-slate-400 uppercase">No se encontraron miembros</p>
                             </div>
                         ) : (
                             <div className="pb-20">
@@ -205,9 +205,9 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
 
 function MetricCard({ title, value, icon: Icon, color, bg }: any) {
     return (
-        <div className="relative p-6 rounded-2xl bg-white dark:bg-[#1e2025] border border-slate-100 dark:border-white/[0.06] shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer overflow-hidden">
+        <div className="relative p-4 rounded-2xl bg-white dark:bg-[#1e2025] border border-slate-100 dark:border-white/[0.06] shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer overflow-hidden">
             {/* Subtle gradient glow top-right */}
-            <div className={`absolute -top-6 -right-6 size-24 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity ${bg}`} />
+            <div className={`absolute -top-4 -right-6 size-24 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity ${bg}`} />
             <div className="flex items-start justify-between mb-5 relative z-10">
                 <div className={`inline-flex items-center justify-center size-11 rounded-xl ${bg} ${color} shadow-sm`}>
                     <Icon size={20} />
@@ -329,7 +329,7 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
 
     return (
         <div className="flex flex-col h-full overflow-hidden">
-            <header className="p-8 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-black/20 shrink-0">
+            <header className="p-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-black/20 shrink-0">
                 <div className="flex items-center gap-4">
                     <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-white/5 rounded-full transition-colors text-slate-400"><ChevronRight size={20} /></button>
                     <h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-800 dark:text-white">Ficha de Consolidación</h3>
@@ -340,10 +340,10 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
                 </div>
             </header>
 
-            <div className="flex-1 overflow-y-auto p-10 space-y-10 scrollbar-hide">
+            <div className="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-hide">
                 {/* Perfil Header */}
                 <div className="text-center space-y-4">
-                    <div className="size-24 rounded-[2.5rem] bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center mx-auto text-3xl font-black shadow-xl shadow-blue-500/20">
+                    <div className="size-24 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center mx-auto text-3xl font-black shadow-xl shadow-blue-500/20">
                         {member.first_name[0]}{member.last_name[0]}
                     </div>
                     <div>
@@ -354,12 +354,12 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
 
                 {/* Optimus Brain Action */}
                 <div className="relative group cursor-pointer" onClick={handleAiAnalysis}>
-                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[2rem] blur opacity-10 group-hover:opacity-30 transition-opacity" />
-                    <div className="relative p-6 bg-white dark:bg-[#1e1f21] rounded-[2rem] border border-blue-500/20 shadow-sm flex flex-col items-center text-center gap-3">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl blur opacity-10 group-hover:opacity-30 transition-opacity" />
+                    <div className="relative p-4 bg-white dark:bg-[#1e1f21] rounded-xl border border-blue-500/20 shadow-sm flex flex-col items-center text-center gap-3">
                         {isAnalyzing ? (
                             <Loader2 className="size-8 text-blue-600 animate-spin" />
                         ) : (
-                            <div className="size-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
+                            <div className="size-9 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
                                 <Sparkles size={24} />
                             </div>
                         )}
@@ -386,11 +386,11 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
 
                 {/* Status Bento */}
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-[2rem] border border-slate-100 dark:border-white/5 hover:shadow-md transition-all">
+                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5 hover:shadow-md transition-all">
                         <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Salud Espiritual</span>
                         <div className="text-3xl font-black text-blue-600">{Math.round((member.spiritual_health || 0.8) * 100)}%</div>
                     </div>
-                    <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-[2rem] border border-slate-100 dark:border-white/5 hover:shadow-md transition-all">
+                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5 hover:shadow-md transition-all">
                         <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Academia</span>
                         <div className="text-3xl font-black text-emerald-600">{Math.round((member.academy_progress || 0) * 100)}%</div>
                     </div>
@@ -519,9 +519,9 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
                 </section>
             </div>
             
-            <footer className="p-6 border-t border-slate-100 dark:border-white/5 flex gap-4 bg-white dark:bg-[#1e1f21] shrink-0">
-                <button className="flex-1 py-4 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all">Editar Perfil</button>
-                <button className="px-8 py-4 bg-blue-600 text-white rounded-2xl shadow-xl shadow-blue-500/20 hover:scale-[1.02] transition-all"><ArrowUpRight size={20} /></button>
+            <footer className="p-4 border-t border-slate-100 dark:border-white/5 flex gap-4 bg-white dark:bg-[#1e1f21] shrink-0">
+                <button className="flex-1 py-2 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all">Editar Perfil</button>
+                <button className="px-5 py-2 bg-blue-600 text-white rounded-2xl shadow-xl shadow-blue-500/20 hover:scale-[1.02] transition-all"><ArrowUpRight size={20} /></button>
             </footer>
         </div>
     );

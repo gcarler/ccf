@@ -135,7 +135,7 @@ export default function ConsolidationPipelinePage() {
                             {initials}
                         </div>
                         <div>
-                            <p className="font-black text-slate-800 dark:text-white text-[13px] leading-tight">{l.first_name} {l.last_name}</p>
+                            <p className="font-black text-slate-800 dark:text-white text-xs leading-tight">{l.first_name} {l.last_name}</p>
                             <p className="text-[10px] font-medium text-slate-400">{l.phone}</p>
                         </div>
                     </div>
@@ -270,12 +270,12 @@ export default function ConsolidationPipelinePage() {
     }, [resetSidebarStack]);
 
     if (loading && leads.length === 0) return (
-        <div className="p-10 space-y-6">
+        <div className="p-5 space-y-3">
             <div className="grid grid-cols-4 gap-4">
                 {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-8 rounded-full" />)}
             </div>
             <div className="grid grid-cols-5 gap-4">
-                {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-64 rounded-3xl" />)}
+                {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-64 rounded-xl" />)}
             </div>
         </div>
     );
@@ -323,7 +323,7 @@ export default function ConsolidationPipelinePage() {
                                     />
                                 </motion.div>
                             ) : viewType === 'grid' ? (
-                                <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-6 overflow-y-auto">
+                                <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-4 overflow-y-auto">
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         {filteredLeads.map((lead: any) => {
                                             const stage = PIPELINE_STAGES.find(s => s.value === lead.stage);
@@ -331,10 +331,10 @@ export default function ConsolidationPipelinePage() {
                                                 <div
                                                     key={lead.id}
                                                     onClick={() => handleLeadSelect(lead)}
-                                                    className="p-5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer group"
+                                                    className="p-5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer group"
                                                 >
                                                     <div className="flex items-center gap-3 mb-3">
-                                                        <div className="size-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xs shadow-lg shadow-blue-500/20">
+                                                        <div className="size-8 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xs shadow-lg shadow-blue-500/20">
                                                             {lead.first_name?.[0]}{lead.last_name?.[0]}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
@@ -359,9 +359,9 @@ export default function ConsolidationPipelinePage() {
                                     </div>
                                 </motion.div>
                             ) : viewType === 'calendar' ? (
-                                <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-6 overflow-y-auto space-y-4">
+                                <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-4 overflow-y-auto space-y-4">
                                     {groupedByDate.length === 0 ? (
-                                        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 p-10 text-center text-slate-400">Sin actividad de pipeline</div>
+                                        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 p-5 text-center text-slate-400">Sin actividad de pipeline</div>
                                     ) : groupedByDate.map(([key, payload]) => (
                                         <div key={key} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
                                             <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">{payload.label}</p>
@@ -377,7 +377,7 @@ export default function ConsolidationPipelinePage() {
                                     ))}
                                 </motion.div>
                             ) : viewType === 'gantt' ? (
-                                <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-6 overflow-y-auto">
+                                <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-4 overflow-y-auto">
                                     <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Evolucion de prospectos</p>
                                         {filteredLeads.map((lead: any) => (
@@ -391,15 +391,15 @@ export default function ConsolidationPipelinePage() {
                                                 </div>
                                             </div>
                                         ))}
-                                        {filteredLeads.length === 0 && <div className="py-8 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">Sin prospectos</div>}
+                                        {filteredLeads.length === 0 && <div className="py-4 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">Sin prospectos</div>}
                                     </div>
                                 </motion.div>
                             ) : viewType === 'wiki' ? (
-                                <motion.div key="wiki" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex-1 p-8 overflow-y-auto space-y-8 max-w-6xl mx-auto">
+                                <motion.div key="wiki" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex-1 p-4 overflow-y-auto space-y-3 max-w-6xl mx-auto">
                                     {/* Wiki Header */}
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3 italic uppercase">
+                                            <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-3 italic uppercase">
                                                 <FileText className="text-blue-600" size={28} />
                                                 Manual de Consolidación
                                             </h2>
@@ -411,16 +411,16 @@ export default function ConsolidationPipelinePage() {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                                         {/* Playbooks Section */}
-                                        <div className="lg:col-span-2 space-y-6">
+                                        <div className="lg:col-span-2 space-y-3">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {[
                                                     { title: 'Primer Encuentro', icon: Users, desc: 'Contactar en menos de 24h. Usar tono cálido y empático.', color: 'text-blue-500 bg-blue-50' },
                                                     { title: 'Cierre de Etapa', icon: Target, desc: 'Validar disposición al bautismo o membresía activa.', color: 'text-emerald-500 bg-emerald-50' }
                                                 ].map((card, i) => (
-                                                    <div key={i} className="p-6 rounded-[2rem] bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 shadow-sm hover:shadow-xl transition-all group">
-                                                        <div className={clsx("size-10 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110", card.color.split(' ')[1])}>
+                                                    <div key={i} className="p-4 rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 shadow-sm hover:shadow-xl transition-all group">
+                                                        <div className={clsx("size-8 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110", card.color.split(' ')[1])}>
                                                             <card.icon className={card.color.split(' ')[0]} size={20} />
                                                         </div>
                                                         <h4 className="font-black text-slate-800 dark:text-white mb-2 uppercase italic">{card.title}</h4>
@@ -430,8 +430,8 @@ export default function ConsolidationPipelinePage() {
                                             </div>
 
                                             {/* Notes Area with Premium Styling */}
-                                            <div className="p-1 rounded-[2.5rem] bg-gradient-to-br from-blue-500/10 via-transparent to-indigo-500/10">
-                                                <div className="p-6 rounded-[2.4rem] bg-white dark:bg-[#1e1f21] border border-white/20 shadow-2xl space-y-4">
+                                            <div className="p-1 rounded-xl bg-gradient-to-br from-blue-500/10 via-transparent to-indigo-500/10">
+                                                <div className="p-4 rounded-[2.4rem] bg-white dark:bg-[#1e1f21] border border-white/20 shadow-2xl space-y-4">
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block pl-1">Notas Dinámicas de Proceso</label>
                                                     <textarea
                                                         value={wikiNotes}
@@ -444,8 +444,8 @@ export default function ConsolidationPipelinePage() {
                                         </div>
 
                                         {/* SLA & Stats Sidebar */}
-                                        <div className="space-y-6">
-                                            <div className="p-6 rounded-[2rem] bg-slate-900 text-white shadow-2xl relative overflow-hidden">
+                                        <div className="space-y-3">
+                                            <div className="p-4 rounded-xl bg-slate-900 text-white shadow-2xl relative overflow-hidden">
                                                 <div className="absolute top-0 right-0 p-4 opacity-10">
                                                     <Clock size={80} />
                                                 </div>
@@ -469,7 +469,7 @@ export default function ConsolidationPipelinePage() {
                                                 </div>
                                             </div>
 
-                                            <div className="p-6 rounded-[2rem] bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10">
+                                            <div className="p-4 rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10">
                                                 <h4 className="font-black text-[10px] tracking-[0.25em] uppercase text-slate-500 mb-4">Ayuda de Sistema</h4>
                                                 <div className="space-y-3">
                                                     <div className="flex items-center gap-3 text-xs font-bold text-slate-600 dark:text-slate-300">
@@ -526,7 +526,7 @@ export default function ConsolidationPipelinePage() {
                     </>
                 }
             >
-                <form id="new-lead-form" onSubmit={handleCreateLead} className="space-y-5 pt-2">
+                <form id="new-lead-form" onSubmit={handleCreateLead} className="space-y-2 pt-2">
                     {/* Nombre / Apellido */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
@@ -536,7 +536,7 @@ export default function ConsolidationPipelinePage() {
                                 value={newLeadForm.first_name}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, first_name: e.target.value })}
                                 placeholder="Juan"
-                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder-slate-300 transition-all"
+                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder-slate-300 transition-all"
                             />
                         </div>
                         <div className="space-y-2">
@@ -546,7 +546,7 @@ export default function ConsolidationPipelinePage() {
                                 value={newLeadForm.last_name}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, last_name: e.target.value })}
                                 placeholder="Pérez"
-                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder-slate-300 transition-all"
+                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder-slate-300 transition-all"
                             />
                         </div>
                     </div>
@@ -561,7 +561,7 @@ export default function ConsolidationPipelinePage() {
                                 value={newLeadForm.phone}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, phone: e.target.value })}
                                 placeholder="+57 300 000 0000"
-                                className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder-slate-300 transition-all"
+                                className="w-full pl-10 pr-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder-slate-300 transition-all"
                             />
                         </div>
                     </div>
@@ -573,7 +573,7 @@ export default function ConsolidationPipelinePage() {
                             <select
                                 value={newLeadForm.source}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, source: e.target.value })}
-                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white appearance-none transition-all"
+                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white appearance-none transition-all"
                             >
                                 {Object.keys(SOURCES).map(s => <option key={s} value={s}>{SOURCES[s]} {s}</option>)}
                             </select>
@@ -583,7 +583,7 @@ export default function ConsolidationPipelinePage() {
                             <select
                                 value={newLeadForm.stage}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, stage: e.target.value })}
-                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white appearance-none transition-all"
+                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white appearance-none transition-all"
                             >
                                 {PIPELINE_STAGES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                             </select>
@@ -598,7 +598,7 @@ export default function ConsolidationPipelinePage() {
                             onChange={e => setNewLeadForm({ ...newLeadForm, notes: e.target.value })}
                             placeholder="¿Cómo llegó? ¿Qué contó? ¿Tiene familia en la iglesia?..."
                             rows={4}
-                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder-slate-300 resize-none transition-all"
+                            className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder-slate-300 resize-none transition-all"
                         />
                     </div>
 

@@ -28,7 +28,7 @@ export default function StudentGrades() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="space-y-8 px-4 py-8">
+        <div className="space-y-3 px-4 py-4">
             <AdminHero
                 eyebrow="Calificaciones"
                 title="Mis calificaciones"
@@ -38,8 +38,8 @@ export default function StudentGrades() {
                 primaryAction={{ label: 'Configurar alertas', icon: Bell, onClick: () => router.push('/account') }}
             />
 
-            <section className="relative overflow-hidden rounded-[2.5rem] bg-primary p-8 text-white shadow-2xl shadow-primary/30 border border-white/10">
-                <div className="relative flex flex-wrap gap-8 justify-between items-center">
+            <section className="relative overflow-hidden rounded-xl bg-primary p-4 text-white shadow-2xl shadow-primary/30 border border-white/10">
+                <div className="relative flex flex-wrap gap-4 justify-between items-center">
                     <div>
                         <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-white px-3 py-1.5 rounded-xl shadow-sm">
                             Resumen del {new Date().getFullYear()}
@@ -49,29 +49,29 @@ export default function StudentGrades() {
                             {enrollments.length ? 'Información en tiempo real de tus materias inscritas.' : 'Empieza un curso para ver tus métricas aquí.'}
                         </p>
                     </div>
-                    <div className="flex gap-6">
+                    <div className="flex gap-4">
                         <MetricCard label="Promedio general" value={averageGrade ? `${averageGrade}/10` : '—'} />
                         <MetricCard label="Cursos aprobados" value={`${completionRate}%`} />
                     </div>
                 </div>
             </section>
 
-            <div className="rounded-[2.5rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] shadow-xl p-6 space-y-6">
+            <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] shadow-xl p-4 space-y-3">
                 {loading ? (
-                    <div className="px-6 py-12 text-center text-slate-400 text-sm font-semibold uppercase tracking-widest">
+                    <div className="px-4 py-12 text-center text-slate-400 text-sm font-semibold uppercase tracking-widest">
                         Cargando materias...
                     </div>
                 ) : enrollments.length === 0 ? (
-                    <div className="px-6 py-16 text-center text-slate-400 space-y-3">
+                    <div className="px-4 py-16 text-center text-slate-400 space-y-3">
                         <BookOpen className="w-12 h-12 mx-auto text-slate-300" />
-                        <p className="text-lg font-bold text-slate-800 dark:text-white">Aún no tienes calificaciones</p>
+                        <p className="text-sm font-bold text-slate-800 dark:text-white">Aún no tienes calificaciones</p>
                         <p className="text-sm">Inscríbete a un curso para ver tus notas y progreso aquí.</p>
                     </div>
                 ) : (
                     <div className="px-2 flex flex-col gap-4">
-                        <h3 className="text-slate-900 dark:text-white text-xl font-bold mb-2">Materias inscritas</h3>
+                        <h3 className="text-slate-900 dark:text-white text-base font-bold mb-2">Materias inscritas</h3>
                         {enrollments.map((enrollment) => (
-                            <article key={enrollment.id} className="bg-slate-50 dark:bg-white/5 rounded-[2rem] p-6 border border-slate-100 dark:border-white/10 flex flex-col gap-4 shadow-xl transition-all">
+                            <article key={enrollment.id} className="bg-slate-50 dark:bg-white/5 rounded-xl p-4 border border-slate-100 dark:border-white/10 flex flex-col gap-4 shadow-xl transition-all">
                                 <div className="flex items-center gap-4">
                                     <div className="size-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
                                         <BookOpen size={24} />
@@ -80,10 +80,10 @@ export default function StudentGrades() {
                                         <p className="text-xs text-slate-400 uppercase tracking-widest font-bold mb-1">
                                             {enrollment.course.modality === 'formal' ? 'Programa formal' : 'Ruta no formal'}
                                         </p>
-                                        <h4 className="text-slate-900 dark:text-white text-lg font-bold leading-tight">{enrollment.course.title}</h4>
+                                        <h4 className="text-slate-900 dark:text-white text-sm font-bold leading-tight">{enrollment.course.title}</h4>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-primary text-2xl font-black">
+                                        <p className="text-primary text-lg font-black">
                                             {typeof enrollment.final_grade === 'number' ? enrollment.final_grade.toFixed(1) : '--'}
                                             <span className="text-xs text-slate-400 font-bold">/10</span>
                                         </p>
@@ -113,9 +113,9 @@ export default function StudentGrades() {
 
 function MetricCard({ label, value }: { label: string; value: string }) {
     return (
-        <div className="bg-white/15 rounded-2xl px-6 py-4 border border-white/20 text-center">
+        <div className="bg-white/15 rounded-2xl px-4 py-2 border border-white/20 text-center">
             <p className="text-[10px] font-black uppercase tracking-widest text-white/70">{label}</p>
-            <p className="text-2xl font-black text-white mt-1">{value}</p>
+            <p className="text-lg font-black text-white mt-1">{value}</p>
         </div>
     );
 }

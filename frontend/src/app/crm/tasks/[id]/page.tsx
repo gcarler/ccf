@@ -61,9 +61,9 @@ export default function CrmTaskDetailPage() {
                 { label: `TASK-${id}`, icon: CheckCircle2 },
             ]}
         >
-            <main className="flex-1 overflow-y-auto p-8 lg:p-12">
-                <div className="max-w-4xl mx-auto space-y-8">
-                    <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <main className="flex-1 overflow-y-auto p-4 lg:p-4">
+                <div className="max-w-4xl mx-auto space-y-3">
+                    <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
                                 <DSBadge tone="violet" label={task.category.toUpperCase()} />
@@ -75,8 +75,8 @@ export default function CrmTaskDetailPage() {
                         </div>
                     </header>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2 space-y-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div className="lg:col-span-2 space-y-3">
                             <DSCard>
                                 <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Detalle de la Actividad</h3>
                                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -104,9 +104,9 @@ export default function CrmTaskDetailPage() {
                             </DSCard>
                         </div>
 
-                        <aside className="space-y-6">
+                        <aside className="space-y-3">
                             <DSCard>
-                                <div className="space-y-6">
+                                <div className="space-y-3">
                                     <div className="space-y-2">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Asignado a</p>
                                         <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
@@ -134,13 +134,13 @@ export default function CrmTaskDetailPage() {
                                         </div>
                                     </div>
 
-                                    <button className="w-full py-3 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all">
+                                    <button className="w-full py-1.5 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all">
                                         Marcar como Completada
                                     </button>
                                 </div>
                             </DSCard>
 
-                            <div className="p-6 bg-slate-900 rounded-[2.5rem] text-white space-y-4">
+                            <div className="p-4 bg-slate-900 rounded-xl text-white space-y-4">
                                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">
                                     <AlertCircle size={14} /> Optimus Guard
                                 </div>

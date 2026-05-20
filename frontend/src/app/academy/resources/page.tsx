@@ -69,7 +69,7 @@ export default function ResourcesLibrary() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="space-y-8 px-4 py-8">
+        <div className="space-y-3 px-4 py-4">
             <AdminHero
                 eyebrow="Recursos"
                 title="Biblioteca virtual"
@@ -78,14 +78,14 @@ export default function ResourcesLibrary() {
                 watchers={['Equipo Recursos', 'Optimus Brain']}
                 primaryAction={{ label: showFavorites ? 'Ver todos' : 'Favoritos', icon: Star, onClick: () => setShowFavorites((prev) => !prev) }}
             />
-            <div className="relative group mb-6 rounded-[2.5rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-6">
+            <div className="relative group mb-6 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4">
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                     <Search className="text-slate-500 group-focus-within:text-primary" size={20} />
                 </div>
                 <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    className="w-full bg-transparent border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary/50 focus:border-primary/50"
+                    className="w-full bg-transparent border border-slate-200 dark:border-white/10 rounded-2xl py-2 pl-12 pr-4 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary/50 focus:border-primary/50"
                     placeholder="Buscar lecciones o cursos"
                     type="text"
                 />
@@ -115,19 +115,19 @@ export default function ResourcesLibrary() {
             )}
 
             {(loading || lessonsLoading) && (
-                <p className="text-center text-slate-400 text-sm py-10">Buscando recursos de tus cursos...</p>
+                <p className="text-center text-slate-400 text-sm py-6">Buscando recursos de tus cursos...</p>
             )}
 
             {!loading && resources.length === 0 && (
                 <div className="py-20 text-center text-slate-400 space-y-3">
                     <BookOpen className="w-12 h-12 mx-auto text-slate-600" />
-                    <p className="text-lg font-bold text-white">No hay material disponible aún</p>
+                    <p className="text-sm font-bold text-white">No hay material disponible aún</p>
                     <p className="text-sm">Cuando tus cursos publiquen material descargable aparecerá en esta biblioteca.</p>
                 </div>
             )}
 
             {favoriteResources.length > 0 && (
-                <section className="py-6 flex flex-col gap-3 rounded-[2.5rem] border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-[#16191d] p-6">
+                <section className="py-6 flex flex-col gap-3 rounded-xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-[#16191d] p-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-sm font-black uppercase tracking-[0.3em] text-amber-500 flex items-center gap-2">
                             <Star size={14} /> Guardados
@@ -140,8 +140,8 @@ export default function ResourcesLibrary() {
                 </section>
             )}
 
-            <section className="py-6 flex flex-col gap-5 rounded-[2.5rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-6">
-                 <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{filteredResources.length} recursos encontrados</h2>
+            <section className="py-6 flex flex-col gap-5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4">
+                 <h2 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">{filteredResources.length} recursos encontrados</h2>
                  {filteredResources.map((resource) => (
                      <ResourceRow key={resource.id} resource={resource} isFavorite={favorites.includes(resource.id)} onToggleFavorite={toggleFavorite} />
                  ))}
@@ -157,7 +157,7 @@ function cleanSnippet(html: string) {
 
 function ResourceRow({ resource, isFavorite, onToggleFavorite }: { resource: ResourceEntry; isFavorite?: boolean; onToggleFavorite: (id: string) => void; }) {
     return (
-        <article className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 hover:border-primary/30 rounded-[2rem] p-5 flex items-center gap-5 shadow-xl transition-all">
+        <article className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 hover:border-primary/30 rounded-xl p-5 flex items-center gap-5 shadow-xl transition-all">
             <div className="size-16 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20 text-primary">
                 {resource.snippet.length > 120 ? <FileText size={28} /> : <BookOpen size={28} />}
             </div>
@@ -170,13 +170,13 @@ function ResourceRow({ resource, isFavorite, onToggleFavorite }: { resource: Res
             <div className="flex items-center gap-3">
                 <button
                     onClick={() => onToggleFavorite(resource.id)}
-                    className={`size-10 rounded-full border ${isFavorite ? 'border-amber-400 text-amber-400 bg-amber-50' : 'border-slate-200 dark:border-white/10 text-slate-400 bg-white dark:bg-white/10'} hover:scale-105 transition-transform`}
+                    className={`size-8 rounded-full border ${isFavorite ? 'border-amber-400 text-amber-400 bg-amber-50' : 'border-slate-200 dark:border-white/10 text-slate-400 bg-white dark:bg-white/10'} hover:scale-105 transition-transform`}
                 >
                     <Star size={18} fill={isFavorite ? 'currentColor' : 'none'} />
                 </button>
                 <a
                     href={resource.href}
-                    className="shrink-0 size-12 rounded-full bg-white dark:bg-white/10 flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:border-primary/40 transition-colors text-slate-400 hover:text-white"
+                    className="shrink-0 size-9 rounded-full bg-white dark:bg-white/10 flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:border-primary/40 transition-colors text-slate-400 hover:text-white"
                 >
                     <Download size={20} />
                 </a>

@@ -6,7 +6,7 @@ import { Quote, ArrowRight, Sparkles, Search, Users, Headphones, ImageIcon, Play
 import { motion, AnimatePresence } from "framer-motion";
 import { useContentBlock } from "@/hooks/useContent";
 import { apiFetch } from "@/lib/http";
-import { Testimonial, PREMIUM_TESTIMONIALS } from "@/lib/data/testimonios";
+import { Testimonial } from "@/lib/data/testimonios";
 
 const itemVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -163,14 +163,8 @@ export default function TestimoniosPage() {
 
     useEffect(() => {
         apiFetch<Testimonial[]>("/cms/testimonials", { silent: true })
-            .then((data) => {
-                if (Array.isArray(data) && data.length > 0) {
-                    setTestimonials(data);
-                } else {
-                    setTestimonials(PREMIUM_TESTIMONIALS);
-                }
-            })
-            .catch(() => setTestimonials(PREMIUM_TESTIMONIALS))
+            .then((data) => setTestimonials(Array.isArray(data) ? data : []))
+            .catch(() => setTestimonials([]))
             .finally(() => setLoading(false));
     }, []);
 

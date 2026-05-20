@@ -22,7 +22,7 @@ export default function CrmKanbanView({ columns, onDragEnd, onOpenMember }: CrmK
 
     return (
         <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={onDragEnd}>
-            <div className="flex h-full gap-6 p-6 overflow-x-auto bg-transparent items-start scrollbar-thin">
+            <div className="flex h-full gap-4 p-4 overflow-x-auto bg-transparent items-start scrollbar-thin">
                 {columns.map((col) => (
                     <MemberPipelineColumn key={col.id} {...col} onOpenMember={onOpenMember} />
                 ))}

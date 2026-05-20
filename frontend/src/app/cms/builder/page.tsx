@@ -399,10 +399,12 @@ function MediaPicker({
     try {
       const form = new FormData();
       form.append("file", file);
+      form.append("section", "builder");
+      form.append("alt_text", file.name);
+      form.append("tags", "builder,imagen");
       const created = await apiFetch<CmsMediaItem>("/cms/media/upload", {
         method: "POST",
         token,
-        query: { section: "builder", alt_text: file.name },
         body: form,
       });
       setItems((prev) => [created, ...prev]);
@@ -520,8 +522,6 @@ export default function CmsBuilderPage() {
   const [saving, setSaving] = useState(false);
   const [draggedSectionId, setDraggedSectionId] = useState<number | null>(null);
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
-  const [rawPropsDraft, setRawPropsDraft] = useState("");
-  const [rawPropsError, setRawPropsError] = useState<string | null>(null);
   const [pageTitleDraft, setPageTitleDraft] = useState("");
   const [pageSlugDraft, setPageSlugDraft] = useState("");
   const [seoTitleDraft, setSeoTitleDraft] = useState("");
@@ -543,16 +543,6 @@ export default function CmsBuilderPage() {
   const activeSite = useMemo(() => sites.find((site) => site.site_key === siteKey) ?? null, [sites, siteKey]);
   const canEdit = canEditCms(user?.role);
   const canPublish = canPublishCms(user?.role);
-
-  useEffect(() => {
-    if (!activeSection) {
-      setRawPropsDraft("");
-      setRawPropsError(null);
-      return;
-    }
-    setRawPropsDraft(JSON.stringify(activeSection.props_json ?? {}, null, 2));
-    setRawPropsError(null);
-  }, [activeSection]);
 
   useEffect(() => {
     setPageTitleDraft(activePage?.title || "");
@@ -713,16 +703,6 @@ export default function CmsBuilderPage() {
     const currentProps = asObject(activeSection.props_json);
     const currentItems = Array.isArray(currentProps[key]) ? [...(currentProps[key] as Array<Record<string, unknown>>)] : [];
     const nextItems = [...currentItems, template];
-    const nextProps = { ...currentProps, [key]: nextItems };
-    updateSectionPropsLocal(nextProps);
-    return nextProps;
-  };
-
-  const removeArrayItem = (key: "items", index: number) => {
-    if (!activeSection) return;
-    const currentProps = asObject(activeSection.props_json);
-    const currentItems = Array.isArray(currentProps[key]) ? [...(currentProps[key] as Array<Record<string, unknown>>)] : [];
-    const nextItems = currentItems.filter((_, i) => i !== index);
     const nextProps = { ...currentProps, [key]: nextItems };
     updateSectionPropsLocal(nextProps);
     return nextProps;
@@ -1293,36 +1273,171 @@ export default function CmsBuilderPage() {
                   </div>
                 )}
 
-                <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">JSON avanzado</p>
-                  <textarea
-                    value={rawPropsDraft}
-                    onChange={(e) => {
-                      setRawPropsDraft(e.target.value);
-                      setRawPropsError(null);
-                    }}
-                    className="w-full min-h-[120px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs font-mono"
-                  />
-                  <button
-                    onClick={() => {
-                      try {
-                        const parsed = JSON.parse(rawPropsDraft);
-                        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-                          setRawPropsError("El JSON debe ser un objeto.");
-                          return;
-                        }
-                        setRawPropsError(null);
-                        saveSectionProps(parsed as Record<string, unknown>);
-                      } catch {
-                        setRawPropsError("JSON inválido.");
-                      }
-                    }}
-                    className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-black uppercase tracking-widest"
-                  >
-                    Guardar JSON
-                  </button>
-                  {rawPropsError && <p className="text-[10px] text-rose-500">{rawPropsError}</p>}
-                </div>
+                {activeSection.type === "video_hero" && (
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Video de fondo</p>
+                    <input
+                      value={safeString(activeSection.props_json?.video_url)}
+                      onChange={(e) => {
+                        const nextProps = { ...asObject(activeSection.props_json), video_url: e.target.value };
+                        updateSectionPropsLocal(nextProps);
+                      }}
+                      onBlur={(e) => saveSectionField("video_url", e.target.value)}
+                      placeholder="URL del video"
+                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                    />
+                  </div>
+                )}
+
+                {activeSection.type === "rich_text_columns" && (
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Segunda columna</p>
+                    <textarea
+                      value={safeString(activeSection.props_json?.body_2)}
+                      onChange={(e) => {
+                        const nextProps = { ...asObject(activeSection.props_json), body_2: e.target.value };
+                        updateSectionPropsLocal(nextProps);
+                      }}
+                      onBlur={(e) => saveSectionField("body_2", e.target.value)}
+                      placeholder="Contenido de la segunda columna"
+                      className="w-full min-h-[80px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                    />
+                  </div>
+                )}
+
+                {activeSection.type === "countdown" && (
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Fecha objetivo</p>
+                    <input
+                      type="datetime-local"
+                      value={safeString(activeSection.props_json?.target_date).slice(0, 16)}
+                      onChange={(e) => {
+                        const nextProps = { ...asObject(activeSection.props_json), target_date: e.target.value };
+                        updateSectionPropsLocal(nextProps);
+                      }}
+                      onBlur={(e) => saveSectionField("target_date", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                    />
+                  </div>
+                )}
+
+                {activeSection.type === "popup_banner" && (
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pop-up</p>
+                    <input
+                      type="number"
+                      value={safeString(activeSection.props_json?.delay_ms) || "2000"}
+                      onChange={(e) => {
+                        const nextProps = { ...asObject(activeSection.props_json), delay_ms: e.target.value };
+                        updateSectionPropsLocal(nextProps);
+                      }}
+                      onBlur={(e) => saveSectionField("delay_ms", e.target.value)}
+                      placeholder="Retraso en milisegundos"
+                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                    />
+                  </div>
+                )}
+
+                {activeSection.type === "stats" && (
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Metricas</p>
+                    {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
+                      const itemObject = asObject(item);
+                      const isItemArchived = safeString(itemObject.status) === "archived";
+                      return (
+                        <div key={`stat-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
+                          {isItemArchived && <p className="text-[9px] font-black uppercase tracking-widest text-amber-700">Archivado</p>}
+                          <input value={safeString(itemObject.value)} onChange={(e) => upsertArrayItem("items", index, { value: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { value: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Valor: 10K+" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.label)} onChange={(e) => upsertArrayItem("items", index, { label: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { label: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Etiqueta" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-widest ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
+                            {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
+                            {isItemArchived ? "Restaurar metrica" : "Archivar metrica"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <button onClick={() => { const nextProps = addArrayItem("items", { value: "0", label: "Nueva metrica", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-black uppercase tracking-widest">
+                      + Anadir metrica
+                    </button>
+                  </div>
+                )}
+
+                {activeSection.type === "team" && (
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Equipo</p>
+                    {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
+                      const itemObject = asObject(item);
+                      const isItemArchived = safeString(itemObject.status) === "archived";
+                      return (
+                        <div key={`team-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
+                          {isItemArchived && <p className="text-[9px] font-black uppercase tracking-widest text-amber-700">Archivado</p>}
+                          <input value={safeString(itemObject.name)} onChange={(e) => upsertArrayItem("items", index, { name: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { name: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Nombre" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.role)} onChange={(e) => upsertArrayItem("items", index, { role: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { role: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Rol" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.image)} onChange={(e) => upsertArrayItem("items", index, { image: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { image: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="URL imagen" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-widest ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
+                            {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
+                            {isItemArchived ? "Restaurar persona" : "Archivar persona"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <button onClick={() => { const nextProps = addArrayItem("items", { name: "Nombre", role: "Rol", image: "", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-black uppercase tracking-widest">
+                      + Anadir persona
+                    </button>
+                  </div>
+                )}
+
+                {activeSection.type === "pricing" && (
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Planes / donaciones</p>
+                    {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
+                      const itemObject = asObject(item);
+                      const isItemArchived = safeString(itemObject.status) === "archived";
+                      return (
+                        <div key={`pricing-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
+                          {isItemArchived && <p className="text-[9px] font-black uppercase tracking-widest text-amber-700">Archivado</p>}
+                          <input value={safeString(itemObject.name)} onChange={(e) => upsertArrayItem("items", index, { name: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { name: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Nombre del plan" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.price)} onChange={(e) => upsertArrayItem("items", index, { price: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { price: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Precio" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <textarea value={safeString(itemObject.features)} onChange={(e) => upsertArrayItem("items", index, { features: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { features: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Beneficios, uno por linea" className="w-full min-h-[64px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.btn)} onChange={(e) => upsertArrayItem("items", index, { btn: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { btn: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Texto del boton" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-widest ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
+                            {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
+                            {isItemArchived ? "Restaurar plan" : "Archivar plan"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <button onClick={() => { const nextProps = addArrayItem("items", { name: "Nuevo plan", price: "$0", features: "Beneficio", btn: "Seleccionar", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-black uppercase tracking-widest">
+                      + Anadir plan
+                    </button>
+                  </div>
+                )}
+
+                {activeSection.type === "testimonials" && (
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Testimonios manuales de esta seccion</p>
+                    {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
+                      const itemObject = asObject(item);
+                      const isItemArchived = safeString(itemObject.status) === "archived";
+                      return (
+                        <div key={`manual-testimonial-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
+                          {isItemArchived && <p className="text-[9px] font-black uppercase tracking-widest text-amber-700">Archivado</p>}
+                          <input value={safeString(itemObject.author)} onChange={(e) => upsertArrayItem("items", index, { author: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { author: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Autor" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.role)} onChange={(e) => upsertArrayItem("items", index, { role: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { role: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Rol" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <textarea value={safeString(itemObject.content)} onChange={(e) => upsertArrayItem("items", index, { content: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { content: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Contenido" className="w-full min-h-[64px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-widest ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
+                            {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
+                            {isItemArchived ? "Restaurar" : "Archivar"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <button onClick={() => { const nextProps = addArrayItem("items", { author: "Autor", role: "Rol", content: "Testimonio", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-black uppercase tracking-widest">
+                      + Anadir testimonio
+                    </button>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-2">
                   <button onClick={() => setSectionVisibility(!activeSection.is_visible)} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-1">
                     {activeSection.is_visible ? <EyeOff size={11} /> : <Eye size={11} />} {activeSection.is_visible ? "Ocultar" : "Mostrar"}

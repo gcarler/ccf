@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import UniversalTableView, { TableColumn } from '@/components/ui/UniversalTableView';
 import { Flame } from 'lucide-react';
-// Import eliminado
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/http';
+import { useAuth } from '@/context/AuthContext';
+import Skeleton from '@/components/ui/Skeleton';
 
 export interface EvangelismStrategy {
     id: string;
@@ -19,34 +21,28 @@ export interface EvangelismStrategy {
     updated_at: string;
 }
 
-const MOCK_DATA: EvangelismStrategy[] = [
-    {
-        id: 'EVG-001',
-        title: 'Campaña "Un Amigo Más"',
-        description: 'Estrategia de alcance 1 a 1 para invitar amigos a Faros en Casa.',
-        status: 'active',
-        strategy_type: 'Faro en Casa',
-        start_date: '2026-06-01T00:00:00Z',
-        end_date: '2026-07-31T00:00:00Z',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-    },
-    {
-        id: 'EVG-002',
-        title: 'Cosecha de Verano 2026',
-        description: 'Evento masivo de impacto en la ciudad con campañas de sanidad.',
-        status: 'pending',
-        strategy_type: 'Evento Masivo',
-        start_date: '2026-08-15T00:00:00Z',
-        end_date: '2026-08-20T00:00:00Z',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-    }
-];
-
 export default function EvangelismClient() {
-    const [data, setData] = useState<EvangelismStrategy[]>(MOCK_DATA);
-    // const { openModal } = useCreation(); // Omitido hasta que se implemente el modal
+    const { token } = useAuth();
+    const [data, setData] = useState<EvangelismStrategy[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchStrategies = useCallback(async () => {
+        if (!token) return;
+        setLoading(true);
+        try {
+            const result = await apiFetch<EvangelismStrategy[]>('/evangelism/strategies', { token });
+            setData(Array.isArray(result) ? result : []);
+        } catch (err) {
+            toast.error('Error al cargar estrategias de evangelismo');
+            setData([]); // Fallback to empty instead of mock for realism
+        } finally {
+            setLoading(false);
+        }
+    }, [token]);
+
+    useEffect(() => {
+        fetchStrategies();
+    }, [fetchStrategies]);
 
     const columns: TableColumn<EvangelismStrategy>[] = [
         { key: 'id', label: 'ID', type: 'id' },
@@ -58,12 +54,23 @@ export default function EvangelismClient() {
     ];
 
     const handleAddItem = () => {
-        // Here we could open the UniversalCreationModal, but for now we'll just mock it or show a toast
         toast.info("Función en desarrollo: Abre el formulario de nueva estrategia de evangelismo.");
     };
 
-    const handleUpdateItem = (id: string, field: keyof EvangelismStrategy, value: any) => {
+    const handleUpdateItem = async (id: string, field: keyof EvangelismStrategy, value: any) => {
+        // Optimistic update
         setData(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+        try {
+            await apiFetch(`/evangelism/strategies/${id}`, {
+                method: 'PATCH',
+                token,
+                body: { [field]: value }
+            });
+            toast.success('Estrategia actualizada');
+        } catch {
+            toast.error('Error al actualizar');
+            fetchStrategies(); // Revert
+        }
     };
 
     return (
@@ -73,14 +80,20 @@ export default function EvangelismClient() {
                 { label: 'Estrategias' }
             ]}
         >
-            <div className="h-full flex flex-col -mx-4 -my-6 lg:-mx-6">
-                <UniversalTableView
-                    data={data}
-                    columns={columns}
-                    viewName="Todas las Estrategias"
-                    onAddItem={handleAddItem}
-                    onUpdateItem={handleUpdateItem}
-                />
+            <div className="h-full flex flex-col">
+                {loading ? (
+                    <div className="p-4 space-y-2">
+                        {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full rounded-xl" />)}
+                    </div>
+                ) : (
+                    <UniversalTableView
+                        data={data}
+                        columns={columns}
+                        viewName="Todas las Estrategias"
+                        onAddItem={handleAddItem}
+                        onUpdateItem={handleUpdateItem}
+                    />
+                )}
             </div>
         </EvangelismShell>
     );

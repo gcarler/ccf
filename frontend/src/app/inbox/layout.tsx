@@ -2,7 +2,7 @@
 
 
 import WorkspaceLayout from '@/components/WorkspaceLayout';
-import { Bell, AtSign, CheckCircle2, Bot } from 'lucide-react';
+import { Bell, AtSign, CheckCircle2, Bot, MessageSquare } from 'lucide-react';
 
 const INBOX_SECTIONS = [
     {
@@ -12,6 +12,7 @@ const INBOX_SECTIONS = [
             { id: 'inbox-mentions', label: 'Menciones', href: '/inbox#menciones', icon: AtSign },
             { id: 'inbox-tasks',    label: 'Tareas',    href: '/inbox#tareas',    icon: CheckCircle2 },
             { id: 'inbox-ai',       label: 'MESH AI',   href: '/inbox#ai',        icon: Bot },
+            { id: 'inbox-messages', label: 'Mensajes',  href: '/inbox/messages',  icon: MessageSquare },
         ],
     },
 ];

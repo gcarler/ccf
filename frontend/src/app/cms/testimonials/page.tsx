@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import {
@@ -16,6 +17,12 @@ import ViewSwitcher, { ViewType } from "@/components/ViewSwitcher";
 import UniversalCalendarView from "@/components/ui/UniversalCalendarView";
 import UniversalGanttView from "@/components/ui/UniversalGanttView";
 import UniversalWikiView from "@/components/ui/UniversalWikiView";
+import {
+  activeTestimonialMediaAssets,
+  inferTestimonialMediaType,
+  normalizeTestimonialMediaType,
+  TestimonialMediaType,
+} from "@/lib/cms/testimonialMedia";
 
 interface Testimonial {
   id: number;
@@ -32,6 +39,15 @@ interface Testimonial {
   is_approved?: boolean;
   show_on_home?: boolean;
   status?: "pending" | "approved" | "archived" | string;
+}
+
+interface MediaItem {
+  id: number;
+  url: string;
+  filename?: string;
+  mime_type?: string;
+  alt_text?: string;
+  status?: string;
 }
 
 const EMOTION_CONFIG: Record<string, { color: string; bg: string; border: string; emoji: string }> = {
@@ -85,6 +101,9 @@ export default function CmsTestimonialsPage() {
   const [selected, setSelected] = useState<Testimonial | null>(null);
   const [processing, setProcessing] = useState<number | null>(null);
   const [viewType, setViewType] = useState<ViewType>("grid");
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+  const [mediaLoading, setMediaLoading] = useState(true);
+  const [mediaSearch, setMediaSearch] = useState("");
 
   const fetchTestimonials = useCallback(async () => {
     if (!token) { setLoading(false); return; }
@@ -104,6 +123,26 @@ export default function CmsTestimonialsPage() {
   }, [token]);
 
   useEffect(() => { fetchTestimonials(); }, [fetchTestimonials]);
+
+  const fetchMedia = useCallback(async () => {
+    if (!token) {
+      setMediaItems([]);
+      setMediaLoading(false);
+      return;
+    }
+
+    setMediaLoading(true);
+    try {
+      const data = await apiFetch<MediaItem[]>("/cms/media", { token, cache: "no-store" });
+      setMediaItems(Array.isArray(data) ? data : []);
+    } catch {
+      setMediaItems([]);
+    } finally {
+      setMediaLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => { fetchMedia(); }, [fetchMedia]);
 
   const handleToggle = async (t: Testimonial) => {
     if (!token) return;
@@ -152,7 +191,8 @@ export default function CmsTestimonialsPage() {
   const saveSelected = async () => {
     if (!token || !selected) return;
     setProcessing(selected.id);
-    const mediaUrl = getTestimonialMediaUrl(selected);
+    const mediaType = normalizeTestimonialMediaType(selected.media_type);
+    const mediaUrl = mediaType === "text" ? "" : getTestimonialMediaUrl(selected);
     try {
       const updated = await apiFetch<Testimonial>(`/admin/testimonials/${selected.id}`, {
         method: "PATCH",
@@ -160,11 +200,11 @@ export default function CmsTestimonialsPage() {
         body: {
           content: selected.content,
           emotion: selected.emotion,
-          media_type: selected.media_type || "text",
+          media_type: mediaType,
           media_url: mediaUrl || null,
-          image_url: selected.image_url || null,
-          video_url: selected.video_url || null,
-          podcast_url: selected.podcast_url || null,
+          image_url: mediaType === "image" ? mediaUrl || null : null,
+          video_url: mediaType === "video" ? mediaUrl || null : null,
+          podcast_url: mediaType === "podcast" ? mediaUrl || null : null,
           status: selected.status === "archived" ? "archived" : selected.published ? "approved" : "pending",
           show_on_home: selected.show_on_home ?? false,
         },
@@ -175,6 +215,36 @@ export default function CmsTestimonialsPage() {
     } finally {
       setProcessing(null);
     }
+  };
+
+  const compatibleMedia = useMemo(
+    () => selected ? activeTestimonialMediaAssets(mediaItems, selected.media_type, mediaSearch, 8) : [],
+    [mediaItems, mediaSearch, selected],
+  );
+
+  const changeSelectedMediaType = (nextType: TestimonialMediaType) => {
+    setMediaSearch("");
+    setSelected(prev => {
+      if (!prev) return prev;
+      if (nextType === "text") {
+        return { ...prev, media_type: "text", media_url: null, image_url: null, video_url: null, podcast_url: null };
+      }
+      if (normalizeTestimonialMediaType(prev.media_type) === nextType) return prev;
+      return { ...prev, media_type: nextType, media_url: null, image_url: null, video_url: null, podcast_url: null };
+    });
+  };
+
+  const assignMediaToSelected = (item: MediaItem) => {
+    const mediaType = inferTestimonialMediaType(item.mime_type);
+    if (!mediaType) return;
+    setSelected(prev => prev ? {
+      ...prev,
+      media_type: mediaType,
+      media_url: item.url,
+      image_url: mediaType === "image" ? item.url : null,
+      video_url: mediaType === "video" ? item.url : null,
+      podcast_url: mediaType === "podcast" ? item.url : null,
+    } : prev);
   };
 
   const stats = useMemo(() => ({
@@ -588,7 +658,7 @@ export default function CmsTestimonialsPage() {
                   ].map(option => (
                     <button
                       key={option.id}
-                      onClick={() => setSelected(prev => prev ? { ...prev, media_type: option.id } : prev)}
+                      onClick={() => changeSelectedMediaType(option.id as TestimonialMediaType)}
                       className={clsx(
                         "flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-[9px] font-black uppercase tracking-widest transition-all",
                         (selected.media_type || "text") === option.id
@@ -603,6 +673,51 @@ export default function CmsTestimonialsPage() {
 
                 {(selected.media_type || "text") !== "text" && (
                   <div className="space-y-2">
+                    <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Seleccionar desde media</p>
+                        <Link href="/cms/media" className="text-[9px] font-black uppercase tracking-widest text-rose-500 hover:underline">
+                          Subir archivo
+                        </Link>
+                      </div>
+                      <input
+                        value={mediaSearch}
+                        onChange={event => setMediaSearch(event.target.value)}
+                        placeholder="Buscar imagen, video o audio..."
+                        className="mb-3 w-full text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/20"
+                      />
+                      {mediaLoading ? (
+                        <p className="rounded-xl bg-slate-50 dark:bg-white/5 px-3 py-3 text-xs font-bold text-slate-400">Cargando biblioteca...</p>
+                      ) : compatibleMedia.length === 0 ? (
+                        <p className="rounded-xl bg-slate-50 dark:bg-white/5 px-3 py-3 text-xs font-medium text-slate-500">
+                          No hay archivos compatibles para este tipo. Sube o restaura media desde la biblioteca.
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
+                          {compatibleMedia.map(item => {
+                            const active = getTestimonialMediaUrl(selected) === item.url;
+                            const mediaKind = inferTestimonialMediaType(item.mime_type);
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => assignMediaToSelected(item)}
+                                className={clsx(
+                                  "flex items-center gap-2 rounded-xl border px-3 py-2 text-left transition-all",
+                                  active
+                                    ? "border-rose-300 bg-rose-50 text-rose-600"
+                                    : "border-slate-200 dark:border-white/10 text-slate-500 hover:border-rose-300"
+                                )}
+                              >
+                                {mediaKind === "image" ? <ImageIcon size={13} /> : mediaKind === "video" ? <PlayCircle size={13} /> : <Headphones size={13} />}
+                                <span className="min-w-0 truncate text-[10px] font-bold">{item.filename || item.url}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">URL multimedia</p>
                     <input
                       value={getTestimonialMediaUrl(selected)}

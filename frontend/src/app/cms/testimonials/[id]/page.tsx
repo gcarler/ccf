@@ -8,6 +8,9 @@ import {
     CheckCircle2,
     Archive,
     RotateCcw,
+    Headphones,
+    ImageIcon,
+    PlayCircle,
     User,
     Calendar,
     Star,
@@ -21,6 +24,14 @@ import { DSCard } from '@/design/components/DSCard';
 import { DSBadge } from '@/design/components/DSBadge';
 import { toast } from 'sonner';
 import clsx from 'clsx';
+
+function getTestimonialMediaUrl(testimonial: any): string {
+    if (!testimonial) return '';
+    if (testimonial.media_type === 'image') return testimonial.image_url || testimonial.media_url || '';
+    if (testimonial.media_type === 'video') return testimonial.video_url || testimonial.media_url || '';
+    if (testimonial.media_type === 'podcast') return testimonial.podcast_url || testimonial.media_url || '';
+    return testimonial.media_url || testimonial.image_url || testimonial.video_url || testimonial.podcast_url || '';
+}
 
 export default function CmsTestimonialDetailPage() {
     const params = useParams();
@@ -56,17 +67,21 @@ export default function CmsTestimonialDetailPage() {
 
     const handleAction = async (newStatus: string) => {
         try {
-            const isApproved = newStatus === 'approved';
-            const updated = await apiFetch<any>(`/admin/testimonials/${id}`, {
-                method: 'PATCH',
-                token,
-                body: { status: newStatus },
-            });
-            setTestimonial({
-                ...testimonial,
-                ...updated,
-                status: updated.status || newStatus,
-            });
+            if (newStatus === 'archived') {
+                await apiFetch(`/admin/testimonials/${id}`, { method: 'DELETE', token });
+                setTestimonial({ ...testimonial, is_approved: false, show_on_home: false, status: 'archived' });
+            } else {
+                const updated = await apiFetch<any>(`/admin/testimonials/${id}`, {
+                    method: 'PATCH',
+                    token,
+                    body: { status: newStatus },
+                });
+                setTestimonial({
+                    ...testimonial,
+                    ...updated,
+                    status: updated.status || newStatus,
+                });
+            }
             toast.success(`Testimonio ${newStatus === 'approved' ? 'aprobado' : newStatus === 'archived' ? 'archivado' : 'restaurado'}`);
         } catch (err) {
             toast.error('Error al actualizar estado');
@@ -75,6 +90,8 @@ export default function CmsTestimonialDetailPage() {
 
     if (loading) return <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Verificando Testimonio...</div>;
     if (!testimonial) return <div className="p-20 text-center font-black uppercase tracking-widest text-slate-400">Testimonio no encontrado.</div>;
+
+    const mediaUrl = getTestimonialMediaUrl(testimonial);
 
     return (
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
@@ -118,6 +135,31 @@ export default function CmsTestimonialDetailPage() {
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 space-y-8">
+                            {mediaUrl && (
+                                <DSCard>
+                                    <div className="mb-4 flex items-center gap-2">
+                                        {testimonial.media_type === 'video' ? <PlayCircle size={16} className="text-rose-500" /> : testimonial.media_type === 'podcast' ? <Headphones size={16} className="text-amber-500" /> : <ImageIcon size={16} className="text-blue-500" />}
+                                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                            Media asociada
+                                        </h3>
+                                    </div>
+                                    <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-slate-950 dark:border-white/10">
+                                        {testimonial.media_type === 'image' ? (
+                                            <img src={mediaUrl} alt="" className="max-h-[420px] w-full object-contain" />
+                                        ) : testimonial.media_type === 'video' ? (
+                                            <video controls className="w-full bg-black">
+                                                <source src={mediaUrl} />
+                                            </video>
+                                        ) : (
+                                            <div className="space-y-4 bg-white p-6 dark:bg-white/5">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Podcast / audio testimonial</p>
+                                                <audio controls src={mediaUrl} className="w-full" />
+                                            </div>
+                                        )}
+                                    </div>
+                                </DSCard>
+                            )}
+
                             <DSCard>
                                 <div className="space-y-6 relative">
                                     <Quote size={48} className="absolute -top-4 -left-4 text-blue-500/10 -z-0" />

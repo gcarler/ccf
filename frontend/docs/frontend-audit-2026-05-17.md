@@ -50,6 +50,14 @@
 - Se amplio `cms/media` para tratar audio como podcast, aceptar `audio/*` y previsualizar imagen, video y audio.
 - Se renderizan medios de testimonios en la pagina publica de FARO y en el detalle publico.
 - `admin/content` ya no muestra tablero con datos simulados: redirige al editor CMS real.
+- Se retiro el fallback `PREMIUM_TESTIMONIALS`; la pagina publica y el detalle de testimonios ahora dependen del endpoint real del CMS y muestran estados vacios honestos.
+- Se agrego selector directo de biblioteca media en creacion y edicion de testimonios para no copiar/pegar URLs manualmente.
+- `admin/testimonials` ya no conserva un panel legacy sin multimedia: redirige a `/cms/testimonials`.
+- El detalle `/cms/testimonials/[id]` muestra imagen, video o audio asociado y usa `status` real para aprobar, archivar y restaurar.
+- El dashboard CMS incorpora metricas de media total, imagenes, videos y podcasts.
+- Se retiro el editor de "JSON avanzado" del builder visual y se agregaron controles visuales para `video_hero`, columnas, countdown, popup, stats, team, pricing y testimonios manuales.
+- El renderer publico del builder dejo de inventar cards, FAQ, testimonios, metricas, equipo, pricing, imagenes y videos de ejemplo cuando el CMS no tiene contenido real.
+- La subida de media desde el builder envia `section`, `alt_text` y `tags` como `FormData`, consistente con el backend de media.
 
 ## Deuda funcional restante
 
@@ -58,8 +66,8 @@
 - El modulo global de `whiteboard` ya es funcional local-first, pero no sincroniza entre usuarios ni dispositivos porque no existe contrato backend global equivalente al whiteboard por proyecto.
 - La bitacora de hitos de `admin/mission-impact` sigue siendo editorial porque no existe un contrato backend especifico para milestones misioneros.
 - La cobertura automatizada sigue siendo baja para el tamano del frontend: solo hay pruebas unitarias basicas y smoke tests aislados.
-- El CMS ya evita JSON manual en la pantalla principal, pero el builder avanzado de secciones sigue usando propiedades tecnicas para casos complejos.
 - La gestion de media cubre metadatos/URLs y subida de archivos, pero aun no incluye recorte, transformaciones, CDN externo ni transcodificacion.
+- Persisten datos estaticos de cursos/libros fuera del CMS (`src/lib/data/cursos.ts`); no bloquean el CMS, pero conviene migrarlos si la meta es contenido 100% administrable.
 
 ## Estado posterior esperado
 

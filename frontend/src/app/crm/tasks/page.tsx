@@ -86,7 +86,7 @@ function TaskCard({ task, onStatusChange }: { task: ConsolidationTask; onStatusC
                     {task.status === 'done' && <CheckCircle2 size={12} strokeWidth={3} />}
                 </button>
                 <div className="flex-1 min-w-0 space-y-2">
-                    <p className={clsx("text-[13px] font-bold leading-tight", task.status === 'done' && "line-through text-slate-400")}>
+                    <p className={clsx("text-xs font-bold leading-tight", task.status === 'done' && "line-through text-slate-400")}>
                         {task.title}
                     </p>
                     {task.member_name && (
@@ -209,7 +209,7 @@ export default function CrmTasksPage() {
 
     if (loading) return (
         <CrmShell breadcrumbs={[{ label: 'Consolidación', icon: Heart }, { label: 'Tareas de Consolidación', icon: CheckSquare }]}>
-            <div className="p-6 space-y-3">
+            <div className="p-4 space-y-3">
                 {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-2xl" />)}
             </div>
         </CrmShell>
@@ -235,7 +235,7 @@ export default function CrmTasksPage() {
             }
         >
             {/* ─── Stats strip ─── */}
-            <div className="px-6 pt-4 pb-0 flex items-center gap-3">
+            <div className="px-4 pt-4 pb-0 flex items-center gap-3">
                 {STATUS_COLUMNS.map(col => (
                     <div key={col.key} className={clsx("flex items-center gap-2 px-4 py-2 rounded-xl border text-[11px] font-black", col.bg, col.border)}>
                         <div className={clsx("size-2 rounded-full", col.dot)} />
@@ -253,12 +253,12 @@ export default function CrmTasksPage() {
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                         className="flex-1 overflow-x-auto overflow-y-hidden"
                     >
-                        <div className="flex gap-4 p-6 h-full min-w-0" style={{ minWidth: 'max-content' }}>
+                        <div className="flex gap-4 p-4 h-full min-w-0" style={{ minWidth: 'max-content' }}>
                             {STATUS_COLUMNS.map(col => {
                                 const colTasks = tasksByStatus[col.key] ?? [];
                                 const Icon = col.icon;
                                 return (
-                                    <div key={col.key} className={clsx("flex flex-col gap-3 w-[300px] shrink-0 rounded-3xl border p-4", col.bg, col.border)}>
+                                    <div key={col.key} className={clsx("flex flex-col gap-3 w-[300px] shrink-0 rounded-xl border p-4", col.bg, col.border)}>
                                         {/* Column header */}
                                         <div className="flex items-center justify-between shrink-0">
                                             <div className="flex items-center gap-2">
@@ -286,7 +286,7 @@ export default function CrmTasksPage() {
                                                 ))}
                                             </AnimatePresence>
                                             {colTasks.length === 0 && (
-                                                <div className="py-8 flex flex-col items-center justify-center text-center opacity-40">
+                                                <div className="py-4 flex flex-col items-center justify-center text-center opacity-40">
                                                     <Icon size={24} strokeWidth={1} className="mb-2 text-slate-300" />
                                                     <p className="text-[10px] font-bold text-slate-400 uppercase">Sin tareas</p>
                                                 </div>
@@ -304,13 +304,13 @@ export default function CrmTasksPage() {
                     <motion.div
                         key="list"
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="flex-1 overflow-y-auto p-6 space-y-2"
+                        className="flex-1 overflow-y-auto p-4 space-y-2"
                     >
                         {tasks.length === 0 ? (
-                            <div className="py-32 flex flex-col items-center gap-4">
+                            <div className="py-1.52 flex flex-col items-center gap-4">
                                 <CheckSquare size={48} strokeWidth={1} className="text-slate-200" />
                                 <p className="text-slate-400 font-black uppercase text-sm">Sin tareas registradas</p>
-                                <button onClick={() => setIsCreateOpen(true)} className="px-6 py-3 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20">
+                                <button onClick={() => setIsCreateOpen(true)} className="px-4 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20">
                                     Crear primera tarea
                                 </button>
                             </div>
@@ -347,7 +347,7 @@ export default function CrmTasksPage() {
                     <motion.div
                         key="table"
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="flex-1 overflow-auto p-6"
+                        className="flex-1 overflow-auto p-4"
                     >
                         <table className="w-full text-left">
                             <thead>
@@ -366,19 +366,19 @@ export default function CrmTasksPage() {
                                             onClick={() => router.push(`/crm/tasks/${task.id}`)}
                                             className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer transition-colors"
                                         >
-                                            <td className="py-3 px-3 text-[13px] font-bold text-slate-800 dark:text-white max-w-[250px] truncate">{task.title}</td>
-                                            <td className="py-3 px-3 text-[11px] text-slate-500">{task.member_name || '—'}</td>
-                                            <td className="py-3 px-3 text-[10px] font-black text-slate-400 uppercase">{task.category}</td>
-                                            <td className="py-3 px-3">
+                                            <td className="py-1.5 px-3 text-xs font-bold text-slate-800 dark:text-white max-w-[250px] truncate">{task.title}</td>
+                                            <td className="py-1.5 px-3 text-[11px] text-slate-500">{task.member_name || '—'}</td>
+                                            <td className="py-1.5 px-3 text-[10px] font-black text-slate-400 uppercase">{task.category}</td>
+                                            <td className="py-1.5 px-3">
                                                 <span className={clsx("px-2 py-0.5 rounded text-[9px] font-black uppercase", PRIORITY_STYLES[task.priority])}>{task.priority}</span>
                                             </td>
-                                            <td className="py-3 px-3">
+                                            <td className="py-1.5 px-3">
                                                 <div className="flex items-center gap-1.5">
                                                     <div className={clsx("size-1.5 rounded-full", col?.dot)} />
                                                     <span className="text-[10px] font-black text-slate-500 uppercase">{col?.label}</span>
                                                 </div>
                                             </td>
-                                            <td className="py-3 px-3 text-[11px] text-slate-400">{task.due_date ? new Date(task.due_date).toLocaleDateString() : '—'}</td>
+                                            <td className="py-1.5 px-3 text-[11px] text-slate-400">{task.due_date ? new Date(task.due_date).toLocaleDateString() : '—'}</td>
                                         </tr>
                                     );
                                 })}
@@ -391,7 +391,7 @@ export default function CrmTasksPage() {
                 )}
 
                 {viewType === 'calendar' && (
-                    <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-6 space-y-4">
+                    <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-4 space-y-4">
                         {dueBuckets.length === 0 ? (
                             <div className="py-20 text-center text-slate-400 font-black uppercase text-sm">Sin tareas con fecha</div>
                         ) : dueBuckets.map(([isoDate, bucket]) => (
@@ -411,7 +411,7 @@ export default function CrmTasksPage() {
                 )}
 
                 {viewType === 'gantt' && (
-                    <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-6">
+                    <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-4">
                         <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Timeline de avance</p>
                             {tasks.map(task => (
@@ -425,13 +425,13 @@ export default function CrmTasksPage() {
                                     </div>
                                 </div>
                             ))}
-                            {tasks.length === 0 && <div className="py-8 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">Sin tareas</div>}
+                            {tasks.length === 0 && <div className="py-4 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">Sin tareas</div>}
                         </div>
                     </motion.div>
                 )}
 
                 {viewType === 'wiki' && (
-                    <motion.div key="wiki" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-6">
+                    <motion.div key="wiki" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-4">
                         <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Wiki de tareas de consolidación</p>
                             <textarea
@@ -445,7 +445,7 @@ export default function CrmTasksPage() {
                 )}
 
                 {!['board', 'kanban', 'grid', 'list', 'table', 'calendar', 'gantt', 'wiki'].includes(viewType) && (
-                    <motion.div key="pending-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6">
+                    <motion.div key="pending-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4">
                         <CrmViewPlaceholder moduleName="Tareas de consolidación" viewType={viewType} />
                     </motion.div>
                 )}
@@ -462,7 +462,7 @@ export default function CrmTasksPage() {
                         <button onClick={() => setIsDetailOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500">Cerrar</button>
                         <button
                             onClick={() => selectedTask && updateTaskStatus(selectedTask.id, selectedTask.status === 'done' ? 'pending' : 'done')}
-                            className="px-6 py-2 bg-emerald-600 text-white rounded-lg text-[11px] font-bold shadow-lg shadow-emerald-500/20"
+                            className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-[11px] font-bold shadow-lg shadow-emerald-500/20"
                         >
                             {selectedTask?.status === 'done' ? 'Reabrir' : 'Marcar Completada'}
                         </button>
@@ -470,7 +470,7 @@ export default function CrmTasksPage() {
                 }
             >
                 {selectedTask && (
-                    <div className="space-y-6">
+                    <div className="space-y-3">
                         {selectedTask.description && (
                             <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-2xl border border-slate-100 dark:border-white/5">
                                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{selectedTask.description}</p>
@@ -529,7 +529,7 @@ export default function CrmTasksPage() {
                             form="create-task-form"
                             type="submit"
                             disabled={isSaving}
-                            className="px-8 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
+                            className="px-5 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Crear Tarea
@@ -537,7 +537,7 @@ export default function CrmTasksPage() {
                     </>
                 }
             >
-                <form id="create-task-form" onSubmit={handleCreate} className="space-y-5">
+                <form id="create-task-form" onSubmit={handleCreate} className="space-y-2">
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Título *</label>
                         <input
@@ -545,7 +545,7 @@ export default function CrmTasksPage() {
                             value={newTask.title}
                             onChange={e => setNewTask({ ...newTask, title: e.target.value })}
                             placeholder="Ej: Visitar a hermano Juan"
-                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
                         />
                     </div>
                     <div className="space-y-2">
@@ -555,7 +555,7 @@ export default function CrmTasksPage() {
                             onChange={e => setNewTask({ ...newTask, description: e.target.value })}
                             placeholder="Detalles adicionales..."
                             rows={3}
-                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white resize-none"
+                            className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white resize-none"
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -564,7 +564,7 @@ export default function CrmTasksPage() {
                             <select
                                 value={newTask.category}
                                 onChange={e => setNewTask({ ...newTask, category: e.target.value })}
-                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
                             >
                                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
@@ -574,7 +574,7 @@ export default function CrmTasksPage() {
                             <select
                                 value={newTask.priority}
                                 onChange={e => setNewTask({ ...newTask, priority: e.target.value })}
-                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
                             >
                                 <option value="low">Baja</option>
                                 <option value="medium">Media</option>
@@ -588,7 +588,7 @@ export default function CrmTasksPage() {
                             <select
                                 value={newTask.status}
                                 onChange={e => setNewTask({ ...newTask, status: e.target.value })}
-                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
                             >
                                 {STATUS_COLUMNS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
                             </select>
@@ -599,7 +599,7 @@ export default function CrmTasksPage() {
                                 type="date"
                                 value={newTask.due_date}
                                 onChange={e => setNewTask({ ...newTask, due_date: e.target.value })}
-                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
                             />
                         </div>
                     </div>
@@ -609,7 +609,7 @@ export default function CrmTasksPage() {
                             <select
                                 value={newTask.member_id}
                                 onChange={e => setNewTask({ ...newTask, member_id: e.target.value })}
-                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
                             >
                                 <option value="">Sin asignar</option>
                                 {members.map((m: any) => <option key={m.id} value={m.id}>{m.first_name} {m.last_name}</option>)}

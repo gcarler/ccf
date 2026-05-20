@@ -67,7 +67,7 @@ export default function AnnouncementsPage() {
     }, [token]);
 
     return (
-        <div className="max-w-4xl mx-auto space-y-10 pb-20 animate-in fade-in duration-700">
+        <div className="max-w-4xl mx-auto space-y-4 pb-20 animate-in fade-in duration-700">
             <header className="space-y-2">
                 <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-black uppercase tracking-[0.3em] text-[10px]">
                     <div className="size-2 rounded-full bg-current shadow-[0_0_10px_currentColor]"></div>
@@ -77,22 +77,22 @@ export default function AnnouncementsPage() {
                 <p className="text-[hsl(var(--text-secondary))] font-medium">Mantente al tanto de las últimas noticias y actualizaciones de nuestra comunidad.</p>
             </header>
 
-            <div className="space-y-6">
+            <div className="space-y-3">
                 {announcements.map((item, idx) => (
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
                         key={item.id}
-                        className="relative bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-[2.5rem] p-8 hover:border-[hsl(var(--primary)/0.3)] hover:shadow-xl hover:shadow-primary/5 transition-all group overflow-hidden"
+                        className="relative bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-xl p-4 hover:border-[hsl(var(--primary)/0.3)] hover:shadow-xl hover:shadow-primary/5 transition-all group overflow-hidden"
                     >
                         {item.isPinned && (
-                            <div className="absolute top-6 right-8 text-[hsl(var(--primary))] opacity-50">
+                            <div className="absolute top-4 right-8 text-[hsl(var(--primary))] opacity-50">
                                 <Pin size={18} strokeWidth={2.5} />
                             </div>
                         )}
 
-                        <div className="flex items-start gap-6">
+                        <div className="flex items-start gap-4">
                             <div className="size-14 rounded-2xl bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--primary))] group-hover:scale-110 transition-transform">
                                 <Megaphone size={24} strokeWidth={2.5} />
                             </div>
@@ -106,7 +106,7 @@ export default function AnnouncementsPage() {
                                         {item.date}
                                     </span>
                                 </div>
-                                <h3 className="text-xl font-black text-[hsl(var(--text-primary))] tracking-tight group-hover:text-[hsl(var(--primary))] transition-colors">
+                                <h3 className="text-base font-black text-[hsl(var(--text-primary))] tracking-tight group-hover:text-[hsl(var(--primary))] transition-colors">
                                     {item.title}
                                 </h3>
                                 <p className="text-[hsl(var(--text-secondary))] text-sm leading-relaxed font-medium">
@@ -119,15 +119,15 @@ export default function AnnouncementsPage() {
             </div>
 
             {/* Empty State / More Info */}
-            <div className="bg-[hsl(var(--surface-3))] rounded-[3rem] p-12 text-center border-2 border-dashed border-[hsl(var(--border))]">
+            <div className="bg-[hsl(var(--surface-3))] rounded-2xl p-4 text-center border-2 border-dashed border-[hsl(var(--border))]">
                 <div className="size-16 rounded-[1.5rem] bg-[hsl(var(--surface-1))] flex items-center justify-center text-[hsl(var(--text-secondary)/0.3)] mx-auto mb-6">
                     <Sparkles size={32} />
                 </div>
-                <h4 className="text-lg font-black text-[hsl(var(--text-primary))] tracking-tight mb-2">¿Tienes algo que anunciar?</h4>
+                <h4 className="text-sm font-black text-[hsl(var(--text-primary))] tracking-tight mb-2">¿Tienes algo que anunciar?</h4>
                 <p className="text-[hsl(var(--text-secondary))] text-sm font-medium max-w-xs mx-auto mb-8">
                     Si eres líder de ministerio y tienes una actualización importante, contacta al equipo de comunicaciones.
                 </p>
-                <button className="px-8 h-12 bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] rounded-2xl font-black uppercase tracking-widest text-[10px] hover:opacity-90 transition-all">
+                <button className="px-5 h-12 bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] rounded-2xl font-black uppercase tracking-widest text-[10px] hover:opacity-90 transition-all">
                     Contactar Equipo
                 </button>
             </div>

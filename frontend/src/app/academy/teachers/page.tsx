@@ -70,18 +70,18 @@ export default function AcademyTeachersPage() {
                 }
             />
 
-            <main className="flex-1 overflow-y-auto p-8 lg:p-12 space-y-8">
+            <main className="flex-1 overflow-y-auto p-4 lg:p-4 space-y-3">
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <Metric icon={ShieldCheck} label="Facilitadores" value={teachers.length} />
                     <Metric icon={BookOpen} label="Cursos asignados" value={teachers.reduce((sum, row) => sum + (row.course_count ?? 0), 0)} />
                     <Metric icon={Users} label="Estudiantes activos" value={teachers.reduce((sum, row) => sum + (row.active_students ?? 0), 0)} />
                 </section>
 
-                <section className="rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
+                <section className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
                     <header className="flex flex-col gap-4 border-b border-slate-100 p-5 dark:border-white/10 md:flex-row md:items-center md:justify-between">
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500">Equipo academico</p>
-                            <h1 className="text-2xl font-black text-slate-900 dark:text-white">Facilitadores</h1>
+                            <h1 className="text-lg font-black text-slate-900 dark:text-white">Facilitadores</h1>
                         </div>
                         <div className="relative w-full md:max-w-sm">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
@@ -89,7 +89,7 @@ export default function AcademyTeachersPage() {
                                 value={query}
                                 onChange={(event) => setQuery(event.target.value)}
                                 placeholder="Buscar facilitador..."
-                                className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm font-semibold outline-none focus:border-blue-400 dark:border-white/10 dark:bg-black/20"
+                                className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-1.5 pl-11 pr-4 text-sm font-semibold outline-none focus:border-blue-400 dark:border-white/10 dark:bg-black/20"
                             />
                         </div>
                     </header>
@@ -136,12 +136,12 @@ export default function AcademyTeachersPage() {
 
 function Metric({ icon: Icon, label, value }: { icon: any; label: string; value: number | string }) {
     return (
-        <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
             <div className="mb-4 flex size-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-500/10">
                 <Icon size={20} />
             </div>
             <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">{label}</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white">{value}</p>
+            <p className="text-lg font-black text-slate-900 dark:text-white">{value}</p>
         </div>
     );
 }

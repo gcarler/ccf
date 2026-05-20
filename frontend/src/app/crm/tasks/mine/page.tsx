@@ -79,7 +79,7 @@ export default function MyTasks() {
         <CrmShell
             breadcrumbs={[{ label: 'CCF', icon: Calendar }, { label: 'Consolidación', icon: Users }, { label: 'Mis tareas', icon: Calendar }]}
             rightActions={
-                <button className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-all">
+                <button className="flex size-8 items-center justify-center rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-all">
                     <Search size={20} />
                 </button>
             }
@@ -131,13 +131,13 @@ export default function MyTasks() {
             secondaryAction={{ label: 'Refrescar', icon: Clock, onClick: fetchTasks }}
         />
 
-        <div className="space-y-10">
+        <div className="space-y-4">
             {/* Summary Cards Cinematic */}
-            <section className="flex gap-6 overflow-x-auto hide-scrollbar">
+            <section className="flex gap-4 overflow-x-auto hide-scrollbar">
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex-1 min-w-[240px] bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden group"
+                    className="flex-1 min-w-[240px] bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl p-4 text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden group"
                 >
                     <div className="absolute top-0 right-0 -mr-10 -mt-10 size-40 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
                     <div className="flex items-center gap-3 mb-6 relative z-10">
@@ -152,7 +152,7 @@ export default function MyTasks() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="flex-1 min-w-[240px] bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[2.5rem] p-8 shadow-sm relative overflow-hidden group task-aura"
+                    className="flex-1 min-w-[240px] bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl p-4 shadow-sm relative overflow-hidden group task-aura"
                     style={{ '--aura-color': 'rgba(244, 63, 94, 0.15)' } as any}
                 >
                     <div className="flex items-center gap-3 mb-6">
@@ -165,7 +165,7 @@ export default function MyTasks() {
             </section>
 
             {/* List View Cinematic */}
-            <section className="space-y-6 bg-white dark:bg-[#1e1f21] rounded-[3rem] p-8 shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-50 dark:border-white/5">
+            <section className="space-y-3 bg-white dark:bg-[#1e1f21] rounded-2xl p-4 shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-50 dark:border-white/5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex p-1 bg-slate-100 dark:bg-white/5 rounded-2xl">
                         {[
@@ -176,7 +176,7 @@ export default function MyTasks() {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={clsx(
-                                    "px-6 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all",
+                                    "px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all",
                                     activeTab === tab.id ? "bg-white dark:bg-slate-700 text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
                                 )}
                             >
@@ -195,7 +195,7 @@ export default function MyTasks() {
                     description="Las notas se vinculan automáticamente a la Hoja de Vida del miembro." 
                 />
 
-                <div className="rounded-[2rem] border border-slate-100 dark:border-white/5 overflow-hidden bg-slate-50/30 dark:bg-transparent">
+                <div className="rounded-xl border border-slate-100 dark:border-white/5 overflow-hidden bg-slate-50/30 dark:bg-transparent">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-4">
                             <Loader2 className="animate-spin text-blue-600" size={32} />
@@ -206,11 +206,11 @@ export default function MyTasks() {
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50/80 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
-                                        <th className="px-8 py-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">Actividad</th>
-                                        <th className="px-8 py-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">Contacto Vinc.</th>
-                                        <th className="px-8 py-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">Límite</th>
-                                        <th className="px-8 py-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">Prioridad</th>
-                                        <th className="px-8 py-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] text-right">Estado</th>
+                                        <th className="px-5 py-2 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">Actividad</th>
+                                        <th className="px-5 py-2 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">Contacto Vinc.</th>
+                                        <th className="px-5 py-2 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">Límite</th>
+                                        <th className="px-5 py-2 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">Prioridad</th>
+                                        <th className="px-5 py-2 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] text-right">Estado</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-white/5 bg-white dark:bg-transparent">
@@ -224,7 +224,7 @@ export default function MyTasks() {
                                                 key={task.id} 
                                                 className="group hover:bg-slate-50/50 dark:hover:bg-white/5 transition-all cursor-pointer"
                                             >
-                                                <td className="px-8 py-5">
+                                                <td className="px-5 py-5">
                                                     <div className="flex items-center gap-4">
                                                         <div className="size-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
                                                         <div>
@@ -233,7 +233,7 @@ export default function MyTasks() {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-8 py-5">
+                                                <td className="px-5 py-5">
                                                     <div className="flex items-center gap-2">
                                                         <div className="size-7 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500">
                                                             <Users size={14} />
@@ -241,15 +241,15 @@ export default function MyTasks() {
                                                         <span className="text-[11px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-tight">{task.contact_name}</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-8 py-5">
+                                                <td className="px-5 py-5">
                                                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{task.due_date ? formatDueLabel(task.due_date) : 'Abierto'}</span>
                                                 </td>
-                                                <td className="px-8 py-5">
+                                                <td className="px-5 py-5">
                                                     <span className={clsx("px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-[0.2em] border", priorityTone[task.priority.toLowerCase()] || priorityTone.normal)}>
                                                         {task.priority}
                                                     </span>
                                                 </td>
-                                                <td className="px-8 py-5 text-right">
+                                                <td className="px-5 py-5 text-right">
                                                     <div className="flex items-center justify-end gap-3">
                                                         <span className={clsx("px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-[0.2em]", statusTone[task.status] || statusTone.todo)}>
                                                             {task.status === 'done' ? 'Completada' : 'Pendiente'}

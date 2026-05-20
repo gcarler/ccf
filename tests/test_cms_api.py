@@ -196,13 +196,25 @@ def test_cms_media_metadata_can_be_created_searched_and_updated(client, db_sessi
     assert restored.status_code == 200
     assert restored.json()["status"] == "active"
 
+    metrics = client.get("/api/cms/metrics", headers=headers)
+    assert metrics.status_code == 200
+    assert metrics.json()["media_total"] == 1
+    assert metrics.json()["media_images"] == 1
 
-def test_cms_media_upload_preserves_form_metadata(client, db_session, tmp_path, monkeypatch):
+
+def test_cms_media_upload_preserves_form_metadata(client, db_session, monkeypatch):
     from backend.api import cms as cms_api
 
     seed_admin(db_session)
     headers = auth_headers(client)
-    monkeypatch.setattr(cms_api.settings, "uploads_dir", str(tmp_path))
+    saved_upload = {}
+
+    def fake_save_upload(content, unique_name, uploads_dir):
+        saved_upload["content"] = content
+        saved_upload["unique_name"] = unique_name
+        saved_upload["uploads_dir"] = uploads_dir
+
+    monkeypatch.setattr(cms_api, "save_upload", fake_save_upload)
 
     response = client.post(
         "/api/cms/media/upload",
@@ -218,6 +230,12 @@ def test_cms_media_upload_preserves_form_metadata(client, db_session, tmp_path, 
     assert payload["tags"] == ["podcast", "testimonio"]
     assert payload["mime_type"] == "audio/mpeg"
     assert payload["file_size"] == len(b"audio-bytes")
+    assert saved_upload["content"] == b"audio-bytes"
+    assert saved_upload["unique_name"].endswith("_podcast.mp3")
+
+    metrics = client.get("/api/cms/metrics", headers=headers)
+    assert metrics.status_code == 200
+    assert metrics.json()["media_audio"] == 1
 
 
 def test_public_cms_page_uses_published_snapshot_not_live_draft(client, db_session):

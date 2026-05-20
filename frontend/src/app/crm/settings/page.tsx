@@ -172,7 +172,7 @@ export default function CrmSettingsPage() {
                 </button>
             }
         >
-            <div className="max-w-[1000px] mx-auto space-y-8 pb-20 pt-6 px-4 font-sans">
+            <div className="max-w-[1000px] mx-auto space-y-3 pb-20 pt-6 px-4 font-sans">
                 
                 {/* 1. Header */}
                 <div className="flex flex-col space-y-1">
@@ -181,12 +181,12 @@ export default function CrmSettingsPage() {
                             <Shield size={10} /> Privilegios Root
                         </div>
                     </div>
-                    <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Control Maestro</h1>
-                    <p className="text-[13px] font-medium text-slate-500 dark:text-slate-400">Administra los parámetros base, integraciones y seguridad del ecosistema.</p>
+                    <h1 className="text-base font-black text-slate-900 dark:text-white tracking-tight">Control Maestro</h1>
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Administra los parámetros base, integraciones y seguridad del ecosistema.</p>
                 </div>
 
                 {/* 2. Settings Grid Layout */}
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                     
                     {/* Navigation Sidebar */}
                     <motion.aside variants={containerVariants} initial="hidden" animate="show" className="space-y-1">
@@ -201,18 +201,18 @@ export default function CrmSettingsPage() {
                     <motion.div variants={itemVariants} initial="hidden" animate="show" className="lg:col-span-3">
                         <AnimatePresence mode="wait">
                             {activeSection === 'general' && (
-                                <motion.div key="general" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6 bg-white dark:bg-[#1E1F21] rounded-2xl border border-slate-200 dark:border-white/5 p-6 md:p-8 shadow-sm">
+                                <motion.div key="general" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-white dark:bg-[#1E1F21] rounded-2xl border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
                                     <div className="space-y-1 border-b border-slate-100 dark:border-white/5 pb-4">
                                         <h3 className="text-[15px] font-bold text-slate-800 dark:text-white">Parámetros de Identidad</h3>
                                         <p className="text-[12px] text-slate-500 font-medium">Define cómo se identifica tu ministerio en reportes y correos.</p>
                                     </div>
 
-                                    <div className="grid grid-cols-1 gap-6">
+                                    <div className="grid grid-cols-1 gap-4">
                                         <SettingInput label="Nombre de la Iglesia" value={config.churchName} onChange={(val: string) => setConfig({...config, churchName: val})} />
                                         <SettingInput label="Email de Respuesta Público" value={config.contactEmail} onChange={(val: string) => setConfig({...config, contactEmail: val})} />
                                         <div className="space-y-1.5">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Zona Horaria Base</label>
-                                            <select className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-[13px] font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all appearance-none cursor-pointer" value={config.timezone} onChange={e => setConfig({...config, timezone: e.target.value})}>
+                                            <select className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all appearance-none cursor-pointer" value={config.timezone} onChange={e => setConfig({...config, timezone: e.target.value})}>
                                                 <option value="America/Bogota">Bogotá (GMT-5)</option>
                                                 <option value="America/New_York">New York (GMT-4)</option>
                                                 <option value="Europe/Madrid">Madrid (GMT+2)</option>
@@ -223,7 +223,7 @@ export default function CrmSettingsPage() {
                             )}
 
                             {activeSection === 'integrations' && (
-                                <motion.div key="integrations" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6 bg-white dark:bg-[#1E1F21] rounded-2xl border border-slate-200 dark:border-white/5 p-6 md:p-8 shadow-sm">
+                                <motion.div key="integrations" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-white dark:bg-[#1E1F21] rounded-2xl border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
                                     <div className="space-y-1 border-b border-slate-100 dark:border-white/5 pb-4">
                                         <h3 className="text-[15px] font-bold text-slate-800 dark:text-white">Pasarelas de Conexión</h3>
                                         <p className="text-[12px] text-slate-500 font-medium">Habilita canales oficiales para mensajería y automatizaciones.</p>
@@ -254,8 +254,8 @@ export default function CrmSettingsPage() {
                             )}
 
                             {activeSection === 'security' && (
-                                <motion.div key="security" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
-                                    <div className="bg-white dark:bg-[#1E1F21] rounded-2xl border border-slate-200 dark:border-white/5 p-6 md:p-8 shadow-sm space-y-6">
+                                <motion.div key="security" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3">
+                                    <div className="bg-white dark:bg-[#1E1F21] rounded-2xl border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm space-y-3">
                                         <div className="space-y-1 border-b border-slate-100 dark:border-white/5 pb-4">
                                             <h3 className="text-[15px] font-bold text-slate-800 dark:text-white">Políticas de Seguridad</h3>
                                             <p className="text-[12px] text-slate-500 font-medium">Controla la infraestructura y salvaguardia de datos.</p>
@@ -265,7 +265,7 @@ export default function CrmSettingsPage() {
                                             <div className="flex items-start gap-4">
                                                 <Database size={18} className="text-blue-600 dark:text-blue-400 mt-0.5" />
                                                 <div>
-                                                    <h4 className="text-[13px] font-bold text-slate-800 dark:text-white">Respaldo Automático Base de Datos</h4>
+                                                    <h4 className="text-xs font-bold text-slate-800 dark:text-white">Respaldo Automático Base de Datos</h4>
                                                     <p className="text-[12px] text-slate-500 mt-0.5">MESH encripta y guarda un backup cada 24h.</p>
                                                 </div>
                                             </div>
@@ -276,7 +276,7 @@ export default function CrmSettingsPage() {
                                             <div className="flex items-start gap-4">
                                                 <AlertTriangle size={18} className="text-rose-600 dark:text-rose-500 mt-0.5" />
                                                 <div>
-                                                    <h4 className="text-[13px] font-bold text-rose-900 dark:text-rose-400">Purga del Sistema</h4>
+                                                    <h4 className="text-xs font-bold text-rose-900 dark:text-rose-400">Purga del Sistema</h4>
                                                     <p className="text-[12px] text-rose-700/70 dark:text-rose-500/80 mt-0.5">Atención: esto borrará todos los registros de miembros permanentemente.</p>
                                                 </div>
                                             </div>
@@ -289,26 +289,26 @@ export default function CrmSettingsPage() {
                             )}
 
                             {activeSection === 'notifications' && (
-                                <motion.div key="notifications" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6 bg-white dark:bg-[#1E1F21] rounded-2xl border border-slate-200 dark:border-white/5 p-6 md:p-8 shadow-sm">
-                                    <div className="flex flex-col items-center justify-center p-12 text-center text-slate-500">
+                                <motion.div key="notifications" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-white dark:bg-[#1E1F21] rounded-2xl border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
+                                    <div className="flex flex-col items-center justify-center p-4 text-center text-slate-500">
                                         <Bell size={32} className="mb-4 opacity-50 text-slate-400" />
-                                        <h4 className="text-[13px] font-bold mb-1 text-slate-700 dark:text-slate-300">Sin notificaciones configuradas</h4>
+                                        <h4 className="text-xs font-bold mb-1 text-slate-700 dark:text-slate-300">Sin notificaciones configuradas</h4>
                                         <p className="text-[12px]">Las preferencias de alerta de sistema aparecerán aquí.</p>
                                     </div>
                                 </motion.div>
                             )}
 
                             {activeSection === 'consolidation' && (
-                                <motion.div key="consolidation" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6 bg-white dark:bg-[#1E1F21] rounded-2xl border border-slate-200 dark:border-white/5 p-6 md:p-8 shadow-sm">
+                                <motion.div key="consolidation" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-white dark:bg-[#1E1F21] rounded-2xl border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
                                     <div className="space-y-1 border-b border-slate-100 dark:border-white/5 pb-4">
                                         <h3 className="text-[15px] font-bold text-slate-800 dark:text-white">Cargos de Consolidación</h3>
                                         <p className="text-[12px] text-slate-500 font-medium">Define los roles nativos que operan el seguimiento de personas.</p>
                                     </div>
 
-                                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                                         <div className="space-y-4 p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
                                             <div className="flex items-center justify-between">
-                                                <h4 className="text-[13px] font-bold text-slate-800 dark:text-white">
+                                                <h4 className="text-xs font-bold text-slate-800 dark:text-white">
                                                     {editingPositionId ? 'Editar cargo' : 'Nuevo cargo'}
                                                 </h4>
                                                 {editingPositionId && (
@@ -329,10 +329,10 @@ export default function CrmSettingsPage() {
                                                     value={positionForm.description}
                                                     onChange={(e) => setPositionForm({ ...positionForm, description: e.target.value })}
                                                     rows={4}
-                                                    className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-[13px] font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400"
+                                                    className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400"
                                                 />
                                             </div>
-                                            <label className="flex items-center gap-3 text-[13px] font-medium text-slate-700 dark:text-slate-200">
+                                            <label className="flex items-center gap-3 text-xs font-medium text-slate-700 dark:text-slate-200">
                                                 <input
                                                     type="checkbox"
                                                     checked={positionForm.is_active}
@@ -354,7 +354,7 @@ export default function CrmSettingsPage() {
 
                                         <div className="space-y-4 p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
                                             <div className="flex items-center justify-between">
-                                                <h4 className="text-[13px] font-bold text-slate-800 dark:text-white">Catálogo actual</h4>
+                                                <h4 className="text-xs font-bold text-slate-800 dark:text-white">Catálogo actual</h4>
                                                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                                                     {isLoadingPositions ? 'Cargando...' : `${positions.length} cargos`}
                                                 </span>
@@ -367,7 +367,7 @@ export default function CrmSettingsPage() {
                                                     ))}
                                                 </div>
                                             ) : positions.length === 0 ? (
-                                                <div className="rounded-xl border border-dashed border-slate-200 dark:border-white/10 p-6 text-center text-slate-500">
+                                                <div className="rounded-xl border border-dashed border-slate-200 dark:border-white/10 p-4 text-center text-slate-500">
                                                     No hay cargos registrados aún.
                                                 </div>
                                             ) : (
@@ -376,7 +376,7 @@ export default function CrmSettingsPage() {
                                                         <div key={position.id} className="flex items-start justify-between gap-4 rounded-xl bg-white dark:bg-[#111317] border border-slate-100 dark:border-white/10 p-4">
                                                             <div className="min-w-0">
                                                                 <div className="flex items-center gap-2">
-                                                                    <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{position.name}</p>
+                                                                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{position.name}</p>
                                                                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest ${position.is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400'}`}>
                                                                         {position.is_active ? 'Activo' : 'Inactivo'}
                                                                     </span>
@@ -423,7 +423,7 @@ function SettingsNavButton({ active, onClick, icon: Icon, label }: any) {
         >
             <div className="flex items-center gap-3">
                 <Icon size={14} className={clsx("transition-colors", active ? "text-blue-600 dark:text-blue-400" : "text-slate-400 group-hover:text-slate-500")} />
-                <span className="text-[13px]">{label}</span>
+                <span className="text-xs">{label}</span>
             </div>
         </button>
     );
@@ -438,7 +438,7 @@ function SettingInput({ label, value, onChange, placeholder, type = "text" }: an
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 placeholder={placeholder}
-                className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-[13px] font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400"
+                className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400"
             />
         </div>
     );
@@ -452,7 +452,7 @@ function ToggleSetting({ icon: Icon, color, title, desc, active, onToggle }: any
                     <Icon size={16} strokeWidth={2.5} />
                 </div>
                 <div>
-                    <h4 className="font-bold text-slate-800 dark:text-white text-[13px]">{title}</h4>
+                    <h4 className="font-bold text-slate-800 dark:text-white text-xs">{title}</h4>
                     <p className="text-[12px] text-slate-500 dark:text-slate-400">{desc}</p>
                 </div>
             </div>

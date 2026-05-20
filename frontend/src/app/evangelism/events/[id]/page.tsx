@@ -107,7 +107,7 @@ function MemberSelect({ members, value, onChange, label, multi = false }: Member
                     })}
                 </div>
             ) : value ? (
-                <div className="flex items-center justify-between px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl mb-2">
+                <div className="flex items-center justify-between px-4 py-1.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl mb-2">
                     <span className="text-sm font-bold text-blue-800 dark:text-blue-300">
                         {(() => {
                             const m = members.find((x) => x.id === value);
@@ -128,7 +128,7 @@ function MemberSelect({ members, value, onChange, label, multi = false }: Member
                             onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
                             onFocus={() => setOpen(true)}
                             placeholder="Buscar miembro..."
-                            className="w-full pl-9 pr-4 py-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
                     {open && search && (
@@ -137,7 +137,7 @@ function MemberSelect({ members, value, onChange, label, multi = false }: Member
                                 <button
                                     key={m.id}
                                     onClick={() => handleSelect(m)}
-                                    className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 border-b border-slate-100 dark:border-white/5 flex flex-col"
+                                    className="w-full text-left px-4 py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 border-b border-slate-100 dark:border-white/5 flex flex-col"
                                 >
                                     <span className="text-sm font-bold text-slate-800 dark:text-white">{m.first_name} {m.last_name}</span>
                                     <span className="text-[10px] uppercase font-black tracking-widest text-slate-400">{m.church_role || 'Miembro'}</span>
@@ -343,8 +343,8 @@ export default function EventDetailPage() {
 
     return (
         <EvangelismShell breadcrumbs={[{ label: "Evangelismo", href: "/evangelism/events" }, { label: "Eventos", href: "/evangelism/events" }, { label: event.name }]}>
-            <main className="flex-1 overflow-y-auto p-4 lg:p-8">
-                <div className="max-w-6xl mx-auto space-y-6">
+            <main className="flex-1 overflow-y-auto p-4 lg:p-4">
+                <div className="max-w-6xl mx-auto space-y-3">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
@@ -375,32 +375,32 @@ export default function EventDetailPage() {
                             <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-2xl">
                                 <button 
                                     onClick={() => setActiveTab('details')}
-                                    className={clsx("px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all", activeTab === 'details' ? "bg-white dark:bg-[#252528] text-blue-600 shadow-sm" : "text-slate-500")}
+                                    className={clsx("px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all", activeTab === 'details' ? "bg-white dark:bg-[#252528] text-blue-600 shadow-sm" : "text-slate-500")}
                                 >Detalles Generales</button>
                                 <button 
                                     onClick={() => setActiveTab('session')}
-                                    className={clsx("px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all", activeTab === 'session' ? "bg-white dark:bg-[#252528] text-blue-600 shadow-sm" : "text-slate-500")}
+                                    className={clsx("px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all", activeTab === 'session' ? "bg-white dark:bg-[#252528] text-blue-600 shadow-sm" : "text-slate-500")}
                                 >Configurar Sesion</button>
                                 <button 
                                     onClick={() => setActiveTab('analytics')}
-                                    className={clsx("px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all", activeTab === 'analytics' ? "bg-white dark:bg-[#252528] text-blue-600 shadow-sm" : "text-slate-500")}
+                                    className={clsx("px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all", activeTab === 'analytics' ? "bg-white dark:bg-[#252528] text-blue-600 shadow-sm" : "text-slate-500")}
                                 >Analitica</button>
                             </div>
                         </div>
                     </div>
 
                     {activeTab === 'details' && (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            <div className="lg:col-span-2 space-y-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            <div className="lg:col-span-2 space-y-3">
                                 <DSCard>
                                     <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Descripcion</h3>
                                     <p className="text-slate-600 dark:text-slate-300 font-medium">{event.description || "Sin descripcion."}</p>
                                 </DSCard>
                             </div>
-                            <div className="space-y-6">
+                            <div className="space-y-3">
                                 <DSCard>
                                     <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Acciones</h3>
-                                    <button onClick={() => router.push('/evangelism/events')} className="w-full py-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl font-bold flex items-center justify-center gap-2">
+                                    <button onClick={() => router.push('/evangelism/events')} className="w-full py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl font-bold flex items-center justify-center gap-2">
                                         <ArrowLeft size={16}/> Volver a Eventos
                                     </button>
                                 </DSCard>
@@ -409,7 +409,7 @@ export default function EventDetailPage() {
                     )}
 
                     {activeTab === 'analytics' && (
-                        <div className="space-y-6">
+                        <div className="space-y-3">
                             {loadingAnalytics || !analytics ? (
                                 <div className="text-center py-20 text-slate-400 font-medium">Cargando analítica...</div>
                             ) : (
@@ -436,11 +436,11 @@ export default function EventDetailPage() {
                                     </div>
                                     
                                     {/* Gráfico de Barras CSS */}
-                                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl p-6 shadow-sm">
+                                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 shadow-sm">
                                         <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-8">Asistencia Promedio por Mes</h3>
                                         
                                         {analytics.monthly_data.length === 0 ? (
-                                            <div className="text-center py-10 text-slate-400 text-sm">No hay datos suficientes para graficar.</div>
+                                            <div className="text-center py-6 text-slate-400 text-sm">No hay datos suficientes para graficar.</div>
                                         ) : (
                                             <div className="flex items-end gap-2 h-64 mt-4 w-full overflow-x-auto pb-4 scrollbar-thin">
                                                 {analytics.monthly_data.map((d) => {
@@ -472,9 +472,9 @@ export default function EventDetailPage() {
                     )}
                     
                     {activeTab === 'session' && (
-                        <div className="space-y-6">
+                        <div className="space-y-3">
                             {/* Toolbar de Sesion */}
-                            <div className="flex flex-col md:flex-row gap-4 items-end bg-white dark:bg-white/5 p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm">
+                            <div className="flex flex-col md:flex-row gap-4 items-end bg-white dark:bg-white/5 p-4 rounded-xl border border-slate-100 dark:border-white/5 shadow-sm">
                                 <div className="flex-1 w-full">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Fecha de la Sesion</label>
                                     <div className="relative">
@@ -483,7 +483,7 @@ export default function EventDetailPage() {
                                             type="date" 
                                             value={sessionDate}
                                             onChange={(e) => setSessionDate(e.target.value)}
-                                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-3 pl-11 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 pl-11 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
                                         />
                                     </div>
                                 </div>
@@ -491,7 +491,7 @@ export default function EventDetailPage() {
                                     <button 
                                         onClick={saveSession}
                                         disabled={savingSession || !sessionDate}
-                                        className="px-8 py-3 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/30 hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-60 disabled:hover:scale-100"
+                                        className="px-5 py-1.5 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/30 hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-60 disabled:hover:scale-100"
                                     >
                                         <Save size={16}/> {savingSession ? 'Guardando...' : 'Guardar Agenda'}
                                     </button>
@@ -501,13 +501,13 @@ export default function EventDetailPage() {
                             {sessionLoading ? (
                                 <div className="p-20 text-center animate-pulse font-black text-slate-400">Cargando datos de la sesion...</div>
                             ) : (
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                     {/* AGENDA PANNEL */}
-                                    <div className="bg-white dark:bg-white/5 rounded-[2rem] border border-slate-200 dark:border-white/5 p-6 shadow-sm">
+                                    <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 p-4 shadow-sm">
                                         <h3 className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-white mb-6 flex items-center gap-2">
                                             <Mic className="text-blue-600" size={18}/> Agenda de la Reunion
                                         </h3>
-                                        <div className="space-y-6">
+                                        <div className="space-y-3">
                                             <MemberSelect 
                                                 label="Maestro de Ceremonia"
                                                 members={members}
@@ -533,17 +533,17 @@ export default function EventDetailPage() {
                                     </div>
 
                                     {/* ATTENDANCE PANNEL */}
-                                    <div className="space-y-6">
-                                        <div className="bg-white dark:bg-white/5 rounded-[2rem] border border-slate-200 dark:border-white/5 p-6 shadow-sm">
+                                    <div className="space-y-3">
+                                        <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 p-4 shadow-sm">
                                             <h3 className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-white mb-6 flex items-center gap-2">
                                                 <Users className="text-emerald-500" size={18}/> Reporte de Asistencia
                                             </h3>
                                             <div className="flex items-center gap-4 mb-8">
-                                                <div className="size-16 rounded-3xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center text-2xl font-black">
+                                                <div className="size-16 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center text-lg font-black">
                                                     {sessionData?.total_attendance || 0}
                                                 </div>
                                                 <div>
-                                                    <p className="text-2xl font-black text-slate-800 dark:text-white">Asistentes Totales</p>
+                                                    <p className="text-lg font-black text-slate-800 dark:text-white">Asistentes Totales</p>
                                                     <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Registrados en check-in</p>
                                                 </div>
                                             </div>
@@ -563,7 +563,7 @@ export default function EventDetailPage() {
                                                 <div className="mt-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 flex items-center justify-between gap-4">
                                                     <div>
                                                         <p className="text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-400">Inasistentes</p>
-                                                        <p className="text-2xl font-black text-amber-700 dark:text-amber-400 mt-0.5">{sessionData?.total_absentees}</p>
+                                                        <p className="text-lg font-black text-amber-700 dark:text-amber-400 mt-0.5">{sessionData?.total_absentees}</p>
                                                         {sessionData?.absentees_truncated && (
                                                             <p className="text-[10px] text-amber-600/70 mt-1">Mostrando {sessionData?.absentees?.length} de {sessionData?.total_absentees}. Descarga el CSV para ver todos.</p>
                                                         )}
@@ -645,30 +645,30 @@ export default function EventDetailPage() {
                     <button type="button" disabled={savingVisitor} onClick={() => setIsVisitorModalOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-60">
                         Cancelar
                     </button>
-                    <button type="button" onClick={handleAddVisitor} disabled={savingVisitor || !visitorForm.first_name || !visitorForm.last_name} className="flex items-center gap-2 px-8 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all disabled:opacity-60">
+                    <button type="button" onClick={handleAddVisitor} disabled={savingVisitor || !visitorForm.first_name || !visitorForm.last_name} className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all disabled:opacity-60">
                         <CheckCircle2 size={16} /> {savingVisitor ? 'Guardando...' : 'Guardar Asistencia'}
                     </button>
                 </>
             }
         >
-            <div className="space-y-6 mt-4">
+            <div className="space-y-3 mt-4">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Nombre</label>
-                        <input required disabled={savingVisitor} value={visitorForm.first_name} onChange={e => setVisitorForm({...visitorForm, first_name: e.target.value})} className="w-full px-4 py-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60" placeholder="Juan" />
+                        <input required disabled={savingVisitor} value={visitorForm.first_name} onChange={e => setVisitorForm({...visitorForm, first_name: e.target.value})} className="w-full px-4 py-1.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60" placeholder="Juan" />
                     </div>
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Apellido</label>
-                        <input required value={visitorForm.last_name} onChange={e => setVisitorForm({...visitorForm, last_name: e.target.value})} className="w-full px-4 py-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Pérez" />
+                        <input required value={visitorForm.last_name} onChange={e => setVisitorForm({...visitorForm, last_name: e.target.value})} className="w-full px-4 py-1.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Pérez" />
                     </div>
                 </div>
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Teléfono (WhatsApp)</label>
-                    <input disabled={savingVisitor} value={visitorForm.phone} onChange={e => setVisitorForm({...visitorForm, phone: e.target.value})} className="w-full px-4 py-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60" placeholder="+57 300 000 0000" />
+                    <input disabled={savingVisitor} value={visitorForm.phone} onChange={e => setVisitorForm({...visitorForm, phone: e.target.value})} className="w-full px-4 py-1.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60" placeholder="+57 300 000 0000" />
                 </div>
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Correo Electrónico (Opcional)</label>
-                    <input type="email" disabled={savingVisitor} value={visitorForm.email} onChange={e => setVisitorForm({...visitorForm, email: e.target.value})} className="w-full px-4 py-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60" placeholder="correo@ejemplo.com" />
+                    <input type="email" disabled={savingVisitor} value={visitorForm.email} onChange={e => setVisitorForm({...visitorForm, email: e.target.value})} className="w-full px-4 py-1.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60" placeholder="correo@ejemplo.com" />
                 </div>
             </div>
         </WorkspaceDrawer>

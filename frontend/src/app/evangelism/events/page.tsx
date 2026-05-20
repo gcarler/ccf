@@ -705,7 +705,7 @@ export default function EventsPage() {
             primaryAction={{ label: 'Crear evento', icon: Plus, onClick: () => setIsCreateDrawerOpen(true) }}
             secondaryAction={{ label: 'Ver calendario', icon: Link2, onClick: () => setViewType('calendar') }}
         />
-        <div className="space-y-8">
+        <div className="space-y-3">
             {/* View switcher */}
             <div className="flex items-center justify-end">
                 <ViewSwitcher
@@ -717,16 +717,16 @@ export default function EventsPage() {
             </div>
 
             {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="animate-pulse h-48 rounded-[2rem] bg-slate-100 dark:bg-white/5" />
+                        <div key={i} className="animate-pulse h-48 rounded-xl bg-slate-100 dark:bg-white/5" />
                     ))}
                 </div>
             ) : (
             <>
             {/* GRID VIEW */}
             {viewType === 'grid' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {events.length === 0 ? (
                         <div className="col-span-3 py-24 text-center text-slate-400 text-sm">
                             No hay eventos registrados
@@ -738,7 +738,7 @@ export default function EventsPage() {
                         <div 
                             key={ev.id} 
                             onClick={() => router.push(`/evangelism/events/${ev.id}`)}
-                            className="p-6 rounded-[2rem] border border-slate-100 dark:border-white/5 bg-white dark:bg-[#1e1f21] hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/10 transition-all group flex flex-col justify-between cursor-pointer"
+                            className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-white dark:bg-[#1e1f21] hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/10 transition-all group flex flex-col justify-between cursor-pointer"
                         >
                             <div>
                                 <div className="flex justify-between items-start mb-4">
@@ -756,7 +756,7 @@ export default function EventsPage() {
                                         {EVENT_TYPE_LABEL[ev.event_type] ?? ev.event_type}
                                     </span>
                                 </div>
-                                <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2 truncate group-hover:text-blue-600 transition-colors uppercase italic pr-4">
+                                <h3 className="text-sm font-black text-slate-900 dark:text-white mb-2 truncate group-hover:text-blue-600 transition-colors uppercase italic pr-4">
                                     {ev.name}
                                 </h3>
                                 <p className="text-sm font-medium text-slate-500 line-clamp-2">{ev.description || 'Evento comunitario de CCF.'}</p>
@@ -773,16 +773,16 @@ export default function EventsPage() {
                                 </div>
                             </div>
                             <div className="mt-6 flex items-center justify-between gap-2">
-                                <button onClick={(e) => { e.stopPropagation(); openQr(ev); }} className="size-10 flex items-center justify-center bg-slate-50 dark:bg-white/5 hover:bg-blue-600 text-slate-400 hover:text-white rounded-xl transition-all shrink-0" title="Generar QR">
+                                <button onClick={(e) => { e.stopPropagation(); openQr(ev); }} className="size-8 flex items-center justify-center bg-slate-50 dark:bg-white/5 hover:bg-blue-600 text-slate-400 hover:text-white rounded-xl transition-all shrink-0" title="Generar QR">
                                     <QrCode size={16} />
                                 </button>
-                                <button onClick={(e) => { e.stopPropagation(); openAttendance(ev); }} className="flex-1 py-3 bg-slate-50 dark:bg-white/5 group-hover:bg-blue-600 text-slate-500 group-hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                                <button onClick={(e) => { e.stopPropagation(); openAttendance(ev); }} className="flex-1 py-1.5 bg-slate-50 dark:bg-white/5 group-hover:bg-blue-600 text-slate-500 group-hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
                                     Panel de Asistencia
                                 </button>
                                 <div className="relative shrink-0" onClick={e => e.stopPropagation()}>
                                     <button
                                         onClick={() => setMenuOpenId(menuOpenId === ev.id ? null : ev.id)}
-                                        className="size-10 flex items-center justify-center bg-slate-50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-400 rounded-xl transition-all"
+                                        className="size-8 flex items-center justify-center bg-slate-50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-400 rounded-xl transition-all"
                                     >
                                         <MoreVertical size={16} />
                                     </button>
@@ -790,13 +790,13 @@ export default function EventsPage() {
                                         <div className="absolute right-0 bottom-12 z-50 bg-white dark:bg-[#18181b] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden w-40 animate-in fade-in slide-in-from-bottom-2">
                                             <button
                                                 onClick={() => { setEditingEvent({ ...ev, target_role_ids: getTargetRoleIds(ev) }); setMenuOpenId(null); }}
-                                                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 dark:text-white hover:bg-blue-50 dark:hover:bg-white/5 transition-all"
+                                                className="w-full flex items-center gap-3 px-4 py-1.5 text-sm font-bold text-slate-700 dark:text-white hover:bg-blue-50 dark:hover:bg-white/5 transition-all"
                                             >
                                                 <Pencil size={14} className="text-blue-500" /> Editar
                                             </button>
                                             <button
                                                 onClick={() => { setDeletingEventId(ev.id); setMenuOpenId(null); }}
-                                                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all"
+                                                className="w-full flex items-center gap-3 px-4 py-1.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all"
                                             >
                                                 <Trash2 size={14} /> Eliminar
                                             </button>
@@ -813,11 +813,11 @@ export default function EventsPage() {
 
             {/* LIST VIEW */}
             {viewType === 'list' && (
-                <div className="bg-white dark:bg-[#1e1f21] rounded-[2rem] border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm divide-y divide-slate-100 dark:divide-white/5">
+                <div className="bg-white dark:bg-[#1e1f21] rounded-xl border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm divide-y divide-slate-100 dark:divide-white/5">
                     {events.map(ev => {
                         const attendanceStat = getEventAttendanceStat(ev);
                         return (
-                        <div key={ev.id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+                        <div key={ev.id} className="flex items-center gap-4 px-4 py-2 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
                             <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center shrink-0">
                                 <Calendar size={16} />
                             </div>
@@ -862,12 +862,12 @@ export default function EventsPage() {
             )}
 
             {viewType === 'table' && (
-                <div className="overflow-hidden rounded-[2rem] border border-slate-100 dark:border-white/5 bg-white dark:bg-[#1e1f21] shadow-sm">
+                <div className="overflow-hidden rounded-xl border border-slate-100 dark:border-white/5 bg-white dark:bg-[#1e1f21] shadow-sm">
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 dark:bg-white/5">
                             <tr>
                                 {['Evento', 'Tipo', 'Audiencia', 'Universo', 'Asistencia', 'Fecha visual'].map((label) => (
-                                    <th key={label} className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                    <th key={label} className="px-5 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
                                         {label}
                                     </th>
                                 ))}
@@ -878,29 +878,29 @@ export default function EventsPage() {
                                 const attendanceStat = getEventAttendanceStat(event);
                                 return (
                                     <tr key={event.id} className="border-t border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02]">
-                                        <td className="px-5 py-4">
+                                        <td className="px-5 py-2">
                                             <button onClick={() => router.push(`/evangelism/events/${event.id}`)} className="font-bold text-slate-800 dark:text-slate-100 hover:text-blue-600">
                                                 {event.name}
                                             </button>
                                         </td>
-                                        <td className="px-5 py-4 text-xs font-bold text-slate-500">{EVENT_TYPE_LABEL[event.event_type] ?? event.event_type}</td>
-                                        <td className="px-5 py-4 text-xs text-slate-500">{getTargetRoleLabel(event)}</td>
-                                        <td className="px-5 py-4 text-xs text-slate-500">{attendanceStat.expected}</td>
-                                        <td className="px-5 py-4 text-xs font-bold text-emerald-600">{attendanceStat.rate}%</td>
-                                        <td className="px-5 py-4 text-xs text-slate-500">{getVisualDate(event)}</td>
+                                        <td className="px-5 py-2 text-xs font-bold text-slate-500">{EVENT_TYPE_LABEL[event.event_type] ?? event.event_type}</td>
+                                        <td className="px-5 py-2 text-xs text-slate-500">{getTargetRoleLabel(event)}</td>
+                                        <td className="px-5 py-2 text-xs text-slate-500">{attendanceStat.expected}</td>
+                                        <td className="px-5 py-2 text-xs font-bold text-emerald-600">{attendanceStat.rate}%</td>
+                                        <td className="px-5 py-2 text-xs text-slate-500">{getVisualDate(event)}</td>
                                     </tr>
                                 );
                             })}
                         </tbody>
                     </table>
-                    {events.length === 0 && <div className="py-10 text-center text-sm text-slate-400">No hay eventos registrados</div>}
+                    {events.length === 0 && <div className="py-6 text-center text-sm text-slate-400">No hay eventos registrados</div>}
                 </div>
             )}
 
             {(viewType === 'board' || viewType === 'kanban') && (
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                     {boardColumns.map((column) => (
-                        <section key={column.key} className="rounded-[2rem] border border-slate-100 bg-white p-4 shadow-sm dark:border-white/5 dark:bg-[#1e1f21]">
+                        <section key={column.key} className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm dark:border-white/5 dark:bg-[#1e1f21]">
                             <header className="mb-4 flex items-center justify-between">
                                 <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-500">{column.label}</h3>
                                 <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-500 dark:bg-white/10">
@@ -933,19 +933,19 @@ export default function EventsPage() {
             )}
 
             {viewType === 'calendar' && (
-                <div className="rounded-[2rem] border border-slate-100 bg-white p-4 shadow-sm dark:border-white/5 dark:bg-[#1e1f21]">
+                <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm dark:border-white/5 dark:bg-[#1e1f21]">
                     <UniversalCalendarView events={calendarEvents} title="Calendario de eventos" />
                 </div>
             )}
 
             {viewType === 'gantt' && (
-                <div className="rounded-[2rem] border border-slate-100 bg-white p-4 shadow-sm dark:border-white/5 dark:bg-[#1e1f21]">
+                <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm dark:border-white/5 dark:bg-[#1e1f21]">
                     <UniversalGanttView items={ganttItems} moduleName="Eventos" />
                 </div>
             )}
 
             {viewType === 'wiki' && (
-                <section className="rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm dark:border-white/5 dark:bg-[#1e1f21]">
+                <section className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm dark:border-white/5 dark:bg-[#1e1f21]">
                     <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">Wiki de eventos</p>
                     <textarea
                         value={wikiNotes}
@@ -974,21 +974,21 @@ export default function EventsPage() {
                         form="create-event-form"
                         type="submit"
                         disabled={savingCreateEvent}
-                        className="px-8 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60 disabled:active:scale-100"
+                        className="px-5 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60 disabled:active:scale-100"
                     >
                         {savingCreateEvent ? 'Guardando...' : 'Guardar'} <Check size={14} />
                     </button>
                 </>
             }
         >
-            <form id="create-event-form" onSubmit={handleCreateEvent} className="space-y-6">
+            <form id="create-event-form" onSubmit={handleCreateEvent} className="space-y-3">
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre del Evento *</label>
                     <input
                         required
                         value={newEvent.name}
                         onChange={e => setNewEvent({ ...newEvent, name: e.target.value })}
-                        className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white"
+                        className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white"
                         placeholder="Ej: Servicio Dominical"
                     />
                 </div>
@@ -999,7 +999,7 @@ export default function EventsPage() {
                         required
                         value={newEvent.event_type}
                         onChange={e => setNewEvent({ ...newEvent, event_type: e.target.value })}
-                        className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white appearance-none"
+                        className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white appearance-none"
                     >
                         <option value="PERMANENT">Semanal / Rutinario</option>
                         <option value="MONTHLY">Mensual</option>
@@ -1023,7 +1023,7 @@ export default function EventsPage() {
                                 target_role_ids: e.target.value === 'ROLE' ? newEvent.target_role_ids : [],
                                 target_member_ids: e.target.value === 'MANUAL' ? newEvent.target_member_ids : [],
                             })}
-                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white appearance-none"
+                            className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white appearance-none"
                         >
                             <option value="ALL">Toda la iglesia</option>
                             <option value="ROLE">Uno o varios roles</option>
@@ -1040,7 +1040,7 @@ export default function EventsPage() {
                                 const selectedValues = Array.from(e.target.selectedOptions).map((option) => option.value);
                                 setNewEvent({ ...newEvent, target_role_ids: selectedValues, target_role_id: selectedValues[0] || '' });
                             }}
-                            className="min-h-[140px] w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white disabled:opacity-50"
+                            className="min-h-[140px] w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white disabled:opacity-50"
                         >
                             {roles.map((role) => (
                                 <option key={role.id} value={role.id}>{role.name}</option>
@@ -1049,7 +1049,7 @@ export default function EventsPage() {
                     </div>
                 </div>
 
-                <div className="space-y-3 rounded-3xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
+                <div className="space-y-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
                     <div className="flex items-center justify-between gap-3">
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Plantillas de audiencia</p>
@@ -1078,7 +1078,7 @@ export default function EventsPage() {
                                 Aun no hay plantillas guardadas
                             </div>
                         ) : audiencePresets.map((preset) => (
-                            <div key={preset.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3">
+                            <div key={preset.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-1.5">
                                 <div className="min-w-0">
                                     <p className="truncate text-sm font-bold text-slate-800 dark:text-white">{preset.name}</p>
                                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -1122,7 +1122,7 @@ export default function EventsPage() {
                             value={createManualSearch}
                             onChange={e => setCreateManualSearch(e.target.value)}
                             placeholder="Buscar por nombre, correo o rol..."
-                            className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-4 py-3 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
+                            className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-4 py-1.5 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
                         />
                         <div className="max-h-64 space-y-2 overflow-y-auto rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-3">
                             {createManualMembers.map((member) => {
@@ -1137,7 +1137,7 @@ export default function EventsPage() {
                                                 ? newEvent.target_member_ids.filter((value) => value !== String(member.id))
                                                 : [...newEvent.target_member_ids, String(member.id)],
                                         })}
-                                        className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all ${
+                                        className={`flex w-full items-center justify-between rounded-2xl border px-4 py-1.5 text-left transition-all ${
                                             isSelected
                                                 ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20'
                                                 : 'border-slate-200 bg-white dark:border-white/10 dark:bg-white/5'
@@ -1154,7 +1154,7 @@ export default function EventsPage() {
                                 );
                             })}
                             {createManualMembers.length === 0 && (
-                                <div className="py-10 text-center text-sm text-slate-400">No hay personas para este filtro</div>
+                                <div className="py-6 text-center text-sm text-slate-400">No hay personas para este filtro</div>
                             )}
                         </div>
                     </div>
@@ -1168,7 +1168,7 @@ export default function EventsPage() {
                             required
                             value={newEvent.start_time}
                             onChange={e => setNewEvent({ ...newEvent, start_time: e.target.value })}
-                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white"
                         />
                     </div>
                     <div className="space-y-1.5">
@@ -1178,7 +1178,7 @@ export default function EventsPage() {
                             required
                             value={newEvent.end_time}
                             onChange={e => setNewEvent({ ...newEvent, end_time: e.target.value })}
-                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white"
                         />
                     </div>
                 </div>
@@ -1189,7 +1189,7 @@ export default function EventsPage() {
                         <select
                             value={newEvent.day_of_week}
                             onChange={e => setNewEvent({ ...newEvent, day_of_week: e.target.value })}
-                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white"
                         >
                             {DAY_LABELS.map((d, i) => <option key={i} value={i}>{d}</option>)}
                         </select>
@@ -1203,7 +1203,7 @@ export default function EventsPage() {
                             type="date"
                             value={newEvent.fixed_date}
                             onChange={e => setNewEvent({ ...newEvent, fixed_date: e.target.value })}
-                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white"
                         />
                     </div>
                 )}
@@ -1214,7 +1214,7 @@ export default function EventsPage() {
                         <input
                             value={newEvent.month_day}
                             onChange={e => setNewEvent({ ...newEvent, month_day: e.target.value })}
-                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white"
                             placeholder="Ej: 15 de cada mes, o 24 Dic"
                         />
                     </div>
@@ -1226,7 +1226,7 @@ export default function EventsPage() {
                         value={newEvent.description}
                         onChange={e => setNewEvent({ ...newEvent, description: e.target.value })}
                         rows={3}
-                        className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white resize-none"
+                        className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm dark:text-white resize-none"
                         placeholder="Breve descripción del evento..."
                     />
                 </div>
@@ -1256,14 +1256,14 @@ export default function EventsPage() {
                     <button
                         onClick={saveAttendance}
                         disabled={savingAttendance || attendanceLoading || String(selectedEvent?.status || '').toUpperCase() === 'CANCELLED' || String(selectedEvent?.status || '').toUpperCase() === 'CANCELED'}
-                        className="px-8 py-2 bg-emerald-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 active:scale-95 transition-all disabled:opacity-60 disabled:active:scale-100"
+                        className="px-5 py-2 bg-emerald-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 active:scale-95 transition-all disabled:opacity-60 disabled:active:scale-100"
                     >
                         {savingAttendance ? 'Guardando...' : 'Guardar Registro'}
                     </button>
                 </>
             }
         >
-            <div className="space-y-6">
+            <div className="space-y-3">
                 {/* Scanner section */}
                 <div>
                     <button
@@ -1275,7 +1275,7 @@ export default function EventsPage() {
                 </div>
 
                 {showScanner && (
-                    <div className="p-6 bg-slate-900 dark:bg-black/40 rounded-2xl space-y-4">
+                    <div className="p-4 bg-slate-900 dark:bg-black/40 rounded-2xl space-y-4">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Ingresa el token del carnet (CCF-MBR-ID-TOKEN)</p>
                         <div className="flex gap-2">
                             <input
@@ -1283,13 +1283,13 @@ export default function EventsPage() {
                                 value={scannerToken}
                                 onChange={e => setScannerToken(e.target.value)}
                                 placeholder="CCF-MBR-1-XXXXXX"
-                                className="flex-1 bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500"
+                                className="flex-1 bg-slate-950 border border-white/10 rounded-xl px-4 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500"
                                 onKeyDown={e => e.key === 'Enter' && handleScanToken()}
                             />
                             <button
                                 onClick={handleScanToken}
                                 disabled={isScanning || !scannerToken}
-                                className="px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
                             >
                                 {isScanning ? 'Validando...' : 'Validar'}
                             </button>
@@ -1303,12 +1303,12 @@ export default function EventsPage() {
                         value={attendanceSearch}
                         onChange={e => setAttendanceSearch(e.target.value)}
                         placeholder="Buscar por nombre o correo..."
-                        className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-4 py-3 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
+                        className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-4 py-1.5 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
                     />
                     <select
                         value={attendanceRoleFilter}
                         onChange={e => setAttendanceRoleFilter(e.target.value)}
-                        className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-4 py-3 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
+                        className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-4 py-1.5 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
                     >
                         <option value="ALL">Todos los roles</option>
                         {attendanceRoleOptions.map((role) => (
@@ -1318,7 +1318,7 @@ export default function EventsPage() {
                     <select
                         value={attendanceStatusFilter}
                         onChange={e => setAttendanceStatusFilter(e.target.value as 'ALL' | 'PENDING' | 'PRESENT')}
-                        className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-4 py-3 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
+                        className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-4 py-1.5 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
                     >
                         <option value="ALL">Todos</option>
                         <option value="PENDING">Pendientes</option>
@@ -1327,28 +1327,28 @@ export default function EventsPage() {
                     <button
                         onClick={markFilteredMembers}
                         disabled={filteredMembers.length === 0}
-                        className="px-4 py-3 rounded-2xl border border-emerald-200 dark:border-emerald-900/30 bg-emerald-50 dark:bg-emerald-900/10 text-[10px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-300 transition-all hover:bg-emerald-100 disabled:opacity-50"
+                        className="px-4 py-1.5 rounded-2xl border border-emerald-200 dark:border-emerald-900/30 bg-emerald-50 dark:bg-emerald-900/10 text-[10px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-300 transition-all hover:bg-emerald-100 disabled:opacity-50"
                     >
                         Marcar filtrados
                     </button>
                     <button
                         onClick={clearFilteredMembers}
                         disabled={filteredMembers.length === 0}
-                        className="px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-300 transition-all hover:bg-slate-50 disabled:opacity-50"
+                        className="px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-300 transition-all hover:bg-slate-50 disabled:opacity-50"
                     >
                         Limpiar filtrados
                     </button>
                 </div>
 
                 {/* Summary badge */}
-                <div className="flex items-center justify-between px-4 py-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-900/30">
+                <div className="flex items-center justify-between px-4 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-900/30">
                     <div>
                         <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Presentes</p>
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                             {attendanceLoading ? 'Cargando sesión...' : `${filteredMembers.length} visibles en esta búsqueda`}
                         </p>
                     </div>
-                    <p className="text-xl font-black text-emerald-600">{attendedMemberIds.length} <span className="text-sm font-bold text-slate-400">/ {expectedUniverseMembers.length}</span></p>
+                    <p className="text-base font-black text-emerald-600">{attendedMemberIds.length} <span className="text-sm font-bold text-slate-400">/ {expectedUniverseMembers.length}</span></p>
                 </div>
 
                 {!attendanceLoading && (
@@ -1414,14 +1414,14 @@ export default function EventsPage() {
             actions={
                 <button
                     onClick={downloadQr}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
                 >
                     <Download size={14} /> Descargar
                 </button>
             }
         >
-            <div className="flex flex-col items-center justify-center space-y-8 py-8">
-                <div className="p-8 bg-white rounded-3xl shadow-xl border border-slate-100 dark:border-white/5 flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center space-y-3 py-4">
+                <div className="p-4 bg-white rounded-xl shadow-xl border border-slate-100 dark:border-white/5 flex items-center justify-center">
                     <QRCodeSVG 
                         id="event-qr-code"
                         value={typeof window !== 'undefined' ? `${window.location.origin}/public/register?event_id=${selectedEvent?.id}` : ''}
@@ -1451,13 +1451,13 @@ export default function EventsPage() {
                         <button disabled={deletingEventLoadingId === deletingEventId} onClick={() => setDeletingEventId(null)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-60">
                             Cancelar
                         </button>
-                        <button onClick={() => deletingEventId && handleDeleteEvent(deletingEventId)} disabled={deletingEventLoadingId === deletingEventId} className="px-8 py-2 bg-red-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-red-500/20 hover:bg-red-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60">
+                        <button onClick={() => deletingEventId && handleDeleteEvent(deletingEventId)} disabled={deletingEventLoadingId === deletingEventId} className="px-5 py-2 bg-red-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-red-500/20 hover:bg-red-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60">
                             <Trash2 size={14} /> Eliminar
                         </button>
                     </>
                 }
             >
-                <div className="flex flex-col items-center text-center p-6 bg-red-50 dark:bg-red-900/10 rounded-3xl border border-red-100 dark:border-red-900/30">
+                <div className="flex flex-col items-center text-center p-4 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/30">
                     <div className="size-16 bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mb-4">
                         <Trash2 size={24} />
                     </div>
@@ -1477,24 +1477,24 @@ export default function EventsPage() {
                         <button disabled={!!editingEvent && updatingEventId === editingEvent.id} onClick={() => setEditingEvent(null)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-60">
                             Cancelar
                         </button>
-                        <button disabled={!editingEvent || updatingEventId === editingEvent.id} onClick={() => editingEvent && handleUpdateEvent(editingEvent.id, { name: editingEvent.name, description: editingEvent.description, location: editingEvent.location, status: editingEvent.status, cancellation_reason: editingEvent.cancellation_reason, start_time: editingEvent.start_time, end_time: editingEvent.end_time, target_audience: editingEvent.target_audience || 'ALL', target_role_id: (editingEvent.target_audience || 'ALL') === 'ROLE' ? (editingEvent.target_role_ids?.[0] || editingEvent.target_role_id) : null, target_role_ids: (editingEvent.target_audience || 'ALL') === 'ROLE' ? (editingEvent.target_role_ids || getTargetRoleIds(editingEvent)) : [], target_member_ids: (editingEvent.target_audience || 'ALL') === 'MANUAL' ? (editingEvent.target_member_ids || []) : [] })} className="px-8 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60">
+                        <button disabled={!editingEvent || updatingEventId === editingEvent.id} onClick={() => editingEvent && handleUpdateEvent(editingEvent.id, { name: editingEvent.name, description: editingEvent.description, location: editingEvent.location, status: editingEvent.status, cancellation_reason: editingEvent.cancellation_reason, start_time: editingEvent.start_time, end_time: editingEvent.end_time, target_audience: editingEvent.target_audience || 'ALL', target_role_id: (editingEvent.target_audience || 'ALL') === 'ROLE' ? (editingEvent.target_role_ids?.[0] || editingEvent.target_role_id) : null, target_role_ids: (editingEvent.target_audience || 'ALL') === 'ROLE' ? (editingEvent.target_role_ids || getTargetRoleIds(editingEvent)) : [], target_member_ids: (editingEvent.target_audience || 'ALL') === 'MANUAL' ? (editingEvent.target_member_ids || []) : [] })} className="px-5 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60">
                             {editingEvent && updatingEventId === editingEvent.id ? 'Guardando...' : 'Guardar'} <Pencil size={14} />
                         </button>
                     </>
                 }
             >
                 {editingEvent && (
-                    <div className="space-y-6">
+                    <div className="space-y-3">
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre</label>
-                            <input type="text" value={editingEvent.name} onChange={e => setEditingEvent({...editingEvent, name: e.target.value})} className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
+                            <input type="text" value={editingEvent.name} onChange={e => setEditingEvent({...editingEvent, name: e.target.value})} className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</label>
                             <select 
                                 value={editingEvent.status || 'SCHEDULED'} 
                                 onChange={e => setEditingEvent({...editingEvent, status: e.target.value})} 
-                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white appearance-none"
+                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white appearance-none"
                             >
                                 <option value="SCHEDULED">Programado</option>
                                 <option value="COMPLETED">Realizado</option>
@@ -1513,7 +1513,7 @@ export default function EventsPage() {
                                         target_role_ids: e.target.value === 'ROLE' ? (editingEvent.target_role_ids || getTargetRoleIds(editingEvent)) : [],
                                         target_member_ids: e.target.value === 'MANUAL' ? (editingEvent.target_member_ids || []) : [],
                                     })}
-                                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white appearance-none"
+                                    className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white appearance-none"
                                 >
                                     <option value="ALL">Toda la iglesia</option>
                                     <option value="ROLE">Uno o varios roles</option>
@@ -1530,7 +1530,7 @@ export default function EventsPage() {
                                         const selectedValues = Array.from(e.target.selectedOptions).map((option) => Number(option.value));
                                         setEditingEvent({ ...editingEvent, target_role_ids: selectedValues, target_role_id: selectedValues[0] || null });
                                     }}
-                                    className="min-h-[140px] w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white disabled:opacity-50"
+                                    className="min-h-[140px] w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white disabled:opacity-50"
                                 >
                                     {roles.map((role) => (
                                         <option key={role.id} value={role.id}>{role.name}</option>
@@ -1538,7 +1538,7 @@ export default function EventsPage() {
                                 </select>
                             </div>
                         </div>
-                        <div className="space-y-3 rounded-3xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
+                        <div className="space-y-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
                             <div className="flex items-center justify-between gap-3">
                                 <div>
                                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Plantillas de audiencia</p>
@@ -1553,7 +1553,7 @@ export default function EventsPage() {
                                 {audiencePresets.length === 0 ? (
                                     <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 px-4 py-5 text-center text-sm text-slate-400">Aun no hay plantillas guardadas</div>
                                 ) : audiencePresets.map((preset) => (
-                                    <div key={preset.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3">
+                                    <div key={preset.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-1.5">
                                         <div className="min-w-0">
                                             <p className="truncate text-sm font-bold text-slate-800 dark:text-white">{preset.name}</p>
                                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{preset.target_audience === 'ALL' ? 'Toda la iglesia' : preset.target_audience === 'ROLE' ? `${preset.target_role_ids.length} roles` : `${preset.target_member_ids.length} personas`}</p>
@@ -1572,12 +1572,12 @@ export default function EventsPage() {
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Personas esperadas</label>
                                     <span className="rounded-full bg-blue-50 dark:bg-blue-900/20 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-300">{(editingEvent.target_member_ids || []).length} seleccionadas</span>
                                 </div>
-                                <input value={editManualSearch} onChange={e => setEditManualSearch(e.target.value)} placeholder="Buscar por nombre, correo o rol..." className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
+                                <input value={editManualSearch} onChange={e => setEditManualSearch(e.target.value)} placeholder="Buscar por nombre, correo o rol..." className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
                                 <div className="max-h-64 space-y-2 overflow-y-auto rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-3">
                                     {editManualMembers.map((member) => {
                                         const isSelected = (editingEvent.target_member_ids || []).includes(member.id);
                                         return (
-                                            <button key={member.id} type="button" onClick={() => setEditingEvent({ ...editingEvent, target_member_ids: isSelected ? (editingEvent.target_member_ids || []).filter((value) => value !== member.id) : [...(editingEvent.target_member_ids || []), member.id], })} className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all ${isSelected ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20' : 'border-slate-200 bg-white dark:border-white/10 dark:bg-white/5'}`}>
+                                            <button key={member.id} type="button" onClick={() => setEditingEvent({ ...editingEvent, target_member_ids: isSelected ? (editingEvent.target_member_ids || []).filter((value) => value !== member.id) : [...(editingEvent.target_member_ids || []), member.id], })} className={`flex w-full items-center justify-between rounded-2xl border px-4 py-1.5 text-left transition-all ${isSelected ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20' : 'border-slate-200 bg-white dark:border-white/10 dark:bg-white/5'}`}>
                                                 <div>
                                                     <p className="text-sm font-bold text-slate-800 dark:text-white">{member.first_name} {member.last_name}</p>
                                                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{member.church_role || 'Sin rol'}</p>
@@ -1586,32 +1586,32 @@ export default function EventsPage() {
                                             </button>
                                         );
                                     })}
-                                    {editManualMembers.length === 0 && <div className="py-10 text-center text-sm text-slate-400">No hay personas para este filtro</div>}
+                                    {editManualMembers.length === 0 && <div className="py-6 text-center text-sm text-slate-400">No hay personas para este filtro</div>}
                                 </div>
                             </div>
                         )}
                         {editingEvent.status === 'CANCELLED' && (
                             <div className="animate-in fade-in slide-in-from-top-2 space-y-1.5">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-red-400">Razón de Cancelación *</label>
-                                <textarea value={editingEvent.cancellation_reason || ''} onChange={e => setEditingEvent({...editingEvent, cancellation_reason: e.target.value})} rows={3} placeholder="¿Por qué no se realizó este evento?" className="w-full px-4 py-3 rounded-2xl border border-red-200 dark:border-white/10 bg-red-50 dark:bg-black/20 focus:ring-2 focus:ring-red-500/20 outline-none font-bold text-sm text-red-900 dark:text-red-200 resize-none placeholder:text-red-300 dark:placeholder:text-red-700" />
+                                <textarea value={editingEvent.cancellation_reason || ''} onChange={e => setEditingEvent({...editingEvent, cancellation_reason: e.target.value})} rows={3} placeholder="¿Por qué no se realizó este evento?" className="w-full px-4 py-1.5 rounded-2xl border border-red-200 dark:border-white/10 bg-red-50 dark:bg-black/20 focus:ring-2 focus:ring-red-500/20 outline-none font-bold text-sm text-red-900 dark:text-red-200 resize-none placeholder:text-red-300 dark:placeholder:text-red-700" />
                             </div>
                         )}
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Descripción</label>
-                            <textarea value={editingEvent.description || ''} onChange={e => setEditingEvent({...editingEvent, description: e.target.value})} rows={3} className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white resize-none" />
+                            <textarea value={editingEvent.description || ''} onChange={e => setEditingEvent({...editingEvent, description: e.target.value})} rows={3} className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white resize-none" />
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ubicación</label>
-                            <input type="text" value={editingEvent.location || ''} onChange={e => setEditingEvent({...editingEvent, location: e.target.value})} className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
+                            <input type="text" value={editingEvent.location || ''} onChange={e => setEditingEvent({...editingEvent, location: e.target.value})} className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hora de Inicio</label>
-                                <input type="time" value={editingEvent.start_time || ''} onChange={e => setEditingEvent({...editingEvent, start_time: e.target.value})} className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
+                                <input type="time" value={editingEvent.start_time || ''} onChange={e => setEditingEvent({...editingEvent, start_time: e.target.value})} className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hora de Finalización</label>
-                                <input type="time" value={editingEvent.end_time || ''} onChange={e => setEditingEvent({...editingEvent, end_time: e.target.value})} className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
+                                <input type="time" value={editingEvent.end_time || ''} onChange={e => setEditingEvent({...editingEvent, end_time: e.target.value})} className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-500/20 outline-none font-bold text-sm text-slate-800 dark:text-white" />
                             </div>
                         </div>
                     </div>

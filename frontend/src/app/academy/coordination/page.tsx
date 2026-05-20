@@ -118,9 +118,9 @@ export default function CoordinationConsole() {
                 }
             />
 
-            <main className="flex-1 overflow-y-auto p-8 lg:p-12 space-y-10">
+            <main className="flex-1 overflow-y-auto p-4 lg:p-4 space-y-4">
                 {!isCoordination && (
-                    <div className="border border-rose-300 bg-rose-100 text-rose-800 rounded-3xl px-6 py-4 text-sm font-semibold">
+                    <div className="border border-rose-300 bg-rose-100 text-rose-800 rounded-xl px-4 py-2 text-sm font-semibold">
                         Esta consola está restringida al equipo académico. Tus permisos actuales son &quot;{user?.role || 'estudiante'}&quot;.
                     </div>
                 )}
@@ -130,7 +130,7 @@ export default function CoordinationConsole() {
                 )}
 
                 {metrics && viewType === 'grid' && (
-                    <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <DSMetric label="Cursos totales" value={String(metrics.total_courses ?? 0)} trend="+4 cohortes" tone="blue" />
                         <DSMetric label="Inscripciones" value={String(metrics.total_enrollments ?? 0)} trend="Semana actual" tone="emerald" />
                         <DSMetric label="Formales aprobados" value={String(metrics.approved_formal_enrollments ?? 0)} trend="Actas activas" tone="amber" />
@@ -138,11 +138,11 @@ export default function CoordinationConsole() {
                 )}
 
                 {readiness && viewType === 'grid' && (
-                    <section className="rounded-[2.5rem] border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] shadow-xl p-6">
+                    <section className="rounded-xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] shadow-xl p-4">
                         <header className="flex items-center justify-between mb-6">
                             <div>
                                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Checklist de alistamiento</p>
-                                <h2 className="text-2xl font-black text-slate-900 dark:text-white">Piloto Academia Faro</h2>
+                                <h2 className="text-lg font-black text-slate-900 dark:text-white">Piloto Academia Faro</h2>
                             </div>
                             <div className="text-right">
                                 <p className="text-sm text-slate-500 font-semibold">Readiness</p>
@@ -152,7 +152,7 @@ export default function CoordinationConsole() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {readiness.checklist.map((item) => (
                                 <article key={item.key} className={clsx('rounded-2xl border p-4 flex items-center gap-4', item.completed ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-slate-50')}>
-                                    <div className={clsx('size-10 rounded-xl flex items-center justify-center', item.completed ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-600')}>
+                                    <div className={clsx('size-8 rounded-xl flex items-center justify-center', item.completed ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-600')}>
                                         {item.completed ? '✓' : '!'}
                                     </div>
                                     <div>
@@ -166,7 +166,7 @@ export default function CoordinationConsole() {
                 )}
 
                 {readiness && readiness.checklist.some((item) => !item.completed) && viewType === 'grid' && (
-                    <section className="rounded-[2rem] border border-amber-200 bg-amber-50/70 p-6 text-amber-800 flex items-center gap-4">
+                    <section className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-amber-800 flex items-center gap-4">
                         <AlertTriangle size={32} />
                         <div>
                             <p className="text-sm font-semibold">Pendientes críticos</p>
@@ -186,7 +186,7 @@ export default function CoordinationConsole() {
                                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{course.certificate_type || 'Pendiente'}</span>
                             </article>
                         ))}
-                        {filteredCourses.length === 0 && <div className="py-8 text-center text-slate-400 text-sm">Sin cursos para mostrar</div>}
+                        {filteredCourses.length === 0 && <div className="py-4 text-center text-slate-400 text-sm">Sin cursos para mostrar</div>}
                     </section>
                 )}
 
@@ -221,7 +221,7 @@ export default function CoordinationConsole() {
                                 <p className="text-xs text-slate-500 mt-1">{course.modality === 'formal' ? 'Formal' : 'No formal'} · Certificado: {course.certificate_type || 'Pendiente'}</p>
                             </article>
                         ))}
-                        {filteredCourses.length === 0 && <div className="col-span-full py-8 text-center text-slate-400 text-sm">No hay eventos de cohorte</div>}
+                        {filteredCourses.length === 0 && <div className="col-span-full py-4 text-center text-slate-400 text-sm">No hay eventos de cohorte</div>}
                     </section>
                 )}
 
@@ -242,7 +242,7 @@ export default function CoordinationConsole() {
                                 </div>
                             );
                         })}
-                        {(!readiness || readiness.checklist.length === 0) && <div className="py-8 text-center text-slate-400 text-sm">Sin datos de roadmap</div>}
+                        {(!readiness || readiness.checklist.length === 0) && <div className="py-4 text-center text-slate-400 text-sm">Sin datos de roadmap</div>}
                     </section>
                 )}
 
@@ -260,11 +260,11 @@ export default function CoordinationConsole() {
 
                 {(viewType === 'grid' || viewType === 'table') && filteredCourses.length > 0 && (
                     <DSCard tone="light" className="shadow-2xl">
-                        <header className="px-6 py-5 border-b border-slate-100 space-y-3">
+                        <header className="px-4 py-5 border-b border-slate-100 space-y-3">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <DSBadge tone="blue" label="Cohortes formales" />
-                                    <h3 className="text-xl font-black text-slate-900">Seguimiento de actas y certificados</h3>
+                                    <h3 className="text-base font-black text-slate-900">Seguimiento de actas y certificados</h3>
                                 </div>
                                 <button onClick={downloadSnapshot} className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.3em] px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50">
                                     <Download size={14} /> Reporte
@@ -298,10 +298,10 @@ export default function CoordinationConsole() {
                             <table className="min-w-full text-sm">
                                 <thead className="text-left text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">
                                     <tr>
-                                        <th className="px-6 py-4">Curso</th>
-                                        <th className="px-6 py-4">Cohorte</th>
-                                        <th className="px-6 py-4">Modalidad</th>
-                                        <th className="px-6 py-4">Certificado</th>
+                                        <th className="px-4 py-2">Curso</th>
+                                        <th className="px-4 py-2">Cohorte</th>
+                                        <th className="px-4 py-2">Modalidad</th>
+                                        <th className="px-4 py-2">Certificado</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -311,10 +311,10 @@ export default function CoordinationConsole() {
                                             className="border-t border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors group"
                                             onClick={() => router.push(`/academy/courses/${course.id}`)}
                                         >
-                                            <td className="px-6 py-4 font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">{course.title}</td>
-                                            <td className="px-6 py-4 text-slate-500">{course.cohort_name || 'Sin asignar'}</td>
-                                            <td className="px-6 py-4">{course.modality === 'formal' ? 'Formal' : 'No formal'}</td>
-                                            <td className="px-6 py-4 text-slate-500">{course.certificate_type || 'Pendiente'}</td>
+                                            <td className="px-4 py-2 font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">{course.title}</td>
+                                            <td className="px-4 py-2 text-slate-500">{course.cohort_name || 'Sin asignar'}</td>
+                                            <td className="px-4 py-2">{course.modality === 'formal' ? 'Formal' : 'No formal'}</td>
+                                            <td className="px-4 py-2 text-slate-500">{course.certificate_type || 'Pendiente'}</td>
                                         </tr>
                                     ))}
                                 </tbody>

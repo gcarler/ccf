@@ -1,8 +1,14 @@
 ﻿"use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Headphones, ImageIcon, LinkIcon, PlayCircle, Send, Smile } from "lucide-react";
 import { apiFetch } from "@/lib/http";
+import {
+  activeTestimonialMediaAssets,
+  TestimonialMediaAsset,
+  TestimonialMediaType,
+} from "@/lib/cms/testimonialMedia";
 
 interface TestimonialFormProps {
   userId: number;
@@ -13,12 +19,53 @@ interface TestimonialFormProps {
 export default function TestimonialForm({ userId, token, onSubmitted }: TestimonialFormProps) {
   const [content, setContent] = useState("");
   const [emotion, setEmotion] = useState("Feliz");
-  const [mediaType, setMediaType] = useState<"text" | "image" | "video" | "podcast">("text");
+  const [mediaType, setMediaType] = useState<TestimonialMediaType>("text");
   const [imageUrl, setImageUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [podcastUrl, setPodcastUrl] = useState("");
+  const [mediaItems, setMediaItems] = useState<TestimonialMediaAsset[]>([]);
+  const [mediaSearch, setMediaSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (!token) {
+      setMediaItems([]);
+      return;
+    }
+
+    apiFetch<TestimonialMediaAsset[]>("/cms/media", { token, cache: "no-store" })
+      .then((data) => setMediaItems(Array.isArray(data) ? data : []))
+      .catch(() => setMediaItems([]));
+  }, [token]);
+
+  const activeMediaUrl = useMemo(() => {
+    if (mediaType === "image") return imageUrl;
+    if (mediaType === "video") return videoUrl;
+    if (mediaType === "podcast") return podcastUrl;
+    return "";
+  }, [imageUrl, mediaType, podcastUrl, videoUrl]);
+
+  const compatibleMedia = useMemo(
+    () => activeTestimonialMediaAssets(mediaItems, mediaType, mediaSearch, 6),
+    [mediaItems, mediaSearch, mediaType],
+  );
+
+  const setActiveMediaUrl = (value: string) => {
+    if (mediaType === "image") setImageUrl(value);
+    if (mediaType === "video") setVideoUrl(value);
+    if (mediaType === "podcast") setPodcastUrl(value);
+  };
+
+  const selectMediaType = (nextType: TestimonialMediaType) => {
+    setMediaType(nextType);
+    setMediaSearch("");
+    if (nextType === "text" || nextType !== mediaType) {
+      setImageUrl("");
+      setVideoUrl("");
+      setPodcastUrl("");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +76,8 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
     }
 
     setIsSubmitting(true);
+    const submittedMediaType = mediaType === "text" || !activeMediaUrl.trim() ? "text" : mediaType;
+    const submittedMediaUrl = submittedMediaType === "text" ? null : activeMediaUrl.trim();
 
     try {
       await apiFetch("/cms/testimonials", {
@@ -37,11 +86,11 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
         body: {
           content,
           emotion,
-          media_type: mediaType,
-          media_url: mediaType === "image" ? imageUrl : mediaType === "video" ? videoUrl : mediaType === "podcast" ? podcastUrl : null,
-          image_url: imageUrl || null,
-          video_url: videoUrl || null,
-          podcast_url: podcastUrl || null,
+          media_type: submittedMediaType,
+          media_url: submittedMediaUrl,
+          image_url: submittedMediaType === "image" ? submittedMediaUrl : null,
+          video_url: submittedMediaType === "video" ? submittedMediaUrl : null,
+          podcast_url: submittedMediaType === "podcast" ? submittedMediaUrl : null,
           author_id: userId,
         },
       });
@@ -51,6 +100,8 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
         setImageUrl("");
         setVideoUrl("");
         setPodcastUrl("");
+        setMediaType("text");
+        setMediaSearch("");
         if (onSubmitted) onSubmitted();
     } catch (error) {
       console.error("testimonial error", error);
@@ -112,7 +163,7 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
               <button
                 key={option.id}
                 type="button"
-                onClick={() => setMediaType(option.id as typeof mediaType)}
+                onClick={() => selectMediaType(option.id as TestimonialMediaType)}
                 className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-black uppercase tracking-widest transition-all ${
                   mediaType === option.id
                     ? "border-primary bg-primary text-white"
@@ -124,22 +175,58 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
             ))}
           </div>
           {mediaType !== "text" && (
-            <label className="block space-y-2">
-              <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500">
-                <LinkIcon size={13} /> URL de {mediaType === "image" ? "imagen" : mediaType === "video" ? "video" : "podcast"}
-              </span>
-              <input
-                type="url"
-                value={mediaType === "image" ? imageUrl : mediaType === "video" ? videoUrl : podcastUrl}
-                onChange={(event) => {
-                  if (mediaType === "image") setImageUrl(event.target.value);
-                  if (mediaType === "video") setVideoUrl(event.target.value);
-                  if (mediaType === "podcast") setPodcastUrl(event.target.value);
-                }}
-                placeholder="Pega la URL desde la biblioteca de medios"
-                className="w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-sm outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary"
-              />
-            </label>
+            <div className="space-y-3">
+              <label className="block space-y-2">
+                <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500">
+                  <LinkIcon size={13} /> URL de {mediaType === "image" ? "imagen" : mediaType === "video" ? "video" : "podcast"}
+                </span>
+                <input
+                  type="url"
+                  value={activeMediaUrl}
+                  onChange={(event) => setActiveMediaUrl(event.target.value)}
+                  placeholder="Pega una URL o elige desde la biblioteca"
+                  className="w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-sm outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary"
+                />
+              </label>
+
+              <div className="rounded-2xl border border-slate-200 bg-white/70 p-3">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Biblioteca CMS</span>
+                  <Link href="/cms/media" className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline">
+                    Subir media
+                  </Link>
+                </div>
+                <input
+                  value={mediaSearch}
+                  onChange={(event) => setMediaSearch(event.target.value)}
+                  placeholder="Buscar archivo..."
+                  className="mb-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-primary/20"
+                />
+                {compatibleMedia.length === 0 ? (
+                  <p className="rounded-xl bg-slate-50 px-3 py-3 text-xs font-medium text-slate-500">
+                    No hay archivos compatibles. Sube primero imagenes, videos o audios en la biblioteca.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {compatibleMedia.map((item) => (
+                      <button
+                        key={item.id ?? item.url}
+                        type="button"
+                        onClick={() => setActiveMediaUrl(item.url)}
+                        className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left transition-all ${
+                          activeMediaUrl === item.url
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-primary/40"
+                        }`}
+                      >
+                        {mediaType === "image" ? <ImageIcon size={14} /> : mediaType === "video" ? <PlayCircle size={14} /> : <Headphones size={14} />}
+                        <span className="min-w-0 truncate text-[11px] font-bold">{item.filename || item.url}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </div>
 

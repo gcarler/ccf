@@ -23,11 +23,11 @@ function SortableMemberCard({ member, onClick }: MemberCardProps) {
             className="p-4 bg-white dark:bg-[#1e1f21] rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-grab active:cursor-grabbing group"
         >
             <div className="flex items-start gap-3">
-                <div className="size-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/20">
+                <div className="size-8 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/20">
                     {member.name.substring(0, 1)}
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h4 className="text-[13px] font-black text-slate-800 dark:text-slate-100 truncate tracking-tight">{member.name}</h4>
+                    <h4 className="text-xs font-black text-slate-800 dark:text-slate-100 truncate tracking-tight">{member.name}</h4>
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{member.group}</p>
                 </div>
             </div>

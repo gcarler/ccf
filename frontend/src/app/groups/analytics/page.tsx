@@ -70,7 +70,7 @@ export default function GroupsAnalyticsPage() {
     }, [groups]);
 
     return (
-        <div className="flex h-full flex-col overflow-hidden bg-[#f8fafc] dark:bg-[#0b0d11]">
+        <div className="flex h-full flex-col overflow-hidden bg-[#f8fafc] dark:bg-[#1E1F21]">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: "Casas de Bendicion", icon: Home },
@@ -78,7 +78,7 @@ export default function GroupsAnalyticsPage() {
                 ]}
             />
 
-            <main className="flex-1 space-y-8 overflow-y-auto p-8 lg:p-12">
+            <main className="flex-1 space-y-3 overflow-y-auto p-4 lg:p-4">
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
                     <MetricCard label="Total casas" value={String(metrics.total)} tone="blue" />
                     <MetricCard label="Casas activas" value={String(metrics.active)} tone="emerald" />
@@ -88,13 +88,13 @@ export default function GroupsAnalyticsPage() {
                 </section>
 
                 {loading && (
-                    <div className="rounded-[2rem] border border-dashed border-slate-300 bg-white p-12 text-center text-sm font-bold text-slate-500 dark:border-white/10 dark:bg-white/[0.02] dark:text-slate-300">
+                    <div className="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-center text-sm font-bold text-slate-500 dark:border-white/10 dark:bg-white/[0.02] dark:text-slate-300">
                         Cargando metricas de grupos...
                     </div>
                 )}
 
                 {!loading && error && (
-                    <div className="rounded-[2rem] border border-rose-200 bg-rose-50 p-8 dark:border-rose-500/20 dark:bg-rose-500/10">
+                    <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 dark:border-rose-500/20 dark:bg-rose-500/10">
                         <p className="text-sm font-bold text-rose-600 dark:text-rose-300">{error}</p>
                         <button
                             type="button"
@@ -107,15 +107,15 @@ export default function GroupsAnalyticsPage() {
                 )}
 
                 {!loading && !error && groups.length === 0 && (
-                    <div className="rounded-[2rem] border-2 border-dashed border-slate-200 bg-white p-12 text-center dark:border-white/10 dark:bg-white/[0.02]">
+                    <div className="rounded-xl border-2 border-dashed border-slate-200 bg-white p-4 text-center dark:border-white/10 dark:bg-white/[0.02]">
                         <Users size={40} className="mx-auto text-slate-300" />
                         <p className="mt-4 text-xs font-black uppercase tracking-widest text-slate-400">No hay datos de grupos para analizar</p>
                     </div>
                 )}
 
                 {!loading && !error && groups.length > 0 && (
-                    <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        <article className="rounded-3xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-white/[0.03]">
+                    <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <article className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/[0.03]">
                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Top grupos por miembros</p>
                             <div className="mt-5 space-y-3">
                                 {metrics.topGroups.map((group) => {
@@ -138,7 +138,7 @@ export default function GroupsAnalyticsPage() {
                             </div>
                         </article>
 
-                        <article className="rounded-3xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-white/[0.03]">
+                        <article className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/[0.03]">
                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Riesgos operativos</p>
                             <div className="mt-5 space-y-4">
                                 <RiskRow
@@ -175,7 +175,7 @@ function MetricCard({ label, value, tone }: { label: string; value: string; tone
     };
 
     return (
-        <article className="rounded-3xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/[0.03]">
+        <article className="rounded-xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/[0.03]">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</p>
             <p className={`mt-2 text-3xl font-black ${toneClass[tone]}`}>{value}</p>
         </article>
@@ -187,7 +187,7 @@ function RiskRow({ label, value, description }: { label: string; value: number; 
         <div className="rounded-2xl border border-slate-200 p-4 dark:border-white/10">
             <div className="flex items-center justify-between gap-4">
                 <p className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">{label}</p>
-                <p className="text-lg font-black text-slate-900 dark:text-slate-100">{value}</p>
+                <p className="text-sm font-black text-slate-900 dark:text-slate-100">{value}</p>
             </div>
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{description}</p>
         </div>

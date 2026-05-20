@@ -69,11 +69,7 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
   }
 
   if (section.type === "cards") {
-    const cardsRaw = Array.isArray(props.items) ? props.items : [
-      { title: val(props, "card_1_title", "Conecta"), body: val(props, "card_1_body", "Únete a una comunidad de fe.") },
-      { title: val(props, "card_2_title", "Crece"), body: val(props, "card_2_body", "Discipulado y formación práctica.") },
-      { title: val(props, "card_3_title", "Sirve"), body: val(props, "card_3_body", "Impacta tu ciudad con propósito.") },
-    ];
+    const cardsRaw = Array.isArray(props.items) ? props.items : [];
     const cards = cardsRaw
       .filter((item) => Boolean(item) && (item as { status?: string }).status !== "archived")
       .slice(0, 6) as Array<{ title?: string; body?: string; status?: string }>;
@@ -94,10 +90,7 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
   }
 
   if (section.type === "faq") {
-    const itemsRaw = Array.isArray(props.items) ? props.items : [
-      { q: val(props, "q1", "¿Dónde están ubicados?"), a: val(props, "a1", "Estamos en múltiples sedes. Revisa la sección de sedes.") },
-      { q: val(props, "q2", "¿Cómo me conecto?"), a: val(props, "a2", "Puedes visitarnos, escribirnos o unirte a un grupo pequeño.") },
-    ];
+    const itemsRaw = Array.isArray(props.items) ? props.items : [];
     const items = itemsRaw
       .filter((item) => Boolean(item) && (item as { status?: string }).status !== "archived")
       .slice(0, 8) as Array<{ q?: string; a?: string; status?: string }>;
@@ -117,10 +110,9 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
   }
 
   if (section.type === "gallery") {
-    const galleryImageUrl = imageUrl || "https://picsum.photos/seed/1517457373958-b7bdd4587205/800/600";
     return (
       <section className="rounded-3xl overflow-hidden" style={{ background: "var(--faro-surface-container-low)" }}>
-        <img src={galleryImageUrl} alt={imageAlt || "Gallery image"} className="w-full h-[320px] object-cover" />
+        {imageUrl && <img src={imageUrl} alt={imageAlt || "Gallery image"} className="w-full h-[320px] object-cover" />}
         <div className="p-6">
           <h3 className="text-2xl font-black" style={{ color: "var(--faro-on-surface)" }}>{title}</h3>
           {body && <p className="mt-2 text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>{body}</p>}
@@ -147,12 +139,14 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
   }
 
   if (section.type === "video_hero") {
-    const videoUrl = val(props, "video_url", "https://cdn.pixabay.com/vimeo/32894014/mountains-21218.mp4?width=1280&hash=123");
+    const videoUrl = val(props, "video_url", "");
     return (
       <section className="relative rounded-3xl overflow-hidden min-h-[500px] flex items-center p-10 md:p-16">
-        <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover">
-          <source src={videoUrl} type="video/mp4" />
-        </video>
+        {videoUrl && (
+          <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover">
+            <source src={videoUrl} type="video/mp4" />
+          </video>
+        )}
         <div className="absolute inset-0 bg-black/50" />
         <div className="relative z-10 w-full max-w-4xl">
           <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/70">Video Hero</p>
@@ -180,11 +174,10 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
   }
 
   if (section.type === "testimonials") {
-    const itemsRaw = Array.isArray(props.items) ? props.items : [
-      { author: "Juan Pérez", role: "Miembro", content: "Una comunidad increíble." },
-      { author: "María López", role: "Voluntaria", content: "He crecido mucho aquí." },
-    ];
-    const items = itemsRaw.slice(0, 4) as Array<{ author?: string; role?: string; content?: string }>;
+    const itemsRaw = Array.isArray(props.items) ? props.items : [];
+    const items = itemsRaw
+      .filter((item) => Boolean(item) && (item as { status?: string }).status !== "archived")
+      .slice(0, 4) as Array<{ author?: string; role?: string; content?: string; status?: string }>;
     return (
       <section className="rounded-3xl p-8 md:p-10" style={{ background: "var(--faro-surface-container-low)" }}>
         <h3 className="text-3xl font-black text-center mb-10" style={{ color: "var(--faro-on-surface)" }}>{title || "Testimonios"}</h3>
@@ -209,12 +202,10 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
   }
 
   if (section.type === "stats") {
-    const itemsRaw = Array.isArray(props.items) ? props.items : [
-      { value: "10K+", label: "Vidas impactadas" },
-      { value: "50+", label: "Grupos activos" },
-      { value: "3", label: "Sedes" },
-    ];
-    const items = itemsRaw.slice(0, 4) as Array<{ value?: string; label?: string }>;
+    const itemsRaw = Array.isArray(props.items) ? props.items : [];
+    const items = itemsRaw
+      .filter((item) => Boolean(item) && (item as { status?: string }).status !== "archived")
+      .slice(0, 4) as Array<{ value?: string; label?: string; status?: string }>;
     return (
       <section className="rounded-3xl p-10 md:p-16 text-center" style={{ background: "var(--faro-primary-container)" }}>
         <h3 className="text-3xl font-black mb-10" style={{ color: "var(--faro-on-primary-container)" }}>{title}</h3>
@@ -231,18 +222,17 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
   }
 
   if (section.type === "team") {
-    const itemsRaw = Array.isArray(props.items) ? props.items : [
-      { name: "Pastor A", role: "Pastor Principal", image: "" },
-      { name: "Líder B", role: "Líder de Jóvenes", image: "" },
-    ];
-    const items = itemsRaw.slice(0, 8) as Array<{ name?: string; role?: string; image?: string }>;
+    const itemsRaw = Array.isArray(props.items) ? props.items : [];
+    const items = itemsRaw
+      .filter((item) => Boolean(item) && (item as { status?: string }).status !== "archived")
+      .slice(0, 8) as Array<{ name?: string; role?: string; image?: string; status?: string }>;
     return (
       <section className="rounded-3xl p-8 md:p-10" style={{ background: "var(--faro-surface-container-low)" }}>
         <h3 className="text-3xl font-black text-center mb-10" style={{ color: "var(--faro-on-surface)" }}>{title || "Nuestro Equipo"}</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {items.map((item, index) => (
             <div key={index} className="flex flex-col items-center">
-              <div className="size-24 md:size-32 rounded-full mb-4 bg-cover bg-center" style={{ backgroundImage: `url('${item.image || "https://picsum.photos/seed/1535713875002-d1d0cf377fde/800/600"}')`, background: item.image ? undefined : "var(--faro-surface-container-high)" }} />
+              <div className="size-24 md:size-32 rounded-full mb-4 bg-cover bg-center" style={{ backgroundImage: item.image ? `url('${item.image}')` : undefined, background: item.image ? undefined : "var(--faro-surface-container-high)" }} />
               <p className="font-bold text-lg" style={{ color: "var(--faro-on-surface)" }}>{item.name}</p>
               <p className="text-sm mt-1" style={{ color: "var(--faro-primary)" }}>{item.role}</p>
             </div>
@@ -253,7 +243,7 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
   }
 
   if (section.type === "countdown") {
-    const targetDate = val(props, "target_date", "2026-12-31T23:59:59");
+    const targetDate = val(props, "target_date", "");
     return (
       <section className="rounded-3xl p-10 text-center" style={{ background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))" }}>
         <h3 className="text-3xl font-black text-white mb-8">{title || "Próximo Evento"}</h3>
@@ -267,17 +257,16 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
             </div>
           ))}
         </div>
-        <p className="mt-8 text-white/80 text-sm font-medium">Cuenta regresiva hasta: {new Date(targetDate).toLocaleDateString()}</p>
+        {targetDate && <p className="mt-8 text-white/80 text-sm font-medium">Cuenta regresiva hasta: {new Date(targetDate).toLocaleDateString()}</p>}
       </section>
     );
   }
 
   if (section.type === "pricing") {
-    const itemsRaw = Array.isArray(props.items) ? props.items : [
-      { name: "Mensual", price: "$50", features: "Acceso completo\nMaterial digital", btn: "Donar" },
-      { name: "Anual", price: "$500", features: "Acceso completo\nMaterial impreso\nEventos VIP", btn: "Donar Anual" },
-    ];
-    const items = itemsRaw.slice(0, 3) as Array<{ name?: string; price?: string; features?: string; btn?: string }>;
+    const itemsRaw = Array.isArray(props.items) ? props.items : [];
+    const items = itemsRaw
+      .filter((item) => Boolean(item) && (item as { status?: string }).status !== "archived")
+      .slice(0, 3) as Array<{ name?: string; price?: string; features?: string; btn?: string; status?: string }>;
     return (
       <section className="rounded-3xl p-8 md:p-10" style={{ background: "var(--faro-surface-container-low)" }}>
         <h3 className="text-3xl font-black text-center mb-10" style={{ color: "var(--faro-on-surface)" }}>{title || "Opciones de Donación"}</h3>

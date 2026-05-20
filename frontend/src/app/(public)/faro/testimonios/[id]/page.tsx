@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Quote, Share2, Heart, Send, CheckCircle2, Loader2, X, Headphones } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Testimonial, PREMIUM_TESTIMONIALS } from "@/lib/data/testimonios";
+import { Testimonial } from "@/lib/data/testimonios";
 import { apiFetch } from "@/lib/http";
 
 function getTestimonialMediaUrl(t: Testimonial): string {
@@ -31,15 +31,12 @@ export default function TestimonioDetailPage() {
     const [prayerSent, setPrayerSent] = useState(false);
 
     useEffect(() => {
-        // Try finding locally first to prevent layout shift if possible
-        const localT = PREMIUM_TESTIMONIALS.find(t => t.id === id);
-        if (localT) {
-            setTestimonial(localT);
+        if (!Number.isFinite(id)) {
+            setTestimonial(null);
             setLoading(false);
             return;
         }
 
-        // Otherwise fetch from API
         apiFetch<Testimonial>(`/cms/testimonials/${id}`, { silent: true })
             .then((data) => setTestimonial(data))
             .catch(() => setTestimonial(null))

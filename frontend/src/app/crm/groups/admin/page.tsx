@@ -118,27 +118,27 @@ export default function GloryHouseAdmin() {
                 secondaryAction={{ label: "Exportar Reportes", icon: FileText, onClick: () => window.print() }}
             />
 
-            <main className="space-y-10 pb-20">
-                <section className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <main className="space-y-4 pb-20">
+                <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <Stat label="Casas Activas" value={loading ? "..." : houses.length.toString()} />
                     <Stat label="Miembros Base" value={loading ? "..." : totalMembers.toString()} />
                     <Stat label="Temporadas" value={seasons.length.toString()} />
                 </section>
 
-                <section className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+                <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {houses.map((house) => (
                         <motion.button
                             key={house.id}
                             initial={{ opacity: 0, y: 16 }}
                             animate={{ opacity: 1, y: 0 }}
                             onClick={() => openReport(house)}
-                            className="rounded-[2.5rem] border border-slate-200 bg-white p-8 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-white/5"
+                            className="rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-white/5"
                         >
                             <div className="mb-6 flex items-start justify-between">
-                                <div className="flex size-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-900/20"><Home size={24} /></div>
+                                <div className="flex size-9 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-900/20"><Home size={24} /></div>
                                 <span className="rounded-lg bg-emerald-50 px-2 py-1 text-[8px] font-black uppercase text-emerald-600 dark:bg-emerald-900/20">{house.status || "Activa"}</span>
                             </div>
-                            <h4 className="text-xl font-black uppercase tracking-tight">{house.name}</h4>
+                            <h4 className="text-base font-black uppercase tracking-tight">{house.name}</h4>
                             <p className="mt-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-slate-400"><MapPin size={12} /> {house.zone || "Sin zona"}</p>
                             <div className="mt-6 flex items-center gap-2 border-t border-slate-100 pt-6 text-[11px] font-bold text-slate-500 dark:border-white/5"><Users size={14} /> {house.members_count || 0} miembros</div>
                         </motion.button>
@@ -147,7 +147,7 @@ export default function GloryHouseAdmin() {
             </main>
 
             <WorkspaceDrawer isOpen={Boolean(selectedHouse)} onClose={() => setSelectedHouse(null)} title={selectedHouse?.name || "Reporte"} subtitle="REPORTE OPERATIVO SEMANAL">
-                <div className="space-y-8 pb-20">
+                <div className="space-y-3 pb-20">
                     <div className="grid grid-cols-2 gap-4">
                         <Field label="Fecha"><input type="date" value={reportDate} onChange={(event) => setReportDate(event.target.value)} className="w-full bg-transparent text-sm font-black outline-none" /></Field>
                         <Field label="Temporada">
@@ -166,7 +166,7 @@ export default function GloryHouseAdmin() {
                         <div className="space-y-2">
                             {attendees.map((attendee) => (
                                 <label key={attendee.member_id} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-4 dark:border-white/5 dark:bg-white/5">
-                                    <span className="text-[13px] font-bold">{attendee.name}</span>
+                                    <span className="text-xs font-bold">{attendee.name}</span>
                                     <input
                                         type="checkbox"
                                         checked={selectedIds.includes(attendee.member_id)}
@@ -174,7 +174,7 @@ export default function GloryHouseAdmin() {
                                     />
                                 </label>
                             ))}
-                            {attendees.length === 0 && <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-400 dark:border-white/10">No hay miembros base asignados.</div>}
+                            {attendees.length === 0 && <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400 dark:border-white/10">No hay miembros base asignados.</div>}
                         </div>
                     </section>
 
@@ -189,9 +189,9 @@ export default function GloryHouseAdmin() {
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
-    return <div className="rounded-[2.5rem] border border-slate-200 bg-white p-8 shadow-sm dark:border-white/10 dark:bg-white/5"><p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</p><h4 className="mt-2 text-2xl font-black">{value}</h4></div>;
+    return <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5"><p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</p><h4 className="mt-2 text-lg font-black">{value}</h4></div>;
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-    return <div className="rounded-3xl border border-slate-100 bg-slate-50 p-6 dark:border-white/5 dark:bg-white/5"><p className="mb-1 text-[9px] font-black uppercase tracking-widest text-slate-400">{label}</p>{children}</div>;
+    return <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-white/5 dark:bg-white/5"><p className="mb-1 text-[9px] font-black uppercase tracking-widest text-slate-400">{label}</p>{children}</div>;
 }

@@ -83,7 +83,9 @@ jobs:
           context: .
           file: backend.Dockerfile
           push: true
-          tags: ${{ env.IMAGE_BACKEND }}:${{ env.COMMIT_SHA }}
+          tags: |
+            ${{ env.IMAGE_BACKEND }}:${{ env.COMMIT_SHA }}
+            ${{ env.IMAGE_BACKEND }}:latest
           cache-from: type=gha,scope=backend
           cache-to: type=gha,mode=max,scope=backend
 
@@ -93,7 +95,9 @@ jobs:
           context: ./frontend
           file: frontend/Dockerfile
           push: true
-          tags: ${{ env.IMAGE_FRONTEND }}:${{ env.COMMIT_SHA }}
+          tags: |
+            ${{ env.IMAGE_FRONTEND }}:${{ env.COMMIT_SHA }}
+            ${{ env.IMAGE_FRONTEND }}:latest
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
 
@@ -102,6 +106,9 @@ jobs:
     if: ${{ (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && needs.changes.outputs.should_deploy == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    outputs:
+      smoke_passed: ${{ steps.smoke.outputs.smoke_passed }}
+      deploy_result: ${{ job.status }}
     permissions:
       contents: read
     steps:
@@ -141,6 +148,52 @@ jobs:
             echo "Namespace ccf does not exist yet; Helm will create it."
           fi
 
+      - name: Pre-deploy database backup
+        id: backup
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          BACKUP_FILE="/tmp/ccf_backup_$(date +%Y%m%d_%H%M%S).sql"
+
+          # Try to find a postgres pod in the ccf namespace
+          PG_POD=$(kubectl get pods -n ccf -o name 2>/dev/null | grep -m 1 'pod/.*postgres' || echo "")
+          if [ -z "$PG_POD" ]; then
+            # Try in default namespace
+            PG_POD=$(kubectl get pods -o name 2>/dev/null | grep -m 1 'pod/.*postgres' || echo "")
+          fi
+
+          if [ -n "$PG_POD" ]; then
+            echo "Found postgres pod: $PG_POD"
+            PG_POD_NAME="${PG_POD#pod/}"
+
+            # Get DB creds from pod env or use defaults
+            PG_USER=$(kubectl exec "$PG_POD_NAME" -n ccf -- printenv POSTGRES_USER 2>/dev/null || echo "postgres")
+            PG_DB=$(kubectl exec "$PG_POD_NAME" -n ccf -- printenv POSTGRES_DB 2>/dev/null || echo "ccf_db")
+            PG_NS=$(kubectl get pod "$PG_POD_NAME" -o jsonpath='{.metadata.namespace}' 2>/dev/null || echo "ccf")
+
+            kubectl exec "$PG_POD_NAME" -n "$PG_NS" -- pg_dump -U "$PG_USER" -d "$PG_DB" --clean --if-exists > "$BACKUP_FILE" 2>&1 || {
+              echo "::warning::pg_dump failed, continuing without backup"
+              exit 0
+            }
+            echo "Backup created: $BACKUP_FILE ($(wc -c < "$BACKUP_FILE") bytes)"
+            echo "backup_file=$BACKUP_FILE" >> "$GITHUB_OUTPUT"
+            echo "backup_success=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::No postgres pod found in cluster — skipping backup."
+            echo "::notice::Set POSTGRES_BACKUP_POD secret to specify the pod name."
+            echo "backup_success=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload backup artifact
+        if: steps.backup.outputs.backup_success == 'true'
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccf-db-backup
+          path: ${{ steps.backup.outputs.backup_file }}
+          retention-days: 7
+          if-no-files-found: ignore
+
       - name: Helm upgrade
         run: |
           set -euo pipefail
@@ -166,3 +219,151 @@ jobs:
         run: |
           kubectl rollout status deployment/ccf-ccf-backend -n ccf --timeout=300s
           kubectl rollout status deployment/ccf-ccf-frontend -n ccf --timeout=300s
+
+      - name: Post-deploy smoke test
+        id: smoke
+        run: |
+          set -euo pipefail
+          echo "::group::Smoke tests"
+
+          # Port-forward backend and frontend for testing
+          kubectl port-forward svc/ccf-ccf-backend 8090:8000 -n ccf &
+          PF_BACKEND=$!
+          kubectl port-forward svc/ccf-ccf-frontend 3090:3000 -n ccf &
+          PF_FRONTEND=$!
+          sleep 5
+
+          # Cleanup on exit
+          cleanup() {
+            kill $PF_BACKEND $PF_FRONTEND 2>/dev/null || true
+            wait $PF_BACKEND $PF_FRONTEND 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          FAILURES=0
+
+          echo ""
+          echo "--- Backend health check ---"
+          if curl -fsS -o /dev/null -w "%{http_code}" --max-time 10 http://localhost:8090/api/system/health 2>/dev/null | grep -q "200"; then
+            echo "  PASS  GET /api/system/health → 200"
+          else
+            echo "  FAIL  GET /api/system/health"
+            FAILURES=$((FAILURES + 1))
+          fi
+
+          echo ""
+          echo "--- Backend API probes ---"
+          AUTH_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 http://localhost:8090/api/auth/me 2>/dev/null || echo "000")
+          if [ "$AUTH_CODE" = "401" ] || [ "$AUTH_CODE" = "403" ]; then
+            echo "  PASS  GET /api/auth/me → $AUTH_CODE (auth gate active)"
+          else
+            echo "  WARN  GET /api/auth/me → $AUTH_CODE (expected 401)"
+          fi
+
+          DOCS_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 http://localhost:8090/docs 2>/dev/null || echo "000")
+          if [ "$DOCS_CODE" = "200" ]; then
+            echo "  PASS  GET /docs → 200"
+          else
+            echo "  WARN  GET /docs → $DOCS_CODE"
+          fi
+
+          echo ""
+          echo "--- Frontend probe ---"
+          FRONTEND_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 http://localhost:3090/ 2>/dev/null || echo "000")
+          if [ "$FRONTEND_CODE" = "200" ] || [ "$FRONTEND_CODE" = "304" ]; then
+            echo "  PASS  GET / → $FRONTEND_CODE"
+          else
+            echo "  FAIL  GET / → $FRONTEND_CODE"
+            FAILURES=$((FAILURES + 1))
+          fi
+
+          echo ""
+          echo "::endgroup::"
+
+          if [ $FAILURES -gt 0 ]; then
+            echo "::error::$FAILURES smoke test(s) failed"
+            echo "smoke_passed=false" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+          echo "::notice::All smoke tests passed"
+          echo "smoke_passed=true" >> "$GITHUB_OUTPUT"
+
+  notify:
+    needs: [deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Prepare notification payload
+        id: notify
+        env:
+          DEPLOY_OUTCOME: ${{ needs.deploy.result }}
+          SMOKE_PASSED: ${{ needs.deploy.outputs.smoke_passed }}
+        run: |
+          COMMIT_SHA="${{ github.event.workflow_run.head_sha || github.sha }}"
+          COMMIT_SHA_SHORT="${COMMIT_SHA:0:7}"
+          COMMIT_MSG="${{ github.event.workflow_run.head_commit.message || github.event.head_commit.message || 'Manual deploy' }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          if [ "$DEPLOY_OUTCOME" = "success" ]; then
+            COLOR="good"
+            STATUS_EMOJI=":white_check_mark:"
+            STATUS_TEXT="Deploy exitoso"
+          elif [ "$DEPLOY_OUTCOME" = "skipped" ]; then
+            COLOR="warning"
+            STATUS_EMOJI=":warning:"
+            STATUS_TEXT="Deploy saltado"
+          else
+            COLOR="danger"
+            STATUS_EMOJI=":x:"
+            STATUS_TEXT="Deploy fallido"
+          fi
+
+          # Determine smoke test result text
+          if [ "${SMOKE_PASSED}" = "true" ]; then
+            SMOKE_LABEL="PASSED"
+          elif [ -z "${SMOKE_PASSED}" ]; then
+            SMOKE_LABEL="N/A"
+          else
+            SMOKE_LABEL="FAILED"
+          fi
+
+          # Truncate commit message to 120 chars
+          COMMIT_MSG_TRUNC="${COMMIT_MSG:0:120}"
+
+          PAYLOAD=$(cat << JSON
+          {
+            "attachments": [
+              {
+                "color": "${COLOR}",
+                "pretext": "${STATUS_EMOJI} ${STATUS_TEXT} — CCF Platform",
+                "fields": [
+                  {"title": "Commit", "value": "<${RUN_URL}|${COMMIT_SHA_SHORT}> — ${COMMIT_MSG_TRUNC}", "short": false},
+                  {"title": "Branch", "value": "${{ github.ref_name }}", "short": true},
+                  {"title": "Smoke Test", "value": "${SMOKE_LABEL}", "short": true}
+                ],
+                "footer": "CCF Deploy Pipeline",
+                "ts": $(date +%s)
+              }
+            ]
+          }
+          JSON
+          )
+          echo "payload<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$PAYLOAD" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Send deploy notification
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -z "${SLACK_WEBHOOK_URL}" ]; then
+            echo "::notice::SLACK_WEBHOOK_URL not configured — skipping notification."
+            echo "::notice::Set it in GitHub Secrets → Settings > Secrets and variables > Actions > SLACK_WEBHOOK_URL"
+            exit 0
+          fi
+          curl -sS -X POST -H "Content-Type: application/json" \
+            -d '${{ steps.notify.outputs.payload }}' \
+            "${SLACK_WEBHOOK_URL}"
+          echo "::notice::Notification sent to Slack."

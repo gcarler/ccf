@@ -170,10 +170,10 @@ export default function CrmGroupsPage() {
         >
             <main className="flex-1 overflow-y-auto scrollbar-thin">
                 {/* Hero Header */}
-                <div className="relative bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 px-8 py-10 overflow-hidden">
+                <div className="relative bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 px-5 py-6 overflow-hidden">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_rgba(255,255,255,0.1)_0%,_transparent_60%)] pointer-events-none" />
-                    <div className="absolute -top-12 -left-12 size-56 rounded-full bg-white/5 blur-3xl" />
-                    <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div className="absolute -top-4 -left-12 size-56 rounded-full bg-white/5 blur-3xl" />
+                    <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-200 mb-2">Evangelismo · Faros en Casa</p>
                             <h1 className="text-4xl font-black text-white tracking-tight mb-1">Casas de Bendición</h1>
@@ -184,7 +184,7 @@ export default function CrmGroupsPage() {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-8 -mt-6 mb-8 relative z-10">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-5 -mt-6 mb-8 relative z-10">
                     {[
                         { label: 'Total Casas', value: stats.total, icon: Home, bg: 'bg-emerald-500' },
                         { label: 'Miembros Activos', value: stats.totalMembers, icon: Users, bg: 'bg-blue-500' },
@@ -192,7 +192,7 @@ export default function CrmGroupsPage() {
                         { label: 'Ocup. Promedio', value: `${stats.avgCapacity}%`, icon: TrendingUp, bg: 'bg-amber-500' },
                     ].map(s => (
                         <div key={s.label} className="bg-white dark:bg-[#252528] rounded-2xl border border-slate-200/70 dark:border-white/5 p-5 shadow-sm hover:shadow-lg transition-all duration-300">
-                            <div className={`inline-flex size-10 rounded-xl ${s.bg} items-center justify-center text-white mb-3 shadow-md`}>
+                            <div className={`inline-flex size-8 rounded-xl ${s.bg} items-center justify-center text-white mb-3 shadow-md`}>
                                 <s.icon size={18} />
                             </div>
                             <div className="text-3xl font-black text-slate-900 dark:text-white">{loading ? '—' : s.value}</div>
@@ -201,7 +201,7 @@ export default function CrmGroupsPage() {
                     ))}
                 </div>
 
-                <div className="px-8 space-y-6 pb-12">
+                <div className="px-5 space-y-3 pb-12">
                     {/* Search */}
                     <div className="relative max-w-md">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -209,7 +209,7 @@ export default function CrmGroupsPage() {
                             value={query}
                             onChange={e => setQuery(e.target.value)}
                             placeholder="Buscar por nombre, zona o líder..."
-                            className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-3 pl-11 pr-4 text-[13px] font-medium outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all placeholder:text-slate-400"
+                            className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 pl-11 pr-4 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all placeholder:text-slate-400"
                         />
                     </div>
 
@@ -224,10 +224,10 @@ export default function CrmGroupsPage() {
                     {/* Empty */}
                     {!loading && filtered.length === 0 && (
                         <div className="py-24 text-center">
-                            <div className="size-20 rounded-3xl bg-slate-100 dark:bg-white/5 flex items-center justify-center mx-auto mb-6">
+                            <div className="size-20 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center mx-auto mb-6">
                                 <Home size={36} className="text-slate-300 dark:text-slate-600" />
                             </div>
-                            <h3 className="text-lg font-black text-slate-400 uppercase tracking-widest mb-2">Sin casas registradas</h3>
+                            <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-2">Sin casas registradas</h3>
                             <p className="text-sm text-slate-400 font-medium mb-6">
                                 {query ? `No se encontraron casas con "${query}"` : 'Registra la primera Casa de Bendición de la red.'}
                             </p>
@@ -253,9 +253,9 @@ export default function CrmGroupsPage() {
                                         {/* Card top accent */}
                                         <div className={`h-[3px] bg-gradient-to-r ${getZoneColor(group.id)}`} />
 
-                                        <div className="p-6">
+                                        <div className="p-4">
                                             <div className="flex items-start justify-between mb-4">
-                                                <div className={`size-12 rounded-2xl bg-gradient-to-br ${getZoneColor(group.id)} flex items-center justify-center text-white shadow-lg`}>
+                                                <div className={`size-9 rounded-2xl bg-gradient-to-br ${getZoneColor(group.id)} flex items-center justify-center text-white shadow-lg`}>
                                                     <Home size={22} />
                                                 </div>
                                                 <div className="flex items-center gap-2">
@@ -346,14 +346,14 @@ export default function CrmGroupsPage() {
                 title="Invitar persona"
                 subtitle={inviteGroup ? `Agregar miembro a ${inviteGroup.name}` : undefined}
             >
-                <div className="space-y-5">
+                <div className="space-y-2">
                     <div className="relative">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <input
                             value={memberQuery}
                             onChange={event => setMemberQuery(event.target.value)}
                             placeholder="Buscar miembro..."
-                            className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                            className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-1.5 pl-11 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
                         />
                     </div>
                     <div className="space-y-2">
@@ -374,7 +374,7 @@ export default function CrmGroupsPage() {
                             </div>
                         ))}
                         {filteredMembers.length === 0 && (
-                            <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-sm text-slate-400 dark:border-white/10">
+                            <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400 dark:border-white/10">
                                 No se encontraron miembros.
                             </div>
                         )}

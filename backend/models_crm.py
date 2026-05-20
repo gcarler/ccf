@@ -509,3 +509,15 @@ class CommunityBoardCard(Base):
     body = Column(Text, nullable=True)
     position = Column(Integer, default=0)
     created_at = Column(DateTime, default=_utcnow, index=True)
+
+class EvangelismStrategy(Base):
+    __tablename__ = "evangelism_strategies"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    strategy_type = Column(String(100), nullable=True)
+    start_date = Column(DateTime, nullable=True)
+    end_date = Column(DateTime, nullable=True)
+    status = Column(String(50), default="active")
+    created_at = Column(DateTime, default=_utcnow, index=True)
+    updated_at = Column(DateTime, onupdate=_utcnow)

@@ -62,10 +62,10 @@ export default function VolunteerDetailPage() {
                 { label: volunteer.name, icon: User },
             ]}
         >
-            <main className="flex-1 overflow-y-auto p-8 lg:p-12">
-                <div className="max-w-4xl mx-auto space-y-8">
-                    <header className="flex items-center gap-6">
-                        <div className="size-20 rounded-3xl bg-blue-500/10 flex items-center justify-center text-blue-600 shadow-xl border border-blue-500/20">
+            <main className="flex-1 overflow-y-auto p-4 lg:p-4">
+                <div className="max-w-4xl mx-auto space-y-3">
+                    <header className="flex items-center gap-4">
+                        <div className="size-20 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 shadow-xl border border-blue-500/20">
                             <User size={40} />
                         </div>
                         <div className="space-y-1">
@@ -77,11 +77,11 @@ export default function VolunteerDetailPage() {
                         </div>
                     </header>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2 space-y-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div className="lg:col-span-2 space-y-3">
                             <DSCard>
                                 <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Informacion del Servidor</h3>
-                                <div className="grid grid-cols-2 gap-6">
+                                <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
                                         <p className="text-[9px] font-black text-slate-400 uppercase">Equipo</p>
                                         <p className="text-sm font-bold">{volunteer.team}</p>
@@ -105,7 +105,7 @@ export default function VolunteerDetailPage() {
                             </DSCard>
                         </div>
 
-                        <aside className="space-y-6">
+                        <aside className="space-y-3">
                             <DSCard>
                                 <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Metricas de Servicio</h3>
                                 <div className="space-y-4">

@@ -85,11 +85,11 @@ export default function LeadDetailPage() {
                 title={`${lead.first_name} ${lead.last_name}`}
                 description={`Fuente: ${lead.source}`}
             >
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-8 lg:p-12">
-                    <div className="lg:col-span-2 space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 lg:p-4">
+                    <div className="lg:col-span-2 space-y-3">
                         <DSCard>
                             <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Información de Contacto</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="flex items-center gap-3 text-sm">
                                     <Phone size={16} className="text-slate-400" />
                                     <span>{lead.phone || 'Sin teléfono'}</span>
@@ -129,10 +129,10 @@ export default function LeadDetailPage() {
                         </section>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-3">
                         <DSCard>
                             <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Estado de Consolidación</h3>
-                            <div className="space-y-6">
+                            <div className="space-y-3">
                                 <div className="space-y-2">
                                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Etapa Actual</p>
                                     <DSBadge tone={lead.stage === 'consolidated' || lead.stage === 'integrated' ? 'emerald' : 'blue'} label={STAGE_LABELS[lead.stage] || lead.stage.toUpperCase()} />
@@ -140,13 +140,13 @@ export default function LeadDetailPage() {
                                 
                                 <div className="h-px bg-slate-100 dark:bg-white/5" />
                                 
-                                <button className="w-full py-3 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
+                                <button className="w-full py-1.5 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
                                     Mover a Siguiente Etapa
                                 </button>
                             </div>
                         </DSCard>
 
-                        <div className="p-6 bg-slate-900 rounded-[2.5rem] text-white space-y-4">
+                        <div className="p-4 bg-slate-900 rounded-xl text-white space-y-4">
                             <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">
                                 <MessageSquare size={14} /> Optimus Brain
                             </div>

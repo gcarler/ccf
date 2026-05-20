@@ -157,13 +157,13 @@ export default function ContactsPage() {
         >
             <div className="flex flex-col h-full overflow-hidden">
                 {/* Toolbar */}
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-white/5 space-y-3">
+                <div className="px-4 py-2 border-b border-slate-100 dark:border-white/5 space-y-3">
                     <div className="relative">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <input
                             type="text"
                             placeholder="Buscar por nombre o fuente..."
-                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-3 pl-11 pr-4 text-sm font-medium focus:ring-2 focus:ring-blue-500/20 outline-none dark:text-white transition-all"
+                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 pl-11 pr-4 text-sm font-medium focus:ring-2 focus:ring-blue-500/20 outline-none dark:text-white transition-all"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                         />
@@ -188,19 +188,19 @@ export default function ContactsPage() {
                 </div>
 
                 {/* List */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-3">
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {loading ? (
-                        [...Array(5)].map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-3xl" />)
+                        [...Array(5)].map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)
                     ) : filtered.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-32 text-center space-y-4">
+                        <div className="flex flex-col items-center justify-center py-1.52 text-center space-y-4">
                             <div className="size-20 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-300 border border-slate-200 dark:border-white/10">
                                 <Search size={40} />
                             </div>
-                            <h4 className="text-slate-800 dark:text-white font-black text-lg">No hay contactos</h4>
+                            <h4 className="text-slate-800 dark:text-white font-black text-sm">No hay contactos</h4>
                             <p className="text-slate-400 text-sm max-w-[200px]">Agrega un nuevo contacto o ajusta los filtros.</p>
                             <button
                                 onClick={() => setIsCreateOpen(true)}
-                                className="px-6 py-3 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20"
+                                className="px-4 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20"
                             >
                                 Agregar Contacto
                             </button>
@@ -209,12 +209,12 @@ export default function ContactsPage() {
                         <div
                             key={lead.id}
                             onClick={() => router.push(`/crm/contacts/${lead.id}`)}
-                            className="bg-white dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-[2rem] p-5 hover:border-blue-300 dark:hover:border-blue-700 transition-all group cursor-pointer shadow-sm hover:shadow-xl"
+                            className="bg-white dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl p-5 hover:border-blue-300 dark:hover:border-blue-700 transition-all group cursor-pointer shadow-sm hover:shadow-xl"
                         >
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex gap-4">
                                     <div className="relative">
-                                        <div className="size-14 rounded-2xl bg-blue-500/10 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-white font-black text-lg uppercase group-hover:border-blue-400 transition-colors">
+                                        <div className="size-14 rounded-2xl bg-blue-500/10 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-white font-black text-sm uppercase group-hover:border-blue-400 transition-colors">
                                             {lead.first_name?.charAt(0)}{lead.last_name?.charAt(0)}
                                         </div>
                                         <div className={`absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-white dark:border-[#1e1f21] ${getStatusDot(lead.stage)}`} />
@@ -286,7 +286,7 @@ export default function ContactsPage() {
                     ) : viewType === 'calendar' ? (
                         <div className="space-y-4">
                             {groupedByDate.length === 0 ? (
-                                <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 p-10 text-center text-slate-400">
+                                <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 p-5 text-center text-slate-400">
                                     <Calendar size={24} className="mx-auto mb-2" />
                                     Sin actividad para mostrar
                                 </div>
@@ -318,26 +318,26 @@ export default function ContactsPage() {
                                     </div>
                                 </div>
                             ))}
-                            {filtered.length === 0 && <div className="py-8 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">Sin datos</div>}
+                            {filtered.length === 0 && <div className="py-4 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">Sin datos</div>}
                         </div>
                     ) : viewType === 'table' ? (
                         <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
                             <table className="w-full text-left">
                                 <thead className="bg-slate-50 dark:bg-white/5">
                                     <tr>
-                                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Nombre</th>
-                                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Fuente</th>
-                                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Telefono</th>
-                                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Etapa</th>
+                                        <th className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Nombre</th>
+                                        <th className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Fuente</th>
+                                        <th className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Telefono</th>
+                                        <th className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Etapa</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {filtered.map(lead => (
                                         <tr key={lead.id} onClick={() => router.push(`/crm/contacts/${lead.id}`)} className="cursor-pointer border-t border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02]">
-                                            <td className="px-4 py-3 text-sm font-bold text-slate-800 dark:text-slate-100">{lead.first_name} {lead.last_name}</td>
-                                            <td className="px-4 py-3 text-xs text-slate-500">{lead.source || 'Sin fuente'}</td>
-                                            <td className="px-4 py-3 text-xs text-slate-500">{lead.phone || 'Sin telefono'}</td>
-                                            <td className="px-4 py-3 text-xs text-slate-500">{STAGE_LABELS[lead.stage] || lead.stage}</td>
+                                            <td className="px-4 py-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">{lead.first_name} {lead.last_name}</td>
+                                            <td className="px-4 py-1.5 text-xs text-slate-500">{lead.source || 'Sin fuente'}</td>
+                                            <td className="px-4 py-1.5 text-xs text-slate-500">{lead.phone || 'Sin telefono'}</td>
+                                            <td className="px-4 py-1.5 text-xs text-slate-500">{STAGE_LABELS[lead.stage] || lead.stage}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -374,7 +374,7 @@ export default function ContactsPage() {
                             form="create-contact-form"
                             type="submit"
                             disabled={isSaving}
-                            className="px-8 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
+                            className="px-5 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Registrar
@@ -382,7 +382,7 @@ export default function ContactsPage() {
                     </>
                 }
             >
-                <form id="create-contact-form" onSubmit={handleCreate} className="space-y-5">
+                <form id="create-contact-form" onSubmit={handleCreate} className="space-y-2">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre *</label>
@@ -391,7 +391,7 @@ export default function ContactsPage() {
                                 value={newLead.first_name}
                                 onChange={e => setNewLead({ ...newLead, first_name: e.target.value })}
                                 placeholder="Juan"
-                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
                             />
                         </div>
                         <div className="space-y-2">
@@ -400,7 +400,7 @@ export default function ContactsPage() {
                                 value={newLead.last_name}
                                 onChange={e => setNewLead({ ...newLead, last_name: e.target.value })}
                                 placeholder="Pérez"
-                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
                             />
                         </div>
                     </div>
@@ -410,7 +410,7 @@ export default function ContactsPage() {
                             value={newLead.phone}
                             onChange={e => setNewLead({ ...newLead, phone: e.target.value })}
                             placeholder="+57 300 123 4567"
-                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -419,7 +419,7 @@ export default function ContactsPage() {
                             <select
                                 value={newLead.source}
                                 onChange={e => setNewLead({ ...newLead, source: e.target.value })}
-                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
                             >
                                 {SOURCE_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
@@ -429,7 +429,7 @@ export default function ContactsPage() {
                             <select
                                 value={newLead.stage}
                                 onChange={e => setNewLead({ ...newLead, stage: e.target.value })}
-                                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
                             >
                                 {PIPELINE_STAGES.map(s => <option key={s} value={s}>{STAGE_LABELS[s]}</option>)}
                             </select>
@@ -442,7 +442,7 @@ export default function ContactsPage() {
                             onChange={e => setNewLead({ ...newLead, notes: e.target.value })}
                             placeholder="Contexto del contacto inicial..."
                             rows={3}
-                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white resize-none"
+                            className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white resize-none"
                         />
                     </div>
                 </form>

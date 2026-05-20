@@ -30,15 +30,15 @@ export default function AcademyAccountPage() {
     ];
 
     return (
-        <div className="min-h-full bg-slate-50 dark:bg-[#0f1117]">
+        <div className="min-h-full bg-slate-50 dark:bg-[#1E1F21]">
             {/* Hero Header */}
             <div className="bg-gradient-to-br from-blue-600 to-indigo-700 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10"
                     style={{ backgroundImage: "radial-gradient(circle at 70% 50%, white 0%, transparent 60%)" }} />
-                <div className="max-w-4xl mx-auto px-8 py-12 relative">
-                    <div className="flex items-end gap-6">
+                <div className="max-w-4xl mx-auto px-5 py-12 relative">
+                    <div className="flex items-end gap-4">
                         <div className="relative">
-                            <div className="size-24 rounded-3xl bg-white/20 backdrop-blur border-2 border-white/30 flex items-center justify-center text-white text-3xl font-black shadow-2xl">
+                            <div className="size-24 rounded-xl bg-white/20 backdrop-blur border-2 border-white/30 flex items-center justify-center text-white text-3xl font-black shadow-2xl">
                                 {(user as any)?.name?.[0] ?? 'E'}
                             </div>
                             <button className="absolute -bottom-2 -right-2 size-8 rounded-xl bg-white text-blue-600 flex items-center justify-center shadow-lg hover:scale-110 transition-all">
@@ -54,7 +54,7 @@ export default function AcademyAccountPage() {
                                     ⭐ Destacado
                                 </span>
                             </div>
-                            <h1 className="text-2xl font-black text-white tracking-tight">
+                            <h1 className="text-lg font-black text-white tracking-tight">
                                 {(user as any)?.name ?? 'Estudiante CCF'}
                             </h1>
                             <p className="text-blue-200 text-sm font-medium">
@@ -70,7 +70,7 @@ export default function AcademyAccountPage() {
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto px-8 py-8 space-y-8">
+            <div className="max-w-4xl mx-auto px-5 py-4 space-y-3">
                 {/* Stats */}
                 <div className="grid grid-cols-4 gap-4">
                     {stats.map((s, i) => (
@@ -81,22 +81,22 @@ export default function AcademyAccountPage() {
                             transition={{ delay: i * 0.05 }}
                             className="bg-white dark:bg-[#1a1d27] rounded-2xl border border-slate-200/60 dark:border-white/5 p-5 shadow-sm"
                         >
-                            <div className={`size-10 rounded-xl ${s.bg} flex items-center justify-center mb-3`}>
+                            <div className={`size-8 rounded-xl ${s.bg} flex items-center justify-center mb-3`}>
                                 <s.icon size={18} className={s.color} />
                             </div>
-                            <p className={`text-2xl font-black ${s.color}`}>{s.value}</p>
+                            <p className={`text-lg font-black ${s.color}`}>{s.value}</p>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{s.label}</p>
                         </motion.div>
                     ))}
                 </div>
 
-                <div className="grid grid-cols-3 gap-6">
+                <div className="grid grid-cols-3 gap-4">
                     {/* Personal Info */}
                     <motion.div
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="col-span-1 bg-white dark:bg-[#1a1d27] rounded-2xl border border-slate-200/60 dark:border-white/5 p-6 shadow-sm space-y-4"
+                        className="col-span-1 bg-white dark:bg-[#1a1d27] rounded-2xl border border-slate-200/60 dark:border-white/5 p-4 shadow-sm space-y-4"
                     >
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Información Personal</p>
                         {[
@@ -122,7 +122,7 @@ export default function AcademyAccountPage() {
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.25 }}
-                        className="col-span-2 bg-white dark:bg-[#1a1d27] rounded-2xl border border-slate-200/60 dark:border-white/5 p-6 shadow-sm"
+                        className="col-span-2 bg-white dark:bg-[#1a1d27] rounded-2xl border border-slate-200/60 dark:border-white/5 p-4 shadow-sm"
                     >
                         <div className="flex items-center justify-between mb-4">
                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mis Cursos</p>
@@ -135,7 +135,7 @@ export default function AcademyAccountPage() {
                                 ))}
                             </div>
                         ) : enrollments.length === 0 ? (
-                            <div className="py-10 text-center">
+                            <div className="py-6 text-center">
                                 <BookOpen size={32} className="mx-auto text-slate-200 mb-3" />
                                 <p className="text-sm font-bold text-slate-400">Sin cursos inscritos aún</p>
                                 <p className="text-xs text-slate-300 mt-1">Explora el catálogo de cursos disponible</p>
@@ -144,7 +144,7 @@ export default function AcademyAccountPage() {
                             <div className="space-y-2">
                                 {enrollments.map((course: any, i) => (
                                     <div key={i} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
-                                        <div className="size-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-black shrink-0">
+                                        <div className="size-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-black shrink-0">
                                             {course.title?.[0] ?? 'C'}
                                         </div>
                                         <div className="flex-1 min-w-0">

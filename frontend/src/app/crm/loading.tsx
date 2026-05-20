@@ -8,7 +8,7 @@ export default function CrmLoading() {
             <div className="w-72 bg-[#0f1116] border-r border-white/5" />
             <div className="flex-1 flex flex-col">
                 <div className="h-14 border-b border-white/10 bg-black/30" />
-                <main className="flex-1 overflow-y-auto p-6 space-y-6">
+                <main className="flex-1 overflow-y-auto p-4 space-y-3">
                     <div className="h-16 rounded-2xl border border-white/5 bg-white/5 relative overflow-hidden">
                         <div className={`absolute inset-0 ${shimmer}`} />
                     </div>
@@ -19,8 +19,8 @@ export default function CrmLoading() {
                             </div>
                         ))}
                     </div>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div className="h-[380px] rounded-[2rem] border border-white/5 bg-white/5 relative overflow-hidden">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div className="h-[380px] rounded-xl border border-white/5 bg-white/5 relative overflow-hidden">
                             <div className={`absolute inset-0 ${shimmer}`} />
                             <div className="absolute bottom-4 left-4 right-4 space-y-4">
                                 {[...Array(4)].map((_, idx) => (
@@ -28,7 +28,7 @@ export default function CrmLoading() {
                                 ))}
                             </div>
                         </div>
-                        <div className="h-[380px] rounded-[2rem] border border-white/5 bg-white/5 relative overflow-hidden">
+                        <div className="h-[380px] rounded-xl border border-white/5 bg-white/5 relative overflow-hidden">
                             <div className={`absolute inset-0 ${shimmer}`} />
                             <div className="absolute inset-0 p-4 grid grid-cols-2 gap-3">
                                 {[...Array(6)].map((_, idx) => (

@@ -99,7 +99,7 @@ export default function StudentSchedule() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="space-y-8 px-4 py-8">
+        <div className="space-y-3 px-4 py-4">
             <AdminHero
                 eyebrow="Horario"
                 title="Horario académico"
@@ -108,8 +108,8 @@ export default function StudentSchedule() {
                 watchers={['Equipo Horarios', 'Optimus Brain']}
                 primaryAction={{ label: icsGenerating ? 'Generando...' : 'Exportar .ics', icon: Download, onClick: exportCalendar }}
             />
-            <div className="rounded-[2.5rem] border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] shadow-xl overflow-hidden">
-            <div className="flex gap-4 pb-4 overflow-x-auto hide-scrollbar p-6 border-b border-slate-100 dark:border-white/5">
+            <div className="rounded-xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] shadow-xl overflow-hidden">
+            <div className="flex gap-4 pb-4 overflow-x-auto hide-scrollbar p-4 border-b border-slate-100 dark:border-white/5">
                 {DAYS.map((day, index) => (
                     <button
                         key={day}
@@ -132,17 +132,17 @@ export default function StudentSchedule() {
                     ))}
                 </div>
 
-            <div className="flex-1 overflow-y-auto pb-12 px-6">
+            <div className="flex-1 overflow-y-auto pb-12 px-4">
                     {(enrollmentError || lessonsError) && (
-                        <p className="text-center text-rose-400 text-sm py-4">{enrollmentError || lessonsError}</p>
+                        <p className="text-center text-rose-400 text-sm py-2">{enrollmentError || lessonsError}</p>
                     )}
 
                     {(loading || lessonsLoading) && (
-                        <p className="text-center text-slate-400 text-sm py-8">Actualizando calendario...</p>
+                        <p className="text-center text-slate-400 text-sm py-4">Actualizando calendario...</p>
                     )}
 
                     {!loading && sessions.length === 0 && (
-                        <p className="text-center text-slate-400 text-sm py-8">
+                        <p className="text-center text-slate-400 text-sm py-4">
                             Aún no hay sesiones programadas. Revisa tus cursos para obtener horarios oficiales.
                         </p>
                     )}
@@ -167,7 +167,7 @@ export default function StudentSchedule() {
                                         }`}
                                     ></div>
                                 </div>
-                                <div className="bg-slate-900/50 backdrop-blur-xl p-6 rounded-[2rem] shadow-xl border border-white/5 hover:border-primary/30 transition-all">
+                                <div className="bg-slate-900/50 backdrop-blur-xl p-4 rounded-xl shadow-xl border border-white/5 hover:border-primary/30 transition-all">
                                     <div className="flex justify-between items-start mb-4">
                                         <span className="text-slate-300 text-xs font-black uppercase tracking-widest px-3 py-1.5 bg-slate-800 rounded-xl border border-white/5">
                                             {session.time} - {nextSlot(session.time)}
@@ -176,7 +176,7 @@ export default function StudentSchedule() {
                                             <MoreHorizontal size={20} />
                                         </button>
                                     </div>
-                                    <h4 className="text-white text-xl font-bold mb-3 tracking-tight">{session.title}</h4>
+                                    <h4 className="text-white text-base font-bold mb-3 tracking-tight">{session.title}</h4>
                                     <p className="text-slate-400 text-sm mb-4">{session.course}</p>
                                     <div className="flex flex-col gap-2">
                                         <div className="flex items-center gap-3 text-slate-400 text-sm">

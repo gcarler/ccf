@@ -81,7 +81,7 @@ export default function EnrollmentWizard() {
             variant="violet"
             contentClassName="max-w-xl mx-auto"
         >
-            <div className="px-6 mt-4 mb-4">
+            <div className="px-4 mt-4 mb-4">
                 <div className="flex items-center justify-between gap-4 p-2 bg-[hsl(var(--surface-2))] rounded-2xl border border-[hsl(var(--border))]">
                     {[1, 2, 3].map((s) => (
                         <div key={s} className="flex-1 flex items-center gap-2">
@@ -91,7 +91,7 @@ export default function EnrollmentWizard() {
                 </div>
             </div>
 
-            <div className="flex-1 px-6 pb-32">
+            <div className="flex-1 px-4 pb-32">
                     <AnimatePresence mode="wait">
                         {step === 1 && (
                             <motion.div 
@@ -99,13 +99,13 @@ export default function EnrollmentWizard() {
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
-                                className="space-y-6"
+                                className="space-y-3"
                             >
                                 {/* Course Hero Card */}
                                 <div className="relative group">
-                                    <div className="absolute inset-0 bg-[hsl(var(--primary))] opacity-10 blur-2xl rounded-[2.5rem] group-hover:opacity-20 transition-opacity"></div>
-                                    <div className="relative p-8 rounded-[2.5rem] bg-slate-900 border border-white/10 overflow-hidden min-h-[220px] flex flex-col justify-end">
-                                        <div className="absolute top-0 right-0 p-8 text-white/5 opacity-20 transform translate-x-4 -translate-y-4 group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
+                                    <div className="absolute inset-0 bg-[hsl(var(--primary))] opacity-10 blur-2xl rounded-xl group-hover:opacity-20 transition-opacity"></div>
+                                    <div className="relative p-4 rounded-xl bg-slate-900 border border-white/10 overflow-hidden min-h-[220px] flex flex-col justify-end">
+                                        <div className="absolute top-0 right-0 p-4 text-white/5 opacity-20 transform translate-x-4 -translate-y-4 group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
                                             <BookOpen size={160} strokeWidth={1} />
                                         </div>
                                         <div className="relative z-10">
@@ -120,20 +120,20 @@ export default function EnrollmentWizard() {
 
                                 {/* Quick Specs */}
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-5 rounded-3xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                                    <div className="p-5 rounded-xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
                                         <p className="text-[10px] font-black text-[hsl(var(--text-secondary))] uppercase tracking-widest mb-1">Carga Horaria</p>
-                                        <p className="text-lg font-black">{course.duration_hours}h <span className="text-[10px] text-[hsl(var(--text-secondary))]">Estimadas</span></p>
+                                        <p className="text-sm font-black">{course.duration_hours}h <span className="text-[10px] text-[hsl(var(--text-secondary))]">Estimadas</span></p>
                                     </div>
-                                    <div className="p-5 rounded-3xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                                    <div className="p-5 rounded-xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
                                         <p className="text-[10px] font-black text-[hsl(var(--text-secondary))] uppercase tracking-widest mb-1">Modalidad</p>
-                                        <p className="text-lg font-black">{course.is_self_paced ? 'Sincrónico' : 'Híbrido'}</p>
+                                        <p className="text-sm font-black">{course.is_self_paced ? 'Sincrónico' : 'Híbrido'}</p>
                                     </div>
                                 </div>
 
                                 {/* Enrollment Info */}
-                                <div className="surface-card p-6 border-none bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]">
+                                <div className="surface-card p-4 border-none bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]">
                                     <div className="flex items-center gap-3 mb-4">
-                                        <div className="size-10 rounded-xl bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.2)] flex items-center justify-center text-[hsl(var(--primary))]">
+                                        <div className="size-8 rounded-xl bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.2)] flex items-center justify-center text-[hsl(var(--primary))]">
                                             <BookOpen size={20} />
                                         </div>
                                         <h3 className="font-black text-sm uppercase tracking-widest">Contenido Curricular</h3>
@@ -172,14 +172,14 @@ export default function EnrollmentWizard() {
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
-                                className="space-y-6"
+                                className="space-y-3"
                             >
-                                <div className="surface-card p-8 bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]">
+                                <div className="surface-card p-4 bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]">
                                     <div className="flex flex-col items-center text-center mb-8">
                                         <div className="size-16 rounded-[1.5rem] bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.2)] flex items-center justify-center text-[hsl(var(--primary))] mb-4">
                                             <Wallet size={32} />
                                         </div>
-                                        <h3 className="text-xl font-black tracking-tighter mb-1">Resumen de Cargo</h3>
+                                        <h3 className="text-base font-black tracking-tighter mb-1">Resumen de Cargo</h3>
                                         <p className="text-xs text-[hsl(var(--text-secondary))] font-medium">Inscripción al ciclo académico actual</p>
                                     </div>
 
@@ -194,7 +194,7 @@ export default function EnrollmentWizard() {
                                         </div>
                                         <div className="flex justify-between items-center bg-[hsl(var(--surface-3))] p-4 rounded-2xl">
                                             <span className="text-[11px] font-black uppercase tracking-widest">Inversión Total</span>
-                                            <span className="text-2xl font-black text-[hsl(var(--primary))] tracking-tighter">$250.00</span>
+                                            <span className="text-lg font-black text-[hsl(var(--primary))] tracking-tighter">$250.00</span>
                                         </div>
                                     </div>
                                 </div>
@@ -205,13 +205,13 @@ export default function EnrollmentWizard() {
                                         {['card', 'paypal', 'bank'].map((id) => (
                                             <label key={id} className={`flex items-center gap-4 p-5 rounded-2xl border transition-all cursor-pointer ${paymentMethod === id ? 'bg-[hsl(var(--primary)/0.1)] border-[hsl(var(--primary)/0.5)]' : 'bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))]'}`}>
                                                 <input type="radio" name="pay-opt" value={id} className="hidden" onChange={(e) => setPaymentMethod(e.target.value)} checked={paymentMethod === id} />
-                                                <div className={`size-12 rounded-xl flex items-center justify-center border transition-all ${paymentMethod === id ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))] text-white shadow-lg shadow-primary/20' : 'bg-[hsl(var(--surface-2))] border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]'}`}>
+                                                <div className={`size-9 rounded-xl flex items-center justify-center border transition-all ${paymentMethod === id ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))] text-white shadow-lg shadow-primary/20' : 'bg-[hsl(var(--surface-2))] border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]'}`}>
                                                     {id === 'card' && <CreditCard size={24} />}
                                                     {id === 'paypal' && <Wallet size={24} />}
                                                     {id === 'bank' && <Landmark size={24} />}
                                                 </div>
                                                 <div className="flex-1">
-                                                    <p className="text-[13px] font-black uppercase tracking-wider">{id === 'card' ? 'Tarjeta de Crédito' : id === 'paypal' ? 'PayPal Checkout' : 'Depósito Directo'}</p>
+                                                    <p className="text-xs font-black uppercase tracking-wider">{id === 'card' ? 'Tarjeta de Crédito' : id === 'paypal' ? 'PayPal Checkout' : 'Depósito Directo'}</p>
                                                     <p className="text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-widest">{id === 'card' ? 'Mastercard / Visa' : 'Transferencia Segura'}</p>
                                                 </div>
                                                 {paymentMethod === id && <CheckCircle2 size={20} className="text-[hsl(var(--primary))]" />}
@@ -231,7 +231,7 @@ export default function EnrollmentWizard() {
                             >
                                 <div className="relative mb-8">
                                     <div className="absolute inset-0 bg-emerald-500/20 blur-3xl animate-pulse"></div>
-                                    <div className="relative size-32 rounded-[2.5rem] bg-emerald-500 border border-emerald-400 flex items-center justify-center text-white shadow-2xl shadow-emerald-500/30">
+                                    <div className="relative size-32 rounded-xl bg-emerald-500 border border-emerald-400 flex items-center justify-center text-white shadow-2xl shadow-emerald-500/30">
                                         <CheckCircle2 size={64} strokeWidth={2.5} />
                                     </div>
                                 </div>
@@ -251,7 +251,7 @@ export default function EnrollmentWizard() {
                 </div>
 
             {step < 3 && (
-                <div className="sticky bottom-0 left-0 w-full p-6 bg-gradient-to-t from-[hsl(var(--bg-primary))] via-[hsl(var(--bg-primary)/0.9)] to-transparent">
+                <div className="sticky bottom-0 left-0 w-full p-4 bg-gradient-to-t from-[hsl(var(--bg-primary))] via-[hsl(var(--bg-primary)/0.9)] to-transparent">
                          <button
                             onClick={() => {
                                 if (step === 1) setStep(2);
