@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Archive,
   Copy, FileImage, FileText, Film, Loader2, Plus, Search,
-  RotateCcw, Upload, X, Check, Download, Headphones
+  RotateCcw, Upload, X, Check, Download, Headphones, Save
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
@@ -21,6 +21,8 @@ interface MediaItem {
   filename: string;
   mime_type?: string;
   alt_text?: string;
+  section?: string;
+  tags?: string[];
   file_size?: number;
   width?: number;
   height?: number;
@@ -79,6 +81,8 @@ export default function CmsMediaLibrary() {
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [metadataSaving, setMetadataSaving] = useState(false);
+  const [tagsText, setTagsText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchMedia = useCallback(async () => {
@@ -96,6 +100,10 @@ export default function CmsMediaLibrary() {
 
   useEffect(() => { fetchMedia(); }, [fetchMedia]);
 
+  useEffect(() => {
+    setTagsText((selectedItem?.tags || []).join(", "));
+  }, [selectedItem]);
+
   const uploadFiles = async (files: FileList | File[]) => {
     if (!token || !files.length) return;
     setUploading(true);
@@ -105,6 +113,8 @@ export default function CmsMediaLibrary() {
         const form = new FormData();
         form.append("file", file);
         form.append("alt_text", file.name);
+        form.append("section", file.type.startsWith("audio/") ? "podcasts" : file.type.startsWith("video/") ? "videos" : file.type.startsWith("image/") ? "imagenes" : "general");
+        form.append("tags", file.type.startsWith("audio/") ? "podcast,audio" : file.type.startsWith("video/") ? "video" : file.type.startsWith("image/") ? "imagen" : "documento");
         await apiFetch("/cms/media/upload", {
           method: "POST",
           token,
@@ -134,6 +144,36 @@ export default function CmsMediaLibrary() {
     navigator.clipboard.writeText(item.url);
     setCopiedId(item.id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const updateSelectedItem = (patch: Partial<MediaItem>) => {
+    setSelectedItem(prev => prev ? { ...prev, ...patch } : prev);
+  };
+
+  const saveMetadata = async () => {
+    if (!token || !selectedItem) return;
+    setMetadataSaving(true);
+    const tags = tagsText.split(",").map(tag => tag.trim()).filter(Boolean);
+    try {
+      const updated = await apiFetch<MediaItem>(`/cms/media/${selectedItem.id}`, {
+        method: "PATCH",
+        token,
+        body: {
+          alt_text: selectedItem.alt_text || "",
+          section: selectedItem.section || "general",
+          tags,
+          filename: selectedItem.filename,
+        },
+      });
+      const normalized = { ...selectedItem, ...updated, tags };
+      setSelectedItem(normalized);
+      setItems(prev => prev.map(item => item.id === selectedItem.id ? normalized : item));
+      setTagsText(tags.join(", "));
+    } catch (err) {
+      console.error("Save media metadata error", err);
+    } finally {
+      setMetadataSaving(false);
+    }
   };
 
   const toggleArchiveItem = async (item: MediaItem) => {
@@ -591,6 +631,35 @@ export default function CmsMediaLibrary() {
                   ))}
                 </div>
 
+                <div className="space-y-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Metadata editable</p>
+                  <label className="block space-y-1.5">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Alt / titulo accesible</span>
+                    <input
+                      value={selectedItem.alt_text || ""}
+                      onChange={event => updateSelectedItem({ alt_text: event.target.value })}
+                      className="w-full text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/20"
+                    />
+                  </label>
+                  <label className="block space-y-1.5">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Seccion</span>
+                    <input
+                      value={selectedItem.section || "general"}
+                      onChange={event => updateSelectedItem({ section: event.target.value })}
+                      className="w-full text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/20"
+                    />
+                  </label>
+                  <label className="block space-y-1.5">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Tags</span>
+                    <input
+                      value={tagsText}
+                      onChange={event => setTagsText(event.target.value)}
+                      placeholder="hero, testimonio, podcast"
+                      className="w-full text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/20"
+                    />
+                  </label>
+                </div>
+
                 {/* URL field */}
                 <div className="space-y-1.5">
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">URL pública</p>
@@ -617,6 +686,14 @@ export default function CmsMediaLibrary() {
 
               {/* Actions */}
               <div className="p-4 border-t border-slate-200 dark:border-white/5 space-y-2">
+                <button
+                  onClick={saveMetadata}
+                  disabled={metadataSaving}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all disabled:opacity-60"
+                >
+                  {metadataSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  Guardar metadata
+                </button>
                 <a
                   href={selectedItem.url}
                   target="_blank"

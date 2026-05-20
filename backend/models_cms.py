@@ -96,6 +96,7 @@ class CmsTheme(Base):
     name = Column(String(120), nullable=False)
     tokens_json = Column(JSON, default={})
     is_active = Column(Boolean, default=False, index=True)
+    status = Column(String(20), default="active", index=True)
     version = Column(Integer, default=1)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
@@ -228,6 +229,7 @@ class Testimonial(Base):
     podcast_url = Column(String(500), nullable=True)
     is_approved = Column(Boolean, default=False)
     show_on_home = Column(Boolean, default=False)
+    status = Column(String(20), default="pending", index=True)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
 

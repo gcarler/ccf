@@ -125,16 +125,21 @@ class CmsSiteRead(BaseModel):
     model_config = orm_config
 
 
+CmsThemeStatus = Literal["active", "archived"]
+
+
 class CmsThemeCreate(BaseModel):
     name: str
     tokens_json: Dict[str, Any] = Field(default_factory=dict)
     is_active: bool = False
+    status: CmsThemeStatus = "active"
 
 
 class CmsThemeUpdate(BaseModel):
     name: Optional[str] = None
     tokens_json: Optional[Dict[str, Any]] = None
     is_active: Optional[bool] = None
+    status: Optional[CmsThemeStatus] = None
 
 
 class CmsThemeRead(BaseModel):
@@ -143,6 +148,7 @@ class CmsThemeRead(BaseModel):
     name: str
     tokens_json: Dict[str, Any] = Field(default_factory=dict)
     is_active: bool
+    status: CmsThemeStatus = "active"
     version: int
     created_by: Optional[int] = None
     created_at: datetime
@@ -331,6 +337,7 @@ class CmsPublicPageRead(BaseModel):
 # ── Announcements ───────────────────────────────────────
 
 AnnouncementStatus = Literal["draft", "published", "archived"]
+TestimonialStatus = Literal["pending", "approved", "archived"]
 
 
 class AnnouncementCreate(BaseModel):
@@ -376,6 +383,7 @@ class TestimonialCreate(BaseModel):
     podcast_url: Optional[str] = None
     is_approved: bool = False
     show_on_home: bool = False
+    status: Optional[TestimonialStatus] = None
     author_id: Optional[int] = None
 
 
@@ -389,6 +397,7 @@ class TestimonialUpdate(BaseModel):
     podcast_url: Optional[str] = None
     is_approved: Optional[bool] = None
     show_on_home: Optional[bool] = None
+    status: Optional[TestimonialStatus] = None
 
 
 class TestimonialAuthorRead(BaseModel):
@@ -408,6 +417,7 @@ class TestimonialRead(BaseModel):
     podcast_url: Optional[str] = None
     is_approved: bool
     show_on_home: bool
+    status: TestimonialStatus = "pending"
     author_id: Optional[int] = None
     author: Optional[TestimonialAuthorRead] = None
     created_at: datetime

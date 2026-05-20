@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
@@ -52,21 +52,8 @@ export default function CmsMediaDetailPage() {
                     mime_type: data.mime_type || data.mimetype || '',
                     file_size: data.file_size || data.size || 0,
                     status: data.status || 'active',
-                } : {
-                    id,
-                    title: 'Hero Banner Campaña 2026',
-                    filename: 'banner-faro-2026.webp',
-                    url: '/api/static/banner-faro-2026.webp',
-                    alt_text: 'Hero Banner',
-                    mime_type: 'image/webp',
-                    file_size: 1024 * 450,
-                    status: 'active',
-                    section: 'general',
-                    created_at: '2026-04-10T08:00:00Z',
-                    tags: ['marketing', 'faro', 'hero']
-                };
-                setItem(normalized);
-                setTagsText(normalized.tags.join(', '));
+                } : null;                setItem(normalized);
+                setTagsText(normalized?.tags?.join(', ') || '');
             } catch (err) {
                 toast.error('Error al cargar detalle del recurso');
             } finally {
@@ -125,6 +112,7 @@ export default function CmsMediaDetailPage() {
     };
 
     if (loading) return <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Recuperando Recurso Multimedia...</div>;
+    if (!item) return <div className="p-20 text-center font-black uppercase tracking-widest text-slate-400">Recurso multimedia no encontrado.</div>;
 
     return (
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
@@ -150,14 +138,28 @@ export default function CmsMediaDetailPage() {
                 <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
                     <div className="space-y-8">
                         <div className="aspect-video rounded-[2.5rem] bg-slate-900 overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl relative group">
-                            <img 
-                                src={item.url} 
-                                alt={item.alt_text || item.filename || 'Media'}
-                                className="w-full h-full object-contain"
-                                onError={(e) => {
-                                    (e.target as any).src = 'https://placehold.co/800x450/1e293b/64748b?text=Media+Preview';
-                                }}
-                            />
+                            {item.mime_type?.startsWith('image/') ? (
+                                <img
+                                    src={item.url}
+                                    alt={item.alt_text || item.filename || 'Media'}
+                                    className="w-full h-full object-contain"
+                                    onError={(e) => {
+                                        (e.target as any).src = 'https://placehold.co/800x450/1e293b/64748b?text=Media+Preview';
+                                    }}
+                                />
+                            ) : item.mime_type?.startsWith('video/') ? (
+                                <video controls className="w-full h-full bg-black">
+                                    <source src={item.url} type={item.mime_type} />
+                                </video>
+                            ) : item.mime_type?.startsWith('audio/') ? (
+                                <div className="flex h-full items-center justify-center p-8">
+                                    <audio controls src={item.url} className="w-full" />
+                                </div>
+                            ) : (
+                                <div className="flex h-full items-center justify-center text-xs font-black uppercase tracking-widest text-slate-500">
+                                    Sin vista previa
+                                </div>
+                            )}
                             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 <button className="p-4 bg-white/20 backdrop-blur-xl rounded-full text-white hover:scale-110 transition-transform">
                                     <Maximize2 size={24} />
@@ -178,7 +180,7 @@ export default function CmsMediaDetailPage() {
                     <div className="space-y-8">
                         <section className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Título del Recurso</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">TÃ­tulo del Recurso</label>
                                 <input 
                                     value={item.alt_text || ''}
                                     onChange={(e) => setItem({ ...item, alt_text: e.target.value })}
@@ -196,7 +198,7 @@ export default function CmsMediaDetailPage() {
                         </section>
 
                         <DSCard>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Información Técnica</h3>
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">InformaciÃ³n TÃ©cnica</h3>
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nombre de Archivo</p>
@@ -207,7 +209,7 @@ export default function CmsMediaDetailPage() {
                                     <p className="text-xs font-bold">{item.mime_type || 'sin tipo'}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tamaño</p>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">TamaÃ±o</p>
                                     <p className="text-xs font-bold">{formatBytes(item.file_size)}</p>
                                 </div>
                                 <div className="space-y-1">
@@ -218,7 +220,7 @@ export default function CmsMediaDetailPage() {
                         </DSCard>
 
                         <DSCard>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Etiquetas y Organización</h3>
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Etiquetas y OrganizaciÃ³n</h3>
                             <div className="space-y-4">
                                 <input
                                     value={tagsText}
@@ -242,3 +244,4 @@ export default function CmsMediaDetailPage() {
         </div>
     );
 }
+

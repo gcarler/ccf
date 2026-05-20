@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -58,7 +58,7 @@ def get_cms_testimonial(
     db: Session = Depends(get_db),
 ):
     row = crud.get_testimonial(db, testimonial_id)
-    if not row or not row.is_approved:
+    if not row or not row.is_approved or row.status == "archived":
         raise HTTPException(status_code=404, detail="testimonial not found")
     return row
 
@@ -257,9 +257,9 @@ def delete_cms_media(
 @router.post("/cms/media/upload", response_model=schemas.CmsMediaRead, status_code=201)
 async def upload_cms_media(
     file: UploadFile = File(...),
-    section: str = Query(default="general"),
-    alt_text: str = Query(default=""),
-    tags: str = Query(default=""),
+    section: str = Form(default="general"),
+    alt_text: str = Form(default=""),
+    tags: str = Form(default=""),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
@@ -371,9 +371,11 @@ def patch_cms_page(
 def delete_cms_page(
     page_key: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
 ):
-    row = crud.get_or_create_page_content(db, page_key)
-    if row:
-        db.delete(row)
-        db.commit()
+    crud.update_content_publication(
+        db,
+        page_key,
+        status="archived",
+        updated_by=current_user.id,
+    )

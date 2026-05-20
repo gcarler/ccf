@@ -151,6 +151,26 @@ export default function UserTasksPage() {
             viewType={viewType}
             setViewType={setViewType}
             availableViews={['list', 'table', 'grid', 'kanban']}
+    };
+
+    const filtered = useMemo(() => tasks.filter(t => {
+        const matchQ = !query || t.title.toLowerCase().includes(query.toLowerCase());
+        const matchP = filterPriority === 'all' || t.priority === filterPriority;
+        return matchQ && matchP;
+    }), [tasks, query, filterPriority]);
+
+    const pending   = tasks.length;
+    const dueToday  = tasks.filter(t => t.due_date && new Date(t.due_date).toDateString() === new Date().toDateString()).length;
+    const urgent    = tasks.filter(t => t.priority === 'urgent').length;
+
+    if (!isAuthenticated) return null;
+
+    return (
+        <WorkspaceLayout
+            breadcrumbs={[{ label: 'Mi Centro de Tareas', icon: ListChecks, href: '/tasks' }]}
+            viewType={viewType}
+            setViewType={setViewType}
+            availableViews={['list', 'table', 'grid', 'kanban']}
             rightActions={
                 <SplitDropdownButton
                     onMainClick={() => {}}
@@ -158,7 +178,7 @@ export default function UserTasksPage() {
                 />
             }
         >
-            <div className="flex flex-col h-full bg-slate-50 dark:bg-[#111213] overflow-hidden rounded-2xl">
+            <div className="flex flex-col h-full bg-slate-50 dark:bg-[#1E1F21] overflow-hidden rounded-2xl">
             {/* ── TASK EDIT DRAWER ── */}
             <TaskEditDrawer
                 task={selectedTask}
@@ -219,7 +239,7 @@ export default function UserTasksPage() {
                                 <motion.div key={task.id}
                                     initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
                                     onClick={() => handleTaskSelect(task)}
-                                    className="group bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:border-blue-200 dark:hover:border-white/15 transition-all cursor-pointer">
+                                    className="group bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/7 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:border-blue-200 dark:hover:border-white/15 transition-all duration-300 active:scale-[0.99] cursor-pointer">
                                     <div className="flex items-start justify-between mb-3">
                                         <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", pc.color)}>{pc.label}</span>
                                         <button onClick={(e) => { e.stopPropagation(); completeTask(task.id); }}
@@ -261,7 +281,7 @@ export default function UserTasksPage() {
                                                 <motion.div key={task.id}
                                                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
                                                     onClick={() => handleTaskSelect(task)}
-                                                    className="p-3 bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-xl shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-white/20 transition-all cursor-pointer group">
+                                                    className="p-3 bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/7 rounded-xl shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-white/20 transition-all duration-300 active:scale-[0.99] cursor-pointer group">
                                                     <p className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{task.title}</p>
                                                     <div className="flex items-center justify-between">
                                                         <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black", pc.color)}>{pc.label}</span>
@@ -368,134 +388,6 @@ export default function UserTasksPage() {
                                     const priorityKey = task.priority ?? 'low';
                                     const pc = PRIORITY_CONFIG[priorityKey] || PRIORITY_CONFIG['low'];
                                     const xp = XP_MAP[priorityKey] || XP_MAP['low'];
-                                    const isDone = completing === task.id;
-                                    return (
-                                        <motion.div
-                                            key={task.id}
-                                            layout
-                                            initial={{ opacity: 0, y: 8 }}
-                                            animate={{ opacity: isDone ? 0 : 1, y: 0, scale: isDone ? 0.96 : 1 }}
-                                            exit={{ opacity: 0, x: 30, scale: 0.95 }}
-                                            transition={{ duration: 0.25, delay: idx * 0.04 }}
-                                            onClick={() => handleTaskSelect(task)}
-                                            className="group bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-white/15 transition-all overflow-hidden relative cursor-pointer"
-                                            style={{ borderLeft: `3px solid ${task.priority === 'urgent' ? '#f43f5e' : task.priority === 'high' ? '#f97316' : task.priority === 'medium' ? '#f59e0b' : '#94a3b8'}` }}
-                                        >
-                                            {/* Complete button */}
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); completeTask(task.id); }}
-                                                className={clsx(
-                                                    "size-9 rounded-2xl flex items-center justify-center transition-all shrink-0",
-                                                    isDone
-                                                        ? "bg-emerald-500 text-white scale-90"
-                                                        : "bg-slate-50 dark:bg-white/5 text-slate-300 border border-slate-200 dark:border-white/10 hover:bg-emerald-50 hover:text-emerald-500 hover:border-emerald-200 active:scale-90"
-                                                )}
-                                            >
-                                                {isDone ? <CheckCircle2 size={18} /> : <Circle size={18} />}
-                                            </button>
-
-                                            {/* Content */}
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-[14px] font-bold text-slate-800 dark:text-white leading-tight truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                                    {task.title}
-                                                </p>
-                                                <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                                                    {task.project_title && (
-                                                        <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                                                            <FolderOpen size={10} /> {task.project_title}
-                                                        </span>
-                                                    )}
-                                                    {task.due_date && (
-                                                        <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                                                            <CalendarDays size={10} /> {new Date(task.due_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
-                                                        </span>
-                                                    )}
-                                                    <span className="text-[10px] font-bold text-slate-300 dark:text-white/20 uppercase">
-                                                        {STATUS_LABEL[task.status] || task.status}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {/* Right: Priority + XP */}
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                <span className={clsx("px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest", pc.color)}>
-                                                    {pc.label}
-                                                </span>
-                                                <span className="flex items-center gap-1 px-2 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-xl text-[9px] font-black">
-                                                    <Zap size={10} fill="currentColor" /> +{xp} XP
-                                                </span>
-                                                <button onClick={(e) => { e.stopPropagation(); handleTaskSelect(task); }} className="p-1.5 text-slate-200 dark:text-white/20 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-all" title="Ver detalle">
-                                                    <ChevronRight size={16} />
-                                                </button>
-                                            </div>
-                                        </motion.div>
-                                    );
-                                })}
-                            </AnimatePresence>
-                        )}
-                    </div>
-
-                    {/* ── RIGHT COLUMN ── */}
-                    <aside className="lg:col-span-4 space-y-6">
-
-                        {/* Stats */}
-                        <div className="bg-white dark:bg-gradient-to-br dark:from-slate-900 dark:to-[#1a1d28] border border-slate-200 dark:border-white/[0.06] rounded-2xl p-6 shadow-sm dark:shadow-xl space-y-6">
-                            <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.3em]">Resumen de Hoy</h3>
-                            <div className="grid grid-cols-3 gap-2">
-                                {[
-                                    { label: 'Pendientes', value: pending, color: 'text-blue-600 dark:text-blue-400' },
-                                    { label: 'Vencen hoy', value: dueToday, color: 'text-amber-500 dark:text-amber-400' },
-                                    { label: 'Urgentes', value: urgent, color: 'text-rose-500 dark:text-rose-400' },
-                                ].map(s => (
-                                    <div key={s.label} className="text-center p-3 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/[0.06]">
-                                        <p className={clsx("text-2xl font-black tracking-tighter", s.color)}>{s.value}</p>
-                                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">{s.label}</p>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="pt-2 border-t border-slate-100 dark:border-white/[0.06]">
-                                <div className="flex justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
-                                    <span>Progreso</span>
-                                    <span className="text-blue-600 dark:text-blue-400">{tasks.length > 0 ? Math.round(((30 - tasks.length) / 30) * 100) : 100}%</span>
-                                </div>
-                                <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
-                                    <motion.div
-                                        className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${tasks.length > 0 ? Math.round(((30 - tasks.length) / 30) * 100) : 100}%` }}
-                                        transition={{ duration: 1, delay: 0.3 }}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* MESH AI card */}
-                        <div className="relative overflow-hidden bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-[#0f1117] dark:to-[#1a1b1e] rounded-[2.5rem] p-8 shadow-sm dark:shadow-2xl space-y-5 border border-blue-100 dark:border-white/5">
-                            <div className="absolute top-0 right-0 -mr-8 -mt-8 size-32 bg-blue-500/10 dark:bg-blue-600/20 rounded-full blur-2xl" />
-                            <div className="relative z-10 space-y-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="size-9 rounded-2xl bg-blue-100 dark:bg-blue-600/20 flex items-center justify-center">
-                                        <Bot size={18} className="text-blue-600 dark:text-blue-400" />
-                                    </div>
-                                    <h4 className="text-[11px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">Optimus Tasks</h4>
-                                </div>
-                                <p className="text-[13px] font-medium leading-relaxed italic text-slate-700 dark:text-slate-300">
-                                    &ldquo;Tienes {urgent} tarea{urgent !== 1 ? 's' : ''} urgente{urgent !== 1 ? 's' : ''} hoy. ¿Quieres que organice tu agenda automáticamente?&rdquo;
-                                </p>
-                                <button className="flex items-center gap-2 text-[10px] font-black text-blue-700 dark:text-white uppercase tracking-widest hover:gap-3 transition-all group/btn">
-                                    Organizar agenda <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Quick link to projects */}
-                        <Link href="/projects" className="block bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-3xl p-5 hover:border-blue-300 dark:hover:border-white/20 transition-all group shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <div className="size-10 rounded-2xl bg-blue-50 dark:bg-blue-600/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <FolderOpen size={18} className="text-blue-500" />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-[13px] font-bold text-slate-800 dark:text-white">Ver todos los proyectos</p>
                                     <p className="text-[10px] text-slate-400">Gestiona proyectos y crea tareas</p>
                                 </div>
                                 <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-1 transition-transform" />

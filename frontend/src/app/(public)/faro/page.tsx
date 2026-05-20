@@ -26,10 +26,11 @@ export default function PublicHomePage() {
         date?: string;
         title?: string;
         desc?: string;
+        status?: string;
     }
 
     const publicEvents: PublicEventItem[] = Array.isArray(eventsContent?.parsed)
-        ? (eventsContent?.parsed as PublicEventItem[])
+        ? (eventsContent?.parsed as PublicEventItem[]).filter((event) => event.status !== "archived")
         : [];
 
     return (

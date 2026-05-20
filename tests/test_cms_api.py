@@ -80,6 +80,25 @@ def test_public_testimonials_only_returns_approved_items(client, db_session):
     assert updated.json()["media_type"] == "podcast"
     assert updated.json()["podcast_url"] == "https://cdn.example.org/testimonio.mp3"
     assert updated.json()["show_on_home"] is True
+    assert updated.json()["status"] == "approved"
+
+    archived = client.delete(f"/api/admin/testimonials/{approved.json()['id']}", headers=headers)
+    assert archived.status_code == 204
+    assert client.get(f"/api/cms/testimonials/{approved.json()['id']}").status_code == 404
+
+    archived_admin = client.get(f"/api/admin/testimonials/{approved.json()['id']}", headers=headers)
+    assert archived_admin.status_code == 200
+    assert archived_admin.json()["status"] == "archived"
+    assert archived_admin.json()["is_approved"] is False
+
+    restored = client.patch(
+        f"/api/admin/testimonials/{approved.json()['id']}",
+        json={"status": "approved"},
+        headers=headers,
+    )
+    assert restored.status_code == 200
+    assert restored.json()["status"] == "approved"
+    assert restored.json()["is_approved"] is True
 
 
 def test_public_announcements_only_returns_published_items(client, db_session):
@@ -120,6 +139,13 @@ def test_public_announcements_only_returns_published_items(client, db_session):
     assert metrics.status_code == 200
     assert metrics.json()["announcements_total"] == 3
     assert metrics.json()["announcements_active"] == 1
+
+    archived_delete = client.delete(f"/api/admin/announcements/{published.json()['id']}", headers=headers)
+    assert archived_delete.status_code == 204
+    assert client.get(f"/api/cms/announcements/{published.json()['id']}").status_code == 404
+    deleted_admin = client.get(f"/api/admin/announcements/{published.json()['id']}", headers=headers)
+    assert deleted_admin.status_code == 200
+    assert deleted_admin.json()["status"] == "archived"
 
 
 def test_cms_media_metadata_can_be_created_searched_and_updated(client, db_session):
@@ -169,6 +195,29 @@ def test_cms_media_metadata_can_be_created_searched_and_updated(client, db_sessi
     restored = client.patch(f"/api/cms/media/{media_id}", json={"status": "active"}, headers=headers)
     assert restored.status_code == 200
     assert restored.json()["status"] == "active"
+
+
+def test_cms_media_upload_preserves_form_metadata(client, db_session, tmp_path, monkeypatch):
+    from backend.api import cms as cms_api
+
+    seed_admin(db_session)
+    headers = auth_headers(client)
+    monkeypatch.setattr(cms_api.settings, "uploads_dir", str(tmp_path))
+
+    response = client.post(
+        "/api/cms/media/upload",
+        files={"file": ("podcast.mp3", b"audio-bytes", "audio/mpeg")},
+        data={"alt_text": "Podcast testimonial", "section": "testimonios", "tags": "podcast, testimonio"},
+        headers=headers,
+    )
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["alt_text"] == "Podcast testimonial"
+    assert payload["section"] == "testimonios"
+    assert payload["tags"] == ["podcast", "testimonio"]
+    assert payload["mime_type"] == "audio/mpeg"
+    assert payload["file_size"] == len(b"audio-bytes")
 
 
 def test_public_cms_page_uses_published_snapshot_not_live_draft(client, db_session):
@@ -288,6 +337,62 @@ def test_public_cms_page_uses_published_snapshot_not_live_draft(client, db_sessi
     assert restored_preview.status_code == 200
     assert restored_preview.json()["title"] == "Inicio borrador"
 
+    deleted_page = client.delete("/api/cms/v2/sites/snapshot/pages/inicio", headers=headers)
+    assert deleted_page.status_code == 204
+    deleted_admin = client.get("/api/cms/v2/sites/snapshot/pages/inicio", headers=headers)
+    assert deleted_admin.status_code == 200
+    assert deleted_admin.json()["status"] == "archived"
+
+
+def test_legacy_cms_page_delete_archives_workflow(client, db_session):
+    seed_admin(db_session)
+    headers = auth_headers(client)
+
+    created = client.post(
+        "/api/cms/pages",
+        json={"page_key": "legacy-page", "title": "Legacy", "content": "Contenido recuperable"},
+        headers=headers,
+    )
+    assert created.status_code == 201
+
+    archived = client.delete("/api/cms/pages/legacy-page", headers=headers)
+    assert archived.status_code == 204
+
+    content = client.get("/api/cms/pages/legacy-page", headers=headers)
+    assert content.status_code == 200
+    assert content.json()["content"] == "Contenido recuperable"
+
+    workflow = client.get("/api/content/legacy-page/workflow", headers=headers)
+    assert workflow.status_code == 200
+    assert workflow.json()["status"] == "archived"
+
+
+def test_cms_site_delete_deactivates_without_removing(client, db_session):
+    seed_admin(db_session)
+    headers = auth_headers(client)
+
+    created = client.post(
+        "/api/cms/v2/sites",
+        json={"site_key": "recoverable", "name": "Recoverable", "base_path": "/recoverable", "is_active": True},
+        headers=headers,
+    )
+    assert created.status_code == 201
+
+    archived = client.delete("/api/cms/v2/sites/recoverable", headers=headers)
+    assert archived.status_code == 204
+
+    admin_site = client.get("/api/cms/v2/sites/recoverable", headers=headers)
+    assert admin_site.status_code == 200
+    assert admin_site.json()["is_active"] is False
+
+    restored = client.patch(
+        "/api/cms/v2/sites/recoverable",
+        json={"is_active": True},
+        headers=headers,
+    )
+    assert restored.status_code == 200
+    assert restored.json()["is_active"] is True
+
 
 def test_public_cms_menu_filters_non_public_items(client, db_session):
     seed_admin(db_session)
@@ -325,13 +430,85 @@ def test_public_cms_menu_filters_non_public_items(client, db_session):
     labels = [item["label"] for item in public_menu.json()["items"]]
     assert labels == ["Inicio"]
 
-    inactive_menu = client.patch(
-        "/api/cms/v2/sites/web/menus/main",
-        json={"is_active": False},
+    archived_item = client.delete(
+        f"/api/cms/v2/sites/web/menus/main/items/{visible.json()['id']}",
         headers=headers,
     )
-    assert inactive_menu.status_code == 200
+    assert archived_item.status_code == 204
+    admin_items = client.get("/api/cms/v2/sites/web/menus/main/items", headers=headers)
+    assert admin_items.status_code == 200
+    visible_admin = next(item for item in admin_items.json() if item["id"] == visible.json()["id"])
+    assert visible_admin["visibility"] == "hidden"
+    assert client.get("/api/cms/v2/public/sites/web/menus/main").json()["items"] == []
+
+    restored_item = client.patch(
+        f"/api/cms/v2/sites/web/menus/main/items/{visible.json()['id']}",
+        json={"visibility": "public"},
+        headers=headers,
+    )
+    assert restored_item.status_code == 200
+    assert restored_item.json()["visibility"] == "public"
+
+    archived_menu = client.delete("/api/cms/v2/sites/web/menus/main", headers=headers)
+    assert archived_menu.status_code == 204
+    admin_menu = client.get("/api/cms/v2/sites/web/menus/main", headers=headers)
+    assert admin_menu.status_code == 200
+    assert admin_menu.json()["is_active"] is False
     assert client.get("/api/cms/v2/public/sites/web/menus/main").status_code == 404
+
+    restored_menu = client.patch(
+        "/api/cms/v2/sites/web/menus/main",
+        json={"is_active": True},
+        headers=headers,
+    )
+    assert restored_menu.status_code == 200
+    assert restored_menu.json()["is_active"] is True
+    assert client.get("/api/cms/v2/public/sites/web/menus/main").status_code == 200
+
+
+def test_cms_theme_delete_archives_and_can_restore(client, db_session):
+    seed_admin(db_session)
+    headers = auth_headers(client)
+
+    site_response = client.post(
+        "/api/cms/v2/sites",
+        json={"site_key": "themes", "name": "Themes", "base_path": "/themes", "is_active": True},
+        headers=headers,
+    )
+    assert site_response.status_code == 201
+
+    theme = client.post(
+        "/api/cms/v2/sites/themes/themes",
+        json={"name": "Tema recuperable", "tokens_json": {"--faro-primary": "#111111"}, "is_active": False},
+        headers=headers,
+    )
+    assert theme.status_code == 201
+    assert theme.json()["status"] == "active"
+
+    archived = client.delete(f"/api/cms/v2/sites/themes/themes/{theme.json()['id']}", headers=headers)
+    assert archived.status_code == 204
+    themes = client.get("/api/cms/v2/sites/themes/themes", headers=headers)
+    assert themes.status_code == 200
+    archived_theme = next(row for row in themes.json() if row["id"] == theme.json()["id"])
+    assert archived_theme["status"] == "archived"
+    assert archived_theme["is_active"] is False
+
+    restored = client.patch(
+        f"/api/cms/v2/sites/themes/themes/{theme.json()['id']}",
+        json={"status": "active"},
+        headers=headers,
+    )
+    assert restored.status_code == 200
+    assert restored.json()["status"] == "active"
+    assert restored.json()["is_active"] is False
+
+    activated = client.post(f"/api/cms/v2/sites/themes/themes/{theme.json()['id']}/activate", headers=headers)
+    assert activated.status_code == 200
+    assert activated.json()["is_active"] is True
+    assert activated.json()["status"] == "active"
+    public_theme = client.get("/api/cms/v2/public/sites/themes/theme")
+    assert public_theme.status_code == 200
+    assert public_theme.json()["id"] == theme.json()["id"]
 
 
 def test_cms_section_delete_archives_and_can_restore(client, db_session):

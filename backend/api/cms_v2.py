@@ -136,11 +136,10 @@ def delete_site(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    """Elimina un sitio CMS."""
+    """Desactiva un sitio CMS sin eliminar su contenido."""
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
     row = _get_site_or_404(db, site_key)
-    db.delete(row)
-    db.commit()
+    crud.archive_cms_site(db, row)
     return None
 
 
@@ -208,14 +207,13 @@ def delete_theme(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    """Elimina un tema CMS."""
+    """Archiva un tema CMS sin eliminar su historial."""
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
     site = _get_site_or_404(db, site_key)
     row = crud.get_cms_theme(db, site.id, theme_id)
     if not row:
         raise HTTPException(status_code=404, detail="theme not found")
-    db.delete(row)
-    db.commit()
+    crud.archive_cms_theme(db, row)
     return None
 
 
@@ -275,6 +273,7 @@ def delete_menu(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
+    """Desactiva un menu CMS sin eliminarlo."""
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
     row = _get_menu_or_404(db, site.id, menu_key)
@@ -333,6 +332,7 @@ def delete_menu_item(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
+    """Oculta un item de menu sin eliminarlo."""
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
     menu = _get_menu_or_404(db, site.id, menu_key)

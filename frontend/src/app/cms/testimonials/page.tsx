@@ -4,8 +4,9 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import {
+  Archive,
   Heart, MessageCircle, CheckCircle2, XCircle, Clock,
-  Search, Plus, Users, ChevronRight, X, ImageIcon, PlayCircle, Headphones, Save
+  Search, Plus, Users, ChevronRight, X, ImageIcon, PlayCircle, Headphones, Save, RotateCcw
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import TestimonialForm from "@/components/TestimonialForm";
@@ -30,6 +31,7 @@ interface Testimonial {
   published?: boolean;
   is_approved?: boolean;
   show_on_home?: boolean;
+  status?: "pending" | "approved" | "archived" | string;
 }
 
 const EMOTION_CONFIG: Record<string, { color: string; bg: string; border: string; emoji: string }> = {
@@ -77,7 +79,7 @@ export default function CmsTestimonialsPage() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [filter, setFilter] = useState("Todos");
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "approved" | "pending">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "approved" | "pending" | "archived">("all");
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [selected, setSelected] = useState<Testimonial | null>(null);
@@ -91,7 +93,7 @@ export default function CmsTestimonialsPage() {
       const data = await apiFetch<Testimonial[]>("/admin/testimonials", { token, cache: "no-store" });
       setTestimonials(
         Array.isArray(data)
-          ? data.map(row => ({ ...row, published: row.published ?? row.is_approved ?? false }))
+          ? data.map(row => ({ ...row, status: row.status || (row.is_approved ? "approved" : "pending"), published: row.published ?? row.is_approved ?? false }))
           : []
       );
     } catch {
@@ -106,15 +108,42 @@ export default function CmsTestimonialsPage() {
   const handleToggle = async (t: Testimonial) => {
     if (!token) return;
     const next = !t.published;
-    setTestimonials(prev => prev.map(i => i.id === t.id ? { ...i, published: next } : i));
+    const nextStatus = next ? "approved" : "pending";
+    setTestimonials(prev => prev.map(i => i.id === t.id ? { ...i, published: next, status: nextStatus } : i));
     setProcessing(t.id);
     try {
-      await apiFetch(`/admin/testimonials/${t.id}`, {
-        method: "PATCH", token, body: { is_approved: next }
+      const updated = await apiFetch<Testimonial>(`/admin/testimonials/${t.id}`, {
+        method: "PATCH", token, body: { status: nextStatus }
       });
-      if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, published: next } : null);
+      if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...updated, published: next, status: nextStatus } : null);
     } catch {
       setTestimonials(prev => prev.map(i => i.id === t.id ? { ...i, published: t.published } : i));
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const toggleArchive = async (t: Testimonial) => {
+    if (!token) return;
+    const restore = t.status === "archived";
+    const nextStatus = restore ? "pending" : "archived";
+    setProcessing(t.id);
+    try {
+      if (restore) {
+        const updated = await apiFetch<Testimonial>(`/admin/testimonials/${t.id}`, {
+          method: "PATCH",
+          token,
+          body: { status: nextStatus },
+        });
+        const normalized = { ...updated, published: false, status: nextStatus };
+        setTestimonials(prev => prev.map(item => item.id === t.id ? normalized : item));
+        if (selected?.id === t.id) setSelected(normalized);
+      } else {
+        await apiFetch(`/admin/testimonials/${t.id}`, { method: "DELETE", token });
+        const archived = { ...t, published: false, is_approved: false, show_on_home: false, status: "archived" };
+        setTestimonials(prev => prev.map(item => item.id === t.id ? archived : item));
+        if (selected?.id === t.id) setSelected(archived);
+      }
     } finally {
       setProcessing(null);
     }
@@ -136,11 +165,11 @@ export default function CmsTestimonialsPage() {
           image_url: selected.image_url || null,
           video_url: selected.video_url || null,
           podcast_url: selected.podcast_url || null,
-          is_approved: selected.published ?? selected.is_approved ?? false,
+          status: selected.status === "archived" ? "archived" : selected.published ? "approved" : "pending",
           show_on_home: selected.show_on_home ?? false,
         },
       });
-      const normalized = { ...updated, published: updated.is_approved ?? selected.published ?? false };
+      const normalized = { ...updated, status: updated.status || (updated.is_approved ? "approved" : "pending"), published: updated.is_approved ?? selected.published ?? false };
       setSelected(normalized);
       setTestimonials(prev => prev.map(item => item.id === selected.id ? normalized : item));
     } finally {
@@ -150,8 +179,8 @@ export default function CmsTestimonialsPage() {
 
   const stats = useMemo(() => ({
     total: testimonials.length,
-    approved: testimonials.filter(t => t.published).length,
-    pending: testimonials.filter(t => !t.published).length,
+    approved: testimonials.filter(t => t.status !== "archived" && t.published).length,
+    pending: testimonials.filter(t => t.status !== "archived" && !t.published).length,
     byEmotion: EMOTION_FILTERS.slice(1).map(e => ({
       label: e,
       count: testimonials.filter(t => t.emotion?.toLowerCase() === e.toLowerCase()).length,
@@ -161,15 +190,17 @@ export default function CmsTestimonialsPage() {
   const filtered = useMemo(() => {
     return testimonials.filter(t => {
       const matchEmotion = filter === "Todos" || t.emotion?.toLowerCase() === filter.toLowerCase();
-      const matchStatus = statusFilter === "all" || (statusFilter === "approved" ? t.published : !t.published);
+      const matchStatus = statusFilter === "all"
+        || (statusFilter === "approved" ? t.status !== "archived" && t.published : statusFilter === "pending" ? t.status !== "archived" && !t.published : t.status === "archived");
       const matchSearch = !search || t.content.toLowerCase().includes(search.toLowerCase());
       return matchEmotion && matchStatus && matchSearch;
     });
   }, [testimonials, filter, statusFilter, search]);
 
   const testimonialGroups = useMemo(() => ([
-    { id: "approved", label: "Aprobados", items: filtered.filter(t => t.published) },
-    { id: "pending", label: "Pendientes", items: filtered.filter(t => !t.published) },
+    { id: "approved", label: "Aprobados", items: filtered.filter(t => t.status !== "archived" && t.published) },
+    { id: "pending", label: "Pendientes", items: filtered.filter(t => t.status !== "archived" && !t.published) },
+    { id: "archived", label: "Archivados", items: filtered.filter(t => t.status === "archived") },
   ]), [filtered]);
 
   const calendarEvents = useMemo(() => filtered.map(t => ({
@@ -195,12 +226,12 @@ export default function CmsTestimonialsPage() {
       {filtered.map(t => {
         const cfg = EMOTION_CONFIG[t.emotion] ?? defaultEmotion;
         return (
-          <button key={t.id} onClick={() => setSelected(t)} className="w-full text-left bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-2xl p-4 hover:border-rose-300 transition-all flex items-center gap-4">
+          <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-2xl p-4 hover:border-rose-300 transition-all flex items-center gap-4", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
             <div className={clsx("size-10 rounded-2xl flex items-center justify-center text-white text-[11px] font-black shrink-0", getAvatarColor(t.author_id))}>{getInitials(t.author_id)}</div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className={clsx("text-[10px] font-black uppercase tracking-widest", cfg.color)}>{cfg.emoji} {t.emotion || "Testimonio"}</span>
-                <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", t.published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{t.published ? "Publicado" : "Pendiente"}</span>
+                <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", t.status === "archived" ? "bg-slate-100 text-slate-500" : t.published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span>
               </div>
               <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-1 mt-1">{t.content}</p>
             </div>
@@ -225,13 +256,13 @@ export default function CmsTestimonialsPage() {
         </thead>
         <tbody className="divide-y divide-slate-100 dark:divide-white/5">
           {filtered.map(t => (
-            <tr key={t.id} onClick={() => setSelected(t)} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer">
+            <tr key={t.id} onClick={() => setSelected(t)} className={clsx("hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
               <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-200 line-clamp-1 max-w-[420px]">{t.content}</td>
               <td className="px-4 py-3 hidden md:table-cell text-[11px] font-bold text-slate-500">{t.emotion || "—"}</td>
-              <td className="px-4 py-3 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", t.published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{t.published ? "Publicado" : "Pendiente"}</span></td>
+              <td className="px-4 py-3 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", t.status === "archived" ? "bg-slate-100 text-slate-500" : t.published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span></td>
               <td className="px-4 py-3 hidden xl:table-cell text-[11px] text-slate-400">{new Date(t.created_at).toLocaleDateString("es-CO")}</td>
               <td className="px-4 py-3">
-                <button onClick={e => { e.stopPropagation(); handleToggle(t); }} disabled={processing === t.id} className="text-[9px] font-black uppercase tracking-widest text-rose-600 disabled:opacity-50">{t.published ? "Retirar" : "Aprobar"}</button>
+                <button onClick={e => { e.stopPropagation(); toggleArchive(t); }} disabled={processing === t.id} className="text-[9px] font-black uppercase tracking-widest text-amber-600 disabled:opacity-50">{t.status === "archived" ? "Restaurar" : "Archivar"}</button>
               </td>
             </tr>
           ))}
@@ -250,7 +281,7 @@ export default function CmsTestimonialsPage() {
           </div>
           <div className="space-y-3">
             {group.items.map(t => (
-              <button key={t.id} onClick={() => setSelected(t)} className="w-full text-left bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/5 rounded-2xl p-4 hover:border-rose-300 transition-all">
+              <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/5 rounded-2xl p-4 hover:border-rose-300 transition-all", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Miembro #{t.author_id} · {t.emotion || "Testimonio"}</p>
                 <p className="text-sm text-slate-700 dark:text-slate-200 line-clamp-3">{t.content}</p>
               </button>
@@ -296,15 +327,16 @@ export default function CmsTestimonialsPage() {
             { label: "Total", value: stats.total, icon: Users, color: "text-slate-600" },
             { label: "Aprobados", value: stats.approved, icon: CheckCircle2, color: "text-emerald-600" },
             { label: "Pendientes", value: stats.pending, icon: Clock, color: "text-amber-500" },
+            { label: "Archivados", value: testimonials.filter(t => t.status === "archived").length, icon: Archive, color: "text-slate-500" },
           ].map(s => (
             <button
               key={s.label}
               onClick={() => setStatusFilter(
-                s.label === "Total" ? "all" : s.label === "Aprobados" ? "approved" : "pending"
+                s.label === "Total" ? "all" : s.label === "Aprobados" ? "approved" : s.label === "Pendientes" ? "pending" : "archived"
               )}
               className={clsx(
                 "flex items-center gap-2 transition-all",
-                statusFilter === (s.label === "Total" ? "all" : s.label === "Aprobados" ? "approved" : "pending")
+                statusFilter === (s.label === "Total" ? "all" : s.label === "Aprobados" ? "approved" : s.label === "Pendientes" ? "pending" : "archived")
                   ? "opacity-100"
                   : "opacity-50 hover:opacity-75"
               )}
@@ -451,7 +483,7 @@ export default function CmsTestimonialsPage() {
                       <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={e => { e.stopPropagation(); handleToggle(t); }}
-                          disabled={processing === t.id}
+                          disabled={processing === t.id || t.status === "archived"}
                           className={clsx(
                             "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border",
                             t.published
@@ -460,6 +492,18 @@ export default function CmsTestimonialsPage() {
                           )}
                         >
                           {t.published ? <><XCircle size={10} /> Rechazar</> : <><CheckCircle2 size={10} /> Aprobar</>}
+                        </button>
+                        <button
+                          onClick={e => { e.stopPropagation(); toggleArchive(t); }}
+                          disabled={processing === t.id}
+                          className={clsx(
+                            "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border",
+                            t.status === "archived"
+                              ? "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
+                              : "bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100"
+                          )}
+                        >
+                          {t.status === "archived" ? <><RotateCcw size={10} /> Restaurar</> : <><Archive size={10} /> Archivar</>}
                         </button>
                         <button
                           onClick={e => { e.stopPropagation(); setSelected(isSelected ? null : t); }}
@@ -515,9 +559,9 @@ export default function CmsTestimonialsPage() {
                     </div>
                     <span className={clsx(
                       "px-2 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border",
-                      selected.published ? "bg-emerald-50 text-emerald-600 border-emerald-200" : "bg-amber-50 text-amber-600 border-amber-200"
+                      selected.status === "archived" ? "bg-slate-100 text-slate-500 border-slate-200" : selected.published ? "bg-emerald-50 text-emerald-600 border-emerald-200" : "bg-amber-50 text-amber-600 border-amber-200"
                     )}>
-                      {selected.published ? "✓ Publicado" : "⏳ Pendiente"}
+                      {selected.status === "archived" ? "Archivado" : selected.published ? "✓ Publicado" : "⏳ Pendiente"}
                     </span>
                   </div>
                 );
@@ -636,7 +680,7 @@ export default function CmsTestimonialsPage() {
                 </button>
                 <button
                   onClick={() => handleToggle(selected)}
-                  disabled={processing === selected.id}
+                  disabled={processing === selected.id || selected.status === "archived"}
                   className={clsx(
                     "flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95 disabled:opacity-60",
                     selected.published
@@ -647,6 +691,21 @@ export default function CmsTestimonialsPage() {
                   {selected.published
                     ? <><XCircle size={16} /> Retirar del Sitio Web</>
                     : <><CheckCircle2 size={16} /> Aprobar y Publicar</>
+                  }
+                </button>
+                <button
+                  onClick={() => toggleArchive(selected)}
+                  disabled={processing === selected.id}
+                  className={clsx(
+                    "flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95 disabled:opacity-60",
+                    selected.status === "archived"
+                      ? "bg-emerald-600 text-white shadow-emerald-500/20 hover:bg-emerald-700"
+                      : "bg-amber-500 text-white shadow-amber-500/20 hover:bg-amber-600"
+                  )}
+                >
+                  {selected.status === "archived"
+                    ? <><RotateCcw size={16} /> Restaurar a pendientes</>
+                    : <><Archive size={16} /> Archivar testimonio</>
                   }
                 </button>
               </div>

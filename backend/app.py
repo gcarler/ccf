@@ -225,12 +225,15 @@ def _run_startup_migrations() -> None:
             "ALTER TABLE cms_media_items ADD COLUMN filename VARCHAR(255)",
             "ALTER TABLE cms_media_items ADD COLUMN mime_type VARCHAR(120)",
             "ALTER TABLE cms_media_items ADD COLUMN file_size INTEGER DEFAULT 0",
+            "ALTER TABLE cms_media_items ADD COLUMN status VARCHAR(20) DEFAULT 'active'",
+            "ALTER TABLE cms_themes ADD COLUMN status VARCHAR(20) DEFAULT 'active'",
             # CMS testimonial media columns
             "ALTER TABLE testimonials ADD COLUMN media_type VARCHAR(30) DEFAULT 'text'",
             "ALTER TABLE testimonials ADD COLUMN media_url VARCHAR(500)",
             "ALTER TABLE testimonials ADD COLUMN image_url VARCHAR(500)",
             "ALTER TABLE testimonials ADD COLUMN video_url VARCHAR(500)",
             "ALTER TABLE testimonials ADD COLUMN podcast_url VARCHAR(500)",
+            "ALTER TABLE testimonials ADD COLUMN status VARCHAR(20) DEFAULT 'pending'",
             # CMS section type column
             "ALTER TABLE cms_sections ADD COLUMN section_type VARCHAR(50)",
             # Dedicated announcements / testimonials tables

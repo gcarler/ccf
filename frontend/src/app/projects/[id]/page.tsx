@@ -294,7 +294,7 @@ export default function ProjectDetailPage() {
     }));
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
+        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Proyectos', icon: LayoutDashboard, href: '/projects' },
@@ -477,7 +477,7 @@ export default function ProjectDetailPage() {
                         )}
 
                         {viewType === 'table' && (
-                            <div className="h-[calc(100vh-14rem)] border border-slate-200 dark:border-white/5 rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e1f21] shadow-sm">
+                            <div className="h-[calc(100vh-14rem)] border border-slate-200 dark:border-white/5 rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#252528] shadow-sm">
                                 <TaskTableView
                                     projectId={project?.id}
                                     tasks={tasks}
@@ -494,7 +494,7 @@ export default function ProjectDetailPage() {
                                     <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Plan de Acción</h3>
                                     <div className="space-y-2">
                                         {tasks.map(task => (
-                                            <div key={task.id} onClick={() => handleOpenTask(task)} className="p-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/30 transition-all cursor-pointer">
+                                            <div key={task.id} onClick={() => handleOpenTask(task)} className="p-4 rounded-2xl bg-white dark:bg-[#252528] border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/30 transition-all duration-300 active:scale-[0.99] cursor-pointer">
                                                 <div className="flex items-center gap-4 flex-1">
                                                     <button
                                                         onClick={(event) => {
@@ -544,14 +544,14 @@ export default function ProjectDetailPage() {
                                 {STATUS_FLOW.map((status) => {
                                     const columnTasks = tasks.filter((task) => (task.status || 'todo') === status);
                                     return (
-                                        <section key={status} className="w-80 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                                        <section key={status} className="w-80 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-[#252528]">
                                             <div className="mb-3 flex items-center justify-between px-1">
                                                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{STATUS_LABELS[status]}</p>
                                                 <span className="text-[10px] font-black text-slate-400">{columnTasks.length}</span>
                                             </div>
                                             <div className="space-y-2">
                                                 {columnTasks.map((task) => (
-                                                    <article key={task.id} onClick={() => handleOpenTask(task)} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-white/5 cursor-pointer">
+                                                    <article key={task.id} onClick={() => handleOpenTask(task)} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#1E1F21] cursor-pointer transition-all duration-300 hover:border-blue-300 active:scale-[0.99]">
                                                         <p className="text-sm font-black text-slate-900 dark:text-white">{task.title}</p>
                                                         <div className="mt-3 flex items-center justify-between gap-2">
                                                             <span className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${STATUS_COLORS[task.status] || 'bg-slate-100 text-slate-500'}`}>{STATUS_LABELS[task.status] || task.status}</span>

@@ -321,11 +321,18 @@ def update_cms_site(db: Session, row: models.CmsSite, payload: schemas.CmsSiteUp
 
 # ── CMS v2 Themes ──────────────────────────────────────
 
+def archive_cms_site(db: Session, row: models.CmsSite):
+    row.is_active = False
+    db.commit()
+    db.refresh(row)
+    return row
+
+
 def list_cms_themes(db: Session, site_id: int):
     return (
         db.query(models.CmsTheme)
         .filter(models.CmsTheme.site_id == site_id)
-        .order_by(models.CmsTheme.updated_at.desc())
+        .order_by(models.CmsTheme.is_active.desc(), models.CmsTheme.updated_at.desc())
         .all()
     )
 
@@ -337,11 +344,13 @@ def create_cms_theme(db: Session, site_id: int, payload: schemas.CmsThemeCreate,
         .scalar()
         or 0
     )
+    status = (payload.status or "active").strip().lower()
     row = models.CmsTheme(
         site_id=site_id,
         name=payload.name.strip(),
         tokens_json=payload.tokens_json or {},
-        is_active=bool(payload.is_active),
+        is_active=bool(payload.is_active) and status != "archived",
+        status=status,
         version=int(version) + 1,
         created_by=created_by,
     )
@@ -370,9 +379,14 @@ def update_cms_theme(db: Session, row: models.CmsTheme, payload: schemas.CmsThem
         row.name = str(data["name"]).strip()
     if "tokens_json" in data and data["tokens_json"] is not None:
         row.tokens_json = data["tokens_json"]
+    if "status" in data and data["status"] is not None:
+        row.status = str(data["status"]).strip().lower()
+        if row.status == "archived":
+            row.is_active = False
     if "is_active" in data and data["is_active"] is not None:
         row.is_active = bool(data["is_active"])
         if row.is_active:
+            row.status = "active"
             db.query(models.CmsTheme).filter(
                 models.CmsTheme.site_id == row.site_id,
                 models.CmsTheme.id != row.id,
@@ -383,11 +397,20 @@ def update_cms_theme(db: Session, row: models.CmsTheme, payload: schemas.CmsThem
 
 
 def activate_cms_theme(db: Session, site_id: int, theme_id: int):
-    db.query(models.CmsTheme).filter(models.CmsTheme.site_id == site_id).update({"is_active": False})
     row = get_cms_theme(db, site_id, theme_id)
     if not row:
         return None
+    db.query(models.CmsTheme).filter(models.CmsTheme.site_id == site_id).update({"is_active": False})
     row.is_active = True
+    row.status = "active"
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def archive_cms_theme(db: Session, row: models.CmsTheme):
+    row.is_active = False
+    row.status = "archived"
     db.commit()
     db.refresh(row)
     return row
@@ -396,7 +419,11 @@ def activate_cms_theme(db: Session, site_id: int, theme_id: int):
 def get_active_cms_theme(db: Session, site_id: int):
     return (
         db.query(models.CmsTheme)
-        .filter(models.CmsTheme.site_id == site_id, models.CmsTheme.is_active.is_(True))
+        .filter(
+            models.CmsTheme.site_id == site_id,
+            models.CmsTheme.is_active.is_(True),
+            models.CmsTheme.status != "archived",
+        )
         .order_by(models.CmsTheme.updated_at.desc())
         .first()
     )
@@ -446,8 +473,10 @@ def update_cms_menu(db: Session, row: models.CmsMenu, payload: schemas.CmsMenuUp
 
 
 def delete_cms_menu(db: Session, row: models.CmsMenu):
-    db.delete(row)
+    row.is_active = False
     db.commit()
+    db.refresh(row)
+    return row
 
 
 # ── CMS v2 Menu Items ──────────────────────────────────
@@ -504,8 +533,10 @@ def update_cms_menu_item(db: Session, row: models.CmsMenuItem, payload: schemas.
 
 
 def delete_cms_menu_item(db: Session, row: models.CmsMenuItem):
-    db.delete(row)
+    row.visibility = "hidden"
     db.commit()
+    db.refresh(row)
+    return row
 
 
 def reorder_cms_menu_items(db: Session, menu_id: int, items: list[schemas.CmsMenuItemReorderItem]):
@@ -576,8 +607,10 @@ def update_cms_page(db: Session, row: models.CmsPage, payload: schemas.CmsPageUp
 
 
 def delete_cms_page(db: Session, row: models.CmsPage):
-    db.delete(row)
+    row.status = "archived"
     db.commit()
+    db.refresh(row)
+    return row
 
 
 # ── CMS v2 Sections ────────────────────────────────────
@@ -628,8 +661,7 @@ def update_cms_section(db: Session, row: models.CmsSection, payload: schemas.Cms
 
 
 def delete_cms_section(db: Session, row: models.CmsSection):
-    db.delete(row)
-    db.commit()
+    return archive_cms_section(db, row)
 
 
 def archive_cms_section(db: Session, row: models.CmsSection):
@@ -846,13 +878,14 @@ def update_announcement(db: Session, row: models.Announcement, payload: schemas.
 
 
 def delete_announcement(db: Session, row: models.Announcement) -> None:
-    db.delete(row)
+    row.status = "archived"
     db.commit()
 
 
 # ── Testimonials ────────────────────────────────────────
 
 def create_testimonial(db: Session, payload: schemas.TestimonialCreate) -> models.Testimonial:
+    status = payload.status or ("approved" if payload.is_approved else "pending")
     row = models.Testimonial(
         content=payload.content.strip(),
         emotion=payload.emotion,
@@ -863,6 +896,7 @@ def create_testimonial(db: Session, payload: schemas.TestimonialCreate) -> model
         podcast_url=payload.podcast_url,
         is_approved=payload.is_approved,
         show_on_home=payload.show_on_home,
+        status=status,
         author_id=payload.author_id,
     )
     db.add(row)
@@ -874,7 +908,7 @@ def create_testimonial(db: Session, payload: schemas.TestimonialCreate) -> model
 def list_testimonials(db: Session, *, approved_only: bool = False) -> list[models.Testimonial]:
     query = db.query(models.Testimonial)
     if approved_only:
-        query = query.filter(models.Testimonial.is_approved.is_(True))
+        query = query.filter(models.Testimonial.is_approved.is_(True), models.Testimonial.status != "archived")
     return query.order_by(models.Testimonial.created_at.desc()).all()
 
 
@@ -894,14 +928,23 @@ def update_testimonial(db: Session, row: models.Testimonial, payload: schemas.Te
         "podcast_url",
         "is_approved",
         "show_on_home",
+        "status",
     ):
         if field in data and data[field] is not None:
             setattr(row, field, data[field])
+    if "status" not in data and "is_approved" in data and data["is_approved"] is not None:
+        row.status = "approved" if data["is_approved"] else "pending"
+    if "status" in data and data["status"] == "approved":
+        row.is_approved = True
+    if "status" in data and data["status"] in {"pending", "archived"}:
+        row.is_approved = False
     db.commit()
     db.refresh(row)
     return row
 
 
 def delete_testimonial(db: Session, row: models.Testimonial) -> None:
-    db.delete(row)
+    row.status = "archived"
+    row.is_approved = False
+    row.show_on_home = False
     db.commit()

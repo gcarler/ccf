@@ -14,6 +14,7 @@ export interface CmsTheme {
   name: string;
   tokens_json: Record<string, string>;
   is_active: boolean;
+  status: "active" | "archived" | string;
   version: number;
   created_at: string;
   updated_at: string;

@@ -78,8 +78,8 @@ export default function InboxPage() {
     const unreadCount = notifications.filter((notification) => !notification.read).length;
 
     return (
-        <div className="h-full flex flex-col bg-white dark:bg-[#141517] overflow-hidden font-display">
-            <div className="h-12 border-b border-slate-100 dark:border-white/5 flex items-center px-6 gap-3 shrink-0 bg-slate-50/50 dark:bg-[#141517]">
+        <div className="h-full flex flex-col bg-white dark:bg-[#1E1F21] overflow-hidden font-display">
+            <div className="h-12 border-b border-slate-100 dark:border-white/5 flex items-center px-6 gap-3 shrink-0 bg-slate-50/50 dark:bg-[#1E1F21]">
                 <h1 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-700 dark:text-slate-300 flex items-center gap-2">
                     <Bell size={13} />
                     Bandeja de Entrada

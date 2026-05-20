@@ -74,7 +74,9 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
       { title: val(props, "card_2_title", "Crece"), body: val(props, "card_2_body", "Discipulado y formación práctica.") },
       { title: val(props, "card_3_title", "Sirve"), body: val(props, "card_3_body", "Impacta tu ciudad con propósito.") },
     ];
-    const cards = cardsRaw.filter(Boolean).slice(0, 6) as Array<{ title?: string; body?: string }>;
+    const cards = cardsRaw
+      .filter((item) => Boolean(item) && (item as { status?: string }).status !== "archived")
+      .slice(0, 6) as Array<{ title?: string; body?: string; status?: string }>;
     return (
       <section className="rounded-3xl p-8 md:p-10" style={{ background: "var(--faro-surface-container-low)" }}>
         <h3 className="text-3xl font-black" style={{ color: "var(--faro-on-surface)" }}>{title}</h3>
@@ -96,7 +98,9 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
       { q: val(props, "q1", "¿Dónde están ubicados?"), a: val(props, "a1", "Estamos en múltiples sedes. Revisa la sección de sedes.") },
       { q: val(props, "q2", "¿Cómo me conecto?"), a: val(props, "a2", "Puedes visitarnos, escribirnos o unirte a un grupo pequeño.") },
     ];
-    const items = itemsRaw.slice(0, 8) as Array<{ q?: string; a?: string }>;
+    const items = itemsRaw
+      .filter((item) => Boolean(item) && (item as { status?: string }).status !== "archived")
+      .slice(0, 8) as Array<{ q?: string; a?: string; status?: string }>;
     return (
       <section className="rounded-3xl p-8 md:p-10" style={{ background: "var(--faro-surface-container-low)" }}>
         <h3 className="text-3xl font-black" style={{ color: "var(--faro-on-surface)" }}>{title}</h3>

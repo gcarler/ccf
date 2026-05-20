@@ -14,6 +14,7 @@ interface PublicEventItem {
     excerpt?: string;
     category?: string;
     featured?: boolean;
+    status?: string;
     img?: string;
 }
 
@@ -52,7 +53,7 @@ export default function EventosPage() {
         "Espacios disenados para el crecimiento, la conexion y la guia espiritual.";
 
     const parsedEvents = Array.isArray(eventsContent?.parsed)
-        ? (eventsContent?.parsed as PublicEventItem[])
+        ? (eventsContent?.parsed as PublicEventItem[]).filter((event) => event.status !== "archived")
         : [];
 
     const featuredEvent = parsedEvents.find((event) => event.featured) || parsedEvents[0];

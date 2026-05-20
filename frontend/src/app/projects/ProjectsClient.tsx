@@ -234,7 +234,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                         ) : viewType === 'list' ? (
                             <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2 pb-20">
                                 {filtered.map((project) => (
-                                    <button key={project.id} onClick={() => router.push(`/projects/${project.id}`)} className="w-full rounded-xl border border-slate-200 bg-white p-4 text-left transition hover:border-blue-300 dark:border-white/10 dark:bg-white/5">
+                                    <button key={project.id} onClick={() => router.push(`/projects/${project.id}`)} className="w-full rounded-xl border border-slate-200 bg-white p-4 text-left transition-all duration-300 hover:border-blue-300 active:scale-[0.99] dark:border-white/10 dark:bg-[#252528] hover:dark:bg-[#2A2B2E]">
                                         <div className="flex items-center justify-between gap-4">
                                             <div className="min-w-0">
                                                 <p className="truncate text-sm font-black text-slate-900 dark:text-white">{project.title}</p>
@@ -248,7 +248,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                         ) : viewType === 'board' || viewType === 'kanban' ? (
                             <motion.div key="board" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex gap-4 overflow-x-auto pb-20">
                                 {groupedByStatus.map((column) => (
-                                    <section key={column.status} className="w-80 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                                    <section key={column.status} className="w-80 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-[#252528]">
                                         <div className="mb-3 flex items-center justify-between px-1">
                                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{column.status}</p>
                                             <span className="text-[10px] font-black text-slate-400">{column.projects.length}</span>

@@ -124,8 +124,8 @@ export default function MiVistaPage() {
       breadcrumbs={[{ label: "Mi Vista", icon: UserCircle, href: "/mi-vista" }]}
       sidebarTitle="Mi Vista"
     >
-      <div className="h-full overflow-y-auto bg-slate-50 dark:bg-[#111213] p-6 lg:p-8">
-        <div className="mx-auto max-w-7xl space-y-6">
+      <div className="flex-1 w-full overflow-y-auto bg-slate-50 dark:bg-[#1E1F21] p-6 lg:p-8">
+        <div className="w-full space-y-6">
           <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <StatCard
               icon={CheckCircle2}
@@ -237,12 +237,13 @@ function StatCard({
   href: string;
 }) {
   return (
-    <Link href={href} className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:shadow-md dark:border-white/10 dark:bg-[#1a1b1e]">
-      <div className="mb-2 flex items-center gap-2 text-slate-500 dark:text-slate-300">
+    <Link href={href} className="group relative rounded-2xl border border-slate-200/70 bg-white dark:bg-[#252528] p-6 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:border-white/5 dark:hover:shadow-black/30 transition-all duration-300 active:scale-[0.99] cursor-pointer overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="mb-2 flex items-center gap-2 text-slate-500 dark:text-slate-400">
         <Icon size={16} />
-        <span className="text-xs font-black uppercase tracking-widest">{label}</span>
+        <span className="text-[10px] font-black uppercase tracking-[0.15em]">{label}</span>
       </div>
-      <div className="text-3xl font-black text-slate-900 dark:text-white">{value}</div>
+      <div className="text-3xl font-black text-slate-900 dark:text-slate-50 mt-4">{value}</div>
     </Link>
   );
 }
@@ -259,10 +260,10 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#1a1b1e]">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-black text-slate-800 dark:text-slate-200">{title}</h2>
-        <Link href={actionHref} className="text-xs font-black uppercase tracking-widest text-blue-600">
+    <div className="rounded-2xl border border-slate-200/70 bg-white dark:bg-[#252528] p-6 shadow-sm dark:border-white/5">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-[13px] font-bold text-slate-900 dark:text-slate-50">{title}</h2>
+        <Link href={actionHref} className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-600 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">
           {actionLabel}
         </Link>
       </div>
@@ -283,9 +284,9 @@ function QuickLink({
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-700 transition hover:shadow-md dark:border-white/10 dark:bg-[#1a1b1e] dark:text-slate-200"
+      className="group flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-white dark:bg-[#252528] p-5 text-[13px] font-semibold text-slate-700 transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/60 dark:border-white/5 dark:text-slate-300 dark:hover:text-slate-100 dark:hover:shadow-black/30 active:scale-[0.99]"
     >
-      <Icon size={18} />
+      <Icon size={18} className="text-slate-400 group-hover:text-blue-600 transition-colors" />
       {label}
     </Link>
   );

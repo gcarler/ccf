@@ -3,14 +3,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Link2, Plus, Trash2,
+    Archive, Link2, Plus, RotateCcw, X,
     ExternalLink, ChevronRight, Zap,
     GripVertical, Save
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import SidePanel from '@/components/ui/SidePanel';
 import clsx from 'clsx';
-import { createCmsMenu, createCmsMenuItem, deleteCmsMenuItem, listCmsMenuItems, listCmsMenus, listCmsSites, patchCmsMenuItem, reorderCmsMenuItems } from '@/lib/cms/v2';
+import { createCmsMenu, createCmsMenuItem, deleteCmsMenuItem as archiveCmsMenuItem, listCmsMenuItems, listCmsMenus, listCmsSites, patchCmsMenu, patchCmsMenuItem, reorderCmsMenuItems } from '@/lib/cms/v2';
 import { CmsMenu, CmsMenuItem, CmsSite } from '@/types/cms-v2';
 import { ApiError } from '@/lib/http';
 import { canEditCms } from '@/lib/cms/permissions';
@@ -52,6 +52,7 @@ export default function CmsMenusManagement() {
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const [draggedId, setDraggedId] = useState<number | null>(null);
     const canEdit = canEditCms(user?.role);
+    const selectedMenu = useMemo(() => menus.find((menu) => menu.menu_key === menuKey) || null, [menus, menuKey]);
 
     const wouldCreateCycle = (itemId: number, parentId: number | null) => {
         if (parentId == null) return false;
@@ -197,6 +198,16 @@ export default function CmsMenusManagement() {
         }
     };
 
+    const handleToggleMenuActive = async () => {
+        if (!token || !canEdit || !siteKey || !selectedMenu) return;
+        try {
+            const updated = await patchCmsMenu(siteKey, selectedMenu.menu_key, { is_active: !selectedMenu.is_active }, token);
+            setMenus((prev) => prev.map((menu) => menu.id === updated.id ? updated : menu));
+        } catch (error) {
+            console.error("Error updating CMS menu:", error);
+        }
+    };
+
     const handleAddItem = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         if (!newItemLabel.trim() || !newItemHref.trim() || !canEdit || !siteKey || !menuKey) return;
@@ -223,15 +234,19 @@ export default function CmsMenusManagement() {
         }
     };
 
-    const handleDeleteItem = async (index: number) => {
+    const handleToggleItemVisibility = async (index: number) => {
         if (!canEdit || !siteKey || !menuKey) return;
         const target = navConfig.items[index];
         if (!target) return;
         try {
-            await deleteCmsMenuItem(siteKey, menuKey, target.id, token);
+            if (target.visibility === "hidden") {
+                await patchCmsMenuItem(siteKey, menuKey, target.id, { visibility: "public" }, token);
+            } else {
+                await archiveCmsMenuItem(siteKey, menuKey, target.id, token);
+            }
             fetchNav();
         } catch (error) {
-            console.error('Error deleting menu item:', error);
+            console.error('Error updating menu item visibility:', error);
         }
         if (selectedIndex === index) {
             setSelectedItem(null);
@@ -253,6 +268,7 @@ export default function CmsMenusManagement() {
                     href: updatedItem.href,
                     is_external: !!updatedItem.is_external,
                     parent_id: updatedItem.parent_id ?? null,
+                    visibility: updatedItem.visibility || "public",
                     sort_order: updatedItem.sort_order,
                 },
                 token,
@@ -371,9 +387,22 @@ export default function CmsMenusManagement() {
                     >
                         {menus.length === 0 && <option value="">Sin menus</option>}
                         {menus.map((menu) => (
-                            <option key={menu.id} value={menu.menu_key}>{menu.name} ({menu.menu_key})</option>
+                            <option key={menu.id} value={menu.menu_key}>
+                                {menu.name} ({menu.menu_key}){menu.is_active ? "" : " - inactivo"}
+                            </option>
                         ))}
                     </select>
+                    {selectedMenu && (
+                        <button
+                            onClick={handleToggleMenuActive}
+                            disabled={!canEdit}
+                            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                            title={selectedMenu.is_active ? "Desactivar menu publico" : "Activar menu publico"}
+                        >
+                            {selectedMenu.is_active ? <Archive size={14} /> : <RotateCcw size={14} />}
+                            {selectedMenu.is_active ? "Desactivar" : "Activar"}
+                        </button>
+                    )}
                     <button 
                         onClick={() => setIsQuickAddOpen(!isQuickAddOpen)}
                         disabled={!canEdit || !menuKey}
@@ -462,7 +491,7 @@ export default function CmsMenusManagement() {
                                     onClick={() => setIsQuickAddOpen(false)}
                                     className="p-1.5 hover:bg-blue-200 dark:hover:bg-blue-800/30 rounded-lg text-blue-500 transition-all"
                                 >
-                                    <Trash2 size={14} />
+                                    <X size={14} />
                                 </button>
                             </div>
                         </form>
@@ -541,7 +570,12 @@ export default function CmsMenusManagement() {
                                         setDraggedId(null);
                                     }}
                                     onDragEnd={() => setDraggedId(null)}
-                                    className="group bg-white dark:bg-[#252528] rounded-2xl border border-slate-200/70 dark:border-white/5 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center gap-4"
+                                    className={clsx(
+                                        "group rounded-2xl border p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center gap-4",
+                                        item.visibility === "hidden"
+                                            ? "bg-slate-50 dark:bg-white/[0.03] border-dashed border-slate-200 dark:border-white/10 opacity-75"
+                                            : "bg-white dark:bg-[#252528] border-slate-200/70 dark:border-white/5"
+                                    )}
                                     style={{ marginLeft: `${depth * 16}px` }}
                                 >
                                     <div className="p-2 text-slate-300 group-hover:text-slate-500 transition-colors">
@@ -560,6 +594,11 @@ export default function CmsMenusManagement() {
                                     {item.is_external && (
                                         <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-slate-100 dark:bg-white/5 text-slate-500 uppercase tracking-widest">
                                             EXTERNO
+                                        </span>
+                                    )}
+                                    {item.visibility === "hidden" && (
+                                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-50 dark:bg-amber-500/10 text-amber-700 uppercase tracking-widest">
+                                            OCULTO
                                         </span>
                                     )}
 
@@ -592,12 +631,13 @@ export default function CmsMenusManagement() {
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 const sourceIndex = navConfig.items.findIndex((entry) => entry.id === item.id);
-                                                handleDeleteItem(sourceIndex);
+                                                handleToggleItemVisibility(sourceIndex);
                                             }}
                                             disabled={!canEdit}
-                                            className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl text-slate-400 hover:text-rose-600 transition-all"
+                                            title={item.visibility === "hidden" ? "Restaurar enlace" : "Ocultar enlace"}
+                                            className="p-2 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-xl text-slate-400 hover:text-amber-700 transition-all"
                                         >
-                                            <Trash2 size={16} />
+                                            {item.visibility === "hidden" ? <RotateCcw size={16} /> : <Archive size={16} />}
                                         </button>
                                     </div>
                                     <ChevronRight size={16} className="text-slate-300" />
@@ -679,6 +719,40 @@ export default function CmsMenusManagement() {
                                             <option key={item.id} value={item.id}>{item.label}</option>
                                         ))}
                                 </select>
+                            </div>
+                        </section>
+
+                        <section className="pt-6 border-t border-slate-100 dark:border-white/5 space-y-3">
+                            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+                                VISIBILIDAD
+                            </p>
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => handleUpdateItem(selectedIndex, { ...selectedItem, visibility: "public" })}
+                                    disabled={!canEdit}
+                                    className={clsx(
+                                        "rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all",
+                                        selectedItem.visibility !== "hidden"
+                                            ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10"
+                                            : "border-slate-200 text-slate-500 dark:border-white/10"
+                                    )}
+                                >
+                                    Publico
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleUpdateItem(selectedIndex, { ...selectedItem, visibility: "hidden" })}
+                                    disabled={!canEdit}
+                                    className={clsx(
+                                        "rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all",
+                                        selectedItem.visibility === "hidden"
+                                            ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10"
+                                            : "border-slate-200 text-slate-500 dark:border-white/10"
+                                    )}
+                                >
+                                    Oculto
+                                </button>
                             </div>
                         </section>
 

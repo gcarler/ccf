@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import AdminHero from "@/components/admin/AdminHero";
 import { FARO_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
-import { CalendarRange, Plus, Save, Trash2 } from "lucide-react";
+import { Archive, CalendarRange, Plus, RotateCcw, Save } from "lucide-react";
 
 interface PublicEvent {
   title: string;
@@ -14,6 +14,7 @@ interface PublicEvent {
   excerpt: string;
   category: string;
   featured?: boolean;
+  status?: "published" | "archived" | string;
 }
 
 interface ContentRecord {
@@ -26,7 +27,8 @@ const EMPTY_EVENT: PublicEvent = {
   location: "",
   excerpt: "",
   category: "General",
-  featured: false
+  featured: false,
+  status: "published"
 };
 
 export default function CmsEventsPage() {
@@ -43,7 +45,11 @@ export default function CmsEventsPage() {
       try {
         const data = await apiFetch<ContentRecord>(`/content/${FARO_EVENTS_BLOCK_KEY}`, { token, cache: "no-store" });
         const parsed = data?.content ? JSON.parse(data.content) : [];
-        setEvents(Array.isArray(parsed) ? parsed : []);
+        setEvents(
+          Array.isArray(parsed)
+            ? parsed.map((event) => ({ ...event, status: event.status || "published" }))
+            : [],
+        );
       } catch {
         setEvents([]);
       } finally {
@@ -53,7 +59,9 @@ export default function CmsEventsPage() {
     load();
   }, [token]);
 
-  const featuredCount = useMemo(() => events.filter((event) => event.featured).length, [events]);
+  const activeEvents = useMemo(() => events.filter((event) => event.status !== "archived"), [events]);
+  const archivedCount = events.length - activeEvents.length;
+  const featuredCount = useMemo(() => activeEvents.filter((event) => event.featured).length, [activeEvents]);
 
   const save = async () => {
     if (!token) return;
@@ -99,11 +107,15 @@ export default function CmsEventsPage() {
           <div className="flex items-center gap-6">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Eventos</p>
-              <p className="text-3xl font-black mt-1">{events.length}</p>
+              <p className="text-3xl font-black mt-1">{activeEvents.length}</p>
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Destacados</p>
               <p className="text-3xl font-black mt-1">{featuredCount}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Archivados</p>
+              <p className="text-3xl font-black mt-1">{archivedCount}</p>
             </div>
           </div>
           <button
@@ -126,8 +138,10 @@ export default function CmsEventsPage() {
           </button>
         ) : (
           <div className="space-y-4">
-            {events.map((event, index) => (
-              <div key={index} className="rounded-2xl border border-slate-100 dark:border-white/10 p-4 space-y-3">
+            {events.map((event, index) => {
+              const isArchived = event.status === "archived";
+              return (
+              <div key={index} className={`rounded-2xl border p-4 space-y-3 ${isArchived ? "border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-100 dark:border-white/10"}`}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <input
                     value={event.title}
@@ -190,15 +204,19 @@ export default function CmsEventsPage() {
                     Destacado
                   </label>
                   <button
-                    onClick={() => setEvents((prev) => prev.filter((_, rowIndex) => rowIndex !== index))}
-                    className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-rose-500"
+                    onClick={() => {
+                      const nextStatus = isArchived ? "published" : "archived";
+                      setEvents((prev) => prev.map((row, rowIndex) => (rowIndex === index ? { ...row, status: nextStatus } : row)));
+                    }}
+                    className={`inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] ${isArchived ? "text-emerald-600" : "text-amber-700"}`}
                   >
-                    <Trash2 size={13} />
-                    Eliminar
+                    {isArchived ? <RotateCcw size={13} /> : <Archive size={13} />}
+                    {isArchived ? "Restaurar" : "Archivar"}
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

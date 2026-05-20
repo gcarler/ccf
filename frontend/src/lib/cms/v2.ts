@@ -54,7 +54,7 @@ export async function listCmsThemes(siteKey: string, token?: string | null) {
 
 export async function createCmsTheme(
   siteKey: string,
-  payload: { name: string; tokens_json: Record<string, string>; is_active?: boolean },
+  payload: { name: string; tokens_json: Record<string, string>; is_active?: boolean; status?: string },
   token?: string | null,
 ) {
   return apiFetch<CmsTheme>(`/cms/v2/sites/${siteKey}/themes`, {
@@ -81,7 +81,7 @@ export async function activateCmsTheme(siteKey: string, themeId: number, token?:
 export async function patchCmsTheme(
   siteKey: string,
   themeId: number,
-  payload: { name?: string; tokens_json?: Record<string, string>; is_active?: boolean },
+  payload: { name?: string; tokens_json?: Record<string, string>; is_active?: boolean; status?: string },
   token?: string | null,
 ) {
   return apiFetch<CmsTheme>(`/cms/v2/sites/${siteKey}/themes/${themeId}`, {

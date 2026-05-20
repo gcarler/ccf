@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Check, Copy, Eye, EyeOff, ExternalLink, FileImage, ImageIcon, LayoutPanelTop, Monitor, Plus, Save, Search, Send, Smartphone, Trash2, Upload, Undo2, X } from "lucide-react";
+import { Archive, ArrowDown, ArrowUp, Check, Copy, Eye, EyeOff, ExternalLink, FileImage, ImageIcon, LayoutPanelTop, Monitor, Plus, RotateCcw, Save, Search, Send, Smartphone, Upload, Undo2, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
   createCmsPage,
@@ -217,7 +217,9 @@ function SectionPreview({ section }: { section: CmsSection }) {
     );
   }
   if (section.type === "cards" || section.type === "pricing") {
-    const items = Array.isArray(section.props_json?.items) ? section.props_json.items as Array<Record<string,unknown>> : [];
+    const items = Array.isArray(section.props_json?.items)
+      ? (section.props_json.items as Array<Record<string,unknown>>).filter((item) => item.status !== "archived")
+      : [];
     return (
       <div className="rounded-2xl border border-dashed border-slate-300 dark:border-white/20 p-4 space-y-2">
         <TypeBadge />
@@ -318,7 +320,9 @@ function SectionPreview({ section }: { section: CmsSection }) {
     );
   }
   if (section.type === "faq") {
-    const faqs = Array.isArray(section.props_json?.items) ? section.props_json.items as Array<Record<string,unknown>> : [];
+    const faqs = Array.isArray(section.props_json?.items)
+      ? (section.props_json.items as Array<Record<string,unknown>>).filter((item) => item.status !== "archived")
+      : [];
     return (
       <div className="rounded-2xl border border-dashed border-amber-300 dark:border-amber-500/30 p-4 space-y-2">
         <TypeBadge />
@@ -1176,10 +1180,14 @@ export default function CmsBuilderPage() {
                 {activeSection.type === "cards" && (
                   <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Items de tarjetas</p>
-                    {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => (
-                      <div key={`card-${index}`} className="space-y-2 rounded-lg border border-slate-200/70 dark:border-white/10 p-2">
+                    {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
+                      const itemObject = asObject(item);
+                      const isItemArchived = safeString(itemObject.status) === "archived";
+                      return (
+                      <div key={`card-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
+                        {isItemArchived && <p className="text-[9px] font-black uppercase tracking-widest text-amber-700">Archivado</p>}
                         <input
-                          value={safeString(asObject(item).title)}
+                          value={safeString(itemObject.title)}
                           onChange={(e) => {
                             upsertArrayItem("items", index, { title: e.target.value });
                           }}
@@ -1191,7 +1199,7 @@ export default function CmsBuilderPage() {
                           className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
                         />
                         <textarea
-                          value={safeString(asObject(item).body)}
+                          value={safeString(itemObject.body)}
                           onChange={(e) => {
                             upsertArrayItem("items", index, { body: e.target.value });
                           }}
@@ -1204,18 +1212,20 @@ export default function CmsBuilderPage() {
                         />
                         <button
                           onClick={() => {
-                            const nextProps = removeArrayItem("items", index);
+                            const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" });
                             if (nextProps) saveSectionProps(nextProps);
                           }}
-                          className="rounded-md border border-rose-200 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-rose-600"
+                          className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-widest ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}
                         >
-                          Eliminar item
+                          {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
+                          {isItemArchived ? "Restaurar item" : "Archivar item"}
                         </button>
                       </div>
-                    ))}
+                      );
+                    })}
                     <button
                       onClick={() => {
-                        const nextProps = addArrayItem("items", { title: "Nueva tarjeta", body: "Descripción" });
+                        const nextProps = addArrayItem("items", { title: "Nueva tarjeta", body: "Descripción", status: "published" });
                         if (nextProps) saveSectionProps(nextProps);
                       }}
                       className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-black uppercase tracking-widest"
@@ -1228,10 +1238,14 @@ export default function CmsBuilderPage() {
                 {activeSection.type === "faq" && (
                   <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Preguntas</p>
-                    {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => (
-                      <div key={`faq-${index}`} className="space-y-2 rounded-lg border border-slate-200/70 dark:border-white/10 p-2">
+                    {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
+                      const itemObject = asObject(item);
+                      const isItemArchived = safeString(itemObject.status) === "archived";
+                      return (
+                      <div key={`faq-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
+                        {isItemArchived && <p className="text-[9px] font-black uppercase tracking-widest text-amber-700">Archivado</p>}
                         <input
-                          value={safeString(asObject(item).q)}
+                          value={safeString(itemObject.q)}
                           onChange={(e) => {
                             upsertArrayItem("items", index, { q: e.target.value });
                           }}
@@ -1243,7 +1257,7 @@ export default function CmsBuilderPage() {
                           className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
                         />
                         <textarea
-                          value={safeString(asObject(item).a)}
+                          value={safeString(itemObject.a)}
                           onChange={(e) => {
                             upsertArrayItem("items", index, { a: e.target.value });
                           }}
@@ -1256,18 +1270,20 @@ export default function CmsBuilderPage() {
                         />
                         <button
                           onClick={() => {
-                            const nextProps = removeArrayItem("items", index);
+                            const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" });
                             if (nextProps) saveSectionProps(nextProps);
                           }}
-                          className="rounded-md border border-rose-200 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-rose-600"
+                          className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-widest ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}
                         >
-                          Eliminar pregunta
+                          {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
+                          {isItemArchived ? "Restaurar pregunta" : "Archivar pregunta"}
                         </button>
                       </div>
-                    ))}
+                      );
+                    })}
                     <button
                       onClick={() => {
-                        const nextProps = addArrayItem("items", { q: "Nueva pregunta", a: "Respuesta" });
+                        const nextProps = addArrayItem("items", { q: "Nueva pregunta", a: "Respuesta", status: "published" });
                         if (nextProps) saveSectionProps(nextProps);
                       }}
                       className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-black uppercase tracking-widest"
@@ -1315,7 +1331,8 @@ export default function CmsBuilderPage() {
                     <Copy size={11} /> Duplicar
                   </button>
                   <button onClick={toggleSectionArchive} className={`col-span-2 rounded-lg border px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-1 ${activeSection.status === "archived" ? "border-emerald-200 text-emerald-600" : "border-amber-200 text-amber-600"}`}>
-                    <Trash2 size={11} /> {activeSection.status === "archived" ? "Restaurar seccion" : "Archivar seccion"}
+                    {activeSection.status === "archived" ? <RotateCcw size={11} /> : <Archive size={11} />}
+                    {activeSection.status === "archived" ? "Restaurar seccion" : "Archivar seccion"}
                   </button>
                 </div>
                 <p className="text-[10px] text-slate-400">{saving ? "Guardando..." : "Cambios guardados al salir del campo"}</p>

@@ -6,7 +6,8 @@ import {
     Layout, 
     Quote, 
     CheckCircle2,
-    XCircle,
+    Archive,
+    RotateCcw,
     User,
     Calendar,
     Star,
@@ -39,7 +40,7 @@ export default function CmsTestimonialDetailPage() {
                     ...data,
                     author_name: data.author?.username || (data.author_id ? `Miembro #${data.author_id}` : 'Anonimo'),
                     author_role: 'Miembro de la comunidad',
-                    status: data.is_approved ? 'approved' : 'pending',
+                    status: data.status || (data.is_approved ? 'approved' : 'pending'),
                     rating: 5,
                     category: data.emotion || 'Testimonio',
                 } : null;
@@ -59,14 +60,14 @@ export default function CmsTestimonialDetailPage() {
             const updated = await apiFetch<any>(`/admin/testimonials/${id}`, {
                 method: 'PATCH',
                 token,
-                body: { is_approved: isApproved },
+                body: { status: newStatus },
             });
             setTestimonial({
                 ...testimonial,
                 ...updated,
-                status: isApproved ? 'approved' : 'pending',
+                status: updated.status || newStatus,
             });
-            toast.success(`Testimonio ${newStatus === 'approved' ? 'aprobado' : 'rechazado'}`);
+            toast.success(`Testimonio ${newStatus === 'approved' ? 'aprobado' : newStatus === 'archived' ? 'archivado' : 'restaurado'}`);
         } catch (err) {
             toast.error('Error al actualizar estado');
         }
@@ -91,7 +92,7 @@ export default function CmsTestimonialDetailPage() {
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
                                 <DSBadge tone="violet" label={testimonial.category.toUpperCase()} />
-                                <DSBadge tone={testimonial.status === 'approved' ? 'emerald' : 'amber'} label={testimonial.status.toUpperCase()} />
+                                <DSBadge tone={testimonial.status === 'approved' ? 'emerald' : testimonial.status === 'archived' ? 'slate' : 'amber'} label={testimonial.status.toUpperCase()} />
                             </div>
                             <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-none uppercase">
                                 Moderación de Testimonio
@@ -99,13 +100,15 @@ export default function CmsTestimonialDetailPage() {
                         </div>
                         <div className="flex items-center gap-3">
                             <button 
-                                onClick={() => handleAction('rejected')}
+                                onClick={() => handleAction(testimonial.status === 'archived' ? 'pending' : 'archived')}
                                 className="px-6 py-2 border border-slate-200 dark:border-white/10 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all flex items-center gap-2"
                             >
-                                <XCircle size={14} /> Rechazar
+                                {testimonial.status === 'archived' ? <RotateCcw size={14} /> : <Archive size={14} />}
+                                {testimonial.status === 'archived' ? 'Restaurar' : 'Archivar'}
                             </button>
                             <button 
                                 onClick={() => handleAction('approved')}
+                                disabled={testimonial.status === 'archived'}
                                 className="px-6 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all flex items-center gap-2"
                             >
                                 <CheckCircle2 size={14} /> Aprobar para Web

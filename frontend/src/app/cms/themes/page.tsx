@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Palette, Save } from "lucide-react";
+import { Archive, Palette, RotateCcw, Save } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { activateCmsTheme, createCmsTheme, deleteCmsTheme, listCmsSites, listCmsThemes, patchCmsTheme } from "@/lib/cms/v2";
+import { activateCmsTheme, createCmsTheme, deleteCmsTheme as archiveCmsTheme, listCmsSites, listCmsThemes, patchCmsTheme } from "@/lib/cms/v2";
 import { canEditCms, canPublishCms } from "@/lib/cms/permissions";
 
 const DEFAULT_TOKENS = {
@@ -17,7 +17,7 @@ export default function CmsThemesPage() {
   const { token, user } = useAuth();
   const [siteKey, setSiteKey] = useState("faro");
   const [sites, setSites] = useState<Array<{ site_key: string; name: string }>>([]);
-  const [themes, setThemes] = useState<Array<{ id: number; name: string; is_active: boolean; tokens_json?: Record<string, string> }>>([]);
+  const [themes, setThemes] = useState<Array<{ id: number; name: string; is_active: boolean; status?: string; tokens_json?: Record<string, string> }>>([]);
   const [name, setName] = useState("Tema personalizado");
   const [tokens, setTokens] = useState(DEFAULT_TOKENS);
   const [editingThemeId, setEditingThemeId] = useState<number | null>(null);
@@ -30,7 +30,13 @@ export default function CmsThemesPage() {
     if (!token) return;
     const [nextSites, nextThemes] = await Promise.all([listCmsSites(token), listCmsThemes(activeSite, token)]);
     setSites((nextSites || []).map((site) => ({ site_key: site.site_key, name: site.name })));
-    setThemes((nextThemes || []).map((theme) => ({ id: theme.id, name: theme.name, is_active: theme.is_active, tokens_json: theme.tokens_json })));
+    setThemes((nextThemes || []).map((theme) => ({
+      id: theme.id,
+      name: theme.name,
+      is_active: theme.is_active,
+      status: theme.status || "active",
+      tokens_json: theme.tokens_json,
+    })));
   };
 
   useEffect(() => {
@@ -46,7 +52,7 @@ export default function CmsThemesPage() {
     try {
       const shouldActivate = canPublish;
       if (editingThemeId) {
-        await patchCmsTheme(siteKey, editingThemeId, { name, tokens_json: tokens, is_active: shouldActivate }, token);
+        await patchCmsTheme(siteKey, editingThemeId, { name, tokens_json: tokens, is_active: shouldActivate, status: "active" }, token);
         if (shouldActivate) {
           await activateCmsTheme(siteKey, editingThemeId, token);
           setMessage("Tema actualizado y activado.");
@@ -54,7 +60,7 @@ export default function CmsThemesPage() {
           setMessage("Tema actualizado. Solo un publicador puede activarlo.");
         }
       } else {
-        const created = await createCmsTheme(siteKey, { name, tokens_json: tokens, is_active: shouldActivate }, token);
+        const created = await createCmsTheme(siteKey, { name, tokens_json: tokens, is_active: shouldActivate, status: "active" }, token);
         if (shouldActivate) {
           await activateCmsTheme(siteKey, created.id, token);
           setMessage("Tema guardado y activado.");
@@ -73,6 +79,25 @@ export default function CmsThemesPage() {
   const activate = async (themeId: number) => {
     if (!token || !canPublish) return;
     await activateCmsTheme(siteKey, themeId, token);
+    await load(siteKey);
+  };
+
+  const archive = async (themeId: number) => {
+    if (!token || !canPublish) return;
+    await archiveCmsTheme(siteKey, themeId, token);
+    if (editingThemeId === themeId) {
+      setEditingThemeId(null);
+      setName("Tema personalizado");
+      setTokens(DEFAULT_TOKENS);
+    }
+    setMessage("Tema archivado. Puedes restaurarlo desde esta lista.");
+    await load(siteKey);
+  };
+
+  const restore = async (themeId: number) => {
+    if (!token || !canEdit) return;
+    await patchCmsTheme(siteKey, themeId, { status: "active", is_active: false }, token);
+    setMessage("Tema restaurado como disponible.");
     await load(siteKey);
   };
 
@@ -161,11 +186,15 @@ export default function CmsThemesPage() {
 
           <h2 className="text-sm font-black uppercase tracking-wider text-slate-500">Temas existentes</h2>
           <div className="space-y-2">
-            {themes.map((theme) => (
-                <div key={theme.id} className="flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 p-3">
+            {themes.map((theme) => {
+              const isArchived = theme.status === "archived";
+              return (
+                <div key={theme.id} className={`flex items-center justify-between rounded-xl border p-3 ${isArchived ? "border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200 dark:border-white/10"}`}>
                   <div>
                     <p className="text-sm font-bold">{theme.name}</p>
-                    <p className="text-[10px] uppercase tracking-widest text-slate-400">{theme.is_active ? "Activo" : "Inactivo"}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-slate-400">
+                      {isArchived ? "Archivado" : theme.is_active ? "Activo" : "Disponible"}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -176,33 +205,40 @@ export default function CmsThemesPage() {
                         setTokens({ ...DEFAULT_TOKENS, ...(theme.tokens_json || {}) });
                         setMessage("Editando tema seleccionado.");
                       }}
-                      disabled={!canEdit}
+                      disabled={!canEdit || isArchived}
                       className="rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest"
                     >
                       Editar
                     </button>
-                    {!theme.is_active && (
+                    {!theme.is_active && !isArchived && (
                       <button onClick={() => activate(theme.id)} disabled={!canPublish} className="rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest disabled:opacity-50">
                         Activar
                       </button>
                     )}
-                    {!theme.is_active && (
+                    {!theme.is_active && !isArchived && (
                       <button
-                        onClick={async () => {
-                          if (!token || !canEdit) return;
-                          if (!confirm("Eliminar este tema?")) return;
-                          await deleteCmsTheme(siteKey, theme.id, token);
-                          await load(siteKey);
-                        }}
-                        disabled={!canEdit}
-                        className="rounded-lg border border-red-200 dark:border-red-500/20 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-red-600 disabled:opacity-50"
+                        onClick={() => archive(theme.id)}
+                        disabled={!canPublish}
+                        className="inline-flex items-center gap-1 rounded-lg border border-amber-200 dark:border-amber-500/20 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-amber-700 disabled:opacity-50"
                       >
-                        Eliminar
+                        <Archive size={12} />
+                        Archivar
+                      </button>
+                    )}
+                    {isArchived && (
+                      <button
+                        onClick={() => restore(theme.id)}
+                        disabled={!canEdit}
+                        className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 dark:border-emerald-500/20 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-700 disabled:opacity-50"
+                      >
+                        <RotateCcw size={12} />
+                        Restaurar
                       </button>
                     )}
                   </div>
                 </div>
-              ))}
+              );
+            })}
             {themes.length === 0 && <p className="text-sm text-slate-500">Sin temas para este sitio.</p>}
           </div>
         </div>
@@ -210,4 +246,3 @@ export default function CmsThemesPage() {
     </div>
   );
 }
-
