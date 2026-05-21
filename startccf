@@ -27,7 +27,7 @@ start_backend() {
 
   (
     cd "$ROOT_DIR"
-    python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 >"$BACKEND_LOG" 2>&1 &
+    /usr/local/bin/python3.12 -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 >"$BACKEND_LOG" 2>&1 &
     echo $! >"$BACKEND_PID_FILE"
   )
   echo "Backend started on http://localhost:8000"
