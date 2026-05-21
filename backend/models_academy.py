@@ -166,8 +166,8 @@ class GloryHouse(Base):
     members_count = Column(Integer, default=0)
     capacity = Column(Integer, default=15)
     day_of_week = Column(String(20), nullable=True)  # e.g. "Lunes", "Jueves"
-    start_time = Column(String(10), nullable=True)
-    end_time = Column(String(10), nullable=True)          # e.g. "19:00"
+    start_time = Column(String(50), nullable=True)
+    end_time = Column(String(50), nullable=True)          # e.g. "19:00"
     status = Column(String(20), default="Activo", index=True)
     
     leader_id = Column(Integer, ForeignKey("members.id", ondelete="SET NULL"), nullable=True)

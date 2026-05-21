@@ -8,7 +8,7 @@ from backend.core.database import get_db
 
 router = APIRouter(prefix="/assets", tags=["Assets"])
 
-@router.get("/", response_model=List[dict])
+@router.get("", response_model=List[dict])
 def list_assets(db: Session = Depends(get_db)):
     """Lista el inventario de activos de la iglesia."""
     return crud.get_assets(db)

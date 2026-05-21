@@ -16,7 +16,7 @@ from backend.core.rate_limit import rate_limiter
 router = APIRouter(prefix="/donations", tags=["donations"])
 
 
-@router.post("/", response_model=schemas.Donation, dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))])
+@router.post("", response_model=schemas.Donation, dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))])
 def create_donation(
     payload: schemas.DonationCreate,
     db: Session = Depends(get_db),
@@ -26,7 +26,7 @@ def create_donation(
     return created
 
 
-@router.get("/", response_model=List[schemas.Donation])
+@router.get("", response_model=List[schemas.Donation])
 def list_donations(
     skip: int = 0,
     limit: int = 100,

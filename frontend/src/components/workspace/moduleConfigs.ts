@@ -95,57 +95,6 @@ export const MODULE_CONFIGS: Record<string, any> = {
       },
     ],
   },
-  "mi-vista": {
-    title: "Mi Vista",
-    sections: [
-      {
-        title: "Resumen Personal",
-        items: [
-          {
-            id: "my-view-home",
-            label: "Vista General",
-            href: "/mi-vista",
-            icon: LayoutDashboard,
-          },
-          {
-            id: "my-view-tasks",
-            label: "Mis Tareas",
-            href: "/tasks",
-            icon: CheckSquare,
-          },
-          {
-            id: "my-view-inbox",
-            label: "Mensajes",
-            href: "/inbox",
-            icon: Inbox,
-          },
-          {
-            id: "my-view-calendar",
-            label: "Calendario",
-            href: "/calendar",
-            icon: Calendar,
-          },
-        ],
-      },
-      {
-        title: "Mi Cuenta",
-        items: [
-          {
-            id: "my-view-profile",
-            label: "Mi Perfil",
-            href: "/account",
-            icon: Users,
-          },
-          {
-            id: "my-view-settings",
-            label: "Configuración",
-            href: "/settings",
-            icon: Settings,
-          },
-        ],
-      },
-    ],
-  },
   calendar: {
     title: 'Calendario',
     sections: [

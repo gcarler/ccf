@@ -33,7 +33,7 @@ def upgrade() -> None:
             batch_op.add_column(sa.Column("status", sa.String(length=20), nullable=False, server_default="pending"))
             batch_op.create_index("ix_testimonials_status", ["status"])
 
-    op.execute("UPDATE testimonials SET status = CASE WHEN is_approved = 1 THEN 'approved' ELSE 'pending' END WHERE status IS NULL OR status = 'pending'")
+    op.execute("UPDATE testimonials SET status = CASE WHEN is_approved = TRUE THEN 'approved' ELSE 'pending' END WHERE status IS NULL OR status = 'pending'")
 
 
 def downgrade() -> None:

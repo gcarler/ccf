@@ -45,7 +45,7 @@ export default function UnifiedSidebar({
 
     // Global items matching the mock structure roughly
     const GLOBAL_MAIN = [
-        { id: 'dashboard', label: 'Inicio', href: '/mi-vista', icon: Home },
+        { id: 'dashboard', label: 'Inicio', href: '/', icon: Home },
         { id: 'inbox', label: 'Bandeja de Entrada', href: '/inbox', icon: Inbox },
         { id: 'crm', label: 'CRM / Equipos', href: '/crm', icon: Users },
         { id: 'academy', label: 'Academia', href: '/academy', icon: GraduationCap },

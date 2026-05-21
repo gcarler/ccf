@@ -37,7 +37,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
     const canAccessEvangelism = role === 'admin' || role === 'pastor';
 
     const primaryItems = [
-        { id: 'my-view',  icon: LayoutDashboard, href: '/mi-vista',  label: 'Mi Vista' },
+        { id: 'dashboard',  icon: LayoutDashboard, href: '/',  label: 'Inicio' },
         { id: 'projects', icon: Target,       href: '/projects',  label: 'Proyectos' },
         { id: 'tasks',    icon: Layout,        href: '/tasks',     label: 'Mis Tareas' },
         { id: 'calendar', icon: CalendarDays,  href: '/calendar',  label: 'Calendario' },
@@ -61,7 +61,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
     });
 
     const NavItem = ({ id, icon: Icon, href, label, badge }: any) => {
-        const isActive = pathname?.startsWith(href);
+        const isActive = href === '/' ? (pathname === '/' || !pathname) : pathname?.startsWith(href);
         return (
             <Tooltip key={id} content={label} side="right">
                 <Link href={href} className="relative" onClick={() => resetSidebarStack()}>

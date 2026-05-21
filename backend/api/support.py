@@ -7,7 +7,7 @@ from backend.auth import require_active_user
 
 router = APIRouter()
 
-@router.post("/", response_model=schemas.SupportTicket)
+@router.post("", response_model=schemas.SupportTicket)
 def create_support_ticket(
     ticket: schemas.SupportTicketCreate, 
     db: Session = Depends(get_db),
@@ -18,7 +18,7 @@ def create_support_ticket(
         ticket.user_id = current_user.id
     return crud.create_support_ticket(db=db, ticket=ticket)
 
-@router.get("/", response_model=List[schemas.SupportTicket])
+@router.get("", response_model=List[schemas.SupportTicket])
 def read_support_tickets(
     skip: int = 0, 
     limit: int = 100, 

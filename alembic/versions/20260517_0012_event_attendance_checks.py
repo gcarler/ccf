@@ -43,7 +43,7 @@ def upgrade() -> None:
         with op.batch_alter_table("event_attendances") as batch_op:
             batch_op.create_check_constraint(
                 "ck_event_attendances_attended_matches_status",
-                "(attended = 1 AND status = 'present') OR (attended = 0 AND status = 'absent')",
+                "(attended = TRUE AND status = 'present') OR (attended = FALSE AND status = 'absent')",
             )
 
 
