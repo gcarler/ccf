@@ -1,21 +1,17 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   PlayCircle,
   ChevronRight,
-  MessageCircle,
   Users,
   BookOpen,
   Calendar,
   Sparkles,
   ArrowRight,
   Shield,
-  Heart,
   Loader2,
-  Video,
-  ImageIcon,
   CheckCircle2,
   Clock,
   Layout,
@@ -33,11 +29,10 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import Navbar from '@/components/Navbar';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
-import Skeleton from '@/components/ui/Skeleton';
 
 const DASHBOARD_SECTIONS = [
     {
@@ -246,7 +241,7 @@ function CommandCenterHome({ user, token }: any) {
                                 {loading ? (
                                     [1,2].map(i => <div key={i} className="h-32 bg-white dark:bg-[#252528] rounded-2xl border border-slate-100 dark:border-white/5 animate-pulse" />)
                                 ) : tasks.length > 0 ? (
-                                    tasks.map((task, i) => (
+                                    tasks.map((task) => (
                                         <div key={task.id} className="p-5 bg-white dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 rounded-2xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/10 transition-all group cursor-pointer flex flex-col justify-between min-h-[140px] active:scale-[0.99]">
                                             <div className="space-y-2.5">
                                                 <div className="flex items-start justify-between gap-4">

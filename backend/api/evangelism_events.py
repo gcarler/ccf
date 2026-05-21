@@ -74,10 +74,18 @@ def update_event(
         "target_member_ids",
         "status",
         "cancellation_reason",
+        "start_time",
+        "end_time",
+        "day_of_week",
+        "month_day",
+        "fixed_date",
     ]
     for field in editable:
         if field in payload:
-            setattr(event, field, payload[field])
+            val = payload[field]
+            if field == "fixed_date" and isinstance(val, str) and val:
+                val = datetime.datetime.fromisoformat(val.replace("Z", "+00:00"))
+            setattr(event, field, val)
     db.commit()
     db.refresh(event)
     record_admin_action(db, current_user, action="update_event", resource_type="event", resource_id=str(event.id))

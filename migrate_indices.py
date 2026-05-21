@@ -7,9 +7,13 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Migration-Indices")
 
 def index_exists(db, index_name):
-    """Verifica si un índice existe en SQLite."""
+    """Verifica si un índice existe en SQLite o PostgreSQL."""
     try:
-        cursor = db.execute(text(f"SELECT name FROM sqlite_master WHERE type='index' AND name='{index_name}'"))
+        dialect_name = db.bind.dialect.name
+        if dialect_name == "postgresql":
+            cursor = db.execute(text("SELECT indexname FROM pg_indexes WHERE indexname = :idx"), {"idx": index_name})
+        else:
+            cursor = db.execute(text("SELECT name FROM sqlite_master WHERE type='index' AND name = :idx"), {"idx": index_name})
         return cursor.fetchone() is not None
     except Exception:
         return False
@@ -35,16 +39,18 @@ def migrate():
     try:
         logger.info("Iniciando creación de índices para optimización de motor...")
         for idx_name, table, cols in indices:
+            # Recheck exists (using a fresh transaction context)
             if not index_exists(db, idx_name):
                 try:
                     db.execute(text(f"CREATE INDEX {idx_name} ON {table} ({cols})"))
+                    db.commit()
                     logger.info(f"✅ Índice creado: {idx_name} en {table}({cols})")
                 except Exception as e:
+                    db.rollback()
                     logger.error(f"❌ Error al crear {idx_name}: {e}")
             else:
                 logger.info(f"ℹ️ El índice {idx_name} ya existe.")
         
-        db.commit()
         logger.info("✅ Optimización de índices finalizada.")
     finally:
         db.close()

@@ -57,8 +57,13 @@ def check_db_indices():
     ]
     all_passed = True
     try:
+        dialect_name = db.bind.dialect.name
         for idx in expected_indices:
-            res = db.execute(text(f"SELECT name FROM sqlite_master WHERE type='index' AND name='{idx}'"))
+            if dialect_name == "postgresql":
+                res = db.execute(text(f"SELECT indexname FROM pg_indexes WHERE indexname = :idx"), {"idx": idx})
+            else:
+                res = db.execute(text(f"SELECT name FROM sqlite_master WHERE type='index' AND name = :idx"), {"idx": idx})
+            
             if res.fetchone():
                 logger.info(f"✅ Índice {idx} verificado.")
             else:

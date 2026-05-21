@@ -57,6 +57,48 @@ interface AudiencePreset {
     target_member_ids: number[];
 }
 
+function parseAndValidateTime(timeStr: string): { valid: boolean; minutes: number; normalized: string } {
+    if (!timeStr) return { valid: false, minutes: 0, normalized: '' };
+    
+    const clean = timeStr.trim().toLowerCase().replace(/\s+/g, ' ');
+    
+    // Handle standard 24h format HH:MM
+    const match24 = clean.match(/^(\d{1,2}):(\d{2})$/);
+    if (match24) {
+        const h = parseInt(match24[1], 10);
+        const m = parseInt(match24[2], 10);
+        if (h >= 0 && h < 24 && m >= 0 && m < 60) {
+            const padH = String(h).padStart(2, '0');
+            const padM = String(m).padStart(2, '0');
+            return { valid: true, minutes: h * 60 + m, normalized: `${padH}:${padM}` };
+        }
+    }
+    
+    // Handle formats with AM/PM (could be a. m., p. m., a.m., p.m., am, pm, etc.)
+    const matchAmpm = clean.match(/^(\d{1,2}):(\d{2})\s*([ap](?:\.?,?\s*m?\.?)?)/i);
+    if (matchAmpm) {
+        let h = parseInt(matchAmpm[1], 10);
+        const m = parseInt(matchAmpm[2], 10);
+        const periodStr = matchAmpm[3];
+        
+        const isPm = periodStr.includes('p');
+        const isAm = periodStr.includes('a');
+        
+        if (h >= 1 && h <= 12 && m >= 0 && m < 60 && (isAm || isPm)) {
+            if (isPm && h < 12) {
+                h += 12;
+            } else if (isAm && h === 12) {
+                h = 0;
+            }
+            const padH = String(h).padStart(2, '0');
+            const padM = String(m).padStart(2, '0');
+            return { valid: true, minutes: h * 60 + m, normalized: `${padH}:${padM}` };
+        }
+    }
+    
+    return { valid: false, minutes: 0, normalized: '' };
+}
+
 export default function EventsPage() {
     const { token } = useAuth();
     const router = useRouter();
@@ -364,6 +406,32 @@ export default function EventsPage() {
             return;
         }
 
+        if (!newEvent.start_time) {
+            addToast("La hora de inicio es requerida", "error");
+            return;
+        }
+        if (!newEvent.end_time) {
+            addToast("La hora de finalización es requerida", "error");
+            return;
+        }
+
+        const startParsed = parseAndValidateTime(newEvent.start_time);
+        if (!startParsed.valid) {
+            addToast("Formato de hora de inicio inválido (use HH:MM)", "error");
+            return;
+        }
+
+        const endParsed = parseAndValidateTime(newEvent.end_time);
+        if (!endParsed.valid) {
+            addToast("Formato de hora de finalización inválido (use HH:MM)", "error");
+            return;
+        }
+
+        if (endParsed.minutes <= startParsed.minutes) {
+            addToast("La hora de finalización debe ser posterior a la hora de inicio", "error");
+            return;
+        }
+
         const payload: {
             name: string;
             description: string;
@@ -385,8 +453,8 @@ export default function EventsPage() {
             target_role_id: newEvent.target_audience === 'ROLE' && newEvent.target_role_ids[0] ? Number(newEvent.target_role_ids[0]) : null,
             target_role_ids: newEvent.target_audience === 'ROLE' ? newEvent.target_role_ids.map((value) => Number(value)) : [],
             target_member_ids: newEvent.target_audience === 'MANUAL' ? newEvent.target_member_ids.map((value) => Number(value)) : [],
-            start_time: newEvent.start_time,
-            end_time: newEvent.end_time,
+            start_time: startParsed.normalized,
+            end_time: endParsed.normalized,
         };
 
         if (['PERMANENT', 'FARO', 'ONLINE'].includes(newEvent.event_type)) payload.day_of_week = parseInt(newEvent.day_of_week);
@@ -400,8 +468,10 @@ export default function EventsPage() {
             setIsCreateDrawerOpen(false);
             setNewEvent({ name: '', description: '', event_type: 'PERMANENT', target_audience: 'ALL', target_role_id: '', target_role_ids: [], target_member_ids: [], day_of_week: '0', month_day: '', fixed_date: '', start_time: '', end_time: '' });
             fetchData();
-        } catch {
-            addToast("Error de conexión", "error");
+        } catch (error: any) {
+            console.error("Error creating event:", error);
+            const msg = error?.message || "Error de conexión";
+            addToast(msg, "error");
         } finally {
             setSavingCreateEvent(false);
         }
@@ -665,14 +735,48 @@ export default function EventsPage() {
             toast.error('Selecciona al menos una persona esperada antes de guardar');
             return;
         }
+
+        // Validate and normalize times if they are modified or provided
+        if (payload.start_time || payload.end_time) {
+            if (payload.start_time) {
+                const startParsed = parseAndValidateTime(payload.start_time);
+                if (!startParsed.valid) {
+                    toast.error("Formato de hora de inicio inválido (use HH:MM)");
+                    return;
+                }
+                payload.start_time = startParsed.normalized;
+            }
+            if (payload.end_time) {
+                const endParsed = parseAndValidateTime(payload.end_time);
+                if (!endParsed.valid) {
+                    toast.error("Formato de hora de finalización inválido (use HH:MM)");
+                    return;
+                }
+                payload.end_time = endParsed.normalized;
+            }
+
+            const currentStartTime = payload.start_time || editingEvent?.start_time || '';
+            const currentEndTime = payload.end_time || editingEvent?.end_time || '';
+            if (currentStartTime && currentEndTime) {
+                const startParsed = parseAndValidateTime(currentStartTime);
+                const endParsed = parseAndValidateTime(currentEndTime);
+                if (startParsed.valid && endParsed.valid && endParsed.minutes <= startParsed.minutes) {
+                    toast.error("La hora de finalización debe ser posterior a la hora de inicio");
+                    return;
+                }
+            }
+        }
+
         setUpdatingEventId(evId);
         try {
             await apiFetch(`/evangelism/events/${evId}`, { method: 'PUT', body: payload, token });
             setEvents(prev => prev.map(e => e.id === evId ? { ...e, ...payload } : e));
             toast.success('Evento actualizado');
             setEditingEvent(null);
-        } catch {
-            toast.error('Error al actualizar el evento');
+        } catch (error: any) {
+            console.error("Error updating event:", error);
+            const msg = error?.message || 'Error al actualizar el evento';
+            toast.error(msg);
         } finally {
             setUpdatingEventId(null);
         }

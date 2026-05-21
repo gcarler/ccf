@@ -24,6 +24,48 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { toast } from 'react-toastify';
 
+function parseAndValidateTime(timeStr: string): { valid: boolean; minutes: number; normalized: string } {
+  if (!timeStr) return { valid: false, minutes: 0, normalized: '' };
+  
+  const clean = timeStr.trim().toLowerCase().replace(/\s+/g, ' ');
+  
+  // Handle standard 24h format HH:MM
+  const match24 = clean.match(/^(\d{1,2}):(\d{2})$/);
+  if (match24) {
+    const h = parseInt(match24[1], 10);
+    const m = parseInt(match24[2], 10);
+    if (h >= 0 && h < 24 && m >= 0 && m < 60) {
+      const padH = String(h).padStart(2, '0');
+      const padM = String(m).padStart(2, '0');
+      return { valid: true, minutes: h * 60 + m, normalized: `${padH}:${padM}` };
+    }
+  }
+  
+  // Handle formats with AM/PM (could be a. m., p. m., a.m., p.m., am, pm, etc.)
+  const matchAmpm = clean.match(/^(\d{1,2}):(\d{2})\s*([ap](?:\.?,?\s*m?\.?)?)/i);
+  if (matchAmpm) {
+    let h = parseInt(matchAmpm[1], 10);
+    const m = parseInt(matchAmpm[2], 10);
+    const periodStr = matchAmpm[3];
+    
+    const isPm = periodStr.includes('p');
+    const isAm = periodStr.includes('a');
+    
+    if (h >= 1 && h <= 12 && m >= 0 && m < 60 && (isAm || isPm)) {
+      if (isPm && h < 12) {
+        h += 12;
+      } else if (isAm && h === 12) {
+        h = 0;
+      }
+      const padH = String(h).padStart(2, '0');
+      const padM = String(m).padStart(2, '0');
+      return { valid: true, minutes: h * 60 + m, normalized: `${padH}:${padM}` };
+    }
+  }
+  
+  return { valid: false, minutes: 0, normalized: '' };
+}
+
 interface GloryHouse {
   id: number;
   code?: string;
@@ -196,8 +238,42 @@ function FaroGroupsContent() {
     e.preventDefault();
     setSaving(true);
     try {
+      let start_time = formData.start_time || '';
+      let end_time = formData.end_time || '';
+
+      if (start_time) {
+        const startParsed = parseAndValidateTime(start_time);
+        if (!startParsed.valid) {
+          toast.error("Formato de hora de inicio inválido (use HH:MM o AM/PM)");
+          setSaving(false);
+          return;
+        }
+        start_time = startParsed.normalized;
+      }
+      if (end_time) {
+        const endParsed = parseAndValidateTime(end_time);
+        if (!endParsed.valid) {
+          toast.error("Formato de hora de finalización inválido (use HH:MM o AM/PM)");
+          setSaving(false);
+          return;
+        }
+        end_time = endParsed.normalized;
+      }
+
+      if (start_time && end_time) {
+        const startParsed = parseAndValidateTime(start_time);
+        const endParsed = parseAndValidateTime(end_time);
+        if (startParsed.valid && endParsed.valid && endParsed.minutes <= startParsed.minutes) {
+          toast.error("La hora de finalización debe ser posterior a la hora de inicio");
+          setSaving(false);
+          return;
+        }
+      }
+
       const payload = {
         ...formData,
+        start_time: start_time || null,
+        end_time: end_time || null,
         base_attendee_ids: Array.from(selectedMemberIds),
       };
       if (isCreating) {
@@ -247,8 +323,10 @@ function FaroGroupsContent() {
         );
         toast.success('Grupo actualizado');
       }
-    } catch {
-      toast.error('Error al guardar grupo');
+    } catch (error: any) {
+      console.error("Error saving group:", error);
+      const msg = error?.message || 'Error al guardar grupo';
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
