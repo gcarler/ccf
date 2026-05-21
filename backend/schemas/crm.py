@@ -704,6 +704,7 @@ class GloryHouseCreate(BaseModel):
     assistant_id: Optional[int] = None
     host_id: Optional[int] = None
     capacity: int = 15
+    status: Optional[str] = "Activo"
     day_of_week: Optional[str] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
@@ -719,6 +720,7 @@ class GloryHouseUpdate(BaseModel):
     assistant_id: Optional[int] = None
     host_id: Optional[int] = None
     capacity: Optional[int] = None
+    status: Optional[str] = None
     day_of_week: Optional[str] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
