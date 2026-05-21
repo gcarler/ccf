@@ -1,0 +1,120 @@
+const fs = require('fs');
+let code = fs.readFileSync('src/components/public/cms/PublicSectionRenderer.tsx', 'utf8');
+
+// 1. Add imports
+if (!code.includes('lucide-react')) {
+  code = code.replace(
+    'import { CmsSection } from "@/types/cms-v2";',
+    'import { CmsSection } from "@/types/cms-v2";\nimport { X } from "lucide-react";\nimport { AnimatePresence, motion } from "framer-motion";\nimport { useState, useEffect } from "react";'
+  );
+} else {
+    // If lucide-react already exists, just add the others. (It doesn't in this file)
+}
+
+// 2. Add PopupBlock component definition at the end
+const popupBlockDef = `
+function PopupBlock({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "Aviso Importante");
+  const body = val(props, "body", "");
+  const ctaLabel = val(props, "cta_label", "Ver Más");
+  const ctaHref = val(props, "cta_href", "/");
+  const delayMs = parseInt(val(props, "delay_ms", "2000"), 10) || 2000;
+  
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    // Logic to show popup once per session using sessionStorage
+    const popupId = \`faro_popup_\${section.id}\`;
+    if (!sessionStorage.getItem(popupId)) {
+      const timer = setTimeout(() => {
+        setIsVisible(true);
+      }, delayMs);
+      return () => clearTimeout(timer);
+    }
+  }, [section.id, delayMs]);
+
+  const handleClose = () => {
+    setIsVisible(false);
+    sessionStorage.setItem(\`faro_popup_\${section.id}\`, "closed");
+  };
+
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={handleClose}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="relative w-full max-w-md bg-white dark:bg-[#111418] rounded-3xl p-8 shadow-2xl border border-slate-200 dark:border-white/10"
+            style={{
+              background: "var(--faro-surface-container)",
+              color: "var(--faro-on-surface)",
+            }}
+          >
+            <button
+              onClick={handleClose}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="text-center mt-2">
+              <h2 className="text-2xl font-black mb-3">{title}</h2>
+              <p className="text-sm mb-8" style={{ color: "var(--faro-on-surface-variant)" }}>
+                {body}
+              </p>
+
+              <div className="flex flex-col gap-3">
+                <Link
+                  href={ctaHref}
+                  onClick={handleClose}
+                  className="w-full py-3.5 rounded-full text-xs font-black uppercase tracking-widest text-white transition-transform hover:scale-[1.02]"
+                  style={{ background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))" }}
+                >
+                  {ctaLabel}
+                </Link>
+                <button
+                  onClick={handleClose}
+                  className="w-full py-3 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                  style={{ color: "var(--faro-on-surface-variant)" }}
+                >
+                  No, gracias
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+}
+`;
+
+if (!code.includes('PopupBlock')) {
+  code += '\\n' + popupBlockDef;
+}
+
+// 3. Inject popup_banner into PublicSectionRenderer
+const popupHook = `
+  if (section.type === "popup_banner") {
+    return <PopupBlock section={section} />;
+  }
+`;
+
+if (!code.includes('section.type === "popup_banner"')) {
+  code = code.replace(
+    '  if (section.type === "hero") {',
+    popupHook + '\\n  if (section.type === "hero") {'
+  );
+}
+
+fs.writeFileSync('src/components/public/cms/PublicSectionRenderer.tsx', code);

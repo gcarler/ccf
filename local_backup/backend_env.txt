@@ -1,0 +1,7 @@
+ENVIRONMENT=local
+DATABASE_URL=postgresql+pg8000://postgres:ccf_dev_2026@localhost:5435/ccf_db
+REDIS_URL=redis://localhost:6379/0
+KAFKA_BOOTSTRAP_SERVERS=localhost:19092
+UPLOADS_DIR=uploads
+SECRET_KEY=ccf-secret-2026-ministerial-mesh
+OPENROUTER_API_KEY=

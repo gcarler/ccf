@@ -1,0 +1,44 @@
+const fs = require('fs');
+let code = fs.readFileSync('src/components/public/FaroNavbar.tsx', 'utf8');
+
+code = code.replace(
+  /<div className="w-8 h-8 relative">[\s\S]*?<span[\s\S]*?FARO[\s\S]*?<\/span>/,
+  `{logoUrl ? (
+                            <img src={logoUrl} alt={logoName} className="h-8 object-contain" />
+                        ) : (
+                            <div className="w-8 h-8 relative">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full text-faro-primary">
+                                    <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
+                                    <circle cx="12" cy="4" r="1.5" fill="currentColor" />
+                                </svg>
+                            </div>
+                        )}
+                        {logoName && (
+                            <span
+                                className="font-black text-xl tracking-tight"
+                                style={{ color: "var(--faro-on-background)" }}
+                            >
+                                {logoName}
+                            </span>
+                        )}`
+);
+
+code = code.replace(
+  /<Link\s*href="\/faro\/conocer-a-jesus"[^>]*>[\s\S]*?Quiero conocer a Jes[^\<]*<\/Link>/g,
+  `{ctaLabel && ctaHref && (
+                            <Link
+                                href={ctaHref}
+                                onClick={() => setMobileOpen && setMobileOpen(false)}
+                                className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-[0.15em] transition-all hover:scale-105"
+                                style={{
+                                    background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
+                                    color: "white",
+                                    boxShadow: "0 4px 20px rgba(44, 96, 157, 0.35)",
+                                }}
+                            >
+                                {ctaLabel}
+                            </Link>
+                        )}`
+);
+
+fs.writeFileSync('src/components/public/FaroNavbar.tsx', code);
