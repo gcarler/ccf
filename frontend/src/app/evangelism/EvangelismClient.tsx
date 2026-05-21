@@ -5,7 +5,6 @@ import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import { 
     Flame, 
     Calendar, 
-    Plus, 
     Trash2, 
     ChevronRight, 
     Sparkles, 
