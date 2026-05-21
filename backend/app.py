@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 import logging
 import os
@@ -263,7 +264,7 @@ def _run_startup_migrations() -> None:
                 "COUNT(t.id) AS total_tasks, "
                 "SUM(CASE WHEN t.status IN ('todo','in_progress','review') THEN 1 ELSE 0 END) AS open_tasks, "
                 "SUM(CASE WHEN t.priority = 'urgent' AND t.status != 'done' THEN 1 ELSE 0 END) AS critical_tasks, "
-                "SUM(CASE WHEN t.due_date < datetime('now') AND t.status != 'done' THEN 1 ELSE 0 END) AS overdue_tasks "
+                "SUM(CASE WHEN t.due_date < CURRENT_TIMESTAMP AND t.status != 'done' THEN 1 ELSE 0 END) AS overdue_tasks "
                 "FROM users u "
                 "LEFT JOIN project_tasks t ON t.assignee_id = u.id "
                 "GROUP BY u.id, u.username"
@@ -288,6 +289,40 @@ async def lifespan(_: FastAPI):
         os.makedirs(settings.uploads_dir, exist_ok=True)
     except PermissionError:
         logger.warning("Unable to create uploads directory %s; continuing without it", settings.uploads_dir)
+
+    # Ensure all ORM-managed tables exist (safe idempotent operation, retries for DB readiness)
+    for attempt in range(1, 6):
+        try:
+            from backend.core.database import Base, engine
+            from backend import models
+            from backend import models_crm
+            from backend import models_projects
+            from backend import models_cms
+            Base.metadata.create_all(bind=engine)
+            logger.info("ORM tables verified/created.")
+            break
+        except Exception as exc:
+            if attempt < 5:
+                logger.warning("create_all attempt %d/5 failed: %s — retrying...", attempt, exc)
+                await asyncio.sleep(3)
+            else:
+                logger.warning("Could not verify/create ORM tables after 5 attempts: %s", exc)
+
+    # Run outstanding Alembic migrations (idempotent, fast when up-to-date)
+    try:
+        from pathlib import Path
+        from alembic.config import Config
+        from alembic import command
+        alembic_ini = Path(__file__).resolve().parent.parent / "alembic.ini"
+        if alembic_ini.exists():
+            alembic_cfg = Config(str(alembic_ini))
+            alembic_cfg.set_main_option("sqlalchemy.url", settings.database_url)
+            command.upgrade(alembic_cfg, "head")
+            logger.info("Alembic migrations verified/applied.")
+    except Exception as exc:
+        logger.warning("Could not run Alembic migrations: %s", exc)
+
+    # Apply startup schema fixes when enabled
     if settings.run_startup_schema_fixes:
         _run_startup_migrations()
         _run_data_migrations()
@@ -312,8 +347,14 @@ async def quality_assurance_middleware(request: Request, call_next):
     return response
 
 
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
+    if isinstance(exc, (StarletteHTTPException, RequestValidationError)):
+        raise exc
+    
     logger.exception("Unhandled request error on %s %s", request.method, request.url.path)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -20,7 +20,7 @@ const CMS_PAGE_VIEWS: ViewType[] = ["grid", "list", "table", "board", "kanban", 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   published: { label: "Publicado",   color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400" },
   draft:     { label: "Borrador",    color: "bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-slate-400" },
-  in_review: { label: "En RevisiÃ³n", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400" },
+  in_review: { label: "En revision", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400" },
   archived:  { label: "Archivado",   color: "bg-rose-100 text-rose-600 dark:bg-rose-900/10 dark:text-rose-400" },
 };
 
@@ -265,7 +265,7 @@ export default function CmsPagesManagement() {
       <header className="h-14 border-b border-slate-100 dark:border-white/5 flex items-center px-6 gap-3 shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <FileText size={16} className="text-blue-600 shrink-0" />
-          <h2 className="text-[11px] font-black uppercase tracking-widest text-slate-400 truncate">GestiÃ³n de pÃ¡ginas</h2>
+          <h2 className="text-[11px] font-black uppercase tracking-widest text-slate-400 truncate">Gestion de paginas</h2>
           <span className="text-[10px] font-black text-slate-400 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full shrink-0">{visiblePages.length}</span>
         </div>
 
@@ -280,7 +280,7 @@ export default function CmsPagesManagement() {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Buscar pÃ¡ginas..."
+            placeholder="Buscar paginas..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-white/5 border-none rounded-lg text-[12px] focus:ring-2 focus:ring-blue-500/20 w-52 transition-all"
@@ -294,7 +294,7 @@ export default function CmsPagesManagement() {
           disabled={!canEdit}
           className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 shrink-0"
         >
-          <Plus size={14} /> Nueva pÃ¡gina
+          <Plus size={14} /> Nueva pagina
         </button>
       </header>
 
@@ -315,7 +315,7 @@ export default function CmsPagesManagement() {
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 onKeyDown={(e) => e.key === "Escape" && setIsQuickAddOpen(false)}
-                placeholder="TÃ­tulo de la nueva pÃ¡gina (Enter para crear)"
+                placeholder="Titulo de la nueva pagina (Enter para crear)"
                 disabled={!canEdit}
                 className="flex-1 bg-transparent border-none text-[15px] font-bold text-blue-900 dark:text-blue-200 placeholder:text-blue-400 focus:ring-0"
               />
@@ -332,8 +332,8 @@ export default function CmsPagesManagement() {
           <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-50 py-20">
             <div className="size-16 rounded-[2rem] bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400"><FileText size={32} /></div>
             <div>
-              <p className="font-bold text-slate-900 dark:text-white">No hay pÃ¡ginas creadas</p>
-              <p className="text-sm text-slate-500">Usa la barra superior para crear tu primera pÃ¡gina.</p>
+              <p className="font-bold text-slate-900 dark:text-white">No hay paginas creadas</p>
+              <p className="text-sm text-slate-500">Usa la barra superior para crear tu primera pagina.</p>
             </div>
           </div>
         ) : viewType === "grid" ? (
@@ -418,7 +418,7 @@ export default function CmsPagesManagement() {
           renderBoard()
         ) : viewType === "calendar" ? (
           <UniversalCalendarView
-            title="Calendario de pÃƒÂ¡ginas"
+            title="Calendario de paginas"
             events={calendarEvents}
             onEventClick={(event) => {
               const page = visiblePages.find((item) => item.id === event.id);
@@ -450,7 +450,7 @@ export default function CmsPagesManagement() {
                       className="rounded"
                     />
                   </th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">PÃ¡gina</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Pagina</th>
                   <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Slug</th>
                   <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Estado</th>
                   <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden xl:table-cell">Actualizado</th>
@@ -485,7 +485,7 @@ export default function CmsPagesManagement() {
                         <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest", st.color)}>{st.label}</span>
                       </td>
                       <td className="px-4 py-3 hidden xl:table-cell">
-                        <span className="text-[11px] text-slate-400">{page.updated_at ? new Date(page.updated_at).toLocaleDateString() : "â€”"}</span>
+                        <span className="text-[11px] text-slate-400">{page.updated_at ? new Date(page.updated_at).toLocaleDateString() : "-"}</span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
@@ -544,10 +544,10 @@ export default function CmsPagesManagement() {
         {selectedPage && (
           <div className="space-y-6">
             <section className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">ConfiguraciÃ³n general</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Configuracion general</label>
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <span className="text-[12px] font-medium text-slate-700 dark:text-slate-300">TÃ­tulo</span>
+                  <span className="text-[12px] font-medium text-slate-700 dark:text-slate-300">Titulo</span>
                   <input type="text" value={selectedPage.title} onChange={(e) => setSelectedPage({ ...selectedPage, title: e.target.value })} className="w-full px-3 py-2 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl" disabled={!canEdit} />
                 </div>
                 <div className="space-y-1.5">
@@ -558,17 +558,17 @@ export default function CmsPagesManagement() {
             </section>
 
             <section className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">SEO (OptimizaciÃ³n y Redes)</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">SEO (Optimizacion y redes)</label>
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <span className="text-[12px] font-medium text-slate-700 dark:text-slate-300">Meta DescripciÃ³n</span>
+                  <span className="text-[12px] font-medium text-slate-700 dark:text-slate-300">Meta descripcion</span>
                   <textarea
                     rows={3}
                     value={(selectedPage.seo_json?.meta_description as string) || ""}
                     onChange={(e) => setSelectedPage({ ...selectedPage, seo_json: { ...(selectedPage.seo_json || {}), meta_description: e.target.value } })}
                     className="w-full px-3 py-2 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl resize-none custom-scrollbar"
                     disabled={!canEdit}
-                    placeholder="Breve descripciÃ³n para Google..."
+                    placeholder="Breve descripcion para Google..."
                   />
                 </div>
                 <div className="space-y-1.5">

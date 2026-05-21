@@ -197,11 +197,12 @@ export default function FaroNavbar() {
                             <Link
                                 href={ctaHref}
                                 onClick={() => setMobileOpen && setMobileOpen(false)}
-                                className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-[0.15em] transition-all hover:scale-105"
+                                className="hidden lg:flex items-center gap-2 px-6 py-2.5 rounded-full text-[11px] font-black uppercase tracking-[0.15em] transition-all hover:scale-105 animate-gradient-xy"
                                 style={{
-                                    background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
+                                    backgroundImage: "linear-gradient(to right, #004581, #018abd, #004581)",
+                                    backgroundSize: "200% auto",
                                     color: "white",
-                                    boxShadow: "0 4px 20px rgba(44, 96, 157, 0.35)",
+                                    boxShadow: "0 4px 20px rgba(1, 138, 189, 0.5)",
                                 }}
                             >
                                 {ctaLabel}
@@ -262,11 +263,12 @@ export default function FaroNavbar() {
                             <Link
                                 href={ctaHref}
                                 onClick={() => setMobileOpen && setMobileOpen(false)}
-                                className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-[0.15em] transition-all hover:scale-105"
+                                className="flex items-center justify-center gap-2 px-6 py-3 mt-4 w-full rounded-full text-[12px] font-black uppercase tracking-[0.15em] transition-all hover:scale-105 animate-gradient-xy"
                                 style={{
-                                    background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
+                                    backgroundImage: "linear-gradient(to right, #004581, #018abd, #004581)",
+                                    backgroundSize: "200% auto",
                                     color: "white",
-                                    boxShadow: "0 4px 20px rgba(44, 96, 157, 0.35)",
+                                    boxShadow: "0 4px 20px rgba(1, 138, 189, 0.5)",
                                 }}
                             >
                                 {ctaLabel}

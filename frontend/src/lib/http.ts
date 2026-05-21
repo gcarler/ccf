@@ -1,4 +1,4 @@
-﻿import { apiUrl } from "./api";
+import { apiUrl } from "./api";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -112,11 +112,13 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
 
   if (response.status === 401) {
     console.warn(`[API_UNAUTHORIZED] ${path}`);
-    if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+    const isLoginPath = path.includes('/auth/login') || (typeof window !== 'undefined' && window.location.pathname.includes('/login'));
+    if (typeof window !== 'undefined' && !isLoginPath) {
        localStorage.removeItem('ccf_token');
        window.location.href = '/login?expired=true';
     }
-    throw new ApiError("Session expired", 401, parsed);
+    const defaultMsg = isLoginPath ? "Credenciales incorrectas" : "Session expired";
+    throw new ApiError(parsed?.detail || parsed?.message || defaultMsg, 401, parsed);
   }
 
   if (!response.ok) {

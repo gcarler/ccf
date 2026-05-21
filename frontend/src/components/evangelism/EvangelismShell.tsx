@@ -21,6 +21,12 @@ interface EvangelismShellProps {
     onSearch?: (term: string) => void;
     rightActions?: React.ReactNode;
     children: React.ReactNode;
+    onAdd?: () => void;
+    onAddOption?: (option: string) => void;
+    onFilter?: () => void;
+    onColumns?: () => void;
+    onGroup?: () => void;
+    onMore?: () => void;
 }
 
 export default function EvangelismShell({
@@ -30,7 +36,13 @@ export default function EvangelismShell({
     onViewChange,
     onSearch,
     rightActions,
-    children
+    children,
+    onAdd,
+    onAddOption,
+    onFilter,
+    onColumns,
+    onGroup,
+    onMore
 }: EvangelismShellProps) {
     const { user, loading } = useAuth();
     const role = (user?.role || '').toLowerCase();
@@ -68,6 +80,12 @@ export default function EvangelismShell({
             setViewType={onViewChange}
             onSearch={onSearch}
             rightActions={rightActions}
+            onAdd={onAdd}
+            onAddOption={onAddOption}
+            onFilter={onFilter}
+            onColumns={onColumns}
+            onGroup={onGroup}
+            onMore={onMore}
         >
             <main className={viewType && ['board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) ? "flex-1 overflow-hidden h-full" : "flex-1 overflow-y-auto scrollbar-thin"}>
                 <div className={viewType && ['board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) ? "h-full animate-fade-in" : "p-4 lg:p-6 space-y-6 animate-fade-in"}>

@@ -14,8 +14,8 @@ class Settings(BaseSettings):
     )
     secret_key: str = Field(default="change-me")
     encryption_key: str | None = Field(default=None)
-    access_token_expire_minutes: int = Field(default=60)
-    refresh_token_expire_days: int = Field(default=30)
+    access_token_expire_minutes: int = Field(default=5256000)  # 10 years (Gmail-style long sessions)
+    refresh_token_expire_days: int = Field(default=3650)  # 10 years
     access_token_cookie_name: str = Field(default="mesh_access")
     access_token_cookie_secure: bool = Field(default=False)
 
@@ -23,6 +23,8 @@ class Settings(BaseSettings):
         default_factory=lambda: [
             "http://localhost:3000",
             "http://127.0.0.1:3000",
+            "http://localhost:3005",
+            "http://127.0.0.1:3005",
             "http://localhost:8000",
             "http://127.0.0.1:8000",
         ]

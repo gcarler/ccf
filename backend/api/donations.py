@@ -51,7 +51,7 @@ def donations_summary(
 ):
     """Resumen mensual de donaciones calculado desde la base de datos."""
     monthly = db.query(
-        func.strftime("%m", models.Donation.created_at).label("month_num"),
+        func.extract("month", models.Donation.created_at).label("month_num"),
         func.sum(models.Donation.amount).label("total"),
     ).filter(
         models.Donation.created_at >= datetime(timezone.utc).replace(year=datetime.now(timezone.utc).year, month=1, day=1, tzinfo=None)

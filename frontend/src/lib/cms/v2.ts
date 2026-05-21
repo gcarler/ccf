@@ -164,7 +164,7 @@ export async function reorderCmsMenuItems(
 }
 
 export async function getCmsPublicMenu(siteKey: string, menuKey: string) {
-  return apiFetch<CmsPublicMenu>(`/cms/v2/public/sites/${siteKey}/menus/${menuKey}`);
+  return apiFetch<CmsPublicMenu>(`/cms/v2/public/sites/${siteKey}/menus/${menuKey}`, { silent: true });
 }
 
 export async function listCmsPages(siteKey: string, token?: string | null) {

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     X, CheckSquare, FileText, Bell, LayoutDashboard, Layers,
-    Plus, User, Calendar, Flag, Tag, MoreHorizontal, Paperclip,
+    Plus, User, Calendar, Flag, Tag, Paperclip,
     MessageSquare, ChevronDown, Sparkles, Loader2,
     Table2, Columns, List, ChevronRight, Users,
     Minus
@@ -41,8 +41,26 @@ const STATUS_COLORS: Record<string, string> = {
     'COMPLETADO':  'bg-emerald-100 text-emerald-700',
 };
 
+const DocAddBtn = ({ icon: Icon, label }: { icon: any; label: string }) => (
+    <button className="flex items-center gap-2 w-full px-2 py-1.5 rounded hover:bg-slate-50 dark:hover:bg-white/5 text-[12px] text-slate-600 dark:text-slate-300 transition-colors">
+        <Icon size={13} className="text-slate-400" />
+        {label}
+    </button>
+);
+
+const ReminderChip = ({ icon: Icon, label, avatar }: { icon?: any; label: string; avatar?: boolean }) => (
+    <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 dark:border-white/10 text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+        {avatar ? (
+            <div className="size-3.5 rounded-full bg-slate-200 dark:bg-white/10 flex items-center justify-center text-[8px] font-bold">U</div>
+        ) : Icon ? (
+            <Icon size={12} className="text-slate-400" />
+        ) : null}
+        {label}
+    </button>
+);
+
 export default function UniversalCreationModal({ isOpen, onClose, initialType = 'task' }: Props) {
-    const { token } = useAuth();
+    const { user, token } = useAuth();
     const { initialData } = useCreation();
     const [type, setType] = useState<CreationType>(initialType);
     const [projects, setProjects] = useState<ProjectRecord[]>([]);
@@ -52,9 +70,13 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
     // Form state
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
+    const [showDescription, setShowDescription] = useState(false);
     const [status, setStatus] = useState('PENDIENTE');
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
-    const [priority] = useState('normal');
+    const [priority, setPriority] = useState('normal');
+    const [dueDate, setDueDate] = useState('');
+    const [tags, setTags] = useState<string[]>([]);
+    const [assignedToMe, setAssignedToMe] = useState(false);
     const [isGeneratingAi, setIsGeneratingAi] = useState(false);
     const [eventDate, setEventDate] = useState(() => initialData?.initialDate || new Date().toISOString().split('T')[0]);
     const [eventEndDate, setEventEndDate] = useState(() => initialData?.initialDate || new Date().toISOString().split('T')[0]);
@@ -68,6 +90,9 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
     const [showEventTypeDropdown, setShowEventTypeDropdown] = useState(false);
     const [strategyType, setStrategyType] = useState('Campaña de Alcance');
     const [showStrategyTypeDropdown, setShowStrategyTypeDropdown] = useState(false);
+    const [showTagsDropdown, setShowTagsDropdown] = useState(false);
+    const [whiteboardBg, setWhiteboardBg] = useState('grid');
+    const [panelLayout, setPanelLayout] = useState('board');
 
     const titleRef = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
 
@@ -78,14 +103,28 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
         setStatus(statuses[nextIndex]);
     };
 
+    const cyclePriority = () => {
+        const priorities = ['normal', 'alta', 'urgente', 'baja'];
+        const currentIndex = priorities.indexOf(priority);
+        const nextIndex = (currentIndex + 1) % priorities.length;
+        setPriority(priorities[nextIndex]);
+    };
+
     useEffect(() => {
         if (isOpen) {
             setType(initialType);
             setTitle('');
             setDescription('');
+            setShowDescription(false);
             setStatus('PENDIENTE');
             setIsPrivate(false);
             setEventLocation('');
+            setDueDate('');
+            setTags([]);
+            setAssignedToMe(false);
+            setStrategyType('Campaña de Alcance');
+            setWhiteboardBg('grid');
+            setPanelLayout('board');
             if (initialData?.initialDate) {
                 setEventDate(initialData.initialDate);
                 setEventEndDate(initialData.initialDate);
@@ -95,6 +134,31 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, initialType]);
+
+    useEffect(() => {
+        const closeAllDropdowns = () => {
+            setShowProjectDropdown(false);
+            setShowSubmitDropdown(false);
+            setShowEventTypeDropdown(false);
+            setShowStrategyTypeDropdown(false);
+            setShowTagsDropdown(false);
+        };
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                if (showProjectDropdown || showSubmitDropdown || showEventTypeDropdown || showStrategyTypeDropdown || showTagsDropdown) {
+                    closeAllDropdowns();
+                } else {
+                    onClose();
+                }
+            }
+        };
+        document.addEventListener('click', closeAllDropdowns);
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('click', closeAllDropdowns);
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [showProjectDropdown, showSubmitDropdown, showEventTypeDropdown, showStrategyTypeDropdown, showTagsDropdown, onClose]);
 
     const fetchProjects = async () => {
         if (!token) return;
@@ -178,6 +242,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                     }
                 });
                 toast.success('Estrategia de evangelismo creada');
+                window.dispatchEvent(new CustomEvent('evangelism-strategy-created'));
             } else if (type === 'panel') {
                 toast.success('Panel creado (Boceto)');
             } else {
@@ -284,7 +349,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                     <div className="flex items-center gap-2 px-5 pt-2 pb-2 relative z-[95]">
                                                         <div className="relative">
                                                             <button 
-                                                                onClick={() => setShowProjectDropdown(!showProjectDropdown)}
+                                                                onClick={(e) => { e.stopPropagation(); setShowProjectDropdown(!showProjectDropdown); }}
                                                                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                                                             >
                                                                 <span className="size-3 rounded-sm inline-block"
@@ -327,22 +392,50 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         className="px-5 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none w-full"
                                                     />
 
-                                                    {/* Description links */}
-                                                    <div className="px-5 pb-3 space-y-1">
-                                                        <button className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-                                                            <FileText size={13} />
-                                                            Añadir descripción
-                                                        </button>
-                                                        <button
-                                                            onClick={handleAiWrite}
-                                                            className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                                                        >
-                                                            {isGeneratingAi
-                                                                ? <Loader2 size={13} className="animate-spin" />
-                                                                : <Sparkles size={13} />
-                                                            }
-                                                            Escribir con IA
-                                                        </button>
+                                                    {/* Description section */}
+                                                    <div className="px-5 pb-3">
+                                                        {showDescription ? (
+                                                            <div className="space-y-2 w-full">
+                                                                <textarea
+                                                                    value={description}
+                                                                    onChange={e => setDescription(e.target.value)}
+                                                                    placeholder="Añade la descripción o notas de esta tarea..."
+                                                                    className="w-full min-h-[70px] text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                                                                />
+                                                                <div className="flex justify-end">
+                                                                    <button
+                                                                        onClick={handleAiWrite}
+                                                                        className="flex items-center gap-1.5 text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:opacity-85 transition-colors"
+                                                                    >
+                                                                        {isGeneratingAi ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                                        Mejorar con IA
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center gap-4">
+                                                                <button 
+                                                                    onClick={() => setShowDescription(true)}
+                                                                    className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                                                >
+                                                                    <FileText size={13} />
+                                                                    Añadir descripción
+                                                                </button>
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        setShowDescription(true);
+                                                                        await handleAiWrite();
+                                                                    }}
+                                                                    className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                                                >
+                                                                    {isGeneratingAi
+                                                                        ? <Loader2 size={13} className="animate-spin" />
+                                                                        : <Sparkles size={13} />
+                                                                    }
+                                                                    Escribir con IA
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
 
                                                     {/* Properties bar */}
@@ -358,13 +451,116 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         >
                                                             {status}
                                                         </button>
-                                                        <PropBtn icon={User} label="Persona asignada" />
-                                                        <PropBtn icon={Calendar} label="Fecha límite" />
-                                                        <PropBtn icon={Flag} label="Prioridad" />
-                                                        <PropBtn icon={Tag} label="Etiquetas" />
-                                                        <button className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
-                                                            <MoreHorizontal size={13} />
+                                                        
+                                                        {/* Assignee */}
+                                                        {assignedToMe ? (
+                                                            <button 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setAssignedToMe(false);
+                                                                }}
+                                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-blue-200 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-500/10 text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:opacity-85 transition-colors"
+                                                            >
+                                                                <span className="size-4 rounded-full bg-blue-600 flex items-center justify-center text-white text-[9px] font-black uppercase">
+                                                                    {user?.username?.substring(0, 2).toUpperCase() || 'MI'}
+                                                                </span>
+                                                                Asignado a mí
+                                                            </button>
+                                                        ) : (
+                                                            <button 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setAssignedToMe(true);
+                                                                }}
+                                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-slate-200 dark:border-white/10 text-[11px] font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                                                            >
+                                                                <User size={12} />
+                                                                Asignar a mí
+                                                            </button>
+                                                        )}
+
+                                                        {/* Due Date */}
+                                                        <div className="relative flex items-center">
+                                                            <input
+                                                                type="date"
+                                                                value={dueDate}
+                                                                onChange={e => setDueDate(e.target.value)}
+                                                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                                                            />
+                                                            <button className={clsx(
+                                                                "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-medium transition-colors pointer-events-none",
+                                                                dueDate ? "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5"
+                                                            )}>
+                                                                <Calendar size={12} className={dueDate ? "text-emerald-500" : "text-slate-400"} />
+                                                                {dueDate ? `Fecha límite: ${dueDate}` : 'Fecha límite'}
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Priority */}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                cyclePriority();
+                                                            }}
+                                                            className={clsx(
+                                                                "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-bold transition-all active:scale-95",
+                                                                priority === 'normal' && "border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5",
+                                                                priority === 'alta' && "border-amber-200 dark:border-amber-500/30 bg-amber-50/50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400",
+                                                                priority === 'urgente' && "border-rose-200 dark:border-rose-500/30 bg-rose-50/50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400",
+                                                                priority === 'baja' && "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-400 dark:text-slate-500"
+                                                            )}
+                                                        >
+                                                            <Flag size={12} className={clsx(
+                                                                priority === 'normal' && "text-slate-400",
+                                                                priority === 'alta' && "text-amber-500",
+                                                                priority === 'urgente' && "text-rose-500",
+                                                                priority === 'baja' && "text-slate-300"
+                                                            )} />
+                                                            Prioridad: {priority === 'normal' ? 'Normal' : priority === 'alta' ? 'Alta' : priority === 'urgente' ? 'Urgente' : 'Baja'}
                                                         </button>
+
+                                                        {/* Tags */}
+                                                        <div className="relative">
+                                                            <button 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setShowTagsDropdown(!showTagsDropdown);
+                                                                }}
+                                                                className={clsx(
+                                                                    "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-medium transition-colors hover:bg-slate-50 dark:hover:bg-white/5",
+                                                                    tags.length > 0 ? "border-violet-200 dark:border-violet-500/30 bg-violet-50/50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400" : "border-slate-200 dark:border-white/10 text-slate-500"
+                                                                )}
+                                                            >
+                                                                <Tag size={12} className={tags.length > 0 ? "text-violet-500" : "text-slate-400"} />
+                                                                {tags.length > 0 ? `Etiquetas: ${tags.join(', ')}` : 'Etiquetas'}
+                                                            </button>
+                                                            {showTagsDropdown && (
+                                                                <div 
+                                                                    onClick={e => e.stopPropagation()}
+                                                                    className="absolute bottom-full left-0 mb-1 w-44 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg z-[9999] py-1"
+                                                                >
+                                                                    {['Ministerio', 'Comunidad', 'Servicio', 'Planeación', 'Logística'].map(t => {
+                                                                        const isSelected = tags.includes(t);
+                                                                        return (
+                                                                            <button
+                                                                                key={t}
+                                                                                onClick={() => {
+                                                                                    if (isSelected) {
+                                                                                        setTags(tags.filter(x => x !== t));
+                                                                                    } else {
+                                                                                        setTags([...tags, t]);
+                                                                                    }
+                                                                                }}
+                                                                                className="flex items-center justify-between px-3 py-1.5 w-full text-left text-[12px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-slate-300"
+                                                                            >
+                                                                                <span>{t}</span>
+                                                                                {isSelected && <span className="size-1.5 rounded-full bg-violet-500" />}
+                                                                            </button>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
 
                                                     {/* Custom fields section */}
@@ -386,7 +582,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         {/* Event Type dropdown */}
                                                         <div className="relative">
                                                             <button 
-                                                                onClick={() => setShowEventTypeDropdown(!showEventTypeDropdown)}
+                                                                onClick={(e) => { e.stopPropagation(); setShowEventTypeDropdown(!showEventTypeDropdown); }}
                                                                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                                                             >
                                                                 <Calendar size={12} />
@@ -512,7 +708,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                     <div className="flex items-center gap-2 px-5 pt-3 pb-2 text-[12px] text-slate-500 relative z-[95]">
                                                         <div className="relative">
                                                             <button 
-                                                                onClick={() => setShowStrategyTypeDropdown(!showStrategyTypeDropdown)}
+                                                                onClick={(e) => { e.stopPropagation(); setShowStrategyTypeDropdown(!showStrategyTypeDropdown); }}
                                                                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                                                             >
                                                                 <Sparkles size={12} />
@@ -594,17 +790,37 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         placeholder="Ponle un nombre a este documento..."
                                                         className="px-5 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
                                                     />
-                                                    <div className="px-5 py-3 space-y-2 border-t border-slate-100 dark:border-white/5 mt-3">
-                                                        <button className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors w-full">
-                                                            <FileText size={13} />
-                                                            Empezar a escribir
-                                                        </button>
-                                                        <button onClick={handleAiWrite} className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors w-full">
-                                                            <Sparkles size={13} />
-                                                            Escribir con IA
-                                                        </button>
-                                                        <div className="pt-2">
-                                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Añadir nuevo</p>
+                                                    <div className="px-5 py-3 border-t border-slate-100 dark:border-white/5 mt-3">
+                                                        {showDescription ? (
+                                                            <textarea
+                                                                value={description}
+                                                                onChange={e => setDescription(e.target.value)}
+                                                                placeholder="Comienza a redactar el contenido de tu documento..."
+                                                                className="w-full min-h-[90px] text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                                                            />
+                                                        ) : (
+                                                            <div className="space-y-2">
+                                                                <button 
+                                                                    onClick={() => setShowDescription(true)}
+                                                                    className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors w-full text-left"
+                                                                >
+                                                                    <FileText size={13} />
+                                                                    Empezar a escribir contenido
+                                                                </button>
+                                                                <button 
+                                                                    onClick={async () => {
+                                                                        setShowDescription(true);
+                                                                        await handleAiWrite();
+                                                                    }}
+                                                                    className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors w-full text-left"
+                                                                >
+                                                                    <Sparkles size={13} />
+                                                                    Generar plantilla con IA
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                        <div className="pt-4">
+                                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Añadir nuevo elemento</p>
                                                             <div className="space-y-1">
                                                                 <DocAddBtn icon={Table2} label="Tabla" />
                                                                 <DocAddBtn icon={Columns} label="Columna" />
@@ -626,10 +842,22 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         className="px-5 py-4 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none w-full"
                                                     />
                                                     <div className="px-5 pb-3">
-                                                        <button className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-                                                            <FileText size={13} />
-                                                            Añadir descripción
-                                                        </button>
+                                                        {showDescription ? (
+                                                            <textarea
+                                                                value={description}
+                                                                onChange={e => setDescription(e.target.value)}
+                                                                placeholder="Añade detalles o notas a este recordatorio..."
+                                                                className="w-full min-h-[60px] text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                                                            />
+                                                        ) : (
+                                                            <button 
+                                                                onClick={() => setShowDescription(true)}
+                                                                className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                                            >
+                                                                <FileText size={13} />
+                                                                Añadir descripción
+                                                            </button>
+                                                        )}
                                                     </div>
                                                     <div className="flex items-center gap-2 px-5 py-3 border-t border-slate-100 dark:border-white/5">
                                                         <ReminderChip icon={Calendar} label="Hoy" />
@@ -656,7 +884,28 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         placeholder="Ponle un nombre a esta pizarra..."
                                                         className="px-5 py-4 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
                                                     />
-                                                    <div className="h-20" /> {/* spacer */}
+                                                    
+                                                    {/* Background option styling */}
+                                                    <div className="px-5 py-3 border-t border-slate-100 dark:border-white/5 space-y-2">
+                                                        <p className="text-[11px] font-bold text-slate-400">Diseño de Pizarra</p>
+                                                        <div className="flex gap-2">
+                                                            {['grid', 'dots', 'blank'].map(bg => (
+                                                                <button
+                                                                    key={bg}
+                                                                    onClick={() => setWhiteboardBg(bg)}
+                                                                    className={clsx(
+                                                                        "px-3 py-1.5 rounded-lg border text-[12px] font-medium capitalize transition-all",
+                                                                        whiteboardBg === bg
+                                                                            ? "border-violet-500 bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 font-semibold"
+                                                                            : "border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5"
+                                                                    )}
+                                                                >
+                                                                    {bg === 'grid' ? 'Cuadrícula' : bg === 'dots' ? 'Puntos' : 'Blanco'}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div className="h-10" />
                                                 </div>
                                             )}
 
@@ -670,7 +919,33 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         placeholder="Nombre del panel..."
                                                         className="px-5 py-4 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
                                                     />
-                                                    <div className="h-20" />
+                                                    
+                                                    {/* Layout style option */}
+                                                    <div className="px-5 py-3 border-t border-slate-100 dark:border-white/5 space-y-2">
+                                                        <p className="text-[11px] font-bold text-slate-400">Vista predeterminada del Panel</p>
+                                                        <div className="flex gap-2 flex-wrap">
+                                                            {[
+                                                                { id: 'board', label: 'Tablero', icon: Columns },
+                                                                { id: 'list', label: 'Lista', icon: List },
+                                                                { id: 'calendar', label: 'Calendario', icon: Calendar },
+                                                            ].map(layout => (
+                                                                <button
+                                                                    key={layout.id}
+                                                                    onClick={() => setPanelLayout(layout.id)}
+                                                                    className={clsx(
+                                                                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-all",
+                                                                        panelLayout === layout.id
+                                                                            ? "border-sky-500 bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 font-semibold"
+                                                                            : "border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5"
+                                                                    )}
+                                                                >
+                                                                    <layout.icon size={12} />
+                                                                    {layout.label}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div className="h-10" />
                                                 </div>
                                             )}
                                         </motion.div>
@@ -725,7 +1000,10 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                 {submitOption === 'create_and_new' ? 'Crear y nuevo' : 'Crear'}
                                             </button>
                                             <button 
-                                                onClick={() => setShowSubmitDropdown(!showSubmitDropdown)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setShowSubmitDropdown(!showSubmitDropdown);
+                                                }}
                                                 className="flex items-center px-2 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12px] font-bold rounded-r-lg border-l border-white/20 dark:border-slate-900/20 hover:bg-slate-700 dark:hover:bg-slate-100 transition-colors"
                                             >
                                                 <ChevronDown size={13} />
@@ -766,31 +1044,4 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
     );
 }
 
-// ── Helper components ──────────────────────────────────────────────────────────
-function PropBtn({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
-    return (
-        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-slate-200 dark:border-white/10 text-[11px] font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
-            <Icon size={12} />
-            {label}
-        </button>
-    );
-}
 
-function ReminderChip({ icon: Icon, label, avatar }: { icon?: React.ElementType; label: string; avatar?: boolean }) {
-    return (
-        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-            {avatar && <span className="size-4 rounded-full bg-blue-600 inline-block" />}
-            {Icon && <Icon size={12} />}
-            {label}
-        </button>
-    );
-}
-
-function DocAddBtn({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
-    return (
-        <button className="flex items-center gap-2 px-3 py-1.5 w-full text-left text-[12px] font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg transition-colors">
-            <Icon size={13} className="text-slate-400" />
-            {label}
-        </button>
-    );
-}

@@ -34,6 +34,7 @@ export default function LoginPage() {
         setError('');
         try {
             const formData = new URLSearchParams();
+            formData.append('grant_type', 'password');
             formData.append('username', email);
             formData.append('password', password);
             const response = await apiFetch<any>('/auth/login', {
