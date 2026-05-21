@@ -20,11 +20,11 @@ const nextConfig = {
         ],
     },
     async rewrites() {
-        if (!apiProxyTarget) return [];
+        const target = process.env.API_PROXY_TARGET || 'http://backend:8000';
         return [
             {
                 source: '/api/:path*',
-                destination: `${apiProxyTarget}/api/:path*`
+                destination: `${target}/api/:path*`
             }
         ];
     },

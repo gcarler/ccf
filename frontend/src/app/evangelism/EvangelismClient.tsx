@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import Skeleton from '@/components/ui/Skeleton';
+import EmptyState from '@/components/ui/EmptyState';
 import { useCreation } from '@/context/CreationContext';
 import { ViewType } from '@/components/ViewSwitcher';
 import RightPanel from '@/components/ui/RightPanel';
@@ -182,7 +183,7 @@ export default function EvangelismClient() {
         done: 'Terminada',
     };
 
-    const formatDate = (dateStr?: string | null) => {
+    const formatDate = (dateStr: string | null | undefined) => {
         if (!dateStr) return 'Sin fecha';
         try {
             const date = new Date(dateStr);
@@ -210,21 +211,13 @@ export default function EvangelismClient() {
                         {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full rounded-2xl" />)}
                     </div>
                 ) : filteredData.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center p-16 text-center bg-slate-50 dark:bg-white/5 rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-white/10 max-w-lg mx-auto mt-10">
-                        <div className="size-16 rounded-2xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-6 shadow-sm">
-                            <Flame size={32} className="animate-pulse" />
-                        </div>
-                        <h3 className="text-[16px] font-black text-slate-900 dark:text-white uppercase tracking-wider">No hay estrategias</h3>
-                        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 max-w-xs font-medium">
-                            Las estrategias te permiten planificar campañas de alcance, consolidación y discipulado en tu comunidad.
-                        </p>
-                        <button
-                            onClick={handleAddItem}
-                            className="mt-6 flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all"
-                        >
-                            <Plus size={14} /> Crear Estrategia
-                        </button>
-                    </div>
+                    <EmptyState
+                        title="No hay estrategias"
+                        description="Las estrategias te permiten planificar campañas de alcance, consolidación y discipulado en tu comunidad."
+                        icon={Flame}
+                        onAction={handleAddItem}
+                        actionLabel="Crear Estrategia"
+                    />
                 ) : (
                     <div className="pb-16 flex-1">
                         {/* ── TABLE VIEW ─────────────────────────────── */}

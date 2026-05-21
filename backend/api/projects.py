@@ -140,7 +140,7 @@ def _normalize_dates(obj):
                 if attr == 'created_at': setattr(obj, attr, datetime.now())
     return obj
 
-@router.get("/", response_model=List[schemas.Project])
+@router.get("", response_model=List[schemas.Project])
 def list_projects(
     status_filter: Optional[str] = Query(None, alias="status"),
     owner_id: Optional[int] = None,
@@ -186,7 +186,7 @@ def list_projects(
 
 
 
-@router.post("/", response_model=schemas.Project, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=schemas.Project, status_code=status.HTTP_201_CREATED)
 def create_project(
     project: schemas.ProjectCreate,
     db: Session = Depends(get_db),

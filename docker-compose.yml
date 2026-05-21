@@ -48,11 +48,11 @@ services:
       - "8000:8000"
     environment:
       environment: production
-      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://postgres:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ccf_db}}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
-      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-redpanda:9092}
+      DATABASE_URL: postgresql+pg8000://postgres:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ccf_db}
+      REDIS_URL: redis://redis:6379/0
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
       UPLOADS_DIR: ${UPLOADS_DIR:-uploads}
-      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY}
+      SECRET_KEY: ${SECRET_KEY}
     depends_on:
       - db
       - redis
@@ -66,7 +66,9 @@ services:
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_API_URL: /api
+      API_PROXY_TARGET: http://backend:8000
+      API_BASE_URL: http://backend:8000/api
     depends_on:
       - backend
 

@@ -80,8 +80,10 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
             toast.success('Proyecto creado');
             window.dispatchEvent(new CustomEvent('project-updated'));
             setTimeout(() => router.push(`/projects/${created.id}`), 200);
-        } catch {
-            toast.error('Error al crear el proyecto');
+        } catch (e: any) {
+            console.error('Error creating project:', e);
+            const detailMsg = e.detail?.detail || e.detail?.message || e.message || 'Intente de nuevo más tarde';
+            toast.error(`Error al crear el proyecto: ${detailMsg}`);
         } finally {
             setIsCreating(false);
         }
