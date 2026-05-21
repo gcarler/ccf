@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import WorkspaceMiniSidebar from '@/components/WorkspaceMiniSidebar';
@@ -278,7 +278,6 @@ function WorkspaceLayoutInner({
 
             <div className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-2" />
 
-            {/* User chip â€” premium */}
             <button className="flex items-center gap-2 h-9 pl-2.5 pr-1 bg-slate-50 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.07] rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all group">
                 <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors max-w-[80px] truncate">
                     {displayName}
@@ -292,7 +291,7 @@ function WorkspaceLayoutInner({
 
     return (
         <ProtectedRoute allowedRoles={allowedRoles}>
-            <div className="flex h-screen w-full bg-slate-50 dark:bg-[#111213] overflow-hidden font-display relative transition-colors duration-500">
+            <div className="flex flex-col h-screen w-full bg-slate-50 dark:bg-[#111213] overflow-hidden font-display relative transition-colors duration-500">
 
                 <motion.div
                     className="absolute top-0 left-0 right-0 h-[2px] bg-blue-600 z-[10000]"
@@ -303,24 +302,83 @@ function WorkspaceLayoutInner({
 
                 <UniversalCreationModal isOpen={isModalOpen} onClose={closeModal} initialType={defaultType} />
 
-                <AnimatePresence mode="popLayout">
-                    {s1Visible && (
-                        <motion.div
-                            key="sidebar1"
-                            initial={{ x: -80, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            exit={{ x: -80, opacity: 0 }}
-                            transition={{ type: 'tween', duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-                            className="flex shrink-0 z-50 h-screen py-[10vh] pl-4"
-                            style={{ filter: 'drop-shadow(8px 0 24px rgba(0,0,0,0.15))' }}
-                        >
-                            <WorkspaceMiniSidebar onHide={() => closeLayer('S1')} />
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                {/* ── UNIFIED TOOLBAR / HEADER (100% WIDTH) ── */}
+                <div className="w-full shrink-0 z-[60]">
+                    {breadcrumbs ? (
+                        <WorkspaceToolbar
+                            breadcrumbs={breadcrumbs}
+                            viewType={viewType}
+                            setViewType={setViewType}
+                            availableViews={availableViews}
+                            leftActions={
+                                <>
+                                    {depth > 1 && (
+                                        <button
+                                            onClick={onBack}
+                                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all text-slate-400 mr-1"
+                                        >
+                                            <ChevronLeft size={16} />
+                                        </button>
+                                    )}
+                                    {leftActions}
+                                </>
+                            }
+                            rightActions={
+                                <div className="flex items-center gap-2">
+                                    {rightActions}
+                                    {defaultRightActions}
+                                </div>
+                            }
+                            onSearch={onSearch}
+                            onFilter={onFilter}
+                            onColumns={onColumns}
+                            onGroup={onGroup}
+                            onMore={onMore}
+                            onAdd={onAdd}
+                            onAddOption={onAddOption}
+                        />
+                    ) : (
+                        <header className="h-14 border-b border-slate-100/80 dark:border-white/[0.05] flex items-center px-5 gap-3 shrink-0 bg-white dark:bg-[#141517] relative">
+                            {depth > 1 && (
+                                <button
+                                    onClick={onBack}
+                                    className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all text-slate-400"
+                                >
+                                    <ChevronLeft size={20} />
+                                </button>
+                            )}
 
-                <main className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
-                    <div className="flex h-full w-full overflow-hidden">
+                            <div className="flex-1 flex items-center gap-3 overflow-hidden min-w-0">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="size-2 rounded-full bg-blue-500 shrink-0 shadow-[0_0_6px_2px_rgba(59,130,246,0.4)]" />
+                                    <h1 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 truncate tracking-tight leading-none">
+                                        {displayTitle}
+                                    </h1>
+                                </div>
+                            </div>
+                            {defaultRightActions}
+                        </header>
+                    )}
+                </div>
+
+                <div className="flex flex-1 min-h-0 w-full overflow-hidden">
+                    <AnimatePresence mode="popLayout">
+                        {s1Visible && (
+                            <motion.div
+                                key="sidebar1"
+                                initial={{ x: -80, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                exit={{ x: -80, opacity: 0 }}
+                                transition={{ type: 'tween', duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                                className="flex shrink-0 z-50 h-full py-4 pl-4"
+                                style={{ filter: 'drop-shadow(8px 0 24px rgba(0,0,0,0.15))' }}
+                            >
+                                <WorkspaceMiniSidebar onHide={() => closeLayer('S1')} />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <main className="flex-1 flex min-w-0 relative overflow-hidden">
                         <div
                             className={clsx(
                                 "h-full shrink-0 relative flex",
@@ -360,115 +418,57 @@ function WorkspaceLayoutInner({
                             )}
                         </div>
 
-                        <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#141517] shadow-2xl relative z-10 border-l border-slate-100 dark:border-white/5 overflow-hidden">
-
-                            {/* â”€â”€ UNIFIED TOOLBAR / HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-                            {breadcrumbs ? (
-                                <WorkspaceToolbar
-                                    breadcrumbs={breadcrumbs}
-                                    viewType={viewType}
-                                    setViewType={setViewType}
-                                    availableViews={availableViews}
-                                    leftActions={
-                                        <>
-                                            {depth > 1 && (
-                                                <button
-                                                    onClick={onBack}
-                                                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all text-slate-400 mr-1"
-                                                >
-                                                    <ChevronLeft size={16} />
-                                                </button>
-                                            )}
-                                            {leftActions}
-                                        </>
-                                    }
-                                    rightActions={
-                                        <div className="flex items-center gap-2">
-                                            {rightActions}
-                                            {defaultRightActions}
-                                        </div>
-                                    }
-                                    onSearch={onSearch}
-                                    onFilter={onFilter}
-                                    onColumns={onColumns}
-                                    onGroup={onGroup}
-                                    onMore={onMore}
-                                    onAdd={onAdd}
-                                    onAddOption={onAddOption}
-                                />
-                            ) : (
-                                <header className="h-14 border-b border-slate-100/80 dark:border-white/[0.05] flex items-center px-5 gap-3 shrink-0 bg-white dark:bg-[#141517] z-[60] relative">
-                                    {depth > 1 && (
-                                        <button
-                                            onClick={onBack}
-                                            className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all text-slate-400"
-                                        >
-                                            <ChevronLeft size={20} />
-                                        </button>
-                                    )}
-
-                                    <div className="flex-1 flex items-center gap-3 overflow-hidden min-w-0">
-                                        <div className="flex items-center gap-2.5 min-w-0">
-                                            <div className="size-2 rounded-full bg-blue-500 shrink-0 shadow-[0_0_6px_2px_rgba(59,130,246,0.4)]" />
-                                            <h1 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 truncate tracking-tight leading-none">
-                                                {displayTitle}
-                                            </h1>
-                                        </div>
-                                    </div>
-                                    {defaultRightActions}
-                                </header>
-                            )}
-
+                        <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#141517] shadow-[inset_1px_0_0_rgba(0,0,0,0.03)] dark:shadow-none relative z-10 border-l border-slate-100 dark:border-white/5 overflow-hidden">
                             <div className="flex-1 overflow-hidden relative">
                                 <ErrorBoundary moduleName={displayTitle}>
                                     {children}
                                 </ErrorBoundary>
                             </div>
                         </div>
-                    </div>
+                        
+                        <WorkspaceInbox isOpen={showInbox} onClose={() => setShowInbox(false)} />
+                        <MeshChat isOpen={showChat} onClose={() => setShowChat(false)} />
 
-                    <WorkspaceInbox isOpen={showInbox} onClose={() => setShowInbox(false)} />
-                    <MeshChat isOpen={showChat} onClose={() => setShowChat(false)} />
-
-                    <motion.button
-                        initial={{ scale: 0, rotate: -45 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        whileHover={{ scale: 1.1, rotate: 5 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => setShowChat(true)}
-                        className="fixed bottom-8 right-8 z-[500] size-14 rounded-[1.5rem] bg-gradient-to-tr from-sky-600 to-indigo-600 text-white shadow-2xl shadow-sky-500/40 flex items-center justify-center border border-white/20 group"
-                        aria-label="Abrir MESH AI"
-                    >
-                        <Bot size={28} className="group-hover:animate-pulse" />
-                        <div className="absolute -top-1 -right-1 size-4 bg-emerald-500 rounded-full border-2 border-white dark:border-[#111213]" />
-                    </motion.button>
-                </main>
-
-                {!s1Visible && (
-                    <motion.button
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        onClick={() => openLayer('S1')}
-                        className="fixed left-8 bottom-[88px] z-[60] size-8 bg-slate-900 text-white rounded-xl shadow-md hover:bg-slate-800 hover:scale-110 active:scale-95 transition-all flex items-center justify-center border border-white/10 dark:border-[#111213]"
-                        aria-label="Mostrar navegaciÃ³n principal"
-                    >
-                        <ChevronRight size={16} strokeWidth={2.5} />
-                    </motion.button>
-                )}
-
-                {!layers.S2 && (
-                    <Tooltip content="Mostrar panel de mÃ³dulo" side="right">
                         <motion.button
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            onClick={cycleS2}
-                            className="fixed left-8 bottom-6 z-[60] size-8 bg-slate-900 text-white rounded-xl shadow-md hover:bg-slate-800 hover:-translate-y-1 active:scale-95 active:translate-y-0 transition-all flex items-center justify-center border border-white/10 dark:border-[#111213]"
-                            aria-label="Mostrar panel de mÃ³dulo"
+                            initial={{ scale: 0, rotate: -45 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            whileHover={{ scale: 1.1, rotate: 5 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => setShowChat(true)}
+                            className="fixed bottom-8 right-8 z-[500] size-14 rounded-[1.5rem] bg-gradient-to-tr from-sky-600 to-indigo-600 text-white shadow-2xl shadow-sky-500/40 flex items-center justify-center border border-white/20 group"
+                            aria-label="Abrir MESH AI"
+                        >
+                            <Bot size={28} className="group-hover:animate-pulse" />
+                            <div className="absolute -top-1 -right-1 size-4 bg-emerald-500 rounded-full border-2 border-white dark:border-[#111213]" />
+                        </motion.button>
+                    </main>
+
+                    {!s1Visible && (
+                        <motion.button
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            onClick={() => openLayer('S1')}
+                            className="fixed left-8 bottom-[88px] z-[60] size-8 bg-slate-900 text-white rounded-xl shadow-md hover:bg-slate-800 hover:scale-110 active:scale-95 transition-all flex items-center justify-center border border-white/10 dark:border-[#111213]"
+                            aria-label="Mostrar navegación principal"
                         >
                             <ChevronRight size={16} strokeWidth={2.5} />
                         </motion.button>
-                    </Tooltip>
-                )}
+                    )}
+
+                    {!layers.S2 && (
+                        <Tooltip content="Mostrar panel de módulo" side="right">
+                            <motion.button
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                onClick={cycleS2}
+                                className="fixed left-8 bottom-6 z-[60] size-8 bg-slate-900 text-white rounded-xl shadow-md hover:bg-slate-800 hover:-translate-y-1 active:scale-95 active:translate-y-0 transition-all flex items-center justify-center border border-white/10 dark:border-[#111213]"
+                                aria-label="Mostrar panel de módulo"
+                            >
+                                <ChevronRight size={16} strokeWidth={2.5} />
+                            </motion.button>
+                        </Tooltip>
+                    )}
+                </div>
             </div>
         </ProtectedRoute>
     );

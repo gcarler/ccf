@@ -25,14 +25,14 @@ interface Props {
 }
 
 // ── Tab config ─────────────────────────────────────────────────────────────
-const TABS: { id: CreationType; label: string; icon: React.ElementType; color?: string }[] = [
-    { id: 'task',       label: 'Tarea',        icon: CheckSquare,    color: 'text-blue-600' },
-    { id: 'event',      label: 'Evento',       icon: Calendar,       color: 'text-blue-600' },
-    { id: 'evangelism_strategy', label: 'Estrategia', icon: Sparkles, color: 'text-orange-500' },
-    { id: 'doc',        label: 'Documento',    icon: FileText,       color: 'text-slate-500' },
-    { id: 'reminder',   label: 'Recordatorio', icon: Bell,           color: 'text-slate-500' },
-    { id: 'whiteboard', label: 'Pizarra',      icon: LayoutDashboard,color: 'text-slate-500' },
-    { id: 'panel',      label: 'Panel',        icon: Layers,         color: 'text-slate-500' },
+const TABS: { id: CreationType; label: string; icon: React.ElementType; color?: string; activeColor?: string }[] = [
+    { id: 'task',       label: 'Tarea',        icon: CheckSquare,    color: 'text-blue-500', activeColor: 'text-blue-600 dark:text-blue-400' },
+    { id: 'event',      label: 'Evento',       icon: Calendar,       color: 'text-emerald-500', activeColor: 'text-emerald-600 dark:text-emerald-400' },
+    { id: 'evangelism_strategy', label: 'Estrategia', icon: Sparkles, color: 'text-amber-500', activeColor: 'text-amber-600 dark:text-amber-400' },
+    { id: 'doc',        label: 'Documento',    icon: FileText,       color: 'text-indigo-500', activeColor: 'text-indigo-600 dark:text-indigo-400' },
+    { id: 'reminder',   label: 'Recordatorio', icon: Bell,           color: 'text-rose-500', activeColor: 'text-rose-600 dark:text-rose-400' },
+    { id: 'whiteboard', label: 'Pizarra',      icon: LayoutDashboard,color: 'text-violet-500', activeColor: 'text-violet-600 dark:text-violet-400' },
+    { id: 'panel',      label: 'Panel',        icon: Layers,         color: 'text-sky-500', activeColor: 'text-sky-600 dark:text-sky-400' },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -59,8 +59,24 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
     const [eventDate, setEventDate] = useState(() => initialData?.initialDate || new Date().toISOString().split('T')[0]);
     const [eventEndDate, setEventEndDate] = useState(() => initialData?.initialDate || new Date().toISOString().split('T')[0]);
     const [eventLocation, setEventLocation] = useState('');
+    
+    // Interactivity & dropdown states
+    const [showProjectDropdown, setShowProjectDropdown] = useState(false);
+    const [showSubmitDropdown, setShowSubmitDropdown] = useState(false);
+    const [submitOption, setSubmitOption] = useState<'create' | 'create_and_new'>('create');
+    const [eventType, setEventType] = useState('Reunión');
+    const [showEventTypeDropdown, setShowEventTypeDropdown] = useState(false);
+    const [strategyType, setStrategyType] = useState('Campaña de Alcance');
+    const [showStrategyTypeDropdown, setShowStrategyTypeDropdown] = useState(false);
 
     const titleRef = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
+
+    const cycleStatus = () => {
+        const statuses = ['PENDIENTE', 'EN CURSO', 'COMPLETADO'];
+        const currentIndex = statuses.indexOf(status);
+        const nextIndex = (currentIndex + 1) % statuses.length;
+        setStatus(statuses[nextIndex]);
+    };
 
     useEffect(() => {
         if (isOpen) {
@@ -155,7 +171,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                     body: {
                         name: title.trim(),
                         description: description,
-                        strategy_type: 'General',
+                        strategy_type: strategyType,
                         start_date: new Date(eventDate).toISOString(),
                         end_date: new Date(eventEndDate).toISOString(),
                         status: 'active'
@@ -168,7 +184,15 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                 toast.info(`Configuración requerida para ${type}`);
                 return;
             }
-            onClose();
+            
+            if (submitOption === 'create_and_new') {
+                setTitle('');
+                setDescription('');
+                setEventLocation('');
+                setTimeout(() => titleRef.current?.focus(), 100);
+            } else {
+                onClose();
+            }
         } catch (e: any) { 
             console.error(e);
             toast.error('Error al crear: ' + (e.message || 'Intente de nuevo más tarde')); 
@@ -186,42 +210,54 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 20, scale: 0.96 }}
                     transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="fixed bottom-24 right-8 z-[9000] w-full max-w-[550px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] rounded-2xl bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 flex flex-col overflow-hidden font-display pointer-events-auto"
+                    className="fixed bottom-24 right-4 left-4 sm:right-8 sm:left-auto w-auto sm:w-[550px] max-w-full z-[9000] shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] rounded-2xl bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 flex flex-col overflow-hidden font-display pointer-events-auto"
                 >
                     {/* ── TAB BAR ─────────────────────────────── */}
-                                    <div className="flex items-center border-b border-slate-100 dark:border-white/5 px-2">
-                                        {TABS.map(tab => (
-                                            <button
-                                                key={tab.id}
-                                                onClick={() => setType(tab.id)}
-                                                className={clsx(
-                                                    'flex items-center gap-1.5 px-3 py-3 text-[12px] font-medium transition-all relative whitespace-nowrap',
-                                                    type === tab.id
-                                                        ? 'text-slate-900 dark:text-white'
-                                                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-                                                )}
-                                            >
-                                                <tab.icon size={13} className={type === tab.id ? (tab.color ?? 'text-slate-700') : 'text-slate-400'} />
-                                                {tab.label}
-                                                {type === tab.id && (
-                                                    <motion.div
-                                                        layoutId="modalActiveTab"
-                                                        className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 dark:bg-white"
-                                                    />
-                                                )}
-                                            </button>
-                                        ))}
-                                        <div className="flex-1" />
-                                        <button className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors ml-1">
-                                            <Minus size={15} />
-                                        </button>
-                                        <button 
-                                            onClick={onClose}
-                                            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors ml-1"
-                                        >
-                                            <X size={15} />
-                                        </button>
-                                    </div>
+                    <div className="flex items-center border-b border-slate-100 dark:border-white/5 px-2 justify-between">
+                        <div className="flex items-center overflow-x-auto hide-scrollbar flex-1 mr-2 scroll-smooth">
+                            {TABS.map(tab => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setType(tab.id)}
+                                    className={clsx(
+                                        'flex items-center gap-1.5 px-3 py-3 text-[12px] font-semibold transition-all relative whitespace-nowrap shrink-0 border-b-2 border-transparent',
+                                        type === tab.id
+                                            ? (tab.activeColor ?? 'text-slate-900 dark:text-white')
+                                            : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                                    )}
+                                >
+                                    <tab.icon size={13} className={type === tab.id ? (tab.color ?? 'text-slate-700') : 'text-slate-400'} />
+                                    {tab.label}
+                                    {type === tab.id && (
+                                        <motion.div
+                                            layoutId="modalActiveTab"
+                                            className={clsx(
+                                                "absolute bottom-0 left-0 right-0 h-[2.5px]",
+                                                tab.id === 'task' && "bg-blue-500",
+                                                tab.id === 'event' && "bg-emerald-500",
+                                                tab.id === 'evangelism_strategy' && "bg-amber-500",
+                                                tab.id === 'doc' && "bg-indigo-500",
+                                                tab.id === 'reminder' && "bg-rose-500",
+                                                tab.id === 'whiteboard' && "bg-violet-500",
+                                                tab.id === 'panel' && "bg-sky-500"
+                                            )}
+                                        />
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="flex items-center shrink-0 border-l border-slate-100 dark:border-white/5 pl-2 py-2">
+                            <button className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all">
+                                <Minus size={15} />
+                            </button>
+                            <button 
+                                onClick={onClose}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all ml-0.5"
+                            >
+                                <X size={15} />
+                            </button>
+                        </div>
+                    </div>
 
                                     {/* ── BODY ─────────────────────────────────── */}
                                     <AnimatePresence mode="wait">
@@ -245,13 +281,35 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         <span className="font-medium text-slate-600 dark:text-slate-300">General</span>
                                                     </div>
                                                     {/* Project + type selectors */}
-                                                    <div className="flex items-center gap-2 px-5 pt-2 pb-2">
-                                                        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                                            <span className="size-3 rounded-sm inline-block"
-                                                                style={{ backgroundColor: selectedProject?.color || '#2563eb' }} />
-                                                            {selectedProject?.title || 'Proyecto 1'}
-                                                            <ChevronDown size={11} />
-                                                        </button>
+                                                    <div className="flex items-center gap-2 px-5 pt-2 pb-2 relative z-[95]">
+                                                        <div className="relative">
+                                                            <button 
+                                                                onClick={() => setShowProjectDropdown(!showProjectDropdown)}
+                                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                                            >
+                                                                <span className="size-3 rounded-sm inline-block"
+                                                                    style={{ backgroundColor: selectedProject?.color || '#2563eb' }} />
+                                                                {selectedProject?.title || 'Seleccionar Proyecto'}
+                                                                <ChevronDown size={11} />
+                                                            </button>
+                                                            {showProjectDropdown && (
+                                                                <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg z-[9999] py-1 max-h-48 overflow-y-auto scrollbar-thin">
+                                                                    {projects.map(p => (
+                                                                        <button
+                                                                            key={p.id}
+                                                                            onClick={() => {
+                                                                                setSelectedProjectId(p.id);
+                                                                                setShowProjectDropdown(false);
+                                                                            }}
+                                                                            className="flex items-center gap-2 px-3 py-2 w-full text-left text-[12px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-slate-300"
+                                                                        >
+                                                                            <span className="size-2 rounded-full inline-block" style={{ backgroundColor: p.color || '#2563eb' }} />
+                                                                            <span className="truncate">{p.title}</span>
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                         <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                                                             <CheckSquare size={12} />
                                                             Tarea
@@ -266,7 +324,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         onChange={e => setTitle(e.target.value)}
                                                         onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSubmit()}
                                                         placeholder="Escribe el nombre de Tarea o pulsa «/» para ver comandos"
-                                                        className="px-5 py-2 text-[14px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
+                                                        className="px-5 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none w-full"
                                                     />
 
                                                     {/* Description links */}
@@ -290,10 +348,14 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                     {/* Properties bar */}
                                                     <div className="flex items-center gap-2 px-5 py-3 border-t border-slate-100 dark:border-white/5 flex-wrap">
                                                         {/* Status */}
-                                                        <button className={clsx(
-                                                            'px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-wide',
-                                                            STATUS_COLORS[status] ?? 'bg-slate-100 text-slate-600'
-                                                        )}>
+                                                        <button 
+                                                            onClick={cycleStatus}
+                                                            title="Clic para cambiar estado"
+                                                            className={clsx(
+                                                                'px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-wide cursor-pointer hover:opacity-85 transition-all active:scale-95',
+                                                                STATUS_COLORS[status] ?? 'bg-slate-100 text-slate-600'
+                                                            )}
+                                                        >
                                                             {status}
                                                         </button>
                                                         <PropBtn icon={User} label="Persona asignada" />
@@ -320,16 +382,77 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                             {type === 'event' && (
                                                 <div className="flex flex-col">
                                                     {/* Top options */}
-                                                    <div className="flex items-center gap-2 px-5 pt-3 pb-2 text-[12px] text-slate-500">
-                                                        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                                            <Calendar size={12} />
-                                                            Reunión
-                                                            <ChevronDown size={11} />
-                                                        </button>
-                                                        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                                            Sin módulo (Global)
-                                                            <ChevronDown size={11} />
-                                                        </button>
+                                                    <div className="flex items-center gap-2 px-5 pt-3 pb-2 text-[12px] text-slate-500 relative z-[95]">
+                                                        {/* Event Type dropdown */}
+                                                        <div className="relative">
+                                                            <button 
+                                                                onClick={() => setShowEventTypeDropdown(!showEventTypeDropdown)}
+                                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                                            >
+                                                                <Calendar size={12} />
+                                                                {eventType}
+                                                                <ChevronDown size={11} />
+                                                            </button>
+                                                            {showEventTypeDropdown && (
+                                                                <div className="absolute top-full left-0 mt-1 w-32 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg z-[9999] py-1">
+                                                                    {['Reunión', 'Cita', 'Celebración', 'Taller'].map(opt => (
+                                                                        <button
+                                                                            key={opt}
+                                                                            onClick={() => {
+                                                                                setEventType(opt);
+                                                                                setShowEventTypeDropdown(false);
+                                                                            }}
+                                                                            className="px-3 py-1.5 w-full text-left text-[12px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-slate-300"
+                                                                        >
+                                                                            {opt}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Project Selection dropdown */}
+                                                        <div className="relative">
+                                                            <button 
+                                                                onClick={() => setShowProjectDropdown(!showProjectDropdown)}
+                                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                                            >
+                                                                {selectedProject ? (
+                                                                    <>
+                                                                        <span className="size-2 rounded-full inline-block" style={{ backgroundColor: selectedProject.color || '#2563eb' }} />
+                                                                        {selectedProject.title}
+                                                                    </>
+                                                                ) : 'Global (Sin módulo)'}
+                                                                <ChevronDown size={11} />
+                                                            </button>
+                                                            {showProjectDropdown && (
+                                                                <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg z-[9999] py-1 max-h-48 overflow-y-auto scrollbar-thin">
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setSelectedProjectId(null);
+                                                                            setShowProjectDropdown(false);
+                                                                        }}
+                                                                        className="flex items-center gap-2 px-3 py-2 w-full text-left text-[12px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-slate-300"
+                                                                    >
+                                                                        <span className="size-2 rounded-full inline-block bg-slate-400" />
+                                                                        <span className="truncate">Global (Sin módulo)</span>
+                                                                    </button>
+                                                                    {projects.map(p => (
+                                                                        <button
+                                                                            key={p.id}
+                                                                            onClick={() => {
+                                                                                setSelectedProjectId(p.id);
+                                                                                setShowProjectDropdown(false);
+                                                                            }}
+                                                                            className="flex items-center gap-2 px-3 py-2 w-full text-left text-[12px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-slate-300"
+                                                                        >
+                                                                            <span className="size-2 rounded-full inline-block" style={{ backgroundColor: p.color || '#2563eb' }} />
+                                                                            <span className="truncate">{p.title}</span>
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
 
                                                     {/* Title input */}
@@ -344,20 +467,20 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
 
                                                     {/* Event details */}
                                                     <div className="px-5 py-3 space-y-2">
-                                                        <div className="flex items-center gap-3">
-                                                            <Calendar size={14} className="text-slate-400" />
+                                                        <div className="flex items-center gap-3 flex-wrap">
+                                                            <Calendar size={14} className="text-slate-400 font-semibold" />
                                                             <input 
                                                                 type="date"
                                                                 value={eventDate}
                                                                 onChange={e => setEventDate(e.target.value)}
-                                                                className="text-[12px] bg-transparent border border-slate-200 dark:border-white/10 rounded px-2 py-1 text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500" 
+                                                                className="text-[13px] font-semibold bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer" 
                                                             />
-                                                            <span className="text-slate-400 text-[11px]">hasta</span>
+                                                            <span className="text-slate-400 text-[11px] font-semibold">hasta</span>
                                                             <input 
                                                                 type="date"
                                                                 value={eventEndDate}
                                                                 onChange={e => setEventEndDate(e.target.value)}
-                                                                className="text-[12px] bg-transparent border border-slate-200 dark:border-white/10 rounded px-2 py-1 text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500" 
+                                                                className="text-[13px] font-semibold bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer" 
                                                             />
                                                         </div>
                                                         <div className="flex items-center gap-3 pt-2">
@@ -386,12 +509,33 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                             {/* ─── ESTRATEGIA EVANGELISMO ─── */}
                                             {type === 'evangelism_strategy' && (
                                                 <div className="flex flex-col">
-                                                    <div className="flex items-center gap-2 px-5 pt-3 pb-2 text-[12px] text-slate-500">
-                                                        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                                            <Sparkles size={12} />
-                                                            Campaña de Alcance
-                                                            <ChevronDown size={11} />
-                                                        </button>
+                                                    <div className="flex items-center gap-2 px-5 pt-3 pb-2 text-[12px] text-slate-500 relative z-[95]">
+                                                        <div className="relative">
+                                                            <button 
+                                                                onClick={() => setShowStrategyTypeDropdown(!showStrategyTypeDropdown)}
+                                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                                            >
+                                                                <Sparkles size={12} />
+                                                                {strategyType}
+                                                                <ChevronDown size={11} />
+                                                            </button>
+                                                            {showStrategyTypeDropdown && (
+                                                                <div className="absolute top-full left-0 mt-1 w-44 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg z-[9999] py-1">
+                                                                    {['Campaña de Alcance', 'Consolidación', 'Discipulado', 'Evangelismo Personal'].map(opt => (
+                                                                        <button
+                                                                            key={opt}
+                                                                            onClick={() => {
+                                                                                setStrategyType(opt);
+                                                                                setShowStrategyTypeDropdown(false);
+                                                                            }}
+                                                                            className="px-3 py-1.5 w-full text-left text-[12px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-slate-300"
+                                                                        >
+                                                                            {opt}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
 
                                                     <input
@@ -400,24 +544,24 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         onChange={e => setTitle(e.target.value)}
                                                         onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSubmit()}
                                                         placeholder="Nombre de la estrategia..."
-                                                        className="px-5 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
+                                                        className="px-5 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none w-full"
                                                     />
 
                                                     <div className="px-5 py-3 space-y-2">
-                                                        <div className="flex items-center gap-3">
-                                                            <Calendar size={14} className="text-slate-400" />
+                                                        <div className="flex items-center gap-3 flex-wrap">
+                                                            <Calendar size={14} className="text-slate-400 font-semibold" />
                                                             <input 
                                                                 type="date"
                                                                 value={eventDate}
                                                                 onChange={e => setEventDate(e.target.value)}
-                                                                className="text-[12px] bg-transparent border border-slate-200 dark:border-white/10 rounded px-2 py-1 text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500" 
+                                                                className="text-[13px] font-semibold bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer" 
                                                             />
-                                                            <span className="text-slate-400 text-[11px]">hasta</span>
+                                                            <span className="text-slate-400 text-[11px] font-semibold">hasta</span>
                                                             <input 
                                                                 type="date"
                                                                 value={eventEndDate}
                                                                 onChange={e => setEventEndDate(e.target.value)}
-                                                                className="text-[12px] bg-transparent border border-slate-200 dark:border-white/10 rounded px-2 py-1 text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500" 
+                                                                className="text-[13px] font-semibold bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer" 
                                                             />
                                                         </div>
                                                         <div className="flex items-start gap-3 pt-3">
@@ -479,7 +623,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         value={title}
                                                         onChange={e => setTitle(e.target.value)}
                                                         placeholder="Escribe el nombre del recordatorio o pulsa «/» para ver comandos"
-                                                        className="px-5 py-4 text-[14px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
+                                                        className="px-5 py-4 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none w-full"
                                                     />
                                                     <div className="px-5 pb-3">
                                                         <button className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
@@ -571,18 +715,49 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                         </div>
 
                                         {/* Submit split button */}
-                                        <div className="flex items-center">
+                                        <div className="flex items-center relative">
                                             <button
                                                 onClick={handleSubmit}
                                                 disabled={loading || !title.trim()}
                                                 className="flex items-center gap-1.5 px-4 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12px] font-bold rounded-l-lg hover:bg-slate-700 dark:hover:bg-slate-100 disabled:opacity-40 transition-colors"
                                             >
                                                 {loading ? <Loader2 size={12} className="animate-spin" /> : null}
-                                                Crear
+                                                {submitOption === 'create_and_new' ? 'Crear y nuevo' : 'Crear'}
                                             </button>
-                                            <button className="flex items-center px-2 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12px] font-bold rounded-r-lg border-l border-white/20 dark:border-slate-900/20 hover:bg-slate-700 dark:hover:bg-slate-100 transition-colors">
+                                            <button 
+                                                onClick={() => setShowSubmitDropdown(!showSubmitDropdown)}
+                                                className="flex items-center px-2 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12px] font-bold rounded-r-lg border-l border-white/20 dark:border-slate-900/20 hover:bg-slate-700 dark:hover:bg-slate-100 transition-colors"
+                                            >
                                                 <ChevronDown size={13} />
                                             </button>
+                                            {showSubmitDropdown && (
+                                                <div className="absolute bottom-full right-0 mb-1 w-44 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg z-[9999] py-1">
+                                                    <button
+                                                        onClick={() => {
+                                                            setSubmitOption('create');
+                                                            setShowSubmitDropdown(false);
+                                                        }}
+                                                        className={clsx(
+                                                            "px-3 py-2 w-full text-left text-[12px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors font-medium text-slate-700 dark:text-slate-300",
+                                                            submitOption === 'create' && "bg-slate-50 dark:bg-white/5 text-blue-600 dark:text-blue-400"
+                                                        )}
+                                                    >
+                                                        Crear
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setSubmitOption('create_and_new');
+                                                            setShowSubmitDropdown(false);
+                                                        }}
+                                                        className={clsx(
+                                                            "px-3 py-2 w-full text-left text-[12px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors font-medium text-slate-700 dark:text-slate-300",
+                                                            submitOption === 'create_and_new' && "bg-slate-50 dark:bg-white/5 text-blue-600 dark:text-blue-400"
+                                                        )}
+                                                    >
+                                                        Crear y nuevo
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                 </motion.div>
