@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch, ApiError } from '@/lib/http';
-import { Home, Plus, Calendar, Users, CheckCircle2, Loader2, ChevronRight, BarChart3, Clock } from 'lucide-react';
+import { Home, Plus, CheckCircle2, Loader2, ChevronRight, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import WorkspaceLayout from '@/components/WorkspaceLayout';

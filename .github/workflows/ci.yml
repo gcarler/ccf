@@ -203,8 +203,7 @@ jobs:
           echo "✅ No default secrets in config.py"
       - name: Check security tests (production rejects insecure defaults)
         run: |
-          PYTHONPATH=. python -m pytest tests/test_security_config.py -v --noconftest
-        working-directory: .
+          PYTHONPATH=.. python -m pytest ../tests/test_security_config.py -v --noconftest
       - name: Run pip-audit (check for known vulnerabilities)
         run: |
           pip install pip-audit

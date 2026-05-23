@@ -72,6 +72,7 @@ export default function FundsPage() {
         }
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { loadFunds(); }, [token]);
 
     const openCreate = () => {

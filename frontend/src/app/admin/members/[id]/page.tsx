@@ -65,6 +65,7 @@ export default function MemberDetailPage() {
         }
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { loadMember(); }, [id, token]);
 
     if (loading) {

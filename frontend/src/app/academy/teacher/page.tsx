@@ -14,9 +14,7 @@ import {
     XCircle,
     Loader2,
     FileText,
-    Award,
     Shield,
-    MessageCircle,
     Users,
     BookOpen,
 } from 'lucide-react';

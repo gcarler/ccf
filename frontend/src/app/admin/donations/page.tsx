@@ -84,6 +84,7 @@ export default function DonationsManagementPage() {
         }
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { loadDonations(); }, [token]);
 
     const openCreate = () => {
@@ -132,7 +133,7 @@ export default function DonationsManagementPage() {
         }
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async () => {
         // No DELETE endpoint exists yet; show toast
         toast.info("Eliminar donación no disponible aún");
         setDeleteId(null);
