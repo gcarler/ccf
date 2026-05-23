@@ -32,6 +32,7 @@ import { apiFetch } from '@/lib/http';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 
 const DASHBOARD_SECTIONS = [
@@ -165,7 +166,7 @@ function CommandCenterHome({ user, token }: any) {
                 variants={containerVariants}
                 initial="hidden"
                 animate="show"
-                className="max-w-[1600px] w-full space-y-8 relative z-10"
+                className="w-full space-y-8 relative z-10"
             >
                 {/* 1. Header & Greeting */}
                 <motion.header variants={itemVariants} className="flex items-start justify-between gap-4">
@@ -411,7 +412,7 @@ function PublicLandingPage() {
                 <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-soft"></div>
             </div>
             <Navbar />
-            <div className="max-w-4xl w-full space-y-8 text-center relative z-10 mt-10">
+            <div className="w-full max-w-[1600px] mx-auto space-y-8 text-center relative z-10 mt-10 px-6 lg:px-10">
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] mx-auto shadow-lg shadow-blue-500/5">
                     <Shield size={14} /> MESH Ecosystem v2.1
                 </div>
@@ -425,7 +426,7 @@ function PublicLandingPage() {
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 text-left">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 text-left max-w-[1600px] mx-auto">
                     {linkCards.map((card) => (
                         <Link
                             key={card.href}
@@ -444,6 +445,7 @@ function PublicLandingPage() {
                     ))}
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }

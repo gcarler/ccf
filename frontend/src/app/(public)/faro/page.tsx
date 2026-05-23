@@ -7,6 +7,7 @@ import { ArrowRight, Play, Calendar, MapPin, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import { useContentBlock } from "@/hooks/useContent";
 import { FARO_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
+import Footer from "@/components/Footer";
 
 export default function PublicHomePage() {
     const { data: heroContent } = useContentBlock("faro_home_hero");
@@ -64,7 +65,7 @@ export default function PublicHomePage() {
                 />
 
                 {/* Content */}
-                <div className="relative z-10 text-center px-6 max-w-5xl mx-auto pt-24">
+                <div className="relative z-10 text-center w-full px-6 md:px-16 lg:px-24 pt-24">
                     <span
                         className="inline-block text-xs font-black uppercase tracking-[0.5em] mb-8"
                         style={{ color: "rgba(165, 200, 255, 0.7)" }}
@@ -158,7 +159,7 @@ export default function PublicHomePage() {
                 className="py-24 px-6 md:px-16 lg:px-24 overflow-hidden"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
-                <div className="max-w-6xl mx-auto">
+                <div className="w-full max-w-[1600px] mx-auto px-6 md:px-16 lg:px-24">
                     <motion.div 
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -277,7 +278,7 @@ export default function PublicHomePage() {
                 className="py-24 px-6 md:px-16 lg:px-24 overflow-hidden"
                 style={{ background: "var(--faro-surface)" }}
             >
-                <div className="max-w-6xl mx-auto">
+                <div className="w-full max-w-[1600px] mx-auto px-6 md:px-16 lg:px-24">
                     <motion.div 
                         initial={{ opacity: 0, x: -30 }}
                         whileInView={{ opacity: 1, x: 0 }}
@@ -434,6 +435,7 @@ export default function PublicHomePage() {
                     </div>
                 </motion.div>
             </section>
+            <Footer />
         </main>
     );
 }
