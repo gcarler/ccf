@@ -168,9 +168,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Run alembic migrations
-        run: PYTHONPATH=. alembic upgrade head
+        run: |
+          echo "=== DEBUG: pwd=$(pwd), PYTHONPATH=$PYTHONPATH ==="
+          python -c "import sys; print(sys.path)" || true
+          PYTHONPATH=. alembic upgrade head 2>&1
       - name: Run evangelism backend tests (fast feedback)
         run: PYTHONPATH=. pytest tests/test_crm_api.py -k evangelism -q
+        working-directory: .
 
   backend-security:
     runs-on: ubuntu-latest
@@ -199,8 +203,8 @@ jobs:
           echo "✅ No default secrets in config.py"
       - name: Check security tests (production rejects insecure defaults)
         run: |
-          pip install pydantic pydantic-settings
-          PYTHONPATH=.. python -m pytest ../tests/test_security_config.py -v --noconftest
+          PYTHONPATH=. python -m pytest tests/test_security_config.py -v --noconftest
+        working-directory: .
       - name: Run pip-audit (check for known vulnerabilities)
         run: |
           pip install pip-audit
