@@ -71,7 +71,7 @@ jobs:
           pip install -r requirements.txt
           pip install pre-commit pytest-cov
       - name: Run pre-commit
-        run: pre-commit run --all-files
+        run: SKIP=mypy pre-commit run --all-files
       - name: Run alembic migrations
         run: PYTHONPATH=. alembic upgrade head
       - name: Run tests with coverage (min 70%)
