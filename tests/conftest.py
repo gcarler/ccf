@@ -4,7 +4,7 @@ import os
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -40,8 +40,15 @@ app.dependency_overrides[get_db] = override_get_db
 
 @pytest.fixture(scope="function")
 def db_session():
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
+    if engine.dialect.name == "postgresql":
+        with engine.connect() as conn:
+            conn.execute(text("DROP SCHEMA public CASCADE"))
+            conn.execute(text("CREATE SCHEMA public"))
+            conn.commit()
+        Base.metadata.create_all(bind=engine)
+    else:
+        Base.metadata.drop_all(bind=engine)
+        Base.metadata.create_all(bind=engine)
     session = TestingSessionLocal()
     try:
         yield session

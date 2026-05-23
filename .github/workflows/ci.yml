@@ -202,8 +202,7 @@ jobs:
           name: alembic-debug
           path: /tmp/alembic_debug.log
       - name: Run evangelism backend tests (fast feedback)
-        run: PYTHONPATH=. pytest tests/test_crm_api.py -k evangelism -q
-        working-directory: .
+        run: PYTHONPATH=. pytest tests/test_crm_api.py -k evangelism -q --override-ini="addopts="
 
   backend-security:
     runs-on: ubuntu-latest

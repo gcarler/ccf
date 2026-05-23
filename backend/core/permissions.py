@@ -306,13 +306,22 @@ def create_access_token(
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def create_refresh_token(db: Session, user_id: int) -> str:
+def create_refresh_token(
+    db: Session, user_id: int, ip_address: str = None, user_agent: str = None
+) -> str:
     """Create a cryptographically random refresh token and persist it."""
     from backend import crud  # avoid circular import
 
     token = secrets.token_urlsafe(48)
     expires_at = _utcnow() + timedelta(days=settings.refresh_token_expire_days)
-    crud.create_refresh_token(db, user_id=user_id, token=token, expires_at=expires_at)
+    crud.create_refresh_token(
+        db,
+        user_id=user_id,
+        token=token,
+        expires_at=expires_at,
+        ip_address=ip_address,
+        user_agent=user_agent,
+    )
     return token
 
 
