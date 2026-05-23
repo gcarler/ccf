@@ -8,14 +8,18 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Centralized runtime configuration."""
 
-    environment: str = Field(default="local", validation_alias=AliasChoices("environment", "ENV"))
-    database_url: str = Field(
-        default="sqlite:////root/ccf/ccf_final.db"
+    environment: str = Field(
+        default="local", validation_alias=AliasChoices("environment", "ENV")
     )
+    database_url: str = Field(default="sqlite:////root/ccf/ccf_final.db")
     secret_key: str = Field(default="change-me")
     encryption_key: str | None = Field(default=None)
-    access_token_expire_minutes: int = Field(default=15)  # 15 min sessions; refresh via HttpOnly cookies
-    refresh_token_expire_days: int = Field(default=180)  # 180 days refresh window (Gmail-like)
+    access_token_expire_minutes: int = Field(
+        default=15
+    )  # 15 min sessions; refresh via HttpOnly cookies
+    refresh_token_expire_days: int = Field(
+        default=180
+    )  # 180 days refresh window (Gmail-like)
     access_token_cookie_name: str = Field(default="mesh_access")
     refresh_token_cookie_name: str = Field(default="mesh_refresh")
     access_token_cookie_secure: bool = Field(default=False)
@@ -50,30 +54,47 @@ class Settings(BaseSettings):
     smtp_from_name: str = Field(default="CCF Ministerio")
     smtp_use_tls: bool = Field(default=True)
     frontend_url: str = Field(default="http://localhost:3000")
-    run_startup_schema_fixes: bool = Field(default=False)  # DEPRECATED: use Alembic instead
+    run_startup_schema_fixes: bool = Field(
+        default=False
+    )  # DEPRECATED: use Alembic instead
 
     # Google OAuth
     google_client_id: str = Field(default="")
     google_client_secret: str = Field(default="")
-    google_redirect_uri: str = Field(default="http://localhost:8000/api/auth/google/callback")
+    google_redirect_uri: str = Field(
+        default="http://localhost:8000/api/auth/google/callback"
+    )
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+    )
 
     @model_validator(mode="after")
     def validate_security_defaults(self) -> "Settings":
         env = (self.environment or "local").strip().lower()
         insecure_secrets = {"", "change-me", "replace-me", "ci-test-only-key"}
 
-        if env in {"production", "prod", "staging"} and self.secret_key in insecure_secrets:
-            raise ValueError("SECRET_KEY must be set to a strong value outside local/test environments")
+        if (
+            env in {"production", "prod", "staging"}
+            and self.secret_key in insecure_secrets
+        ):
+            raise ValueError(
+                "SECRET_KEY must be set to a strong value outside local/test"
+                " environments"
+            )
 
         if env in {"production", "prod", "staging"} and not self.encryption_key:
             raise ValueError("ENCRYPTION_KEY must be set in production environments")
 
-        if env in {"production", "prod", "staging"} and not self.access_token_cookie_secure:
+        if (
+            env in {"production", "prod", "staging"}
+            and not self.access_token_cookie_secure
+        ):
             self.access_token_cookie_secure = True
 
-        if env in {"production", "prod", "staging"} and self.database_url.startswith("sqlite"):
+        if env in {"production", "prod", "staging"} and self.database_url.startswith(
+            "sqlite"
+        ):
             raise ValueError("SQLite is not supported in production environments")
 
         if self.access_token_expire_minutes <= 0:
