@@ -169,11 +169,7 @@ jobs:
           pip install -r requirements.txt
       - name: Test PostgreSQL connection
         run: |
-          python -c "
-import os
-print('DATABASE_URL:', os.environ.get('DATABASE_URL','NOT SET'))
-print('SECRET_KEY:', '***set***' if os.environ.get('SECRET_KEY') else 'NOT SET')
-" 2>&1
+          python -c "import os; print('DATABASE_URL:', os.environ.get('DATABASE_URL','NOT SET')); print('SECRET_KEY:', '***set***' if os.environ.get('SECRET_KEY') else 'NOT SET')" 2>&1
       - name: Run alembic migrations
         run: |
           set +e
