@@ -5,14 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import { 
-    GraduationCap, 
-    TrendingUp, 
-    ChevronRight,
+import {
+    GraduationCap,
+    TrendingUp,
     Sparkles,
-    Users,
-    Award,
-    BookOpen
 } from 'lucide-react';
 import { DSCard } from '@/design/components/DSCard';
 import { DSMetric } from '@/design/components/DSMetric';
@@ -77,7 +73,7 @@ export default function AcademyClient() {
                             <div className="flex items-center justify-between mb-8">
                                 <div>
                                     <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Tendencia de Crecimiento</h3>
-                                    <p className="text-xl font-black text-white italic">Inscripciones Mensuales</p>
+                                    <p className="text-xl font-bold text-white italic">Inscripciones Mensuales</p>
                                 </div>
                                 <div className="size-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
                                     <TrendingUp size={20} />

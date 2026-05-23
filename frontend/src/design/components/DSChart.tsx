@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { 
-    LineChart, Line, AreaChart, Area, BarChart, Bar, 
-    XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie
+    LineChart, Line, AreaChart, Area, BarChart, Bar,
+    XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 
 export const DSChart = ({ type = 'line', data = [], height = 300, color = "#3b82f6" }: any) => {

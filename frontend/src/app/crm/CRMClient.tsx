@@ -1,13 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { 
-    Users, 
-    UserPlus, 
+import React, { useState, useEffect } from 'react';
+import {
+    Users,
+    UserPlus,
     MoreHorizontal,
     Heart,
-    GraduationCap,
-    ShieldCheck,
     MessageCircle,
     Mail,
     Phone,
@@ -104,18 +102,6 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
         const timer = setTimeout(fetchMembers, 300);
         return () => clearTimeout(timer);
     }, [token, search]);
-
-    const stats = useMemo(() => {
-        const activeMembersFromRows = members.filter(member =>
-            ['activo', 'active', 'miembro activo'].includes(member.spiritual_status?.toLowerCase() ?? '')
-        ).length;
-
-        return {
-            total: dashboard?.total_members ?? members.length,
-            active: dashboard?.active_members ?? activeMembersFromRows,
-            leaders: members.filter(m => m.church_role?.toLowerCase().includes('líder')).length,
-        };
-    }, [dashboard, members]);
 
     return (
         <WorkspaceLayout
@@ -218,26 +204,6 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
         </WorkspaceLayout>
     );
 }
-
-function MetricCard({ title, value, icon: Icon, color, bg }: any) {
-    return (
-        <div className="relative p-4 rounded-lg bg-white dark:bg-[#1e2025] border border-slate-100 dark:border-white/[0.06] shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer overflow-hidden">
-            {/* Subtle gradient glow top-right */}
-            <div className={`absolute -top-4 -right-6 size-10 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity ${bg}`} />
-            <div className="flex items-start justify-between mb-5 relative z-10">
-                <div className={`inline-flex items-center justify-center size-6 rounded-md ${bg} ${color} shadow-sm`}>
-                    <Icon size={20} />
-                </div>
-                <span className={`font-semibold px-2 py-1 rounded-lg ${bg} ${color} opacity-0 group-hover:opacity-100 transition-opacity`}>
-                    Ver todo
-                </span>
-            </div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1 relative z-10">{title}</p>
-            <div className="text-lg font-bold text-slate-900 dark:text-white leading-none tracking-tight relative z-10">{value}</div>
-        </div>
-    );
-}
-
 
 
 function MemberDetailView({ member, onClose }: { member: Member, onClose: () => void }) {

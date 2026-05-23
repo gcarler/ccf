@@ -189,7 +189,7 @@ jobs:
           echo "=== CURRENT ===" | tee -a "$LOG"
           PYTHONPATH=. alembic current 2>&1 | tee -a "$LOG"
           echo "=== UPGRADE ===" | tee -a "$LOG"
-          PYTHONPATH=. alembic upgrade head --raiseerr 2>&1 | tee -a "$LOG"
+          PYTHONPATH=. alembic upgrade head 2>&1 | tee -a "$LOG"
           rc=${PIPESTATUS[0]}
           echo "alembic exit code: $rc" | tee -a "$LOG"
           echo "alembic_exit=$rc" >> "$GITHUB_ENV"
