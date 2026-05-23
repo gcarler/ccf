@@ -51,7 +51,7 @@ export default async function FaroDynamicPage({ params }: { params: Promise<{ sl
   }
 
   return (
-    <main className="px-6 md:px-12 lg:px-20 py-28 space-y-8" style={{ background: "var(--faro-background)", color: "var(--faro-on-background)" }}>
+    <main className="px-3 md:px-4 lg:px-20 py-28 space-y-3" style={{ background: "var(--faro-background)", color: "var(--faro-on-background)" }}>
       {page.sections.filter((section) => section.is_visible).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((section) => (
         <PublicSectionRenderer key={section.id} section={section} />
       ))}

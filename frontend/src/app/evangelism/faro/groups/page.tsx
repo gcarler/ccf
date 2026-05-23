@@ -394,7 +394,7 @@ function FaroGroupsContent() {
   }, [members, memberSearchQuery, memberRoleFilter, memberAssignmentFilter, selectedMemberIds, summary]);
 
   const inputCls =
-    'w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-1.5 text-sm font-medium focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-slate-400';
+    'w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-md px-4 py-1.5 text-sm font-medium focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-slate-400';
 
   const showPanel = selectedHouse !== null || isCreating || mode === 'members';
 
@@ -406,9 +406,9 @@ function FaroGroupsContent() {
       replaceAll: true,
       content: (
         <div className="flex flex-col h-full">
-          <div className="px-5 pt-3 pb-4">
+          <div className="px-3 pt-3 pb-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">
                 Buscar Grupo
               </span>
               <button
@@ -432,20 +432,20 @@ function FaroGroupsContent() {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Buscar por nombre o zona..."
-                className="w-full bg-slate-100 dark:bg-white/5 border border-transparent rounded-xl py-2 pl-9 pr-3 text-xs font-medium focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all"
+                className="w-full bg-slate-100 dark:bg-white/5 border border-transparent rounded-md py-2 pl-9 pr-3 text-xs font-medium focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all"
               />
             </div>
           </div>
 
           <div className="flex-1 overflow-y-auto px-3 pb-4 scrollbar-thin flex flex-col gap-1">
             {loading ? (
-              <div className="py-12 text-center text-slate-400">
+              <div className="py-1.5 text-center text-slate-400">
                 <Activity className="animate-spin mx-auto opacity-50" />
               </div>
             ) : filteredHouses.length === 0 ? (
-              <div className="py-16 px-4 text-center">
+              <div className="py-1.5 px-4 text-center">
                 <Search size={24} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-                <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Sin resultados</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Sin resultados</p>
                 <p className="text-xs text-slate-500 mt-1">No hay grupos que coincidan.</p>
               </div>
             ) : (
@@ -476,7 +476,7 @@ function FaroGroupsContent() {
                         setSelectedMemberIds(new Set());
                       }
                     }}
-                    className={`w-full text-left px-3 py-2.5 rounded-xl border transition-all duration-200 ${
+                    className={`w-full text-left px-3 py-2.5 rounded-md border transition-all duration-200 ${
                       isActive
                         ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 shadow-sm'
                         : 'bg-transparent border-transparent hover:bg-slate-100 dark:hover:bg-white/5'
@@ -533,8 +533,8 @@ function FaroGroupsContent() {
       <div className="flex h-full p-4 lg:p-4 bg-slate-50/50 dark:bg-[#252528]/50">
         {/* Detail/Edit Panel */}
         {showPanel ? (
-          <div className="flex-1 bg-white dark:bg-[#252528] rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
-            <div className="px-5 py-6 border-b border-slate-100/80 dark:border-white/5 flex items-center justify-between shrink-0 bg-slate-50/50 dark:bg-white/[0.02]">
+          <div className="flex-1 bg-white dark:bg-[#252528] rounded-lg border border-slate-200 dark:border-white/5 shadow-sm flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="px-3 py-2 border-b border-slate-100/80 dark:border-white/5 flex items-center justify-between shrink-0 bg-slate-50/50 dark:bg-white/[0.02]">
               <h2 className="text-base font-black text-slate-900 dark:text-white">
                 {isCreating ? 'Nuevo Faro' : MODE_CONFIG[mode].title}
               </h2>
@@ -551,18 +551,18 @@ function FaroGroupsContent() {
 
             {selectedHouse || isCreating ? (
               <>
-              <div className="flex-1 overflow-y-auto px-5 py-6 scrollbar-thin">
+              <div className="flex-1 overflow-y-auto px-3 py-2 scrollbar-thin">
                 {!isCreating && (
-                <div className="mb-5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-4 py-1.5 flex items-start justify-between gap-4">
+                <div className="mb-5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-4 py-1.5 flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                       {MODE_CONFIG[mode].title}
                     </p>
                     <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mt-1">
                       {MODE_CONFIG[mode].description}
                     </p>
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                     Edición
                   </span>
                 </div>
@@ -575,7 +575,7 @@ function FaroGroupsContent() {
                 {/* Identidad */}
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2">
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
                       Código del Faro
                     </label>
                     <input
@@ -591,7 +591,7 @@ function FaroGroupsContent() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2">
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
                       Nombre o Número del Grupo
                     </label>
                     <input
@@ -605,7 +605,7 @@ function FaroGroupsContent() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 flex items-center gap-1">
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1">
                         <MapPin size={11} /> Zona/Barrio
                       </label>
                       <input
@@ -618,7 +618,7 @@ function FaroGroupsContent() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 flex items-center gap-1">
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1">
                         <MapPin size={11} /> Dirección
                       </label>
                       <input
@@ -635,7 +635,7 @@ function FaroGroupsContent() {
 
                 {/* Roles */}
                 <div>
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-4 flex items-center gap-2">
+                  <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
                     <Users size={12} className="text-blue-500" /> Roles del
                     Grupo
                   </h3>
@@ -646,7 +646,7 @@ function FaroGroupsContent() {
                       { key: 'host_id', label: 'Anfitrión' },
                     ].map(({ key, label }) => (
                       <div key={key}>
-                        <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2">
+                        <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
                           {label}
                         </label>
                         <select
@@ -679,12 +679,12 @@ function FaroGroupsContent() {
 
                 {/* Logística */}
                 <div>
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-4 flex items-center gap-2">
+                  <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
                     <Calendar size={12} className="text-blue-500" /> Logística
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="col-span-2">
-                      <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 flex items-center gap-1">
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1">
                         <Clock size={11} /> Día de Reunión
                       </label>
                       <select
@@ -714,7 +714,7 @@ function FaroGroupsContent() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2">
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
                         Hora Inicio
                       </label>
                       <input
@@ -730,7 +730,7 @@ function FaroGroupsContent() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2">
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
                         Hora Fin
                       </label>
                       <input
@@ -743,7 +743,7 @@ function FaroGroupsContent() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2">
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
                         Capacidad
                       </label>
                       <input
@@ -765,7 +765,7 @@ function FaroGroupsContent() {
                   <div className="space-y-4">
                     <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4 border-t border-slate-100 dark:border-white/5 pt-8 mt-4">
                       <div>
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-1 flex items-center gap-2">
+                        <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-2">
                           <Users size={12} className="text-blue-500" /> Miembros actuales ({selectedMemberIds.size})
                         </h3>
                         <p className="text-xs text-slate-500">
@@ -775,7 +775,7 @@ function FaroGroupsContent() {
                       <button
                         type="button"
                         onClick={() => setIsAddingMembers(!isAddingMembers)}
-                        className={`px-4 py-2 text-[11px] font-black uppercase tracking-widest rounded-lg transition-colors flex items-center gap-2 ${
+                        className={`px-4 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-lg transition-colors flex items-center gap-2 ${
                           isAddingMembers 
                             ? 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/20' 
                             : 'bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400'
@@ -789,7 +789,7 @@ function FaroGroupsContent() {
                     {selectedMemberIds.size > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {members.filter(m => selectedMemberIds.has(m.id)).map(member => (
-                          <div key={member.id} className="flex items-center justify-between gap-3 rounded-2xl border border-blue-200 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-900/10 px-4 py-1.5">
+                          <div key={member.id} className="flex items-center justify-between gap-3 rounded-lg border border-blue-200 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-900/10 px-4 py-1.5">
                             <div className="min-w-0">
                               <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
                                 {member.first_name} {member.last_name}
@@ -814,22 +814,22 @@ function FaroGroupsContent() {
                         ))}
                       </div>
                     ) : (
-                      <div className="py-6 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
+                      <div className="py-2 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-lg">
                         <p className="text-sm text-slate-400 font-medium">No hay miembros asignados a este Faro.</p>
                       </div>
                     )}
 
                     {/* QUICK ACTION TO ATTENDANCE PANEL */}
-                    <div className="mt-6 pt-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-between bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl px-4 py-5">
+                    <div className="mt-3 pt-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-between bg-blue-50/50 dark:bg-blue-900/10 rounded-lg px-4 py-2">
                       <div>
-                        <h3 className="text-sm font-black text-blue-900 dark:text-blue-100 mb-1">Registrar Asistencia Semanal</h3>
+                        <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">Registrar Asistencia Semanal</h3>
                         <p className="text-xs font-medium text-blue-700/70 dark:text-blue-300/70">
                           Ir al panel dedicado para registrar la asistencia, ofrendas y novedades de las reuniones semanales de este grupo.
                         </p>
                       </div>
                       <a
                         href={`/evangelism/faro/${selectedHouse.id}`}
-                        className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-500/30 flex items-center gap-2 shrink-0"
+                        className="px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-blue-500/30 flex items-center gap-2 shrink-0"
                       >
                         <Calendar size={14} /> Registrar Asistencia
                       </a>
@@ -837,7 +837,7 @@ function FaroGroupsContent() {
 
                     {/* ADD MEMBERS CATALOG */}
                     {isAddingMembers && (
-                      <div className="mt-6 pt-6 border-t border-slate-100 dark:border-white/5 space-y-4">
+                      <div className="mt-3 pt-6 border-t border-slate-100 dark:border-white/5 space-y-4">
                         <div className="flex flex-col md:flex-row items-center gap-2 w-full">
                           <div className="relative w-full md:flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
@@ -877,7 +877,7 @@ function FaroGroupsContent() {
                             return (
                               <label
                                 key={member.id}
-                                className="flex items-start gap-3 rounded-2xl border px-4 py-1.5 cursor-pointer transition-all bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-blue-300/40"
+                                className="flex items-start gap-3 rounded-lg border px-4 py-1.5 cursor-pointer transition-all bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-blue-300/40"
                               >
                                 <input
                                   type="checkbox"
@@ -905,7 +905,7 @@ function FaroGroupsContent() {
                             );
                           })}
                           {filteredMembersList.filter(m => !selectedMemberIds.has(m.id)).length === 0 && (
-                              <div className="col-span-full py-4 text-center text-slate-400 text-sm">
+                              <div className="col-span-full py-1.5 text-center text-slate-400 text-sm">
                                 No se encontraron miembros disponibles con estos filtros.
                               </div>
                           )}
@@ -917,13 +917,13 @@ function FaroGroupsContent() {
               </form>
             </div>
 
-            <div className="px-5 py-2 border-t border-slate-100 dark:border-white/5 shrink-0 flex justify-end gap-2">
+            <div className="px-3 py-2 border-t border-slate-100 dark:border-white/5 shrink-0 flex justify-end gap-2">
               <button
                 onClick={() => {
                   setIsCreating(false);
                   setSelectedHouse(null);
                 }}
-                className="px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                className="px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
               >
                 Cancelar
               </button>
@@ -931,7 +931,7 @@ function FaroGroupsContent() {
                 type="submit"
                 form="faro-form"
                 disabled={saving}
-                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 flex items-center gap-2"
               >
                 {saving ? (
                   <Activity className="animate-spin" size={13} />
@@ -946,8 +946,8 @@ function FaroGroupsContent() {
           <div className="flex-1 overflow-y-auto bg-white dark:bg-[#1e1f21]">
             {mode === 'members' && summary ? (
               <div className="p-4 space-y-3">
-                <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-4 py-1.5">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-4 py-1.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                     Asignación rápida
                   </p>
                   <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mt-1">
@@ -958,14 +958,14 @@ function FaroGroupsContent() {
 
                 <div className="space-y-3">
                   {summary.unassigned_members.length === 0 ? (
-                    <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-4 text-center text-slate-400">
+                    <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-1.5 text-center text-slate-400">
                       No hay miembros sin faro asignado.
                     </div>
                   ) : (
                     summary.unassigned_members.map(member => (
                       <div
                         key={member.id}
-                        className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4"
+                        className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4"
                       >
                         <div className="flex flex-col md:flex-row md:items-center gap-3">
                           <div className="min-w-0 flex-1">
@@ -985,7 +985,7 @@ function FaroGroupsContent() {
                                 [member.id]: Number(e.target.value),
                               }))
                             }
-                            className="w-full md:w-72 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500/30"
+                            className="w-full md:w-72 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500/30"
                           >
                             <option value="">Selecciona una casa</option>
                             {houses.map(h => (
@@ -997,7 +997,7 @@ function FaroGroupsContent() {
                           <button
                             onClick={() => handleQuickAssignMember(member.id)}
                             disabled={saving}
-                            className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black uppercase tracking-widest disabled:opacity-50"
+                            className="px-4 py-2.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold uppercase tracking-wide disabled:opacity-50"
                           >
                             Asignar
                           </button>
@@ -1021,8 +1021,8 @@ function FaroGroupsContent() {
             )}
           </div>
         ) : (
-          <div className="flex-1 bg-white/50 dark:bg-[#252528]/50 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center justify-center animate-in fade-in duration-500 shadow-sm">
-            <div className="size-20 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-6 shadow-inner">
+          <div className="flex-1 bg-white/50 dark:bg-[#252528]/50 rounded-lg border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center justify-center animate-in fade-in duration-500 shadow-sm">
+            <div className="size-8 rounded-md bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-3 shadow-inner">
               <Home size={32} className="text-slate-400" />
             </div>
             <h2 className="text-base font-black text-slate-800 dark:text-white tracking-tight mb-2">Espacio de Trabajo Faro</h2>

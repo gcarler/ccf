@@ -97,18 +97,18 @@ export default function SpiritualLifePage() {
 
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-[#111213] overflow-y-auto font-display">
-                <div className="max-w-6xl mx-auto w-full p-8 space-y-8 pb-24">
+                <div className="max-w-6xl mx-auto w-full p-4 space-y-3 pb-4">
 
                     {/* ── HERO HEADER ─────────────────────────────────────────────── */}
                     <div className="flex items-start justify-between">
                         <div>
                             <div className="flex items-center gap-2 mb-2">
-                                <div className="size-8 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
+                                <div className="size-8 rounded-md bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
                                     <Heart size={16} className="text-rose-600" fill="currentColor" />
                                 </div>
-                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-600">Vida Espiritual</span>
+                                <span className="text-[10px] font-semibold uppercase tracking-wide text-rose-600">Vida Espiritual</span>
                             </div>
-                            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white leading-none">
+                            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">
                                 Tu Caminar con Cristo
                             </h1>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">
@@ -119,7 +119,7 @@ export default function SpiritualLifePage() {
                         <Link href="/spiritual-life/timeline">
                             <motion.button
                                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/25"
+                                className="flex items-center gap-2 px-3 py-2.5 bg-blue-600 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/25"
                             >
                                 <Calendar size={14} /> Ver Línea de Tiempo
                             </motion.button>
@@ -136,30 +136,30 @@ export default function SpiritualLifePage() {
                         ].map((kpi, i) => (
                             <motion.div key={i}
                                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
-                                className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all"
+                                className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-lg p-3 shadow-sm hover:shadow-md transition-all"
                             >
-                                <div className={clsx("size-9 rounded-xl flex items-center justify-center mb-3", kpi.bg)}>
+                                <div className={clsx("size-9 rounded-md flex items-center justify-center mb-3", kpi.bg)}>
                                     <kpi.icon size={17} className={kpi.color} />
                                 </div>
-                                <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{kpi.value}</div>
-                                <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 mt-0.5">{kpi.label}</div>
+                                <div className="text-lg font-black text-slate-900 dark:text-white tracking-tight">{kpi.value}</div>
+                                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5">{kpi.label}</div>
                             </motion.div>
                         ))}
                     </div>
 
                     {/* ── MAIN GRID ──────────────────────────────────────────────── */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
 
                         {/* Left: Milestones journey ── */}
                         <div className="lg:col-span-2 space-y-4">
                             <div className="flex items-center justify-between mb-1">
-                                <h2 className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-500">Hitos Espirituales</h2>
+                                <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Hitos Espirituales</h2>
                                 <span className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full">
                                     {milestones.length} alcanzados
                                 </span>
                             </div>
 
-                            <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-2xl overflow-hidden shadow-sm">
+                            <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-lg overflow-hidden shadow-sm">
                                 {MILESTONE_DEFS.map((m, i) => {
                                     const reached = milestones.includes(m.key);
                                     const isNext = !reached && m.key === nextMilestone?.key;
@@ -167,12 +167,12 @@ export default function SpiritualLifePage() {
                                         <motion.div key={m.key}
                                             initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }}
                                             className={clsx(
-                                                "flex items-center gap-4 px-5 py-4 border-b border-slate-100 dark:border-white/5 last:border-0 transition-all",
+                                                "flex items-center gap-4 px-3 py-1.5 border-b border-slate-100 dark:border-white/5 last:border-0 transition-all",
                                                 reached ? "opacity-100" : isNext ? "opacity-90" : "opacity-40"
                                             )}
                                         >
                                             {/* Icon */}
-                                            <div className={clsx("size-10 rounded-xl flex items-center justify-center border shrink-0", m.bg, m.border)}>
+                                            <div className={clsx("size-10 rounded-md flex items-center justify-center border shrink-0", m.bg, m.border)}>
                                                 <m.icon size={18} className={m.color} />
                                             </div>
 
@@ -181,7 +181,7 @@ export default function SpiritualLifePage() {
                                                 <div className="flex items-center gap-2">
                                                     <p className="text-[13px] font-bold text-slate-800 dark:text-white truncate">{m.label}</p>
                                                     {isNext && (
-                                                        <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 text-[9px] font-black uppercase tracking-widest rounded-full">
+                                                        <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 text-[9px] font-semibold uppercase tracking-wide rounded-full">
                                                             Siguiente
                                                         </span>
                                                     )}
@@ -202,10 +202,10 @@ export default function SpiritualLifePage() {
                             </div>
 
                             {/* Spiritual progress bar */}
-                            <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-2xl p-5 shadow-sm">
+                            <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-lg p-3 shadow-sm">
                                 <div className="flex items-center justify-between mb-3">
-                                    <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">Progreso espiritual</span>
-                                    <span className="text-[13px] font-black text-blue-600">{progressPct}%</span>
+                                    <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Progreso espiritual</span>
+                                    <span className="font-semibold text-blue-600">{progressPct}%</span>
                                 </div>
                                 <div className="h-2.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                                     <motion.div
@@ -228,15 +228,15 @@ export default function SpiritualLifePage() {
                         <div className="space-y-4">
 
                             {/* Discipleship path */}
-                            <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-2xl overflow-hidden shadow-sm">
-                                <div className="px-5 py-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
-                                    <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-500">Ruta de Discipulado</h3>
-                                    <span className="text-[10px] font-black text-slate-400">{discipuladoDone}/5</span>
+                            <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-lg overflow-hidden shadow-sm">
+                                <div className="px-3 py-1.5 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+                                    <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Ruta de Discipulado</h3>
+                                    <span className="font-semibold text-slate-400">{discipuladoDone}/5</span>
                                 </div>
                                 <div className="divide-y divide-slate-100 dark:divide-white/5">
                                     {DISCIPULADO_STEPS.map(step => (
                                         <div key={step.id} className={clsx(
-                                            "flex items-start gap-3 px-5 py-3 transition-all",
+                                            "flex items-start gap-3 px-3 py-3 transition-all",
                                             !step.done && "opacity-50"
                                         )}>
                                             <div className={clsx(
@@ -247,7 +247,7 @@ export default function SpiritualLifePage() {
                                             )}>
                                                 {step.done
                                                     ? <CheckCircle2 size={12} className="text-emerald-600" />
-                                                    : <span className="text-[9px] font-black text-slate-400">{step.id}</span>
+                                                    : <span className="font-semibold text-slate-400">{step.id}</span>
                                                 }
                                             </div>
                                             <div>
@@ -262,8 +262,8 @@ export default function SpiritualLifePage() {
                             {/* Quick links */}
                             <div className="space-y-2">
                                 <Link href="/spiritual-life/timeline">
-                                    <div className="flex items-center gap-3 p-4 bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-white/15 transition-all cursor-pointer group">
-                                        <div className="size-9 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                                    <div className="flex items-center gap-3 p-4 bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-lg shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-white/15 transition-all cursor-pointer group">
+                                        <div className="size-9 rounded-md bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
                                             <Calendar size={16} className="text-blue-600" />
                                         </div>
                                         <div className="flex-1">
@@ -275,8 +275,8 @@ export default function SpiritualLifePage() {
                                 </Link>
 
                                 <Link href="/spiritual-life/certificates">
-                                    <div className="flex items-center gap-3 p-4 bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-white/15 transition-all cursor-pointer group">
-                                        <div className="size-9 rounded-xl bg-cyan-50 dark:bg-cyan-900/20 flex items-center justify-center">
+                                    <div className="flex items-center gap-3 p-4 bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/7 rounded-lg shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-white/15 transition-all cursor-pointer group">
+                                        <div className="size-9 rounded-md bg-cyan-50 dark:bg-cyan-900/20 flex items-center justify-center">
                                             <Award size={16} className="text-cyan-600" />
                                         </div>
                                         <div className="flex-1">
@@ -288,8 +288,8 @@ export default function SpiritualLifePage() {
                                 </Link>
 
                                 <Link href="/academy">
-                                    <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-600 to-blue-600 rounded-2xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all cursor-pointer group">
-                                        <div className="size-9 rounded-xl bg-white/20 flex items-center justify-center">
+                                    <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-600 to-blue-600 rounded-lg shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all cursor-pointer group">
+                                        <div className="size-9 rounded-md bg-white/20 flex items-center justify-center">
                                             <Sparkles size={16} className="text-white" />
                                         </div>
                                         <div className="flex-1">

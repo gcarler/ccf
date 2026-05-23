@@ -282,7 +282,7 @@ export default function PlanificadorPage() {
                 <div className="flex-1 flex flex-col overflow-hidden">
 
                     {/* Calendar header */}
-                    <header className="shrink-0 flex items-center justify-between px-6 py-3 border-b border-slate-100 dark:border-white/5">
+                    <header className="shrink-0 flex items-center justify-between px-3 py-3 border-b border-slate-100 dark:border-white/5">
                         {/* Nav */}
                         <div className="flex items-center gap-1.5">
                             <button onClick={prev} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 transition-colors">
@@ -299,7 +299,7 @@ export default function PlanificadorPage() {
                             </button>
                             <div className="ml-1 flex items-center gap-2">
                                 <h2 className={clsx(
-                                    "text-[15px] font-bold capitalize transition-colors",
+                                    "text-sm font-bold capitalize transition-colors",
                                     isCalendarFullyVisible ? "text-slate-800 dark:text-white" : "text-amber-600 dark:text-amber-400"
                                 )}>
                                 {viewMode === 'semana'
@@ -310,7 +310,7 @@ export default function PlanificadorPage() {
                                 }
                                 </h2>
                                 <span className={clsx(
-                                    "rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-widest",
+                                    "rounded-full px-2 py-1 text-[9px] font-semibold uppercase tracking-wide",
                                     isCalendarFullyVisible
                                         ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
                                         : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
@@ -328,7 +328,7 @@ export default function PlanificadorPage() {
                                         key={eventType}
                                         onClick={() => toggleTypeFilter(eventType)}
                                         className={clsx(
-                                            "rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest transition-all",
+                                            "rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-all",
                                             activeTypes.includes(eventType)
                                                 ? EVENT_TYPE_META[eventType].chip
                                                 : "bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-slate-500"
@@ -338,7 +338,7 @@ export default function PlanificadorPage() {
                                     </button>
                                 ))}
                             </div>
-                            <div className="hidden md:flex items-center rounded-full bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:bg-white/5 dark:text-slate-300">
+                            <div className="hidden md:flex items-center rounded-full bg-slate-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-white/5 dark:text-slate-300">
                                 {visibleEvents.length} visibles
                             </div>
                             <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
@@ -368,7 +368,7 @@ export default function PlanificadorPage() {
                                             initial={{ opacity: 0, y: -4 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, y: -4 }}
-                                            className="absolute right-0 top-full mt-1.5 w-32 bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl overflow-hidden z-50"
+                                            className="absolute right-0 top-full mt-1.5 w-32 bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-md shadow-xl overflow-hidden z-50"
                                         >
                                             {(['semana', 'mes', 'dia'] as ViewMode[]).map(v => (
                                                 <button key={v}
@@ -405,7 +405,7 @@ export default function PlanificadorPage() {
                                 <div className="w-16 shrink-0" />
                                 {/* COT timezone label */}
                                 <div className="w-[40px] shrink-0 flex items-end pb-2 pl-1">
-                                    <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest rotate-0">COT</span>
+                                    <span className="text-[9px] font-bold text-slate-300 uppercase tracking-wide rotate-0">COT</span>
                                 </div>
                                 {weekDays.map((day, i) => (
                                     <div key={i} className="flex-1 min-w-0 flex flex-col items-center py-2 border-l border-slate-100 dark:border-white/5 first:border-l-0">
@@ -413,7 +413,7 @@ export default function PlanificadorPage() {
                                             {format(day, 'EEE', { locale: es })}
                                         </span>
                                         <span className={clsx(
-                                            'size-8 flex items-center justify-center rounded-full text-[15px] font-bold mt-0.5 transition-colors',
+                                            'size-8 flex items-center justify-center rounded-full text-sm font-bold mt-0.5 transition-colors',
                                             isToday(day)
                                                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
                                                 : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
@@ -442,7 +442,7 @@ export default function PlanificadorPage() {
                                                     style={{ backgroundColor: e.color }}
                                                 >
                                                     <div className="flex items-center gap-1">
-                                                        <span className="text-[8px] font-black uppercase tracking-widest opacity-80">
+                                                        <span className="text-[8px] font-semibold uppercase tracking-wide opacity-80">
                                                             {EVENT_TYPE_META[e.type].label}
                                                         </span>
                                                         <span className="truncate text-[10px] font-bold">{e.title}</span>
@@ -523,7 +523,7 @@ export default function PlanificadorPage() {
                                                                 style={{ top, height, backgroundColor: e.color + '22', borderLeft: `3px solid ${e.color}` }}
                                                             >
                                                                 <div className="mb-1">
-                                                                    <span className={clsx("inline-flex rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest", EVENT_TYPE_META[e.type].chip)}>
+                                                                    <span className={clsx("inline-flex rounded-full px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide", EVENT_TYPE_META[e.type].chip)}>
                                                                         {EVENT_TYPE_META[e.type].label}
                                                                     </span>
                                                                 </div>
@@ -549,7 +549,7 @@ export default function PlanificadorPage() {
                     {viewMode === 'dia' && (
                         <div className="flex-1 flex flex-col overflow-hidden">
                             {/* Day header */}
-                            <div className="flex shrink-0 border-b border-slate-100 dark:border-white/5 px-6 py-2">
+                            <div className="flex shrink-0 border-b border-slate-100 dark:border-white/5 px-3 py-2">
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide capitalize">
                                     {format(currentDate, "EEEE d 'de' MMMM", { locale: es })}
                                 </span>
@@ -590,10 +590,10 @@ export default function PlanificadorPage() {
                                                 return (
                                                     <div key={e.id} 
                                                         onClick={(evt) => { evt.stopPropagation(); handleEventClick(e); }}
-                                                        className="absolute left-1 right-4 rounded-xl px-3 py-2 shadow-md cursor-pointer hover:brightness-95 transition-all"
+                                                        className="absolute left-1 right-4 rounded-md px-3 py-2 shadow-md cursor-pointer hover:brightness-95 transition-all"
                                                         style={{ top, height: h, backgroundColor: e.color + '20', borderLeft: `4px solid ${e.color}` }}>
                                                         <div className="mb-1">
-                                                            <span className={clsx("inline-flex rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest", EVENT_TYPE_META[e.type].chip)}>
+                                                            <span className={clsx("inline-flex rounded-full px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide", EVENT_TYPE_META[e.type].chip)}>
                                                                 {EVENT_TYPE_META[e.type].label}
                                                             </span>
                                                         </div>
@@ -611,7 +611,7 @@ export default function PlanificadorPage() {
 
                     {/* Bottom search bar */}
                     <div className="shrink-0 border-t border-slate-100 dark:border-white/5 px-4 py-2">
-                        <div className="max-w-lg mx-auto flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                        <div className="max-w-lg mx-auto flex items-center gap-2 px-4 py-2 rounded-md bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
                             <Search size={14} className="text-slate-300 shrink-0" />
                             <input
                                 placeholder="Busca eventos, compañeros de equipo, comandos..."
@@ -637,22 +637,22 @@ export default function PlanificadorPage() {
                     <div className="flex-1 overflow-y-auto scrollbar-hide py-3 space-y-4 px-3">
                         {/* Resumen de hoy */}
                         <PanelSection title="Hoy">
-                            <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3 space-y-3">
+                            <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3 space-y-3">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Eventos visibles</p>
-                                        <p className="text-2xl font-black text-slate-900 dark:text-white">{todayVisibleEvents.length}</p>
+                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Eventos visibles</p>
+                                        <p className="text-lg font-black text-slate-900 dark:text-white">{todayVisibleEvents.length}</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hoy</p>
+                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Hoy</p>
                                         <p className="text-[11px] font-bold text-slate-600 dark:text-slate-300">{format(new Date(), 'dd MMM', { locale: es })}</p>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-3 gap-2">
                                     {CALENDAR_EVENT_TYPES.map((eventType) => (
-                                        <div key={eventType} className="rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 px-2 py-2 text-center">
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">{EVENT_TYPE_META[eventType].label}</p>
-                                            <p className="mt-1 text-sm font-black text-slate-900 dark:text-white">
+                                        <div key={eventType} className="rounded-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 px-2 py-2 text-center">
+                                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">{EVENT_TYPE_META[eventType].label}</p>
+                                            <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
                                                 {todayVisibleEvents.filter((event) => event.type === eventType).length}
                                             </p>
                                         </div>
@@ -661,26 +661,26 @@ export default function PlanificadorPage() {
                                 <div className="grid grid-cols-3 gap-2">
                                     <button
                                         onClick={() => setActiveTypes([...CALENDAR_EVENT_TYPES])}
-                                        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 transition-all hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+                                        className="rounded-md border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500 transition-all hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
                                     >
                                         Limpiar filtros
                                     </button>
                                     <button
                                         onClick={() => router.push('/agenda/events')}
-                                        className="rounded-xl bg-blue-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-blue-700"
+                                        className="rounded-md bg-blue-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-blue-700"
                                     >
                                         Agenda simple
                                     </button>
                                     {canAccessEvangelism && (
                                         <button
                                             onClick={() => router.push('/evangelism/events')}
-                                            className="rounded-xl bg-emerald-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-emerald-700"
+                                            className="rounded-md bg-emerald-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-emerald-700"
                                         >
                                             Evangelismo
                                         </button>
                                     )}
                                 </div>
-                                <div className="flex items-center justify-between rounded-xl border border-dashed border-slate-200 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+                                <div className="flex items-center justify-between rounded-md border border-dashed border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
                                     <span>Estado de filtros</span>
                                     <span className={clsx(
                                         "rounded-full px-2 py-1",
@@ -696,14 +696,14 @@ export default function PlanificadorPage() {
 
                         {/* Próximos */}
                         <PanelSection title="Próximos">
-                            <div className="space-y-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3">
+                            <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3">
                                 {upcomingVisibleEvents.length === 0 ? (
                                     <p className="text-[11px] text-slate-400">No hay eventos visibles próximos.</p>
                                 ) : upcomingVisibleEvents.map((event) => (
                                     <button
                                         key={event.id}
                                         onClick={() => handleEventClick(event)}
-                                        className="flex w-full items-start gap-2 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-500/30 transition-all"
+                                        className="flex w-full items-start gap-2 rounded-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-500/30 transition-all"
                                     >
                                         <span
                                             className="mt-0.5 size-2.5 rounded-full shrink-0"
@@ -711,7 +711,7 @@ export default function PlanificadorPage() {
                                         />
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-2">
-                                                <span className={clsx("rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest", EVENT_TYPE_META[event.type].chip)}>
+                                                <span className={clsx("rounded-full px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide", EVENT_TYPE_META[event.type].chip)}>
                                                     {EVENT_TYPE_META[event.type].label}
                                                 </span>
                                                 <span className="truncate text-[11px] font-bold text-slate-700 dark:text-slate-300">{event.title}</span>
@@ -727,7 +727,7 @@ export default function PlanificadorPage() {
 
                         {/* Prioridades */}
                         <PanelSection title="Prioridades">
-                            <div className="bg-slate-50 dark:bg-white/[0.03] rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-white/5">
+                            <div className="bg-slate-50 dark:bg-white/[0.03] rounded-md p-4 text-center border border-dashed border-slate-200 dark:border-white/5">
                                 <Flag size={18} className="text-slate-300 mx-auto mb-2" />
                                 <p className="text-[11px] text-slate-400 leading-snug">
                                     Prioriza una tarea para verla aparecer aquí.
@@ -778,7 +778,7 @@ export default function PlanificadorPage() {
 
                             {/* Task list */}
                             {tasks.length === 0 ? (
-                                <div className="bg-slate-50 dark:bg-white/[0.03] rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-white/5">
+                                <div className="bg-slate-50 dark:bg-white/[0.03] rounded-md p-4 text-center border border-dashed border-slate-200 dark:border-white/5">
                                     <p className="text-[11px] text-slate-400">
                                         Ninguna tarea coincide con estos filtros.
                                     </p>
@@ -799,13 +799,13 @@ export default function PlanificadorPage() {
 
                         {/* Leyenda */}
                         <PanelSection title="Leyenda">
-                            <div className="space-y-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3">
+                            <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3">
                                 {CALENDAR_EVENT_TYPES.map((eventType) => (
                                     <button
                                         key={eventType}
                                         onClick={() => toggleTypeFilter(eventType)}
                                         className={clsx(
-                                            "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition-all",
+                                            "flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition-all",
                                             activeTypes.includes(eventType)
                                                 ? "bg-white dark:bg-white/5"
                                                 : "opacity-50 hover:opacity-80"
@@ -820,7 +820,7 @@ export default function PlanificadorPage() {
                                                 {EVENT_TYPE_META[eventType].label}
                                             </span>
                                         </span>
-                                        <span className={clsx("rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest", EVENT_TYPE_META[eventType].chip)}>
+                                        <span className={clsx("rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide", EVENT_TYPE_META[eventType].chip)}>
                                             {eventTypeCounts[eventType]}
                                         </span>
                                     </button>
@@ -860,7 +860,7 @@ function MonthView({
             {/* Day of week headers */}
             <div className="grid grid-cols-7 shrink-0 border-b border-slate-100 dark:border-white/5">
                 {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(d => (
-                    <div key={d} className="py-2.5 text-center text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <div key={d} className="py-2.5 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                         {d}
                     </div>
                 ))}
@@ -902,7 +902,7 @@ function MonthView({
                                         style={{ backgroundColor: e.color }}
                                     >
                                         <div className="flex items-center gap-1">
-                                            <span className="text-[7px] font-black uppercase tracking-widest opacity-80">
+                                            <span className="text-[7px] font-semibold uppercase tracking-wide opacity-80">
                                                 {EVENT_TYPE_META[e.type].label}
                                             </span>
                                             <span className="truncate text-[9px] font-bold">{e.title}</span>
@@ -937,7 +937,7 @@ function PanelSection({
                 onClick={() => collapsible && setOpen(v => !v)}
                 className={clsx('flex items-center justify-between', collapsible && 'cursor-pointer')}
             >
-                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                     {title}
                 </span>
                 {collapsible && (

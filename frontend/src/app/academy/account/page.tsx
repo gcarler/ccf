@@ -35,7 +35,7 @@ export default function AcademyAccountPage() {
             <div className="bg-gradient-to-br from-blue-600 to-indigo-700 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10"
                     style={{ backgroundImage: "radial-gradient(circle at 70% 50%, white 0%, transparent 60%)" }} />
-                <div className="max-w-4xl mx-auto px-5 py-4 relative">
+                <div className="max-w-4xl mx-auto px-3 py-1.5 relative">
                     <div className="flex items-end gap-4">
                         <div className="relative">
                             <div className="size-10 rounded-lg bg-white/20 backdrop-blur border-2 border-white/30 flex items-center justify-center text-white text-xl font-black shadow-2xl">
@@ -47,10 +47,10 @@ export default function AcademyAccountPage() {
                         </div>
                         <div className="pb-1">
                             <div className="flex items-center gap-2 mb-1">
-                                <span className="px-2 py-0.5 rounded-full bg-white/20 text-white text-[9px] font-black uppercase tracking-wide">
+                                <span className="px-2 py-0.5 rounded-full bg-white/20 text-white text-[9px] font-semibold uppercase tracking-wide">
                                     Estudiante
                                 </span>
-                                <span className="px-2 py-0.5 rounded-full bg-amber-400/30 text-amber-200 text-[9px] font-black uppercase tracking-wide">
+                                <span className="px-2 py-0.5 rounded-full bg-amber-400/30 text-amber-200 text-[9px] font-semibold uppercase tracking-wide">
                                     Destacado
                                 </span>
                             </div>
@@ -62,7 +62,7 @@ export default function AcademyAccountPage() {
                             </p>
                         </div>
                         <div className="ml-auto pb-1">
-                            <button className="flex items-center gap-2 px-3 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur border border-white/20 text-white rounded-lg text-[11px] font-black uppercase tracking-wide transition-all">
+                            <button className="flex items-center gap-2 px-3 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur border border-white/20 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all">
                                 <Edit2 size={14} /> Editar Perfil
                             </button>
                         </div>
@@ -70,7 +70,7 @@ export default function AcademyAccountPage() {
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto px-5 py-4 space-y-3">
+            <div className="max-w-4xl mx-auto px-3 py-1.5 space-y-3">
                 {/* Stats */}
                 <div className="grid grid-cols-4 gap-3">
                     {stats.map((s, i) => (
@@ -98,7 +98,7 @@ export default function AcademyAccountPage() {
                         transition={{ delay: 0.2 }}
                         className="col-span-1 bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 shadow-sm space-y-4"
                     >
-                        <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">Informacion Personal</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Informacion Personal</p>
                         {[
                             { icon: Mail, label: 'Email', value: (user as any)?.email ?? '—' },
                             { icon: Phone, label: 'Telefono', value: '+57 300 000 0000' },
@@ -125,17 +125,17 @@ export default function AcademyAccountPage() {
                         className="col-span-2 bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 shadow-sm"
                     >
                         <div className="flex items-center justify-between mb-4">
-                            <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">Mis Cursos</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Mis Cursos</p>
                             <GraduationCap size={16} className="text-slate-300" />
                         </div>
                         {loading ? (
                             <div className="space-y-3">
                                 {[1, 2, 3].map(i => (
-                                    <div key={i} className="h-14 bg-slate-50 dark:bg-white/5 rounded-lg animate-pulse" />
+                                    <div key={i} className="h-8 bg-slate-50 dark:bg-white/5 rounded-lg animate-pulse" />
                                 ))}
                             </div>
                         ) : enrollments.length === 0 ? (
-                            <div className="py-4 text-center">
+                            <div className="py-1.5 text-center">
                                 <BookOpen size={32} className="mx-auto text-slate-200 mb-3" />
                                 <p className="text-sm font-bold text-slate-400">Sin cursos inscritos aun</p>
                                 <p className="text-xs text-slate-300 mt-1">Explora el catalogo de cursos disponible</p>
@@ -144,7 +144,7 @@ export default function AcademyAccountPage() {
                             <div className="space-y-2">
                                 {enrollments.map((course: any, i) => (
                                     <div key={i} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
-                                        <div className="size-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-black shrink-0">
+                                        <div className="size-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-semibold shrink-0">
                                             {course.title?.[0] ?? 'C'}
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -153,7 +153,7 @@ export default function AcademyAccountPage() {
                                                 <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${30 + i * 15}%` }} />
                                             </div>
                                         </div>
-                                        <span className="text-[10px] font-black text-slate-400">{30 + i * 15}%</span>
+                                        <span className="font-semibold text-slate-400">{30 + i * 15}%</span>
                                     </div>
                                 ))}
                             </div>

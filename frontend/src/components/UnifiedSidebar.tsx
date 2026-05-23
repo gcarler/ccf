@@ -67,7 +67,7 @@ export default function UnifiedSidebar({
                     <Link
                         href={item.href}
                         className={clsx(
-                            "flex items-center gap-3 py-2 rounded-xl transition-all cursor-pointer group relative",
+                            "flex items-center gap-3 py-2 rounded-md transition-all cursor-pointer group relative",
                             isMini ? "justify-center px-0 w-10 mx-auto" : "px-3 w-full",
                             isActive 
                                 ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-bold" 
@@ -99,7 +99,7 @@ export default function UnifiedSidebar({
                     <div
                         onClick={onToggle}
                         className={clsx(
-                            "flex items-center gap-3 py-2 rounded-xl transition-all cursor-pointer group relative",
+                            "flex items-center gap-3 py-2 rounded-md transition-all cursor-pointer group relative",
                             isMini ? "justify-center px-0 w-10 mx-auto" : "px-3 w-full",
                             isActive 
                                 ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-bold" 
@@ -148,9 +148,9 @@ export default function UnifiedSidebar({
             </div>
 
             {/* Sidebar Header (Logo) */}
-            <div className="h-[80px] flex items-center px-5 shrink-0">
+            <div className="h-12 flex items-center px-3 shrink-0">
                 <div className="flex items-center gap-3 w-full">
-                    <div className="w-8 h-8 rounded-xl bg-slate-900 dark:bg-white flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-md bg-slate-900 dark:bg-white flex items-center justify-center shrink-0">
                         {/* Abstract circle logo matching the mock */}
                         <div className="w-3.5 h-3.5 rounded-full border-2 border-white dark:border-slate-900 relative">
                             <div className="absolute top-[-2px] right-[-2px] w-1.5 h-1.5 bg-white dark:bg-slate-900" />
@@ -158,25 +158,25 @@ export default function UnifiedSidebar({
                     </div>
                     {!isMini && (
                         <div className="flex-1 overflow-hidden">
-                            <span className="text-[16px] font-black text-slate-900 dark:text-white tracking-tight">{title}</span>
+                            <span className="font-semibold text-slate-900 dark:text-white tracking-tight">{title}</span>
                         </div>
                     )}
                 </div>
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none py-2 px-3 flex flex-col gap-6">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none py-2 px-3 flex flex-col gap-3">
                 
                 {/* 1. Global Module Navigation (MAIN) */}
                 <div className="flex flex-col gap-1">
-                    {!isMini && <span className="px-3 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Main</span>}
+                    {!isMini && <span className="px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Main</span>}
                     {GLOBAL_MAIN.map(item => renderItem(item))}
                 </div>
 
                 {/* 2. Contextual Sections (e.g. from Projects layout) */}
                 {sections && sections.length > 0 && (
                     <div className="flex flex-col gap-1">
-                        {!isMini && <span className="px-3 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Contextual Tools</span>}
+                        {!isMini && <span className="px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Contextual Tools</span>}
                         
                         <div className="flex flex-col gap-0.5">
                             {renderItem(
@@ -210,7 +210,7 @@ export default function UnifiedSidebar({
 
                 {/* 3. Global Settings */}
                 <div className="flex flex-col gap-1 mt-auto shrink-0 pb-4">
-                    {!isMini && <span className="px-3 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Settings</span>}
+                    {!isMini && <span className="px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Settings</span>}
                     {GLOBAL_SETTINGS.map(item => renderItem(item))}
                 </div>
 

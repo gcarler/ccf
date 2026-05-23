@@ -20,7 +20,7 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
         return (
             <button
                 onClick={toggleTheme}
-                className={`w-full flex items-center justify-between px-3 py-2 mx-2 rounded-xl transition-all group cursor-pointer mb-0.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white ${className}`}
+                className={`w-full flex items-center justify-between px-3 py-2 mx-2 rounded-md transition-all group cursor-pointer mb-0.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white ${className}`}
                 title={isNight ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
             >
                 <div className="flex items-center gap-3">
@@ -53,7 +53,7 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
         /* Pill doble compacto — para toolbars */
         return (
             <div
-                className={`flex items-center rounded-xl p-1 gap-0.5 ${
+                className={`flex items-center rounded-md p-1 gap-0.5 ${
                     isNight
                         ? "bg-slate-800 border border-white/5"
                         : "bg-slate-100 border border-slate-200"
@@ -92,7 +92,7 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
         <Tooltip content={isNight ? "Modo Claro" : "Modo Oscuro"} side="right">
             <button
                 onClick={toggleTheme}
-                className={`size-10 rounded-2xl flex items-center justify-center transition-all group ${
+                className={`size-10 rounded-lg flex items-center justify-center transition-all group ${
                     isNight
                         ? "text-slate-400 hover:bg-white/5 hover:text-amber-300"
                         : "text-slate-600 hover:bg-black/5 hover:text-blue-600"

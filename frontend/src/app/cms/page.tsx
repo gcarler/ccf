@@ -254,7 +254,7 @@ export default function CmsHomePage() {
   if (!isAuthenticated) {
     return (
       <div className="h-full overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-4 py-24 text-center">
+        <div className="mx-auto max-w-3xl px-4 py-1.5 text-center">
           <h1 className="text-xl font-semibold">Inicia sesion</h1>
           <p className="mt-3 text-slate-500">Necesitas una sesion valida para administrar el CMS.</p>
         </div>
@@ -264,7 +264,7 @@ export default function CmsHomePage() {
 
   return (
     <div className="h-full overflow-y-auto bg-slate-50/60 dark:bg-[#141517]">
-      <div className="space-y-6 px-4 py-6 lg:px-6">
+      <div className="space-y-6 px-4 py-2 lg:px-3">
         <AdminHero
           eyebrow="CMS"
           title="Administracion del sitio web"
@@ -299,15 +299,15 @@ export default function CmsHomePage() {
           })}
         </section>
 
-        <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+        <section className="grid grid-cols-1 gap-3 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
             <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Control de calidad</p>
                 <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">Prioridades editoriales</h2>
               </div>
               <div className="flex items-center gap-3">
-                <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-white">
+                <div className="flex h-8 w-14 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-white">
                   {qualityScore === null ? "..." : `${qualityScore}%`}
                 </div>
                 <p className="max-w-44 text-xs leading-relaxed text-slate-500">
@@ -346,7 +346,7 @@ export default function CmsHomePage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+          <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Acceso</p>
@@ -381,8 +381,8 @@ export default function CmsHomePage() {
           </div>
         </section>
 
-        <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+        <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Testimonios recientes</h2>
@@ -419,7 +419,7 @@ export default function CmsHomePage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+          <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Ruta de gestion</h2>

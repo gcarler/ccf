@@ -370,7 +370,7 @@ function WorkspaceLayoutInner({
                                 animate={{ x: 0, opacity: 1 }}
                                 exit={{ x: -80, opacity: 0 }}
                                 transition={{ type: 'tween', duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-                                className="flex shrink-0 z-50 h-full py-4 pl-4"
+                                className="flex shrink-0 z-50 h-full py-1.5 pl-4"
                                 style={{ filter: 'drop-shadow(8px 0 24px rgba(0,0,0,0.15))' }}
                             >
                                 <WorkspaceMiniSidebar onHide={() => closeLayer('S1')} />
@@ -435,7 +435,7 @@ function WorkspaceLayoutInner({
                             whileHover={{ scale: 1.1, rotate: 5 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => setShowChat(true)}
-                            className="fixed bottom-8 right-8 z-[500] size-14 rounded-[1.5rem] bg-gradient-to-tr from-sky-600 to-indigo-600 text-white shadow-2xl shadow-sky-500/40 flex items-center justify-center border border-white/20 group"
+                            className="fixed bottom-8 right-8 z-[500] size-7 rounded-lg bg-gradient-to-tr from-sky-600 to-indigo-600 text-white shadow-2xl shadow-sky-500/40 flex items-center justify-center border border-white/20 group"
                             aria-label="Abrir MESH AI"
                         >
                             <Bot size={28} className="group-hover:animate-pulse" />
@@ -448,7 +448,7 @@ function WorkspaceLayoutInner({
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             onClick={() => openLayer('S1')}
-                            className="fixed left-8 bottom-[88px] z-[60] size-8 bg-slate-900 text-white rounded-xl shadow-md hover:bg-slate-800 hover:scale-110 active:scale-95 transition-all flex items-center justify-center border border-white/10 dark:border-[#111213]"
+                            className="fixed left-8 bottom-[88px] z-[60] size-8 bg-slate-900 text-white rounded-md shadow-md hover:bg-slate-800 hover:scale-110 active:scale-95 transition-all flex items-center justify-center border border-white/10 dark:border-[#111213]"
                             aria-label="Mostrar navegación principal"
                         >
                             <ChevronRight size={16} strokeWidth={2.5} />
@@ -461,7 +461,7 @@ function WorkspaceLayoutInner({
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 onClick={cycleS2}
-                                className="fixed left-8 bottom-6 z-[60] size-8 bg-slate-900 text-white rounded-xl shadow-md hover:bg-slate-800 hover:-translate-y-1 active:scale-95 active:translate-y-0 transition-all flex items-center justify-center border border-white/10 dark:border-[#111213]"
+                                className="fixed left-8 bottom-6 z-[60] size-8 bg-slate-900 text-white rounded-md shadow-md hover:bg-slate-800 hover:-translate-y-1 active:scale-95 active:translate-y-0 transition-all flex items-center justify-center border border-white/10 dark:border-[#111213]"
                                 aria-label="Mostrar panel de módulo"
                             >
                                 <ChevronRight size={16} strokeWidth={2.5} />

@@ -35,7 +35,7 @@ export default function DigitalCertificatesPage() {
 
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-[#0f1012] overflow-y-auto font-display">
-            <div className="max-w-5xl mx-auto w-full p-6 space-y-6 pb-20">
+            <div className="max-w-5xl mx-auto w-full p-3 space-y-6 pb-4">
 
                 {/* Sub-header */}
                 <div className="flex items-center justify-between">
@@ -44,9 +44,9 @@ export default function DigitalCertificatesPage() {
                             <div className="size-7 rounded-lg bg-cyan-50 dark:bg-cyan-900/30 flex items-center justify-center">
                                 <ShieldCheck size={14} className="text-cyan-600" />
                             </div>
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-600">Certificación Oficial</span>
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-cyan-600">Certificación Oficial</span>
                         </div>
-                        <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white leading-none">
+                        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">
                             Mis Certificados
                         </h1>
                         <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
@@ -58,7 +58,7 @@ export default function DigitalCertificatesPage() {
                 {/* Certificates Grid */}
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-48 rounded-2xl" />)}
+                        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-48 rounded-lg" />)}
                     </div>
                 ) : certificates.length === 0 ? (
                     <EmptyState
@@ -78,7 +78,7 @@ export default function DigitalCertificatesPage() {
                                     initial={{ opacity: 0, y: 12 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: i * 0.07 }}
-                                    className="group bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-2xl p-6 hover:border-cyan-300 dark:hover:border-cyan-500/30 hover:shadow-lg transition-all relative overflow-hidden"
+                                    className="group bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-lg p-3 hover:border-cyan-300 dark:hover:border-cyan-500/30 hover:shadow-lg transition-all relative overflow-hidden"
                                 >
                                     {/* Decorative watermark */}
                                     <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.07] transition-all duration-700">
@@ -87,11 +87,11 @@ export default function DigitalCertificatesPage() {
 
                                     <div className="relative z-10 space-y-4">
                                         <div className="flex items-start justify-between">
-                                            <div className="size-12 rounded-2xl bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-100 dark:border-cyan-500/20 flex items-center justify-center text-cyan-600">
+                                            <div className="size-7 rounded-lg bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-100 dark:border-cyan-500/20 flex items-center justify-center text-cyan-600">
                                                 {isSacramento ? <Waves size={24} /> : <FileCheck size={24} />}
                                             </div>
                                             <span className={clsx(
-                                                "text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border",
+                                                "text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full border",
                                                 isSacramento
                                                     ? "bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 border-cyan-200 dark:border-cyan-500/20"
                                                     : "bg-blue-50 dark:bg-blue-900/20 text-blue-600 border-blue-200 dark:border-blue-500/20"
@@ -101,10 +101,10 @@ export default function DigitalCertificatesPage() {
                                         </div>
 
                                         <div>
-                                            <h3 className="text-[15px] font-bold text-slate-900 dark:text-white leading-tight">
+                                            <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
                                                 {cert.course_title ?? cert.certificate_type ?? 'Certificado'}
                                             </h3>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                                            <p className="font-semibold text-slate-400 uppercase tracking-wide mt-1">
                                                 {new Date(cert.issued_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
                                             </p>
                                         </div>
@@ -114,7 +114,7 @@ export default function DigitalCertificatesPage() {
                                                 {cert.certificate_code}
                                             </code>
                                             <div className="flex items-center gap-2">
-                                                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-lg active:scale-95 transition-all shadow-sm shadow-blue-500/20">
+                                                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg active:scale-95 transition-all shadow-sm shadow-blue-500/20">
                                                     <Download size={12} /> PDF
                                                 </button>
                                                 <button className="p-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 rounded-lg transition-all">
@@ -130,8 +130,8 @@ export default function DigitalCertificatesPage() {
                 )}
 
                 {/* Verification Banner */}
-                <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-2xl p-5 flex flex-col md:flex-row items-center gap-4 shadow-sm">
-                    <div className="size-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-500/20 flex items-center justify-center text-emerald-600 shrink-0">
+                <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-lg p-3 flex flex-col md:flex-row items-center gap-4 shadow-sm">
+                    <div className="size-10 rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-500/20 flex items-center justify-center text-emerald-600 shrink-0">
                         <ShieldCheck size={20} />
                     </div>
                     <div className="flex-1 text-center md:text-left">
@@ -140,7 +140,7 @@ export default function DigitalCertificatesPage() {
                             Cada certificado contiene un código único y token QR para validar su veracidad ante autoridades eclesiásticas.
                         </p>
                     </div>
-                    <button className="shrink-0 px-4 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-[11px] font-black uppercase tracking-widest rounded-lg transition-all active:scale-95">
+                    <button className="shrink-0 px-4 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-[11px] font-semibold uppercase tracking-wide rounded-lg transition-all active:scale-95">
                         Validar Código
                     </button>
                 </div>

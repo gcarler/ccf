@@ -62,12 +62,12 @@ function VerifyEmailContent() {
           transition={{ delay: 0.4 }}
           className="relative z-10"
         >
-          <div className="inline-flex items-center gap-3 border border-white/20 rounded-full px-5 py-2.5 bg-white/5 backdrop-blur-md">
+          <div className="inline-flex items-center gap-3 border border-white/20 rounded-full px-3 py-2.5 bg-white/5 backdrop-blur-md">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
               <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round"/>
               <circle cx="12" cy="4" r="1.5" fill="white" stroke="none"/>
             </svg>
-            <span className="text-white font-bold uppercase tracking-[0.2em] text-[10px]">
+            <span className="text-white font-bold uppercase tracking-wide text-[10px]">
               Ministerio Internacional
             </span>
           </div>
@@ -79,13 +79,13 @@ function VerifyEmailContent() {
           transition={{ delay: 0.6, duration: 0.8 }}
           className="relative z-10"
         >
-          <h1 className="font-black tracking-[-0.04em] leading-[0.88] text-white text-[clamp(3rem,6vw,4.5rem)] m-0">
+          <h1 className="font-bold tracking-[-0.04em] leading-[0.88] text-white text-[clamp(3rem,6vw,4.5rem)] m-0">
             EL <br /> FARO
           </h1>
-          <p className="text-[#018ABD] text-[clamp(1rem,2vw,1.25rem)] font-black tracking-[0.2em] uppercase mt-6 leading-[1.4]">
+          <p className="text-[#018ABD] text-[clamp(1rem,2vw,1.25rem)] font-bold tracking-wide uppercase mt-3 leading-[1.4]">
             Comunidad <br /> Cristiana
           </p>
-          <div className="w-16 h-1.5 bg-white mt-8 rounded-full" />
+          <div className="w-16 h-1.5 bg-white mt-3 rounded-full" />
         </motion.div>
 
         <motion.div
@@ -121,7 +121,7 @@ function VerifyEmailContent() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-            className="mb-8 flex justify-center"
+            className="mb-3 flex justify-center"
           >
             {status === "loading" && (
               <div className="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center">
@@ -150,7 +150,7 @@ function VerifyEmailContent() {
               {status === "success" && "¡Correo verificado!"}
               {status === "error" && "No pudimos verificar"}
             </h2>
-            <p className="text-gray-500 text-sm font-medium leading-relaxed mb-10">
+            <p className="text-gray-500 text-sm font-medium leading-relaxed mb-3">
               {message}
             </p>
           </motion.div>
@@ -165,17 +165,17 @@ function VerifyEmailContent() {
               <>
                 <button
                   onClick={() => router.push("/login")}
-                  className="w-full py-4 bg-[#018ABD] text-white rounded-xl font-black text-[11px] uppercase tracking-[0.2em] border-none cursor-pointer hover:bg-[#004581] transition-all"
+                  className="w-full py-1.5 bg-[#018ABD] text-white rounded-lg font-bold text-[11px] uppercase tracking-wide border-none cursor-pointer hover:bg-[#004581] transition-all"
                 >
                   {status === "success" ? "Ir al inicio de sesión →" : "Volver al inicio"}
                 </button>
 
-                <div className="relative my-8">
+                <div className="relative my-4">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t-2 border-gray-100" />
                   </div>
                   <div className="relative flex justify-center">
-                    <span className="bg-white px-4 text-[9px] font-black uppercase tracking-[0.3em] text-gray-300">
+                    <span className="bg-white px-4 text-[9px] font-bold uppercase tracking-wide text-gray-300">
                       Salmos 133:1
                     </span>
                   </div>

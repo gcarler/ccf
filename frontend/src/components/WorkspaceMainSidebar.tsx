@@ -325,9 +325,9 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
 
                                 {/* Fallback content */}
                                 {!sections?.length && !isMini && (
-                                    <div className="px-6 py-10 text-center space-y-3 opacity-40">
+                                    <div className="px-3 py-1.5 text-center space-y-3 opacity-40">
                                         <Circle size={40} className="mx-auto text-slate-200" />
-                                        <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Sin contenido</p>
+                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Sin contenido</p>
                                     </div>
                                 )}
                             </>
@@ -346,7 +346,7 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
                     <Tooltip content={isCollapsed ? 'Expandir panel' : 'Contraer panel'} side="right">
                         <button
                             onClick={onToggle}
-                            className="p-2 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all duration-200 shrink-0"
+                            className="p-2 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all duration-200 shrink-0"
                             aria-label={isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
                         >
                             {isCollapsed

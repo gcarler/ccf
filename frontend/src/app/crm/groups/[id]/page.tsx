@@ -110,12 +110,12 @@ export default function GroupDetailPage() {
                         <DSCard>
                             <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Estadisticas del Grupo</h3>
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                                <div className="p-4 rounded-md bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
                                     <Users size={20} className="text-blue-600 mb-2" />
                                     <p className="text-lg font-bold">{group.members_count ?? 0}</p>
                                     <p className="text-[9px] font-bold text-slate-400 uppercase">Miembros Frecuentes</p>
                                 </div>
-                                <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                                <div className="p-4 rounded-md bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
                                     <History size={20} className="text-emerald-500 mb-2" />
                                     <p className="text-lg font-bold">{group.capacity ?? 0}</p>
                                     <p className="text-[9px] font-bold text-slate-400 uppercase">Capacidad</p>
@@ -125,12 +125,12 @@ export default function GroupDetailPage() {
                     </div>
 
                     <aside className="space-y-3">
-                        <div className="p-4 bg-slate-900 rounded-xl text-white space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-blue-400">
+                        <div className="p-4 bg-slate-900 rounded-md text-white space-y-4">
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-blue-400">
                                 <History size={14} /> Linea de Tiempo
                             </div>
                             <div className="space-y-3">
-                                <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-[10px]">
+                                <div className="p-3 rounded-md bg-white/5 border border-white/10 text-[10px]">
                                     <p className="font-bold">Grupo cargado desde backend</p>
                                     <p className="opacity-50">{group.created_at ? new Date(group.created_at).toLocaleDateString("es-CO") : "Sin fecha"}</p>
                                 </div>

@@ -129,19 +129,19 @@ export default function CommentModeration() {
                 breadcrumbs={[{ label: 'Admin', icon: Layout }, { label: 'Moderación de Comunidad', icon: MessageSquare }]}
                 viewType={viewType} setViewType={setViewType} availableViews={COMMENT_VIEWS}
                 rightActions={
-                    <button className="p-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-blue-600 relative active:scale-95 transition-all">
+                    <button className="p-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-blue-600 relative active:scale-95 transition-all">
                         <Bell size={20} />
                         <span className="absolute top-2 right-2 size-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-[#0a0f16]"></span>
                     </button>
                 }
             />
 
-            <div className="flex px-10 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 shrink-0 overflow-x-auto no-scrollbar">
+            <div className="flex px-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 shrink-0 overflow-x-auto no-scrollbar">
                 {['Todos', 'Foro', 'Prédicas', 'Cursos'].map((f) => (
                     <button 
                         key={f} onClick={() => setActiveFilter(f)}
                         className={clsx(
-                            "px-8 py-6 text-[11px] font-black uppercase tracking-[0.3em] transition-all relative border-b-2 shrink-0",
+                            "px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all relative border-b-2 shrink-0",
                             activeFilter === f ? "text-blue-600 border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600"
                         )}
                     >
@@ -151,19 +151,19 @@ export default function CommentModeration() {
                 ))}
             </div>
 
-            <main className="flex-1 overflow-y-auto scrollbar-thin p-8 lg:p-12 relative pb-40">
-                <div className="max-w-5xl mx-auto space-y-10 relative z-10">
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative pb-4">
+                <div className="max-w-5xl mx-auto space-y-3 relative z-10">
                     
                     {/* Header Cinematic */}
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-4">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-4">
                         <div className="space-y-4">
                             <motion.div 
                                 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-[0.3em] border border-blue-500/20"
+                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 text-blue-600 rounded-full text-[10px] font-semibold uppercase tracking-wide border border-blue-500/20"
                             >
                                 <Zap size={12} className="animate-pulse" /> Protocolo de Moderación Activo
                             </motion.div>
-                            <h1 className="text-5xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                            <h1 className="text-xl lg:text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
                                 Centro de <span className="text-blue-600 italic">Interacción.</span>
                             </h1>
                         </div>
@@ -172,7 +172,7 @@ export default function CommentModeration() {
                             <input 
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
+                                className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
                                 placeholder="Filtrar por autor o contenido..."
                             />
                         </div>
@@ -180,23 +180,23 @@ export default function CommentModeration() {
 
                     <AnimatePresence mode="wait">
                         {loading ? (
-                            <div className="py-40 flex flex-col items-center justify-center gap-6 text-slate-400 font-black uppercase tracking-[0.5em] animate-pulse">
+                            <div className="py-1.5 flex flex-col items-center justify-center gap-3 text-slate-400 font-semibold uppercase tracking-wide animate-pulse">
                                 <Loader2 className="animate-spin text-blue-600" size={48} strokeWidth={1.5} /> Sincronizando Comentarios...
                             </div>
                         ) : viewType === 'table' ? (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
                                 <table className="w-full text-left text-sm">
-                                    <thead className="border-b border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:border-white/10">
-                                        <tr><th className="px-5 py-3">Autor</th><th className="px-5 py-3">Contexto</th><th className="px-5 py-3">Tipo</th><th className="px-5 py-3">Fecha</th><th className="px-5 py-3" /></tr>
+                                    <thead className="border-b border-slate-100 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:border-white/10">
+                                        <tr><th className="px-3 py-3">Autor</th><th className="px-3 py-3">Contexto</th><th className="px-3 py-3">Tipo</th><th className="px-3 py-3">Fecha</th><th className="px-3 py-3" /></tr>
                                     </thead>
                                     <tbody>
                                         {filteredComments.map((comment) => (
                                             <tr key={comment.id} className="border-b border-slate-50 dark:border-white/5">
-                                                <td className="px-5 py-4 font-black text-slate-900 dark:text-white">{comment.author}</td>
-                                                <td className="px-5 py-4 text-slate-500">{comment.context}</td>
-                                                <td className="px-5 py-4 text-slate-500">{comment.type}</td>
-                                                <td className="px-5 py-4 text-slate-400">{new Date(comment.created_at).toLocaleDateString()}</td>
-                                                <td className="px-5 py-4 text-right"><button onClick={() => handleDelete(comment.id)} className="rounded-xl bg-rose-50 p-2 text-rose-500"><Trash2 size={16} /></button></td>
+                                                <td className="px-3 py-1.5 font-black text-slate-900 dark:text-white">{comment.author}</td>
+                                                <td className="px-3 py-1.5 text-slate-500">{comment.context}</td>
+                                                <td className="px-3 py-1.5 text-slate-500">{comment.type}</td>
+                                                <td className="px-3 py-1.5 text-slate-400">{new Date(comment.created_at).toLocaleDateString()}</td>
+                                                <td className="px-3 py-1.5 text-right"><button onClick={() => handleDelete(comment.id)} className="rounded-md bg-rose-50 p-2 text-rose-500"><Trash2 size={16} /></button></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -205,25 +205,25 @@ export default function CommentModeration() {
                         ) : viewType === 'grid' ? (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 {filteredComments.map((comment) => (
-                                    <article key={comment.id} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
-                                        <p className="text-sm font-black text-slate-900 dark:text-white">{comment.author}</p>
+                                    <article key={comment.id} className="rounded-lg border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{comment.author}</p>
                                         <p className="mt-2 line-clamp-3 text-sm font-medium text-slate-500">{comment.text}</p>
-                                        <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-blue-500">{comment.type}</p>
+                                        <p className="mt-4 text-[10px] font-semibold uppercase tracking-wide text-blue-500">{comment.type}</p>
                                     </article>
                                 ))}
                             </motion.div>
                         ) : viewType === 'board' || viewType === 'kanban' ? (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-4 overflow-x-auto">
                                 {groupedComments.map((column) => (
-                                    <section key={column.type} className="w-80 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                                    <section key={column.type} className="w-80 shrink-0 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
                                         <div className="mb-3 flex items-center justify-between px-1">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{column.type}</p>
-                                            <span className="text-[10px] font-black text-slate-400">{column.items.length}</span>
+                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{column.type}</p>
+                                            <span className="font-semibold text-slate-400">{column.items.length}</span>
                                         </div>
                                         <div className="space-y-2">
                                             {column.items.map((comment) => (
-                                                <article key={comment.id} className="rounded-xl border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
-                                                    <p className="text-xs font-black text-slate-900 dark:text-white">{comment.author}</p>
+                                                <article key={comment.id} className="rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+                                                    <p className="text-xs font-semibold text-slate-900 dark:text-white">{comment.author}</p>
                                                     <p className="mt-2 line-clamp-2 text-[11px] font-medium text-slate-500">{comment.text}</p>
                                                 </article>
                                             ))}
@@ -246,7 +246,7 @@ export default function CommentModeration() {
                         ) : filteredComments.length > 0 ? (
                             <motion.div 
                                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                                className="grid grid-cols-1 gap-6"
+                                className="grid grid-cols-1 gap-3"
                             >
                                 {filteredComments.map((comment, i) => (
                                     <motion.div 
@@ -254,11 +254,11 @@ export default function CommentModeration() {
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: i * 0.05 }}
-                                        className="comment-aura group bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-10 rounded-[3rem] shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col space-y-8"
+                                        className="comment-aura group bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-4 rounded-lg shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col space-y-3"
                                     >
-                                        <div className="flex items-start gap-8">
+                                        <div className="flex items-start gap-3">
                                             <div className="relative shrink-0">
-                                                <div className="size-16 rounded-full bg-gradient-to-tr from-slate-100 to-white dark:from-white/10 dark:to-white/5 flex items-center justify-center text-blue-600 font-black text-xl border-4 border-white dark:border-[#0a0f16] shadow-xl group-hover:rotate-6 transition-transform duration-500">
+                                                <div className="size-8 rounded-full bg-gradient-to-tr from-slate-100 to-white dark:from-white/10 dark:to-white/5 flex items-center justify-center text-blue-600 font-black text-xl border-4 border-white dark:border-[#0a0f16] shadow-xl group-hover:rotate-6 transition-transform duration-500">
                                                     {comment.author.charAt(0)}
                                                 </div>
                                                 <div className="absolute -bottom-1 -right-1 size-7 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg border-2 border-white dark:border-[#0a0f16]">
@@ -269,11 +269,11 @@ export default function CommentModeration() {
                                                 <div className="flex justify-between items-center">
                                                     <div>
                                                         <h4 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none group-hover:text-blue-600 transition-colors">{comment.author}</h4>
-                                                        <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mt-2 flex items-center gap-2">
+                                                        <p className="font-semibold text-blue-500 uppercase tracking-wide mt-2 flex items-center gap-2">
                                                             <Globe size={10} /> En: <span className="text-slate-400 italic">&quot;{comment.context}&quot;</span>
                                                         </p>
                                                     </div>
-                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{new Date(comment.created_at).toLocaleDateString('es-ES', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                                                    <span className="font-semibold text-slate-400 uppercase tracking-wide">{new Date(comment.created_at).toLocaleDateString('es-ES', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                                                 </div>
                                                 <p className="text-base text-slate-600 dark:text-slate-300 font-medium leading-relaxed italic">
                                                     &ldquo;{comment.text}&rdquo;
@@ -282,15 +282,15 @@ export default function CommentModeration() {
                                         </div>
 
                                         <div className="flex gap-4 pt-8 border-t border-slate-100 dark:border-white/5">
-                                            <button className="flex-1 py-4 bg-blue-600 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95 flex items-center justify-center gap-3">
+                                            <button className="flex-1 py-1.5 bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95 flex items-center justify-center gap-3">
                                                 <CheckCircle2 size={16} /> Aprobar Registro
                                             </button>
-                                            <button className="px-10 py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-slate-200 transition-all active:scale-95">
+                                            <button className="px-4 py-1.5 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-[10px] font-semibold uppercase tracking-wide rounded-lg hover:bg-slate-200 transition-all active:scale-95">
                                                 Responder
                                             </button>
                                             <button 
                                                 onClick={() => handleDelete(comment.id)}
-                                                className="size-14 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-2xl border border-rose-100 dark:border-rose-900/30 flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all duration-500 shadow-sm hover:shadow-rose-500/20 active:scale-90"
+                                                className="size-7 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-lg border border-rose-100 dark:border-rose-900/30 flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all duration-500 shadow-sm hover:shadow-rose-500/20 active:scale-90"
                                             >
                                                 <Trash2 size={20} />
                                             </button>
@@ -299,13 +299,13 @@ export default function CommentModeration() {
                                 ))}
                             </motion.div>
                         ) : (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-40 text-center space-y-6">
-                                <div className="size-24 rounded-[3rem] bg-slate-50 dark:bg-white/5 border-2 border-dashed border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto text-slate-200">
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-1.5 text-center space-y-6">
+                                <div className="size-10 rounded-lg bg-slate-50 dark:bg-white/5 border-2 border-dashed border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto text-slate-200">
                                     <Sparkles size={48} strokeWidth={1} />
                                 </div>
                                 <div className="space-y-2">
                                     <p className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight">Comunidad Limpia</p>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">No hay interacciones pendientes de moderación.</p>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">No hay interacciones pendientes de moderación.</p>
                                 </div>
                             </motion.div>
                         )}

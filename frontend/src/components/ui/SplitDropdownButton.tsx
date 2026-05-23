@@ -82,10 +82,10 @@ export default function SplitDropdownButton({ onMainClick, onOptionClick, mainLa
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 5, scale: 0.98 }}
                         transition={{ duration: 0.15, ease: "easeOut" }}
-                        className="absolute top-9 right-0 w-64 bg-white dark:bg-[#252628] border border-slate-200 dark:border-white/10 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)] py-2 z-[100] origin-top-right overflow-hidden"
+                        className="absolute top-9 right-0 w-64 bg-white dark:bg-[#252628] border border-slate-200 dark:border-white/10 rounded-md shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)] py-2 z-[100] origin-top-right overflow-hidden"
                     >
                         <div className="px-3 pb-2 pt-1 mb-1 flex items-center justify-between border-b border-slate-100 dark:border-white/5">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Crear</span>
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Crear</span>
                             <span className="text-[10px] font-bold text-blue-500 cursor-pointer hover:underline">Gestionar</span>
                         </div>
 

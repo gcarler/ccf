@@ -56,7 +56,7 @@ export default function AuditDetailPage() {
     }, [id, token]);
 
     if (loading) {
-        return <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Consultando bitácora de seguridad...</div>;
+        return <div className="p-4 text-center animate-pulse font-semibold uppercase tracking-wide text-slate-400">Consultando bitácora de seguridad...</div>;
     }
 
     return (
@@ -69,30 +69,30 @@ export default function AuditDetailPage() {
                 ]}
             />
 
-            <main className="flex-1 overflow-y-auto p-8 lg:p-12">
-                <div className="max-w-4xl mx-auto space-y-8">
+            <main className="flex-1 overflow-y-auto p-4 lg:p-4">
+                <div className="max-w-4xl mx-auto space-y-3">
                     <header className="space-y-4">
                         <div className="flex items-center gap-3">
                             <DSBadge tone="violet" label="SECURITY_LOG" />
                             <DSBadge tone="blue" label={log.action} />
                         </div>
-                        <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">
+                        <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">
                             Detalle de Operación
                         </h1>
                     </header>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2 space-y-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                        <div className="lg:col-span-2 space-y-3">
                             <DSCard>
-                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Descripción del Evento</h3>
+                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Descripción del Evento</h3>
                                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                                     {log.description}
                                 </p>
                             </DSCard>
 
                             <DSCard>
-                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Metadatos de la Transacción</h3>
-                                <div className="bg-slate-900 rounded-2xl p-6 overflow-x-auto">
+                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Metadatos de la Transacción</h3>
+                                <div className="bg-slate-900 rounded-lg p-3 overflow-x-auto">
                                     <pre className="text-emerald-400 text-xs font-mono">
                                         {JSON.stringify(log.metadata, null, 4)}
                                     </pre>
@@ -104,24 +104,24 @@ export default function AuditDetailPage() {
                             <DSCard>
                                 <div className="space-y-6">
                                     <div className="space-y-2">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Actor</p>
+                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Actor</p>
                                         <div className="flex items-center gap-2">
                                             <div className="size-8 rounded-lg bg-slate-900 text-white flex items-center justify-center">
                                                 <User size={16} />
                                             </div>
-                                            <span className="text-xs font-black uppercase">{log.actor}</span>
+                                            <span className="text-xs font-semibold uppercase">{log.actor}</span>
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Marca de Tiempo</p>
+                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Marca de Tiempo</p>
                                         <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400">
                                             <Clock size={14} /> {new Date(log.timestamp).toLocaleString()}
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Dirección IP</p>
+                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Dirección IP</p>
                                         <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400">
                                             <Globe size={14} /> {log.ip_address}
                                         </div>
@@ -129,7 +129,7 @@ export default function AuditDetailPage() {
 
                                     <div className="h-px bg-slate-100 dark:bg-white/5" />
 
-                                    <div className="flex items-center gap-2 text-[10px] font-black text-emerald-600 uppercase tracking-widest">
+                                    <div className="flex items-center gap-2 font-semibold text-emerald-600 uppercase tracking-wide">
                                         <Lock size={12} /> Registro Inmutable
                                     </div>
                                 </div>

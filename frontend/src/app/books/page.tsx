@@ -34,7 +34,7 @@ export default function BooksPage() {
             <div className="pt-28" />
 
             {/* Hero */}
-            <section className="py-4 px-6 text-center relative">
+            <section className="py-1.5 px-3 text-center relative">
                 <div className="absolute inset-0 bg-gradient-to-b from-sky-600/10 to-transparent pointer-events-none" />
                 <div className="max-w-4xl mx-auto relative">
                     <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-500/20 text-sky-400 text-[11px] font-bold uppercase tracking-wide mb-3">
@@ -50,13 +50,13 @@ export default function BooksPage() {
                         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
                         <input value={search} onChange={e => setSearch(e.target.value)}
                             placeholder="Buscar libro o autor..."
-                            className="w-full pl-12 pr-5 py-4 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-[14px] outline-none focus:ring-2 focus:ring-sky-500/30 backdrop-blur" />
+                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-sm outline-none focus:ring-2 focus:ring-sky-500/30 backdrop-blur" />
                     </div>
                 </div>
             </section>
 
             {/* Filters */}
-            <div className="max-w-6xl mx-auto px-6 flex items-center gap-3 flex-wrap mb-3">
+            <div className="max-w-6xl mx-auto px-3 flex items-center gap-3 flex-wrap mb-3">
                 <Filter size={12} className="text-slate-600" />
                 {CATEGORIES.map(c => (
                     <button key={c} onClick={() => setCat(c)}
@@ -74,7 +74,7 @@ export default function BooksPage() {
             </div>
 
             {/* Books Grid */}
-            <div className="max-w-6xl mx-auto px-6 pb-20">
+            <div className="max-w-6xl mx-auto px-3 pb-4">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {filtered.map((book, i) => (
                         <motion.div key={book.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
@@ -98,8 +98,8 @@ export default function BooksPage() {
                                 </div>
                             </div>
                             {/* Info */}
-                            <div className="p-5">
-                                <p className="text-[14px] font-bold text-white leading-snug group-hover:text-sky-400 transition-colors">{book.title}</p>
+                            <div className="p-3">
+                                <p className="text-sm font-bold text-white leading-snug group-hover:text-sky-400 transition-colors">{book.title}</p>
                                 <p className="text-[11px] text-slate-500 mt-1 font-medium">{book.author}</p>
                                 <p className="text-[11px] text-slate-400 mt-2 leading-relaxed line-clamp-2">{book.desc}</p>
                                 <button className={clsx("mt-4 w-full py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-2",

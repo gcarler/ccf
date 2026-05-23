@@ -75,12 +75,12 @@ export default function LoginPage() {
                     transition={{ delay: 0.4 }}
                     className="relative z-10"
                 >
-                    <div className="inline-flex items-center gap-3 border border-white/20 rounded-full px-5 py-2.5 bg-white/5 backdrop-blur-md">
+                    <div className="inline-flex items-center gap-3 border border-white/20 rounded-full px-3 py-2.5 bg-white/5 backdrop-blur-md">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                             <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round"/>
                             <circle cx="12" cy="4" r="1.5" fill="white" stroke="none"/>
                         </svg>
-                        <span className="text-white font-bold uppercase tracking-[0.2em] text-[10px]">
+                        <span className="text-white font-bold uppercase tracking-wide text-[10px]">
                             Ministerio Internacional
                         </span>
                     </div>
@@ -93,13 +93,13 @@ export default function LoginPage() {
                     transition={{ delay: 0.6, duration: 0.8 }}
                     className="relative z-10"
                 >
-                    <h1 className="font-black tracking-[-0.04em] leading-[0.88] text-white text-[clamp(3rem,6vw,4.5rem)] m-0">
+                    <h1 className="font-bold tracking-[-0.04em] leading-[0.88] text-white text-[clamp(3rem,6vw,4.5rem)] m-0">
                         EL <br /> FARO
                     </h1>
-                    <p className="text-ccf-blue-light text-[clamp(1rem,2vw,1.25rem)] font-black tracking-[0.2em] uppercase mt-6 leading-[1.4]">
+                    <p className="text-ccf-blue-light text-[clamp(1rem,2vw,1.25rem)] font-bold tracking-wide uppercase mt-3 leading-[1.4]">
                         Comunidad <br /> Cristiana
                     </p>
-                    <div className="w-16 h-1.5 bg-white mt-8 rounded-full" />
+                    <div className="w-16 h-1.5 bg-white mt-3 rounded-full" />
                 </motion.div>
 
                 {/* Bottom motto */}
@@ -139,22 +139,22 @@ export default function LoginPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 }}
-                        className="mb-14"
+                        className="mb-4"
                     >
                         <h2 className="text-[clamp(2rem,4vw,2.75rem)] font-extrabold text-ccf-blue-dark tracking-[-0.02em] leading-none m-0 mb-4">
                             Bienvenido
                         </h2>
-                        <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] m-0">
+                        <p className="text-gray-400 font-bold uppercase tracking-wide text-[10px] m-0">
                             Acceso a la plataforma digital
                         </p>
                     </motion.div>
 
                     {/* Form */}
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-7">
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
 
                         {/* Email */}
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] block mb-3 ml-2">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-3 ml-2">
                                 Email
                             </label>
                             <input
@@ -170,10 +170,10 @@ export default function LoginPage() {
                         {/* Password */}
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
                             <div className="flex justify-between items-center mb-3 mx-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                                     Contraseña
                                 </label>
-                                <Link href="#" className="text-[9px] text-ccf-blue-light font-black uppercase tracking-[0.15em] no-underline">
+                                <Link href="#" className="text-[9px] text-ccf-blue-light font-bold uppercase tracking-wider no-underline">
                                     ¿Olvidaste la clave?
                                 </Link>
                             </div>
@@ -204,7 +204,7 @@ export default function LoginPage() {
                                     initial={{ opacity: 0, scale: 0.96 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.96 }}
-                                    className="px-6 py-3.5 bg-rose-50 border-2 border-rose-200 rounded-full text-rose-600 text-[11px] font-black text-center uppercase tracking-[0.1em]"
+                                    className="px-3 py-3.5 bg-rose-50 border-2 border-rose-200 rounded-lg text-rose-600 text-[11px] font-bold text-center uppercase tracking-wider"
                                 >
                                     {error}
                                 </motion.div>
@@ -234,12 +234,12 @@ export default function LoginPage() {
                     </form>
 
                     {/* Divider */}
-                    <div className="relative my-9">
+                    <div className="relative my-4">
                         <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t-2 border-gray-100" />
                         </div>
                         <div className="relative flex justify-center">
-                            <span className="bg-white px-4 text-[9px] font-black uppercase tracking-[0.3em] text-gray-300">
+                            <span className="bg-white px-4 text-[9px] font-bold uppercase tracking-wide text-gray-300">
                                 O bien
                             </span>
                         </div>
@@ -251,7 +251,7 @@ export default function LoginPage() {
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.85 }}
                         type="button"
-                        className="login-google-btn mb-10"
+                        className="login-google-btn mb-4"
                         onClick={() => window.location.href = '/api/auth/google/login'}
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24">
@@ -270,12 +270,12 @@ export default function LoginPage() {
                         transition={{ delay: 0.95 }}
                         className="text-center"
                     >
-                        <p className="text-gray-400 text-[10px] font-bold tracking-[0.15em] uppercase mb-2.5">
+                        <p className="text-gray-400 text-[10px] font-bold tracking-wider uppercase mb-2.5">
                             ¿No tienes una cuenta ministerial?
                         </p>
                         <Link
                             href="/register"
-                            className="text-ccf-blue-light font-black text-[10px] uppercase tracking-[0.15em] no-underline"
+                            className="text-ccf-blue-light font-bold text-[10px] uppercase tracking-wider no-underline"
                         >
                             Solicitar registro ahora
                         </Link>

@@ -121,7 +121,7 @@ export default function MessagingDetailPage() {
                     <div className="lg:col-span-2 space-y-3">
                         <DSCard>
                             <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Contenido del Mensaje</h3>
-                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                            <div className="p-4 rounded-md bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
                                 <p className="text-sm font-medium text-slate-800 dark:text-slate-200 leading-relaxed">
                                     {campaign.content}
                                 </p>

@@ -41,24 +41,24 @@ export default function SpiritualTimelinePanel() {
         return (
             <div className="flex flex-col items-center justify-center h-40 gap-3">
                 <Loader2 className="animate-spin text-blue-600" size={24} />
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Cargando cronograma...</p>
+                <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Cargando cronograma...</p>
             </div>
         );
     }
 
     return (
-        <div className="space-y-10 p-6">
+        <div className="space-y-3 p-3">
             <div className="relative">
                 {/* Vertical line with glow */}
                 <div className="absolute left-[21px] top-6 bottom-6 w-[2px] bg-slate-200 dark:bg-white/[0.04]">
                     <div className="absolute inset-0 bg-blue-500 blur-[2px] opacity-20" />
                 </div>
 
-                <div className="space-y-8">
+                <div className="space-y-3">
                     {milestones.length === 0 ? (
-                        <div className="text-center py-16 bg-slate-50 dark:bg-white/[0.02] rounded-[2.5rem] border border-dashed border-slate-200 dark:border-white/10">
+                        <div className="text-center py-1.5 bg-slate-50 dark:bg-white/[0.02] rounded-lg border border-dashed border-slate-200 dark:border-white/10">
                             <Heart className="mx-auto text-slate-200 dark:text-white/10 mb-4 animate-pulse" size={48} />
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Caminando hacia la meta...</p>
+                            <p className="font-semibold text-slate-400 uppercase tracking-wide">Caminando hacia la meta...</p>
                         </div>
                     ) : milestones.map((m) => {
                         const def = MILESTONE_DEFS[m.type] ?? {
@@ -78,20 +78,20 @@ export default function SpiritualTimelinePanel() {
                                 className="flex items-start gap-5 group"
                             >
                                 <div className={clsx(
-                                    'size-11 rounded-[1.2rem] flex items-center justify-center shrink-0 border-2 relative z-10 transition-all group-hover:scale-110 shadow-lg',
+                                    'size-6 rounded-lg flex items-center justify-center shrink-0 border-2 relative z-10 transition-all group-hover:scale-110 shadow-lg',
                                     def.bg, def.border
                                 )}>
                                     <Icon size={18} className={clsx('transition-all', def.color)} />
                                 </div>
 
-                                <div className="flex-1 bg-white dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.05] rounded-[2.2rem] p-5 shadow-sm group-hover:shadow-xl group-hover:shadow-blue-500/[0.03] transition-all group-hover:border-blue-500/20">
+                                <div className="flex-1 bg-white dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.05] rounded-lg p-3 shadow-sm group-hover:shadow-xl group-hover:shadow-blue-500/[0.03] transition-all group-hover:border-blue-500/20">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-[13px] font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tight">{def.label}</p>
+                                            <p className="font-semibold text-slate-900 dark:text-white leading-tight uppercase tracking-tight">{def.label}</p>
                                             {m.notes && <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1 leading-relaxed italic">&quot;{m.notes}&quot;</p>}
                                         </div>
                                         <div className="shrink-0 flex flex-col items-end gap-1">
-                                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 opacity-60">
+                                            <span className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 opacity-60">
                                                 {new Date(m.event_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
                                             </span>
                                             <Zap size={10} className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -106,7 +106,7 @@ export default function SpiritualTimelinePanel() {
 
             {/* Upcoming preview */}
             <div className="pt-8 border-t border-slate-100 dark:border-white/[0.04]">
-                <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-5 ml-2">Próximos Desafíos</h2>
+                <h2 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-5 ml-2">Próximos Desafíos</h2>
                 <div className="grid grid-cols-1 gap-3">
                     {Object.entries(MILESTONE_DEFS)
                         .filter(([key]) => !milestones.some(m => m.type === key))
@@ -116,12 +116,12 @@ export default function SpiritualTimelinePanel() {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 0.5 }}
                                 whileHover={{ opacity: 1, scale: 1.02 }}
-                                className="flex items-center gap-4 px-5 py-4 bg-slate-50 dark:bg-white/[0.02] rounded-[1.8rem] border border-slate-100 dark:border-white/[0.04] grayscale hover:grayscale-0 transition-all cursor-default"
+                                className="flex items-center gap-4 px-3 py-1.5 bg-slate-50 dark:bg-white/[0.02] rounded-lg border border-slate-100 dark:border-white/[0.04] grayscale hover:grayscale-0 transition-all cursor-default"
                             >
-                                <div className={clsx("size-8 rounded-xl flex items-center justify-center border", def.bg, def.border)}>
+                                <div className={clsx("size-8 rounded-md flex items-center justify-center border", def.bg, def.border)}>
                                     <def.icon size={14} className={def.color} />
                                 </div>
-                                <p className="text-[11px] font-black text-slate-600 dark:text-slate-400 flex-1 uppercase tracking-tight">{def.label}</p>
+                                <p className="font-semibold text-slate-600 dark:text-slate-400 flex-1 uppercase tracking-tight">{def.label}</p>
                                 <Lock size={12} className="text-slate-300 dark:text-white/10" />
                             </motion.div>
                         ))}

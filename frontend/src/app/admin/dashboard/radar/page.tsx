@@ -52,7 +52,7 @@ export default function PastorRadarPage() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="p-8 lg:p-12 space-y-12 max-w-[1600px] mx-auto font-display overflow-hidden relative">
+        <div className="p-4 lg:p-4 space-y-3 max-w-[1600px] mx-auto font-display overflow-hidden relative">
             <style jsx global>{`
                 .radar-aura {
                     position: relative;
@@ -99,14 +99,14 @@ export default function PastorRadarPage() {
                 <motion.div 
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/10 text-blue-500 rounded-full text-[10px] font-black uppercase tracking-[0.3em] w-fit border border-blue-500/20"
+                    className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/10 text-blue-500 rounded-full text-[10px] font-semibold uppercase tracking-wide w-fit border border-blue-500/20"
                 >
                     <Shield size={12} className="animate-pulse" /> Inteligencia Ministerial Optimus v3.9
                 </motion.div>
                 <motion.h1 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-5xl lg:text-6xl font-black tracking-tighter text-slate-900 dark:text-white uppercase leading-none"
+                    className="text-xl lg:text-xl font-bold tracking-tighter text-slate-900 dark:text-white uppercase leading-none"
                 >
                     Radar <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-400">Pastoral</span>
                 </motion.h1>
@@ -121,22 +121,22 @@ export default function PastorRadarPage() {
             </header>
 
             {loading ? (
-                <div className="py-40 flex flex-col items-center justify-center gap-6">
+                <div className="py-1.5 flex flex-col items-center justify-center gap-3">
                     <Loader2 className="animate-spin text-blue-600" size={64} strokeWidth={1.5} />
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] animate-pulse">Iniciando Red Neuronal...</p>
+                    <p className="font-semibold text-slate-400 uppercase tracking-wide animate-pulse">Iniciando Red Neuronal...</p>
                 </div>
             ) : error ? (
-                <div className="p-10 bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 rounded-[3rem] text-rose-600 text-center space-y-4">
+                <div className="p-4 bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 rounded-lg text-rose-600 text-center space-y-4">
                     <Zap size={40} className="mx-auto" />
-                    <p className="font-black uppercase tracking-widest">Error de Sincronización: {error}</p>
-                    <button onClick={fetchRadar} className="px-8 py-3 bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl">Reintentar</button>
+                    <p className="font-semibold uppercase tracking-wide">Error de Sincronización: {error}</p>
+                    <button onClick={fetchRadar} className="px-4 py-3 bg-rose-600 text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-xl">Reintentar</button>
                 </div>
             ) : (
                 <>
                 <motion.div 
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
                 >
                     <RadarStat label="Membresía Viva" value={data?.membresia_viva || 0} icon={Users} color="blue" trend="+5.2%" auraColor="rgba(37,99,235,0.15)" />
                     <RadarStat label="Bautismos" value={data?.bautismos_este_anio || 0} icon={Waves} color="cyan" trend="+12%" auraColor="rgba(6,182,212,0.15)" />
@@ -144,24 +144,24 @@ export default function PastorRadarPage() {
                     <RadarStat label="Recaudación" value={`$${(data?.recaudacion_mes || 0).toLocaleString()}`} icon={DollarSign} color="amber" trend="+15%" auraColor="rgba(245,158,11,0.15)" />
                 </motion.div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 relative z-10">
                     <motion.div 
                         initial={{ opacity: 0, x: -30 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3 }}
-                        className="lg:col-span-7 bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 p-10 rounded-[3.5rem] shadow-xl space-y-10 group"
+                        className="lg:col-span-7 bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 p-4 rounded-lg shadow-xl space-y-3 group"
                     >
                         <div className="flex items-center justify-between">
                             <div className="space-y-1">
-                                <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase flex items-center gap-3">
+                                <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tighter uppercase flex items-center gap-3">
                                     <BarChart3 className="text-blue-600" /> Crecimiento Orgánico
                                 </h2>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Métricas consolidadas semestrales</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Métricas consolidadas semestrales</p>
                             </div>
-                            <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-4 py-1.5 rounded-full tracking-[0.2em] border border-blue-100 uppercase">Live BI</span>
+                            <span className="font-semibold text-blue-600 bg-blue-50 px-4 py-1.5 rounded-full tracking-wide border border-blue-100 uppercase">Live BI</span>
                         </div>
                         
-                        <div className="h-72 flex items-end justify-between gap-4 pt-10 px-4">
+                        <div className="h-48 flex items-end justify-between gap-4 pt-10 px-4">
                             {[45, 70, 55, 90, 85, 100].map((h, i) => (
                                 <div key={i} className="flex-1 flex flex-col items-center gap-4 group/bar">
                                     <div 
@@ -171,11 +171,11 @@ export default function PastorRadarPage() {
                                         )}
                                         style={{ height: `${h}%` }}
                                     >
-                                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-all transform scale-90 group-hover/bar:scale-100 bg-slate-900 text-white px-3 py-1.5 rounded-xl text-[10px] font-black shadow-2xl">
+                                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-all transform scale-90 group-hover/bar:scale-100 bg-slate-900 text-white px-3 py-1.5 rounded-md font-semibold shadow-2xl">
                                             {h}%
                                         </div>
                                     </div>
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">M0{i+1}</span>
+                                    <span className="font-semibold text-slate-400 uppercase tracking-wide">M0{i+1}</span>
                                 </div>
                             ))}
                         </div>
@@ -185,14 +185,14 @@ export default function PastorRadarPage() {
                         initial={{ opacity: 0, x: 30 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.4 }}
-                        className="lg:col-span-5 glass-card p-10 rounded-[3.5rem] shadow-2xl space-y-10 relative overflow-hidden"
+                        className="lg:col-span-5 glass-card p-4 rounded-lg shadow-2xl space-y-3 relative overflow-hidden"
                     >
-                        <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:rotate-12 transition-transform duration-1000"><Sparkles size={120} /></div>
+                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:rotate-12 transition-transform duration-1000"><Sparkles size={120} /></div>
                         
-                        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase flex items-center gap-3">
+                        <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tighter uppercase flex items-center gap-3">
                             <Target className="text-indigo-500" /> Metas Trimestrales
                         </h2>
-                        <div className="space-y-8">
+                        <div className="space-y-3">
                             <GoalItem label="Bautismos Meta" target={50} current={data?.bautismos_este_anio || 0} color="bg-blue-500" />
                             <GoalItem label="Nuevos Miembros" target={200} current={35} color="bg-emerald-500" />
                             <GoalItem label="Estudiantes Liderazgo" target={80} current={12} color="bg-amber-500" />
@@ -200,9 +200,9 @@ export default function PastorRadarPage() {
 
                         <div className="pt-8 border-t border-white/5 space-y-6">
                             <div className="flex items-center gap-4">
-                                <div className="size-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-xl shadow-indigo-500/20"><Zap size={24} fill="currentColor" /></div>
+                                <div className="size-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-xl shadow-indigo-500/20"><Zap size={24} fill="currentColor" /></div>
                                 <div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sugerencia IA</p>
+                                    <p className="font-semibold text-slate-400 uppercase tracking-wide">Sugerencia IA</p>
                                     <p className="text-[13px] font-bold text-slate-700 dark:text-slate-300 leading-tight">Potenciar el ministerio de Hospitalidad para el próximo servicio.</p>
                                 </div>
                             </div>
@@ -224,20 +224,20 @@ function RadarStat({ label, value, icon: Icon, color, trend, auraColor }: any) {
     };
     return (
         <div 
-            className="radar-aura p-8 bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 rounded-[2.5rem] shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
+            className="radar-aura p-4 bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 rounded-lg shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
             style={{ '--aura-color': auraColor } as any}
         >
-            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-125 transition-transform duration-700"><Icon size={64} /></div>
+            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-125 transition-transform duration-700"><Icon size={64} /></div>
             <div className="space-y-6 relative z-10">
                 <div className="flex justify-between items-center">
-                    <div className={clsx("size-14 rounded-2xl flex items-center justify-center transition-transform group-hover:rotate-12", colorMap[color])}>
+                    <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:rotate-12", colorMap[color])}>
                         <Icon size={28} />
                     </div>
-                    <span className="px-3 py-1 bg-white/50 dark:bg-white/5 rounded-lg text-[9px] font-black text-emerald-500 border border-emerald-100 dark:border-emerald-900/30 uppercase">{trend}</span>
+                    <span className="px-3 py-1 bg-white/50 dark:bg-white/5 rounded-lg font-semibold text-emerald-500 border border-emerald-100 dark:border-emerald-900/30 uppercase">{trend}</span>
                 </div>
                 <div>
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{label}</p>
-                    <h4 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">{value}</h4>
+                    <p className="font-semibold text-slate-400 uppercase tracking-wide mb-1">{label}</p>
+                    <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tighter leading-none">{value}</h4>
                 </div>
             </div>
         </div>
@@ -248,7 +248,7 @@ function GoalItem({ label, target, current, color }: any) {
     const pct = Math.min(100, (current / target) * 100);
     return (
         <div className="space-y-3 group/goal">
-            <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em]">
+            <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide">
                 <span className="text-slate-500 dark:text-slate-400 group-hover/goal:text-blue-500 transition-colors">{label}</span>
                 <span className="text-slate-900 dark:text-white">{current} / {target}</span>
             </div>

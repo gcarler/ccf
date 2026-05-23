@@ -279,9 +279,12 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
       - name: Run Playwright smoke tests
+        env:
+          PLAYWRIGHT_MANAGED_WEBSERVER: "1"
         run: npm run test:e2e
       - name: Run Playwright authenticated tests (mandatory)
         env:
+          PLAYWRIGHT_MANAGED_WEBSERVER: "1"
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
           E2E_API_URL: ${{ secrets.E2E_API_URL }}

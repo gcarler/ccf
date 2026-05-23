@@ -80,7 +80,7 @@ export default function CursosPage() {
     const books = cmsBooks.length > 0 ? cmsBooks : PREMIUM_BOOKS;
 
     return (
-        <main className="pt-[88px] pb-32 overflow-hidden">
+        <main className="pt-[88px] pb-4 overflow-hidden">
             {/* ── TOAST NOTIFICATION ────────────────────── */}
             <AnimatePresence>
                 {toastMessage && (
@@ -88,7 +88,7 @@ export default function CursosPage() {
                         initial={{ opacity: 0, y: 50, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.9 }}
-                        className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-4 rounded-full shadow-2xl border"
+                        className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-3 py-1.5 rounded-full shadow-2xl border"
                         style={{
                             background: "var(--faro-surface)",
                             borderColor: "var(--faro-outline-variant)",
@@ -102,7 +102,7 @@ export default function CursosPage() {
             </AnimatePresence>
 
             {/* ── HERO ──────────────────────────────────── */}
-            <section className="relative h-[560px] flex items-center px-8 md:px-20 overflow-hidden">
+            <section className="relative h-[560px] flex items-center px-4 md:px-20 overflow-hidden">
                 <div className="absolute inset-0 z-0">
                     <Image
                         src="https://picsum.photos/seed/1481627834876-b7833e8f5570/1920/1080"
@@ -126,13 +126,13 @@ export default function CursosPage() {
                     className="relative z-10 max-w-4xl"
                 >
                     <span
-                        className="text-xs font-black uppercase tracking-[0.25em] mb-4 block"
+                        className="text-xs font-semibold uppercase tracking-wide mb-4 block"
                         style={{ color: "var(--faro-primary)" }}
                     >
                         {heroEyebrow}
                     </span>
                     <h1
-                        className="font-black tracking-tighter leading-none mb-6"
+                        className="font-bold tracking-tighter leading-none mb-3"
                         style={{
                             fontSize: "clamp(3rem, 8vw, 7rem)",
                             color: "var(--faro-on-background)",
@@ -160,16 +160,16 @@ export default function CursosPage() {
             </section>
 
             {/* ── CURSOS BENTO ──────────────────────────── */}
-            <section className="px-8 md:px-20 mt-24">
+            <section className="px-4 md:px-20 mt-24">
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-8"
+                    className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-3"
                 >
                     <div className="max-w-2xl">
                         <h2
-                            className="text-4xl md:text-5xl font-black mb-4 tracking-tight"
+                            className="text-lg md:text-xl font-black mb-4 tracking-tight"
                             style={{ color: "var(--faro-on-surface)" }}
                         >
                             Cursos & Academia
@@ -181,7 +181,7 @@ export default function CursosPage() {
                     </div>
                 </motion.div>
 
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                     {/* Featured course */}
                     {featuredCourse && (
                         <motion.div
@@ -189,7 +189,7 @@ export default function CursosPage() {
                             whileInView={{ opacity: 1, scale: 1 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.5 }}
-                            className="md:col-span-8 group relative rounded-3xl overflow-hidden min-h-[450px] cursor-pointer"
+                            className="md:col-span-8 group relative rounded-lg overflow-hidden min-h-[450px] cursor-pointer"
                             style={{ background: "var(--faro-surface-container-low)" }}
                         >
                             <Link href={`/faro/cursos/${featuredCourse.id || "1"}`} className="block absolute inset-0 z-20" />
@@ -206,10 +206,10 @@ export default function CursosPage() {
                                     background: "linear-gradient(to top, var(--faro-surface-container-lowest) 0%, transparent 60%)",
                                 }}
                             />
-                            <div className="absolute bottom-0 p-8 md:p-12 w-full relative z-10 flex flex-col justify-end h-full">
+                            <div className="absolute bottom-0 p-4 md:p-4 w-full relative z-10 flex flex-col justify-end h-full">
                                 <div>
                                     <span
-                                        className="inline-block px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-6"
+                                        className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide mb-3"
                                         style={{
                                             background: "rgba(44,96,157,0.2)",
                                             color: "var(--faro-primary)",
@@ -219,27 +219,27 @@ export default function CursosPage() {
                                         {featuredCourse.tag || "Destacado"}
                                     </span>
                                     <h3
-                                        className="text-4xl md:text-5xl font-black mb-4 tracking-tight"
+                                        className="text-lg md:text-xl font-black mb-4 tracking-tight"
                                         style={{ color: "var(--faro-on-surface)" }}
                                     >
                                         {featuredCourse.title}
                                     </h3>
-                                    <p className="max-w-2xl mb-8 text-lg line-clamp-2 leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>
+                                    <p className="max-w-2xl mb-3 text-lg line-clamp-2 leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>
                                         {featuredCourse.excerpt || featuredCourse.desc}
                                     </p>
-                                    <div className="flex flex-wrap items-center gap-6">
+                                    <div className="flex flex-wrap items-center gap-3">
                                         {featuredCourse.lessons && (
-                                            <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest" style={{ color: "var(--faro-on-surface)" }}>
+                                            <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide" style={{ color: "var(--faro-on-surface)" }}>
                                                 <Clock size={16} style={{ color: "var(--faro-primary)" }} />
                                                 {featuredCourse.lessons} Semanas
                                             </span>
                                         )}
-                                        <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest" style={{ color: "var(--faro-on-surface)" }}>
+                                        <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide" style={{ color: "var(--faro-on-surface)" }}>
                                             <User size={16} style={{ color: "var(--faro-primary)" }} />
                                             {featuredCourse.modality || "Online"}
                                         </span>
                                         <button
-                                            className="ml-auto px-8 py-3.5 rounded-2xl font-black text-sm text-white transition-all hover:scale-105 uppercase tracking-widest flex items-center gap-2"
+                                            className="ml-auto px-4 py-3.5 rounded-lg font-black text-sm text-white transition-all hover:scale-105 uppercase tracking-wide flex items-center gap-2"
                                             style={{ background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))" }}
                                         >
                                             {featuredCourse.cta || "Ver Curso"} <ArrowRight size={16} />
@@ -251,7 +251,7 @@ export default function CursosPage() {
                     )}
 
                     {/* Secondary courses */}
-                    <div className="md:col-span-4 flex flex-col gap-6">
+                    <div className="md:col-span-4 flex flex-col gap-3">
                         {secondaryCourses.map((c: CourseItem, i: number) => (
                             <Link href={`/faro/cursos/${c.id || i}`} key={i} className="block flex-1">
                                 <motion.div
@@ -259,7 +259,7 @@ export default function CursosPage() {
                                     whileInView={{ opacity: 1, x: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: i * 0.1 }}
-                                    className="h-full rounded-3xl p-8 group transition-all hover:-translate-y-2 hover:shadow-2xl flex flex-col justify-between"
+                                    className="h-full rounded-lg p-4 group transition-all hover:-translate-y-2 hover:shadow-2xl flex flex-col justify-between"
                                     style={{
                                         background: "var(--faro-surface-container-high)",
                                         border: "1px solid var(--faro-outline-variant)",
@@ -267,19 +267,19 @@ export default function CursosPage() {
                                 >
                                     <div>
                                         <span
-                                            className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 block"
+                                            className="text-[10px] font-semibold uppercase tracking-wide mb-4 block"
                                             style={{ color: "var(--faro-secondary)" }}
                                         >
                                             {c.modality || c.tag}
                                         </span>
                                         <h4
-                                            className="text-2xl font-black mb-4 group-hover:opacity-80 transition-opacity leading-tight"
+                                            className="text-lg font-black mb-4 group-hover:opacity-80 transition-opacity leading-tight"
                                             style={{ color: "var(--faro-on-surface)" }}
                                         >
                                             {c.title}
                                         </h4>
                                         <p
-                                            className="text-sm leading-relaxed line-clamp-3 mb-8"
+                                            className="text-sm leading-relaxed line-clamp-3 mb-3"
                                             style={{ color: "var(--faro-on-surface-variant)" }}
                                         >
                                             {c.excerpt || c.desc}
@@ -287,7 +287,7 @@ export default function CursosPage() {
                                     </div>
                                     <div className="flex justify-between items-center mt-auto border-t pt-6" style={{ borderColor: "var(--faro-outline-variant)" }}>
                                         <span
-                                            className="font-black text-xs uppercase tracking-widest"
+                                            className="font-black text-xs uppercase tracking-wide"
                                             style={{ color: "var(--faro-primary)" }}
                                         >
                                             {c.cta || "Ver Curso"}
@@ -307,7 +307,7 @@ export default function CursosPage() {
 
             {/* ── LIBRERÍA ──────────────────────────────── */}
             <section
-                className="px-8 md:px-20 mt-32 py-24"
+                className="px-4 md:px-20 mt-32 py-1.5"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
                 <motion.div 
@@ -317,7 +317,7 @@ export default function CursosPage() {
                     className="max-w-xl mb-16"
                 >
                     <h2
-                        className="text-4xl md:text-5xl font-black mb-6 tracking-tight"
+                        className="text-lg md:text-xl font-black mb-3 tracking-tight"
                         style={{ color: "var(--faro-on-surface)" }}
                     >
                         Nuestra Librería
@@ -333,7 +333,7 @@ export default function CursosPage() {
                         Próximamente tendremos libros disponibles.
                     </p>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                         {books.map((book, i) => (
                             <motion.div 
                                 initial={{ opacity: 0, y: 20 }}
@@ -343,7 +343,7 @@ export default function CursosPage() {
                                 key={book.title} 
                                 className="group flex flex-col h-full"
                             >
-                                <div className="relative w-full aspect-[2/3] rounded-2xl mb-6 overflow-hidden shadow-xl transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl">
+                                <div className="relative w-full aspect-[2/3] rounded-lg mb-3 overflow-hidden shadow-xl transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl">
                                     <Image
                                         src={book.img}
                                         alt={book.title}
@@ -360,27 +360,27 @@ export default function CursosPage() {
                                     {book.title}
                                 </h5>
                                 <p
-                                    className="text-xs font-black mb-3 uppercase tracking-widest"
+                                    className="text-xs font-semibold mb-3 uppercase tracking-wide"
                                     style={{ color: "var(--faro-primary)" }}
                                 >
                                     {book.author}
                                 </p>
                                 <p
-                                    className="text-sm leading-relaxed mb-6 flex-grow"
+                                    className="text-sm leading-relaxed mb-3 flex-grow"
                                     style={{ color: "var(--faro-on-surface-variant)" }}
                                 >
                                     {book.desc}
                                 </p>
                                 <div className="flex items-center justify-between pt-4 border-t" style={{ borderColor: "var(--faro-outline-variant)" }}>
                                     <span
-                                        className="text-2xl font-black"
+                                        className="text-lg font-black"
                                         style={{ color: "var(--faro-on-surface)" }}
                                     >
                                         {book.price}
                                     </span>
                                     <button
                                         onClick={() => handleAddToCart(book.title)}
-                                        className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all hover:scale-110 hover:-rotate-6"
+                                        className="w-12 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110 hover:-rotate-6"
                                         style={{
                                             background: "var(--faro-primary-container)",
                                             color: "var(--faro-primary)",
@@ -396,12 +396,12 @@ export default function CursosPage() {
             </section>
 
             {/* ── CTA ACADEMIA ─────────────────────────── */}
-            <section className="px-8 md:px-20 mt-32">
+            <section className="px-4 md:px-20 mt-32">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="rounded-[3rem] p-12 md:p-24 relative overflow-hidden shadow-2xl"
+                    className="rounded-lg p-4 md:p-24 relative overflow-hidden shadow-2xl"
                     style={{
                         background: "linear-gradient(135deg, var(--faro-surface-container-high) 0%, var(--faro-surface-container-low) 100%)",
                         border: "1px solid var(--faro-outline-variant)",
@@ -411,16 +411,16 @@ export default function CursosPage() {
                         className="absolute top-0 right-0 w-96 h-96 blur-[120px] rounded-full -mr-32 -mt-32 pointer-events-none"
                         style={{ background: "rgba(44,96,157,0.15)" }}
                     />
-                    <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+                    <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
                         <div>
                             <h2
-                                className="text-4xl md:text-6xl font-black mb-6 tracking-tight leading-[1.1]"
+                                className="text-lg md:text-xl font-black mb-3 tracking-tight leading-[1.1]"
                                 style={{ color: "var(--faro-on-surface)" }}
                             >
                                 Únete a la <br/>Academia FARO
                             </h2>
                             <p
-                                className="text-xl leading-relaxed mb-10"
+                                className="text-xl leading-relaxed mb-3"
                                 style={{ color: "var(--faro-on-surface-variant)" }}
                             >
                                 Recibe actualizaciones sobre nuevos cursos, lanzamientos de
@@ -435,7 +435,7 @@ export default function CursosPage() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="Tu correo electrónico"
                                     disabled={isSubmitting}
-                                    className="flex-1 rounded-2xl px-6 py-4 text-lg focus:outline-none transition-shadow focus:shadow-xl"
+                                    className="flex-1 rounded-lg px-3 py-1.5 text-lg focus:outline-none transition-shadow focus:shadow-xl"
                                     style={{
                                         background: "var(--faro-surface-container-highest)",
                                         color: "var(--faro-on-surface)",
@@ -444,7 +444,7 @@ export default function CursosPage() {
                                 />
                                 <button
                                     type="submit"
-                                    className="px-10 py-4 rounded-2xl font-black text-sm text-white shadow-lg transition-all hover:scale-105 uppercase tracking-widest"
+                                    className="px-4 py-1.5 rounded-lg font-black text-sm text-white shadow-lg transition-all hover:scale-105 uppercase tracking-wide"
                                     style={{
                                         background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
                                     }}
@@ -453,11 +453,11 @@ export default function CursosPage() {
                                 </button>
                             </form>
                         </div>
-                        <div className="hidden md:grid grid-cols-2 gap-6">
+                        <div className="hidden md:grid grid-cols-2 gap-3">
                             <motion.div
                                 initial={{ y: 20 }}
                                 whileInView={{ y: 0 }}
-                                className="relative aspect-square rounded-[2rem] overflow-hidden shadow-2xl"
+                                className="relative aspect-square rounded-lg overflow-hidden shadow-2xl"
                                 style={{ background: "var(--faro-surface)" }}
                             >
                                 <Image
@@ -471,7 +471,7 @@ export default function CursosPage() {
                             <motion.div
                                 initial={{ y: 40 }}
                                 whileInView={{ y: 20 }}
-                                className="relative aspect-square rounded-[2rem] overflow-hidden shadow-2xl"
+                                className="relative aspect-square rounded-lg overflow-hidden shadow-2xl"
                                 style={{ background: "var(--faro-surface)" }}
                             >
                                 <Image

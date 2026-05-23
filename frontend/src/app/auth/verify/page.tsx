@@ -34,19 +34,19 @@ function VerifyEmailContent() {
     }, [token]);
 
     const icon = () => {
-        if (status === 'loading') return <Loader2 className="w-12 h-12 animate-spin text-primary" />;
-        if (status === 'success') return <CheckCircle2 className="w-12 h-12 text-emerald-400" />;
-        return <XCircle className="w-12 h-12 text-rose-400" />;
+        if (status === 'loading') return <Loader2 className="w-12 h-8 animate-spin text-primary" />;
+        if (status === 'success') return <CheckCircle2 className="w-12 h-8 text-emerald-400" />;
+        return <XCircle className="w-12 h-8 text-rose-400" />;
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 px-6">
-            <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl p-10 text-center space-y-6">
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 px-3">
+            <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl rounded-lg border border-white/10 shadow-2xl p-4 text-center space-y-6">
                 <div className="flex justify-center">{icon()}</div>
-                <h1 className="text-2xl font-black">Verificación de correo</h1>
+                <h1 className="text-lg font-black">Verificación de correo</h1>
                 <p className="text-slate-300 text-sm leading-relaxed">{message}</p>
                 <div className="space-y-2">
-                    <Link href="/login" className="block w-full py-3 rounded-2xl font-black uppercase tracking-widest text-sm bg-primary text-white hover:bg-primary/90 transition">
+                    <Link href="/login" className="block w-full py-3 rounded-lg font-semibold uppercase tracking-wide text-sm bg-primary text-white hover:bg-primary/90 transition">
                         Ir al inicio de sesión
                     </Link>
                     <Link href="/auth/forgot" className="block text-sm text-primary font-semibold hover:underline">

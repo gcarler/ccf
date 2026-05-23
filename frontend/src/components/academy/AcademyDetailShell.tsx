@@ -65,7 +65,7 @@ export function AcademyDetailShell({
             </div>
 
             <div className="relative z-10 max-w-4xl mx-auto flex flex-col min-h-screen">
-                <header className="sticky top-0 bg-slate-950/85 backdrop-blur-2xl border-b border-white/5 px-6 pt-6 pb-4 flex flex-col gap-4">
+                <header className="sticky top-0 bg-slate-950/85 backdrop-blur-2xl border-b border-white/5 px-3 pt-6 pb-4 flex flex-col gap-4">
                     <div className="flex items-center justify-between gap-4">
                         <button
                             onClick={handleBack}
@@ -75,8 +75,8 @@ export function AcademyDetailShell({
                             <ArrowLeft size={18} />
                         </button>
                         <div className="flex-1 text-center">
-                            <p className="text-[10px] font-black uppercase tracking-wide text-white/40">Academia</p>
-                            <h1 className="text-xl font-black tracking-tight text-white">{title}</h1>
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">Academia</p>
+                            <h1 className="text-xl font-bold tracking-tight text-white">{title}</h1>
                             {description && <p className="text-xs text-white/60 mt-1 font-medium leading-tight">{description}</p>}
                         </div>
                         <div className="flex items-center justify-end w-10 text-white">
@@ -87,7 +87,7 @@ export function AcademyDetailShell({
                     {headerContent && <div className="w-full">{headerContent}</div>}
                 </header>
 
-                <main className={`flex-1 overflow-y-auto pb-24 px-6 ${contentClassName ?? ""}`}>
+                <main className={`flex-1 overflow-y-auto pb-4 px-3 ${contentClassName ?? ""}`}>
                     {children}
                 </main>
             </div>

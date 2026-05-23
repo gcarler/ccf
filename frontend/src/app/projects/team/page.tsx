@@ -61,9 +61,9 @@ export default function TeamPage() {
                                 <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
                                     <Users size={14} className="text-blue-600" />
                                 </div>
-                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">Recursos Humanos</span>
+                                <span className="text-[10px] font-semibold uppercase tracking-wide text-blue-600">Recursos Humanos</span>
                             </div>
-                            <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white leading-none">
+                            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">
                                 Equipo del Proyecto
                             </h1>
                             <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
@@ -72,14 +72,14 @@ export default function TeamPage() {
                         </div>
                         <div className="flex items-center gap-3">
                             {!loading && team.length > 0 && (
-                                <div className="px-4 py-2 bg-white dark:bg-[#1a1b1e] rounded-xl border border-slate-200 dark:border-white/[0.06] shadow-sm text-center">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Cap. Prom.</p>
-                                    <p className="text-[15px] font-black text-blue-600">
+                                <div className="px-4 py-2 bg-white dark:bg-[#1a1b1e] rounded-md border border-slate-200 dark:border-white/[0.06] shadow-sm text-center">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Cap. Prom.</p>
+                                    <p className="text-sm font-semibold text-blue-600">
                                         {Math.round(team.reduce((a, m) => a + m.capacity_percent, 0) / team.length)}%
                                     </p>
                                 </div>
                             )}
-                            <button className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all">
+                            <button className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all">
                                 <UserPlus size={13} /> Invitar
                             </button>
                         </div>
@@ -124,7 +124,7 @@ export default function TeamPage() {
                                                 <div>
                                                     <p className="text-[13px] font-medium text-slate-900 dark:text-white leading-none">{member.name}</p>
                                                     <span className={clsx(
-                                                        "text-[9px] font-black uppercase tracking-widest mt-0.5 block",
+                                                        "text-[9px] font-semibold uppercase tracking-wide mt-0.5 block",
                                                         isOverloaded ? "text-rose-500" : "text-slate-400"
                                                     )}>{member.load_status}</span>
                                                 </div>
@@ -146,7 +146,7 @@ export default function TeamPage() {
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+                                            <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide">
                                                 <span className="text-slate-400">Saturación</span>
                                                 <span className={isOverloaded ? "text-rose-500" : "text-blue-600"}>{member.capacity_percent}%</span>
                                             </div>
@@ -160,7 +160,7 @@ export default function TeamPage() {
                                             </div>
                                         </div>
 
-                                        <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[10px] font-black uppercase text-blue-600 tracking-widest">
+                                        <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[10px] font-semibold uppercase text-blue-600 tracking-wide">
                                             Ver detalle <ChevronRight size={11} />
                                         </div>
                                     </motion.div>
@@ -182,7 +182,7 @@ export default function TeamPage() {
                             <div>
                                 <h3 className="text-sm font-medium text-slate-900 dark:text-white">{selectedMember.name}</h3>
                                 <span className={clsx(
-                                    "text-[9px] font-black uppercase tracking-widest",
+                                    "text-[9px] font-semibold uppercase tracking-wide",
                                     selectedMember.load_status === 'sobrecargado' ? "text-rose-500" : "text-emerald-500"
                                 )}>{selectedMember.load_status}</span>
                             </div>

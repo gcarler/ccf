@@ -87,40 +87,40 @@ export default function AdminMaintenancePage() {
     const renderList = () => (
         <div className="space-y-4">
             {visibleTasks.map((row, index) => (
-                <div key={row.id || index} className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[2rem] p-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div key={row.id || index} className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-5">
-                        <div className={clsx("size-12 rounded-2xl flex items-center justify-center", row.priority === 'Alta' ? "bg-rose-50 text-rose-500" : "bg-amber-50 text-amber-500")}>
+                        <div className={clsx("size-7 rounded-lg flex items-center justify-center", row.priority === 'Alta' ? "bg-rose-50 text-rose-500" : "bg-amber-50 text-amber-500")}>
                             <AlertCircle size={24} />
                         </div>
                         <div>
                             <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">{row.item}</h3>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{row.task}</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">{row.task}</p>
                         </div>
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{new Date(row.date).toLocaleDateString('es-ES')}</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{new Date(row.date).toLocaleDateString('es-ES')}</span>
                 </div>
             ))}
         </div>
     );
 
     const renderTable = () => (
-        <div className="rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
             <table className="w-full text-left">
                 <thead className="bg-slate-50 dark:bg-white/5">
                     <tr>
-                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Activo</th>
-                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Tarea</th>
-                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Fecha</th>
-                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Prioridad</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Activo</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden md:table-cell">Tarea</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden lg:table-cell">Fecha</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Prioridad</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                     {visibleTasks.map((row, index) => (
                         <tr key={row.id || index} className="hover:bg-slate-50 dark:hover:bg-white/[0.03]">
-                            <td className="px-5 py-4 text-sm font-bold text-slate-800 dark:text-slate-100">{row.item}</td>
-                            <td className="px-5 py-4 hidden md:table-cell text-[11px] text-slate-500">{row.task}</td>
-                            <td className="px-5 py-4 hidden lg:table-cell text-[11px] text-slate-400">{new Date(row.date).toLocaleDateString('es-ES')}</td>
-                            <td className="px-5 py-4"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", row.priority === 'Alta' ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600")}>{row.priority}</span></td>
+                            <td className="px-3 py-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">{row.item}</td>
+                            <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-slate-500">{row.task}</td>
+                            <td className="px-3 py-1.5 hidden lg:table-cell text-[11px] text-slate-400">{new Date(row.date).toLocaleDateString('es-ES')}</td>
+                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", row.priority === 'Alta' ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600")}>{row.priority}</span></td>
                         </tr>
                     ))}
                 </tbody>
@@ -131,16 +131,16 @@ export default function AdminMaintenancePage() {
     const renderBoard = () => (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {groupedTasks.map((group) => (
-                <section key={group.id} className="rounded-[2.5rem] bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-5">
+                <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Prioridad {group.label}</span>
-                        <span className="text-[10px] font-black text-slate-400">{group.items.length}</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Prioridad {group.label}</span>
+                        <span className="font-semibold text-slate-400">{group.items.length}</span>
                     </div>
                     <div className="space-y-4">
                         {group.items.map((row, index) => (
-                            <div key={row.id || index} className="bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-[1.5rem] p-5">
-                                <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{row.item}</p>
-                                <p className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{row.task}</p>
+                            <div key={row.id || index} className="bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-3">
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{row.item}</p>
+                                <p className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide">{row.task}</p>
                             </div>
                         ))}
                     </div>
@@ -186,20 +186,20 @@ export default function AdminMaintenancePage() {
                 availableViews={MAINTENANCE_VIEWS}
             />
 
-            <main className="flex-1 overflow-y-auto scrollbar-thin p-8 lg:p-12 relative">
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#f59e0b05_0%,_transparent_50%)] pointer-events-none" />
 
-                <div className="max-w-7xl mx-auto space-y-12 relative z-10">
+                <div className="max-w-7xl mx-auto space-y-3 relative z-10">
                     {/* Cinematic Header */}
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
                         <div className="space-y-4">
                             <motion.div 
                                 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-500 rounded-full text-[10px] font-black uppercase tracking-[0.3em] border border-amber-500/20"
+                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-500 rounded-full text-[10px] font-semibold uppercase tracking-wide border border-amber-500/20"
                             >
                                 <Zap size={12} className="animate-pulse" /> Protocolo de Salud Activa
                             </motion.div>
-                            <h1 className="text-5xl lg:text-6xl font-black tracking-tighter text-slate-900 dark:text-white uppercase leading-none italic">
+                            <h1 className="text-xl lg:text-xl font-bold tracking-tighter text-slate-900 dark:text-white uppercase leading-none italic">
                                 Agenda de <span className="text-amber-500">Mantenimiento</span>
                             </h1>
                             <p className="text-slate-500 dark:text-slate-400 text-lg font-medium max-w-xl leading-relaxed">
@@ -209,7 +209,7 @@ export default function AdminMaintenancePage() {
 
                         <motion.button 
                             whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                            className="px-8 py-4 bg-amber-500 hover:bg-amber-600 text-black text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-2xl shadow-amber-500/20 flex items-center gap-3 group"
+                            className="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-black text-[11px] font-semibold uppercase tracking-wide rounded-lg transition-all shadow-2xl shadow-amber-500/20 flex items-center gap-3 group"
                         >
                             <Plus size={18} className="group-hover:rotate-90 transition-transform duration-500" /> Programar Revisión
                         </motion.button>
@@ -228,21 +228,21 @@ export default function AdminMaintenancePage() {
                     ) : viewType === 'wiki' ? (
                         <UniversalWikiView moduleName="Mantenimiento técnico" storageKey="wiki_admin_maintenance" />
                     ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                         {/* Task List Cinematic */}
                         <div className="lg:col-span-8 space-y-6">
-                            <div className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[3.5rem] overflow-hidden shadow-sm shadow-slate-200/50">
-                                <div className="p-8 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 flex items-center justify-between">
-                                    <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-3">
+                            <div className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg overflow-hidden shadow-sm shadow-slate-200/50">
+                                <div className="p-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 flex items-center justify-between">
+                                    <h3 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-3">
                                         <History size={16} className="text-amber-500" /> Tareas de Seguimiento Técnico
                                     </h3>
-                                    <span className="px-4 py-1 bg-rose-50 dark:bg-rose-900/20 text-rose-600 text-[9px] font-black rounded-full border border-rose-100 dark:border-rose-800 uppercase tracking-widest">Estado Crítico: {stats. review}</span>
+                                    <span className="px-4 py-1 bg-rose-50 dark:bg-rose-900/20 text-rose-600 font-semibold rounded-full border border-rose-100 dark:border-rose-800 uppercase tracking-wide">Estado Crítico: {stats. review}</span>
                                 </div>
                                 <div className="divide-y divide-slate-50 dark:divide-white/5">
                                     {loading ? (
-                                        <div className="p-20 flex flex-col items-center gap-4">
+                                        <div className="p-4 flex flex-col items-center gap-4">
                                             <Loader2 className="animate-spin text-amber-500" size={32} />
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sincronizando con Servidor...</p>
+                                            <p className="font-semibold text-slate-400 uppercase tracking-wide">Sincronizando con Servidor...</p>
                                         </div>
                                     ) : tasks.length > 0 ? tasks.map((row, i) => (
                                         <motion.div 
@@ -250,36 +250,36 @@ export default function AdminMaintenancePage() {
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: i * 0.05 }}
                                             key={i} 
-                                            className="p-8 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-all flex items-center justify-between group cursor-pointer"
+                                            className="p-4 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-all flex items-center justify-between group cursor-pointer"
                                         >
-                                            <div className="flex items-center gap-6">
+                                            <div className="flex items-center gap-3">
                                                 <div className={clsx(
-                                                    "size-14 rounded-2xl flex items-center justify-center shadow-inner transition-transform group-hover:scale-110 duration-500",
+                                                    "size-7 rounded-lg flex items-center justify-center shadow-inner transition-transform group-hover:scale-110 duration-500",
                                                     row.priority === 'Alta' ? "bg-rose-50 dark:bg-rose-900/20 text-rose-500" : "bg-amber-50 dark:bg-amber-900/20 text-amber-500"
                                                 )}>
                                                     <AlertCircle size={28} />
                                                 </div>
                                                 <div>
                                                     <div className="text-lg font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight group-hover:text-amber-600 transition-colors leading-none mb-2">{row.item}</div>
-                                                    <div className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">{row.task}</div>
+                                                    <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">{row.task}</div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-10">
+                                            <div className="flex items-center gap-3">
                                                 <div className="text-right">
-                                                    <div className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2 justify-end mb-1">
+                                                    <div className="font-semibold text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-2 justify-end mb-1">
                                                         <Clock size={12} className="text-slate-400" /> {new Date(row.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
                                                     </div>
-                                                    <div className={clsx("text-[9px] font-black uppercase tracking-widest", row.priority === 'Alta' ? 'text-rose-500' : 'text-slate-400')}>Prioridad {row.priority}</div>
+                                                    <div className={clsx("text-[9px] font-semibold uppercase tracking-wide", row.priority === 'Alta' ? 'text-rose-500' : 'text-slate-400')}>Prioridad {row.priority}</div>
                                                 </div>
-                                                <button className="size-12 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl flex items-center justify-center text-slate-300 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:shadow-xl hover:shadow-emerald-500/20 transition-all duration-500">
+                                                <button className="size-7 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-lg flex items-center justify-center text-slate-300 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:shadow-xl hover:shadow-emerald-500/20 transition-all duration-500">
                                                     <CheckCircle2 size={20} />
                                                 </button>
                                             </div>
                                         </motion.div>
                                     )) : (
-                                        <div className="p-20 text-center space-y-4">
-                                            <div className="size-20 bg-slate-50 dark:bg-white/5 rounded-[2rem] flex items-center justify-center mx-auto text-slate-200"><Wrench size={40} strokeWidth={1} /></div>
-                                            <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">No hay revisiones programadas</p>
+                                        <div className="p-4 text-center space-y-4">
+                                            <div className="size-8 bg-slate-50 dark:bg-white/5 rounded-lg flex items-center justify-center mx-auto text-slate-200"><Wrench size={40} strokeWidth={1} /></div>
+                                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">No hay revisiones programadas</p>
                                         </div>
                                     )}
                                 </div>
@@ -287,20 +287,20 @@ export default function AdminMaintenancePage() {
                         </div>
 
                         {/* Health Radar Sidebar */}
-                        <div className="lg:col-span-4 space-y-8">
+                        <div className="lg:col-span-4 space-y-3">
                             <motion.div 
                                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-                                className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-10 rounded-[3.5rem] shadow-sm space-y-8 aura-tech"
+                                className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-4 rounded-lg shadow-sm space-y-3 aura-tech"
                             >
-                                <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-3">
+                                <h3 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-3">
                                     <ShieldCheck size={16} className="text-amber-500" /> Salud de Activos
                                 </h3>
-                                <div className="flex flex-col items-center justify-center py-6 gap-6">
-                                    <div className="relative size-44 p-4 rounded-full border-2 border-slate-50 dark:border-white/5 flex items-center justify-center shadow-inner">
+                                <div className="flex flex-col items-center justify-center py-2 gap-3">
+                                    <div className="relative size-10 p-4 rounded-full border-2 border-slate-50 dark:border-white/5 flex items-center justify-center shadow-inner">
                                         <div className="size-full rounded-full bg-gradient-to-tr from-amber-500/5 to-amber-500/20 animate-pulse" />
                                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                            <span className="text-5xl font-black text-slate-900 dark:text-white italic tracking-tighter">{stats.operative}%</span>
-                                            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-1">Óptimo</span>
+                                            <span className="text-xl font-black text-slate-900 dark:text-white italic tracking-tighter">{stats.operative}%</span>
+                                            <span className="font-semibold text-emerald-500 uppercase tracking-wide mt-1">Óptimo</span>
                                         </div>
                                         {/* Circular Progress Simulated */}
                                         <svg className="absolute inset-0 size-full -rotate-90">
@@ -316,13 +316,13 @@ export default function AdminMaintenancePage() {
                                 </div>
                             </motion.div>
 
-                            <div className="bg-slate-900 p-10 rounded-[3.5rem] text-white space-y-6 relative overflow-hidden group shadow-2xl">
-                                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:rotate-12 transition-transform duration-1000"><Database size={80} /></div>
-                                <h3 className="text-xs font-black uppercase tracking-[0.3em] relative z-10">Data Integrity</h3>
+                            <div className="bg-slate-900 p-4 rounded-lg text-white space-y-6 relative overflow-hidden group shadow-2xl">
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:rotate-12 transition-transform duration-1000"><Database size={80} /></div>
+                                <h3 className="text-xs font-semibold uppercase tracking-wide relative z-10">Data Integrity</h3>
                                 <p className="text-[13px] text-slate-400 font-medium leading-relaxed relative z-10 italic">
                                     &quot;El mantenimiento preventivo ahorra un 40% en costos de reposición anual.&quot;
                                 </p>
-                                <button className="w-full py-4 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all border border-white/10 relative z-10">
+                                <button className="w-full py-1.5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all border border-white/10 relative z-10">
                                     Descargar Reporte Anual
                                 </button>
                             </div>
@@ -342,9 +342,9 @@ function HealthRow({ label, value, color }: { label: string, value: number, colo
         rose: 'text-rose-500 bg-rose-50 dark:bg-rose-900/20'
     };
     return (
-        <div className="flex justify-between items-center p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{label}</span>
-            <span className={clsx("px-3 py-1 rounded-lg text-xs font-black", tones[color])}>{value}</span>
+        <div className="flex justify-between items-center p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</span>
+            <span className={clsx("px-3 py-1 rounded-lg text-xs font-semibold", tones[color])}>{value}</span>
         </div>
     );
 }

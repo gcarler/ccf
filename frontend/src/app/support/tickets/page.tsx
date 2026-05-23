@@ -127,33 +127,33 @@ export default function SupportTicketsPage() {
 
     return (
         <div className="h-full flex flex-col bg-slate-50 dark:bg-[#0f1117]">
-            <header className="h-14 border-b border-slate-200/60 dark:border-white/5 flex items-center px-6 gap-4 shrink-0 bg-white dark:bg-[#1a1d27]">
+            <header className="h-8 border-b border-slate-200/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-white dark:bg-[#1a1d27]">
                 <MessageSquare size={16} className="text-blue-500" />
-                <h1 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex-1">Mis Tickets de Soporte</h1>
+                <h1 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex-1">Mis Tickets de Soporte</h1>
                 <div className="relative">
                     <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
                         placeholder="Buscar ticket..."
-                        className="pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-white/5 border-none rounded-xl text-[12px] focus:ring-2 focus:ring-blue-500/20 w-56 transition-all text-slate-700 dark:text-slate-200"
+                        className="pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-white/5 border-none rounded-md text-[12px] focus:ring-2 focus:ring-blue-500/20 w-56 transition-all text-slate-700 dark:text-slate-200"
                     />
                 </div>
                 <button
                     onClick={() => setShowNew(true)}
-                    className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all"
+                    className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all"
                 >
                     <Plus size={14} /> Nuevo Ticket
                 </button>
             </header>
 
-            <div className="flex items-center gap-1 px-6 py-3 border-b border-slate-200/60 dark:border-white/5 bg-white dark:bg-[#1a1d27] shrink-0">
+            <div className="flex items-center gap-1 px-3 py-3 border-b border-slate-200/60 dark:border-white/5 bg-white dark:bg-[#1a1d27] shrink-0">
                 {['all', ...STATUS_ORDER].map((status) => (
                     <button
                         key={status}
                         onClick={() => setFilter(status)}
                         className={clsx(
-                            'px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
+                            'px-4 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all',
                             filter === status
                                 ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600'
                                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300',
@@ -167,10 +167,10 @@ export default function SupportTicketsPage() {
                 ))}
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-3">
                 <div className="max-w-4xl mx-auto space-y-3">
                     {loading && (
-                        <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white p-6 text-sm font-bold text-slate-400 dark:border-white/10 dark:bg-[#1a1d27]">
+                        <div className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white p-3 text-sm font-bold text-slate-400 dark:border-white/10 dark:bg-[#1a1d27]">
                             <Loader2 size={16} className="animate-spin" /> Cargando tickets...
                         </div>
                     )}
@@ -186,15 +186,15 @@ export default function SupportTicketsPage() {
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.04 }}
-                                    className="bg-white dark:bg-[#1a1d27] rounded-2xl border border-slate-200/60 dark:border-white/5 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-all group"
+                                    className="bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 flex items-center gap-4 shadow-sm hover:shadow-md transition-all group"
                                 >
-                                    <div className={clsx('size-10 rounded-xl flex items-center justify-center shrink-0', statusConfig.bg)}>
+                                    <div className={clsx('size-10 rounded-md flex items-center justify-center shrink-0', statusConfig.bg)}>
                                         <Icon size={18} className={statusConfig.color} />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest font-mono">CCF-{ticket.id}</span>
-                                            <span className={clsx('px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest', statusConfig.bg, statusConfig.color)}>
+                                            <span className="font-semibold text-slate-400 uppercase tracking-wide font-mono">CCF-{ticket.id}</span>
+                                            <span className={clsx('px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide', statusConfig.bg, statusConfig.color)}>
                                                 {statusConfig.label}
                                             </span>
                                         </div>
@@ -212,7 +212,7 @@ export default function SupportTicketsPage() {
                     </AnimatePresence>
 
                     {!loading && filtered.length === 0 && (
-                        <div className="py-20 text-center">
+                        <div className="py-1.5 text-center">
                             <Circle size={40} className="mx-auto text-slate-200 mb-3" />
                             <p className="text-sm font-bold text-slate-400">No se encontraron tickets</p>
                         </div>
@@ -234,7 +234,7 @@ export default function SupportTicketsPage() {
                             form="support-ticket-form"
                             type="submit"
                             disabled={submitting}
-                            className="flex items-center gap-2 px-8 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all disabled:cursor-wait disabled:opacity-60"
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all disabled:cursor-wait disabled:opacity-60"
                         >
                             {submitting ? <Loader2 size={14} className="animate-spin" /> : null}
                             Enviar Ticket
@@ -244,22 +244,22 @@ export default function SupportTicketsPage() {
             >
                 <form id="support-ticket-form" onSubmit={handleCreateTicket} className="space-y-6 mt-4">
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Asunto</label>
+                        <label className="font-semibold text-slate-400 uppercase tracking-wide block">Asunto</label>
                         <input
                             value={draft.subject}
                             onChange={(event) => setDraft((current) => ({ ...current, subject: event.target.value }))}
                             placeholder="Describe brevemente el problema..."
-                            className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200"
+                            className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-sm outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200"
                         />
                     </div>
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Descripcion</label>
+                        <label className="font-semibold text-slate-400 uppercase tracking-wide block">Descripcion</label>
                         <textarea
                             rows={4}
                             value={draft.description}
                             onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))}
                             placeholder="Explica el problema en detalle..."
-                            className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 resize-none text-slate-700 dark:text-slate-200"
+                            className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-sm outline-none focus:ring-2 focus:ring-blue-500/20 resize-none text-slate-700 dark:text-slate-200"
                         />
                     </div>
                 </form>

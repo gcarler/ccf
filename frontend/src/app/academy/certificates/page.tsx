@@ -76,7 +76,7 @@ export default function StudentCertificates() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="space-y-3 px-4 py-4">
+        <div className="space-y-3 px-4 py-1.5">
             <AdminHero
                 eyebrow="Certificados"
                 title="Mis certificados"
@@ -88,23 +88,23 @@ export default function StudentCertificates() {
                     toast.success('Alertas de certificados activadas');
                 } }}
             />
-            <main className="rounded-xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] shadow-xl overflow-hidden pb-24 relative z-10 hide-scrollbar">
+            <main className="rounded-md border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] shadow-xl overflow-hidden pb-4 relative z-10 hide-scrollbar">
                 {totalLoading ? (
-                    <div className="flex items-center justify-center py-24 text-slate-500 text-sm uppercase tracking-widest font-black">
+                    <div className="flex items-center justify-center py-1.5 text-slate-500 text-sm uppercase tracking-wide font-black">
                         Cargando historial...
                         </div>
                     ) : error ? (
-                        <p className="px-4 py-12 text-center text-rose-400 font-semibold">{error}</p>
+                        <p className="px-4 py-1.5 text-center text-rose-400 font-semibold">{error}</p>
                     ) : certificates.length === 0 ? (
-                        <div className="px-4 py-20 text-center text-slate-400 space-y-4">
-                            <Award className="w-12 h-12 mx-auto text-slate-600" />
+                        <div className="px-4 py-1.5 text-center text-slate-400 space-y-4">
+                            <Award className="w-12 h-8 mx-auto text-slate-600" />
                             <p className="text-sm font-bold text-white">Aún no tienes certificados</p>
                             <p className="text-sm text-slate-400">Completa tus cursos para desbloquear diplomas y reconocimientos oficiales.</p>
                         </div>
                     ) : (
                         <>
-                            <section className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <h2 className="px-4 text-slate-900 dark:text-white text-base font-bold mb-6 flex items-center gap-3">
+                            <section className="mt-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <h2 className="px-4 text-slate-900 dark:text-white text-base font-bold mb-3 flex items-center gap-3">
                                     <Award className="text-yellow-500" size={24} /> Diplomas destacados
                                 </h2>
                                 <div className="flex overflow-x-auto hide-scrollbar gap-5 px-4 snap-x pb-6">
@@ -116,11 +116,11 @@ export default function StudentCertificates() {
                                                 onClick={() => setActiveCertificate(certificate)}
                                                 className="min-w-[260px] snap-center group text-left"
                                             >
-                                                <div className="aspect-[1.6/1] rounded-xl relative overflow-hidden border border-white/10 shadow-2xl shadow-yellow-500/20 bg-gradient-to-br from-slate-800 to-slate-950 group-hover:border-primary/40 transition-all">
+                                                <div className="aspect-[1.6/1] rounded-md relative overflow-hidden border border-white/10 shadow-2xl shadow-yellow-500/20 bg-gradient-to-br from-slate-800 to-slate-950 group-hover:border-primary/40 transition-all">
                                                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/15 via-transparent to-transparent opacity-80"></div>
                                                     <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center transform group-hover:scale-105 transition-transform duration-500">
                                                         <Award className="text-yellow-500 mb-3" size={48} />
-                                                        <p className="text-[9px] uppercase tracking-[0.25em] text-yellow-500 font-bold">{certificate.certificate_type || 'Certificado'}</p>
+                                                        <p className="text-[9px] uppercase tracking-wide text-yellow-500 font-bold">{certificate.certificate_type || 'Certificado'}</p>
                                                         <h3 className="text-base font-bold mt-2 text-white">
                                                             {enrollment?.course.title || 'Curso completado'}
                                                         </h3>
@@ -135,16 +135,16 @@ export default function StudentCertificates() {
                                 </div>
                             </section>
 
-                            <section className="mt-8 px-4 animate-in fade-in slide-in-from-bottom-6 duration-700">
-                                <h3 className="text-slate-900 dark:text-white text-base font-bold mb-6">Todos mis títulos</h3>
+                            <section className="mt-3 px-4 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                                <h3 className="text-slate-900 dark:text-white text-base font-bold mb-3">Todos mis títulos</h3>
                                 <div className="flex flex-col gap-4">
                                     {certificates.map((certificate) => {
                                         const enrollment = resolveEnrollment(certificate);
                                         return (
-                                            <div key={certificate.id} className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 hover:border-primary/30 rounded-xl p-4 flex flex-col gap-4 shadow-xl transition-all">
+                                            <div key={certificate.id} className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 hover:border-primary/30 rounded-md p-4 flex flex-col gap-4 shadow-xl transition-all">
                                                 <div className="flex justify-between items-start gap-4">
                                                     <div className="flex gap-4 items-center">
-                                                        <div className="size-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner border border-primary/20">
+                                                        <div className="size-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary shadow-inner border border-primary/20">
                                                             <School size={24} />
                                                         </div>
                                                         <div>
@@ -155,7 +155,7 @@ export default function StudentCertificates() {
                                                     </div>
                                                     <button
                                                         onClick={() => handleShare(certificate)}
-                                                        className="p-2.5 rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-colors border border-white/5"
+                                                        className="p-2.5 rounded-md bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-colors border border-white/5"
                                                         disabled={sharingId === certificate.id}
                                                     >
                                                         <Share2 size={18} className={sharingId === certificate.id ? 'animate-pulse text-primary' : ''} />
@@ -164,7 +164,7 @@ export default function StudentCertificates() {
                                                 <div className="flex gap-3">
                                                     <button
                                                         onClick={() => setActiveCertificate(certificate)}
-                                                        className="flex-1 bg-white/5 hover:bg-primary/20 text-white py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 transition-all border border-white/10 hover:border-primary/50"
+                                                        className="flex-1 bg-white/5 hover:bg-primary/20 text-white py-2 rounded-md text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-3 transition-all border border-white/10 hover:border-primary/50"
                                                     >
                                                         <Download size={18} className="text-primary" />
                                                         Ver / Descargar

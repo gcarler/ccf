@@ -33,26 +33,26 @@ export default function AutomationsPage() {
                             <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
                                 <Sparkles size={14} className="text-blue-600" />
                             </div>
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">Motor Optimus 3.0</span>
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-blue-600">Motor Optimus 3.0</span>
                         </div>
-                        <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white leading-none">
+                        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">
                             Automatizaciones
                         </h1>
                         <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
                             Configura cómo el sistema reacciona a los desafíos de tu ministerio.
                         </p>
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all">
+                    <button className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all">
                         <Plus size={13} /> Nueva Regla
                     </button>
                 </div>
 
                 {/* Active count */}
                 <div className="flex items-center gap-3">
-                    <span className="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-200 dark:border-emerald-500/20">
+                    <span className="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-full text-[10px] font-semibold uppercase tracking-wide border border-emerald-200 dark:border-emerald-500/20">
                         {rules.filter(r => r.active).length} activas
                     </span>
-                    <span className="px-2.5 py-1 bg-slate-100 dark:bg-white/5 text-slate-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-slate-200 dark:border-white/10">
+                    <span className="px-2.5 py-1 bg-slate-100 dark:bg-white/5 text-slate-400 rounded-full text-[10px] font-semibold uppercase tracking-wide border border-slate-200 dark:border-white/10">
                         {rules.filter(r => !r.active).length} inactivas
                     </span>
                 </div>
@@ -75,7 +75,7 @@ export default function AutomationsPage() {
                                 )}
                             >
                                 <div className="flex items-start justify-between mb-4">
-                                    <div className={clsx("size-10 rounded-xl flex items-center justify-center border shrink-0", rule.bg,
+                                    <div className={clsx("size-10 rounded-md flex items-center justify-center border shrink-0", rule.bg,
                                         rule.color.replace('text-', 'border-').replace('500', '200') + ' dark:border-opacity-20'
                                     )}>
                                         <Icon size={18} className={rule.color} />
@@ -93,16 +93,16 @@ export default function AutomationsPage() {
                                 </div>
 
                                 <div className="space-y-1 mb-4">
-                                    <h3 className="text-[14px] font-bold text-slate-900 dark:text-white leading-tight">{rule.name}</h3>
+                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{rule.name}</h3>
                                     <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">{rule.trigger}</p>
                                 </div>
 
                                 <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-                                    <button className="text-[10px] font-black uppercase text-blue-600 tracking-widest flex items-center gap-1.5 hover:underline">
+                                    <button className="text-[10px] font-semibold uppercase text-blue-600 tracking-wide flex items-center gap-1.5 hover:underline">
                                         Configurar lógica <ArrowRight size={11} />
                                     </button>
                                     {!rule.active && (
-                                        <span className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 text-slate-400 rounded-md text-[9px] font-black uppercase tracking-widest">
+                                        <span className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 text-slate-400 rounded-md text-[9px] font-semibold uppercase tracking-wide">
                                             Inactivo
                                         </span>
                                     )}
@@ -118,12 +118,12 @@ export default function AutomationsPage() {
                         transition={{ delay: rules.length * 0.07 }}
                         className="flex flex-col items-center justify-center p-3 rounded-lg border-2 border-dashed border-slate-200 dark:border-white/10 text-center gap-2 group cursor-pointer hover:border-blue-400 dark:hover:border-blue-500/40 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all min-h-[100px]"
                     >
-                        <div className="size-10 rounded-xl bg-white dark:bg-white/5 shadow-sm border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 group-hover:text-blue-600 group-hover:border-blue-200 dark:group-hover:border-blue-500/30 transition-all">
+                        <div className="size-10 rounded-md bg-white dark:bg-white/5 shadow-sm border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 group-hover:text-blue-600 group-hover:border-blue-200 dark:group-hover:border-blue-500/30 transition-all">
                             <Plus size={18} />
                         </div>
                         <div>
                             <h4 className="text-[13px] font-bold text-slate-700 dark:text-slate-300 group-hover:text-blue-600 transition-colors">Crear Regla</h4>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Expandir Inteligencia</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">Expandir Inteligencia</p>
                         </div>
                     </motion.div>
                 </div>

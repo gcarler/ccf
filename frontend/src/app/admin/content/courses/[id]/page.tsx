@@ -47,7 +47,7 @@ export default function AdminCourseContentPage() {
         loadData();
     }, [id, token]);
 
-    if (loading) return <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Preparando Editor de Contenidos...</div>;
+    if (loading) return <div className="p-4 text-center animate-pulse font-semibold uppercase tracking-wide text-slate-400">Preparando Editor de Contenidos...</div>;
 
     return (
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
@@ -58,42 +58,42 @@ export default function AdminCourseContentPage() {
                 ]}
                 rightActions={
                     <div className="flex items-center gap-3">
-                        <button className="px-4 py-2 text-slate-500 text-[10px] font-black uppercase tracking-widest hover:text-slate-700 transition-all">
+                        <button className="px-4 py-2 text-slate-500 text-[10px] font-semibold uppercase tracking-wide hover:text-slate-700 transition-all">
                             Vista Previa
                         </button>
-                        <button className="px-6 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
+                        <button className="px-3 py-2 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
                             <Save size={14} /> Publicar Cambios
                         </button>
                     </div>
                 }
             />
 
-            <main className="flex-1 overflow-y-auto p-8 lg:p-12">
-                <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 space-y-8">
+            <main className="flex-1 overflow-y-auto p-4 lg:p-4">
+                <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-3">
+                    <div className="lg:col-span-2 space-y-3">
                         <header className="space-y-4">
                             <div className="flex items-center gap-3">
                                 <DSBadge tone="blue" label="PROGRAMA ACADÉMICO" />
                                 <DSBadge tone="emerald" label="PUBLICADO" />
                             </div>
-                            <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight uppercase">
+                            <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-tight uppercase">
                                 {course?.title}
                             </h1>
                         </header>
 
                         <section className="space-y-6">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-sm font-black uppercase tracking-[0.3em] text-slate-400">Lecciones y Módulos ({lessons.length})</h3>
-                                <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:border-blue-500 transition-all">
+                                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Lecciones y Módulos ({lessons.length})</h3>
+                                <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:border-blue-500 transition-all">
                                     <Plus size={14} /> Nueva Lección
                                 </button>
                             </div>
 
                             <div className="space-y-3">
                                 {lessons.map((lesson, idx) => (
-                                    <div key={lesson.id} className="group bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex items-center justify-between hover:border-blue-500/30 transition-all cursor-pointer">
+                                    <div key={lesson.id} className="group bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 flex items-center justify-between hover:border-blue-500/30 transition-all cursor-pointer">
                                         <div className="flex items-center gap-4">
-                                            <span className="text-xs font-black text-slate-300 group-hover:text-blue-500 transition-colors">
+                                            <span className="text-xs font-semibold text-slate-300 group-hover:text-blue-500 transition-colors">
                                                 {String(idx + 1).padStart(2, '0')}
                                             </span>
                                             <div>
@@ -106,9 +106,9 @@ export default function AdminCourseContentPage() {
                                 ))}
 
                                 {lessons.length === 0 && (
-                                    <div className="py-20 text-center border-2 border-dashed border-slate-100 dark:border-white/5 rounded-[2rem]">
+                                    <div className="py-1.5 text-center border-2 border-dashed border-slate-100 dark:border-white/5 rounded-lg">
                                         <BookOpen size={48} className="mx-auto text-slate-100 mb-4" />
-                                        <p className="text-xs font-black uppercase tracking-widest text-slate-400">El curso no tiene contenido todavía</p>
+                                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">El curso no tiene contenido todavía</p>
                                     </div>
                                 )}
                             </div>
@@ -117,31 +117,31 @@ export default function AdminCourseContentPage() {
 
                     <aside className="space-y-6">
                         <DSCard>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Configuración de Obra</h3>
+                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-4">Configuración de Obra</h3>
                             <div className="space-y-4">
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Código de Referencia</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Código de Referencia</p>
                                     <p className="text-sm font-bold">{course?.code}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sede Principal</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sede Principal</p>
                                     <p className="text-sm font-bold">Campus Virtual / Central</p>
                                 </div>
                                 <div className="h-px bg-slate-100 dark:bg-white/5" />
-                                <button className="w-full flex items-center justify-center gap-2 py-3 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all">
+                                <button className="w-full flex items-center justify-center gap-2 py-3 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-slate-50 transition-all">
                                     <Settings size={14} /> Ajustes Técnicos
                                 </button>
                             </div>
                         </DSCard>
 
-                        <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">
+                        <div className="bg-slate-900 rounded-lg p-4 text-white space-y-4">
+                            <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-blue-400">
                                 <History size={14} /> Control de Versiones
                             </div>
                             <p className="text-[11px] font-medium opacity-70">
                                 Última edición por Admin_CCF hace 1 hora.
                             </p>
-                            <button className="text-[9px] font-black uppercase tracking-widest text-blue-400 hover:text-blue-300">
+                            <button className="text-[9px] font-semibold uppercase tracking-wide text-blue-400 hover:text-blue-300">
                                 Ver historial completo
                             </button>
                         </div>

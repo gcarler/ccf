@@ -377,7 +377,7 @@ export default function ProjectDetailPage() {
                                             <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-2">Hitos</h3>
                                             <div className="space-y-2">
                                                 {project?.milestones?.map((m: ProjectMilestoneRecord) => (
-                                                    <div key={m.id} className="rounded-xl bg-slate-50 p-2 dark:bg-white/5">
+                                                    <div key={m.id} className="rounded-md bg-slate-50 p-2 dark:bg-white/5">
                                                         {editingMilestoneId === m.id ? (
                                                             <div className="space-y-2">
                                                                 <input
@@ -395,13 +395,13 @@ export default function ProjectDetailPage() {
                                                                     <button
                                                                         onClick={() => handleUpdateMilestone(m.id)}
                                                                         disabled={updatingMilestoneId === m.id || !milestoneDraftTitle.trim()}
-                                                                        className="rounded-lg bg-blue-600 px-2 py-1.5 text-[10px] font-black uppercase text-white disabled:opacity-50"
+                                                                        className="rounded-lg bg-blue-600 px-2 py-1.5 text-[10px] font-semibold uppercase text-white disabled:opacity-50"
                                                                     >
                                                                         Guardar
                                                                     </button>
                                                                     <button
                                                                         onClick={() => setEditingMilestoneId(null)}
-                                                                        className="rounded-lg border border-slate-200 px-2 py-1.5 text-[10px] font-black uppercase text-slate-500 dark:border-white/10"
+                                                                        className="rounded-lg border border-slate-200 px-2 py-1.5 text-[10px] font-semibold uppercase text-slate-500 dark:border-white/10"
                                                                     >
                                                                         Cancelar
                                                                     </button>
@@ -429,7 +429,7 @@ export default function ProjectDetailPage() {
                                                                 </div>
                                                                 <button
                                                                     onClick={() => startEditingMilestone(m)}
-                                                                    className="rounded-lg border border-slate-200 px-2 py-1 text-[10px] font-black uppercase text-slate-500 dark:border-white/10"
+                                                                    className="rounded-lg border border-slate-200 px-2 py-1 text-[10px] font-semibold uppercase text-slate-500 dark:border-white/10"
                                                                 >
                                                                     Editar
                                                                 </button>
@@ -446,19 +446,19 @@ export default function ProjectDetailPage() {
                                                     value={milestoneTitle}
                                                     onChange={(event) => setMilestoneTitle(event.target.value)}
                                                     placeholder="Nuevo hito"
-                                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold dark:border-white/10 dark:bg-white/5"
+                                                    className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold dark:border-white/10 dark:bg-white/5"
                                                 />
                                                 <div className="flex gap-2">
                                                     <input
                                                         type="date"
                                                         value={milestoneDate}
                                                         onChange={(event) => setMilestoneDate(event.target.value)}
-                                                        className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold dark:border-white/10 dark:bg-white/5"
+                                                        className="min-w-0 flex-1 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold dark:border-white/10 dark:bg-white/5"
                                                     />
                                                     <button
                                                         onClick={handleCreateMilestone}
                                                         disabled={creatingMilestone || !milestoneTitle.trim()}
-                                                        className="rounded-xl bg-blue-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-50"
+                                                        className="rounded-md bg-blue-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50"
                                                     >
                                                         {creatingMilestone ? '...' : 'Crear'}
                                                     </button>
@@ -474,7 +474,7 @@ export default function ProjectDetailPage() {
                         )}
 
                         {viewType === 'table' && (
-                            <div className="h-[calc(100vh-14rem)] border border-slate-200 dark:border-white/5 rounded-lg overflow-hidden bg-white dark:bg-[#252528] shadow-sm">
+                            <div className="h-[calc(100vh-8rem)] border border-slate-200 dark:border-white/5 rounded-lg overflow-hidden bg-white dark:bg-[#252528] shadow-sm">
                                 <TaskTableView
                                     projectId={project?.id}
                                     tasks={tasks}
@@ -513,7 +513,7 @@ export default function ProjectDetailPage() {
                                                     <div className="flex-1">
                                                         <p className="text-sm font-bold text-slate-800 dark:text-white">{task.title}</p>
                                                         <div className="flex items-center gap-2 mt-1">
-                                                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-slate-200 bg-slate-50 text-slate-600 dark:border-white/10">
+                                                            <span className="text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full border border-slate-200 bg-slate-50 text-slate-600 dark:border-white/10">
                                                                 {phases.find(p => p.slug === task.status)?.name || task.status}
                                                             </span>
                                                             <span className="text-[10px] text-slate-400 uppercase font-black">{task.priority}</span>
@@ -522,14 +522,14 @@ export default function ProjectDetailPage() {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={(event) => { event.stopPropagation(); handleDeleteTask(task.id); }} className="p-2 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 transition-colors" title="Eliminar tarea">
+                                                    <button onClick={(event) => { event.stopPropagation(); handleDeleteTask(task.id); }} className="p-2 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 transition-colors" title="Eliminar tarea">
                                                         <Trash2 size={16} />
                                                     </button>
                                                     <ChevronRight size={16} className="text-slate-300" />
                                                 </div>
                                             </div>
                                         ))}
-                                        {tasks.length === 0 && <p className="text-xs text-slate-400 text-center py-10">No hay tareas — crea la primera con el botón &quot;Nueva Tarea&quot;</p>}
+                                        {tasks.length === 0 && <p className="text-xs text-slate-400 text-center py-1.5">No hay tareas — crea la primera con el botón &quot;Nueva Tarea&quot;</p>}
                                     </div>
                                 </DSCard>
                             </div>
@@ -544,23 +544,23 @@ export default function ProjectDetailPage() {
                                             <div className="mb-3 flex items-center justify-between px-1">
                                                 <div className="flex items-center gap-2">
                                                     <div className="size-2 rounded-full" style={{ backgroundColor: phase.color }} />
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{phase.name}</p>
+                                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{phase.name}</p>
                                                 </div>
-                                                <span className="text-[10px] font-black text-slate-400">{columnTasks.length}</span>
+                                                <span className="font-semibold text-slate-400">{columnTasks.length}</span>
                                             </div>
                                             <div className="space-y-2">
                                                 {columnTasks.map((task) => (
                                                     <article key={task.id} onClick={() => handleOpenTask(task)} className="rounded-md border border-slate-200 bg-white p-2 shadow-sm dark:border-white/10 dark:bg-[#1E1F21] cursor-pointer transition-all duration-300 hover:border-blue-300 active:scale-[0.99]">
                                                         <p className="text-sm font-bold text-slate-900 dark:text-white">{task.title}</p>
                                                         <div className="mt-2 flex items-center justify-between gap-2">
-                                                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-slate-200 bg-slate-100 text-slate-600 dark:border-white/10">
+                                                            <span className="text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full border border-slate-200 bg-slate-100 text-slate-600 dark:border-white/10">
                                                                 {phase.name}
                                                             </span>
-                                                            <button onClick={(event) => { event.stopPropagation(); handleMoveTask(task); }} className="rounded-lg border border-slate-200 px-2 py-1 text-[10px] font-black uppercase text-slate-500 dark:border-white/10">Avanzar</button>
+                                                            <button onClick={(event) => { event.stopPropagation(); handleMoveTask(task); }} className="rounded-lg border border-slate-200 px-2 py-1 text-[10px] font-semibold uppercase text-slate-500 dark:border-white/10">Avanzar</button>
                                                         </div>
                                                     </article>
                                                 ))}
-                                                {columnTasks.length === 0 && <div className="rounded-md border border-dashed border-slate-200 py-4 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:border-white/10">Vacio</div>}
+                                                {columnTasks.length === 0 && <div className="rounded-md border border-dashed border-slate-200 py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:border-white/10">Vacio</div>}
                                             </div>
                                         </section>
                                     );

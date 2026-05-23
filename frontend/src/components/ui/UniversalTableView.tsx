@@ -96,7 +96,7 @@ function TableCell<T>({ column, value, item }: { column: TableColumn<T>; value: 
     if (column.render) return <>{column.render(value, item)}</>;
     switch (column.type) {
         case 'id': return (
-            <div className="flex items-center gap-1 text-[11px] font-bold text-slate-300 uppercase tracking-widest">
+            <div className="flex items-center gap-1 text-[11px] font-bold text-slate-300 uppercase tracking-wide">
                 <Hash size={10} />{String(value ?? '').substring(0, 4)}
             </div>
         );
@@ -111,7 +111,7 @@ function TableCell<T>({ column, value, item }: { column: TableColumn<T>; value: 
         }
         case 'user': return (
             <div className="flex items-center gap-2">
-                <div className="size-6 rounded-full bg-blue-100 dark:bg-white/10 flex items-center justify-center text-[10px] font-black text-blue-600 shrink-0">
+                <div className="size-6 rounded-full bg-blue-100 dark:bg-white/10 flex items-center justify-center font-semibold text-blue-600 shrink-0">
                     {value ? String(value).charAt(0).toUpperCase() : <User size={11} className="text-slate-400" />}
                 </div>
                 <span className="text-[12px] text-slate-600 dark:text-slate-300 font-medium truncate">
@@ -137,7 +137,7 @@ function TableCell<T>({ column, value, item }: { column: TableColumn<T>; value: 
                         <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }}
                             className={clsx("h-full rounded-full", pct === 100 ? "bg-emerald-500" : "bg-blue-500")} />
                     </div>
-                    <span className="text-[10px] font-black text-slate-400 tabular-nums">{pct}%</span>
+                    <span className="font-semibold text-slate-400 tabular-nums">{pct}%</span>
                 </div>
             );
         }
@@ -168,10 +168,10 @@ function ConfigPopover<T>({ columns, hiddenCols, onToggleCol, onClose, relations
         <motion.div ref={ref}
             initial={{ opacity: 0, y: -6, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.97 }} transition={{ duration: 0.13 }}
-            className="absolute top-full left-0 mt-1 z-50 w-[260px] bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden">
+            className="absolute top-full left-0 mt-1 z-50 w-[260px] bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-2xl overflow-hidden">
             {/* Relationships */}
             <div className="px-3 pt-3 pb-1">
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Relaciones en esta tabla</p>
+                <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Relaciones en esta tabla</p>
                 {rels.map(r => (
                     <button key={r.label} className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
                         <div className="flex items-center gap-2">
@@ -185,7 +185,7 @@ function ConfigPopover<T>({ columns, hiddenCols, onToggleCol, onClose, relations
             <div className="h-px bg-slate-100 dark:bg-white/5 mx-3 my-1" />
             {/* Columns */}
             <div className="px-3 pb-3">
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 pt-1">Columnas en esta tabla</p>
+                <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 mb-2 pt-1">Columnas en esta tabla</p>
                 {columns.filter(c => !c.hidden).map(col => {
                     const isHidden = hiddenCols.has(String(col.key));
                     return (
@@ -237,7 +237,7 @@ function SortPopoverV2<T>({ columns, sorts, onSortsChange, onClose }: {
         <motion.div ref={ref}
             initial={{ opacity: 0, y: -6, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.97 }} transition={{ duration: 0.13 }}
-            className="absolute top-full left-0 mt-1 z-50 w-[520px] bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden">
+            className="absolute top-full left-0 mt-1 z-50 w-[520px] bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-2xl overflow-hidden">
             <div className="p-3 space-y-2">
                 {local.length === 0 && (
                     <p className="text-[12px] text-slate-400 text-center py-2">Sin criterios de ordenamiento</p>
@@ -309,8 +309,8 @@ function FilterPanel<T>({ columns, onClose, onAddFilter }: {
         <motion.div ref={ref}
             initial={{ opacity: 0, y: -6, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.97 }} transition={{ duration: 0.13 }}
-            className="absolute top-full left-0 mt-1 z-50 w-[380px] bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl p-4">
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">Agregar filtro</p>
+            className="absolute top-full left-0 mt-1 z-50 w-[380px] bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-2xl p-4">
+            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Agregar filtro</p>
             <div className="flex gap-2 mb-4">
                 <select value={key} onChange={e => setKey(e.target.value)}
                     className="flex-1 text-[12px] text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-400">
@@ -326,7 +326,7 @@ function FilterPanel<T>({ columns, onClose, onAddFilter }: {
                 </button>
             </div>
             {/* Quick status filters */}
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Estado rápido</p>
+            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Estado rápido</p>
             <div className="flex flex-wrap gap-1.5">
                 {statusOpts.map(([k, st]) => (
                     <button key={k} onClick={() => { onAddFilter('status', k); onClose(); }}
@@ -358,9 +358,9 @@ function GroupByPopover<T>({ columns, activeGroupBy, onApply, onClose }: {
         <motion.div ref={ref}
             initial={{ opacity: 0, y: -6, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.97 }} transition={{ duration: 0.13 }}
-            className="absolute top-full left-0 mt-1 z-50 w-[340px] bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden">
+            className="absolute top-full left-0 mt-1 z-50 w-[340px] bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-2xl overflow-hidden">
             <div className="p-4">
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">Agrupar por columna</p>
+                <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Agrupar por columna</p>
                 <select value={selected} onChange={e => setSelected(e.target.value)}
                     className="w-full text-[12px] font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-400 mb-3">
                     <option value="">— Sin agrupación —</option>
@@ -444,7 +444,7 @@ function RowDetailPanel<T>({ item, columns, onClose, onSave, renderContent }: {
             {/* Resize handle */}
             <div onMouseDown={onMouseDown}
                 className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400/40 transition-colors z-10 group">
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-12 bg-slate-300 dark:bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-slate-300 dark:bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
 
             {/* Header */}
@@ -537,20 +537,20 @@ function DefaultDetailContent<T>({
         // Fix 1: h-full + overflow-hidden en contenedor; cada columna scrollea independiente
         <div className="flex h-full overflow-hidden">
             {/* Fields — Fix 1: overflow-y-auto + min-h-0 */}
-            <div className="flex-1 p-5 space-y-5 overflow-y-auto min-h-0">
+            <div className="flex-1 p-3 space-y-5 overflow-y-auto min-h-0">
                 {/* Title — Fix 2: editable si editing=true */}
                 <div>
-                    <label className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">
+                    <label className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">
                         <FileText size={11} /> Título
                     </label>
                     {editing ? (
                         <input
                             defaultValue={(item as any).title ?? ''}
                             onChange={e => onEditChange?.({ ...edits, title: e.target.value })}
-                            className="w-full px-3 py-2.5 bg-white dark:bg-white/5 border border-blue-400 rounded-xl text-[14px] font-semibold text-slate-800 dark:text-slate-100 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-400/30"
+                            className="w-full px-3 py-2.5 bg-white dark:bg-white/5 border border-blue-400 rounded-md text-sm font-semibold text-slate-800 dark:text-slate-100 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-400/30"
                         />
                     ) : (
-                        <div className="w-full px-3 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[14px] font-semibold text-slate-800 dark:text-slate-100 min-h-[44px] cursor-text">
+                        <div className="w-full px-3 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-sm font-semibold text-slate-800 dark:text-slate-100 min-h-[44px] cursor-text">
                             {(item as any).title ?? '—'}
                         </div>
                     )}
@@ -561,7 +561,7 @@ function DefaultDetailContent<T>({
                     const editVal = edits[String(col.key)] ?? val;
                     return (
                         <div key={String(col.key)}>
-                            <label className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">
+                            <label className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">
                                 <ColIcon type={col.type} /> {col.label}
                             </label>
                             {/* Fix 2: campos text editables */}
@@ -569,10 +569,10 @@ function DefaultDetailContent<T>({
                                 <input
                                     defaultValue={String(val ?? '')}
                                     onChange={e => onEditChange?.({ ...edits, [String(col.key)]: e.target.value })}
-                                    className="w-full px-3 py-2.5 bg-white dark:bg-white/5 border border-blue-400 rounded-xl text-[13px] text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-400/30"
+                                    className="w-full px-3 py-2.5 bg-white dark:bg-white/5 border border-blue-400 rounded-md text-[13px] text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-400/30"
                                 />
                             ) : (
-                                <div className="w-full px-3 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl min-h-[40px] flex items-center">
+                                <div className="w-full px-3 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md min-h-[40px] flex items-center">
                                     <TableCell column={col} value={editing ? editVal : val} item={item} />
                                 </div>
                             )}
@@ -584,7 +584,7 @@ function DefaultDetailContent<T>({
             {/* Metadata — Fix 1: overflow-y-auto + min-h-0; Fix 6: fechas reales */}
             <div className="w-[200px] shrink-0 border-l border-slate-100 dark:border-white/5 bg-slate-50/40 dark:bg-white/[0.01] p-4 space-y-5 overflow-y-auto min-h-0">
                 <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">Metadata</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Metadata</p>
                     <div className="space-y-3">
                         {metaRows.map(m => (
                             <div key={m.label}>
@@ -596,8 +596,8 @@ function DefaultDetailContent<T>({
                 </div>
                 <div className="h-px bg-slate-100 dark:bg-white/5" />
                 <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">Comentarios</p>
-                    <button className="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold rounded-xl transition-colors active:scale-95">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Comentarios</p>
+                    <button className="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold rounded-md transition-colors active:scale-95">
                         Nuevo hilo
                     </button>
                 </div>
@@ -733,8 +733,8 @@ export default function UniversalTableView<T extends { id: string | number }>({
                             <motion.div
                                 initial={{ opacity: 0, y: -6, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, y: -6, scale: 0.97 }} transition={{ duration: 0.13 }}
-                                className="absolute top-full left-0 mt-1 z-50 w-[240px] bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl p-3">
-                                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Nombre de vista</p>
+                                className="absolute top-full left-0 mt-1 z-50 w-[240px] bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-2xl p-3">
+                                <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Nombre de vista</p>
                                 <div className="flex gap-2">
                                     <input
                                         autoFocus
@@ -781,7 +781,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                         className={clsx('flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all',
                             activeGroup || showGroup ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5')}>
                         <Users size={13} /> Grupo
-                        {activeGroup && <span className="size-4 rounded-full bg-blue-500 text-white text-[9px] font-black flex items-center justify-center">1</span>}
+                        {activeGroup && <span className="size-4 rounded-full bg-blue-500 text-white font-semibold flex items-center justify-center">1</span>}
                     </button>
                     <AnimatePresence>
                         {showGroup && (
@@ -801,7 +801,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                         className={clsx('flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all',
                             activeFilters || showFilter ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5')}>
                         <Filter size={13} /> Filtrar
-                        {activeFilters && <span className="size-4 rounded-full bg-blue-500 text-white text-[9px] font-black flex items-center justify-center">{filters.length}</span>}
+                        {activeFilters && <span className="size-4 rounded-full bg-blue-500 text-white font-semibold flex items-center justify-center">{filters.length}</span>}
                     </button>
                     <AnimatePresence>
                         {showFilter && (
@@ -817,7 +817,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                         className={clsx('flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all',
                             activeSorts || showSort ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5')}>
                         <ArrowUpDown size={13} /> Ordenar
-                        {activeSorts && <span className="size-4 rounded-full bg-blue-500 text-white text-[9px] font-black flex items-center justify-center">{sorts.length}</span>}
+                        {activeSorts && <span className="size-4 rounded-full bg-blue-500 text-white font-semibold flex items-center justify-center">{sorts.length}</span>}
                     </button>
                     <AnimatePresence>
                         {showSort && (
@@ -900,7 +900,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                                 </th>
                                 {/* Row # */}
                                 <th className="w-9 px-2 py-2.5 border-r border-slate-100 dark:border-white/5 text-center">
-                                    <span className="text-[10px] font-black text-slate-300">#</span>
+                                    <span className="font-semibold text-slate-300">#</span>
                                 </th>
                                 {visibleColumns.map(col => (
                                     <th key={String(col.key)} style={{ width: col.width }}
@@ -914,7 +914,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                                         }}>
                                         <div className="flex items-center gap-1.5">
                                             <ColIcon type={col.type} />
-                                            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 group-hover/th:text-slate-600 dark:group-hover/th:text-slate-200 transition-colors whitespace-nowrap">
+                                            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 group-hover/th:text-slate-600 dark:group-hover/th:text-slate-200 transition-colors whitespace-nowrap">
                                                 {col.label}
                                             </span>
                                             {sorts.find(s => s.key === String(col.key)) && (
@@ -1001,7 +1001,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                                     {/* Quick-add per group */}
                                     {!collapsedGroups[groupName] && (
                                         <tr className="group/add">
-                                            <td colSpan={visibleColumns.length + 3} className="px-12 py-0.5">
+                                            <td colSpan={visibleColumns.length + 3} className="px-4 py-0.5">
                                                 {quickAddGroup === groupName ? (
                                                     <div className="flex items-center gap-3 py-1.5">
                                                         <input autoFocus value={quickAddTitle}
@@ -1029,9 +1029,9 @@ export default function UniversalTableView<T extends { id: string | number }>({
                             {/* Empty state */}
                             {processed.length === 0 && !isLoading && (
                                 <tr>
-                                    <td colSpan={visibleColumns.length + 3} className="py-20 text-center">
+                                    <td colSpan={visibleColumns.length + 3} className="py-1.5 text-center">
                                         <div className="flex flex-col items-center gap-3">
-                                            <div className="size-14 rounded-full bg-slate-50 dark:bg-white/5 flex items-center justify-center">
+                                            <div className="size-7 rounded-full bg-slate-50 dark:bg-white/5 flex items-center justify-center">
                                                 <Table2 size={24} className="text-slate-200" />
                                             </div>
                                             <p className="text-slate-400 text-sm font-medium">{emptyMessage}</p>
@@ -1079,7 +1079,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
 
             {/* ── FOOTER ── */}
             <footer className="px-4 py-1.5 border-t border-slate-100 dark:border-white/[0.04] flex items-center justify-between bg-slate-50/50 dark:bg-black/10 shrink-0">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
                     {processed.length} de {data.length} registros
                     {filters.length > 0 && ` · ${filters.length} filtro${filters.length > 1 ? 's' : ''}`}
                 </span>

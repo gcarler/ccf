@@ -102,7 +102,7 @@ export default function CourseManagementPage() {
                     <h2 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">Acceso Restringido</h2>
                     <p className="text-slate-500 max-w-sm font-medium">Esta consola de gestion esta reservada para personal autorizado. Contacta a coordinacion academica.</p>
                 </div>
-                <button onClick={() => router.back()} className="px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-black uppercase tracking-wide text-[10px] shadow-2xl transition-all active:scale-95">Volver a puerto</button>
+                <button onClick={() => router.back()} className="px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-semibold uppercase tracking-wide text-[10px] shadow-2xl transition-all active:scale-95">Volver a puerto</button>
             </div>
         );
     }
@@ -119,7 +119,7 @@ export default function CourseManagementPage() {
 
     return (
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden relative">
-            <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-blue-600/5 to-transparent pointer-events-none" />
+            <div className="absolute top-0 left-0 w-full h-48 bg-gradient-to-b from-blue-600/5 to-transparent pointer-events-none" />
 
             <WorkspaceToolbar
                 breadcrumbs={[
@@ -146,7 +146,7 @@ export default function CourseManagementPage() {
                                         <h3 className="font-black text-slate-900 dark:text-white">{student.username}</h3>
                                         <p className="mt-1 text-sm text-slate-500">{student.email}</p>
                                     </div>
-                                    <span className="text-sm font-black text-blue-600">{Math.round(student.progress)}%</span>
+                                    <span className="text-sm font-semibold text-blue-600">{Math.round(student.progress)}%</span>
                                 </div>
                             </article>
                         ))}
@@ -156,7 +156,7 @@ export default function CourseManagementPage() {
                 {viewType === 'table' && (
                     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
                         <table className="w-full text-left">
-                            <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-black uppercase tracking-wide text-slate-400">
+                            <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                 <tr><th className="px-4 py-1.5">Estudiante</th><th className="px-4 py-1.5">Correo</th><th className="px-4 py-1.5">Progreso</th><th className="px-4 py-1.5">Nota</th></tr>
                             </thead>
                             <tbody>
@@ -179,14 +179,14 @@ export default function CourseManagementPage() {
                     className="w-full space-y-4"
                 >
                     <motion.section variants={itemVariants} className="bg-white/70 dark:bg-[#15171c]/70 backdrop-blur-3xl rounded-lg border border-white dark:border-white/5 p-4 lg:p-4 shadow-2xl shadow-slate-200/50 dark:shadow-none flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden group">
-                        <div className="absolute top-[-20%] right-[-5%] w-64 h-64 bg-blue-600/10 rounded-full blur-[80px] group-hover:bg-blue-600/20 transition-all duration-1000" />
+                        <div className="absolute top-[-20%] right-[-5%] w-64 h-48 bg-blue-600/10 rounded-full blur-[80px] group-hover:bg-blue-600/20 transition-all duration-1000" />
 
                         <div className="space-y-3 relative z-10">
                             <div className="flex items-center gap-3">
-                                <div className="px-3 py-1.5 bg-blue-600 text-white rounded-full text-[9px] font-black uppercase tracking-wide shadow-lg shadow-blue-500/20">
+                                <div className="px-3 py-1.5 bg-blue-600 text-white rounded-full text-[9px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20">
                                     {course?.modality === 'formal' ? 'Ruta Ministerial' : 'Capacitacion'}
                                 </div>
-                                <div className="px-3 py-1.5 bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wide">
+                                <div className="px-3 py-1.5 bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-semibold uppercase tracking-wide">
                                     {course?.code || '---'}
                                 </div>
                             </div>
@@ -221,7 +221,7 @@ export default function CourseManagementPage() {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
                                 className={clsx(
-                                    "flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wide transition-all",
+                                    "flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-wide transition-all",
                                     activeTab === tab.id
                                         ? "bg-white dark:bg-[#1c1f26] text-blue-600 shadow-xl shadow-slate-200/50 dark:shadow-none"
                                         : "text-slate-400 hover:text-slate-600"
@@ -251,7 +251,7 @@ export default function CourseManagementPage() {
                                         />
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <button className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg text-[10px] font-black uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-all">
+                                        <button className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-all">
                                             <FileText size={16} /> Exportar Acta
                                         </button>
                                     </div>
@@ -260,7 +260,7 @@ export default function CourseManagementPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                     {loading ? (
                                         Array(6).fill(0).map((_, i) => (
-                                            <div key={i} className="h-64 bg-slate-100 dark:bg-white/5 rounded-lg animate-pulse" />
+                                            <div key={i} className="h-48 bg-slate-100 dark:bg-white/5 rounded-lg animate-pulse" />
                                         ))
                                     ) : filteredStudents.length > 0 ? (
                                         filteredStudents.map(student => (
@@ -275,7 +275,7 @@ export default function CourseManagementPage() {
                                                     </div>
                                                     <div className="flex flex-col items-end gap-2">
                                                         <span className={clsx(
-                                                            "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-wide",
+                                                            "px-3 py-1 rounded-full text-[8px] font-semibold uppercase tracking-wide",
                                                             student.status === 'active' ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
                                                         )}>
                                                             {student.status}
@@ -292,26 +292,26 @@ export default function CourseManagementPage() {
                                                 <div className="mt-3 pt-3 border-t border-slate-50 dark:border-white/5 grid grid-cols-2 gap-4 relative z-10">
                                                     <div className="space-y-3">
                                                         <div className="flex items-center justify-between">
-                                                            <p className="text-[9px] font-black uppercase tracking-wide text-slate-400">Progreso</p>
-                                                            <span className="text-[10px] font-black text-slate-700 dark:text-slate-300">{student.progress}%</span>
+                                                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Progreso</p>
+                                                            <span className="font-semibold text-slate-700 dark:text-slate-300">{student.progress}%</span>
                                                         </div>
                                                         <div className="h-2 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden p-0.5">
                                                             <div className="h-full bg-blue-500 rounded-full shadow-lg shadow-blue-500/20" style={{ width: `${student.progress}%` }} />
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
-                                                        <p className="text-[9px] font-black uppercase tracking-wide text-slate-400 mb-1">Nota Promedio</p>
-                                                        <p className={clsx("text-xl font-black tracking-tighter", student.average_grade >= 70 ? "text-emerald-500" : "text-rose-500")}>
+                                                        <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Nota Promedio</p>
+                                                        <p className={clsx("text-xl font-bold tracking-tighter", student.average_grade >= 70 ? "text-emerald-500" : "text-rose-500")}>
                                                             {student.average_grade.toFixed(1)}
                                                         </p>
                                                     </div>
                                                 </div>
 
-                                                <button className="w-full mt-3 py-1.5 bg-slate-50 dark:bg-white/5 rounded-lg text-[10px] font-black uppercase tracking-wide text-slate-500 group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-xl group-hover:shadow-blue-500/20 transition-all">Perfil Academico</button>
+                                                <button className="w-full mt-3 py-1.5 bg-slate-50 dark:bg-white/5 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-slate-500 group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-xl group-hover:shadow-blue-500/20 transition-all">Perfil Academico</button>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="col-span-full py-4 text-center space-y-3">
+                                        <div className="col-span-full py-1.5 text-center space-y-3">
                                             <div className="size-10 bg-slate-100 dark:bg-white/5 rounded-lg flex items-center justify-center mx-auto text-slate-300 shadow-inner">
                                                 <Search size={48} strokeWidth={1.5} />
                                             </div>

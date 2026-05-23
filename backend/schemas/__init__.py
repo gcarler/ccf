@@ -1,6 +1,11 @@
 from __future__ import annotations
 
 from backend.schemas._common import orm_config
+# ── Dashboard & Analytics ───────────────────────────────────────────────────
+from backend.schemas.dashboard import (AcademyDashboard, AdminGlobalDashboard,
+                                       AssetsDashboard, ChartDataPoint,
+                                       CrmDashboard, FinanceDashboard,
+                                       MetricCard, ProjectsDashboard)
 # ── Academy / LMS ────────────────────────────────────────────────────────────
 from backend.schemas.academy import (AcademyStudentProfile, Assessment,
                                      AssessmentAttempt,

@@ -119,9 +119,9 @@ export default function AssessmentPage() {
                             <h2 className="text-xl font-black mb-2">{result.passed ? '¡Felicitaciones!' : 'Sigue intentando'}</h2>
                             <p className="text-slate-500 dark:text-slate-400 font-medium">Has completado la evaluacion de {assessment.title}</p>
                         </div>
-                        <div className="py-4 border-y border-slate-200 dark:border-white/5">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide mb-1">Tu Puntaje</p>
-                            <span className="text-xl font-black tracking-tighter">{Math.round(result.submitted_score)}%</span>
+                        <div className="py-1.5 border-y border-slate-200 dark:border-white/5">
+                            <p className="font-semibold text-slate-400 uppercase tracking-wide mb-1">Tu Puntaje</p>
+                            <span className="text-xl font-bold tracking-tighter">{Math.round(result.submitted_score)}%</span>
                         </div>
                         <div className="space-y-3">
                             <button
@@ -182,11 +182,11 @@ export default function AssessmentPage() {
                             >
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
-                                        <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">Pregunta {index + 1}</p>
+                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Pregunta {index + 1}</p>
                                         <h3 className="mt-2 text-base font-black text-slate-900 dark:text-white">{question.question_text}</h3>
                                     </div>
                                     <span className={clsx(
-                                        "rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wide",
+                                        "rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide",
                                         answeredQuestionIds.has(question.id)
                                             ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
                                             : "bg-slate-100 text-slate-500 dark:bg-white/10"
@@ -202,7 +202,7 @@ export default function AssessmentPage() {
                 {viewType === 'table' && (
                     <div className="max-w-5xl mx-auto overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
                         <table className="w-full text-left">
-                            <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-wide text-slate-400 dark:bg-white/5">
+                            <thead className="bg-slate-50 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:bg-white/5">
                                 <tr>
                                     <th className="px-4 py-1.5">#</th>
                                     <th className="px-4 py-1.5">Pregunta</th>
@@ -219,7 +219,7 @@ export default function AssessmentPage() {
                                         <td className="px-4 py-1.5">
                                             <button
                                                 onClick={() => setCurrentStep(index)}
-                                                className="text-xs font-black uppercase tracking-wide text-blue-600"
+                                                className="text-xs font-semibold uppercase tracking-wide text-blue-600"
                                             >
                                                 {answeredQuestionIds.has(question.id) ? 'Revisar' : 'Responder'}
                                             </button>
@@ -237,12 +237,12 @@ export default function AssessmentPage() {
                     <div className="space-y-4">
                         <div className="flex justify-between items-end">
                             <div>
-                                <p className="text-[10px] font-black text-blue-500 uppercase tracking-wide mb-1">Pregunta {currentStep + 1} de {assessment.questions.length}</p>
+                                <p className="font-semibold text-blue-500 uppercase tracking-wide mb-1">Pregunta {currentStep + 1} de {assessment.questions.length}</p>
                                 <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight leading-tight">
                                     {currentQuestion.question_text}
                                 </h3>
                             </div>
-                            <span className="text-[12px] font-black text-slate-400 shrink-0">{Math.round(((currentStep + 1) / assessment.questions.length) * 100)}%</span>
+                            <span className="font-semibold text-slate-400 shrink-0">{Math.round(((currentStep + 1) / assessment.questions.length) * 100)}%</span>
                         </div>
                         <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                             <motion.div
@@ -305,7 +305,7 @@ export default function AssessmentPage() {
                         <button
                             disabled={currentStep === 0}
                             onClick={() => setCurrentStep(prev => prev - 1)}
-                            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wide text-slate-400 hover:text-slate-600 disabled:opacity-0 transition-all"
+                            className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hover:text-slate-600 disabled:opacity-0 transition-all"
                         >
                             <ArrowLeft size={16} /> Anterior
                         </button>

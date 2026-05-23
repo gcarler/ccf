@@ -24,20 +24,20 @@ function ResetPasswordContent() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center max-w-md mx-auto px-8"
+            className="text-center max-w-md mx-auto px-4"
           >
-            <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-3">
               <Lock className="w-8 h-8 text-white/60" />
             </div>
-            <h2 className="text-2xl font-extrabold text-white tracking-[-0.02em] mb-3">
+            <h2 className="text-lg font-extrabold text-white tracking-[-0.02em] mb-3">
               Token inválido
             </h2>
-            <p className="text-white/60 text-sm mb-8">
+            <p className="text-white/60 text-sm mb-3">
               El enlace no es válido o ya fue utilizado. Solicita uno nuevo.
             </p>
             <button
               onClick={() => router.push("/auth/forgot")}
-              className="px-8 py-4 bg-[#018ABD] text-white rounded-xl font-black text-[11px] uppercase tracking-[0.2em] border-none cursor-pointer hover:bg-[#004581] transition-all"
+              className="px-4 py-1.5 bg-[#018ABD] text-white rounded-lg font-bold text-[11px] uppercase tracking-wide border-none cursor-pointer hover:bg-[#004581] transition-all"
             >
               Solicitar nuevo enlace
             </button>
@@ -84,17 +84,17 @@ function ResetPasswordContent() {
         <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex-1 bg-white flex flex-col justify-center items-center px-8 min-h-screen"
+          className="flex-1 bg-white flex flex-col justify-center items-center px-4 min-h-screen"
         >
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-            className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center mb-6"
+            className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center mb-3"
           >
             <CheckCircle2 className="w-10 h-10 text-emerald-500" />
           </motion.div>
-          <h2 className="text-2xl font-extrabold text-[#001B48] tracking-[-0.02em] mb-3">
+          <h2 className="text-lg font-extrabold text-[#001B48] tracking-[-0.02em] mb-3">
             Contraseña actualizada
           </h2>
           <p className="text-gray-500 text-sm">Redirigiendo al inicio de sesión...</p>
@@ -123,12 +123,12 @@ function ResetPasswordContent() {
           transition={{ delay: 0.4 }}
           className="relative z-10"
         >
-          <div className="inline-flex items-center gap-3 border border-white/20 rounded-full px-5 py-2.5 bg-white/5 backdrop-blur-md">
+          <div className="inline-flex items-center gap-3 border border-white/20 rounded-full px-3 py-2.5 bg-white/5 backdrop-blur-md">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
               <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round"/>
               <circle cx="12" cy="4" r="1.5" fill="white" stroke="none"/>
             </svg>
-            <span className="text-white font-bold uppercase tracking-[0.2em] text-[10px]">
+            <span className="text-white font-bold uppercase tracking-wide text-[10px]">
               Ministerio Internacional
             </span>
           </div>
@@ -140,13 +140,13 @@ function ResetPasswordContent() {
           transition={{ delay: 0.6, duration: 0.8 }}
           className="relative z-10"
         >
-          <h1 className="font-black tracking-[-0.04em] leading-[0.88] text-white text-[clamp(3rem,6vw,4.5rem)] m-0">
+          <h1 className="font-bold tracking-[-0.04em] leading-[0.88] text-white text-[clamp(3rem,6vw,4.5rem)] m-0">
             EL <br /> FARO
           </h1>
-          <p className="text-[#018ABD] text-[clamp(1rem,2vw,1.25rem)] font-black tracking-[0.2em] uppercase mt-6 leading-[1.4]">
+          <p className="text-[#018ABD] text-[clamp(1rem,2vw,1.25rem)] font-bold tracking-wide uppercase mt-3 leading-[1.4]">
             Comunidad <br /> Cristiana
           </p>
-          <div className="w-16 h-1.5 bg-white mt-8 rounded-full" />
+          <div className="w-16 h-1.5 bg-white mt-3 rounded-full" />
         </motion.div>
 
         <motion.div
@@ -180,24 +180,24 @@ function ResetPasswordContent() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="mb-12"
+            className="mb-4"
           >
             <h2 className="text-[clamp(1.8rem,3.5vw,2.5rem)] font-extrabold text-[#001B48] tracking-[-0.02em] leading-none m-0 mb-4">
               Restablecer contraseña
             </h2>
-            <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] m-0">
+            <p className="text-gray-400 font-bold uppercase tracking-wide text-[10px] m-0">
               Crea una nueva clave segura
             </p>
           </motion.div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             {/* Nueva contraseña */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.45 }}
             >
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] block mb-3 ml-2">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-3 ml-2">
                 Nueva contraseña
               </label>
               <div className="relative">
@@ -208,7 +208,7 @@ function ResetPasswordContent() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-4 px-5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-[#018ABD] focus:bg-white transition-all pr-14"
+                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-lg py-1.5 px-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-[#018ABD] focus:bg-white transition-all pr-14"
                 />
                 <button
                   type="button"
@@ -226,7 +226,7 @@ function ResetPasswordContent() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.55 }}
             >
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] block mb-3 ml-2">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-3 ml-2">
                 Confirmar contraseña
               </label>
               <div className="relative">
@@ -237,7 +237,7 @@ function ResetPasswordContent() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-4 px-5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-[#018ABD] focus:bg-white transition-all pr-14"
+                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-lg py-1.5 px-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-[#018ABD] focus:bg-white transition-all pr-14"
                 />
               </div>
             </motion.div>
@@ -247,7 +247,7 @@ function ResetPasswordContent() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="px-6 py-3.5 bg-rose-50 border-2 border-rose-200 rounded-xl text-rose-600 text-[11px] font-black text-center uppercase tracking-[0.1em]"
+                className="px-3 py-3.5 bg-rose-50 border-2 border-rose-200 rounded-lg text-rose-600 text-[11px] font-bold text-center uppercase tracking-wider"
               >
                 {error}
               </motion.div>
@@ -260,7 +260,7 @@ function ResetPasswordContent() {
               transition={{ delay: 0.65 }}
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-[#018ABD] text-white rounded-xl font-black text-[11px] uppercase tracking-[0.2em] border-none cursor-pointer hover:bg-[#004581] transition-all mt-2 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+              className="w-full py-1.5 bg-[#018ABD] text-white rounded-lg font-bold text-[11px] uppercase tracking-wide border-none cursor-pointer hover:bg-[#004581] transition-all mt-2 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
             >
               {loading ? (
                 <Loader2 className="animate-spin" size={20} />

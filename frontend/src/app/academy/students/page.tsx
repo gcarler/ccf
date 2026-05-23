@@ -62,7 +62,7 @@ export default function AcademyStudentsPage() {
                     { label: "Estudiantes", icon: UserRound },
                 ]}
                 rightActions={
-                    <span className="text-[11px] font-black uppercase tracking-wide text-slate-400">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                         {filtered.length} activos
                     </span>
                 }
@@ -78,7 +78,7 @@ export default function AcademyStudentsPage() {
                 <section className="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
                     <header className="flex flex-col gap-4 border-b border-slate-100 p-3 dark:border-white/10 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-wide text-blue-500">Directorio academico</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-500">Directorio academico</p>
                             <h1 className="text-lg font-black text-slate-900 dark:text-white">Estudiantes</h1>
                         </div>
                         <div className="relative w-full md:max-w-sm">
@@ -95,7 +95,7 @@ export default function AcademyStudentsPage() {
                     <div className="overflow-x-auto">
                         <table className="min-w-full text-sm">
                             <thead>
-                                <tr className="border-b border-slate-100 text-left text-[10px] font-black uppercase tracking-wide text-slate-400 dark:border-white/10">
+                                <tr className="border-b border-slate-100 text-left text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:border-white/10">
                                     <th className="px-4 py-1.5">Nombre</th>
                                     <th className="px-4 py-1.5">Correo</th>
                                     <th className="px-4 py-1.5">Cursos</th>
@@ -115,7 +115,7 @@ export default function AcademyStudentsPage() {
                                         <td className="px-4 py-1.5 text-slate-500">{student.course_count ?? 0}</td>
                                         <td className="px-4 py-1.5 text-slate-500">{student.progress ?? 0}%</td>
                                         <td className="px-4 py-1.5">
-                                            <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-emerald-600">
+                                            <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-600">
                                                 {student.status || "Activo"}
                                             </span>
                                         </td>
@@ -123,14 +123,14 @@ export default function AcademyStudentsPage() {
                                 ))}
                                 {!loading && filtered.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} className="px-4 py-4 text-center text-sm font-semibold text-slate-400">
+                                        <td colSpan={5} className="px-4 py-1.5 text-center text-sm font-semibold text-slate-400">
                                             No hay estudiantes registrados para mostrar.
                                         </td>
                                     </tr>
                                 )}
                                 {loading && (
                                     <tr>
-                                        <td colSpan={5} className="px-4 py-4 text-center text-sm font-semibold text-slate-400">
+                                        <td colSpan={5} className="px-4 py-1.5 text-center text-sm font-semibold text-slate-400">
                                             Cargando estudiantes...
                                         </td>
                                     </tr>
@@ -150,7 +150,7 @@ function Metric({ icon: Icon, label, value }: { icon: any; label: string; value:
             <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10">
                 <Icon size={20} />
             </div>
-            <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">{label}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
             <p className="text-lg font-black text-slate-900 dark:text-white">{value}</p>
         </div>
     );

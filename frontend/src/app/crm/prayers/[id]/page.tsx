@@ -90,8 +90,8 @@ export default function PrayerDetailPage() {
                     </div>
 
                     <aside className="space-y-3">
-                        <div className="p-4 bg-slate-900 rounded-xl text-white space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-blue-400">
+                        <div className="p-4 bg-slate-900 rounded-md text-white space-y-4">
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-blue-400">
                                 <Sparkles size={14} /> AI Context
                             </div>
                             <p className="text-[11px] font-bold leading-relaxed opacity-90">

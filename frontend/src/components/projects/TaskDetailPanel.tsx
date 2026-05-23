@@ -187,7 +187,7 @@ function ActivityItem({
                 {activity.assignee && (
                     <div
                         title={activity.assignee.name}
-                        className="size-5 rounded-full flex items-center justify-center text-[8px] font-black text-white shrink-0"
+                        className="size-5 rounded-full flex items-center justify-center font-semibold text-white shrink-0"
                         style={{ backgroundColor: activity.assignee.color ?? '#6366f1' }}
                     >
                         {activity.assignee.name.charAt(0).toUpperCase()}
@@ -703,7 +703,7 @@ export default function TaskDetailPanel({
                     className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize z-10 group flex items-center justify-center"
                     title="Arrastrar para redimensionar"
                 >
-                    <div className="w-[3px] h-16 rounded-full bg-slate-200 dark:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="w-[3px] h-8 rounded-full bg-slate-200 dark:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
 
                 {/* ── HEADER ─────────────────────────────────────── */}
@@ -814,7 +814,7 @@ export default function TaskDetailPanel({
                         onChange={e => setTitle(e.target.value)}
                         onBlur={handleSave}
                         rows={1}
-                        className="w-full text-[17px] font-bold text-slate-900 dark:text-white bg-transparent resize-none outline-none leading-snug placeholder:text-slate-300 dark:placeholder:text-slate-600 pb-3"
+                        className="w-full text-sm font-bold text-slate-900 dark:text-white bg-transparent resize-none outline-none leading-snug placeholder:text-slate-300 dark:placeholder:text-slate-600 pb-3"
                         placeholder="Nombre de la tarea..."
                         style={{ minHeight: 28 }}
                         onInput={e => {
@@ -824,7 +824,7 @@ export default function TaskDetailPanel({
                         }}
                     />
                     {saving && (
-                        <p className="pb-3 text-[10px] font-bold uppercase tracking-widest text-blue-500">
+                        <p className="pb-3 text-[10px] font-bold uppercase tracking-wide text-blue-500">
                             Guardando cambios...
                         </p>
                     )}
@@ -842,7 +842,7 @@ export default function TaskDetailPanel({
                                 title="Click para auto-asignar o liberar"
                                 className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] font-medium hover:bg-slate-50 dark:hover:bg-white/[0.04] border border-transparent hover:border-slate-200 dark:hover:border-white/[0.08] transition-all cursor-pointer"
                             >
-                                <div className={task.assignee_id ? 'size-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px] font-black' : 'size-5 rounded-full bg-blue-600/20 border border-blue-300/30 flex items-center justify-center'}>
+                                <div className={task.assignee_id ? 'size-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold' : 'size-5 rounded-full bg-blue-600/20 border border-blue-300/30 flex items-center justify-center'}>
                                     {task.assignee_id ? (user?.username?.charAt(0).toUpperCase() || 'U') : <UserRound size={10} className="text-blue-500" />}
                                 </div>
                                 {task.assignee_id ? (user?.id === task.assignee_id ? user?.username || 'Tú' : `Asignado #${task.assignee_id}`) : 'Sin asignar'}
@@ -907,9 +907,9 @@ export default function TaskDetailPanel({
                                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                                 exit={{ opacity: 0, scale: 0.95, y: -4 }}
                                                 transition={{ duration: 0.12 }}
-                                                className="absolute top-full left-0 mt-1.5 z-50 w-56 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl p-3 space-y-2"
+                                                className="absolute top-full left-0 mt-1.5 z-50 w-56 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-2xl p-3 space-y-2"
                                             >
-                                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Nueva etiqueta</p>
+                                                <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Nueva etiqueta</p>
                                                 <div className="flex gap-1.5">
                                                     <input
                                                         ref={labelInputRef}
@@ -958,7 +958,7 @@ export default function TaskDetailPanel({
 
                     {/* ─ DESCRIPTION ─ */}
                     <section className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.05]">
-                        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 flex items-center gap-1.5">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
                             <AlignLeft size={11} /> Descripción
                         </p>
                         <textarea
@@ -974,7 +974,7 @@ export default function TaskDetailPanel({
                     {/* ─ ARCHIVOS ─ */}
                     <section className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.05]">
                         <div className="mb-3 flex items-center justify-between">
-                            <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+                            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                                 <Paperclip size={11} /> Archivos
                                 <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
                                     {attachments.length}
@@ -994,7 +994,7 @@ export default function TaskDetailPanel({
                                         href={attachment.file_url}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-left transition hover:border-blue-200 hover:bg-blue-50/60 dark:border-white/[0.06] dark:bg-white/[0.03] dark:hover:border-blue-500/30 dark:hover:bg-blue-500/10"
+                                        className="flex items-center justify-between gap-3 rounded-md border border-slate-100 bg-slate-50 px-3 py-2 text-left transition hover:border-blue-200 hover:bg-blue-50/60 dark:border-white/[0.06] dark:bg-white/[0.03] dark:hover:border-blue-500/30 dark:hover:bg-blue-500/10"
                                     >
                                         <div className="min-w-0">
                                             <p className="truncate text-[12px] font-bold text-slate-700 dark:text-slate-200">
@@ -1004,7 +1004,7 @@ export default function TaskDetailPanel({
                                                 {attachment.file_size ? `${Math.max(1, Math.round(attachment.file_size / 1024))} KB` : 'Archivo adjunto'}
                                             </p>
                                         </div>
-                                        <span className="shrink-0 text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">
+                                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
                                             Abrir
                                         </span>
                                     </a>
@@ -1016,7 +1016,7 @@ export default function TaskDetailPanel({
                     {/* ─ ACTIVIDADES ─ */}
                     <section className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.05]">
                         <div className="mb-3 flex items-center justify-between">
-                            <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+                            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                                 <Boxes size={11} /> Insumos
                                 <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
                                     {supplies.length}
@@ -1034,7 +1034,7 @@ export default function TaskDetailPanel({
                             {supplies.map((supply) => (
                                 <div
                                     key={supply.id}
-                                    className="grid grid-cols-[minmax(0,1fr)_72px_110px] items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 dark:border-white/[0.06] dark:bg-white/[0.03]"
+                                    className="grid grid-cols-[minmax(0,1fr)_72px_110px] items-center gap-2 rounded-md border border-slate-100 bg-slate-50 px-3 py-2 dark:border-white/[0.06] dark:bg-white/[0.03]"
                                 >
                                     <input
                                         value={supply.item_name}
@@ -1089,19 +1089,19 @@ export default function TaskDetailPanel({
                                 onChange={(event) => setNewSupplyName(event.target.value)}
                                 onKeyDown={(event) => event.key === 'Enter' && handleAddSupply()}
                                 placeholder="Nuevo insumo"
-                                className="min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] font-medium outline-none dark:border-white/10 dark:bg-white/5"
+                                className="min-w-0 rounded-md border border-slate-200 bg-white px-3 py-2 text-[12px] font-medium outline-none dark:border-white/10 dark:bg-white/5"
                             />
                             <input
                                 type="number"
                                 min={1}
                                 value={newSupplyQuantity}
                                 onChange={(event) => setNewSupplyQuantity(Math.max(1, Number(event.target.value) || 1))}
-                                className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-[12px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
+                                className="rounded-md border border-slate-200 bg-white px-2 py-2 text-[12px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
                             />
                             <button
                                 onClick={handleAddSupply}
                                 disabled={creatingSupply || !newSupplyName.trim()}
-                                className="rounded-xl bg-blue-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-50"
+                                className="rounded-md bg-blue-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50"
                             >
                                 {creatingSupply ? '...' : 'Agregar'}
                             </button>
@@ -1110,7 +1110,7 @@ export default function TaskDetailPanel({
 
                     <section className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.05]">
                         <div className="flex items-center justify-between mb-3">
-                            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 flex items-center gap-1.5">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                                 <Check size={11} /> Actividades
                                 <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-white/[0.06] rounded text-slate-500 dark:text-slate-400 font-bold text-[9px]">
                                     {activities.length}
@@ -1157,7 +1157,7 @@ export default function TaskDetailPanel({
 
                     {/* ─ COMENTARIOS ─ */}
                     <section className="px-4 py-3">
-                        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-3 flex items-center gap-1.5">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
                             <MessageSquare size={11} /> Actividad
                         </p>
 
@@ -1176,7 +1176,7 @@ export default function TaskDetailPanel({
                             {comments.map(c => (
                                 <div key={c.id} className="flex gap-2.5">
                                     <div
-                                        className="size-6 rounded-full flex items-center justify-center text-[9px] font-black text-white shrink-0 mt-0.5"
+                                        className="size-6 rounded-full flex items-center justify-center font-semibold text-white shrink-0 mt-0.5"
                                         style={{ backgroundColor: c.authorColor ?? '#6366f1' }}
                                     >
                                         {c.author.charAt(0).toUpperCase()}
@@ -1196,10 +1196,10 @@ export default function TaskDetailPanel({
 
                         {/* Comment input */}
                         <div className="flex items-end gap-2">
-                            <div className="size-6 rounded-full bg-blue-600 flex items-center justify-center text-[9px] font-black text-white shrink-0">
+                            <div className="size-6 rounded-full bg-blue-600 flex items-center justify-center font-semibold text-white shrink-0">
                                 T
                             </div>
-                            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.07] focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400/40 transition-all">
+                            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-md bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.07] focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400/40 transition-all">
                                 <input
                                     type="text"
                                     value={commentInput}

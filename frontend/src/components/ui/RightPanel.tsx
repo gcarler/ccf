@@ -64,7 +64,7 @@ export default function RightPanel({
         >
             {/* Panel header */}
             <div className="h-10 flex items-center justify-between px-4 border-b border-slate-100 dark:border-white/5 shrink-0">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                     {title}
                 </span>
                 <div className="flex items-center gap-1">

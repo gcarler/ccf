@@ -68,20 +68,20 @@ export default function CrmSidebar() {
                 </div>
 
                 <div className="flex flex-col gap-2 w-full items-center">
-                    <button className="p-2.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+                    <button className="p-2.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-md transition-all">
                         <Inbox size={20} />
                     </button>
-                    <button className="p-2.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+                    <button className="p-2.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-md transition-all">
                         <Clock size={20} />
                     </button>
-                    <button className="p-2.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all relative">
+                    <button className="p-2.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-md transition-all relative">
                         <Bell size={20} />
                         <span className="absolute top-2 right-2 size-2 bg-rose-500 rounded-full border-2 border-[#1e2227]"></span>
                     </button>
                 </div>
 
                 <div className="mt-auto flex flex-col gap-2 w-full items-center pb-4">
-                    <button className="p-2.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+                    <button className="p-2.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-md transition-all">
                         <Monitor size={20} />
                     </button>
                     <div className="size-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-[10px] border border-indigo-400/20 cursor-pointer">

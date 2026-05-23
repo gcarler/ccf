@@ -360,7 +360,7 @@ export default function CmsMenusManagement() {
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#141517]">
             {/* TOOLBAR */}
-            <header className="min-h-14 border-b border-slate-100 dark:border-white/5 flex flex-wrap items-center px-6 py-3 gap-3 shrink-0">
+            <header className="min-h-8 border-b border-slate-100 dark:border-white/5 flex flex-wrap items-center px-3 py-3 gap-3 shrink-0">
                 <div className="flex items-center gap-2 flex-1">
                     <Link2 size={16} className="text-blue-600" />
                     <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
@@ -416,7 +416,7 @@ export default function CmsMenusManagement() {
 
             <form
                 onSubmit={handleCreateMenu}
-                className="border-b border-slate-100 dark:border-white/5 px-6 py-3 flex flex-wrap items-center gap-3 bg-slate-50/60 dark:bg-white/[0.02]"
+                className="border-b border-slate-100 dark:border-white/5 px-3 py-3 flex flex-wrap items-center gap-3 bg-slate-50/60 dark:bg-white/[0.02]"
             >
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Nuevo menu</p>
                 <input
@@ -456,7 +456,7 @@ export default function CmsMenusManagement() {
                     >
                         <form 
                             onSubmit={handleAddItem}
-                            className="px-6 py-4 flex items-center gap-4"
+                            className="px-3 py-1.5 flex items-center gap-4"
                         >
                             <div className="size-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
                                 <Zap size={16} />
@@ -468,14 +468,14 @@ export default function CmsMenusManagement() {
                                     onChange={(e) => setNewItemLabel(e.target.value)}
                                     placeholder="Nombre del enlace..."
                                     disabled={!canEdit}
-                                    className="flex-1 bg-transparent border-none text-[15px] font-bold text-blue-900 dark:text-blue-200 placeholder:text-blue-400 focus:ring-0"
+                                    className="flex-1 bg-transparent border-none text-sm font-bold text-blue-900 dark:text-blue-200 placeholder:text-blue-400 focus:ring-0"
                                 />
                                 <input 
                                     value={newItemHref}
                                     onChange={(e) => setNewItemHref(e.target.value)}
                                     placeholder="URL (ej: /contacto o https://...)"
                                     disabled={!canEdit}
-                                    className="flex-1 bg-transparent border-none text-[15px] font-medium text-blue-700 dark:text-blue-300 placeholder:text-blue-400 focus:ring-0"
+                                    className="flex-1 bg-transparent border-none text-sm font-medium text-blue-700 dark:text-blue-300 placeholder:text-blue-400 focus:ring-0"
                                 />
                             </div>
                             <div className="flex items-center gap-2">
@@ -500,16 +500,16 @@ export default function CmsMenusManagement() {
             </AnimatePresence>
 
             {/* LIST AREA */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 max-w-4xl mx-auto w-full">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-3 max-w-4xl mx-auto w-full">
                 {loading ? (
                     <div className="space-y-4">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className="h-16 bg-slate-50 dark:bg-white/5 rounded-lg animate-pulse" />
+                            <div key={i} className="h-8 bg-slate-50 dark:bg-white/5 rounded-lg animate-pulse" />
                         ))}
                     </div>
                 ) : !menuKey ? (
                     <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-60">
-                        <div className="size-16 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
+                        <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
                             <Link2 size={32} />
                         </div>
                         <div>
@@ -519,7 +519,7 @@ export default function CmsMenusManagement() {
                     </div>
                 ) : navConfig.items.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-50">
-                        <div className="size-16 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
+                        <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
                             <Link2 size={32} />
                         </div>
                         <div>
@@ -536,7 +536,7 @@ export default function CmsMenusManagement() {
                                 await moveToRoot(draggedId);
                                 setDraggedId(null);
                             }}
-                            className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400"
+                            className="rounded-md border border-dashed border-slate-300 dark:border-white/20 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400"
                         >
                             Soltar aquí para mover a nivel raíz
                         </div>
@@ -610,7 +610,7 @@ export default function CmsMenusManagement() {
                                                 moveItem(sourceIndex, 'up');
                                             }}
                                             disabled={!canEdit}
-                                            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl text-slate-400 hover:text-slate-600 transition-all"
+                                            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-md text-slate-400 hover:text-slate-600 transition-all"
                                             title="Subir"
                                         >
                                             <ChevronRight size={14} className="-rotate-90" />
@@ -622,7 +622,7 @@ export default function CmsMenusManagement() {
                                                 moveItem(sourceIndex, 'down');
                                             }}
                                             disabled={!canEdit}
-                                            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl text-slate-400 hover:text-slate-600 transition-all"
+                                            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-md text-slate-400 hover:text-slate-600 transition-all"
                                             title="Bajar"
                                         >
                                             <ChevronRight size={14} className="rotate-90" />
@@ -635,7 +635,7 @@ export default function CmsMenusManagement() {
                                             }}
                                             disabled={!canEdit}
                                             title={item.visibility === "hidden" ? "Restaurar enlace" : "Ocultar enlace"}
-                                            className="p-2 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-xl text-slate-400 hover:text-amber-700 transition-all"
+                                            className="p-2 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-md text-slate-400 hover:text-amber-700 transition-all"
                                         >
                                             {item.visibility === "hidden" ? <RotateCcw size={16} /> : <Archive size={16} />}
                                         </button>
@@ -680,7 +680,7 @@ export default function CmsMenusManagement() {
                                     value={selectedItem.label}
                                     onChange={(e) => handleUpdateItem(selectedIndex, { ...selectedItem, label: e.target.value })}
                                     disabled={!canEdit}
-                                    className="w-full px-3 py-2.5 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-blue-500/30 transition-all font-bold"
+                                    className="w-full px-3 py-2.5 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all font-bold"
                                 />
                             </div>
                             
@@ -693,7 +693,7 @@ export default function CmsMenusManagement() {
                                     value={selectedItem.href}
                                     onChange={(e) => handleUpdateItem(selectedIndex, { ...selectedItem, href: e.target.value })}
                                     disabled={!canEdit}
-                                    className="w-full px-3 py-2.5 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-blue-500/30 transition-all"
+                                    className="w-full px-3 py-2.5 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all"
                                 />
                             </div>
 
@@ -710,7 +710,7 @@ export default function CmsMenusManagement() {
                                             : null,
                                     })}
                                     disabled={!canEdit}
-                                    className="w-full px-3 py-2.5 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-blue-500/30 transition-all"
+                                    className="w-full px-3 py-2.5 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all"
                                 >
                                     <option value="">Sin padre (nivel raíz)</option>
                                     {navConfig.items
@@ -732,7 +732,7 @@ export default function CmsMenusManagement() {
                                     onClick={() => handleUpdateItem(selectedIndex, { ...selectedItem, visibility: "public" })}
                                     disabled={!canEdit}
                                     className={clsx(
-                                        "rounded-xl border px-3 py-2 text-[10px] font-semibold uppercase tracking-wide transition-all",
+                                        "rounded-md border px-3 py-2 text-[10px] font-semibold uppercase tracking-wide transition-all",
                                         selectedItem.visibility !== "hidden"
                                             ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10"
                                             : "border-slate-200 text-slate-500 dark:border-white/10"
@@ -745,7 +745,7 @@ export default function CmsMenusManagement() {
                                     onClick={() => handleUpdateItem(selectedIndex, { ...selectedItem, visibility: "hidden" })}
                                     disabled={!canEdit}
                                     className={clsx(
-                                        "rounded-xl border px-3 py-2 text-[10px] font-semibold uppercase tracking-wide transition-all",
+                                        "rounded-md border px-3 py-2 text-[10px] font-semibold uppercase tracking-wide transition-all",
                                         selectedItem.visibility === "hidden"
                                             ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10"
                                             : "border-slate-200 text-slate-500 dark:border-white/10"
@@ -769,7 +769,7 @@ export default function CmsMenusManagement() {
                             >
                                 <div className="flex items-center gap-3 text-left">
                                     <div className={clsx(
-                                        "size-10 rounded-xl flex items-center justify-center transition-all",
+                                        "size-10 rounded-md flex items-center justify-center transition-all",
                                         selectedItem.is_external ? "bg-blue-600 text-white" : "bg-slate-200 dark:bg-white/10 text-slate-400"
                                     )}>
                                         <ExternalLink size={18} />
@@ -794,7 +794,7 @@ export default function CmsMenusManagement() {
                                     setSelectedItem(null);
                                     setSelectedIndex(null);
                                 }}
-                                className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3 rounded-xl text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2"
                             >
                                 <Save size={14} />
                                 CERRAR Y LISTO

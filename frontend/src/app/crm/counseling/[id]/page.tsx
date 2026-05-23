@@ -90,7 +90,7 @@ export default function CounselingDetailPage() {
                                 Miembro: {session.member_name}
                             </p>
                         </div>
-                        <button className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all">
+                        <button className="px-4 py-2 bg-emerald-600 text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all">
                             Cerrar sesion
                         </button>
                     </header>

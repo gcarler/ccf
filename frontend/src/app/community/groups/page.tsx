@@ -40,14 +40,14 @@ export default function GroupsPage() {
     ];
 
     return (
-        <div className="max-w-6xl mx-auto space-y-4 pb-20 animate-in fade-in duration-700">
+        <div className="max-w-6xl mx-auto space-y-4 pb-4 animate-in fade-in duration-700">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-black uppercase tracking-[0.3em] text-[10px]">
+                    <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-[10px]">
                         <div className="size-2 rounded-full bg-current shadow-[0_0_10px_currentColor]"></div>
                         Grupos Pequeños
                     </div>
-                    <h1 className="text-4xl font-black text-[hsl(var(--text-primary))] tracking-tighter">Comunidades</h1>
+                    <h1 className="text-lg font-black text-[hsl(var(--text-primary))] tracking-tighter">Comunidades</h1>
                     <p className="text-[hsl(var(--text-secondary))] font-medium">Encuentra un grupo para crecer juntos en fe y amistad.</p>
                 </div>
 
@@ -56,13 +56,13 @@ export default function GroupsPage() {
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] size-4" />
                         <input 
                             placeholder="Buscar grupo..."
-                            className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-2xl h-12 pl-12 pr-6 text-sm font-medium w-64 focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] outline-none transition-all"
+                            className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg h-8 pl-12 pr-6 text-sm font-medium w-64 focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] outline-none transition-all"
                         />
                     </div>
-                    <button className="size-9 rounded-2xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all">
+                    <button className="size-9 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all">
                         <Filter size={18} />
                     </button>
-                    <button className="h-12 px-4 rounded-2xl bg-[hsl(var(--primary))] text-white font-black uppercase tracking-widest text-[10px] flex items-center gap-2 shadow-lg shadow-primary/20 hover:opacity-90 transition-all">
+                    <button className="h-8 px-4 rounded-lg bg-[hsl(var(--primary))] text-white font-semibold uppercase tracking-wide text-[10px] flex items-center gap-2 shadow-lg shadow-primary/20 hover:opacity-90 transition-all">
                         <Plus size={16} strokeWidth={3} />
                         Unirse a un Grupo
                     </button>
@@ -76,7 +76,7 @@ export default function GroupsPage() {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: idx * 0.1 }}
                         key={group.id}
-                        className="group bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-xl overflow-hidden hover:border-[hsl(var(--primary)/0.3)] hover:shadow-2xl transition-all shadow-sm flex flex-col"
+                        className="group bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md overflow-hidden hover:border-[hsl(var(--primary)/0.3)] hover:shadow-2xl transition-all shadow-sm flex flex-col"
                     >
                         <div className="h-48 relative overflow-hidden">
                             <Image
@@ -88,7 +88,7 @@ export default function GroupsPage() {
                                 sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-[hsl(var(--surface-2))] via-transparent to-transparent"></div>
-                            <div className="absolute top-4 left-4 h-8 px-4 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-[10px] font-black uppercase tracking-widest text-white">
+                            <div className="absolute top-4 left-4 h-8 px-4 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-[10px] font-semibold uppercase tracking-wide text-white">
                                 {group.category}
                             </div>
                         </div>
@@ -98,7 +98,7 @@ export default function GroupsPage() {
                                 <h3 className="text-base font-black text-[hsl(var(--text-primary))] tracking-tighter group-hover:text-[hsl(var(--primary))] transition-colors">
                                     {group.name}
                                 </h3>
-                                <p className="text-[hsl(var(--text-secondary))] text-xs font-bold uppercase tracking-widest">
+                                <p className="text-[hsl(var(--text-secondary))] text-xs font-bold uppercase tracking-wide">
                                     {group.leader}
                                 </p>
                             </div>
@@ -119,7 +119,7 @@ export default function GroupsPage() {
                             </div>
 
                             <div className="pt-4 mt-auto">
-                                <button className="w-full h-12 rounded-2xl bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] font-black uppercase tracking-widest text-[9px] hover:bg-[hsl(var(--primary))] hover:text-white hover:border-transparent transition-all">
+                                <button className="w-full h-8 rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] font-semibold uppercase tracking-wide text-[9px] hover:bg-[hsl(var(--primary))] hover:text-white hover:border-transparent transition-all">
                                     Ver Detalles
                                 </button>
                             </div>

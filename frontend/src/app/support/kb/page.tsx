@@ -29,29 +29,29 @@ export default function SupportKBPage() {
     return (
         <div className="h-full flex flex-col bg-slate-50 dark:bg-[#0f1117]">
             {/* Hero Search */}
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-12 text-center relative overflow-hidden">
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-4 text-center relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 50% 0%, white 0%, transparent 60%)" }} />
                 <div className="relative">
                     <Book size={32} className="text-white/60 mx-auto mb-4" />
-                    <h1 className="text-2xl font-black text-white mb-2">Base de Conocimientos</h1>
-                    <p className="text-blue-200 text-sm mb-6">Encuentra respuestas a todas tus preguntas sobre la plataforma CCF</p>
+                    <h1 className="text-lg font-black text-white mb-2">Base de Conocimientos</h1>
+                    <p className="text-blue-200 text-sm mb-3">Encuentra respuestas a todas tus preguntas sobre la plataforma CCF</p>
                     <div className="max-w-lg mx-auto relative">
                         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             placeholder="Buscar artículos, guías, tutoriales..."
-                            className="w-full pl-12 pr-5 py-4 rounded-2xl bg-white shadow-2xl text-[14px] text-slate-700 outline-none focus:ring-2 focus:ring-blue-400/40 font-medium"
+                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-white shadow-2xl text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-400/40 font-medium"
                         />
                     </div>
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-8">
-                <div className="max-w-5xl mx-auto space-y-10">
+            <div className="flex-1 overflow-y-auto p-4">
+                <div className="max-w-5xl mx-auto space-y-3">
                     {/* Categories */}
                     <section>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-5">Explorar por Categoría</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-5">Explorar por Categoría</p>
                         <div className="grid grid-cols-3 gap-4">
                             {CATEGORIES.map((cat, i) => (
                                 <motion.button
@@ -61,13 +61,13 @@ export default function SupportKBPage() {
                                     transition={{ delay: i * 0.04 }}
                                     onClick={() => setSelectedCat(selectedCat === cat.id ? null : cat.id)}
                                     className={clsx(
-                                        "flex items-center gap-4 p-5 rounded-2xl border transition-all text-left shadow-sm group",
+                                        "flex items-center gap-4 p-3 rounded-lg border transition-all text-left shadow-sm group",
                                         selectedCat === cat.id
                                             ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10"
                                             : "border-slate-200/60 dark:border-white/5 bg-white dark:bg-[#1a1d27] hover:shadow-md"
                                     )}
                                 >
-                                    <div className={clsx("size-11 rounded-xl flex items-center justify-center shrink-0", cat.color)}>
+                                    <div className={clsx("size-6 rounded-md flex items-center justify-center shrink-0", cat.color)}>
                                         <cat.icon size={20} />
                                     </div>
                                     <div>
@@ -83,18 +83,18 @@ export default function SupportKBPage() {
                     <section>
                         <div className="flex items-center gap-2 mb-5">
                             <Star size={14} className="text-amber-500" />
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Artículos más Populares</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Artículos más Populares</p>
                         </div>
-                        <div className="bg-white dark:bg-[#1a1d27] rounded-2xl border border-slate-200/60 dark:border-white/5 shadow-sm divide-y divide-slate-100 dark:divide-white/5 overflow-hidden">
+                        <div className="bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 shadow-sm divide-y divide-slate-100 dark:divide-white/5 overflow-hidden">
                             {POPULAR_ARTICLES.map((article, i) => (
                                 <motion.div
                                     key={article.id}
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     transition={{ delay: 0.2 + i * 0.04 }}
-                                    className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer group"
+                                    className="flex items-center gap-4 px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer group"
                                 >
-                                    <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-[13px] font-black text-slate-400">
+                                    <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center font-semibold text-slate-400">
                                         {i + 1}
                                     </div>
                                     <div className="flex-1 min-w-0">

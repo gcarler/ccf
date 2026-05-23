@@ -99,7 +99,7 @@ export default function StudentSchedule() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="space-y-3 px-4 py-4">
+        <div className="space-y-3 px-4 py-1.5">
             <AdminHero
                 eyebrow="Horario"
                 title="Horario académico"
@@ -108,7 +108,7 @@ export default function StudentSchedule() {
                 watchers={['Equipo Horarios', 'Optimus Brain']}
                 primaryAction={{ label: icsGenerating ? 'Generando...' : 'Exportar .ics', icon: Download, onClick: exportCalendar }}
             />
-            <div className="rounded-xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] shadow-xl overflow-hidden">
+            <div className="rounded-md border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] shadow-xl overflow-hidden">
             <div className="flex gap-4 pb-4 overflow-x-auto hide-scrollbar p-4 border-b border-slate-100 dark:border-white/5">
                 {DAYS.map((day, index) => (
                     <button
@@ -119,7 +119,7 @@ export default function StudentSchedule() {
                             }`}
                         >
                             <div
-                                className={`flex h-14 w-14 items-center justify-center rounded-2xl border text-sm font-bold uppercase tracking-widest ${
+                                className={`flex h-8 w-14 items-center justify-center rounded-lg border text-sm font-bold uppercase tracking-wide ${
                                     activeDay === index
                                         ? 'bg-primary border-primary/50 shadow-xl shadow-primary/30'
                                         : 'bg-slate-900 border-white/10 hover:border-primary/30'
@@ -138,19 +138,19 @@ export default function StudentSchedule() {
                     )}
 
                     {(loading || lessonsLoading) && (
-                        <p className="text-center text-slate-400 text-sm py-4">Actualizando calendario...</p>
+                        <p className="text-center text-slate-400 text-sm py-1.5">Actualizando calendario...</p>
                     )}
 
                     {!loading && sessions.length === 0 && (
-                        <p className="text-center text-slate-400 text-sm py-4">
+                        <p className="text-center text-slate-400 text-sm py-1.5">
                             Aún no hay sesiones programadas. Revisa tus cursos para obtener horarios oficiales.
                         </p>
                     )}
 
                     {filteredSessions.length > 0 && (
-                        <div className="flex items-center justify-between mb-8">
-                            <h3 className="text-primary text-xs font-black uppercase tracking-widest">{DAYS[activeDay]}</h3>
-                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest border border-white/10 px-2 py-1 rounded">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-primary text-xs font-semibold uppercase tracking-wide">{DAYS[activeDay]}</h3>
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wide border border-white/10 px-2 py-1 rounded">
                                 {filteredSessions.length} sesiones
                             </span>
                         </div>
@@ -159,7 +159,7 @@ export default function StudentSchedule() {
                     <div className="relative">
                         <div className="absolute left-[11px] top-4 bottom-4 w-[2px] bg-white/5 rounded-full" />
                         {filteredSessions.map((session) => (
-                            <div key={session.id} className="relative z-10 grid grid-cols-[24px_1fr] gap-x-6 mb-8">
+                            <div key={session.id} className="relative z-10 grid grid-cols-[24px_1fr] gap-x-6 mb-3">
                                 <div className="flex justify-center pt-3">
                                     <div
                                         className={`w-3 h-3 rounded-full ${
@@ -167,9 +167,9 @@ export default function StudentSchedule() {
                                         }`}
                                     ></div>
                                 </div>
-                                <div className="bg-slate-900/50 backdrop-blur-xl p-4 rounded-xl shadow-xl border border-white/5 hover:border-primary/30 transition-all">
+                                <div className="bg-slate-900/50 backdrop-blur-xl p-4 rounded-md shadow-xl border border-white/5 hover:border-primary/30 transition-all">
                                     <div className="flex justify-between items-start mb-4">
-                                        <span className="text-slate-300 text-xs font-black uppercase tracking-widest px-3 py-1.5 bg-slate-800 rounded-xl border border-white/5">
+                                        <span className="text-slate-300 text-xs font-semibold uppercase tracking-wide px-3 py-1.5 bg-slate-800 rounded-md border border-white/5">
                                             {session.time} - {nextSlot(session.time)}
                                         </span>
                                         <button className="text-slate-500 hover:text-white p-1">
@@ -192,9 +192,9 @@ export default function StudentSchedule() {
                                             <span className="font-medium">{session.location}</span>
                                         </div>
                                         {session.isVirtual && (
-                                            <button className="flex items-center gap-3 text-emerald-400 text-sm font-bold mt-2 bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors w-fit">
+                                            <button className="flex items-center gap-3 text-emerald-400 text-sm font-bold mt-2 bg-emerald-500/10 p-3 rounded-md border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors w-fit">
                                                 <Video size={16} className="fill-current" />
-                                                <span className="uppercase tracking-widest text-[10px]">Unirse a sesión</span>
+                                                <span className="uppercase tracking-wide text-[10px]">Unirse a sesión</span>
                                             </button>
                                         )}
                                     </div>

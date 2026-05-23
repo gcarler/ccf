@@ -140,7 +140,7 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
                                 <div 
                                     key={i} 
                                     style={{ width: m.days.length * dayWidth }}
-                                    className="h-full flex items-center px-4 border-r border-slate-100 dark:border-white/5 text-[10px] font-black text-slate-400 uppercase tracking-widest"
+                                    className="h-full flex items-center px-4 border-r border-slate-100 dark:border-white/5 font-semibold text-slate-400 uppercase tracking-wide"
                                 >
                                     {format(m.date, 'MMMM yyyy', { locale: es })}
                                 </div>

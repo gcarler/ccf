@@ -43,21 +43,21 @@ export default function PrivacidadPage() {
   })();
 
   return (
-    <main className="pt-[120px] pb-24 px-6 md:px-16 lg:px-24 bg-faro-surface min-h-screen">
+    <main className="pt-[120px] pb-4 px-3 md:px-4 lg:px-24 bg-faro-surface min-h-screen">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-4xl mx-auto"
       >
-        <h1 className="text-4xl md:text-6xl font-black mb-8 text-faro-on-background">
+        <h1 className="text-lg md:text-xl font-black mb-3 text-faro-on-background">
           {cms?.parsed && typeof cms.parsed === "object" && !Array.isArray(cms.parsed)
             ? (cms.parsed as Record<string, unknown>).title as string || "Política de Privacidad"
             : "Política de Privacidad"}
         </h1>
-        <div className="space-y-8 text-faro-on-surface-variant leading-relaxed text-lg">
+        <div className="space-y-3 text-faro-on-surface-variant leading-relaxed text-lg">
           {sections.map((section, idx) => (
             <div key={idx}>
-              <h2 className="text-2xl font-bold text-faro-on-surface mt-10 mb-4">
+              <h2 className="text-lg font-bold text-faro-on-surface mt-3 mb-4">
                 {section.title}
               </h2>
               <p>{section.body}</p>

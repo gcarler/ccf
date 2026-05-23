@@ -175,7 +175,7 @@ export default function CrmGroupsPage() {
                     <div className="absolute -top-4 -left-12 size-56 rounded-full bg-white/5 blur-3xl" />
                     <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
                         <div>
-                            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-emerald-200 mb-2">Evangelismo · Faros en Casa</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-200 mb-2">Evangelismo · Faros en Casa</p>
                             <h1 className="text-lg font-bold text-white tracking-tight mb-1">Casas de Bendición</h1>
                             <p className="text-emerald-200 text-sm font-medium">Red de células y grupos de discipulado CCF</p>
                         </div>
@@ -192,7 +192,7 @@ export default function CrmGroupsPage() {
                         { label: 'Ocup. Promedio', value: `${stats.avgCapacity}%`, icon: TrendingUp, bg: 'bg-amber-500' },
                     ].map(s => (
                         <div key={s.label} className="bg-white dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg transition-all duration-300">
-                            <div className={`inline-flex size-8 rounded-xl ${s.bg} items-center justify-center text-white mb-3 shadow-md`}>
+                            <div className={`inline-flex size-8 rounded-md ${s.bg} items-center justify-center text-white mb-3 shadow-md`}>
                                 <s.icon size={18} />
                             </div>
                             <div className="text-xl font-bold text-slate-900 dark:text-white">{loading ? '—' : s.value}</div>
@@ -223,8 +223,8 @@ export default function CrmGroupsPage() {
 
                     {/* Empty */}
                     {!loading && filtered.length === 0 && (
-                        <div className="py-4 text-center">
-                            <div className="size-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center mx-auto mb-3">
+                        <div className="py-1.5 text-center">
+                            <div className="size-10 rounded-md bg-slate-100 dark:bg-white/5 flex items-center justify-center mx-auto mb-3">
                                 <Home size={36} className="text-slate-300 dark:text-slate-600" />
                             </div>
                             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide mb-2">Sin casas registradas</h3>
@@ -268,7 +268,7 @@ export default function CrmGroupsPage() {
                                                 </div>
                                             </div>
 
-                                            <h3 className="text-[15px] font-bold text-slate-900 dark:text-white mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                            <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                                                 {group.name}
                                             </h3>
 
@@ -323,7 +323,7 @@ export default function CrmGroupsPage() {
                                                     <span className="text-[11px] font-bold">{group.members_count || 0} miembros</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <button onClick={e => { e.stopPropagation(); setInviteGroup(group); }} className="p-2 text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-colors">
+                                                    <button onClick={e => { e.stopPropagation(); setInviteGroup(group); }} className="p-2 text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-md transition-colors">
                                                         <UserPlus size={14} />
                                                     </button>
                                                     <ChevronRight size={16} className="text-slate-200 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
@@ -366,7 +366,7 @@ export default function CrmGroupsPage() {
                                 <button
                                     onClick={() => handleInviteMember(member.id)}
                                     disabled={assigningMemberId === member.id}
-                                    className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-white disabled:opacity-60"
+                                    className="flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-white disabled:opacity-60"
                                 >
                                     {assigningMemberId === member.id ? <Loader2 size={12} className="animate-spin" /> : <UserPlus size={12} />}
                                     Agregar

@@ -42,11 +42,11 @@ export default function SidePanel({
                     )}
                 >
                     {/* Header */}
-                    <div className="h-14 px-4 flex items-center justify-between border-b border-slate-100 dark:border-white/5 shrink-0">
+                    <div className="h-8 px-4 flex items-center justify-between border-b border-slate-100 dark:border-white/5 shrink-0">
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={onClose}
-                                className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl text-slate-400 transition-all"
+                                className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400 transition-all"
                             >
                                 <X size={18} />
                             </button>
@@ -69,7 +69,7 @@ export default function SidePanel({
                             {fullViewHref && (
                                 <a
                                     href={fullViewHref}
-                                    className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl text-slate-400 transition-all"
+                                    className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400 transition-all"
                                     title="Vista completa"
                                 >
                                     <ExternalLink size={18} />
@@ -79,12 +79,12 @@ export default function SidePanel({
                     </div>
 
                     {/* Content Area */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-                        <header className="mb-8">
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-1">
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-3">
+                        <header className="mb-3">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-600 mb-1">
                                 DETALLES DEL ÍTEM
                             </p>
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">
+                            <h2 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">
                                 {title}
                             </h2>
                             {subtitle && (

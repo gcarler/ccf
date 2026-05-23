@@ -58,9 +58,9 @@ export default function EvangelismShell({
 
     if (!isAuthorized) {
         return (
-            <div className="min-h-[60vh] flex items-center justify-center p-6">
-                <div className="max-w-md w-full rounded-3xl border border-amber-200 bg-amber-50 px-6 py-8 text-center">
-                    <div className="mx-auto mb-4 size-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center">
+            <div className="min-h-[60vh] flex items-center justify-center p-3">
+                <div className="max-w-md w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-8 text-center">
+                    <div className="mx-auto mb-4 size-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
                         <ShieldAlert size={22} />
                     </div>
                     <h2 className="text-lg font-black text-amber-900">Acceso restringido</h2>
@@ -88,7 +88,7 @@ export default function EvangelismShell({
             onMore={onMore}
         >
             <main className={viewType && ['board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) ? "flex-1 overflow-hidden h-full" : "flex-1 overflow-y-auto scrollbar-thin"}>
-                <div className={viewType && ['board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) ? "h-full animate-fade-in" : "p-4 lg:p-6 space-y-6 animate-fade-in"}>
+                <div className={viewType && ['board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) ? "h-full animate-fade-in" : "p-4 lg:p-3 space-y-6 animate-fade-in"}>
                     {children}
                 </div>
             </main>

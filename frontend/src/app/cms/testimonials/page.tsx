@@ -365,7 +365,7 @@ export default function CmsTestimonialsPage() {
   return (
     <div className="flex flex-col h-full bg-white dark:bg-[#0d0e11] overflow-hidden">
       {/* ── Header toolbar ── */}
-      <header className="shrink-0 border-b border-slate-100 dark:border-white/5 px-6 py-4 flex items-center gap-4">
+      <header className="shrink-0 border-b border-slate-100 dark:border-white/5 px-3 py-1.5 flex items-center gap-4">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <MessageCircle size={18} className="text-rose-500 shrink-0" />
           <h1 className="text-[13px] font-semibold uppercase tracking-wide text-slate-800 dark:text-white">
@@ -378,21 +378,21 @@ export default function CmsTestimonialsPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar..."
-            className="pl-8 pr-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm outline-none w-48 focus:ring-2 focus:ring-rose-500/20"
+            className="pl-8 pr-4 py-2 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm outline-none w-48 focus:ring-2 focus:ring-rose-500/20"
           />
         </div>
         <ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={TESTIMONIAL_VIEWS} />
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-5 py-2 bg-rose-500 text-white rounded-xl text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-rose-500/20 hover:bg-rose-600 active:scale-95 transition-all"
+          className="flex items-center gap-2 px-3 py-2 bg-rose-500 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-rose-500/20 hover:bg-rose-600 active:scale-95 transition-all"
         >
           <Plus size={14} /> Nuevo Testimonio
         </button>
       </header>
 
       {/* ── Stats bar ── */}
-      <div className="shrink-0 border-b border-slate-100 dark:border-white/5 px-6 py-3 flex items-center gap-6">
-        <div className="flex items-center gap-6">
+      <div className="shrink-0 border-b border-slate-100 dark:border-white/5 px-3 py-3 flex items-center gap-3">
+        <div className="flex items-center gap-3">
           {[
             { label: "Total", value: stats.total, icon: Users, color: "text-slate-600" },
             { label: "Aprobados", value: stats.approved, icon: CheckCircle2, color: "text-emerald-600" },
@@ -420,7 +420,7 @@ export default function CmsTestimonialsPage() {
       </div>
 
       {/* ── Filter pills ── */}
-      <div className="shrink-0 px-6 py-3 flex items-center gap-2 border-b border-slate-100 dark:border-white/5">
+      <div className="shrink-0 px-3 py-3 flex items-center gap-2 border-b border-slate-100 dark:border-white/5">
         {EMOTION_FILTERS.map(f => {
           const cfg = EMOTION_CONFIG[f] ?? defaultEmotion;
           const count = f === "Todos" ? stats.total : stats.byEmotion.find(e => e.label === f)?.count ?? 0;
@@ -429,7 +429,7 @@ export default function CmsTestimonialsPage() {
               key={f}
               onClick={() => setFilter(f)}
               className={clsx(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-semibold uppercase tracking-wide border transition-all",
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border transition-all",
                 filter === f
                   ? `${cfg.bg} ${cfg.border} ${cfg.color}`
                   : "bg-slate-100 dark:bg-white/5 border-transparent text-slate-500 hover:text-slate-700"
@@ -446,7 +446,7 @@ export default function CmsTestimonialsPage() {
       {/* ── Content area ── */}
       <div className="flex flex-1 overflow-hidden">
         {/* Grid */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-3">
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -454,8 +454,8 @@ export default function CmsTestimonialsPage() {
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-20">
-              <div className="size-20 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center">
+            <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-1.5">
+              <div className="size-8 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center">
                 <MessageCircle size={36} strokeWidth={1} className="text-slate-300" />
               </div>
               <div className="space-y-1">
@@ -502,7 +502,7 @@ export default function CmsTestimonialsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     onClick={() => setSelected(isSelected ? null : t)}
                     className={clsx(
-                      "group relative rounded-lg border p-5 flex flex-col gap-4 cursor-pointer transition-all",
+                      "group relative rounded-lg border p-3 flex flex-col gap-4 cursor-pointer transition-all",
                       isSelected
                         ? `${cfg.bg} ${cfg.border} ring-2 ring-current`
                         : "bg-white dark:bg-white/[0.02] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:shadow-lg"
@@ -602,7 +602,7 @@ export default function CmsTestimonialsPage() {
               className="w-96 shrink-0 border-l border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-[#111418] flex flex-col overflow-y-auto"
             >
               {/* Panel header */}
-              <div className="p-5 flex items-center justify-between border-b border-slate-200 dark:border-white/5 shrink-0">
+              <div className="p-3 flex items-center justify-between border-b border-slate-200 dark:border-white/5 shrink-0">
                 <div className="flex items-center gap-2">
                   <MessageCircle size={14} className="text-rose-500" />
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Testimonio #{selected.id}</p>
@@ -616,8 +616,8 @@ export default function CmsTestimonialsPage() {
               {(() => {
                 const cfg = EMOTION_CONFIG[selected.emotion] ?? defaultEmotion;
                 return (
-                  <div className={clsx("p-5 flex items-center gap-4 border-b border-slate-200 dark:border-white/5", cfg.bg)}>
-                    <div className={clsx("size-14 rounded-lg flex items-center justify-center text-white text-base font-semibold shrink-0", getAvatarColor(selected.author_id))}>
+                  <div className={clsx("p-3 flex items-center gap-4 border-b border-slate-200 dark:border-white/5", cfg.bg)}>
+                    <div className={clsx("size-7 rounded-lg flex items-center justify-center text-white text-base font-semibold shrink-0", getAvatarColor(selected.author_id))}>
                       {getInitials(selected.author_id)}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -628,7 +628,7 @@ export default function CmsTestimonialsPage() {
                       </div>
                     </div>
                     <span className={clsx(
-                      "px-2 py-1 rounded-xl text-[9px] font-semibold uppercase tracking-wide border",
+                      "px-2 py-1 rounded-md text-[9px] font-semibold uppercase tracking-wide border",
                       selected.status === "archived" ? "bg-slate-100 text-slate-500 border-slate-200" : selected.published ? "bg-emerald-50 text-emerald-600 border-emerald-200" : "bg-amber-50 text-amber-600 border-amber-200"
                     )}>
                       {selected.status === "archived" ? "Archivado" : selected.published ? "✓ Publicado" : "⏳ Pendiente"}
@@ -638,7 +638,7 @@ export default function CmsTestimonialsPage() {
               })()}
 
               {/* Full content */}
-              <div className="p-5 flex-1 space-y-4">
+              <div className="p-3 flex-1 space-y-4">
                 <div className="space-y-2">
                   <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">Contenido completo</p>
                   <textarea
@@ -660,7 +660,7 @@ export default function CmsTestimonialsPage() {
                       key={option.id}
                       onClick={() => changeSelectedMediaType(option.id as TestimonialMediaType)}
                       className={clsx(
-                        "flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-[9px] font-semibold uppercase tracking-wide transition-all",
+                        "flex items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-[9px] font-semibold uppercase tracking-wide transition-all",
                         (selected.media_type || "text") === option.id
                           ? "border-rose-300 bg-rose-50 text-rose-600"
                           : "border-slate-200 dark:border-white/10 text-slate-400 hover:text-slate-700"
@@ -684,12 +684,12 @@ export default function CmsTestimonialsPage() {
                         value={mediaSearch}
                         onChange={event => setMediaSearch(event.target.value)}
                         placeholder="Buscar imagen, video o audio..."
-                        className="mb-3 w-full text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/20"
+                        className="mb-3 w-full text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/20"
                       />
                       {mediaLoading ? (
-                        <p className="rounded-xl bg-slate-50 dark:bg-white/5 px-3 py-3 text-xs font-bold text-slate-400">Cargando biblioteca...</p>
+                        <p className="rounded-md bg-slate-50 dark:bg-white/5 px-3 py-3 text-xs font-bold text-slate-400">Cargando biblioteca...</p>
                       ) : compatibleMedia.length === 0 ? (
-                        <p className="rounded-xl bg-slate-50 dark:bg-white/5 px-3 py-3 text-xs font-medium text-slate-500">
+                        <p className="rounded-md bg-slate-50 dark:bg-white/5 px-3 py-3 text-xs font-medium text-slate-500">
                           No hay archivos compatibles para este tipo. Sube o restaura media desde la biblioteca.
                         </p>
                       ) : (
@@ -703,7 +703,7 @@ export default function CmsTestimonialsPage() {
                                 type="button"
                                 onClick={() => assignMediaToSelected(item)}
                                 className={clsx(
-                                  "flex items-center gap-2 rounded-xl border px-3 py-2 text-left transition-all",
+                                  "flex items-center gap-2 rounded-md border px-3 py-2 text-left transition-all",
                                   active
                                     ? "border-rose-300 bg-rose-50 text-rose-600"
                                     : "border-slate-200 dark:border-white/10 text-slate-500 hover:border-rose-300"
@@ -732,7 +732,7 @@ export default function CmsTestimonialsPage() {
                         });
                       }}
                       placeholder="Pega URL desde /cms/media"
-                      className="w-full text-xs bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/20"
+                      className="w-full text-xs bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/20"
                     />
                     {getTestimonialMediaUrl(selected) && (
                       <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 overflow-hidden">
@@ -768,7 +768,7 @@ export default function CmsTestimonialsPage() {
                   <input
                     value={selected.emotion || ""}
                     onChange={event => setSelected(prev => prev ? { ...prev, emotion: event.target.value } : prev)}
-                    className="w-full text-xs bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/20"
+                    className="w-full text-xs bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/20"
                   />
                 </div>
 
@@ -785,7 +785,7 @@ export default function CmsTestimonialsPage() {
               </div>
 
               {/* Actions */}
-              <div className="p-5 border-t border-slate-200 dark:border-white/5 space-y-3 shrink-0">
+              <div className="p-3 border-t border-slate-200 dark:border-white/5 space-y-3 shrink-0">
                 <button
                   onClick={saveSelected}
                   disabled={processing === selected.id}

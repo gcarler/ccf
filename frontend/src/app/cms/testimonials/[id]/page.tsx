@@ -88,8 +88,8 @@ export default function CmsTestimonialDetailPage() {
         }
     };
 
-    if (loading) return <div className="p-20 text-center animate-pulse font-semibold uppercase tracking-wide text-slate-400">Verificando Testimonio...</div>;
-    if (!testimonial) return <div className="p-20 text-center font-semibold uppercase tracking-wide text-slate-400">Testimonio no encontrado.</div>;
+    if (loading) return <div className="p-4 text-center animate-pulse font-semibold uppercase tracking-wide text-slate-400">Verificando Testimonio...</div>;
+    if (!testimonial) return <div className="p-4 text-center font-semibold uppercase tracking-wide text-slate-400">Testimonio no encontrado.</div>;
 
     const mediaUrl = getTestimonialMediaUrl(testimonial);
 
@@ -103,9 +103,9 @@ export default function CmsTestimonialDetailPage() {
                 ]}
             />
 
-            <main className="flex-1 overflow-y-auto p-8 lg:p-12">
-                <div className="max-w-4xl mx-auto space-y-8">
-                    <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <main className="flex-1 overflow-y-auto p-4 lg:p-4">
+                <div className="max-w-4xl mx-auto space-y-3">
+                    <header className="flex flex-col md:flex-row md:items-end justify-between gap-3">
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
                                 <DSBadge tone="violet" label={testimonial.category.toUpperCase()} />
@@ -118,7 +118,7 @@ export default function CmsTestimonialDetailPage() {
                         <div className="flex items-center gap-3">
                             <button 
                                 onClick={() => handleAction(testimonial.status === 'archived' ? 'pending' : 'archived')}
-                                className="px-6 py-2 border border-slate-200 dark:border-white/10 text-slate-500 rounded-xl text-[10px] font-semibold uppercase tracking-wide hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all flex items-center gap-2"
+                                className="px-3 py-2 border border-slate-200 dark:border-white/10 text-slate-500 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all flex items-center gap-2"
                             >
                                 {testimonial.status === 'archived' ? <RotateCcw size={14} /> : <Archive size={14} />}
                                 {testimonial.status === 'archived' ? 'Restaurar' : 'Archivar'}
@@ -126,15 +126,15 @@ export default function CmsTestimonialDetailPage() {
                             <button 
                                 onClick={() => handleAction('approved')}
                                 disabled={testimonial.status === 'archived'}
-                                className="px-6 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all flex items-center gap-2"
+                                className="px-3 py-2 bg-emerald-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all flex items-center gap-2"
                             >
                                 <CheckCircle2 size={14} /> Aprobar para Web
                             </button>
                         </div>
                     </header>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2 space-y-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                        <div className="lg:col-span-2 space-y-3">
                             {mediaUrl && (
                                 <DSCard>
                                     <div className="mb-4 flex items-center gap-2">
@@ -151,7 +151,7 @@ export default function CmsTestimonialDetailPage() {
                                                 <source src={mediaUrl} />
                                             </video>
                                         ) : (
-                                            <div className="space-y-4 bg-white p-6 dark:bg-white/5">
+                                            <div className="space-y-4 bg-white p-3 dark:bg-white/5">
                                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Podcast / audio testimonial</p>
                                                 <audio controls src={mediaUrl} className="w-full" />
                                             </div>
@@ -175,9 +175,9 @@ export default function CmsTestimonialDetailPage() {
                             </DSCard>
 
                             <DSCard>
-                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-6">Información del Autor</h3>
-                                <div className="flex items-center gap-6">
-                                    <div className="size-16 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
+                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Información del Autor</h3>
+                                <div className="flex items-center gap-3">
+                                    <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
                                         <User size={32} />
                                     </div>
                                     <div>
@@ -190,7 +190,7 @@ export default function CmsTestimonialDetailPage() {
 
                         <aside className="space-y-6">
                             <DSCard>
-                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-6">Detalles de Envío</h3>
+                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Detalles de Envío</h3>
                                 <div className="space-y-4">
                                     <div className="space-y-1">
                                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Fecha de Recepción</p>

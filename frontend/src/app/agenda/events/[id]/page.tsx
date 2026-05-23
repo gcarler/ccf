@@ -100,8 +100,8 @@ export default function AgendaEventDetailPage() {
             ]}
         >
             <div className="h-full overflow-y-auto bg-slate-50 dark:bg-[#141517]">
-                <div className="mx-auto max-w-4xl space-y-6 p-6 lg:p-8">
-                    <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
+                <div className="mx-auto max-w-4xl space-y-6 p-3 p-4">
+                    <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
                         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                             <div>
                                 <button
@@ -111,7 +111,7 @@ export default function AgendaEventDetailPage() {
                                     <ArrowLeft size={16} />
                                     Volver a agenda
                                 </button>
-                                <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                                <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
                                     {loading ? "Cargando..." : event?.title || "Evento de agenda"}
                                 </h1>
                                 <p className="mt-2 text-sm font-medium text-slate-500">
@@ -119,11 +119,11 @@ export default function AgendaEventDetailPage() {
                                 </p>
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
-                                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+                                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
                                     {saving ? "Guardando" : "Edición activa"}
                                 </span>
                                 <span
-                                    className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ${
+                                    className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide ${
                                         saving
                                             ? "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300"
                                             : hasUnsavedChanges
@@ -142,7 +142,7 @@ export default function AgendaEventDetailPage() {
                                 <button
                                     onClick={handleDelete}
                                     disabled={!event || deleting}
-                                    className="inline-flex items-center gap-2 rounded-2xl border border-red-200 px-4 py-3 text-[11px] font-black uppercase tracking-widest text-red-600 transition-all hover:bg-red-50 disabled:opacity-50"
+                                    className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-red-600 transition-all hover:bg-red-50 disabled:opacity-50"
                                 >
                                     <Trash2 size={14} />
                                     {deleting ? "Eliminando..." : "Eliminar"}
@@ -150,7 +150,7 @@ export default function AgendaEventDetailPage() {
                                 <button
                                     onClick={handleSave}
                                     disabled={!event || saving}
-                                    className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-[11px] font-black uppercase tracking-widest text-white transition-all hover:bg-blue-700 disabled:opacity-50"
+                                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-blue-700 disabled:opacity-50"
                                 >
                                     <Save size={14} />
                                     {saving ? "Guardando..." : "Guardar cambios"}
@@ -159,60 +159,60 @@ export default function AgendaEventDetailPage() {
                         </div>
                     </section>
 
-                    <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
+                    <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
                         {loading || !event ? (
-                            <div className="h-64 animate-pulse rounded-[1.5rem] bg-slate-100 dark:bg-white/5" />
+                            <div className="h-48 animate-pulse rounded-lg bg-slate-100 dark:bg-white/5" />
                         ) : (
                             <div className="space-y-5">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Título</label>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Título</label>
                                     <input
                                         value={event.title}
                                         onChange={(e) => setEvent({ ...event, title: e.target.value })}
-                                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                        className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                     />
                                 </div>
 
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Inicio</label>
+                                        <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Inicio</label>
                                         <input
                                             type="datetime-local"
                                             value={event.start_at.slice(0, 16)}
                                             onChange={(e) => setEvent({ ...event, start_at: new Date(e.target.value).toISOString() })}
-                                            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                            className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Fin</label>
+                                        <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Fin</label>
                                         <input
                                             type="datetime-local"
                                             value={(event.end_at || event.start_at).slice(0, 16)}
                                             onChange={(e) => setEvent({ ...event, end_at: new Date(e.target.value).toISOString() })}
-                                            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                            className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ubicación</label>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Ubicación</label>
                                     <div className="relative">
                                         <MapPin size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                                         <input
                                             value={event.location || ""}
                                             onChange={(e) => setEvent({ ...event, location: e.target.value })}
-                                            className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                            className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Descripción</label>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Descripción</label>
                                     <textarea
                                         rows={5}
                                         value={event.description || ""}
                                         onChange={(e) => setEvent({ ...event, description: e.target.value })}
-                                        className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                        className="w-full resize-none rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                     />
                                 </div>
                             </div>

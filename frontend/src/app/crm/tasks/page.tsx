@@ -210,7 +210,7 @@ export default function CrmTasksPage() {
     if (loading) return (
         <CrmShell breadcrumbs={[{ label: 'Consolidación', icon: Heart }, { label: 'Tareas de Consolidación', icon: CheckSquare }]}>
             <div className="p-4 space-y-3">
-                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
+                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-8 w-full rounded-lg" />)}
             </div>
         </CrmShell>
     );
@@ -228,7 +228,7 @@ export default function CrmTasksPage() {
             rightActions={
                 <button
                     onClick={() => setIsCreateOpen(true)}
-                    className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+                    className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
                 >
                     <Plus size={14} /> Nueva Tarea
                 </button>
@@ -237,7 +237,7 @@ export default function CrmTasksPage() {
             {/* ─── Stats strip ─── */}
             <div className="px-4 pt-4 pb-0 flex items-center gap-3">
                 {STATUS_COLUMNS.map(col => (
-                    <div key={col.key} className={clsx("flex items-center gap-2 px-4 py-2 rounded-xl border text-[11px] font-bold", col.bg, col.border)}>
+                    <div key={col.key} className={clsx("flex items-center gap-2 px-4 py-2 rounded-md border text-[11px] font-bold", col.bg, col.border)}>
                         <div className={clsx("size-2 rounded-full", col.dot)} />
                         <span className="text-slate-600 dark:text-slate-300">{col.label}</span>
                         <span className="font-bold text-slate-800 dark:text-white">{tasksByStatus[col.key]?.length ?? 0}</span>
@@ -258,7 +258,7 @@ export default function CrmTasksPage() {
                                 const colTasks = tasksByStatus[col.key] ?? [];
                                 const Icon = col.icon;
                                 return (
-                                    <div key={col.key} className={clsx("flex flex-col gap-3 w-[300px] shrink-0 rounded-xl border p-4", col.bg, col.border)}>
+                                    <div key={col.key} className={clsx("flex flex-col gap-3 w-[300px] shrink-0 rounded-md border p-4", col.bg, col.border)}>
                                         {/* Column header */}
                                         <div className="flex items-center justify-between shrink-0">
                                             <div className="flex items-center gap-2">
@@ -286,7 +286,7 @@ export default function CrmTasksPage() {
                                                 ))}
                                             </AnimatePresence>
                                             {colTasks.length === 0 && (
-                                                <div className="py-4 flex flex-col items-center justify-center text-center opacity-40">
+                                                <div className="py-1.5 flex flex-col items-center justify-center text-center opacity-40">
                                                     <Icon size={24} strokeWidth={1} className="mb-2 text-slate-300" />
                                                     <p className="text-[10px] font-bold text-slate-400 uppercase">Sin tareas</p>
                                                 </div>
@@ -307,10 +307,10 @@ export default function CrmTasksPage() {
                         className="flex-1 overflow-y-auto p-4 space-y-2"
                     >
                         {tasks.length === 0 ? (
-                            <div className="py-4 flex flex-col items-center gap-4">
+                            <div className="py-1.5 flex flex-col items-center gap-4">
                                 <CheckSquare size={48} strokeWidth={1} className="text-slate-200" />
                                 <p className="text-slate-400 font-bold uppercase text-sm">Sin tareas registradas</p>
-                                <button onClick={() => setIsCreateOpen(true)} className="px-4 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20">
+                                <button onClick={() => setIsCreateOpen(true)} className="px-4 py-1.5 bg-blue-600 text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20">
                                     Crear primera tarea
                                 </button>
                             </div>
@@ -385,7 +385,7 @@ export default function CrmTasksPage() {
                             </tbody>
                         </table>
                         {tasks.length === 0 && (
-                            <div className="py-4 text-center text-slate-400 font-bold uppercase text-sm">Sin tareas</div>
+                            <div className="py-1.5 text-center text-slate-400 font-bold uppercase text-sm">Sin tareas</div>
                         )}
                     </motion.div>
                 )}
@@ -393,13 +393,13 @@ export default function CrmTasksPage() {
                 {viewType === 'calendar' && (
                     <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-4 space-y-4">
                         {dueBuckets.length === 0 ? (
-                            <div className="py-4 text-center text-slate-400 font-bold uppercase text-sm">Sin tareas con fecha</div>
+                            <div className="py-1.5 text-center text-slate-400 font-bold uppercase text-sm">Sin tareas con fecha</div>
                         ) : dueBuckets.map(([isoDate, bucket]) => (
                             <div key={isoDate} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
                                 <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{new Date(`${isoDate}T00:00:00`).toLocaleDateString()}</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {bucket.map(task => (
-                                        <button key={task.id} onClick={() => { setSelectedTask(task); setIsDetailOpen(true); }} className="rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
+                                        <button key={task.id} onClick={() => { setSelectedTask(task); setIsDetailOpen(true); }} className="rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
                                             <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{task.title}</p>
                                             <p className="text-[10px] text-slate-400">{task.member_name || 'Sin miembro asignado'}</p>
                                         </button>
@@ -425,7 +425,7 @@ export default function CrmTasksPage() {
                                     </div>
                                 </div>
                             ))}
-                            {tasks.length === 0 && <div className="py-4 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">Sin tareas</div>}
+                            {tasks.length === 0 && <div className="py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">Sin tareas</div>}
                         </div>
                     </motion.div>
                 )}
@@ -484,7 +484,7 @@ export default function CrmTasksPage() {
                                 { label: 'Vence', val: selectedTask.due_date ? new Date(selectedTask.due_date).toLocaleDateString() : '—' },
                                 { label: 'Creada', val: new Date(selectedTask.created_at).toLocaleDateString() },
                             ].map(item => (
-                                <div key={item.label} className="p-3 bg-white dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5">
+                                <div key={item.label} className="p-3 bg-white dark:bg-white/5 rounded-md border border-slate-100 dark:border-white/5">
                                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">{item.label}</p>
                                     <p className="text-sm font-bold text-slate-800 dark:text-white">{item.val}</p>
                                 </div>
@@ -498,7 +498,7 @@ export default function CrmTasksPage() {
                                         key={col.key}
                                         onClick={() => updateTaskStatus(selectedTask.id, col.key)}
                                         className={clsx(
-                                            "flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wide transition-all border",
+                                            "flex items-center gap-1.5 px-3 py-2 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all border",
                                             selectedTask.status === col.key
                                                 ? `${col.bg} ${col.border} text-${col.color}-600 dark:text-${col.color}-400`
                                                 : 'bg-slate-50 dark:bg-white/5 border-transparent text-slate-400 hover:border-slate-200'

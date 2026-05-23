@@ -101,13 +101,13 @@ export default function NewAssessmentPage() {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => router.back()}
-                            className="px-3 py-1.5 text-slate-500 text-[10px] font-black uppercase tracking-wide hover:text-slate-700 transition-all"
+                            className="px-3 py-1.5 text-slate-500 text-[10px] font-semibold uppercase tracking-wide hover:text-slate-700 transition-all"
                         >
                             Cancelar
                         </button>
                         <button
                             onClick={handleSave}
-                            className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2"
+                            className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2"
                         >
                             <Save size={14} /> Guardar Evaluacion
                         </button>
@@ -118,10 +118,10 @@ export default function NewAssessmentPage() {
             <main className="flex-1 overflow-y-auto p-4 lg:p-4">
                 <div className="max-w-4xl mx-auto space-y-3">
                     <DSCard>
-                        <h3 className="text-[10px] font-black uppercase tracking-wide text-slate-400 mb-3">Configuracion General</h3>
+                        <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Configuracion General</h3>
                         <div className="space-y-3">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-wide text-slate-400">Titulo de la Evaluacion</label>
+                                <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Titulo de la Evaluacion</label>
                                 <input
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
@@ -131,7 +131,7 @@ export default function NewAssessmentPage() {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-wide text-slate-400">Nota Minima de Aprobacion (%)</label>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Nota Minima de Aprobacion (%)</label>
                                     <input
                                         type="number"
                                         value={passingScore}
@@ -140,7 +140,7 @@ export default function NewAssessmentPage() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-wide text-slate-400">ID del Curso *</label>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">ID del Curso *</label>
                                     <input
                                         type="number"
                                         value={courseId}
@@ -155,10 +155,10 @@ export default function NewAssessmentPage() {
 
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-black uppercase tracking-wide text-slate-400">Preguntas ({questions.length})</h3>
+                            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Preguntas ({questions.length})</h3>
                             <button
                                 onClick={addQuestion}
-                                className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-black uppercase tracking-wide hover:border-blue-500 transition-all"
+                                className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:border-blue-500 transition-all"
                             >
                                 <Plus size={14} /> Agregar Pregunta
                             </button>
@@ -189,7 +189,7 @@ export default function NewAssessmentPage() {
                                                             updateQuestion(q.id, updates);
                                                         }}
                                                         className={clsx(
-                                                            "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wide transition-all",
+                                                            "px-3 py-1.5 rounded-lg text-[9px] font-semibold uppercase tracking-wide transition-all",
                                                             q.type === t
                                                                 ? "bg-white dark:bg-white/10 text-blue-600 shadow-sm"
                                                                 : "text-slate-400 hover:text-slate-600"
@@ -202,12 +202,12 @@ export default function NewAssessmentPage() {
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10">
-                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-wide">Puntos</span>
+                                                <span className="font-semibold text-slate-400 uppercase tracking-wide">Puntos</span>
                                                 <input
                                                     type="number"
                                                     value={q.points}
                                                     onChange={(e) => updateQuestion(q.id, { points: Number(e.target.value) })}
-                                                    className="w-10 bg-transparent text-xs font-black text-blue-600 outline-none"
+                                                    className="w-10 bg-transparent text-xs font-semibold text-blue-600 outline-none"
                                                 />
                                             </div>
                                             <button
@@ -221,7 +221,7 @@ export default function NewAssessmentPage() {
 
                                     <div className="space-y-4">
                                         <div className="space-y-2">
-                                            <label className="text-[9px] font-black uppercase tracking-wide text-slate-400">Pregunta</label>
+                                            <label className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Pregunta</label>
                                             <textarea
                                                 value={q.text}
                                                 onChange={(e) => updateQuestion(q.id, { text: e.target.value })}
@@ -233,7 +233,7 @@ export default function NewAssessmentPage() {
 
                                         {q.type !== 'text' && (
                                             <div className="grid grid-cols-1 gap-3">
-                                                <label className="text-[9px] font-black uppercase tracking-wide text-slate-400">Opciones (Marca la correcta)</label>
+                                                <label className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Opciones (Marca la correcta)</label>
                                                 {q.options.map((opt, optIndex) => (
                                                     <div key={optIndex} className="flex items-center gap-3 group">
                                                         <button
@@ -280,7 +280,7 @@ export default function NewAssessmentPage() {
                                                         onClick={() => {
                                                             updateQuestion(q.id, { options: [...q.options, ''] });
                                                         }}
-                                                        className="text-[10px] font-black uppercase tracking-wide text-blue-500 mt-2 hover:underline text-left flex items-center gap-2"
+                                                        className="text-[10px] font-semibold uppercase tracking-wide text-blue-500 mt-2 hover:underline text-left flex items-center gap-2"
                                                     >
                                                         <Plus size={12} /> Agregar opcion
                                                     </button>
@@ -304,7 +304,7 @@ export default function NewAssessmentPage() {
                         {questions.length === 0 && (
                             <div className="p-4 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-lg">
                                 <ListChecks size={48} className="mx-auto text-slate-200 mb-4" />
-                                <p className="text-xs font-black uppercase tracking-wide text-slate-400">Tu evaluacion esta vacia</p>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Tu evaluacion esta vacia</p>
                                 <p className="text-[11px] text-slate-300 mt-2">Comienza agregando tu primera pregunta</p>
                             </div>
                         )}

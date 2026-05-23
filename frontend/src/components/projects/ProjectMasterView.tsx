@@ -29,7 +29,7 @@ export function ProjectMasterView({ project, tasks }: ProjectMasterViewProps) {
             {/* 1. Header de Misión con Pulso de Salud */}
             <header className="relative p-4 rounded-lg bg-slate-900 text-white overflow-hidden shadow-2xl border border-white/5">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-indigo-600/20" />
-                <div className="absolute top-0 right-0 p-12 opacity-10">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
                     <Radio size={220} />
                 </div>
                 
@@ -48,7 +48,7 @@ export function ProjectMasterView({ project, tasks }: ProjectMasterViewProps) {
 
                     {/* Widget Bento de Salud Persistida */}
                     <div className="bg-white/5 backdrop-blur-2xl rounded-lg p-3 border border-white/10 flex items-center gap-4 shadow-2xl">
-                        <div className="relative size-16">
+                        <div className="relative size-8">
                             <svg className="size-full -rotate-90" viewBox="0 0 36 36">
                                 <circle cx="18" cy="18" r="16" fill="none" className="stroke-white/5" strokeWidth="3"></circle>
                                 <motion.circle
@@ -65,9 +65,9 @@ export function ProjectMasterView({ project, tasks }: ProjectMasterViewProps) {
                         </div>
                         <div>
                             <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500 block mb-0.5">Avance Real</span>
-                            <div className="text-3xl font-black tracking-tighter">{dbProgress}%</div>
+                            <div className="text-xl font-bold tracking-tighter">{dbProgress}%</div>
                             <div className="flex items-center gap-2 mt-2">
-                                <div className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded text-[9px] font-black uppercase">Salud: Óptima</div>
+                                <div className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded text-[9px] font-semibold uppercase">Salud: Óptima</div>
                             </div>
                         </div>
                     </div>

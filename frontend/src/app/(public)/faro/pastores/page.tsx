@@ -41,7 +41,7 @@ export default function PastoresPage() {
     };
 
     return (
-        <main className="pt-[120px] pb-24 px-6 md:px-16 lg:px-24 bg-faro-surface min-h-screen">
+        <main className="pt-[120px] pb-4 px-3 md:px-4 lg:px-24 bg-faro-surface min-h-screen">
             <div className="max-w-6xl mx-auto">
                 {/* HERO */}
                 <motion.div 
@@ -49,10 +49,10 @@ export default function PastoresPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="mb-20 text-center max-w-3xl mx-auto"
                 >
-                    <span className="text-xs font-black uppercase tracking-[0.4em] mb-6 block text-faro-primary">
+                    <span className="text-xs font-semibold uppercase tracking-wide mb-3 block text-faro-primary">
                         Liderazgo
                     </span>
-                    <h1 className="text-4xl md:text-6xl font-black mb-8 text-faro-on-background tracking-tight">
+                    <h1 className="text-lg md:text-xl font-black mb-3 text-faro-on-background tracking-tight">
                         Nuestro <span className="italic bg-clip-text text-transparent bg-gradient-to-r from-faro-primary to-faro-secondary">Equipo Pastoral</span>
                     </h1>
                     <p className="text-lg text-faro-on-surface-variant leading-relaxed">
@@ -62,8 +62,8 @@ export default function PastoresPage() {
 
                 {/* APÓSTOLES */}
                 <div className="mb-24">
-                    <div className="flex items-center gap-4 mb-10">
-                        <h2 className="text-3xl font-black text-faro-on-surface">Apóstoles</h2>
+                    <div className="flex items-center gap-4 mb-3">
+                        <h2 className="text-xl font-black text-faro-on-surface">Apóstoles</h2>
                         <div className="h-px flex-1 bg-faro-outline-variant/30" />
                     </div>
                     
@@ -72,13 +72,13 @@ export default function PastoresPage() {
                         initial="hidden"
                         whileInView="visible"
                         viewport={{ once: true, margin: "-50px" }}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-8"
+                        className="grid grid-cols-1 md:grid-cols-2 gap-3"
                     >
                         {apostles.map(person => (
                             <Link href={`/faro/pastores/${person.slug}`} key={person.id}>
                                 <motion.div 
                                     variants={cardVariants}
-                                    className="group relative overflow-hidden rounded-[2.5rem] bg-faro-surface-container hover:shadow-2xl transition-all duration-500 cursor-pointer border border-transparent hover:border-faro-primary/20 flex flex-col md:flex-row h-full min-h-[280px]"
+                                    className="group relative overflow-hidden rounded-lg bg-faro-surface-container hover:shadow-2xl transition-all duration-500 cursor-pointer border border-transparent hover:border-faro-primary/20 flex flex-col md:flex-row h-full min-h-[280px]"
                                 >
                                     <div className="w-full md:w-2/5 relative min-h-[240px] md:min-h-full">
                                         <Image 
@@ -89,17 +89,17 @@ export default function PastoresPage() {
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent md:bg-gradient-to-r md:from-transparent md:to-faro-surface-container" />
                                     </div>
-                                    <div className="w-full md:w-3/5 p-8 flex flex-col justify-center">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-faro-primary mb-3">
+                                    <div className="w-full md:w-3/5 p-4 flex flex-col justify-center">
+                                        <span className="text-[10px] font-semibold uppercase tracking-wide text-faro-primary mb-3">
                                             {person.role}
                                         </span>
-                                        <h3 className="text-2xl font-black text-faro-on-surface mb-4 group-hover:text-faro-primary transition-colors">
+                                        <h3 className="text-lg font-black text-faro-on-surface mb-4 group-hover:text-faro-primary transition-colors">
                                             {person.name}
                                         </h3>
-                                        <p className="text-sm text-faro-on-surface-variant line-clamp-3 leading-relaxed mb-6">
+                                        <p className="text-sm text-faro-on-surface-variant line-clamp-3 leading-relaxed mb-3">
                                             {person.description}
                                         </p>
-                                        <div className="mt-auto flex items-center gap-2 text-xs font-black uppercase tracking-widest text-faro-secondary group-hover:translate-x-2 transition-transform">
+                                        <div className="mt-auto flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-faro-secondary group-hover:translate-x-2 transition-transform">
                                             Ver Perfil <ArrowRight size={14} />
                                         </div>
                                     </div>
@@ -111,8 +111,8 @@ export default function PastoresPage() {
 
                 {/* PASTORES */}
                 <div>
-                    <div className="flex items-center gap-4 mb-10">
-                        <h2 className="text-3xl font-black text-faro-on-surface">Equipo Pastoral</h2>
+                    <div className="flex items-center gap-4 mb-3">
+                        <h2 className="text-xl font-black text-faro-on-surface">Equipo Pastoral</h2>
                         <div className="h-px flex-1 bg-faro-outline-variant/30" />
                     </div>
                     
@@ -121,13 +121,13 @@ export default function PastoresPage() {
                         initial="hidden"
                         whileInView="visible"
                         viewport={{ once: true, margin: "-50px" }}
-                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
                     >
                         {pastors.map(person => (
                             <Link href={`/faro/pastores/${person.slug}`} key={person.id}>
                                 <motion.div 
                                     variants={cardVariants}
-                                    className="group rounded-3xl overflow-hidden bg-faro-surface-container-low hover:bg-faro-surface-container transition-all hover:-translate-y-1 hover:shadow-xl border border-faro-outline-variant/10 flex flex-col h-full"
+                                    className="group rounded-lg overflow-hidden bg-faro-surface-container-low hover:bg-faro-surface-container transition-all hover:-translate-y-1 hover:shadow-xl border border-faro-outline-variant/10 flex flex-col h-full"
                                 >
                                     <div className="relative aspect-[4/3] overflow-hidden">
                                         <Image 
@@ -138,14 +138,14 @@ export default function PastoresPage() {
                                         />
                                         <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
                                     </div>
-                                    <div className="p-6 flex flex-col flex-1">
+                                    <div className="p-3 flex flex-col flex-1">
                                         <h3 className="text-xl font-black text-faro-on-surface mb-2 group-hover:text-faro-primary transition-colors">
                                             {person.name}
                                         </h3>
-                                        <p className="text-xs font-bold uppercase tracking-widest text-faro-primary/70 mb-4">
+                                        <p className="text-xs font-bold uppercase tracking-wide text-faro-primary/70 mb-4">
                                             {person.role}
                                         </p>
-                                        <p className="text-sm text-faro-on-surface-variant line-clamp-3 mb-6 flex-1">
+                                        <p className="text-sm text-faro-on-surface-variant line-clamp-3 mb-3 flex-1">
                                             {person.description}
                                         </p>
                                         <div className="flex justify-end">

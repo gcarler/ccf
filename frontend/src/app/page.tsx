@@ -78,7 +78,7 @@ export default function HomeRoot() {
                     <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full animate-pulse" />
                     <Loader2 className="w-8 h-8 animate-spin text-blue-600 relative z-10" />
                 </div>
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Iniciando Ecosistema...</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Iniciando Ecosistema...</p>
             </div>
         );
     }
@@ -161,35 +161,35 @@ function CommandCenterHome({ user, token }: any) {
     };
 
     return (
-        <div className="flex flex-col h-full bg-slate-50 dark:bg-transparent overflow-y-auto scrollbar-thin p-6 lg:p-8 font-sans relative">
+        <div className="flex flex-col h-full bg-slate-50 dark:bg-transparent overflow-y-auto scrollbar-thin p-3 p-4 font-sans relative">
             <motion.div
                 variants={containerVariants}
                 initial="hidden"
                 animate="show"
-                className="w-full space-y-8 relative z-10"
+                className="w-full space-y-3 relative z-10"
             >
                 {/* 1. Header & Greeting */}
                 <motion.header variants={itemVariants} className="flex items-start justify-between gap-4">
                     <div>
-                        <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                        <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                             {greeting}, {displayName}
                         </h1>
                         <p className="text-[13px] text-slate-500 dark:text-slate-400 font-medium mt-1">
                             Este es tu centro de comando. Resumen de actividad reciente.
                         </p>
                     </div>
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg text-[10px] font-bold uppercase tracking-wide">
                         <Sparkles size={12} /> MESH OS v2.1
                     </div>
                 </motion.header>
 
                 {/* 2. Key Metrics */}
-                <motion.section variants={itemVariants} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <motion.section variants={itemVariants} className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     {loading ? (
-                        [1,2,3,4].map(i => <div key={i} className="h-28 bg-white dark:bg-[#252528] rounded-2xl border border-slate-100 dark:border-white/5 animate-pulse" />)
+                        [1,2,3,4].map(i => <div key={i} className="h-28 bg-white dark:bg-[#252528] rounded-lg border border-slate-100 dark:border-white/5 animate-pulse" />)
                     ) : (
                         (stats?.cards || []).map((card: any, idx: number) => (
-                            <div key={idx} className="group relative bg-white dark:bg-[#252528] rounded-2xl border border-slate-200/70 dark:border-white/5 p-5 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99]">
+                            <div key={idx} className="group relative bg-white dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99]">
                                 {/* Top accent bar */}
                                 <div className={clsx(
                                     "absolute top-0 left-0 right-0 h-[3px]",
@@ -199,7 +199,7 @@ function CommandCenterHome({ user, token }: any) {
                                     "bg-gradient-to-r from-amber-400 to-amber-500"
                                 )} />
                                 <div className="flex items-center justify-between mb-3 mt-1">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">{card.title}</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{card.title}</p>
                                     <div className="text-slate-400">
                                         {idx === 0 && <TrendingUp size={14} />}
                                         {idx === 1 && <FolderKanban size={14} />}
@@ -208,7 +208,7 @@ function CommandCenterHome({ user, token }: any) {
                                     </div>
                                 </div>
                                 <div className="flex items-baseline gap-2">
-                                    <span className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter">{card.value}</span>
+                                    <span className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter">{card.value}</span>
                                     <span className={clsx(
                                         "text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5",
                                         card.trend.includes('-') 
@@ -223,30 +223,30 @@ function CommandCenterHome({ user, token }: any) {
                     )}
                 </motion.section>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                     {/* 3. Main Content: Tasks */}
-                    <div className="lg:col-span-2 space-y-6">
-                        
+                    <div className="lg:col-span-2 space-y-3">
+
                         {/* Focus / Tasks */}
-                        <motion.div variants={itemVariants} className="space-y-4">
+                        <motion.div variants={itemVariants} className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                                     <Target size={16} className="text-blue-500" /> Foco de Hoy
                                 </h2>
-                                <Link href="/projects" className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1">
+                                <Link href="/projects" className="text-[10px] font-bold uppercase tracking-wide text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1">
                                     Ver Agenda <ChevronRight size={12} />
                                 </Link>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {loading ? (
-                                    [1,2].map(i => <div key={i} className="h-32 bg-white dark:bg-[#252528] rounded-2xl border border-slate-100 dark:border-white/5 animate-pulse" />)
+                                    [1,2].map(i => <div key={i} className="h-32 bg-white dark:bg-[#252528] rounded-lg border border-slate-100 dark:border-white/5 animate-pulse" />)
                                 ) : tasks.length > 0 ? (
                                     tasks.map((task) => (
-                                        <div key={task.id} className="p-5 bg-white dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 rounded-2xl shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/10 transition-all group cursor-pointer flex flex-col justify-between min-h-[140px] active:scale-[0.99]">
+                                        <div key={task.id} className="p-3 bg-white dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 rounded-lg shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/10 transition-all group cursor-pointer flex flex-col justify-between min-h-[140px] active:scale-[0.99]">
                                             <div className="space-y-2.5">
                                                 <div className="flex items-start justify-between gap-4">
-                                                    <div className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded flex text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 max-w-fit">
+                                                    <div className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded flex text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 max-w-fit">
                                                         {task.project || 'General'}
                                                     </div>
                                                     {task.priority === 'high' && (
@@ -264,15 +264,15 @@ function CommandCenterHome({ user, token }: any) {
                                                     <Clock size={12} />
                                                     <span className="text-[11px] font-medium">Vence pronto</span>
                                                 </div>
-                                                <div className="size-6 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 flex items-center justify-center text-[9px] font-black">
+                                                <div className="size-6 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 flex items-center justify-center font-semibold">
                                                     {user?.username ? user.username.substring(0, 2).toUpperCase() : 'ME'}
                                                 </div>
                                             </div>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="col-span-full py-10 text-center bg-white dark:bg-[#252528] border border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
-                                        <div className="size-10 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                    <div className="col-span-full py-1.5 text-center bg-white dark:bg-[#252528] border border-dashed border-slate-200 dark:border-white/10 rounded-lg">
+                                        <div className="size-10 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg flex items-center justify-center mx-auto mb-3">
                                             <CheckCircle2 size={16} className="text-emerald-500" />
                                         </div>
                                         <p className="text-slate-800 dark:text-slate-200 font-semibold text-[13px] mb-1">Todo al día</p>
@@ -283,14 +283,14 @@ function CommandCenterHome({ user, token }: any) {
                         </motion.div>
 
                         {/* Academy Progress Banner */}
-                        <motion.div variants={itemVariants} className="p-6 rounded-2xl bg-white dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 shadow-sm relative overflow-hidden flex flex-col sm:flex-row items-center gap-6">
+                        <motion.div variants={itemVariants} className="p-4 rounded-lg bg-white dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 shadow-sm relative overflow-hidden flex flex-col sm:flex-row items-center gap-3">
                             <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500" />
                             <div className="flex-1 space-y-3">
-                                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 rounded text-[10px] font-black uppercase tracking-[0.15em] text-blue-600 dark:text-blue-400">
+                                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 rounded text-[10px] font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">
                                     <BookOpen size={12} /> Academia
                                 </div>
                                 <div>
-                                    <h3 className="text-[15px] font-bold text-slate-800 dark:text-white">Fundamentos de la Fe I</h3>
+                                    <h3 className="text-sm font-bold text-slate-800 dark:text-white">Fundamentos de la Fe I</h3>
                                     <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">Módulo 3: La Gracia · 2 lecciones restantes</p>
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -302,7 +302,7 @@ function CommandCenterHome({ user, token }: any) {
                                             className="h-full bg-blue-500 rounded-full"
                                         />
                                     </div>
-                                    <span className="text-[11px] font-black text-slate-600 dark:text-slate-300">65%</span>
+                                    <span className="font-semibold text-slate-600 dark:text-slate-300">65%</span>
                                 </div>
                             </div>
                             <Link href="/academy" className="shrink-0 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[11px] font-bold hover:bg-slate-800 dark:hover:bg-slate-100 active:scale-95 transition-all flex items-center gap-2">
@@ -312,24 +312,24 @@ function CommandCenterHome({ user, token }: any) {
                     </div>
 
                     {/* 4. Right Panel: Intelligence & Activity */}
-                    <div className="space-y-6">
-                        
+                    <div className="space-y-3">
+
                         {/* MESH AI Widget */}
-                        <motion.div variants={itemVariants} className="p-5 bg-white dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 rounded-2xl shadow-sm">
+                        <motion.div variants={itemVariants} className="p-4 bg-white dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 rounded-lg shadow-sm">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                                     <Bot size={16} className="text-violet-500" /> MESH AI
                                 </h3>
-                                <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
+                                <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
                                     <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                     En línea
                                 </div>
                             </div>
                             
-                            <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-100 dark:border-white/5 space-y-2 mb-4">
+                            <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5 space-y-2 mb-4">
                                 <div className="flex items-center gap-1.5">
                                     <Sparkles size={12} className="text-violet-500" />
-                                    <span className="text-[9px] font-black text-violet-600 dark:text-violet-400 uppercase tracking-[0.15em]">
+                                    <span className="text-[9px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-wide">
                                         {insights.length > 0 ? insights[0].title : 'Insight del día'}
                                     </span>
                                 </div>
@@ -346,8 +346,8 @@ function CommandCenterHome({ user, token }: any) {
                         </motion.div>
 
                         {/* Recent Activity */}
-                        <motion.div variants={itemVariants} className="p-5 bg-white dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 rounded-2xl shadow-sm">
-                            <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2">
+                        <motion.div variants={itemVariants} className="p-4 bg-white dark:bg-[#252528] border border-slate-200/70 dark:border-white/5 rounded-lg shadow-sm">
+                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2">
                                 <Activity size={12} /> Actividad Reciente
                             </h3>
                             <div className="space-y-4">
@@ -366,13 +366,13 @@ function CommandCenterHome({ user, token }: any) {
 function ActivityItem({ icon: Icon, title, desc, time, color, bg }: any) {
     return (
         <div className="flex gap-4 group cursor-pointer">
-            <div className={clsx("size-10 shrink-0 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3", bg, color)}>
+            <div className={clsx("size-10 shrink-0 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3", bg, color)}>
                 <Icon size={18} strokeWidth={2.5} />
             </div>
             <div className="space-y-0.5 min-w-0 flex-1 border-b border-slate-50 dark:border-white/5 pb-4 group-last:border-0 group-last:pb-0">
                 <div className="flex items-center justify-between gap-2">
                     <h4 className="text-[13px] font-bold text-slate-800 dark:text-white truncate">{title}</h4>
-                    <span className="text-[9px] font-black text-slate-400 whitespace-nowrap uppercase tracking-widest">{time}</span>
+                    <span className="text-[9px] font-bold text-slate-400 whitespace-nowrap uppercase tracking-wide">{time}</span>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 truncate font-medium">{desc}</p>
             </div>
@@ -407,38 +407,38 @@ function PublicLandingPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-[#020617] text-slate-200 flex flex-col items-center p-6 lg:p-10 gap-10 font-sans relative overflow-hidden">
+        <div className="min-h-screen bg-[#020617] text-slate-200 flex flex-col items-center p-3 lg:p-4 gap-3 font-sans relative overflow-hidden">
             <div className="absolute inset-0 z-0">
                 <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-soft"></div>
             </div>
             <Navbar />
-            <div className="w-full max-w-[1600px] mx-auto space-y-8 text-center relative z-10 mt-10 px-6 lg:px-10">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-[0.3em] mx-auto shadow-lg shadow-blue-500/5">
+            <div className="w-full max-w-[1600px] mx-auto space-y-3 text-center relative z-10 mt-3 px-3 lg:px-4">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-full text-[10px] font-bold uppercase tracking-wide mx-auto shadow-lg shadow-blue-500/5">
                     <Shield size={14} /> MESH Ecosystem v2.1
                 </div>
-                <h1 className="text-5xl lg:text-7xl font-black text-white tracking-tighter leading-[1.1]">
+                <h1 className="text-xl lg:text-xl font-bold text-white tracking-tighter leading-[1.1]">
                     Identidad Digital <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">Ministerial.</span>
                 </h1>
                 <p className="text-lg text-slate-400 font-medium max-w-2xl mx-auto">El centro operativo para la formación teológica, gestión pastoral y colaboración de equipos.</p>
                 <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
-                    <Link href="/login" className="px-10 py-5 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-600/20 hover:bg-blue-500 active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <Link href="/login" className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-xs uppercase tracking-wide shadow-xl shadow-blue-600/20 hover:bg-blue-500 active:scale-95 transition-all flex items-center justify-center gap-2">
                         Acceso Interno <ArrowRight size={16} />
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 text-left max-w-[1600px] mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-20 text-left max-w-[1600px] mx-auto">
                     {linkCards.map((card) => (
                         <Link
                             key={card.href}
                             href={card.href}
-                            className="p-8 rounded-[2rem] bg-white/5 border border-white/10 hover:border-blue-500/50 hover:bg-white/10 transition-all group"
+                            className="p-4 rounded-lg bg-white/5 border border-white/10 hover:border-blue-500/50 hover:bg-white/10 transition-all group"
                         >
-                            <div className="size-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-6 group-hover:scale-110 transition-transform">
+                            <div className="size-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 mb-3 group-hover:scale-110 transition-transform">
                                 <card.icon size={24} />
                             </div>
-                            <h3 className="text-xl font-black text-white mb-2">{card.title}</h3>
-                            <p className="text-sm text-slate-400 leading-relaxed mb-6">{card.description}</p>
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-blue-400">
+                            <h3 className="text-lg font-bold text-white mb-2">{card.title}</h3>
+                            <p className="text-sm text-slate-400 leading-relaxed mb-3">{card.description}</p>
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-blue-400">
                                 {card.label} <ChevronRight size={14} />
                             </div>
                         </Link>

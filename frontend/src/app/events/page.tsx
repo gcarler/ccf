@@ -36,7 +36,7 @@ export default function EventsPage() {
             <div className="pt-28" />
 
             {/* Hero */}
-            <section className="py-4 px-6 text-center relative overflow-hidden">
+            <section className="py-1.5 px-3 text-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-emerald-600/10 to-transparent pointer-events-none" />
                 <div className="max-w-4xl mx-auto relative">
                     <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-bold uppercase tracking-wide mb-3">
@@ -52,13 +52,13 @@ export default function EventsPage() {
                         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
                         <input value={search} onChange={e => setSearch(e.target.value)}
                             placeholder="Buscar evento..."
-                            className="w-full pl-12 pr-5 py-4 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-[14px] outline-none focus:ring-2 focus:ring-emerald-500/30 backdrop-blur" />
+                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-sm outline-none focus:ring-2 focus:ring-emerald-500/30 backdrop-blur" />
                     </div>
                 </div>
             </section>
 
             {/* Featured Events Carousel */}
-            <section className="max-w-6xl mx-auto px-6 mb-12">
+            <section className="max-w-6xl mx-auto px-3 mb-3">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-3">
                     <Star size={10} className="inline mr-1.5 text-amber-400" />Eventos Destacados
                 </p>
@@ -67,7 +67,7 @@ export default function EventsPage() {
                         <motion.div key={ev.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
                             className={`h-52 rounded-lg bg-gradient-to-br ${ev.color} relative overflow-hidden cursor-pointer group hover:scale-[1.02] transition-all shadow-2xl`}>
                             <div className="absolute inset-0 bg-black/30" />
-                            <div className="absolute inset-0 p-6 flex flex-col justify-between">
+                            <div className="absolute inset-0 p-3 flex flex-col justify-between">
                                 <div className="flex items-start justify-between">
                                     <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur text-white text-[9px] font-bold uppercase tracking-wide">{ev.category}</span>
                                     <div className="text-right">
@@ -93,7 +93,7 @@ export default function EventsPage() {
             </section>
 
             {/* Filter */}
-            <div className="max-w-6xl mx-auto px-6 flex items-center gap-2 flex-wrap mb-6">
+            <div className="max-w-6xl mx-auto px-3 flex items-center gap-2 flex-wrap mb-3">
                 <Filter size={12} className="text-slate-600" />
                 {CATEGORIES.map(c => (
                     <button key={c} onClick={() => setCat(c)}
@@ -104,13 +104,13 @@ export default function EventsPage() {
             </div>
 
             {/* Events List */}
-            <div className="max-w-6xl mx-auto px-6 pb-20 space-y-3">
+            <div className="max-w-6xl mx-auto px-3 pb-4 space-y-3">
                 {filtered.map((ev, i) => {
                     const occupation = pct(ev.attendees, ev.capacity);
                     return (
                         <motion.div key={ev.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
                             className="bg-white/5 hover:bg-white/8 border border-white/5 hover:border-white/10 rounded-lg p-3 flex items-center gap-5 cursor-pointer group transition-all">
-                            <div className={`size-14 rounded-2xl bg-gradient-to-br ${ev.color} flex items-center justify-center text-white shrink-0`}>
+                            <div className={`size-7 rounded-lg bg-gradient-to-br ${ev.color} flex items-center justify-center text-white shrink-0`}>
                                 <Calendar size={22} />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -118,7 +118,7 @@ export default function EventsPage() {
                                     <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/10 text-slate-400 font-bold uppercase tracking-wide">{ev.category}</span>
                                     {ev.featured && <Star size={10} className="text-amber-400 fill-amber-400" />}
                                 </div>
-                                <p className="text-[14px] font-bold text-white group-hover:text-emerald-400 transition-colors">{ev.title}</p>
+                                <p className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">{ev.title}</p>
                                 <div className="flex flex-wrap items-center gap-3 mt-1 text-[10px] text-slate-500">
                                     <span className="flex items-center gap-1"><Calendar size={9} /> {ev.date}{ev.endDate ? ` → ${ev.endDate}` : ''}</span>
                                     <span className="flex items-center gap-1"><Clock size={9} /> {ev.time}</span>

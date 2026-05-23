@@ -46,10 +46,10 @@ export default function PastorProfilePage({ params }: { params: Promise<{ slug: 
                 <div className="absolute inset-0 bg-gradient-to-r from-faro-surface/90 to-transparent" />
                 
                 <div className="absolute inset-0 flex items-end">
-                    <div className="max-w-6xl mx-auto w-full px-6 md:px-16 lg:px-24 pb-20">
+                    <div className="max-w-6xl mx-auto w-full px-3 md:px-4 lg:px-24 pb-4">
                         <Link 
                             href="/faro/pastores" 
-                            className="inline-flex items-center gap-2 text-faro-primary font-black text-[10px] uppercase tracking-widest hover:-translate-x-2 transition-transform mb-8 bg-faro-primary-container px-4 py-2 rounded-full"
+                            className="inline-flex items-center gap-2 text-faro-primary font-black text-[10px] uppercase tracking-wide hover:-translate-x-2 transition-transform mb-3 bg-faro-primary-container px-4 py-2 rounded-full"
                         >
                             <ArrowLeft size={14} /> Volver a Liderazgo
                         </Link>
@@ -57,10 +57,10 @@ export default function PastorProfilePage({ params }: { params: Promise<{ slug: 
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                         >
-                            <span className="text-sm font-black uppercase tracking-[0.4em] text-faro-primary mb-4 block">
+                            <span className="text-sm font-semibold uppercase tracking-wide text-faro-primary mb-4 block">
                                 {pastor.role}
                             </span>
-                            <h1 className="text-5xl md:text-7xl font-black text-faro-on-background tracking-tighter mb-6">
+                            <h1 className="text-xl md:text-xl font-black text-faro-on-background tracking-tighter mb-3">
                                 {pastor.name}
                             </h1>
                             <div className="flex gap-4">
@@ -80,12 +80,12 @@ export default function PastorProfilePage({ params }: { params: Promise<{ slug: 
             </section>
 
             {/* CONTENT SECTION */}
-            <section className="py-24 px-6 md:px-16 lg:px-24">
-                <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-16">
+            <section className="py-1.5 px-3 md:px-4 lg:px-24">
+                <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-3">
                     <div className="md:col-span-2">
-                        <h2 className="text-3xl font-black text-faro-on-surface mb-8">Biografía</h2>
+                        <h2 className="text-xl font-black text-faro-on-surface mb-3">Biografía</h2>
                         <div className="prose prose-lg dark:prose-invert prose-p:text-faro-on-surface-variant prose-p:leading-relaxed">
-                            <p className="text-xl font-medium text-faro-on-surface mb-6">
+                            <p className="text-xl font-medium text-faro-on-surface mb-3">
                                 {pastor.description}
                             </p>
                             <p>
@@ -102,25 +102,25 @@ export default function PastorProfilePage({ params }: { params: Promise<{ slug: 
                         </div>
                     </div>
                     
-                    <div className="md:col-span-1 space-y-8">
-                        <div className="bg-faro-surface-container rounded-[2rem] p-8 border border-faro-outline-variant/10">
-                            <h3 className="text-xl font-black text-faro-on-surface mb-6">Información</h3>
+                    <div className="md:col-span-1 space-y-3">
+                        <div className="bg-faro-surface-container rounded-lg p-4 border border-faro-outline-variant/10">
+                            <h3 className="text-xl font-black text-faro-on-surface mb-3">Información</h3>
                             <ul className="space-y-6">
                                 <li>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-faro-primary mb-1">Rol Ministerial</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-faro-primary mb-1">Rol Ministerial</p>
                                     <p className="text-faro-on-surface font-bold">{pastor.role}</p>
                                 </li>
                                 <li>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-faro-primary mb-1">Ministerio</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-faro-primary mb-1">Ministerio</p>
                                     <p className="text-faro-on-surface font-bold">Comunidad Faro</p>
                                 </li>
                             </ul>
                         </div>
                         
-                        <div className="bg-gradient-to-br from-faro-primary to-faro-secondary rounded-[2rem] p-8 text-white text-center">
+                        <div className="bg-gradient-to-br from-faro-primary to-faro-secondary rounded-lg p-4 text-white text-center">
                             <h3 className="text-xl font-black mb-4">Conéctate</h3>
-                            <p className="text-sm opacity-90 mb-6">Únete a nosotros este domingo y recibe una palabra que iluminará tu semana.</p>
-                            <Link href="/faro/sedes" className="inline-block bg-white text-faro-primary font-black text-[10px] uppercase tracking-widest px-6 py-3 rounded-xl hover:scale-105 transition-transform">
+                            <p className="text-sm opacity-90 mb-3">Únete a nosotros este domingo y recibe una palabra que iluminará tu semana.</p>
+                            <Link href="/faro/sedes" className="inline-block bg-white text-faro-primary font-black text-[10px] uppercase tracking-wide px-3 py-3 rounded-md hover:scale-105 transition-transform">
                                 Ver Horarios
                             </Link>
                         </div>

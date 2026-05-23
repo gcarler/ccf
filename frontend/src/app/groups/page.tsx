@@ -40,7 +40,7 @@ export default function GroupsPage() {
                     { label: 'Dashboard', icon: TrendingUp },
                 ]}
                 rightActions={
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
+                    <button className="px-4 py-2 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
                         <Plus size={14} /> Nueva Casa
                     </button>
                 }
@@ -58,11 +58,11 @@ export default function GroupsPage() {
                         <DSCard key={group.id}>
                             <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="size-9 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600">
+                                    <div className="size-9 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600">
                                         <Home size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase">{group.name}</h3>
+                                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase">{group.name}</h3>
                                         <p className="text-xs font-medium text-slate-500 flex items-center gap-1">
                                             <MapPin size={12} /> {group.address || 'Ubicación pendiente'}
                                         </p>
@@ -76,9 +76,9 @@ export default function GroupsPage() {
                     ))}
                     
                     {groups.length === 0 && (
-                        <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-100 rounded-xl">
+                        <div className="col-span-full py-1.5 text-center border-2 border-dashed border-slate-100 rounded-md">
                             <Home size={48} className="mx-auto text-slate-100 mb-4" />
-                            <p className="text-xs font-black uppercase tracking-widest text-slate-400">No hay casas registradas aún</p>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">No hay casas registradas aún</p>
                         </div>
                     )}
                 </div>

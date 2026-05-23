@@ -126,8 +126,8 @@ export default function CourseViewPage() {
                 <div className="flex flex-col h-full bg-white dark:bg-transparent">
                     <div className="p-4 space-y-4">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tu Avance</h3>
-                            <span className="text-[10px] font-black text-blue-600 dark:text-blue-400">{completionRate}%</span>
+                            <h3 className="font-semibold text-slate-400 uppercase tracking-wide">Tu Avance</h3>
+                            <span className="font-semibold text-blue-600 dark:text-blue-400">{completionRate}%</span>
                         </div>
                         <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                             <motion.div initial={{ width: 0 }} animate={{ width: `${completionRate}%` }} className="h-full bg-blue-600 shadow-sm" />
@@ -135,7 +135,7 @@ export default function CourseViewPage() {
                     </div>
 
                     <div className="flex-1 overflow-y-auto px-2 pb-10 space-y-1">
-                        <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest px-4 mb-2">Contenido del Curso</p>
+                        <p className="font-semibold text-slate-300 uppercase tracking-wide px-4 mb-2">Contenido del Curso</p>
                         {course.lessons
                             .slice()
                             .sort((a, b) => a.order_index - b.order_index)
@@ -148,7 +148,7 @@ export default function CourseViewPage() {
                                         key={lesson.id}
                                         onClick={() => setActiveLesson(lesson)}
                                         className={clsx(
-                                            "w-full text-left px-4 py-1.5.5 rounded-2xl transition-all group flex items-start gap-3.5",
+                                            "w-full text-left px-4 py-1.5 rounded-lg transition-all group flex items-start gap-3.5",
                                             isActive
                                                 ? "bg-blue-600/10 dark:bg-blue-500/10 border border-blue-100/50 dark:border-white/5"
                                                 : "hover:bg-slate-50 dark:hover:bg-white/5 text-slate-500 border border-transparent"
@@ -156,7 +156,7 @@ export default function CourseViewPage() {
                                     >
                                         <div
                                             className={clsx(
-                                                "size-9 rounded-xl flex items-center justify-center shrink-0 border transition-all",
+                                                "size-9 rounded-md flex items-center justify-center shrink-0 border transition-all",
                                                 isCompleted
                                                     ? "bg-emerald-500 border-emerald-500 text-white"
                                                     : isActive
@@ -164,11 +164,11 @@ export default function CourseViewPage() {
                                                         : "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/5 text-slate-400"
                                             )}
                                         >
-                                            {isCompleted ? <CheckCircle2 size={16} /> : (isActive ? <PlayCircle size={16} /> : <span className="text-[10px] font-black">{idx + 1}</span>)}
+                                            {isCompleted ? <CheckCircle2 size={16} /> : (isActive ? <PlayCircle size={16} /> : <span className="font-semibold">{idx + 1}</span>)}
                                         </div>
                                         <div className="min-w-0">
-                                            <p className={clsx("text-[12px] font-black leading-tight mb-1", isActive ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-400")}>{lesson.title}</p>
-                                            <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                            <p className={clsx("font-semibold leading-tight mb-1", isActive ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-400")}>{lesson.title}</p>
+                                            <div className="flex items-center gap-2 text-[9px] font-semibold uppercase tracking-wide text-slate-400">
                                                 <Clock size={10} /> {lesson.duration_minutes} min
                                             </div>
                                         </div>
@@ -186,14 +186,14 @@ export default function CourseViewPage() {
             <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden">
                 <WorkspaceToolbar breadcrumbs={[{ label: 'Cargando curso...', icon: GraduationCap }]} />
                 <div className="flex-1 flex">
-                    <aside className="w-80 lg:w-96 border-r border-slate-100 dark:border-white/5 p-4 space-y-4"><Skeleton className="h-4 w-1/2" /><Skeleton className="h-12 w-full rounded-2xl" /><Skeleton className="h-12 w-full rounded-2xl" /></aside>
-                    <main className="flex-1 p-4 space-y-3"><Skeleton className="aspect-video w-full rounded-2xl" /><Skeleton className="h-10 w-1/2" /><Skeleton className="h-32 w-full rounded-2xl" /></main>
+                    <aside className="w-80 lg:w-96 border-r border-slate-100 dark:border-white/5 p-4 space-y-4"><Skeleton className="h-4 w-1/2" /><Skeleton className="h-8 w-full rounded-lg" /><Skeleton className="h-8 w-full rounded-lg" /></aside>
+                    <main className="flex-1 p-4 space-y-3"><Skeleton className="aspect-video w-full rounded-lg" /><Skeleton className="h-10 w-1/2" /><Skeleton className="h-32 w-full rounded-lg" /></main>
                 </div>
             </div>
         );
     }
 
-    if (!course) return <div className="p-5 text-center font-black uppercase text-slate-400 tracking-widest">Curso no encontrado.</div>;
+    if (!course) return <div className="p-3 text-center font-semibold uppercase text-slate-400 tracking-wide">Curso no encontrado.</div>;
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden font-display no-scrollbar">
@@ -207,7 +207,7 @@ export default function CourseViewPage() {
                         <Tooltip content="Compartir curso"><button className="p-2 text-slate-400 hover:text-blue-600 transition-colors"><Share2 size={18} /></button></Tooltip>
                         <Tooltip content="Ayuda"><button className="p-2 text-slate-400 hover:text-blue-600 transition-colors"><HelpCircle size={18} /></button></Tooltip>
                         <div className="w-[1px] h-4 bg-slate-200 dark:bg-white/10 mx-2" />
-                        <button onClick={() => router.push('/academy')} className="flex items-center gap-2 px-4 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-all active:scale-95">Salir</button>
+                        <button onClick={() => router.push('/academy')} className="flex items-center gap-2 px-4 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 rounded-md text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 transition-all active:scale-95">Salir</button>
                     </div>
                 }
             />
@@ -216,13 +216,13 @@ export default function CourseViewPage() {
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f003_0%,_transparent_50%)] pointer-events-none" />
 
                 {viewType === 'list' && (
-                    <section className="max-w-5xl mx-auto p-4 lg:p-16 space-y-4">
+                    <section className="max-w-5xl mx-auto p-4 lg:p-4 space-y-4">
                         {course.lessons.map((lesson) => (
-                            <button key={lesson.id} onClick={() => setActiveLesson(lesson)} className="w-full rounded-xl border border-slate-200 dark:border-white/10 p-4 text-left bg-white dark:bg-white/5 hover:border-blue-300 transition-all">
+                            <button key={lesson.id} onClick={() => setActiveLesson(lesson)} className="w-full rounded-md border border-slate-200 dark:border-white/10 p-4 text-left bg-white dark:bg-white/5 hover:border-blue-300 transition-all">
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Lección {lesson.order_index}</p>
-                                        <h3 className="mt-2 text-sm font-black text-slate-900 dark:text-white">{lesson.title}</h3>
+                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Lección {lesson.order_index}</p>
+                                        <h3 className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">{lesson.title}</h3>
                                     </div>
                                     <span className="text-xs font-bold text-slate-500">{lesson.duration_minutes} min</span>
                                 </div>
@@ -232,10 +232,10 @@ export default function CourseViewPage() {
                 )}
 
                 {viewType === 'table' && (
-                    <section className="max-w-6xl mx-auto p-4 lg:p-16">
-                        <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-white/10">
+                    <section className="max-w-6xl mx-auto p-4 lg:p-4">
+                        <div className="overflow-hidden rounded-md border border-slate-200 dark:border-white/10">
                             <table className="w-full text-left">
-                                <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                     <tr>
                                         <th className="px-4 py-2">Orden</th>
                                         <th className="px-4 py-2">Lección</th>
@@ -261,19 +261,19 @@ export default function CourseViewPage() {
                 )}
 
                 {(viewType === 'board' || viewType === 'kanban') && (
-                    <section className="max-w-6xl mx-auto p-4 lg:p-16 grid gap-4 md:grid-cols-3">
+                    <section className="max-w-6xl mx-auto p-4 lg:p-4 grid gap-4 md:grid-cols-3">
                         {['Pendiente', 'En curso', 'Completada'].map((status) => {
                             const lessons = course.lessons.filter((lesson) => (
                                 status === 'Completada' ? lesson.is_completed : status === 'En curso' ? lesson.id === activeLesson?.id && !lesson.is_completed : !lesson.is_completed && lesson.id !== activeLesson?.id
                             ));
                             return (
-                                <div key={status} className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/5 p-5">
-                                    <h3 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-500">{status}</h3>
+                                <div key={status} className="rounded-md border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/5 p-3">
+                                    <h3 className="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-500">{status}</h3>
                                     <div className="space-y-3">
                                         {lessons.map((lesson) => (
-                                            <button key={lesson.id} onClick={() => setActiveLesson(lesson)} className="w-full rounded-2xl bg-white dark:bg-black/20 p-4 text-left shadow-sm">
-                                                <p className="text-sm font-black text-slate-900 dark:text-white">{lesson.title}</p>
-                                                <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">{lesson.duration_minutes} min</p>
+                                            <button key={lesson.id} onClick={() => setActiveLesson(lesson)} className="w-full rounded-lg bg-white dark:bg-black/20 p-4 text-left shadow-sm">
+                                                <p className="text-sm font-semibold text-slate-900 dark:text-white">{lesson.title}</p>
+                                                <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">{lesson.duration_minutes} min</p>
                                             </button>
                                         ))}
                                     </div>
@@ -331,9 +331,9 @@ export default function CourseViewPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="max-w-5xl mx-auto p-4 lg:p-16 lg:pt-8 space-y-12 pb-32"
+                        className="max-w-5xl mx-auto p-4 lg:p-4 lg:pt-8 space-y-3 pb-4"
                     >
-                        <div className="relative group/player rounded-2xl overflow-hidden shadow-[var(--shadow-floating)] border border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-black aspect-video flex items-center justify-center">
+                        <div className="relative group/player rounded-lg overflow-hidden shadow-[var(--shadow-floating)] border border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-black aspect-video flex items-center justify-center">
                             {(!activeLesson?.content_type || activeLesson.content_type === 'video') && (
                                 <>
                                     <VideoPlayer
@@ -343,8 +343,8 @@ export default function CourseViewPage() {
                                         initialTime={progress?.last_position_seconds || 0}
                                     />
                                     <div className="absolute top-4 left-6 flex gap-2">
-                                        <div className="px-3 py-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[9px] font-black uppercase tracking-[0.2em] text-white">4K ULTRA HD</div>
-                                        <div className="px-3 py-1 bg-blue-600/80 backdrop-blur-md rounded-full text-[9px] font-black uppercase tracking-[0.2em] text-white flex items-center gap-1.5"><Sparkles size={10} /> Optimus Enhanced</div>
+                                        <div className="px-3 py-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[9px] font-semibold uppercase tracking-wide text-white">4K ULTRA HD</div>
+                                        <div className="px-3 py-1 bg-blue-600/80 backdrop-blur-md rounded-full text-[9px] font-semibold uppercase tracking-wide text-white flex items-center gap-1.5"><Sparkles size={10} /> Optimus Enhanced</div>
                                     </div>
                                 </>
                             )}
@@ -355,7 +355,7 @@ export default function CourseViewPage() {
                                         <h3 className="text-base font-black text-slate-800 dark:text-white">Documento PDF Adjunto</h3>
                                         <p className="text-slate-500 text-sm mt-2">Lee el documento para completar esta lección.</p>
                                     </div>
-                                    <a href={activeLesson.media_url || "#"} target="_blank" rel="noreferrer" className="px-4 py-1.5 bg-blue-600 text-white rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-blue-700 transition-colors">
+                                    <a href={activeLesson.media_url || "#"} target="_blank" rel="noreferrer" className="px-4 py-1.5 bg-blue-600 text-white rounded-md font-bold uppercase tracking-wide text-xs hover:bg-blue-700 transition-colors">
                                         Abrir Documento
                                     </a>
                                 </div>
@@ -367,7 +367,7 @@ export default function CourseViewPage() {
                                         <h3 className="text-base font-black text-slate-800 dark:text-white">Evaluación de Conocimiento</h3>
                                         <p className="text-slate-500 text-sm mt-2">Responde las preguntas para avanzar a la siguiente etapa.</p>
                                     </div>
-                                    <button onClick={handleLessonComplete} className="px-4 py-1.5 bg-indigo-600 text-white rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30">
+                                    <button onClick={handleLessonComplete} className="px-4 py-1.5 bg-indigo-600 text-white rounded-md font-bold uppercase tracking-wide text-xs hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30">
                                         Comenzar Cuestionario
                                     </button>
                                 </div>
@@ -378,21 +378,21 @@ export default function CourseViewPage() {
                             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
                                 <div className="space-y-3 max-w-2xl">
                                     <div className="flex items-center gap-3">
-                                        <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-lg uppercase tracking-widest">Lección {activeLesson?.order_index}</span>
+                                        <span className="font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-lg uppercase tracking-wide">Lección {activeLesson?.order_index}</span>
                                         <div className="size-1 rounded-full bg-slate-300" />
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{activeLesson?.duration_minutes} Minutos de contenido</span>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{activeLesson?.duration_minutes} Minutos de contenido</span>
                                     </div>
-                                    <h2 className="text-4xl lg:text-5xl font-black text-slate-800 dark:text-white tracking-tighter leading-none">
+                                    <h2 className="text-lg lg:text-xl font-black text-slate-800 dark:text-white tracking-tighter leading-none">
                                         {activeLesson?.title}
                                     </h2>
                                 </div>
                                 <div className="flex items-center gap-3 shrink-0">
-                                    <button className="p-3 bg-slate-50 dark:bg-white/5 rounded-2xl text-slate-400 hover:text-blue-600 transition-all border border-slate-100 dark:border-white/5"><MoreHorizontal size={20} /></button>
+                                    <button className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg text-slate-400 hover:text-blue-600 transition-all border border-slate-100 dark:border-white/5"><MoreHorizontal size={20} /></button>
                                     <button
                                         onClick={handleLessonComplete}
                                         disabled={activeLesson?.is_completed}
                                         className={clsx(
-                                            "px-5 py-2 rounded-[1.5rem] font-black text-[11px] uppercase tracking-[0.2em] transition-all active:scale-95 flex items-center gap-3 shadow-xl",
+                                            "px-3 py-2 rounded-lg font-black text-[11px] uppercase tracking-wide transition-all active:scale-95 flex items-center gap-3 shadow-xl",
                                             activeLesson?.is_completed
                                                 ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 cursor-not-allowed"
                                                 : "bg-blue-600 text-white shadow-blue-500/20 hover:scale-[1.02]"
@@ -404,26 +404,26 @@ export default function CourseViewPage() {
                             </div>
 
                             <div className="prose prose-slate dark:prose-invert max-w-none">
-                                <div className="p-5 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-100 dark:border-white/5 text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                                <div className="p-3 bg-slate-50 dark:bg-black/20 rounded-md border border-slate-100 dark:border-white/5 text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                                     {activeLesson?.content.split('\n').map((paragraph, index) => (
-                                        <p key={index} className="mb-6 last:mb-0">{paragraph}</p>
+                                        <p key={index} className="mb-3 last:mb-0">{paragraph}</p>
                                     ))}
                                 </div>
                             </div>
 
-                            <section className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-[#1e1f21] border border-white/5 text-white flex flex-col md:flex-row items-center justify-between gap-4 group">
+                            <section className="p-4 rounded-lg bg-gradient-to-br from-slate-900 to-[#1e1f21] border border-white/5 text-white flex flex-col md:flex-row items-center justify-between gap-4 group">
                                 <div className="flex items-center gap-4">
-                                    <div className="size-16 rounded-[1.5rem] bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shadow-2xl group-hover:scale-110 transition-transform">
+                                    <div className="size-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shadow-2xl group-hover:scale-110 transition-transform">
                                         <Award size={32} />
                                     </div>
                                     <div>
-                                        <h4 className="text-base font-black tracking-tight">Hito de Conocimiento</h4>
+                                        <h4 className="text-base font-bold tracking-tight">Hito de Conocimiento</h4>
                                         <p className="text-slate-400 text-sm font-medium">Al completar esta lección, recibirás +10 XP para tu perfil pastoral.</p>
                                     </div>
                                 </div>
                                 <div className="flex -space-x-3">
                                     {[1, 2, 3].map((item) => <div key={item} className="size-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400">JD</div>)}
-                                    <div className="size-8 rounded-full border-2 border-slate-900 bg-blue-600 flex items-center justify-center text-[10px] font-black text-white">+12</div>
+                                    <div className="size-8 rounded-full border-2 border-slate-900 bg-blue-600 flex items-center justify-center font-semibold text-white">+12</div>
                                 </div>
                             </section>
                         </div>

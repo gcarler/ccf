@@ -66,7 +66,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
             <div className="flex items-center justify-between px-1 pb-1">
                 <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full shadow-sm shrink-0" style={{ backgroundColor: color }} />
-                    <span className="text-[11px] font-black tracking-widest text-slate-500 dark:text-slate-400 uppercase">
+                    <span className="font-semibold tracking-wide text-slate-500 dark:text-slate-400 uppercase">
                         {name}
                     </span>
                     <span className="text-[10px] text-slate-400 font-bold bg-slate-200 dark:bg-white/10 px-1.5 py-0.5 rounded-md">
@@ -98,7 +98,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
             <div
                 ref={setNodeRef}
                 className={clsx(
-                    'flex flex-col gap-2.5 min-h-[120px] p-2 rounded-xl transition-all duration-150',
+                    'flex flex-col gap-2.5 min-h-12 p-2 rounded-md transition-all duration-150',
                     isOver ? 'bg-blue-50/80 dark:bg-blue-500/10 ring-2 ring-blue-400/30' : 'bg-slate-50/40 dark:bg-white/[0.02]'
                 )}
             >
@@ -111,7 +111,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                 {/* Empty drop hint */}
                 {tasks.length === 0 && !isAdding && (
                     <div className={clsx(
-                        'flex-1 flex items-center justify-center py-6 rounded-lg border-2 border-dashed transition-all',
+                        'flex-1 flex items-center justify-center py-2 rounded-lg border-2 border-dashed transition-all',
                         isOver ? 'border-blue-400 bg-blue-50/50' : 'border-slate-200 dark:border-white/10'
                     )}>
                         <p className="text-[11px] text-slate-400 font-medium">Suelta aquí</p>
@@ -126,7 +126,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -8 }}
                             transition={{ duration: 0.15 }}
-                            className="bg-white dark:bg-[#25262b] rounded-xl border border-blue-300 dark:border-blue-500/40 shadow-md p-3 flex flex-col gap-2"
+                            className="bg-white dark:bg-[#25262b] rounded-md border border-blue-300 dark:border-blue-500/40 shadow-md p-3 flex flex-col gap-2"
                         >
                             <input
                                 ref={inputRef}

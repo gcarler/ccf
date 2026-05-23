@@ -72,34 +72,34 @@ export default function PrayerRequestForm() {
     };
 
     return (
-        <div className="p-4 lg:p-4 space-y-12 max-w-3xl mx-auto animate-in fade-in duration-700">
+        <div className="p-4 lg:p-4 space-y-3 max-w-3xl mx-auto animate-in fade-in duration-700">
             {/* Header Section */}
             <header className="flex items-center gap-4">
                 <button 
                     onClick={() => router.back()} 
-                    className="size-9 rounded-2xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--primary)/0.3)] transition-all active:scale-90"
+                    className="size-9 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--primary)/0.3)] transition-all active:scale-90"
                 >
                     <ArrowLeft size={20} />
                 </button>
                 <div className="space-y-0.5">
-                    <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-black uppercase tracking-[0.3em] text-[9px]">
+                    <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-[9px]">
                         <div className="size-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]"></div>
                         Interacción
                     </div>
-                    <h1 className="text-3xl font-black text-[hsl(var(--text-primary))] tracking-tighter">Pedir Oración</h1>
+                    <h1 className="text-xl font-black text-[hsl(var(--text-primary))] tracking-tighter">Pedir Oración</h1>
                 </div>
             </header>
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Hero / Instruction */}
-                <div className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-xl p-4 md:p-5 shadow-sm">
+                <div className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md p-4 md:p-3 shadow-sm">
                     <h2 className="text-lg font-black text-[hsl(var(--text-primary))] tracking-tight mb-2">¿En qué podemos orar por ti?</h2>
                     <p className="text-[hsl(var(--text-secondary))] text-sm font-medium">Tu congregación está aquí para apoyarte en intercesión.</p>
                 </div>
 
                 {/* Category Selector */}
                 <section className="space-y-3">
-                    <h4 className="text-[hsl(var(--primary))] text-[10px] uppercase font-black tracking-[0.2em] flex items-center gap-2">
+                    <h4 className="text-[hsl(var(--primary))] text-[10px] uppercase font-bold tracking-wide flex items-center gap-2">
                         <div className="size-1.5 rounded-full bg-current"></div>
                         Motivo de Oración
                     </h4>
@@ -109,7 +109,7 @@ export default function PrayerRequestForm() {
                                 key={category}
                                 type="button"
                                 onClick={() => setSelectedCategory(category)}
-                                className={`h-11 px-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all border ${selectedCategory === category
+                                className={`h-8 px-4 rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all border ${selectedCategory === category
                                     ? 'bg-[hsl(var(--primary))] text-white shadow-lg shadow-primary/30 border-transparent scale-105'
                                     : 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.4)]'
                                     }`}
@@ -122,13 +122,13 @@ export default function PrayerRequestForm() {
 
                 {/* Text Area */}
                 <section className="space-y-3">
-                    <h4 className="text-[hsl(var(--primary))] text-[10px] uppercase font-black tracking-[0.2em] flex items-center gap-2">
+                    <h4 className="text-[hsl(var(--primary))] text-[10px] uppercase font-bold tracking-wide flex items-center gap-2">
                         <div className="size-1.5 rounded-full bg-current"></div>
                         Tu Petición
                     </h4>
                     <div className="relative group">
-                        <div className="absolute -inset-0.5 bg-gradient-to-br from-[hsl(var(--primary))] to-transparent opacity-0 group-focus-within:opacity-20 transition-opacity rounded-xl blur-xl"></div>
-                        <div className="relative bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] group-focus-within:border-[hsl(var(--primary))] rounded-xl p-4 shadow-inner transition-all">
+                        <div className="absolute -inset-0.5 bg-gradient-to-br from-[hsl(var(--primary))] to-transparent opacity-0 group-focus-within:opacity-20 transition-opacity rounded-md blur-xl"></div>
+                        <div className="relative bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] group-focus-within:border-[hsl(var(--primary))] rounded-md p-4 shadow-inner transition-all">
                             <textarea
                                 value={requestText}
                                 onChange={(e) => setRequestText(e.target.value)}
@@ -142,14 +142,14 @@ export default function PrayerRequestForm() {
 
                 {/* Privacy Options */}
                 <section className="space-y-4">
-                    <h4 className="text-[hsl(var(--primary))] text-[10px] uppercase font-black tracking-[0.2em] flex items-center gap-2 mb-6">
+                    <h4 className="text-[hsl(var(--primary))] text-[10px] uppercase font-bold tracking-wide flex items-center gap-2 mb-3">
                         <div className="size-1.5 rounded-full bg-current"></div>
                         Privacidad & Seguridad
                     </h4>
 
-                    <div className={`flex items-center justify-between p-4 rounded-xl transition-all border ${isAnonymous ? 'bg-[hsl(var(--primary)/0.05)] border-[hsl(var(--primary)/0.3)] shadow-lg' : 'bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]'}`}>
+                    <div className={`flex items-center justify-between p-4 rounded-md transition-all border ${isAnonymous ? 'bg-[hsl(var(--primary)/0.05)] border-[hsl(var(--primary)/0.3)] shadow-lg' : 'bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]'}`}>
                         <div className="flex items-start gap-4">
-                            <div className={`p-3 rounded-2xl shrink-0 transition-colors ${isAnonymous ? 'bg-[hsl(var(--primary))] text-white shadow-lg' : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]'}`}>
+                            <div className={`p-3 rounded-lg shrink-0 transition-colors ${isAnonymous ? 'bg-[hsl(var(--primary))] text-white shadow-lg' : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]'}`}>
                                 <Globe size={20} strokeWidth={2.5} />
                             </div>
                             <div className="flex flex-col pt-1">
@@ -163,9 +163,9 @@ export default function PrayerRequestForm() {
                         </label>
                     </div>
 
-                    <div className={`flex items-center justify-between p-4 rounded-xl transition-all border ${isConfidential ? 'bg-rose-500/5 border-rose-500/20 shadow-lg' : 'bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]'}`}>
+                    <div className={`flex items-center justify-between p-4 rounded-md transition-all border ${isConfidential ? 'bg-rose-500/5 border-rose-500/20 shadow-lg' : 'bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]'}`}>
                         <div className="flex items-start gap-4">
-                            <div className={`p-3 rounded-2xl shrink-0 transition-colors ${isConfidential ? 'bg-rose-500 text-white shadow-lg' : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]'}`}>
+                            <div className={`p-3 rounded-lg shrink-0 transition-colors ${isConfidential ? 'bg-rose-500 text-white shadow-lg' : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]'}`}>
                                 <Lock size={20} strokeWidth={2.5} />
                             </div>
                             <div className="flex flex-col pt-1">
@@ -186,7 +186,7 @@ export default function PrayerRequestForm() {
                     whileTap={{ scale: 0.98 }}
                     type="submit"
                     disabled={isSubmitting || !requestText.trim()}
-                    className="w-full h-16 bg-[hsl(var(--text-primary))] text-[hsl(var(--bg-primary))] rounded-xl font-black uppercase tracking-[0.2em] text-xs shadow-2xl hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-3"
+                    className="w-full h-8 bg-[hsl(var(--text-primary))] text-[hsl(var(--bg-primary))] rounded-md font-semibold uppercase tracking-wide text-xs shadow-2xl hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-3"
                 >
                     {isSubmitting ? (
                         <div className="flex items-center gap-2">

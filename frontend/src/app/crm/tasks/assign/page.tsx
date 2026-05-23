@@ -167,7 +167,7 @@ export default function TaskAssignment() {
                     <input
                         type="text"
                         placeholder="Buscar miembro para seguimiento..."
-                        className="w-full bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl py-2 pl-14 pr-6 text-sm font-bold shadow-sm focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
+                        className="w-full bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-md py-2 pl-14 pr-6 text-sm font-bold shadow-sm focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -181,7 +181,7 @@ export default function TaskAssignment() {
 
                     <div className="space-y-4">
                         {loading ? (
-                            <div className="py-4 flex flex-col items-center gap-4">
+                            <div className="py-1.5 flex flex-col items-center gap-4">
                                 <Loader2 className="animate-spin text-blue-600" size={32} />
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Cargando congregación...</p>
                             </div>
@@ -193,7 +193,7 @@ export default function TaskAssignment() {
                                 key={m.id}
                                 onClick={() => setSelectedMemberId(m.id)}
                                 className={clsx(
-                                    "p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between group",
+                                    "p-3 rounded-md border transition-all cursor-pointer flex items-center justify-between group",
                                     selectedMemberId === m.id ? "bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-500/20" : "bg-slate-50 dark:bg-white/5 border-transparent hover:border-blue-200"
                                 )}
                             >
@@ -205,12 +205,12 @@ export default function TaskAssignment() {
                                         {m.first_name.charAt(0)}
                                     </div>
                                     <div>
-                                        <p className="font-bold uppercase tracking-tight text-[15px] leading-none mb-1">{m.first_name} {m.last_name}</p>
+                                        <p className="font-bold uppercase tracking-tight text-sm leading-none mb-1">{m.first_name} {m.last_name}</p>
                                         <p className={clsx("text-[10px] font-bold uppercase tracking-wide", selectedMemberId === m.id ? "text-blue-100" : "text-slate-400")}>{m.church_role} · {m.spiritual_status}</p>
                                     </div>
                                 </div>
                                 <div className={clsx(
-                                    "size-8 rounded-xl flex items-center justify-center transition-all",
+                                    "size-8 rounded-md flex items-center justify-center transition-all",
                                     selectedMemberId === m.id ? "bg-white text-blue-600 rotate-90" : "bg-slate-200 dark:bg-white/10 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600"
                                 )}>
                                     <Plus size={18} />
@@ -265,7 +265,7 @@ export default function TaskAssignment() {
                                                 key={type}
                                                 onClick={() => setTaskTitle(`Seguimiento: ${type}`)}
                                                 className={clsx(
-                                                    "py-1.5 px-4 rounded-xl text-[10px] font-bold uppercase tracking-wide border transition-all",
+                                                    "py-1.5 px-4 rounded-md text-[10px] font-bold uppercase tracking-wide border transition-all",
                                                     taskTitle.includes(type) ? "bg-blue-600 border-blue-600 text-white shadow-lg" : "bg-white dark:bg-white/5 border-slate-100 dark:border-white/10 text-slate-500"
                                                 )}
                                             >
@@ -280,7 +280,7 @@ export default function TaskAssignment() {
                                     <textarea
                                         rows={4}
                                         placeholder="Ej: Dar bienvenida, preguntar por su familia..."
-                                        className="w-full bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl py-2 px-4 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                        className="w-full bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-md py-2 px-4 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
                                         value={taskDescription}
                                         onChange={(e) => setTaskDescription(e.target.value)}
                                     />
@@ -289,7 +289,7 @@ export default function TaskAssignment() {
                                 <button
                                     onClick={handleAssign}
                                     disabled={isAssigning}
-                                    className="w-full py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-xs uppercase tracking-wide shadow-2xl hover:translate-y-[-4px] active:scale-95 transition-all flex items-center justify-center gap-4 group"
+                                    className="w-full py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-md font-bold text-xs uppercase tracking-wide shadow-2xl hover:translate-y-[-4px] active:scale-95 transition-all flex items-center justify-center gap-4 group"
                                 >
                                     {isAssigning ? <Loader2 className="animate-spin" /> : <UserCheck size={20} className="group-hover:rotate-12 transition-transform" />}
                                     Confirmar Misión

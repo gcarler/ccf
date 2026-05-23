@@ -157,7 +157,7 @@ export default function AdminDashboardPage() {
                                     index={100}
                                 />
                             )}
-                            <button className="w-full py-3 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl flex items-center justify-center gap-2 text-slate-400 hover:text-blue-600 hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all font-bold uppercase text-[10px] tracking-wide mt-2 group">
+                            <button className="w-full py-3 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-md flex items-center justify-center gap-2 text-slate-400 hover:text-blue-600 hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all font-bold uppercase text-[10px] tracking-wide mt-2 group">
                                 <Plus size={10} className="group-hover:scale-125 transition-transform" /> Iniciar Nueva Operación
                             </button>
                         </motion.div>
@@ -184,7 +184,7 @@ export default function AdminDashboardPage() {
                                 <div className="space-y-2">
                                     {agentInsights.length > 0 ? (
                                         agentInsights.slice(0, 3).map((insight: any) => (
-                                            <div key={insight.id} className="p-3 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-100 dark:border-white/5 space-y-1 group/insight cursor-pointer hover:border-sky-500/30 hover:shadow-sm transition-all">
+                                            <div key={insight.id} className="p-3 bg-slate-50 dark:bg-black/20 rounded-md border border-slate-100 dark:border-white/5 space-y-1 group/insight cursor-pointer hover:border-sky-500/30 hover:shadow-sm transition-all">
                                                 <div className="flex items-center justify-between">
                                                     <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-none group-hover/insight:text-sky-600 transition-colors truncate">{insight.title}</p>
                                                     <span className="text-[7px] font-bold px-1.5 py-0.5 bg-sky-50 dark:bg-sky-500/10 text-sky-600 rounded uppercase tracking-wide shrink-0">{insight.insight_type.split('_')[0]}</span>
@@ -193,7 +193,7 @@ export default function AdminDashboardPage() {
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="p-3 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-100 dark:border-white/5 space-y-1">
+                                        <div className="p-3 bg-slate-50 dark:bg-black/20 rounded-md border border-slate-100 dark:border-white/5 space-y-1">
                                             <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-none">Análisis de Sistema</p>
                                             <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight italic font-medium">&ldquo;Todos los sistemas operan dentro de los parámetros normales. No se requiere intervención inmediata.&rdquo;</p>
                                         </div>
@@ -235,18 +235,18 @@ export default function AdminDashboardPage() {
         >
             <div className="space-y-3 animate-fade-in p-2">
                 <section className="grid grid-cols-2 gap-3">
-                    <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-100 dark:border-white/5 shadow-sm">
+                    <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-md border border-slate-100 dark:border-white/5 shadow-sm">
                         <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wide mb-1">Estado</p>
                         <p className="text-[13px] font-bold text-slate-800 dark:text-white uppercase">{selectedTask?.status}</p>
                     </div>
-                    <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-100 dark:border-white/5 shadow-sm">
+                    <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-md border border-slate-100 dark:border-white/5 shadow-sm">
                         <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wide mb-1">Prioridad</p>
                         <p className="text-[13px] font-bold text-rose-500 uppercase">{selectedTask?.priority}</p>
                     </div>
                 </section>
                 <section className="space-y-3">
                     <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1.5"><FileText size={10} className="text-blue-500"/> Descripción Técnica</h4>
-                    <div className="p-4 bg-slate-50 dark:bg-[#15171c] rounded-xl text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium shadow-inner">
+                    <div className="p-4 bg-slate-50 dark:bg-[#15171c] rounded-md text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium shadow-inner">
                         {selectedTask?.description || selectedTask?.payload || 'Cargando detalles de la operación...'}
                     </div>
                 </section>
@@ -261,7 +261,7 @@ function KpiCard({ title, value, trend, icon: Icon, color }: any) {
         <div className="p-4 bg-white dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-slate-100 dark:from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-bl-full pointer-events-none" />
             <div className="flex items-center justify-between mb-2 relative z-10">
-                <div className={clsx("size-10 rounded-xl flex items-center justify-center bg-slate-50 dark:bg-black/20 shadow-inner group-hover:scale-105 transition-transform", color)}>
+                <div className={clsx("size-10 rounded-md flex items-center justify-center bg-slate-50 dark:bg-black/20 shadow-inner group-hover:scale-105 transition-transform", color)}>
                     <Icon size={10} strokeWidth={2.5} />
                 </div>
                 <button className="text-slate-300 hover:text-slate-500 transition-colors p-1 rounded-lg"><MoreHorizontal size={10} /></button>
@@ -285,7 +285,7 @@ function AdminTaskRow({ task, onOpen, index }: any) {
             initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.03, type: 'spring', stiffness: 300, damping: 24 }}
             onClick={() => onOpen(task)}
             className={clsx(
-                "p-2.5 rounded-xl bg-white dark:bg-[#15171c] border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/40 hover:shadow-sm shadow-sm transition-all cursor-pointer relative overflow-hidden",
+                "p-2.5 rounded-md bg-white dark:bg-[#15171c] border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/40 hover:shadow-sm shadow-sm transition-all cursor-pointer relative overflow-hidden",
                 task.is_special && "border-l-2 border-l-amber-400"
             )}
         >

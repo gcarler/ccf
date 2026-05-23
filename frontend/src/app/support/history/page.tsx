@@ -22,16 +22,16 @@ export default function SupportHistoryPage() {
 
     return (
         <div className="h-full flex flex-col bg-slate-50 dark:bg-[#0f1117]">
-            <header className="h-14 border-b border-slate-200/60 dark:border-white/5 flex items-center px-6 gap-3 shrink-0 bg-white dark:bg-[#1a1d27]">
+            <header className="h-8 border-b border-slate-200/60 dark:border-white/5 flex items-center px-3 gap-3 shrink-0 bg-white dark:bg-[#1a1d27]">
                 <History size={16} className="text-slate-400" />
-                <h1 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Historial de Soporte</h1>
+                <h1 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Historial de Soporte</h1>
                 <span className="ml-auto text-[10px] text-slate-400 font-bold">{HISTORY.length} conversaciones</span>
             </header>
 
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-3">
                 <div className="max-w-3xl mx-auto space-y-3">
                     {HISTORY.length === 0 ? (
-                        <div className="py-24 text-center">
+                        <div className="py-1.5 text-center">
                             <History size={40} className="mx-auto text-slate-200 mb-3" />
                             <p className="text-sm font-bold text-slate-400">Sin historial de soporte</p>
                         </div>
@@ -47,19 +47,19 @@ export default function SupportHistoryPage() {
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: i * 0.05 }}
-                                    className="bg-white dark:bg-[#1a1d27] rounded-2xl border border-slate-200/60 dark:border-white/5 shadow-sm overflow-hidden"
+                                    className="bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 shadow-sm overflow-hidden"
                                 >
                                     {/* Header row */}
                                     <button
                                         onClick={() => setExpanded(isExpanded ? null : item.id)}
-                                        className="w-full flex items-center gap-4 px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-all text-left"
+                                        className="w-full flex items-center gap-4 px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all text-left"
                                     >
-                                        <div className={clsx("size-9 rounded-xl flex items-center justify-center shrink-0", sc.bg)}>
+                                        <div className={clsx("size-9 rounded-md flex items-center justify-center shrink-0", sc.bg)}>
                                             <Icon size={16} className={sc.color} />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-0.5">
-                                                <span className="text-[9px] font-black text-slate-400 font-mono uppercase tracking-widest">{item.id}</span>
+                                                <span className="font-semibold text-slate-400 font-mono uppercase tracking-wide">{item.id}</span>
                                                 <span className="text-[9px] text-slate-300">·</span>
                                                 <span className="text-[9px] text-slate-400 font-bold">{item.category}</span>
                                             </div>
@@ -87,13 +87,13 @@ export default function SupportHistoryPage() {
                                         <motion.div
                                             initial={{ height: 0, opacity: 0 }}
                                             animate={{ height: 'auto', opacity: 1 }}
-                                            className="border-t border-slate-100 dark:border-white/5 px-5 py-4 space-y-3"
+                                            className="border-t border-slate-100 dark:border-white/5 px-3 py-1.5 space-y-3"
                                         >
                                             {item.resolution ? (
-                                                <div className="flex items-start gap-3 p-4 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl">
+                                                <div className="flex items-start gap-3 p-4 bg-emerald-50 dark:bg-emerald-500/10 rounded-md">
                                                     <MessageSquare size={14} className="text-emerald-500 shrink-0 mt-0.5" />
                                                     <div>
-                                                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Resolución</p>
+                                                        <p className="font-semibold text-emerald-600 uppercase tracking-wide mb-1">Resolución</p>
                                                         <p className="text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed">{item.resolution}</p>
                                                     </div>
                                                 </div>
@@ -101,7 +101,7 @@ export default function SupportHistoryPage() {
                                                 <p className="text-[12px] text-slate-400 italic">Ticket en proceso de resolución...</p>
                                             )}
                                             {item.status === 'closed' && (
-                                                <button className="flex items-center gap-2 text-[10px] font-black text-blue-600 hover:opacity-70 transition-opacity uppercase tracking-widest">
+                                                <button className="flex items-center gap-2 font-semibold text-blue-600 hover:opacity-70 transition-opacity uppercase tracking-wide">
                                                     <RotateCcw size={11} /> Reabrir ticket
                                                 </button>
                                             )}

@@ -50,20 +50,20 @@ export default function PredicasPage() {
                     <div className="absolute inset-0 bg-gradient-to-r from-faro-surface/60 via-transparent to-transparent" />
                 </div>
 
-                <div className="relative z-10 max-w-6xl mx-auto px-6 md:px-16 lg:px-24 pb-20 w-full">
+                <div className="relative z-10 max-w-6xl mx-auto px-3 md:px-4 lg:px-24 pb-4 w-full">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="max-w-3xl"
                     >
-                        <div className="flex items-center gap-4 mb-6">
+                        <div className="flex items-center gap-4 mb-3">
                             <span className="w-12 h-0.5 bg-faro-primary" />
-                            <span className="text-xs font-black uppercase tracking-[0.4em]" style={{ color: "var(--faro-primary)" }}>
+                            <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--faro-primary)" }}>
                                 {heroEyebrow}
                             </span>
                         </div>
                         <h1 
-                            className="font-black tracking-tighter leading-[0.9] mb-8"
+                            className="font-bold tracking-tighter leading-[0.9] mb-3"
                             style={{ 
                                 fontSize: "clamp(3.5rem, 8vw, 7rem)",
                                 color: "white"
@@ -72,18 +72,18 @@ export default function PredicasPage() {
                             {heroTitleLead} <br/>
                             <span className="italic" style={{ color: "var(--faro-primary)" }}>{heroAccent}.</span>
                         </h1>
-                        <p className="text-xl md:text-2xl opacity-70 mb-10 leading-relaxed" style={{ color: "white" }}>
+                        <p className="text-xl md:text-lg opacity-70 mb-3 leading-relaxed" style={{ color: "white" }}>
                             {heroDescription}
                         </p>
                         <div className="flex flex-wrap gap-4">
                             <button 
-                                className="flex items-center gap-3 px-10 py-5 rounded-2xl font-black text-sm uppercase tracking-widest text-white transition-all hover:scale-105 shadow-2xl"
+                                className="flex items-center gap-3 px-4 py-2 rounded-lg font-black text-sm uppercase tracking-wide text-white transition-all hover:scale-105 shadow-2xl"
                                 style={{ background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))" }}
                             >
                                 <Play fill="currentColor" size={18} />
                                 Ver ahora
                             </button>
-                            <button className="flex items-center gap-3 px-10 py-5 rounded-2xl font-black text-sm uppercase tracking-widest bg-white/10 backdrop-blur-xl border border-white/20 text-white transition-all hover:bg-white/20">
+                            <button className="flex items-center gap-3 px-4 py-2 rounded-lg font-black text-sm uppercase tracking-wide bg-white/10 backdrop-blur-xl border border-white/20 text-white transition-all hover:bg-white/20">
                                 <Bookmark size={18} />
                                 Mi lista
                             </button>
@@ -93,16 +93,16 @@ export default function PredicasPage() {
             </section>
 
             {/* ── FILTROS Y CATEGORÍAS ───────────────────────── */}
-            <section className="px-6 md:px-16 lg:px-24 -mt-10 relative z-20">
+            <section className="px-3 md:px-4 lg:px-24 -mt-3 relative z-20">
                 <div 
-                    className="rounded-[2.5rem] p-8 flex flex-col md:flex-row items-center justify-between gap-8 border backdrop-blur-3xl shadow-2xl"
+                    className="rounded-lg p-4 flex flex-col md:flex-row items-center justify-between gap-3 border backdrop-blur-3xl shadow-2xl"
                     style={{ 
                         background: "var(--faro-surface-container-highest)",
                         borderColor: "var(--faro-outline-variant)",
                         opacity: 0.95
                     }}
                 >
-                    <div className="flex flex-wrap justify-center gap-8 text-[10px] font-black uppercase tracking-[0.3em]">
+                    <div className="flex flex-wrap justify-center gap-3 text-[10px] font-semibold uppercase tracking-wide">
                         {["Todas", "Series", "Oradores", "Temas"].map((cat, i) => (
                             <button key={cat} className={`transition-all hover:text-faro-primary ${i === 0 ? "text-faro-primary" : "opacity-50"}`}>
                                 {cat}
@@ -110,7 +110,7 @@ export default function PredicasPage() {
                         ))}
                     </div>
                     <div className="w-full md:w-auto">
-                        <select className="w-full md:w-64 bg-faro-surface-container-low rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest outline-none border border-transparent focus:border-faro-primary/30">
+                        <select className="w-full md:w-64 bg-faro-surface-container-low rounded-md px-4 py-3 text-xs font-semibold uppercase tracking-wide outline-none border border-transparent focus:border-faro-primary/30">
                             <option>Más recientes</option>
                             <option>Más vistos</option>
                             <option>Populares</option>
@@ -120,20 +120,20 @@ export default function PredicasPage() {
             </section>
 
             {/* ── GALERÍA DE VÍDEOS ──────────────────────────── */}
-            <section className="py-24 px-6 md:px-16 lg:px-24">
-                <div className="max-w-7xl mx-auto space-y-16">
+            <section className="py-1.5 px-3 md:px-4 lg:px-24">
+                <div className="max-w-7xl mx-auto space-y-3">
                     <div className="flex justify-between items-end">
-                        <h2 className="text-4xl font-black" style={{ color: "var(--faro-on-surface)" }}>Nuevos Lanzamientos</h2>
-                        <button className="text-xs font-black uppercase tracking-widest flex items-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
+                        <h2 className="text-lg font-black" style={{ color: "var(--faro-on-surface)" }}>Nuevos Lanzamientos</h2>
+                        <button className="text-xs font-semibold uppercase tracking-wide flex items-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
                             Ver todo <ChevronRight size={16} />
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                         {/* Featured Video */}
                         <motion.div 
                             whileHover={{ y: -10 }}
-                            className="md:col-span-8 rounded-[3rem] overflow-hidden group cursor-pointer relative shadow-xl"
+                            className="md:col-span-8 rounded-lg overflow-hidden group cursor-pointer relative shadow-xl"
                             style={{ background: "var(--faro-surface-container)" }}
                         >
                             <div className="aspect-video relative overflow-hidden">
@@ -145,30 +145,30 @@ export default function PredicasPage() {
                                 />
                                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                                    <div className="w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-2xl flex items-center justify-center shadow-2xl">
+                                    <div className="w-20 h-20 rounded-lg bg-white/20 backdrop-blur-2xl flex items-center justify-center shadow-2xl">
                                         <Play fill="white" size={32} className="text-white" />
                                     </div>
                                 </div>
-                                <div className="absolute top-6 left-6 bg-faro-primary text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest">Estreno</div>
+                                <div className="absolute top-6 left-6 bg-faro-primary text-white font-semibold px-3 py-1.5 rounded-full uppercase tracking-wide">Estreno</div>
                             </div>
-                            <div className="p-10">
-                                <div className="flex items-center gap-4 mb-4 text-[10px] font-black uppercase tracking-widest opacity-50">
+                            <div className="p-4">
+                                <div className="flex items-center gap-4 mb-4 text-[10px] font-semibold uppercase tracking-wide opacity-50">
                                     <span style={{ color: "var(--faro-primary)" }}>Serie: {featuredSermon?.series ?? ""}</span>
                                     <span>•</span>
                                     <span>{featuredSermon?.duration ?? ""}</span>
                                 </div>
-                                <h3 className="text-3xl font-black mb-4 group-hover:text-faro-primary transition-colors">{featuredSermon?.title ?? ""}</h3>
+                                <h3 className="text-xl font-black mb-4 group-hover:text-faro-primary transition-colors">{featuredSermon?.title ?? ""}</h3>
                                 <p className="text-lg opacity-70 line-clamp-2 max-w-2xl">{featuredSermon?.excerpt ?? ""}</p>
                             </div>
                         </motion.div>
 
                         {/* Secondary Videos */}
-                        <div className="md:col-span-4 flex flex-col gap-8">
+                        <div className="md:col-span-4 flex flex-col gap-3">
                             {secondarySermons.map((v: SermonItem, i: number) => (
                                 <motion.div 
                                     key={i}
                                     whileHover={{ x: 10 }}
-                                    className="rounded-[2.5rem] overflow-hidden group cursor-pointer border"
+                                    className="rounded-lg overflow-hidden group cursor-pointer border"
                                     style={{ 
                                         background: "var(--faro-surface-container-low)",
                                         borderColor: "var(--faro-outline-variant)"
@@ -179,9 +179,9 @@ export default function PredicasPage() {
                                         <div className="absolute inset-0 bg-black/20" />
                                         <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md text-[10px] px-2 py-1 rounded text-white font-black">{v.duration || "45:00"}</div>
                                     </div>
-                                    <div className="p-6">
+                                    <div className="p-3">
                                         <h4 className="font-black text-lg mb-2 group-hover:text-faro-primary transition-colors">{v.title}</h4>
-                                        <p className="text-xs opacity-50 font-bold uppercase tracking-widest">{v.speaker || v.author}</p>
+                                        <p className="text-xs opacity-50 font-bold uppercase tracking-wide">{v.speaker || v.author}</p>
                                     </div>
                                 </motion.div>
                             ))}

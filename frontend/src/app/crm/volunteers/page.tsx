@@ -154,7 +154,7 @@ export default function VolunteersPage() {
                 {/* Hero */}
                 <div className="relative bg-gradient-to-br from-blue-600 via-sky-600 to-indigo-700 px-3 py-2 overflow-hidden">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.1)_0%,_transparent_60%)] pointer-events-none" />
-                    <div className="absolute -bottom-12 -right-12 size-64 rounded-full bg-white/5 blur-2xl" />
+                    <div className="absolute -bottom-12 -right-12 size-10 rounded-full bg-white/5 blur-2xl" />
                     <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
                         <div>
                             <p className="text-[10px] font-bold uppercase tracking-wide text-blue-200 mb-2">Ministerio · Voluntariado</p>
@@ -179,7 +179,7 @@ export default function VolunteersPage() {
                         { label: 'Líderes de Equipo', value: stats.leaders, icon: Shield, bg: 'bg-amber-500' },
                     ].map(s => (
                         <div key={s.label} className="bg-white dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg transition-all duration-300">
-                            <div className={`inline-flex size-8 rounded-xl ${s.bg} items-center justify-center text-white mb-3 shadow-md`}>
+                            <div className={`inline-flex size-8 rounded-md ${s.bg} items-center justify-center text-white mb-3 shadow-md`}>
                                 <s.icon size={18} />
                             </div>
                             <div className="text-xl font-bold text-slate-900 dark:text-white">{loading ? '—' : s.value}</div>
@@ -219,7 +219,7 @@ export default function VolunteersPage() {
                                             <button
                                                 key={t}
                                                 onClick={() => setTeamFilter(t)}
-                                                className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wide transition-all ${teamFilter === t ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10'}`}
+                                                className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all ${teamFilter === t ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10'}`}
                                             >
                                                 {t}
                                             </button>
@@ -236,33 +236,33 @@ export default function VolunteersPage() {
                             <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="bg-white dark:bg-[#252528] rounded-lg border border-blue-200 dark:border-blue-700/30 p-4 shadow-xl">
                                 <div className="flex items-center justify-between mb-5">
                                     <h3 className="text-xs font-bold uppercase tracking-wide text-slate-800 dark:text-white">Registrar Servidor</h3>
-                                    <button onClick={() => setShowAddForm(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl text-slate-400 transition-colors"><X size={16} /></button>
+                                    <button onClick={() => setShowAddForm(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400 transition-colors"><X size={16} /></button>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500 block mb-1.5">Nombre Completo *</label>
-                                        <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Nombre del servidor..." className="w-full px-3 py-2.5 text-xs font-medium bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-300" />
+                                        <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Nombre del servidor..." className="w-full px-3 py-2.5 text-xs font-medium bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-300" />
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500 block mb-1.5">Equipo</label>
-                                        <select value={form.team} onChange={e => setForm(p => ({ ...p, team: e.target.value }))} className="w-full px-3 py-2.5 text-xs font-medium bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/30 transition-all">
+                                        <select value={form.team} onChange={e => setForm(p => ({ ...p, team: e.target.value }))} className="w-full px-3 py-2.5 text-xs font-medium bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all">
                                             {TEAMS.map(t => <option key={t}>{t}</option>)}
                                         </select>
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500 block mb-1.5">Rol en el Equipo</label>
-                                        <select value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))} className="w-full px-3 py-2.5 text-xs font-medium bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/30 transition-all">
+                                        <select value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))} className="w-full px-3 py-2.5 text-xs font-medium bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all">
                                             {VOLUNTEER_ROLES.map(r => <option key={r}>{r}</option>)}
                                         </select>
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500 block mb-1.5">Notas (opcional)</label>
-                                        <input value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Habilidades, disponibilidad..." className="w-full px-3 py-2.5 text-xs font-medium bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-300" />
+                                        <input value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Habilidades, disponibilidad..." className="w-full px-3 py-2.5 text-xs font-medium bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-300" />
                                     </div>
                                 </div>
                                 <div className="flex justify-end gap-3 mt-5">
-                                    <button onClick={() => setShowAddForm(false)} className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-slate-500 bg-slate-100 dark:bg-white/5 rounded-xl hover:bg-slate-200 transition-colors">Cancelar</button>
-                                    <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-60">
+                                    <button onClick={() => setShowAddForm(false)} className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-slate-500 bg-slate-100 dark:bg-white/5 rounded-md hover:bg-slate-200 transition-colors">Cancelar</button>
+                                    <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-60">
                                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                                         {saving ? 'Guardando...' : 'Registrar'}
                                     </button>
@@ -280,8 +280,8 @@ export default function VolunteersPage() {
 
                     {/* Empty */}
                     {!loading && filtered.length === 0 && (
-                        <div className="py-4 text-center">
-                            <div className="size-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center mx-auto mb-3">
+                        <div className="py-1.5 text-center">
+                            <div className="size-10 rounded-md bg-slate-100 dark:bg-white/5 flex items-center justify-center mx-auto mb-3">
                                 <Heart size={36} className="text-slate-300 dark:text-slate-600" />
                             </div>
                             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide mb-2">Sin servidores registrados</h3>
@@ -302,7 +302,7 @@ export default function VolunteersPage() {
                             {Object.entries(byTeam).map(([team, members]) => (
                                 <div key={team}>
                                     <div className="flex items-center gap-3 mb-4">
-                                        <div className={`size-8 rounded-xl bg-gradient-to-br ${getTeamColor(team)} flex items-center justify-center text-white`}>
+                                        <div className={`size-8 rounded-md bg-gradient-to-br ${getTeamColor(team)} flex items-center justify-center text-white`}>
                                             <Users size={14} />
                                         </div>
                                         <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300">{team}</h3>
@@ -322,7 +322,7 @@ export default function VolunteersPage() {
                                                 <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r ${getTeamColor(team)} opacity-0 group-hover:opacity-100 transition-opacity`} />
 
                                                 <div className="flex items-start justify-between mb-3">
-                                                    <div className={`size-8 rounded-xl bg-gradient-to-br ${getTeamColor(team)} flex items-center justify-center text-white text-xs font-bold shadow-md`}>
+                                                    <div className={`size-8 rounded-md bg-gradient-to-br ${getTeamColor(team)} flex items-center justify-center text-white text-xs font-bold shadow-md`}>
                                                         {(v.name || '?').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                                     </div>
                                                     <div className="flex items-center gap-1.5">

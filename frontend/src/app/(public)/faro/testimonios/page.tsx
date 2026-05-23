@@ -41,7 +41,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.4 }}
-            className="break-inside-avoid relative rounded-[2rem] p-8 lg:p-10 border transition-shadow duration-500 hover:shadow-2xl overflow-hidden group flex flex-col h-fit"
+            className="break-inside-avoid relative rounded-lg p-4 lg:p-4 border transition-shadow duration-500 hover:shadow-2xl overflow-hidden group flex flex-col h-fit"
             style={{
                 background: isHighlight ? "var(--faro-primary-container)" : "var(--faro-surface-container-low)",
                 borderColor: isHighlight ? "var(--faro-primary)" : "var(--faro-outline-variant)",
@@ -49,15 +49,15 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
             }}
         >
             {isHighlight && (
-                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
                     <Quote size={80} style={{ color: "var(--faro-primary)" }} />
                 </div>
             )}
             
-            <div className="relative z-10 flex flex-col flex-grow justify-between gap-8">
+            <div className="relative z-10 flex flex-col flex-grow justify-between gap-3">
                 <div>
                     {mediaUrl && (
-                        <div className="mb-6 overflow-hidden rounded-3xl border" style={{ borderColor: "var(--faro-outline-variant)", background: "var(--faro-surface-container)" }}>
+                        <div className="mb-3 overflow-hidden rounded-lg border" style={{ borderColor: "var(--faro-outline-variant)", background: "var(--faro-surface-container)" }}>
                             {t.media_type === "image" ? (
                                 <img src={mediaUrl} alt="" className="h-48 w-full object-cover" />
                             ) : t.media_type === "video" ? (
@@ -66,7 +66,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
                                 </video>
                             ) : (
                                 <div className="space-y-3 p-4">
-                                    <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest" style={{ color: "var(--faro-primary)" }}>
+                                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--faro-primary)" }}>
                                         <Headphones size={16} /> Podcast
                                     </div>
                                     <audio controls src={mediaUrl} className="w-full" />
@@ -76,7 +76,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
                     )}
                     <motion.p
                         layout="position"
-                        className={isHighlight ? 'text-2xl lg:text-3xl font-bold leading-snug' : 'text-lg lg:text-xl italic leading-relaxed'}
+                        className={isHighlight ? 'text-lg lg:text-xl font-bold leading-snug' : 'text-lg lg:text-xl italic leading-relaxed'}
                         style={{ color: isHighlight ? "var(--faro-on-secondary-container)" : "var(--faro-on-surface)" }}
                     >
                         &quot;{truncatedText}&quot;
@@ -85,7 +85,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
                     {isLongText && (
                         <Link
                             href={`/faro/testimonios/${t.id}`}
-                            className="mt-4 flex items-center gap-1.5 text-sm font-black uppercase tracking-widest transition-all w-fit hover:opacity-70"
+                            className="mt-4 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide transition-all w-fit hover:opacity-70"
                             style={{ color: "var(--faro-primary)" }}
                         >
                             Leer más <ArrowRight size={16} />
@@ -94,17 +94,17 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
                 </div>
                 
                 <div>
-                    <div className="flex items-center gap-4 pt-6 border-t mb-6" style={{ borderColor: "var(--faro-outline-variant)", borderTopWidth: isHighlight ? '2px' : '1px', opacity: isHighlight ? 0.3 : 0.5 }} />
+                    <div className="flex items-center gap-4 pt-6 border-t mb-3" style={{ borderColor: "var(--faro-outline-variant)", borderTopWidth: isHighlight ? '2px' : '1px', opacity: isHighlight ? 0.3 : 0.5 }} />
                     
                     <motion.div layout="position" className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             {t.author?.avatarUrl ? (
-                                <div className="w-12 h-12 rounded-full overflow-hidden border-2 shrink-0" style={{ borderColor: isHighlight ? "var(--faro-primary)" : "var(--faro-surface-container-highest)" }}>
+                                <div className="w-12 h-8 rounded-full overflow-hidden border-2 shrink-0" style={{ borderColor: isHighlight ? "var(--faro-primary)" : "var(--faro-surface-container-highest)" }}>
                                     <img src={t.author.avatarUrl} alt={t.author?.username || "Autor"} className="w-full h-full object-cover" />
                                 </div>
                             ) : (
                                 <div
-                                    className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-black shrink-0"
+                                    className="w-12 h-8 rounded-full flex items-center justify-center text-lg font-black shrink-0"
                                     style={{
                                         background: isHighlight ? "var(--faro-primary)" : "var(--faro-surface-container-highest)",
                                         color: isHighlight ? "var(--faro-on-primary)" : "var(--faro-primary)",
@@ -118,7 +118,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
                                     {t.author?.username ?? "Anónimo"}
                                 </p>
                                 <p
-                                    className="text-[10px] uppercase tracking-widest font-bold opacity-80 truncate"
+                                    className="text-[10px] uppercase tracking-wide font-bold opacity-80 truncate"
                                     style={{ color: "var(--faro-on-surface-variant)" }}
                                 >
                                     {t.author?.role ?? "Miembro"}
@@ -129,7 +129,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
                         <div className="hidden sm:flex flex-col items-end shrink-0 ml-2">
                             {t.emotion && (
                                 <span 
-                                    className="px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest"
+                                    className="px-3 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-wide"
                                     style={{ 
                                         background: "var(--faro-surface-dim)", 
                                         color: "var(--faro-primary)" 
@@ -140,7 +140,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
                             )}
                             {mediaUrl && (
                                 <span
-                                    className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest"
+                                    className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-wide"
                                     style={{ background: "var(--faro-surface-dim)", color: "var(--faro-on-surface-variant)" }}
                                 >
                                     {t.media_type === "video" ? <PlayCircle size={12} /> : t.media_type === "podcast" ? <Headphones size={12} /> : <ImageIcon size={12} />}
@@ -186,19 +186,19 @@ export default function TestimoniosPage() {
 
     if (loading) {
         return (
-            <main className="pt-[88px] pb-32 min-h-screen flex items-center justify-center">
+            <main className="pt-[88px] pb-4 min-h-screen flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--faro-primary) transparent transparent transparent" }} />
-                    <p className="text-lg font-black tracking-widest uppercase" style={{ color: "var(--faro-primary)" }}>Cargando...</p>
+                    <p className="text-lg font-bold tracking-wide uppercase" style={{ color: "var(--faro-primary)" }}>Cargando...</p>
                 </div>
             </main>
         );
     }
 
     return (
-        <main className="pt-[88px] pb-32 overflow-hidden">
+        <main className="pt-[88px] pb-4 overflow-hidden">
             {/* ── HERO ──────────────────────────────────────────── */}
-            <header className="relative px-6 md:px-16 lg:px-24 py-24 lg:py-32 flex flex-col items-center text-center">
+            <header className="relative px-3 md:px-4 lg:px-24 py-1.5 lg:py-1.5 flex flex-col items-center text-center">
                 <div className="absolute inset-0 bg-beam-gradient pointer-events-none opacity-60" />
                 
                 <motion.div 
@@ -208,13 +208,13 @@ export default function TestimoniosPage() {
                     className="relative z-10 max-w-4xl"
                 >
                     <span
-                        className="text-xs font-black uppercase tracking-[0.4em] block mb-6"
+                        className="text-xs font-semibold uppercase tracking-wide block mb-3"
                         style={{ color: "var(--faro-primary)" }}
                     >
                         {heroEyebrow}
                     </span>
                     <h1
-                        className="font-black tracking-tighter leading-[0.9] mb-8"
+                        className="font-bold tracking-tighter leading-[0.9] mb-3"
                         style={{
                             fontSize: "clamp(3.5rem, 8vw, 6.5rem)",
                             color: "var(--faro-on-background)",
@@ -233,7 +233,7 @@ export default function TestimoniosPage() {
                         </span>
                     </h1>
                     <p
-                        className="text-xl md:text-2xl max-w-2xl mx-auto leading-relaxed"
+                        className="text-xl md:text-lg max-w-2xl mx-auto leading-relaxed"
                         style={{ color: "var(--faro-on-surface-variant)" }}
                     >
                         {heroDescription}
@@ -242,10 +242,10 @@ export default function TestimoniosPage() {
             </header>
 
             {/* ── SEARCH & CALL TO ACTION BANNER ────────────────── */}
-            <section className="px-6 md:px-16 lg:px-24 mb-16">
-                <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
+            <section className="px-3 md:px-4 lg:px-24 mb-16">
+                <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-3">
                     {/* Search Bar */}
-                    <div className="flex-1 rounded-[2rem] p-6 flex items-center gap-4 border transition-all focus-within:shadow-2xl focus-within:-translate-y-1"
+                    <div className="flex-1 rounded-lg p-3 flex items-center gap-4 border transition-all focus-within:shadow-2xl focus-within:-translate-y-1"
                          style={{ 
                              background: "var(--faro-surface-container)", 
                              borderColor: "var(--faro-outline-variant)" 
@@ -262,13 +262,13 @@ export default function TestimoniosPage() {
                     </div>
                     
                     {/* CTA */}
-                    <div className="rounded-[2rem] p-6 flex items-center justify-between gap-6 border"
+                    <div className="rounded-lg p-3 flex items-center justify-between gap-3 border"
                          style={{ 
                              background: "var(--faro-surface-container)", 
                              borderColor: "var(--faro-outline-variant)" 
                          }}>
                         <div className="flex items-center gap-4 hidden md:flex">
-                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 shadow-xl">
+                            <div className="w-12 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 shadow-xl">
                                 <Sparkles size={20} className="text-white" />
                             </div>
                             <div className="mr-4">
@@ -277,7 +277,7 @@ export default function TestimoniosPage() {
                         </div>
                         <Link
                             href="/faro/conocer-a-jesus"
-                            className="flex items-center gap-3 px-6 py-3 rounded-full text-xs font-black uppercase tracking-[0.2em] transition-all hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20 w-full justify-center md:w-auto"
+                            className="flex items-center gap-3 px-3 py-3 rounded-full text-xs font-semibold uppercase tracking-wide transition-all hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20 w-full justify-center md:w-auto"
                             style={{
                                 background: "var(--faro-primary)",
                                 color: "var(--faro-on-primary)",
@@ -290,17 +290,17 @@ export default function TestimoniosPage() {
             </section>
 
             {/* ── MASONRY GRID ───────────────────────────────────── */}
-            <section className="px-6 md:px-16 lg:px-24 max-w-[1400px] mx-auto min-h-[50vh]">
+            <section className="px-3 md:px-4 lg:px-24 max-w-[1400px] mx-auto min-h-[50vh]">
                 <AnimatePresence mode="popLayout">
                     {filteredTestimonials.length === 0 ? (
                         <motion.div 
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.9 }}
-                            className="flex flex-col items-center justify-center text-center py-20"
+                            className="flex flex-col items-center justify-center text-center py-1.5"
                         >
-                            <Users size={64} className="mb-6 opacity-20" style={{ color: "var(--faro-primary)" }} />
-                            <h3 className="text-3xl font-black mb-4" style={{ color: "var(--faro-on-surface)" }}>No encontramos resultados</h3>
+                            <Users size={64} className="mb-3 opacity-20" style={{ color: "var(--faro-primary)" }} />
+                            <h3 className="text-xl font-black mb-4" style={{ color: "var(--faro-on-surface)" }}>No encontramos resultados</h3>
                             <p className="text-lg opacity-80 max-w-md" style={{ color: "var(--faro-on-surface-variant)" }}>
                                 Intenta buscar con otras palabras clave o categorías.
                             </p>
@@ -308,7 +308,7 @@ export default function TestimoniosPage() {
                     ) : (
                         <motion.div 
                             layout
-                            className="columns-1 md:columns-2 xl:columns-3 gap-6 space-y-6"
+                            className="columns-1 md:columns-2 xl:columns-3 gap-3 space-y-6"
                         >
                             {filteredTestimonials.map((t, index) => (
                                 <TestimonialCard 

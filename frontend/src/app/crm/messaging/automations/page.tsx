@@ -164,7 +164,7 @@ export default function AutomationsPage() {
             rightActions={
                 <button
                     onClick={openCreate}
-                    className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+                    className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
                 >
                     <Plus size={14} /> Nueva Regla
                 </button>
@@ -188,9 +188,9 @@ export default function AutomationsPage() {
 
                 {/* Rules list */}
                 {loading ? (
-                    [...Array(3)].map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)
+                    [...Array(3)].map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-md" />)
                 ) : rules.length === 0 ? (
-                    <div className="py-4 flex flex-col items-center justify-center gap-4 text-center">
+                    <div className="py-1.5 flex flex-col items-center justify-center gap-4 text-center">
                         <div className="size-10 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-300">
                             <Zap size={48} strokeWidth={1} />
                         </div>
@@ -200,7 +200,7 @@ export default function AutomationsPage() {
                         </div>
                         <button
                             onClick={openCreate}
-                            className="px-3 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20"
+                            className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20"
                         >
                             Crear primera regla
                         </button>
@@ -220,7 +220,7 @@ export default function AutomationsPage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.97 }}
                                     className={clsx(
-                                        "bg-white dark:bg-white/5 border rounded-xl p-3 transition-all",
+                                        "bg-white dark:bg-white/5 border rounded-md p-3 transition-all",
                                         rule.active
                                             ? "border-slate-200 dark:border-white/10 shadow-sm"
                                             : "border-dashed border-slate-200 dark:border-white/5 opacity-60"
@@ -258,14 +258,14 @@ export default function AutomationsPage() {
                                             </button>
                                             <button
                                                 onClick={() => openEdit(rule)}
-                                                className="p-2 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+                                                className="p-2 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
                                             >
                                                 <Settings2 size={16} />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(rule.id)}
                                                 disabled={deletingId === rule.id}
-                                                className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all disabled:opacity-50"
+                                                className="p-2 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all disabled:opacity-50"
                                             >
                                                 {deletingId === rule.id
                                                     ? <Loader2 size={16} className="animate-spin" />
@@ -275,7 +275,7 @@ export default function AutomationsPage() {
                                         </div>
                                     </div>
                                     {rule.payload?.message && (
-                                        <div className="mt-3 ml-16 p-3 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-100 dark:border-white/5">
+                                        <div className="mt-3 ml-16 p-3 bg-slate-50 dark:bg-black/20 rounded-md border border-slate-100 dark:border-white/5">
                                             <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">&quot;{rule.payload.message}&quot;</p>
                                         </div>
                                     )}
@@ -339,7 +339,7 @@ export default function AutomationsPage() {
                                                 : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:border-blue-300"
                                         )}
                                     >
-                                        <div className={clsx("size-8 rounded-xl flex items-center justify-center", selected ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-400')}>
+                                        <div className={clsx("size-8 rounded-md flex items-center justify-center", selected ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-400')}>
                                             <Icon size={16} />
                                         </div>
                                         <span className={clsx("text-[11px] font-bold uppercase tracking-wide", selected ? 'text-blue-700 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300')}>

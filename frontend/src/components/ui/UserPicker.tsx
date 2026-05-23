@@ -68,7 +68,7 @@ export default function UserPicker({
                 >
                     {currentUserId ? (
                         <div className="flex items-center gap-2 truncate">
-                            <div className="size-5 rounded-full bg-slate-900 dark:bg-blue-600 flex items-center justify-center text-[8px] font-black text-white shrink-0">
+                            <div className="size-5 rounded-full bg-slate-900 dark:bg-blue-600 flex items-center justify-center font-semibold text-white shrink-0">
                                 {currentUser?.username?.substring(0, 2).toUpperCase() || 'U'}
                             </div>
                             <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate">
@@ -86,7 +86,7 @@ export default function UserPicker({
 
             <Popover.Portal>
                 <Popover.Content 
-                    className="z-[1000] w-64 bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+                    className="z-[1000] w-64 bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden animate-in fade-in zoom-in-95 duration-100"
                     sideOffset={5}
                     align="start"
                 >
@@ -105,7 +105,7 @@ export default function UserPicker({
                                 </div>
                             ) : (
                                 <>
-                                    <Command.Empty className="py-4 text-center text-[11px] text-slate-500">No se encontraron usuarios.</Command.Empty>
+                                    <Command.Empty className="py-1.5 text-center text-[11px] text-slate-500">No se encontraron usuarios.</Command.Empty>
                                     <Command.Group>
                                         {users.map((user) => (
                                             <Command.Item
@@ -116,7 +116,7 @@ export default function UserPicker({
                                                 }}
                                                 className="flex items-center gap-3 px-3 py-2 rounded-lg text-[12px] font-bold text-slate-700 dark:text-slate-200 cursor-pointer data-[selected='true']:bg-blue-500 data-[selected='true']:text-white transition-colors"
                                             >
-                                                <div className="size-6 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-[9px] font-black group-data-[selected='true']:bg-white/20">
+                                                <div className="size-6 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center font-semibold group-data-[selected='true']:bg-white/20">
                                                     {user.username.substring(0, 2).toUpperCase()}
                                                 </div>
                                                 <div className="flex-1 truncate">

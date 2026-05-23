@@ -173,7 +173,7 @@ export default function UserTasksPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: Math.min(index * 0.025, 0.2) }}
         onClick={() => setSelectedTask(task as TaskDetail)}
-        className="group w-full text-left rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-lg dark:border-white/10 dark:bg-[#252528]"
+        className="group w-full text-left rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-lg dark:border-white/10 dark:bg-[#252528]"
       >
         <div className="flex items-start gap-3">
           <button
@@ -191,18 +191,18 @@ export default function UserTasksPage() {
               {task.title}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className={clsx("rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest", config.color)}>{config.label}</span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-slate-500 dark:bg-white/5">
+              <span className={clsx("rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide", config.color)}>{config.label}</span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-white/5">
                 <FolderOpen size={10} /> {task.project_title || "Sin proyecto"}
               </span>
               {task.due_date && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-blue-600 dark:bg-blue-900/20">
+                <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-blue-600 dark:bg-blue-900/20">
                   <CalendarDays size={10} /> {new Date(task.due_date).toLocaleDateString("es-CO")}
                 </span>
               )}
             </div>
           </div>
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-amber-50 px-2 py-1 text-[9px] font-black text-amber-600 dark:bg-amber-900/20">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-amber-50 px-2 py-1 font-semibold text-amber-600 dark:bg-amber-900/20">
             <Zap size={10} fill="currentColor" /> {xp}
           </span>
         </div>
@@ -217,7 +217,7 @@ export default function UserTasksPage() {
       setViewType={setViewType}
       availableViews={TASK_VIEWS}
     >
-      <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-slate-50 dark:bg-[#1E1F21]">
+      <div className="flex h-full flex-col overflow-hidden rounded-lg bg-slate-50 dark:bg-[#1E1F21]">
         <TaskEditDrawer
           task={selectedTask}
           onClose={() => setSelectedTask(null)}
@@ -225,7 +225,7 @@ export default function UserTasksPage() {
           onTaskDeleted={handleTaskDeleted}
         />
 
-        <header className="shrink-0 border-b border-slate-200 bg-white px-5 py-3 dark:border-white/10 dark:bg-[#18191c]">
+        <header className="shrink-0 border-b border-slate-200 bg-white px-3 py-3 dark:border-white/10 dark:bg-[#18191c]">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-3">
               {[
@@ -233,8 +233,8 @@ export default function UserTasksPage() {
                 { label: "Urgentes", value: metrics.urgent },
                 { label: "Hoy", value: metrics.dueToday },
               ].map(metric => (
-                <div key={metric.label} className="rounded-xl border border-slate-200 px-3 py-2 dark:border-white/10">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">{metric.label}</p>
+                <div key={metric.label} className="rounded-md border border-slate-200 px-3 py-2 dark:border-white/10">
+                  <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">{metric.label}</p>
                   <p className="text-lg font-black text-slate-900 dark:text-white">{metric.value}</p>
                 </div>
               ))}
@@ -246,7 +246,7 @@ export default function UserTasksPage() {
                   value={query}
                   onChange={event => setQuery(event.target.value)}
                   placeholder="Buscar tareas..."
-                  className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-white/5"
+                  className="w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-white/5"
                 />
               </div>
               <div className="flex flex-wrap gap-2">
@@ -255,7 +255,7 @@ export default function UserTasksPage() {
                     key={priority}
                     onClick={() => setFilterPriority(priority)}
                     className={clsx(
-                      "rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all",
+                      "rounded-md px-3 py-2 text-[10px] font-semibold uppercase tracking-wide transition-all",
                       filterPriority === priority
                         ? "bg-blue-600 text-white"
                         : "border border-slate-200 bg-white text-slate-500 hover:border-blue-300 dark:border-white/10 dark:bg-white/5"
@@ -269,16 +269,16 @@ export default function UserTasksPage() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-5">
+        <main className="flex-1 overflow-y-auto p-3">
           {loading ? (
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="h-20 animate-pulse rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5" />
+                <div key={index} className="h-20 animate-pulse rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5" />
               ))}
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex min-h-[55vh] flex-col items-center justify-center gap-4 text-center">
-              <div className="flex size-16 items-center justify-center rounded-3xl bg-emerald-50 text-emerald-500 dark:bg-emerald-900/20">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-500 dark:bg-emerald-900/20">
                 <CheckCircle2 size={28} />
               </div>
               <div>
@@ -287,7 +287,7 @@ export default function UserTasksPage() {
                   {query || filterPriority !== "all" ? "Ajusta los filtros para ver otras tareas." : "No tienes tareas activas asignadas en este momento."}
                 </p>
               </div>
-              <Link href="/projects" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-[11px] font-black uppercase tracking-widest text-white">
+              <Link href="/projects" className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-white">
                 <FolderOpen size={13} /> Ver proyectos
               </Link>
             </div>
@@ -321,14 +321,14 @@ export default function UserTasksPage() {
           ) : viewType === "kanban" ? (
             <div className="flex h-full min-h-[620px] gap-4 overflow-x-auto pb-2">
               {grouped.map(group => (
-                <section key={group.status} className="flex w-72 shrink-0 flex-col rounded-2xl border border-slate-200 bg-slate-100/60 dark:border-white/10 dark:bg-white/[0.03]">
+                <section key={group.status} className="flex w-72 shrink-0 flex-col rounded-lg border border-slate-200 bg-slate-100/60 dark:border-white/10 dark:bg-white/[0.03]">
                   <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-white/10">
-                    <span className="text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">{group.label}</span>
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">{group.label}</span>
                     <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-400 dark:bg-white/5">{group.items.length}</span>
                   </div>
                   <div className="flex-1 space-y-3 overflow-y-auto p-3">
                     {group.items.length === 0 ? (
-                      <div className="flex h-20 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:border-white/10">
+                      <div className="flex h-20 items-center justify-center rounded-md border-2 border-dashed border-slate-200 text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:border-white/10">
                         Vacio
                       </div>
                     ) : (

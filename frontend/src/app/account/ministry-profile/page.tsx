@@ -14,13 +14,13 @@ import {
 
 export default function MinistryProfilePage() {
     return (
-        <div className="p-8 space-y-12 animate-in fade-in duration-1000">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="p-4 space-y-3 animate-in fade-in duration-1000">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
                 <div className="space-y-2">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/10 text-amber-500 rounded-full text-[10px] font-black uppercase tracking-[0.2em] w-fit">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/10 text-amber-500 rounded-full text-[10px] font-semibold uppercase tracking-wide w-fit">
                         <Crown size={12} /> Mi Identidad en el Reino
                     </div>
-                    <h1 className="text-4xl font-black tracking-tighter text-white uppercase italic">
+                    <h1 className="text-lg font-bold tracking-tighter text-white uppercase italic">
                         Perfil <span className="text-amber-500">Ministerial</span>
                     </h1>
                     <p className="text-muted-foreground text-sm max-w-xl">
@@ -28,34 +28,34 @@ export default function MinistryProfilePage() {
                     </p>
                 </div>
 
-                <button className="px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all flex items-center gap-2">
+                <button className="px-3 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all flex items-center gap-2">
                     <Edit3 size={16} /> Editar Perfil
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-8">
-                    <div className="bg-[#1e1f21] border border-white/5 p-8 rounded-[2.5rem] space-y-8">
-                        <div className="flex items-center gap-6">
-                            <div className="w-24 h-24 bg-gradient-to-br from-amber-500 to-primary rounded-3xl flex items-center justify-center text-white text-4xl font-black shadow-2xl">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                <div className="lg:col-span-2 space-y-3">
+                    <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-lg space-y-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-24 h-24 bg-gradient-to-br from-amber-500 to-primary rounded-lg flex items-center justify-center text-white text-lg font-black shadow-2xl">
                                 R
                             </div>
                             <div className="space-y-1">
-                                <h2 className="text-3xl font-black text-white tracking-tight uppercase italic">Ricardo <span className="text-amber-500">Gomez</span></h2>
-                                <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em]">
+                                <h2 className="text-xl font-black text-white tracking-tight uppercase italic">Ricardo <span className="text-amber-500">Gomez</span></h2>
+                                <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">
                                     <Shield size={12} className="text-amber-500" /> Miembro Activo <span className="opacity-20">•</span> Desde 2022
                                 </div>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-8 border-t border-white/5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-8 border-t border-white/5">
                             <div className="space-y-4">
-                                <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                                <h3 className="text-xs font-semibold text-white uppercase tracking-wide flex items-center gap-2">
                                     <Crown size={14} className="text-amber-500" /> Oficios Eclesiásticos
                                 </h3>
                                 <div className="space-y-2">
                                     {['Evangelista', 'Líder de Faro en Casa'].map((office, i) => (
-                                        <div key={i} className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                                        <div key={i} className="flex items-center gap-3 bg-white/5 p-3 rounded-md border border-white/5">
                                             <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_10px_#f59e0b]" />
                                             <span className="text-sm font-bold text-white uppercase tracking-tight">{office}</span>
                                         </div>
@@ -63,7 +63,7 @@ export default function MinistryProfilePage() {
                                 </div>
                             </div>
                             <div className="space-y-4">
-                                <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                                <h3 className="text-xs font-semibold text-white uppercase tracking-wide flex items-center gap-2">
                                     <Zap size={14} className="text-amber-500" /> Mis Dones y Habilidades
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
@@ -77,7 +77,7 @@ export default function MinistryProfilePage() {
                         </div>
                     </div>
 
-                    <div className="bg-[#1e1f21] border border-white/5 p-8 rounded-[2.5rem] space-y-6">
+                    <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-lg space-y-6">
                         <h3 className="text-xl font-black text-white tracking-tight uppercase italic">Mis <span className="text-amber-500">Logros</span></h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {[
@@ -86,11 +86,11 @@ export default function MinistryProfilePage() {
                                 { label: 'Líder 1', icon: Shield, color: 'text-emerald-400' },
                                 { label: 'Maestro', icon: Award, color: 'text-sky-400' },
                             ].map((badge, i) => (
-                                <div key={i} className="bg-white/5 p-6 rounded-3xl flex flex-col items-center gap-3 text-center group hover:bg-white/10 transition-all border border-white/5">
-                                    <div className={`w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center ${badge.color} group-hover:scale-110 transition-transform`}>
+                                <div key={i} className="bg-white/5 p-3 rounded-lg flex flex-col items-center gap-3 text-center group hover:bg-white/10 transition-all border border-white/5">
+                                    <div className={`w-12 h-8 bg-white/5 rounded-lg flex items-center justify-center ${badge.color} group-hover:scale-110 transition-transform`}>
                                         <badge.icon size={24} />
                                     </div>
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{badge.label}</span>
+                                    <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">{badge.label}</span>
                                 </div>
                             ))}
                         </div>
@@ -98,13 +98,13 @@ export default function MinistryProfilePage() {
                 </div>
 
                 <div className="space-y-6">
-                    <div className="bg-gradient-to-br from-amber-500/20 to-primary/20 border border-amber-500/20 p-8 rounded-[2.5rem] space-y-6">
+                    <div className="bg-gradient-to-br from-amber-500/20 to-primary/20 border border-amber-500/20 p-4 rounded-lg space-y-6">
                         <div className="flex items-center justify-between">
                             <h3 className="text-xl font-black text-white tracking-tighter uppercase italic">Nivel <span className="text-amber-500">12</span></h3>
                             <Zap size={24} className="text-amber-500 animate-pulse" />
                         </div>
                         <div className="space-y-2">
-                            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                            <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide">
                                 <span className="text-white/60">Experiencia Ministerial</span>
                                 <span className="text-white">850 / 1000 XP</span>
                             </div>
@@ -117,14 +117,14 @@ export default function MinistryProfilePage() {
                         </p>
                     </div>
 
-                    <div className="bg-[#1e1f21] border border-white/5 p-8 rounded-[2.5rem] space-y-6">
-                        <h3 className="text-xs font-black text-white uppercase tracking-widest">Llamados de Servicio</h3>
+                    <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-lg space-y-6">
+                        <h3 className="text-xs font-semibold text-white uppercase tracking-wide">Llamados de Servicio</h3>
                         <div className="space-y-4">
                             {[
                                 { title: 'Equipo de Media', desc: 'Necesitamos editores de video para el domingo.' },
                                 { title: 'Alabanza', desc: 'Audiciones para coros el proximo martes.' },
                             ].map((call, i) => (
-                                <div key={i} className="group p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-amber-500/30 transition-all cursor-pointer">
+                                <div key={i} className="group p-4 bg-white/5 rounded-lg border border-white/5 hover:border-amber-500/30 transition-all cursor-pointer">
                                     <div className="flex items-center justify-between mb-1">
                                         <span className="text-xs font-bold text-white uppercase">{call.title}</span>
                                         <ChevronRight size={14} className="text-muted-foreground group-hover:text-amber-500 transition-all" />

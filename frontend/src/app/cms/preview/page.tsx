@@ -66,7 +66,7 @@ export default function CmsPreviewPage() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-slate-100 dark:bg-[#0b0d11]">
-      <header className="shrink-0 border-b border-slate-200 bg-white px-5 py-3 dark:border-white/10 dark:bg-[#111418]">
+      <header className="shrink-0 border-b border-slate-200 bg-white px-3 py-3 dark:border-white/10 dark:bg-[#111418]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-600">Vista previa CMS</p>
@@ -74,28 +74,28 @@ export default function CmsPreviewPage() {
             <p className="text-xs text-slate-500">/{siteKey}/{slug}</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={loadPreview} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:border-white/10 dark:text-slate-300">
+            <button onClick={loadPreview} className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:border-white/10 dark:text-slate-300">
               <RefreshCw size={13} /> Recargar
             </button>
-            <Link href={publicHref} target="_blank" className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white dark:bg-white dark:text-slate-900">
+            <Link href={publicHref} target="_blank" className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white dark:bg-white dark:text-slate-900">
               <ExternalLink size={13} /> Publicado
             </Link>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-4 md:p-8">
+      <main className="flex-1 overflow-y-auto p-4 md:p-4">
         <div className="mx-auto max-w-6xl overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl dark:border-white/10 dark:bg-[#0f1115]">
           <div className="flex items-center gap-2 border-b border-slate-200 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:border-white/10">
             <Monitor size={13} /> Draft actual
           </div>
-          <div style={PREVIEW_TOKENS} className="min-h-[70vh] px-6 py-10 md:px-12 lg:px-16 space-y-8">
+          <div style={PREVIEW_TOKENS} className="min-h-[70vh] px-3 py-1.5 md:px-4 lg:px-4 space-y-3">
             {loading ? (
               <div className="flex min-h-[320px] items-center justify-center gap-3 text-sm font-bold text-slate-400">
                 <Loader2 className="animate-spin" size={18} /> Cargando preview...
               </div>
             ) : error ? (
-              <div className="min-h-[320px] rounded-lg border border-dashed border-slate-300 p-10 text-center text-sm font-bold text-slate-500">
+              <div className="min-h-[320px] rounded-lg border border-dashed border-slate-300 p-4 text-center text-sm font-bold text-slate-500">
                 {error}
               </div>
             ) : page ? (

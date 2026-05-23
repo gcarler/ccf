@@ -50,7 +50,7 @@ function RegisterForm() {
                     <Check size={48} strokeWidth={3} />
                 </div>
                 <div>
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-2">¡Registro Exitoso!</h2>
+                    <h2 className="text-xl font-black text-slate-900 tracking-tight mb-2">¡Registro Exitoso!</h2>
                     <p className="text-slate-500 font-medium">
                         Te hemos registrado correctamente para este evento. ¡Bienvenido a casa!
                     </p>
@@ -62,55 +62,55 @@ function RegisterForm() {
     return (
         <form onSubmit={handleSubmit} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {!eventId && (
-                <div className="p-4 bg-rose-50 text-rose-600 rounded-2xl text-sm font-bold flex items-center gap-3">
+                <div className="p-4 bg-rose-50 text-rose-600 rounded-lg text-sm font-bold flex items-center gap-3">
                     <ShieldCheck size={20} />
                     Falta el código del evento (event_id)
                 </div>
             )}
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Nombres *</label>
+                    <label className="font-semibold text-slate-400 uppercase tracking-wide pl-2">Nombres *</label>
                     <input
                         required
                         type="text"
                         value={form.first_name}
                         onChange={e => setForm({ ...form, first_name: e.target.value })}
-                        className="w-full px-5 py-4 rounded-3xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-800 transition-all placeholder:text-slate-300 placeholder:font-medium"
+                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-800 transition-all placeholder:text-slate-300 placeholder:font-medium"
                         placeholder="Tus nombres"
                     />
                 </div>
                 <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Apellidos *</label>
+                    <label className="font-semibold text-slate-400 uppercase tracking-wide pl-2">Apellidos *</label>
                     <input
                         required
                         type="text"
                         value={form.last_name}
                         onChange={e => setForm({ ...form, last_name: e.target.value })}
-                        className="w-full px-5 py-4 rounded-3xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-800 transition-all placeholder:text-slate-300 placeholder:font-medium"
+                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-800 transition-all placeholder:text-slate-300 placeholder:font-medium"
                         placeholder="Tus apellidos"
                     />
                 </div>
             </div>
 
             <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Correo Electrónico</label>
+                <label className="font-semibold text-slate-400 uppercase tracking-wide pl-2">Correo Electrónico</label>
                 <input
                     type="email"
                     value={form.email}
                     onChange={e => setForm({ ...form, email: e.target.value })}
-                    className="w-full px-5 py-4 rounded-3xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-800 transition-all placeholder:text-slate-300 placeholder:font-medium"
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-800 transition-all placeholder:text-slate-300 placeholder:font-medium"
                     placeholder="ejemplo@correo.com"
                 />
             </div>
 
             <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Teléfono móvil</label>
+                <label className="font-semibold text-slate-400 uppercase tracking-wide pl-2">Teléfono móvil</label>
                 <input
                     type="tel"
                     value={form.phone}
                     onChange={e => setForm({ ...form, phone: e.target.value })}
-                    className="w-full px-5 py-4 rounded-3xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-800 transition-all placeholder:text-slate-300 placeholder:font-medium"
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-800 transition-all placeholder:text-slate-300 placeholder:font-medium"
                     placeholder="+57 300 000 0000"
                 />
             </div>
@@ -133,7 +133,7 @@ function RegisterForm() {
             </div>
 
             {status === 'error' && (
-                <div className="p-4 bg-rose-50 text-rose-600 rounded-2xl text-sm font-bold">
+                <div className="p-4 bg-rose-50 text-rose-600 rounded-lg text-sm font-bold">
                     Ocurrió un error al registrar. Inténtalo de nuevo.
                 </div>
             )}
@@ -141,7 +141,7 @@ function RegisterForm() {
             <button
                 type="submit"
                 disabled={status === 'loading' || !eventId}
-                className="w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-3xl text-sm font-black uppercase tracking-widest shadow-xl shadow-slate-900/20 hover:shadow-blue-600/30 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:bg-slate-900"
+                className="w-full py-2 bg-slate-900 hover:bg-blue-600 text-white rounded-lg text-sm font-semibold uppercase tracking-wide shadow-xl shadow-slate-900/20 hover:shadow-blue-600/30 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:bg-slate-900"
             >
                 {status === 'loading' ? 'Registrando...' : 'Confirmar Registro'}
                 {status !== 'loading' && <ArrowRight size={18} />}
@@ -152,25 +152,25 @@ function RegisterForm() {
 
 export default function PublicRegistrationPage() {
     return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 sm:p-12 relative overflow-hidden">
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-3 sm:p-4 relative overflow-hidden">
             {/* Background Decorations */}
             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-200/50 blur-[120px] rounded-full mix-blend-multiply pointer-events-none" />
             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-200/50 blur-[120px] rounded-full mix-blend-multiply pointer-events-none" />
 
-            <div className="w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 p-8 sm:p-12 relative z-10">
-                <div className="flex flex-col items-center justify-center text-center space-y-4 mb-10">
-                    <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-blue-600 text-white rounded-3xl flex items-center justify-center shadow-lg shadow-blue-500/30 rotate-3">
+            <div className="w-full max-w-xl bg-white rounded-lg shadow-2xl border border-slate-100 p-4 sm:p-4 relative z-10">
+                <div className="flex flex-col items-center justify-center text-center space-y-4 mb-3">
+                    <div className="w-16 h-8 bg-gradient-to-tr from-blue-600 to-blue-600 text-white rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30 rotate-3">
                         <Heart size={28} className="drop-shadow-md" />
                     </div>
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Registro de Asistencia</h1>
+                        <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Registro de Asistencia</h1>
                         <p className="text-sm font-medium text-slate-500 mt-2 flex items-center justify-center gap-2">
                             <Calendar size={14} /> CCF Eventos
                         </p>
                     </div>
                 </div>
 
-                <Suspense fallback={<div className="h-64 flex items-center justify-center animate-pulse text-slate-300 font-bold">Cargando...</div>}>
+                <Suspense fallback={<div className="h-48 flex items-center justify-center animate-pulse text-slate-300 font-bold">Cargando...</div>}>
                     <RegisterForm />
                 </Suspense>
             </div>

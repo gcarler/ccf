@@ -129,10 +129,10 @@ export default function ConocerAJesusPage() {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="relative z-10 max-w-4xl mx-auto px-6 md:px-16 pb-20"
+                    className="relative z-10 max-w-4xl mx-auto px-3 md:px-4 pb-4"
                 >
                     <span
-                        className="inline-block px-4 py-1.5 rounded-full border text-xs font-black uppercase tracking-[0.25em] mb-8"
+                        className="inline-block px-4 py-1.5 rounded-full border text-xs font-semibold uppercase tracking-wide mb-3"
                         style={{
                             borderColor: "rgba(165,200,255,0.3)",
                             color: "rgba(165,200,255,0.9)",
@@ -142,7 +142,7 @@ export default function ConocerAJesusPage() {
                         {heroEyebrow}
                     </span>
                     <h1
-                        className="font-black tracking-tight mb-8"
+                        className="font-bold tracking-tight mb-3"
                         style={{
                             fontSize: "clamp(3.5rem, 8vw, 7rem)",
                             color: "white",
@@ -164,14 +164,14 @@ export default function ConocerAJesusPage() {
                         {heroTitleTail}
                     </h1>
                     <p
-                        className="text-xl md:text-2xl max-w-2xl leading-relaxed mb-12"
+                        className="text-xl md:text-lg max-w-2xl leading-relaxed mb-3"
                         style={{ color: "rgba(217,226,255,0.7)" }}
                     >
                         {heroDescription}
                     </p>
                     <a
                         href="#contacto"
-                        className="inline-flex items-center gap-3 px-10 py-5 rounded-full font-black text-sm uppercase tracking-[0.2em] text-white transition-all hover:scale-105"
+                        className="inline-flex items-center gap-3 px-4 py-2 rounded-full font-black text-sm uppercase tracking-wide text-white transition-all hover:scale-105"
                         style={{
                             background:
                                 "linear-gradient(135deg, #018abd 0%, #2c609d 100%)",
@@ -186,17 +186,17 @@ export default function ConocerAJesusPage() {
 
             {/* ── INTRO EDITORIAL ─────────────────────────── */}
             <section
-                className="py-24 px-6 md:px-16 lg:px-24"
+                className="py-1.5 px-3 md:px-4 lg:px-24"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
-                <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+                <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-3 items-center">
                     <motion.div
                         initial={{ opacity: 0, x: -30 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
                     >
                         <h2
-                            className="text-4xl font-black mb-6"
+                            className="text-lg font-black mb-3"
                             style={{ color: "var(--faro-primary)" }}
                         >
                             Un Encuentro Personal
@@ -234,11 +234,11 @@ export default function ConocerAJesusPage() {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.1 * (idx + 1) }}
-                                className="rounded-2xl p-6 transition-transform hover:-translate-y-1 hover:shadow-lg"
+                                className="rounded-lg p-3 transition-transform hover:-translate-y-1 hover:shadow-lg"
                                 style={{ background: "var(--faro-surface-container)" }}
                             >
                                 <div
-                                    className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
+                                    className="w-10 h-10 rounded-md flex items-center justify-center mb-4"
                                     style={{
                                         background: "var(--faro-primary-container)",
                                         color: "var(--faro-primary)",
@@ -266,12 +266,12 @@ export default function ConocerAJesusPage() {
 
             {/* ── TESTIMONIOS RÁPIDOS ──────────────────────── */}
             <section
-                className="py-20 px-6 md:px-16 lg:px-24"
+                className="py-1.5 px-3 md:px-4 lg:px-24"
                 style={{ background: "var(--faro-surface)" }}
             >
                 <div className="max-w-6xl mx-auto">
                     <h2
-                        className="text-3xl font-black mb-12 text-center"
+                        className="text-xl font-black mb-3 text-center"
                         style={{ color: "var(--faro-on-background)" }}
                     >
                         Historias que{" "}
@@ -282,7 +282,7 @@ export default function ConocerAJesusPage() {
                             Próximamente compartiremos historias de transformación.
                         </p>
                     ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         {testimonials.map((t, idx) => (
                             <motion.div
                                 key={t.id}
@@ -290,20 +290,20 @@ export default function ConocerAJesusPage() {
                                 whileInView={{ opacity: 1, scale: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.1 * idx }}
-                                className="rounded-2xl p-8 border-b-4 hover:shadow-md transition-shadow"
+                                className="rounded-lg p-4 border-b-4 hover:shadow-md transition-shadow"
                                 style={{
                                     background: "var(--faro-surface-container)",
                                     borderColor: "var(--faro-primary)",
                                 }}
                             >
                                 <p
-                                    className="text-lg italic leading-relaxed mb-6"
+                                    className="text-lg italic leading-relaxed mb-3"
                                     style={{ color: "var(--faro-on-surface)" }}
                                 >
                                     &quot;{t.content}&quot;
                                 </p>
                                 <p
-                                    className="text-xs font-black uppercase tracking-widest"
+                                    className="text-xs font-semibold uppercase tracking-wide"
                                     style={{ color: "var(--faro-primary)" }}
                                 >
                                     — {(t.author?.username) || "Anónimo"}
@@ -318,20 +318,20 @@ export default function ConocerAJesusPage() {
             {/* ── FORMULARIO DE CONTACTO ───────────────────── */}
             <section
                 id="contacto"
-                className="py-24 px-6 md:px-16 lg:px-24"
+                className="py-1.5 px-3 md:px-4 lg:px-24"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
-                <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-start">
+                <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-3 items-start">
                     {/* Info lado izq */}
                     <div>
                         <h2
-                            className="text-4xl font-black mb-6"
+                            className="text-lg font-black mb-3"
                             style={{ color: "var(--faro-on-background)" }}
                         >
                             Hablemos de Tu Caminar
                         </h2>
                         <p
-                            className="text-lg leading-relaxed mb-10"
+                            className="text-lg leading-relaxed mb-3"
                             style={{ color: "var(--faro-on-surface-variant)" }}
                         >
                             ¿Tienes dudas? ¿Quieres orar por algo específico? Nuestro equipo
@@ -345,7 +345,7 @@ export default function ConocerAJesusPage() {
                                     style={{ color: "var(--faro-on-surface-variant)" }}
                                 >
                                     <div
-                                        className="w-10 h-10 rounded-xl flex items-center justify-center"
+                                        className="w-10 h-10 rounded-md flex items-center justify-center"
                                         style={{
                                             background: "var(--faro-primary-container)",
                                             color: "var(--faro-primary)",
@@ -364,22 +364,22 @@ export default function ConocerAJesusPage() {
                         initial={{ opacity: 0, x: 30 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
-                        className="rounded-3xl p-8 md:p-12 shadow-xl backdrop-blur-xl"
+                        className="rounded-lg p-4 md:p-4 shadow-xl backdrop-blur-xl"
                         style={{ 
                             background: "var(--faro-surface-container)",
                             border: "1px solid rgba(255,255,255,0.05)"
                         }}
                     >
                         {status === "sent" ? (
-                            <div className="text-center py-16">
+                            <div className="text-center py-1.5">
                                 <div
-                                    className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
+                                    className="w-16 h-8 rounded-full flex items-center justify-center mx-auto mb-3"
                                     style={{ background: "var(--faro-primary-container)" }}
                                 >
                                     <Heart size={28} style={{ color: "var(--faro-primary)" }} />
                                 </div>
                                 <h3
-                                    className="text-2xl font-black mb-3"
+                                    className="text-lg font-black mb-3"
                                     style={{ color: "var(--faro-on-surface)" }}
                                 >
                                     ¡Gracias!
@@ -390,14 +390,14 @@ export default function ConocerAJesusPage() {
                             </div>
                         ) : (
                             <form onSubmit={handleSubmit} className="space-y-6">
-                                <div className="grid md:grid-cols-2 gap-6">
+                                <div className="grid md:grid-cols-2 gap-3">
                                     {[
                                         { key: "name", label: "Nombre completo", placeholder: "Tu nombre", type: "text" },
                                         { key: "phone", label: "WhatsApp", placeholder: "+57 300...", type: "tel" },
                                     ].map(({ key, label, placeholder, type }) => (
                                         <div key={key}>
                                             <label
-                                                className="text-[10px] font-black uppercase tracking-[0.2em] block mb-3"
+                                                className="text-[10px] font-semibold uppercase tracking-wide block mb-3"
                                                 style={{ color: "var(--faro-on-surface-variant)" }}
                                             >
                                                 {label}
@@ -410,7 +410,7 @@ export default function ConocerAJesusPage() {
                                                 }
                                                 placeholder={placeholder}
                                                 required
-                                                className="w-full rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 transition-all"
+                                                className="w-full rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all"
                                                 style={{
                                                     background: "var(--faro-surface)",
                                                     border: "2px solid var(--faro-outline-variant)",
@@ -424,7 +424,7 @@ export default function ConocerAJesusPage() {
                                 </div>
                                 <div>
                                     <label
-                                        className="text-[10px] font-black uppercase tracking-[0.2em] block mb-3"
+                                        className="text-[10px] font-semibold uppercase tracking-wide block mb-3"
                                         style={{ color: "var(--faro-on-surface-variant)" }}
                                     >
                                         ¿En qué podemos ayudarte?
@@ -436,7 +436,7 @@ export default function ConocerAJesusPage() {
                                         }
                                         placeholder="Cuéntanos un poco sobre ti o tu petición de oración..."
                                         rows={4}
-                                        className="w-full rounded-2xl px-5 py-4 text-sm focus:outline-none resize-none"
+                                        className="w-full rounded-lg px-3 py-1.5 text-sm focus:outline-none resize-none"
                                         style={{
                                             background: "var(--faro-surface)",
                                             border: "2px solid var(--faro-outline-variant)",
@@ -447,7 +447,7 @@ export default function ConocerAJesusPage() {
                                 <button
                                     type="submit"
                                     disabled={status === "sending"}
-                                    className="w-full py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                                    className="w-full py-2 rounded-lg font-black text-sm uppercase tracking-wide transition-all hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                                     style={{
                                         background:
                                             "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",

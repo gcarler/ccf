@@ -243,8 +243,8 @@ function SectionPreview({ section }: { section: CmsSection }) {
         <TypeBadge />
         {imageUrl
           // eslint-disable-next-line @next/next/no-img-element
-          ? <img src={imageUrl} alt="gallery" className="w-full h-24 object-cover rounded-xl" />
-          : <div className="w-full h-16 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-[9px] text-slate-400 font-bold uppercase">Sin imagen configurada</div>
+          ? <img src={imageUrl} alt="gallery" className="w-full h-24 object-cover rounded-md" />
+          : <div className="w-full h-8 rounded-md bg-slate-100 dark:bg-white/5 flex items-center justify-center text-[9px] text-slate-400 font-bold uppercase">Sin imagen configurada</div>
         }
       </div>
     );
@@ -266,7 +266,7 @@ function SectionPreview({ section }: { section: CmsSection }) {
         <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{title || "Sección de Testimonios"}</p>
         <div className="flex gap-2">
           {[1,2,3].map(i => (
-            <div key={i} className="flex-1 h-8 rounded-xl bg-slate-100 dark:bg-white/5 animate-pulse" />
+            <div key={i} className="flex-1 h-8 rounded-md bg-slate-100 dark:bg-white/5 animate-pulse" />
           ))}
         </div>
       </div>
@@ -310,7 +310,7 @@ function SectionPreview({ section }: { section: CmsSection }) {
         <div className="flex gap-3">
           {["DD", "HH", "MM", "SS"].map(u => (
             <div key={u} className="text-center">
-              <div className="size-10 rounded-xl bg-red-600 flex items-center justify-center text-white font-semibold text-sm">00</div>
+              <div className="size-10 rounded-md bg-red-600 flex items-center justify-center text-white font-semibold text-sm">00</div>
               <p className="text-[8px] text-slate-400 mt-0.5 font-bold uppercase">{u}</p>
             </div>
           ))}
@@ -343,7 +343,7 @@ function SectionPreview({ section }: { section: CmsSection }) {
         <TypeBadge />
         {embedUrl
           ? <p className="text-[10px] text-slate-500 font-mono truncate">{embedUrl}</p>
-          : <div className="w-full h-12 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-[9px] text-slate-400 font-bold uppercase">Sin URL configurada</div>
+          : <div className="w-full h-8 rounded-md bg-slate-100 dark:bg-white/5 flex items-center justify-center text-[9px] text-slate-400 font-bold uppercase">Sin URL configurada</div>
         }
       </div>
     );
@@ -431,9 +431,9 @@ function MediaPicker({
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-sm p-4 flex items-center justify-center" onClick={onClose}>
       <div className="w-full max-w-5xl max-h-[86vh] overflow-hidden rounded-lg bg-white dark:bg-[#111418] border border-slate-200 dark:border-white/10 shadow-2xl" onClick={(event) => event.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 px-5 py-4">
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 px-3 py-1.5">
           <div className="flex items-center gap-3">
-            <div className="size-10 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300 flex items-center justify-center">
+            <div className="size-10 rounded-md bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300 flex items-center justify-center">
               <ImageIcon size={18} />
             </div>
             <div>
@@ -441,33 +441,33 @@ function MediaPicker({
               <h2 className="text-base font-semibold text-slate-900 dark:text-white">Seleccionar imagen</h2>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10">
+          <button onClick={onClose} className="p-2 rounded-md text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10">
             <X size={18} />
           </button>
         </div>
 
-        <div className="flex items-center gap-3 border-b border-slate-200 dark:border-white/10 px-5 py-3">
+        <div className="flex items-center gap-3 border-b border-slate-200 dark:border-white/10 px-3 py-3">
           <div className="relative flex-1">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Buscar por archivo, alt text o seccion"
-              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-500"
+              className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-500"
             />
           </div>
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50">
             <Upload size={14} />
             {uploading ? "Subiendo..." : "Subir imagen"}
             <input type="file" accept="image/*" className="hidden" onChange={uploadImage} disabled={uploading} />
           </label>
         </div>
 
-        <div className="max-h-[62vh] overflow-y-auto p-5">
+        <div className="max-h-[62vh] overflow-y-auto p-3">
           {loading ? (
-            <div className="py-16 text-center text-sm font-bold text-slate-400">Cargando biblioteca...</div>
+            <div className="py-1.5 text-center text-sm font-bold text-slate-400">Cargando biblioteca...</div>
           ) : filtered.length === 0 ? (
-            <div className="py-16 text-center">
+            <div className="py-1.5 text-center">
               <FileImage size={34} className="mx-auto text-slate-300" />
               <p className="mt-3 text-sm font-bold text-slate-500">No hay imagenes disponibles.</p>
             </div>
@@ -815,28 +815,28 @@ export default function CmsBuilderPage() {
   };
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-6 flex items-center justify-between">
+    <div className="space-y-6 p-3">
+      <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-3 flex items-center justify-between">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">CMS V2 Builder</p>
-          <h1 className="mt-2 text-2xl font-semibold">Constructor visual multisitio</h1>
+          <h1 className="mt-2 text-lg font-semibold">Constructor visual multisitio</h1>
         </div>
-        <div className="rounded-xl bg-primary/10 px-3 py-2 text-primary text-xs font-semibold uppercase tracking-wide inline-flex items-center gap-2">
+        <div className="rounded-md bg-primary/10 px-3 py-2 text-primary text-xs font-semibold uppercase tracking-wide inline-flex items-center gap-2">
           <LayoutPanelTop size={14} /> Beta
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
         <aside className="lg:col-span-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-3">
           <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sitio</label>
-          <select value={siteKey} onChange={(e) => setSiteKey(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm">
+          <select value={siteKey} onChange={(e) => setSiteKey(e.target.value)} className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm">
             {sites.length === 0 && <option value="faro">faro</option>}
             {sites.map((site) => (
               <option key={site.site_key} value={site.site_key}>{site.name} ({site.site_key})</option>
             ))}
           </select>
 
-          <div className="rounded-xl border border-slate-200 dark:border-white/10 p-3 space-y-2">
+          <div className="rounded-md border border-slate-200 dark:border-white/10 p-3 space-y-2">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Nueva página</p>
             <input value={newPageTitle} onChange={(e) => setNewPageTitle(e.target.value)} placeholder="Ej: Página de bienvenida" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm" disabled={!canEdit} />
             <button onClick={createPage} disabled={!canEdit} className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50"><Plus size={12} /> Crear vacía</button>
@@ -916,7 +916,7 @@ export default function CmsBuilderPage() {
                   setDraggedSectionId(null);
                 }}
                 onDragEnd={() => setDraggedSectionId(null)}
-                className={`rounded-xl border p-3 cursor-grab active:cursor-grabbing ${section.status === "archived" ? "opacity-70 border-amber-200 bg-amber-50/40 dark:bg-amber-500/5" : section.id === activeSectionId ? "border-primary/40 bg-primary/5" : "border-slate-200 dark:border-white/10"}`}
+                className={`rounded-md border p-3 cursor-grab active:cursor-grabbing ${section.status === "archived" ? "opacity-70 border-amber-200 bg-amber-50/40 dark:bg-amber-500/5" : section.id === activeSectionId ? "border-primary/40 bg-primary/5" : "border-slate-200 dark:border-white/10"}`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <button onClick={() => setActiveSectionId(section.id)} className="text-left">
@@ -949,7 +949,7 @@ export default function CmsBuilderPage() {
                   setDraggedSectionId(null);
                   await loadSectionsAndVersions(activeSlug);
                 }}
-                className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 p-3 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-400"
+                className="rounded-md border border-dashed border-slate-300 dark:border-white/20 p-3 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-400"
               >
                 Soltar aquí para mover al final
               </div>
@@ -974,7 +974,7 @@ export default function CmsBuilderPage() {
               placeholder="slug-de-pagina"
               className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
             />
-            <div className="rounded-xl border border-slate-200 dark:border-white/10 p-3 space-y-2">
+            <div className="rounded-md border border-slate-200 dark:border-white/10 p-3 space-y-2">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">SEO</p>
               <input
                 value={seoTitleDraft}
@@ -989,11 +989,11 @@ export default function CmsBuilderPage() {
                 className="w-full min-h-[72px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
               />
               {seoImageDraft ? (
-                <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
+                <div className="overflow-hidden rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
                   <img src={seoImageDraft} alt="Imagen SEO" className="h-24 w-full object-cover" />
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 p-3 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                <div className="rounded-md border border-dashed border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 p-3 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">
                   Sin imagen social
                 </div>
               )}
@@ -1022,7 +1022,7 @@ export default function CmsBuilderPage() {
             >
               Guardar pagina/SEO
             </button>
-            <textarea value={note} onChange={(e) => setNote(e.target.value)} disabled={!canEdit && !canPublish} placeholder="Nota para workflow..." className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs disabled:opacity-60" />
+            <textarea value={note} onChange={(e) => setNote(e.target.value)} disabled={!canEdit && !canPublish} placeholder="Nota para workflow..." className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs disabled:opacity-60" />
             <div className="grid grid-cols-2 gap-2">
               <button onClick={() => runWorkflow("submit_review")} disabled={!activeSlug || !canEdit} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Send size={11} /> Review</button>
               <button onClick={() => runWorkflow("approve")} disabled={!activeSlug || !canPublish} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Save size={11} /> Aprobar</button>
@@ -1103,11 +1103,11 @@ export default function CmsBuilderPage() {
                       {activeSection.type === "hero" ? "Imagen hero" : "Imagen de galeria"}
                     </p>
                     {safeString(activeSection.props_json?.image_url) ? (
-                      <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
+                      <div className="overflow-hidden rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
                         <img src={safeString(activeSection.props_json?.image_url)} alt={safeString(activeSection.props_json?.image_alt) || "Imagen seleccionada"} className="h-28 w-full object-cover" />
                       </div>
                     ) : (
-                      <div className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 p-4 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                      <div className="rounded-md border border-dashed border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 p-4 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">
                         Sin imagen seleccionada
                       </div>
                     )}
@@ -1300,7 +1300,7 @@ export default function CmsBuilderPage() {
                       }}
                       onBlur={(e) => saveSectionField("body_2", e.target.value)}
                       placeholder="Contenido de la segunda columna"
-                      className="w-full min-h-[80px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                      className="w-full min-h-12 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
                     />
                   </div>
                 )}

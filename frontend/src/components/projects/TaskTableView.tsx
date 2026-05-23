@@ -85,9 +85,9 @@ function InlineStatusCell({ value, onChange }: { value: string; onChange: (v: st
             </Popover.Trigger>
             <Popover.Portal>
                 <Popover.Content
-                    className="z-[500] min-w-[180px] bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5"
+                    className="z-[500] min-w-[180px] bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5"
                     sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 pt-1 pb-2">Estado</p>
+                    <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 pt-1 pb-2">Estado</p>
                     {STATUS_OPTIONS.filter((s, i, a) => a.findIndex(x => x.value === s.value) === i || s.value === 'todo').map(s => (
                         s.value === 'pending' ? null :
                         <button key={s.value} onClick={() => { onChange(s.value); setOpen(false); }}
@@ -123,9 +123,9 @@ function InlinePriorityCell({ value, onChange }: { value: string; onChange: (v: 
             </Popover.Trigger>
             <Popover.Portal>
                 <Popover.Content
-                    className="z-[500] min-w-[160px] bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5"
+                    className="z-[500] min-w-[160px] bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5"
                     sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 pt-1 pb-2">Prioridad</p>
+                    <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 pt-1 pb-2">Prioridad</p>
                     {PRIORITY_OPTIONS.map(p => (
                         <button key={p.value} onClick={() => { onChange(p.value); setOpen(false); }}
                             className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
@@ -184,7 +184,7 @@ function InlineDateCell({ value, onChange }: { value?: string | null; onChange: 
                 </button>
             </Popover.Trigger>
             <Popover.Portal>
-                <Popover.Content className="z-[500] w-[248px] bg-white dark:bg-[#1e1f21] rounded-2xl shadow-2xl border border-slate-200/80 dark:border-white/10 p-3 select-none"
+                <Popover.Content className="z-[500] w-[248px] bg-white dark:bg-[#1e1f21] rounded-lg shadow-2xl border border-slate-200/80 dark:border-white/10 p-3 select-none"
                     sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
                     {/* Navigator */}
                     <div className="flex items-center justify-between mb-3">
@@ -199,7 +199,7 @@ function InlineDateCell({ value, onChange }: { value?: string | null; onChange: 
                         </button>
                     </div>
                     <div className="grid grid-cols-7 mb-1">
-                        {DAYS_ES.map(d => <div key={d} className="text-[9px] font-black uppercase tracking-wider text-slate-400 text-center py-0.5">{d}</div>)}
+                        {DAYS_ES.map(d => <div key={d} className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-center py-0.5">{d}</div>)}
                     </div>
                     <div className="grid grid-cols-7 gap-y-0.5">
                         {cells.map((day, i) => {
@@ -286,7 +286,7 @@ function InlineUserCell({ value, token, onChange }: {
                         open && 'bg-slate-50 dark:bg-white/5 ring-1 ring-slate-200 dark:ring-white/10'
                     )}>
                     <div className={clsx(
-                        'size-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0',
+                        'size-6 rounded-full flex items-center justify-center font-semibold shrink-0',
                         value ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300'
                                : 'bg-slate-100 dark:bg-white/5 text-slate-400'
                     )}>
@@ -298,7 +298,7 @@ function InlineUserCell({ value, token, onChange }: {
                 </button>
             </Popover.Trigger>
             <Popover.Portal>
-                <Popover.Content className="z-[500] w-[240px] bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl border border-slate-200/80 dark:border-white/10 overflow-hidden"
+                <Popover.Content className="z-[500] w-[240px] bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 overflow-hidden"
                     sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
                     <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 dark:border-white/5">
                         <Search size={13} className="text-slate-400 shrink-0" />
@@ -309,11 +309,11 @@ function InlineUserCell({ value, token, onChange }: {
                     </div>
                     <div className="max-h-[200px] overflow-y-auto py-1">
                         {loading ? (
-                            <div className="flex items-center justify-center py-4">
+                            <div className="flex items-center justify-center py-1.5">
                                 <Loader2 size={16} className="text-blue-500 animate-spin" />
                             </div>
                         ) : filtered.length === 0 ? (
-                            <p className="text-[11px] text-slate-400 text-center py-4">Sin resultados</p>
+                            <p className="text-[11px] text-slate-400 text-center py-1.5">Sin resultados</p>
                         ) : (
                             <>
                                 {value && (
@@ -326,7 +326,7 @@ function InlineUserCell({ value, token, onChange }: {
                                 {filtered.map(u => (
                                     <button key={u.id} onClick={() => { onChange(u.id, u.username); setDisplayName(u.username); setOpen(false); }}
                                         className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                        <div className="size-6 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-[10px] font-black text-blue-600 shrink-0">
+                                        <div className="size-6 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center font-semibold text-blue-600 shrink-0">
                                             {u.username.charAt(0).toUpperCase()}
                                         </div>
                                         <div className="flex-1 text-left">
@@ -606,7 +606,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
         <th style={{ width }} className="px-4 py-2.5 text-left border-r border-slate-100 dark:border-white/5 last:border-r-0 select-none">
             <button onClick={(e) => handleSortToggle(k, e)}
                 className="flex items-center gap-1.5 group/th w-full">
-                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 group-hover/th:text-slate-700 dark:group-hover/th:text-slate-200 transition-colors">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 group-hover/th:text-slate-700 dark:group-hover/th:text-slate-200 transition-colors">
                     {label}
                 </span>
                 <SortIcon k={k} />
@@ -634,8 +634,8 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                     </Popover.Trigger>
                     <Popover.Portal>
                         <Popover.Content sideOffset={6} align="start"
-                            className="z-[500] w-56 bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl border border-slate-200/80 dark:border-white/10 p-2">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 py-1.5">Columnas visibles</p>
+                            className="z-[500] w-56 bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-2">
+                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 py-1.5">Columnas visibles</p>
                             {ALL_COLUMNS.map(col => (
                                 <button key={col.id}
                                     onClick={() => setVisibleCols(prev => {
@@ -671,8 +671,8 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                     </Popover.Trigger>
                     <Popover.Portal>
                         <Popover.Content sideOffset={6} align="start"
-                            className="z-[500] w-52 bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 pt-1 pb-2">Agrupar por</p>
+                            className="z-[500] w-52 bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5">
+                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 pt-1 pb-2">Agrupar por</p>
                             {([['status','Estado'],['priority','Prioridad'],['none','Sin agrupación']] as const).map(([k, lbl]) => (
                                 <button key={k} onClick={() => { setGroupBy(k); setGroupOpen(false); }}
                                     className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
@@ -697,8 +697,8 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                     </Popover.Trigger>
                     <Popover.Portal>
                         <Popover.Content sideOffset={6} align="start"
-                            className="z-[500] w-64 bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl border border-slate-200/80 dark:border-white/10 p-2">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 py-1.5">Filtrar por Estado</p>
+                            className="z-[500] w-64 bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-2">
+                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 py-1.5">Filtrar por Estado</p>
                             <div className="flex flex-wrap gap-1.5 px-2 pb-2">
                                 {STATUS_OPTIONS.filter((s,i,a) => a.findIndex(x => x.value === s.value) === i && s.value !== 'pending').map(s => {
                                     const active = activeFilters.some(f => f.field === 'status' && f.value === s.value);
@@ -715,7 +715,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                     );
                                 })}
                             </div>
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 py-1.5 border-t border-slate-100 dark:border-white/5">Filtrar por Prioridad</p>
+                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 py-1.5 border-t border-slate-100 dark:border-white/5">Filtrar por Prioridad</p>
                             <div className="flex flex-wrap gap-1.5 px-2 pb-2">
                                 {PRIORITY_OPTIONS.map(p => {
                                     const active = activeFilters.some(f => f.field === 'priority' && f.value === p.value);
@@ -756,8 +756,8 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                     </Popover.Trigger>
                     <Popover.Portal>
                         <Popover.Content sideOffset={6} align="start"
-                            className="z-[500] w-64 bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl border border-slate-200/80 dark:border-white/10 p-2">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 py-1.5">Columnas activas</p>
+                            className="z-[500] w-64 bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200/80 dark:border-white/10 p-2">
+                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 py-1.5">Columnas activas</p>
                             {sortConfig.length === 0 && <p className="text-[11px] text-slate-500 px-2 pb-2">Ninguna</p>}
                             {sortConfig.map((conf, idx) => {
                                 const lbl = conf.key === 'due_date' ? 'Fecha límite' : conf.key === 'title' ? 'Nombre' : conf.key === 'status' ? 'Estado' : 'Prioridad';
@@ -779,7 +779,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                 );
                             })}
                             <div className="border-t border-slate-100 dark:border-white/5 my-1.5" />
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 py-1.5">Añadir ordenación</p>
+                            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-2 py-1.5">Añadir ordenación</p>
                             {([['title','Nombre'],['status','Estado'],['priority','Prioridad'],['due_date','Fecha límite']] as [SortKey, string][])
                                 .filter(([k]) => !sortConfig.some(s => s.key === k))
                                 .map(([k, lbl]) => (
@@ -870,7 +870,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                             <th className="px-4 py-2.5 text-left border-r border-slate-100 dark:border-white/5 select-none" style={{ width: '380px' }}>
                                 <button onClick={(e) => handleSortToggle('title', e)}
                                     className="flex items-center gap-1.5 group/th w-full">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 group-hover/th:text-slate-700 dark:group-hover/th:text-slate-200 transition-colors">
+                                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 group-hover/th:text-slate-700 dark:group-hover/th:text-slate-200 transition-colors">
                                         Nombre de la tarea
                                     </span>
                                     <SortIcon k="title" />
@@ -880,7 +880,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                             {visibleCols.has('priority') && <ColHeader label="Prioridad"    k="priority" width="140px" />}
                             {visibleCols.has('assignee') && (
                                 <th className="px-4 py-2.5 text-left border-r border-slate-100 dark:border-white/5" style={{ width: '160px' }}>
-                                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Asignado</span>
+                                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Asignado</span>
                                 </th>
                             )}
                             {visibleCols.has('due_date') && <ColHeader label="Fecha límite" k="due_date" width="150px" />}
@@ -1054,7 +1054,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                     {/* Add row per group */}
                                     {!isCollapsed && (
                                         <tr className="group/add">
-                                            <td colSpan={7} className="px-6 py-0.5">
+                                            <td colSpan={7} className="px-3 py-0.5">
                                                 <button onClick={() => setQuickAddGroup(groupName)}
                                                     className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300 hover:text-blue-600 dark:text-white/10 dark:hover:text-blue-400 py-1.5 transition-all opacity-0 group-hover/add:opacity-100">
                                                     <Plus size={12} />
@@ -1070,9 +1070,9 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                         {/* Empty state */}
                         {processed.length === 0 && (
                             <tr>
-                                <td colSpan={7} className="py-20 text-center">
+                                <td colSpan={7} className="py-1.5 text-center">
                                     <div className="flex flex-col items-center gap-3">
-                                        <div className="size-14 rounded-full bg-slate-50 dark:bg-white/5 flex items-center justify-center">
+                                        <div className="size-7 rounded-full bg-slate-50 dark:bg-white/5 flex items-center justify-center">
                                             <CheckCircle2 size={24} className="text-slate-200" />
                                         </div>
                                         <p className="text-slate-400 text-sm font-medium">Sin tareas en este proyecto</p>
@@ -1097,7 +1097,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                         <span className="ml-1 text-slate-300 font-normal text-[10px]">Shift+Enter</span>
                     </button>
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
                     {processed.length} tarea{processed.length !== 1 ? 's' : ''}
                     {sortConfig.length > 0 && ` · ord. por ${sortConfig.map(s => {
                         if (s.key === 'due_date') return 'Fecha';

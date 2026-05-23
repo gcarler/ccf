@@ -49,11 +49,11 @@ export default function EventsCalendar() {
         <div className="p-4 lg:p-4 space-y-6 max-w-5xl mx-auto animate-in fade-in duration-700">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-bold uppercase tracking-[0.3em] text-[10px]">
+                    <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-bold uppercase tracking-wide text-[10px]">
                         <div className="size-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]"></div>
                         Comunidad El Faro
                     </div>
-                    <h1 className="text-2xl font-bold text-[hsl(var(--text-primary))] tracking-tighter">Calendario de Eventos</h1>
+                    <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tighter">Calendario de Eventos</h1>
                 </div>
                 
                 <div className="flex items-center gap-3">
@@ -67,7 +67,7 @@ export default function EventsCalendar() {
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`pb-2 text-[10px] font-bold uppercase tracking-[0.2em] transition-all relative ${activeTab === tab
+                            className={`pb-2 text-[10px] font-bold uppercase tracking-wide transition-all relative ${activeTab === tab
                                 ? 'text-[hsl(var(--primary))]'
                                 : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
                                 }`}
@@ -85,24 +85,24 @@ export default function EventsCalendar() {
 
                 {loading ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {[1, 2].map(i => <Skeleton key={i} className="h-48 w-full rounded-xl" />)}
+                        {[1, 2].map(i => <Skeleton key={i} className="h-48 w-full rounded-md" />)}
                     </div>
                 ) : filteredEvents.length === 0 ? (
-                    <div className="text-center py-12 text-slate-400">
-                        <CalendarDays className="mx-auto h-12 w-12 mb-4 opacity-20" />
+                    <div className="text-center py-1.5 text-slate-400">
+                        <CalendarDays className="mx-auto h-8 w-12 mb-4 opacity-20" />
                         <p className="font-bold text-sm">No hay eventos en esta categoría</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pb-20">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pb-4">
                         {filteredEvents.map(event => (
                             <motion.div 
                                 key={event.id}
                                 whileHover={{ y: -2 }}
-                                className="group bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-[hsl(var(--primary)/0.3)] transition-all flex flex-col"
+                                className="group bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md overflow-hidden shadow-sm hover:shadow-md hover:border-[hsl(var(--primary)/0.3)] transition-all flex flex-col"
                             >
                                 <div className="p-4 flex-1">
                                     <div className="flex items-center justify-between mb-3">
-                                        <span className="rounded-md bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] px-2 py-1 text-[9px] font-bold uppercase tracking-widest">{event.category}</span>
+                                        <span className="rounded-md bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] px-2 py-1 text-[9px] font-bold uppercase tracking-wide">{event.category}</span>
                                         <div className="flex items-center gap-1.5 text-[hsl(var(--text-secondary))] text-[10px] font-bold">
                                             <CalendarDays size={12} />
                                             {new Date(event.date).toLocaleDateString()}
@@ -120,7 +120,7 @@ export default function EventsCalendar() {
                                         <Users size={14} />
                                         {event.attendees_count} Asistentes
                                     </div>
-                                    <button className="px-3 py-1.5 bg-[hsl(var(--text-primary))] text-[hsl(var(--bg-primary))] rounded-lg text-[9px] font-bold uppercase tracking-widest shadow-sm hover:opacity-90 transition-all active:scale-95">
+                                    <button className="px-3 py-1.5 bg-[hsl(var(--text-primary))] text-[hsl(var(--bg-primary))] rounded-lg text-[9px] font-bold uppercase tracking-wide shadow-sm hover:opacity-90 transition-all active:scale-95">
                                         Reservar
                                     </button>
                                 </div>
@@ -133,7 +133,7 @@ export default function EventsCalendar() {
             <motion.button 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="fixed bottom-6 right-6 size-12 bg-[hsl(var(--primary))] text-white rounded-xl shadow-lg flex items-center justify-center z-50 border border-white/20"
+                className="fixed bottom-6 right-6 size-7 bg-[hsl(var(--primary))] text-white rounded-md shadow-lg flex items-center justify-center z-50 border border-white/20"
             >
                 <Plus size={24} />
             </motion.button>

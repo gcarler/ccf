@@ -57,45 +57,45 @@ export default function TaskCreationModal({ isOpen, defaultStatus = 'todo', onCl
             subtitle="Definición de Acción"
             actions={
                 <>
-                    <button type="button" onClick={onClose} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors">
+                    <button type="button" onClick={onClose} className="px-3 py-1.5 text-[11px] font-medium text-slate-500 hover:text-slate-700 transition-colors">
                         Cancelar
                     </button>
-                    <button type="button" onClick={handleSubmit} disabled={loading || !title.trim()} className="flex items-center gap-2 px-8 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50">
-                        {loading ? <Loader2 className="animate-spin" size={14} /> : <CheckSquare size={14} />}
+                    <button type="button" onClick={handleSubmit} disabled={loading || !title.trim()} className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50">
+                        {loading ? <Loader2 className="animate-spin" size={12} /> : <CheckSquare size={12} />}
                         {loading ? 'Creando...' : 'Crear Tarea'}
                     </button>
                 </>
             }
         >
-            <form onSubmit={handleSubmit} className="mt-4 space-y-6">
-                <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+            <form onSubmit={handleSubmit} className="mt-3 space-y-4">
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400 flex items-center gap-2">
                         <Type size={12} /> Título de la tarea
                     </label>
-                    <input 
+                    <input
                         autoFocus
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="Ej: Revisión de Mezcla de Audio"
-                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 dark:text-white"
+                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 dark:text-white"
                     />
                 </div>
 
-                <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400 flex items-center gap-2">
                         <AlignLeft size={12} /> Descripción (Opcional)
                     </label>
-                    <textarea 
+                    <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="Detalles adicionales, links, etc..."
                         rows={5}
-                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-slate-700 dark:text-slate-300"
+                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-slate-700 dark:text-slate-300"
                     />
                 </div>
 
-                <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+                <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400 flex items-center gap-2">
                         <Flag size={12} /> Nivel de Prioridad
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -105,7 +105,7 @@ export default function TaskCreationModal({ isOpen, defaultStatus = 'todo', onCl
                                 type="button"
                                 onClick={() => setPriority(p.value)}
                                 className={clsx(
-                                    "py-3 px-4 rounded-xl flex items-center justify-center gap-2 border text-[11px] font-black uppercase tracking-wider transition-all",
+                                    "py-2 px-3 rounded-md flex items-center justify-center gap-2 border text-[11px] font-bold uppercase tracking-wide transition-all",
                                     priority === p.value
                                         ? `${p.color} border-transparent text-white shadow-md`
                                         : `bg-transparent border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5`

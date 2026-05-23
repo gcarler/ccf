@@ -79,16 +79,16 @@ export default function KnowledgeGraphPage() {
         setViewType={setViewType}
         availableViews={["grid", "list", "table"]}
       />
-      <main className="relative flex flex-1 flex-col gap-5 overflow-hidden p-6 lg:p-8">
+      <main className="relative flex flex-1 flex-col gap-5 overflow-hidden p-3 p-4">
         <header className="space-y-2">
-          <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Knowledge Graph</h1>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Knowledge Graph</h1>
           <p className="max-w-3xl text-sm text-slate-500 dark:text-slate-400">Vista interactiva con pan/zoom, busqueda de nodos y filtros por tipo para insights de CRM, Academy y Projects.</p>
         </header>
 
         {viewType === "list" && (
           <section className="space-y-4 overflow-y-auto">
             {filtered.nodes.map((node) => (
-              <article key={node.id} className="rounded-3xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+              <article key={node.id} className="rounded-lg border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
                 <h3 className="font-black text-slate-900 dark:text-white">{node.label}</h3>
                 <p className="mt-1 text-sm text-slate-500">{node.type}</p>
               </article>
@@ -97,17 +97,17 @@ export default function KnowledgeGraphPage() {
         )}
 
         {viewType === "table" && (
-          <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+          <section className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
             <table className="w-full text-left">
-              <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:bg-white/5">
-                <tr><th className="px-6 py-4">Nodo</th><th className="px-6 py-4">Tipo</th><th className="px-6 py-4">Conexiones</th></tr>
+              <thead className="bg-slate-50 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:bg-white/5">
+                <tr><th className="px-3 py-1.5">Nodo</th><th className="px-3 py-1.5">Tipo</th><th className="px-3 py-1.5">Conexiones</th></tr>
               </thead>
               <tbody>
                 {filtered.nodes.map((node) => (
                   <tr key={node.id} className="border-t border-slate-100 dark:border-white/5">
-                    <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{node.label}</td>
-                    <td className="px-6 py-4 text-slate-500">{node.type}</td>
-                    <td className="px-6 py-4 text-slate-500">{filtered.edges.filter((edge) => edge.from === node.id || edge.to === node.id).length}</td>
+                    <td className="px-3 py-1.5 font-bold text-slate-900 dark:text-white">{node.label}</td>
+                    <td className="px-3 py-1.5 text-slate-500">{node.type}</td>
+                    <td className="px-3 py-1.5 text-slate-500">{filtered.edges.filter((edge) => edge.from === node.id || edge.to === node.id).length}</td>
                   </tr>
                 ))}
               </tbody>
@@ -125,13 +125,13 @@ export default function KnowledgeGraphPage() {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Buscar nodo por nombre, id o detalle..."
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none ring-blue-500/20 transition focus:ring-4 dark:border-white/10 dark:bg-white/5"
+                  className="h-10 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none ring-blue-500/20 transition focus:ring-4 dark:border-white/10 dark:bg-white/5"
                 />
               </div>
 
               <button
                 onClick={refresh}
-                className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-xs font-black uppercase tracking-widest text-slate-500 transition hover:bg-slate-100 dark:border-white/10 dark:hover:bg-white/10"
+                className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-200 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500 transition hover:bg-slate-100 dark:border-white/10 dark:hover:bg-white/10"
               >
                 <RefreshCw size={14} /> Refrescar
               </button>
@@ -144,10 +144,10 @@ export default function KnowledgeGraphPage() {
               </div>
             </div>
 
-            <div className="h-[72vh] overflow-hidden rounded-[2rem] border border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-black/20">
+            <div className="h-[60vh] overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-black/20">
               {configLoading ? (
                 <div className="grid h-full place-items-center">
-                  <Skeleton className="h-[60%] w-[90%] rounded-3xl" />
+                  <Skeleton className="h-[60%] w-[90%] rounded-lg" />
                 </div>
               ) : !enabled ? (
                 <div className="grid h-full place-items-center text-sm font-semibold text-slate-500">
@@ -155,7 +155,7 @@ export default function KnowledgeGraphPage() {
                 </div>
               ) : loading ? (
                 <div className="grid h-full place-items-center">
-                  <Skeleton className="h-[60%] w-[90%] rounded-3xl" />
+                  <Skeleton className="h-[60%] w-[90%] rounded-lg" />
                 </div>
               ) : error ? (
                 <div className="grid h-full place-items-center text-sm font-semibold text-rose-500">{error}</div>
@@ -187,22 +187,22 @@ export default function KnowledgeGraphPage() {
             </div>
           </div>
 
-          <aside className="space-y-3 rounded-[2rem] border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
-            <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Panel de Nodo</h2>
+          <aside className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+            <h2 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Panel de Nodo</h2>
             {selectedNode ? (
               <>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-black/20">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{selectedNode.type}</p>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-black/20">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{selectedNode.type}</p>
                   <h3 className="mt-1 text-lg font-black text-slate-900 dark:text-white">{selectedNode.label}</h3>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{selectedNode.detail || "Sin detalle"}</p>
                 </div>
                 {selectedNode.meta ? (
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-black/20">
-                    <h4 className="mb-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Metadata</h4>
+                  <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-black/20">
+                    <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Metadata</h4>
                     <dl className="space-y-2">
                       {Object.entries(selectedNode.meta).map(([key, value]) => (
                         <div key={key} className="flex items-center justify-between gap-3 text-xs">
-                          <dt className="font-black uppercase tracking-widest text-slate-400">{key}</dt>
+                          <dt className="font-semibold uppercase tracking-wide text-slate-400">{key}</dt>
                           <dd className="max-w-[170px] truncate font-semibold text-slate-700 dark:text-slate-200">{String(value)}</dd>
                         </div>
                       ))}
@@ -214,8 +214,8 @@ export default function KnowledgeGraphPage() {
               <p className="text-sm text-slate-500">Selecciona un nodo para ver su detalle y metadata.</p>
             )}
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-black/20">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Resumen</h4>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-black/20">
+              <h4 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Resumen</h4>
               <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                 <SummaryBox label="Nodos" value={String(filtered.nodes.length)} />
                 <SummaryBox label="Edges" value={String(filtered.edges.length)} />
@@ -233,7 +233,7 @@ function TypeChip({ label, active, onClick }: { label: string; active: boolean; 
   return (
     <button
       onClick={onClick}
-      className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest transition ${
+      className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition ${
         active
           ? "bg-blue-600 text-white"
           : "border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5"
@@ -246,8 +246,8 @@ function TypeChip({ label, active, onClick }: { label: string; active: boolean; 
 
 function SummaryBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center dark:border-white/10 dark:bg-white/5">
-      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</p>
+    <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-center dark:border-white/10 dark:bg-white/5">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
       <p className="text-lg font-black text-slate-800 dark:text-white">{value}</p>
     </div>
   );

@@ -157,7 +157,7 @@ export default function MessagingCampaignCenter() {
             viewType={viewType}
             onViewChange={setViewType}
             rightActions={
-                <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 hover:bg-slate-50 rounded-xl text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 shadow-sm transition-all active:scale-95">
+                <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 hover:bg-slate-50 rounded-md text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 shadow-sm transition-all active:scale-95">
                     <History size={14} /> Historial Detallado
                 </button>
             }
@@ -227,7 +227,7 @@ export default function MessagingCampaignCenter() {
                                         <div 
                                             key={item.id} 
                                             onClick={() => router.push(`/crm/messaging/${item.id}`)}
-                                            className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3 hover:border-blue-500/30 transition-all cursor-pointer"
+                                            className="rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3 hover:border-blue-500/30 transition-all cursor-pointer"
                                         >
                                             <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{item.name}</p>
                                             <p className="text-[10px] text-slate-400">{item.date} · {item.target_count} envíos</p>
@@ -249,7 +249,7 @@ export default function MessagingCampaignCenter() {
                                         <div 
                                             key={item.id} 
                                             onClick={() => router.push(`/crm/messaging/${item.id}`)}
-                                            className="rounded-xl border border-slate-200 dark:border-white/10 p-3 hover:border-blue-500/30 transition-all cursor-pointer bg-white dark:bg-white/5"
+                                            className="rounded-md border border-slate-200 dark:border-white/10 p-3 hover:border-blue-500/30 transition-all cursor-pointer bg-white dark:bg-white/5"
                                         >
                                             <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{item.name}</p>
                                             <p className="text-[10px] text-slate-400">{item.channel} · {item.status} · {item.target_count}</p>
@@ -268,7 +268,7 @@ export default function MessagingCampaignCenter() {
                             <div 
                                 key={item.id} 
                                 onClick={() => router.push(`/crm/messaging/${item.id}`)}
-                                        className="space-y-1 cursor-pointer group p-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl transition-all"
+                                        className="space-y-1 cursor-pointer group p-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md transition-all"
                             >
                                 <div className="flex items-center justify-between text-[11px]">
                                     <span className="font-bold text-slate-700 dark:text-slate-300">{item.name}</span>
@@ -305,7 +305,7 @@ export default function MessagingCampaignCenter() {
                             <div className="relative z-10 flex justify-between items-center">
                                 <div>
                                     <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-none mb-2 uppercase">Campaign Composer</h2>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">Crea mensajes de alto impacto</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Crea mensajes de alto impacto</p>
                                 </div>
                                 <div className="flex bg-slate-100 dark:bg-white/5 p-1.5 rounded-lg border border-slate-200 dark:border-white/10">
                                     <ChannelButton active={channel === 'whatsapp'} onClick={() => setChannel('whatsapp')} icon={MessageSquare} label="WhatsApp" />
@@ -330,11 +330,11 @@ export default function MessagingCampaignCenter() {
                                         <textarea 
                                             value={message} onChange={(e) => setMessage(e.target.value)}
                                             placeholder="Hola {nombre}, te escribimos de CCF para..."
-                                            className="w-full h-48 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-xl p-4 text-[15px] font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all resize-none"
+                                            className="w-full h-48 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-md p-4 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all resize-none"
                                         />
                                         <div className="absolute bottom-4 right-4 flex gap-2">
-                                            <button className="p-2.5 bg-white dark:bg-white/10 rounded-xl text-slate-400 hover:text-blue-600 transition-colors shadow-sm"><Bot size={18} /></button>
-                                            <button className="p-2.5 bg-white dark:bg-white/10 rounded-xl text-slate-400 hover:text-blue-600 transition-colors shadow-sm"><ImageIcon size={18} /></button>
+                                            <button className="p-2.5 bg-white dark:bg-white/10 rounded-md text-slate-400 hover:text-blue-600 transition-colors shadow-sm"><Bot size={18} /></button>
+                                            <button className="p-2.5 bg-white dark:bg-white/10 rounded-md text-slate-400 hover:text-blue-600 transition-colors shadow-sm"><ImageIcon size={18} /></button>
                                         </div>
                                     </div>
                                 </div>
@@ -356,12 +356,12 @@ export default function MessagingCampaignCenter() {
                             </div>
                         </section>
 
-                        <section className="bg-blue-50 dark:bg-blue-900/10 rounded-[3.5rem] p-3 border border-blue-100 dark:border-blue-500/20 space-y-3">
+                        <section className="bg-blue-50 dark:bg-blue-900/10 rounded-lg p-3 border border-blue-100 dark:border-blue-500/20 space-y-3">
                             <div className="flex items-center gap-3 text-blue-600 dark:text-blue-400">
                                 <Sparkles size={20} />
                                 <h3 className="text-[11px] font-bold uppercase tracking-wide">IA Copywriting Helper</h3>
                             </div>
-                            <p className="text-[14px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium italic">
+                            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium italic">
                                 &ldquo;Optimus sugiere: Los mensajes enviados por WhatsApp entre las 10:00 AM y 11:30 AM tienen un 25% más de tasa de respuesta en el segmento de Líderes.&rdquo;
                             </p>
                         </section>
@@ -382,9 +382,9 @@ export default function MessagingCampaignCenter() {
                                 <SegmentTag label="Baja Asistencia" active={segments.includes('low')} onClick={() => toggleSegment('low')} />
                                 <SegmentTag label="Donantes Pro" active={segments.includes('vip')} onClick={() => toggleSegment('vip')} />
                             </div>
-                            <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-100 dark:border-white/5 flex items-center justify-between">
+                            <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-md border border-slate-100 dark:border-white/5 flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="size-8 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600"><Users size={20} /></div>
+                                    <div className="size-8 rounded-md bg-blue-100 flex items-center justify-center text-blue-600"><Users size={20} /></div>
                                     <div>
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">Segmentos Seleccionados</p>
                                         <h4 className="text-base font-bold text-slate-900 dark:text-white">{segments.length} <span className="text-[10px] text-slate-400 font-bold tracking-normal uppercase">Segmentos</span></h4>
@@ -453,7 +453,7 @@ function ChannelButton({ active, onClick, icon: Icon, label }: any) {
         <button 
             onClick={onClick}
             className={clsx(
-                "flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wide transition-all",
+                "flex items-center gap-2.5 px-4 py-2.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all",
                 active ? "bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-xl shadow-blue-500/10" : "text-slate-400 hover:text-slate-600"
             )}
         >

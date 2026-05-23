@@ -19,7 +19,7 @@ export default function QuickCommentCard({
     actionLabel = 'Registrar'
 }: QuickCommentCardProps) {
     return (
-        <div className="rounded-[2rem] border border-[hsl(var(--border))] bg-white shadow-sm p-4 space-y-3">
+        <div className="rounded-lg border border-[hsl(var(--border))] bg-white shadow-sm p-4 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex items-center gap-3 flex-1">
                     <button className="size-10 rounded-full border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--primary))] bg-[hsl(var(--surface-2))]">
@@ -44,7 +44,7 @@ export default function QuickCommentCard({
                         </button>
                     ))}
                 </div>
-                <button className="px-4 h-9 rounded-full bg-[hsl(var(--primary))] text-white text-[11px] font-semibold uppercase tracking-[0.2em]">
+                <button className="px-4 h-9 rounded-full bg-[hsl(var(--primary))] text-white text-[11px] font-semibold uppercase tracking-wide">
                     {actionLabel}
                 </button>
             </div>

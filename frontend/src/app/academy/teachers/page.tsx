@@ -63,7 +63,7 @@ export default function AcademyTeachersPage() {
                 rightActions={
                     <button
                         onClick={() => router.push("/academy/teacher")}
-                        className="rounded-lg bg-blue-600 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-white shadow-lg shadow-blue-500/20"
+                        className="rounded-lg bg-blue-600 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20"
                     >
                         Panel docente
                     </button>
@@ -80,7 +80,7 @@ export default function AcademyTeachersPage() {
                 <section className="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
                     <header className="flex flex-col gap-4 border-b border-slate-100 p-3 dark:border-white/10 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-wide text-blue-500">Equipo academico</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-500">Equipo academico</p>
                             <h1 className="text-lg font-black text-slate-900 dark:text-white">Facilitadores</h1>
                         </div>
                         <div className="relative w-full md:max-w-sm">
@@ -102,7 +102,7 @@ export default function AcademyTeachersPage() {
                                 onClick={() => router.push(`/academy/teacher?teacher=${teacher.id}`)}
                             >
                                 <div className="mb-3 flex items-center gap-3">
-                                    <div className="flex size-8 items-center justify-center rounded-lg bg-blue-600 text-sm font-black text-white">
+                                    <div className="flex size-8 items-center justify-center rounded-lg bg-blue-600 text-sm font-semibold text-white">
                                         {(teacher.full_name || teacher.name || "F").slice(0, 2).toUpperCase()}
                                     </div>
                                     <div>
@@ -118,12 +118,12 @@ export default function AcademyTeachersPage() {
                             </article>
                         ))}
                         {!loading && filtered.length === 0 && (
-                            <div className="col-span-full py-4 text-center text-sm font-semibold text-slate-400">
+                            <div className="col-span-full py-1.5 text-center text-sm font-semibold text-slate-400">
                                 No hay facilitadores registrados para mostrar.
                             </div>
                         )}
                         {loading && (
-                            <div className="col-span-full py-4 text-center text-sm font-semibold text-slate-400">
+                            <div className="col-span-full py-1.5 text-center text-sm font-semibold text-slate-400">
                                 Cargando facilitadores...
                             </div>
                         )}
@@ -140,7 +140,7 @@ function Metric({ icon: Icon, label, value }: { icon: any; label: string; value:
             <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10">
                 <Icon size={20} />
             </div>
-            <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">{label}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
             <p className="text-lg font-black text-slate-900 dark:text-white">{value}</p>
         </div>
     );

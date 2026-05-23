@@ -112,12 +112,12 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
   };
 
   return (
-    <div className="glass-card relative mx-auto my-12 max-w-xl overflow-hidden p-8">
+    <div className="glass-card relative mx-auto my-12 max-w-xl overflow-hidden p-4">
       <div className="absolute right-0 top-0 p-4 text-primary/20">
         <Smile size={80} />
       </div>
 
-      <h3 className="relative z-10 mb-6 text-2xl font-bold">Comparte tu experiencia</h3>
+      <h3 className="relative z-10 mb-3 text-lg font-bold">Comparte tu experiencia</h3>
 
       <form onSubmit={handleSubmit} className="relative z-10 space-y-6">
         <div>
@@ -126,7 +126,7 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
             required
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="h-32 w-full resize-none rounded-xl border border-slate-200 bg-white/70 p-4 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary"
+            className="h-32 w-full resize-none rounded-md border border-slate-200 bg-white/70 p-4 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary"
             placeholder="Como ha sido tu proceso en la plataforma?..."
           />
         </div>
@@ -164,7 +164,7 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
                 key={option.id}
                 type="button"
                 onClick={() => selectMediaType(option.id as TestimonialMediaType)}
-                className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-black uppercase tracking-widest transition-all ${
+                className={`flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-all ${
                   mediaType === option.id
                     ? "border-primary bg-primary text-white"
                     : "border-slate-300 bg-white/70 text-slate-600 hover:bg-slate-100"
@@ -177,7 +177,7 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
           {mediaType !== "text" && (
             <div className="space-y-3">
               <label className="block space-y-2">
-                <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500">
+                <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
                   <LinkIcon size={13} /> URL de {mediaType === "image" ? "imagen" : mediaType === "video" ? "video" : "podcast"}
                 </span>
                 <input
@@ -185,14 +185,14 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
                   value={activeMediaUrl}
                   onChange={(event) => setActiveMediaUrl(event.target.value)}
                   placeholder="Pega una URL o elige desde la biblioteca"
-                  className="w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-sm outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-md border border-slate-200 bg-white/70 px-4 py-3 text-sm outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary"
                 />
               </label>
 
-              <div className="rounded-2xl border border-slate-200 bg-white/70 p-3">
+              <div className="rounded-lg border border-slate-200 bg-white/70 p-3">
                 <div className="mb-2 flex items-center justify-between gap-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Biblioteca CMS</span>
-                  <Link href="/cms/media" className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Biblioteca CMS</span>
+                  <Link href="/cms/media" className="text-[10px] font-semibold uppercase tracking-wide text-primary hover:underline">
                     Subir media
                   </Link>
                 </div>
@@ -200,10 +200,10 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
                   value={mediaSearch}
                   onChange={(event) => setMediaSearch(event.target.value)}
                   placeholder="Buscar archivo..."
-                  className="mb-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-primary/20"
+                  className="mb-3 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-primary/20"
                 />
                 {compatibleMedia.length === 0 ? (
-                  <p className="rounded-xl bg-slate-50 px-3 py-3 text-xs font-medium text-slate-500">
+                  <p className="rounded-md bg-slate-50 px-3 py-3 text-xs font-medium text-slate-500">
                     No hay archivos compatibles. Sube primero imagenes, videos o audios en la biblioteca.
                   </p>
                 ) : (
@@ -213,7 +213,7 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
                         key={item.id ?? item.url}
                         type="button"
                         onClick={() => setActiveMediaUrl(item.url)}
-                        className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left transition-all ${
+                        className={`flex items-center gap-2 rounded-md border px-3 py-2 text-left transition-all ${
                           activeMediaUrl === item.url
                             ? "border-primary bg-primary/10 text-primary"
                             : "border-slate-200 bg-white text-slate-600 hover:border-primary/40"
@@ -233,7 +233,7 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-4 font-bold text-white transition-colors hover:bg-blue-600 disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-md bg-primary py-1.5 font-bold text-white transition-colors hover:bg-blue-600 disabled:opacity-50"
         >
           {isSubmitting ? "Enviando..." : <><Send size={18} /> Publicar testimonio</>}
         </button>

@@ -33,7 +33,7 @@ export default function WikiEditor({
         content: initialContent,
         editorProps: {
             attributes: {
-                class: 'prose prose-slate dark:prose-invert max-w-none focus:outline-none min-h-[500px] text-[15px] leading-relaxed',
+                class: 'prose prose-slate dark:prose-invert max-w-none focus:outline-none min-h-48 text-sm leading-relaxed',
             },
         },
     });
@@ -60,7 +60,7 @@ export default function WikiEditor({
     }, [editor, onSave, initialContent, status]);
 
     return (
-        <div className="relative w-full max-w-4xl mx-auto py-12 px-6">
+        <div className="relative w-full max-w-4xl mx-auto py-1.5 px-3">
             {/* Status Indicator (Floating) */}
             <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
                 <AnimatePresence>
@@ -74,19 +74,19 @@ export default function WikiEditor({
                             {status === 'saving' && (
                                 <>
                                     <Loader2 size={14} className="animate-spin text-blue-600" />
-                                    <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Guardando...</span>
+                                    <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Guardando...</span>
                                 </>
                             )}
                             {status === 'saved' && (
                                 <>
                                     <Cloud size={14} className="text-emerald-500" />
-                                    <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Guardado</span>
+                                    <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Guardado</span>
                                 </>
                             )}
                             {status === 'error' && (
                                 <>
                                     <CloudOff size={14} className="text-rose-500" />
-                                    <span className="text-[11px] font-bold uppercase tracking-widest text-rose-500">Error al guardar</span>
+                                    <span className="text-[11px] font-bold uppercase tracking-wide text-rose-500">Error al guardar</span>
                                 </>
                             )}
                         </motion.div>
@@ -98,13 +98,13 @@ export default function WikiEditor({
             <EditorContent editor={editor} />
 
             {/* Footer Metadata */}
-            <div className="mt-12 pt-8 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-slate-400">
+            <div className="mt-3 pt-8 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-slate-400">
                 <div className="flex items-center gap-2">
                     <div className="size-2 rounded-full bg-emerald-500" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Editor Activo</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide">Editor Activo</span>
                 </div>
                 {lastSaved && (
-                    <span className="text-[10px] font-bold uppercase tracking-widest">
+                    <span className="text-[10px] font-bold uppercase tracking-wide">
                         Última edición: {lastSaved.toLocaleTimeString()}
                     </span>
                 )}

@@ -107,37 +107,37 @@ export default function AssetLibrary() {
                 secondaryAction={{ label: "Abrir Medios CMS", icon: Plus, onClick: () => window.location.assign("/cms/media") }}
             />
 
-            <div className="space-y-10 pb-20">
-                <section className="grid grid-cols-1 gap-6 md:grid-cols-4">
+            <div className="space-y-3 pb-4">
+                <section className="grid grid-cols-1 gap-3 md:grid-cols-4">
                     <StorageStat label="Documentos" count={`${stats.documents.count} archivos`} size={stats.documents.size} icon={FileText} color="blue" />
                     <StorageStat label="Imagenes" count={`${stats.images.count} archivos`} size={stats.images.size} icon={ImageIcon} color="cyan" />
                     <StorageStat label="Videos" count={`${stats.videos.count} archivos`} size={stats.videos.size} icon={Video} color="emerald" />
                     <StorageStat label="Uso Total" count={`${stats.total.count} archivos`} size={stats.total.size} icon={HardDrive} color="slate" />
                 </section>
 
-                <section className="space-y-8 rounded-[3rem] border border-slate-200 bg-white p-10 shadow-xl dark:border-white/10 dark:bg-white/5">
-                    <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
-                        <div className="flex items-center gap-6">
-                            <h3 className="text-xl font-black uppercase tracking-widest">Explorador de Medios</h3>
-                            <div className="flex rounded-2xl border border-slate-200 bg-slate-100 p-1.5 dark:border-white/5 dark:bg-white/10">
-                                <button onClick={() => setViewMode("grid")} className={clsx("rounded-xl p-2.5", viewMode === "grid" ? "bg-white text-blue-600 shadow-md dark:bg-blue-600 dark:text-white" : "text-slate-400")}><LayoutGrid size={20} /></button>
-                                <button onClick={() => setViewMode("list")} className={clsx("rounded-xl p-2.5", viewMode === "list" ? "bg-white text-blue-600 shadow-md dark:bg-blue-600 dark:text-white" : "text-slate-400")}><ListIcon size={20} /></button>
+                <section className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 shadow-xl dark:border-white/10 dark:bg-white/5">
+                    <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+                        <div className="flex items-center gap-3">
+                            <h3 className="text-xl font-semibold uppercase tracking-wide">Explorador de Medios</h3>
+                            <div className="flex rounded-lg border border-slate-200 bg-slate-100 p-1.5 dark:border-white/5 dark:bg-white/10">
+                                <button onClick={() => setViewMode("grid")} className={clsx("rounded-md p-2.5", viewMode === "grid" ? "bg-white text-blue-600 shadow-md dark:bg-blue-600 dark:text-white" : "text-slate-400")}><LayoutGrid size={20} /></button>
+                                <button onClick={() => setViewMode("list")} className={clsx("rounded-md p-2.5", viewMode === "list" ? "bg-white text-blue-600 shadow-md dark:bg-blue-600 dark:text-white" : "text-slate-400")}><ListIcon size={20} /></button>
                             </div>
                         </div>
                         <div className="relative">
-                            <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Buscar por nombre..." className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-12 py-3 text-sm font-bold outline-none md:w-80 dark:border-white/10 dark:bg-white/5" />
+                            <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Buscar por nombre..." className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none md:w-80 dark:border-white/10 dark:bg-white/5" />
                             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                         </div>
                     </div>
 
                     {loading ? (
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-                            {[1, 2, 3, 4].map((item) => <div key={item} className="aspect-square animate-pulse rounded-[2rem] bg-slate-50 dark:bg-white/5" />)}
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+                            {[1, 2, 3, 4].map((item) => <div key={item} className="aspect-square animate-pulse rounded-lg bg-slate-50 dark:bg-white/5" />)}
                         </div>
                     ) : filteredAssets.length === 0 ? (
-                        <div className="rounded-[2rem] border border-dashed border-slate-200 p-12 text-center text-sm text-slate-400 dark:border-white/10">No hay activos para mostrar.</div>
+                        <div className="rounded-lg border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400 dark:border-white/10">No hay activos para mostrar.</div>
                     ) : (
-                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={clsx("grid gap-6", viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5" : "grid-cols-1")}>
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={clsx("grid gap-3", viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5" : "grid-cols-1")}>
                             {filteredAssets.map((asset) => <AssetCard key={asset.id} asset={asset} mode={viewMode} onDelete={() => deleteAsset(asset)} />)}
                         </motion.div>
                     )}
@@ -153,31 +153,31 @@ function AssetCard({ asset, mode, onDelete }: { asset: Asset; mode: "grid" | "li
     const date = asset.createdAt ? new Date(asset.createdAt).toLocaleDateString("es-CO") : "Sin fecha";
     if (mode === "list") {
         return (
-            <div className="flex items-center justify-between rounded-3xl border border-transparent p-5 transition-all hover:border-blue-500/20 hover:bg-slate-50 dark:hover:bg-blue-600/5">
+            <div className="flex items-center justify-between rounded-lg border border-transparent p-3 transition-all hover:border-blue-500/20 hover:bg-slate-50 dark:hover:bg-blue-600/5">
                 <div className="flex items-center gap-5">
-                    <div className="flex size-12 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-sm dark:bg-white/10"><Icon size={24} /></div>
+                    <div className="flex size-7 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm dark:bg-white/10"><Icon size={24} /></div>
                     <div>
-                        <p className="text-[14px] font-black uppercase text-slate-800 dark:text-white">{asset.filename}</p>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{formatBytes(asset.sizeBytes)} | {date} | {asset.type}</p>
+                        <p className="text-sm font-semibold uppercase text-slate-800 dark:text-white">{asset.filename}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{formatBytes(asset.sizeBytes)} | {date} | {asset.type}</p>
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <a href={asset.url} download className="rounded-xl bg-white p-2.5 text-slate-400 shadow-sm hover:text-blue-600 dark:bg-white/10"><Download size={18} /></a>
-                    <button onClick={onDelete} className="rounded-xl bg-white p-2.5 text-slate-400 shadow-sm hover:text-rose-600 dark:bg-white/10"><Trash2 size={18} /></button>
+                    <a href={asset.url} download className="rounded-md bg-white p-2.5 text-slate-400 shadow-sm hover:text-blue-600 dark:bg-white/10"><Download size={18} /></a>
+                    <button onClick={onDelete} className="rounded-md bg-white p-2.5 text-slate-400 shadow-sm hover:text-rose-600 dark:bg-white/10"><Trash2 size={18} /></button>
                 </div>
             </div>
         );
     }
     return (
-        <div className="group relative flex flex-col items-center rounded-[2.5rem] border border-slate-100 bg-slate-50 p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-blue-500/30 hover:shadow-xl dark:border-white/5 dark:bg-white/5">
-            <div className="mb-6 flex aspect-square w-full items-center justify-center rounded-3xl bg-white text-slate-200 shadow-inner transition-all group-hover:text-blue-500 dark:bg-white/5">
+        <div className="group relative flex flex-col items-center rounded-lg border border-slate-100 bg-slate-50 p-3 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-blue-500/30 hover:shadow-xl dark:border-white/5 dark:bg-white/5">
+            <div className="mb-3 flex aspect-square w-full items-center justify-center rounded-lg bg-white text-slate-200 shadow-inner transition-all group-hover:text-blue-500 dark:bg-white/5">
                 <Icon size={64} strokeWidth={1} />
             </div>
-            <h4 className="w-full truncate px-2 text-[13px] font-black uppercase text-slate-800 dark:text-white">{asset.filename}</h4>
+            <h4 className="w-full truncate px-2 text-[13px] font-semibold uppercase text-slate-800 dark:text-white">{asset.filename}</h4>
             <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">{formatBytes(asset.sizeBytes)} | {date}</p>
             <div className="absolute right-4 top-4 flex flex-col gap-2 opacity-0 transition-all group-hover:opacity-100">
-                <a href={asset.url} download className="rounded-2xl bg-white p-3 text-slate-400 shadow-xl hover:text-blue-600 dark:bg-slate-800"><Download size={18} /></a>
-                <button onClick={onDelete} className="rounded-2xl bg-white p-3 text-slate-400 shadow-xl hover:text-rose-600 dark:bg-slate-800"><Trash2 size={18} /></button>
+                <a href={asset.url} download className="rounded-lg bg-white p-3 text-slate-400 shadow-xl hover:text-blue-600 dark:bg-slate-800"><Download size={18} /></a>
+                <button onClick={onDelete} className="rounded-lg bg-white p-3 text-slate-400 shadow-xl hover:text-rose-600 dark:bg-slate-800"><Trash2 size={18} /></button>
             </div>
         </div>
     );
@@ -191,12 +191,12 @@ function StorageStat({ label, count, size, icon: Icon, color }: any) {
         slate: "bg-slate-50 text-slate-600 dark:bg-slate-900/20",
     };
     return (
-        <div className="space-y-6 rounded-[3rem] border border-slate-200 bg-white p-8 shadow-sm dark:border-white/10 dark:bg-white/5">
-            <div className={clsx("flex size-14 items-center justify-center rounded-2xl", colors[color])}><Icon size={28} /></div>
+        <div className="space-y-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
+            <div className={clsx("flex size-7 items-center justify-center rounded-lg", colors[color])}><Icon size={28} /></div>
             <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{label}</p>
-                <h4 className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white">{size}</h4>
-                <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">{count}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
+                <h4 className="text-xl font-bold tracking-tighter text-slate-900 dark:text-white">{size}</h4>
+                <p className="mt-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{count}</p>
             </div>
         </div>
     );

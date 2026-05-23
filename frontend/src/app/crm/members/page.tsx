@@ -145,7 +145,7 @@ export default function MembersPage() {
                 {/* Header Hero */}
                 <div className="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 px-3 py-2 overflow-hidden">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.1)_0%,_transparent_60%)] pointer-events-none" />
-                    <div className="absolute -bottom-8 -right-8 size-64 rounded-full bg-white/5 blur-2xl" />
+                    <div className="absolute -bottom-8 -right-8 size-10 rounded-full bg-white/5 blur-2xl" />
                     <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
                         <div>
                             <p className="text-[10px] font-bold uppercase tracking-wide text-blue-200 mb-2">Consolidación</p>
@@ -170,8 +170,8 @@ export default function MembersPage() {
                             { label: 'Bautizados', value: stats.baptized, icon: Filter, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
                             { label: 'Nuevos (Mes)', value: stats.newThisMonth, icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
                         ].map((s, i) => (
-                            <div key={i} className="p-3 rounded-xl border border-slate-100 dark:border-white/5 bg-white dark:bg-white/5 flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition-all">
-                                <div className={clsx("size-8 rounded-xl flex items-center justify-center", s.bg, s.color)}>
+                            <div key={i} className="p-3 rounded-md border border-slate-100 dark:border-white/5 bg-white dark:bg-white/5 flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition-all">
+                                <div className={clsx("size-8 rounded-md flex items-center justify-center", s.bg, s.color)}>
                                     <s.icon size={20} />
                                 </div>
                                 <div>
@@ -222,7 +222,7 @@ export default function MembersPage() {
 
                     {/* Members List */}
                     {loading ? (
-                        <div className="text-center py-4 animate-pulse font-bold uppercase tracking-wide text-slate-400">
+                        <div className="text-center py-1.5 animate-pulse font-bold uppercase tracking-wide text-slate-400">
                             Sincronizando base de datos...
                         </div>
                     ) : (
@@ -239,7 +239,7 @@ export default function MembersPage() {
                                     >
                                         <div 
                                             onClick={() => router.push(`/crm/members/${member.id}`)}
-                                            className="group p-3 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/5 rounded-xl hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 transition-all cursor-pointer flex items-center justify-between"
+                                            className="group p-3 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/5 rounded-md hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 transition-all cursor-pointer flex items-center justify-between"
                                         >
                                             <div className="flex items-center gap-4">
                                                 <div className="relative">
@@ -265,7 +265,7 @@ export default function MembersPage() {
                                 ))}
                             </AnimatePresence>
                             {filteredMembers.length === 0 && (
-                                <div className="col-span-full py-4 text-center font-bold text-slate-400">
+                                <div className="col-span-full py-1.5 text-center font-bold text-slate-400">
                                     No se encontraron miembros con esos filtros.
                                 </div>
                             )}

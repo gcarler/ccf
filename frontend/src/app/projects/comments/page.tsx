@@ -107,7 +107,7 @@ export default function ProjectsCommentsPage() {
                         <select
                             value={projectId}
                             onChange={(event) => setProjectId(Number(event.target.value))}
-                            className="md:col-span-1 rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2 bg-white dark:bg-black/20"
+                            className="md:col-span-1 rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 bg-white dark:bg-black/20"
                         >
                             {projects.map((project) => (
                                 <option key={project.id} value={project.id}>{project.title}</option>
@@ -117,12 +117,12 @@ export default function ProjectsCommentsPage() {
                             value={content}
                             onChange={(event) => setContent(event.target.value)}
                             placeholder="Escribe un comentario para el proyecto..."
-                            className="md:col-span-2 rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2 bg-white dark:bg-black/20"
+                            className="md:col-span-2 rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 bg-white dark:bg-black/20"
                         />
                         <button
                             onClick={handleSubmit}
                             disabled={saving || !projectId || !content.trim()}
-                            className="md:col-span-1 rounded-xl bg-blue-600 text-white text-[11px] font-black uppercase tracking-widest disabled:opacity-50"
+                            className="md:col-span-1 rounded-md bg-blue-600 text-white text-[11px] font-semibold uppercase tracking-wide disabled:opacity-50"
                         >
                             {saving ? 'Guardando...' : 'Publicar'}
                         </button>
@@ -154,14 +154,14 @@ export default function ProjectsCommentsPage() {
                                     <h3 className="text-xs font-bold uppercase tracking-wide text-blue-600">{project?.title || `Proyecto #${pid}`}</h3>
                                     {rows.map((item) => (
                                         <article key={item.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5">
-                                            <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{item.author_name}</p>
+                                            <p className="font-semibold text-slate-500 uppercase tracking-wide">{item.author_name}</p>
                                             <p className="text-sm text-slate-700 dark:text-slate-200 mt-2">{item.content}</p>
                                             <div className="mt-3 flex items-center justify-between">
                                                 <span className="text-[10px] text-slate-400">{new Date(item.created_at).toLocaleString('es-PE')}</span>
                                                 <button
                                                     onClick={() => resolveComment(item)}
                                                     disabled={item.is_resolved}
-                                                    className="px-3 py-1 rounded-lg bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                                                    className="px-3 py-1 rounded-lg bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
                                                 >
                                                     {item.is_resolved ? 'Resuelto' : 'Resolver'}
                                                 </button>

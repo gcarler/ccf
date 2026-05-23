@@ -79,7 +79,7 @@ export default function MyTasks() {
         <CrmShell
             breadcrumbs={[{ label: 'CCF', icon: Calendar }, { label: 'Consolidación', icon: Users }, { label: 'Mis tareas', icon: Calendar }]}
             rightActions={
-                <button className="flex size-8 items-center justify-center rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-all">
+                <button className="flex size-8 items-center justify-center rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-all">
                     <Search size={20} />
                 </button>
             }
@@ -137,11 +137,11 @@ export default function MyTasks() {
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex-1 min-w-[240px] bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl p-4 text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden group"
+                    className="flex-1 min-w-[240px] bg-gradient-to-br from-blue-600 to-indigo-700 rounded-md p-4 text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden group"
                 >
                     <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
                     <div className="flex items-center gap-3 mb-3 relative z-10">
-                        <div className="p-2 bg-white/10 rounded-xl backdrop-blur-md border border-white/10"><CheckCircle2 size={18} /></div>
+                        <div className="p-2 bg-white/10 rounded-md backdrop-blur-md border border-white/10"><CheckCircle2 size={18} /></div>
                         <span className="text-[10px] font-bold uppercase tracking-wide text-blue-100">Tareas Pendientes</span>
                     </div>
                     <h3 className="text-xl font-bold mb-2 relative z-10 tracking-tighter">{stats.pending}</h3>
@@ -152,11 +152,11 @@ export default function MyTasks() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="flex-1 min-w-[240px] bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl p-4 shadow-sm relative overflow-hidden group task-aura"
+                    className="flex-1 min-w-[240px] bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-md p-4 shadow-sm relative overflow-hidden group task-aura"
                     style={{ '--aura-color': 'rgba(244, 63, 94, 0.15)' } as any}
                 >
                     <div className="flex items-center gap-3 mb-3">
-                        <div className="p-2 bg-rose-50 dark:bg-rose-900/20 rounded-xl text-rose-500 border border-rose-100 dark:border-rose-800"><AlertCircle size={18} /></div>
+                        <div className="p-2 bg-rose-50 dark:bg-rose-900/20 rounded-md text-rose-500 border border-rose-100 dark:border-rose-800"><AlertCircle size={18} /></div>
                         <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Vencidas</span>
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 tracking-tighter">{stats.overdue}</h3>
@@ -176,7 +176,7 @@ export default function MyTasks() {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={clsx(
-                                    "px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wide transition-all",
+                                    "px-4 py-2 rounded-md text-[11px] font-bold uppercase tracking-wide transition-all",
                                     activeTab === tab.id ? "bg-white dark:bg-slate-700 text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
                                 )}
                             >
@@ -186,7 +186,7 @@ export default function MyTasks() {
                     </div>
                     <div className="relative w-full md:w-64">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                        <input className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-xs font-bold" placeholder="Buscar en mi agenda..." />
+                        <input className="w-full pl-11 pr-4 py-2.5 rounded-md border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-xs font-bold" placeholder="Buscar en mi agenda..." />
                     </div>
                 </div>
 
@@ -195,9 +195,9 @@ export default function MyTasks() {
                     description="Las notas se vinculan automáticamente a la Hoja de Vida del miembro." 
                 />
 
-                <div className="rounded-xl border border-slate-100 dark:border-white/5 overflow-hidden bg-slate-50/30 dark:bg-transparent">
+                <div className="rounded-md border border-slate-100 dark:border-white/5 overflow-hidden bg-slate-50/30 dark:bg-transparent">
                     {loading ? (
-                        <div className="flex flex-col items-center justify-center py-4 gap-4">
+                        <div className="flex flex-col items-center justify-center py-1.5 gap-4">
                             <Loader2 className="animate-spin text-blue-600" size={32} />
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Sincronizando tareas pastorales...</p>
                         </div>
@@ -206,11 +206,11 @@ export default function MyTasks() {
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50/80 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
-                                        <th className="px-3 py-2 text-[9px] font-bold text-slate-400 uppercase tracking-[0.25em]">Actividad</th>
-                                        <th className="px-3 py-2 text-[9px] font-bold text-slate-400 uppercase tracking-[0.25em]">Contacto Vinc.</th>
-                                        <th className="px-3 py-2 text-[9px] font-bold text-slate-400 uppercase tracking-[0.25em]">Límite</th>
-                                        <th className="px-3 py-2 text-[9px] font-bold text-slate-400 uppercase tracking-[0.25em]">Prioridad</th>
-                                        <th className="px-3 py-2 text-[9px] font-bold text-slate-400 uppercase tracking-[0.25em] text-right">Estado</th>
+                                        <th className="px-3 py-2 text-[9px] font-bold text-slate-400 uppercase tracking-wide">Actividad</th>
+                                        <th className="px-3 py-2 text-[9px] font-bold text-slate-400 uppercase tracking-wide">Contacto Vinc.</th>
+                                        <th className="px-3 py-2 text-[9px] font-bold text-slate-400 uppercase tracking-wide">Límite</th>
+                                        <th className="px-3 py-2 text-[9px] font-bold text-slate-400 uppercase tracking-wide">Prioridad</th>
+                                        <th className="px-3 py-2 text-[9px] font-bold text-slate-400 uppercase tracking-wide text-right">Estado</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-white/5 bg-white dark:bg-transparent">
@@ -254,7 +254,7 @@ export default function MyTasks() {
                                                         <span className={clsx("px-3 py-1 rounded-lg text-[8px] font-bold uppercase tracking-wide", statusTone[task.status] || statusTone.todo)}>
                                                             {task.status === 'done' ? 'Completada' : 'Pendiente'}
                                                         </span>
-                                                        <button className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl text-slate-300 transition-all"><MoreHorizontal size={16} /></button>
+                                                        <button className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-md text-slate-300 transition-all"><MoreHorizontal size={16} /></button>
                                                     </div>
                                                 </td>
                                             </motion.tr>
@@ -264,7 +264,7 @@ export default function MyTasks() {
                             </table>
                         </div>
                     ) : (
-                        <div className="py-4 flex flex-col items-center justify-center text-center space-y-4">
+                        <div className="py-1.5 flex flex-col items-center justify-center text-center space-y-4">
                             <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-300"><CheckCircle2 size={32} strokeWidth={1} /></div>
                             <div className="space-y-1">
                                 <p className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-tight">Todo al día</p>

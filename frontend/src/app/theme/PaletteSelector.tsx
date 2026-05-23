@@ -44,7 +44,7 @@ export default function PaletteSelector() {
                         <button
                             key={id}
                             onClick={() => setTheme(id)}
-                            className={`text-left p-4 rounded-2xl border transition-all duration-300 ${
+                            className={`text-left p-4 rounded-lg border transition-all duration-300 ${
                                 isActive
                                     ? 'border-blue-500 shadow-lg shadow-blue-500/10 bg-white/90 dark:bg-slate-900'
                                     : 'border-slate-200 dark:border-white/10 bg-white/60 dark:bg-white/5 hover:border-slate-300 dark:hover:border-white/20'

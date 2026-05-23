@@ -54,7 +54,7 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
                     align="start" 
                     sideOffset={8}
                     collisionPadding={16}
-                    className="z-[100] w-[340px] bg-white dark:bg-[#25262b] rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/40 border border-slate-100 dark:border-white/10 p-5 font-display flex flex-col gap-4 animate-in fade-in zoom-in-95 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2"
+                    className="z-[100] w-[340px] bg-white dark:bg-[#25262b] rounded-lg shadow-2xl shadow-black/10 dark:shadow-black/40 border border-slate-100 dark:border-white/10 p-3 font-display flex flex-col gap-4 animate-in fade-in zoom-in-95 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2"
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="flex flex-col gap-1">
@@ -65,9 +65,9 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-                            className="w-full text-[18px] font-medium bg-transparent border-none outline-none placeholder:text-slate-400 text-slate-800 dark:text-white mb-2"
+                            className="w-full text-base font-medium bg-transparent border-none outline-none placeholder:text-slate-400 text-slate-800 dark:text-white mb-2"
                         />
-                        <div className="flex gap-2 text-[11px] font-black uppercase tracking-widest">
+                        <div className="flex gap-2 text-[11px] font-semibold uppercase tracking-wide">
                             <button 
                                 onClick={() => setType('event')}
                                 className={`flex-1 py-1.5 rounded-lg border transition-colors ${type === 'event' ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 border-blue-100 dark:border-blue-500/20' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 border-transparent'}`}
@@ -124,7 +124,7 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
                     <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
                         <button 
                             onClick={() => onOpenChange(false)}
-                            className="px-4 py-2 text-[11px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl transition-colors disabled:opacity-50"
+                            className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md transition-colors disabled:opacity-50"
                             disabled={isSaving}
                         >
                             Cerrar
@@ -132,7 +132,7 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
                         <button 
                             onClick={handleSave}
                             disabled={!title.trim() || isSaving}
-                            className="flex items-center gap-2 px-4 py-2 text-[11px] font-black uppercase tracking-widest bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                            className="flex items-center gap-2 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 rounded-md transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100"
                         >
                             {isSaving && <Loader2 size={12} className="animate-spin" />}
                             Guardar

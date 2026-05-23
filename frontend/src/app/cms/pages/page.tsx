@@ -207,7 +207,7 @@ export default function CmsPagesManagement() {
             onClick={() => openPage(page)}
             className="group bg-white dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer flex items-center gap-4"
           >
-            <div className="size-11 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all">
+            <div className="size-6 rounded-md bg-blue-50 dark:bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all">
               <FileText size={18} />
             </div>
             <div className="flex-1 min-w-0">
@@ -222,7 +222,7 @@ export default function CmsPagesManagement() {
             </div>
             <button
               onClick={(e) => { e.stopPropagation(); router.push(`/cms/builder?site=${siteKey}&page=${page.slug}`); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-[9px] font-semibold uppercase tracking-wide hover:bg-blue-100 transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-[9px] font-semibold uppercase tracking-wide hover:bg-blue-100 transition-all"
             >
               <PenTool size={11} /> Editar
             </button>
@@ -262,7 +262,7 @@ export default function CmsPagesManagement() {
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-[#141517]">
-      <header className="h-14 border-b border-slate-100 dark:border-white/5 flex items-center px-6 gap-3 shrink-0">
+      <header className="h-8 border-b border-slate-100 dark:border-white/5 flex items-center px-3 gap-3 shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <FileText size={16} className="text-blue-600 shrink-0" />
           <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 truncate">Gestion de paginas</h2>
@@ -306,7 +306,7 @@ export default function CmsPagesManagement() {
             exit={{ height: 0, opacity: 0 }}
             className="bg-blue-50 dark:bg-blue-900/10 border-b-2 border-blue-300 dark:border-blue-500/30 overflow-hidden shrink-0"
           >
-            <form onSubmit={handleCreatePage} className="px-6 py-4 flex items-center gap-4">
+            <form onSubmit={handleCreatePage} className="px-3 py-1.5 flex items-center gap-4">
               <div className="size-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
                 <Zap size={16} />
               </div>
@@ -317,7 +317,7 @@ export default function CmsPagesManagement() {
                 onKeyDown={(e) => e.key === "Escape" && setIsQuickAddOpen(false)}
                 placeholder="Titulo de la nueva pagina (Enter para crear)"
                 disabled={!canEdit}
-                className="flex-1 bg-transparent border-none text-[15px] font-bold text-blue-900 dark:text-blue-200 placeholder:text-blue-400 focus:ring-0"
+                className="flex-1 bg-transparent border-none text-sm font-bold text-blue-900 dark:text-blue-200 placeholder:text-blue-400 focus:ring-0"
               />
               <button type="submit" disabled={!canEdit} className="bg-blue-600 text-white px-3 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50">Guardar</button>
             </form>
@@ -325,12 +325,12 @@ export default function CmsPagesManagement() {
         )}
       </AnimatePresence>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-3">
         {loading ? (
           <div className="space-y-4">{[1, 2, 3].map((i) => <div key={i} className="h-20 bg-slate-50 dark:bg-white/5 rounded-lg animate-pulse" />)}</div>
         ) : visiblePages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-50 py-20">
-            <div className="size-16 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400"><FileText size={32} /></div>
+          <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-50 py-1.5">
+            <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400"><FileText size={32} /></div>
             <div>
               <p className="font-bold text-slate-900 dark:text-white">No hay paginas creadas</p>
               <p className="text-sm text-slate-500">Usa la barra superior para crear tu primera pagina.</p>
@@ -361,7 +361,7 @@ export default function CmsPagesManagement() {
 
                   <div
                     onClick={() => router.push(`/cms/pages/${page.slug}`)}
-                    className="size-12 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all cursor-pointer"
+                    className="size-7 rounded-md bg-blue-50 dark:bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all cursor-pointer"
                   >
                     <FileText size={20} />
                   </div>
@@ -384,7 +384,7 @@ export default function CmsPagesManagement() {
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => router.push(`/cms/builder?site=${siteKey}&page=${page.slug}`)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-[9px] font-semibold uppercase tracking-wide hover:bg-blue-100 transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-[9px] font-semibold uppercase tracking-wide hover:bg-blue-100 transition-all"
                     >
                       <PenTool size={11} /> Editar
                     </button>
@@ -392,7 +392,7 @@ export default function CmsPagesManagement() {
                       <button
                         onClick={(e) => { e.stopPropagation(); handleRestorePage(page); }}
                         disabled={!canEdit}
-                        className="p-2 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-xl text-slate-400 hover:text-emerald-600 transition-all disabled:opacity-50"
+                        className="p-2 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-md text-slate-400 hover:text-emerald-600 transition-all disabled:opacity-50"
                         title="Restaurar a borrador"
                       >
                         <RotateCcw size={15} />
@@ -401,7 +401,7 @@ export default function CmsPagesManagement() {
                       <button
                         onClick={(e) => { e.stopPropagation(); handleArchivePage(page); }}
                         disabled={!canEdit}
-                        className="p-2 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-xl text-slate-400 hover:text-amber-600 transition-all disabled:opacity-50"
+                        className="p-2 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-md text-slate-400 hover:text-amber-600 transition-all disabled:opacity-50"
                         title="Archivar pagina"
                       >
                         <Archive size={15} />
@@ -472,7 +472,7 @@ export default function CmsPagesManagement() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="size-8 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center shrink-0">
+                          <div className="size-8 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center shrink-0">
                             <FileText size={14} />
                           </div>
                           <span className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate max-w-[200px]">{page.title}</span>
@@ -544,21 +544,21 @@ export default function CmsPagesManagement() {
         {selectedPage && (
           <div className="space-y-6">
             <section className="space-y-3">
-              <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400">Configuracion general</label>
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Configuracion general</label>
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <span className="text-[12px] font-medium text-slate-700 dark:text-slate-300">Titulo</span>
-                  <input type="text" value={selectedPage.title} onChange={(e) => setSelectedPage({ ...selectedPage, title: e.target.value })} className="w-full px-3 py-2 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl" disabled={!canEdit} />
+                  <input type="text" value={selectedPage.title} onChange={(e) => setSelectedPage({ ...selectedPage, title: e.target.value })} className="w-full px-3 py-2 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-md" disabled={!canEdit} />
                 </div>
                 <div className="space-y-1.5">
                   <span className="text-[12px] font-medium text-slate-700 dark:text-slate-300">Slug</span>
-                  <input type="text" value={selectedPage.slug} onChange={(e) => setSelectedPage({ ...selectedPage, slug: e.target.value })} className="w-full px-3 py-2 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl" disabled={!canEdit} />
+                  <input type="text" value={selectedPage.slug} onChange={(e) => setSelectedPage({ ...selectedPage, slug: e.target.value })} className="w-full px-3 py-2 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-md" disabled={!canEdit} />
                 </div>
               </div>
             </section>
 
             <section className="space-y-3">
-              <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400">SEO (Optimizacion y redes)</label>
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">SEO (Optimizacion y redes)</label>
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <span className="text-[12px] font-medium text-slate-700 dark:text-slate-300">Meta descripcion</span>
@@ -566,7 +566,7 @@ export default function CmsPagesManagement() {
                     rows={3}
                     value={(selectedPage.seo_json?.meta_description as string) || ""}
                     onChange={(e) => setSelectedPage({ ...selectedPage, seo_json: { ...(selectedPage.seo_json || {}), meta_description: e.target.value } })}
-                    className="w-full px-3 py-2 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl resize-none custom-scrollbar"
+                    className="w-full px-3 py-2 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-md resize-none custom-scrollbar"
                     disabled={!canEdit}
                     placeholder="Breve descripcion para Google..."
                   />
@@ -577,12 +577,12 @@ export default function CmsPagesManagement() {
                     type="url"
                     value={(selectedPage.seo_json?.meta_image as string) || ""}
                     onChange={(e) => setSelectedPage({ ...selectedPage, seo_json: { ...(selectedPage.seo_json || {}), meta_image: e.target.value } })}
-                    className="w-full px-3 py-2 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-xl"
+                    className="w-full px-3 py-2 text-[13px] bg-white dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-md"
                     disabled={!canEdit}
                     placeholder="https://..."
                   />
                   {(selectedPage.seo_json?.meta_image as string) && (
-                    <div className="mt-2 rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 h-32 bg-slate-100 dark:bg-white/5 relative">
+                    <div className="mt-2 rounded-md overflow-hidden border border-slate-200 dark:border-white/10 h-32 bg-slate-100 dark:bg-white/5 relative">
                        <img src={selectedPage.seo_json?.meta_image as string} alt="OG Preview" className="absolute inset-0 w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
                     </div>
                   )}
@@ -591,14 +591,14 @@ export default function CmsPagesManagement() {
             </section>
 
             <div className="pt-6 border-t border-slate-100 dark:border-white/5">
-              <button onClick={handleSavePage} disabled={!canEdit} className="w-full bg-blue-600 text-white py-3 rounded-xl text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50">
+              <button onClick={handleSavePage} disabled={!canEdit} className="w-full bg-blue-600 text-white py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50">
                 Guardar cambios
               </button>
               {selectedPage.status === "archived" ? (
                 <button
                   onClick={() => handleRestorePage(selectedPage)}
                   disabled={!canEdit}
-                  className="mt-3 w-full border border-emerald-200 text-emerald-700 dark:text-emerald-300 py-3 rounded-xl text-[11px] font-semibold uppercase tracking-wide hover:bg-emerald-50 dark:hover:bg-emerald-500/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="mt-3 w-full border border-emerald-200 text-emerald-700 dark:text-emerald-300 py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-emerald-50 dark:hover:bg-emerald-500/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <RotateCcw size={14} /> Restaurar a borrador
                 </button>
@@ -606,7 +606,7 @@ export default function CmsPagesManagement() {
                 <button
                   onClick={() => handleArchivePage(selectedPage)}
                   disabled={!canEdit}
-                  className="mt-3 w-full border border-amber-200 text-amber-700 dark:text-amber-300 py-3 rounded-xl text-[11px] font-semibold uppercase tracking-wide hover:bg-amber-50 dark:hover:bg-amber-500/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="mt-3 w-full border border-amber-200 text-amber-700 dark:text-amber-300 py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-amber-50 dark:hover:bg-amber-500/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <Archive size={14} /> Archivar pagina
                 </button>

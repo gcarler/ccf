@@ -87,7 +87,7 @@ export default function ProjectsGeneralPage() {
                         <select
                             value={projectId}
                             onChange={(event) => setProjectId(Number(event.target.value))}
-                            className="rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2 bg-white dark:bg-black/20"
+                            className="rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 bg-white dark:bg-black/20"
                         >
                             {projects.map((project) => (
                                 <option key={project.id} value={project.id}>{project.title}</option>
@@ -97,12 +97,12 @@ export default function ProjectsGeneralPage() {
                             value={content}
                             onChange={(event) => setContent(event.target.value)}
                             placeholder="Escribe una actualización para el canal general..."
-                            className="md:col-span-2 rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2 bg-white dark:bg-black/20"
+                            className="md:col-span-2 rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 bg-white dark:bg-black/20"
                         />
                         <button
                             onClick={postMessage}
                             disabled={saving || !projectId || !content.trim()}
-                            className="rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                            className="rounded-md bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
                         >
                             {saving ? 'Publicando...' : 'Publicar'}
                         </button>

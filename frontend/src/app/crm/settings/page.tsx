@@ -203,7 +203,7 @@ export default function CrmSettingsPage() {
                             {activeSection === 'general' && (
                                 <motion.div key="general" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-white dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
                                     <div className="space-y-1 border-b border-slate-100 dark:border-white/5 pb-4">
-                                        <h3 className="text-[15px] font-bold text-slate-800 dark:text-white">Parámetros de Identidad</h3>
+                                        <h3 className="text-sm font-bold text-slate-800 dark:text-white">Parámetros de Identidad</h3>
                                         <p className="text-[12px] text-slate-500 font-medium">Define cómo se identifica tu ministerio en reportes y correos.</p>
                                     </div>
 
@@ -212,7 +212,7 @@ export default function CrmSettingsPage() {
                                         <SettingInput label="Email de Respuesta Público" value={config.contactEmail} onChange={(val: string) => setConfig({...config, contactEmail: val})} />
                                         <div className="space-y-1.5">
                                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide pl-1">Zona Horaria Base</label>
-                                            <select className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all appearance-none cursor-pointer" value={config.timezone} onChange={e => setConfig({...config, timezone: e.target.value})}>
+                                            <select className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all appearance-none cursor-pointer" value={config.timezone} onChange={e => setConfig({...config, timezone: e.target.value})}>
                                                 <option value="America/Bogota">Bogotá (GMT-5)</option>
                                                 <option value="America/New_York">New York (GMT-4)</option>
                                                 <option value="Europe/Madrid">Madrid (GMT+2)</option>
@@ -225,7 +225,7 @@ export default function CrmSettingsPage() {
                             {activeSection === 'integrations' && (
                                 <motion.div key="integrations" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-white dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
                                     <div className="space-y-1 border-b border-slate-100 dark:border-white/5 pb-4">
-                                        <h3 className="text-[15px] font-bold text-slate-800 dark:text-white">Pasarelas de Conexión</h3>
+                                        <h3 className="text-sm font-bold text-slate-800 dark:text-white">Pasarelas de Conexión</h3>
                                         <p className="text-[12px] text-slate-500 font-medium">Habilita canales oficiales para mensajería y automatizaciones.</p>
                                     </div>
 
@@ -257,11 +257,11 @@ export default function CrmSettingsPage() {
                                 <motion.div key="security" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3">
                                     <div className="bg-white dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm space-y-3">
                                         <div className="space-y-1 border-b border-slate-100 dark:border-white/5 pb-4">
-                                            <h3 className="text-[15px] font-bold text-slate-800 dark:text-white">Políticas de Seguridad</h3>
+                                            <h3 className="text-sm font-bold text-slate-800 dark:text-white">Políticas de Seguridad</h3>
                                             <p className="text-[12px] text-slate-500 font-medium">Controla la infraestructura y salvaguardia de datos.</p>
                                         </div>
 
-                                        <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+                                        <div className="flex items-center justify-between p-4 rounded-md bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
                                             <div className="flex items-start gap-4">
                                                 <Database size={18} className="text-blue-600 dark:text-blue-400 mt-0.5" />
                                                 <div>
@@ -272,7 +272,7 @@ export default function CrmSettingsPage() {
                                             <span className="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-md text-[10px] font-bold uppercase tracking-wide">Activo</span>
                                         </div>
 
-                                        <div className="flex items-center justify-between p-4 rounded-xl bg-rose-50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/20 mt-4">
+                                        <div className="flex items-center justify-between p-4 rounded-md bg-rose-50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/20 mt-4">
                                             <div className="flex items-start gap-4">
                                                 <AlertTriangle size={18} className="text-rose-600 dark:text-rose-500 mt-0.5" />
                                                 <div>
@@ -301,12 +301,12 @@ export default function CrmSettingsPage() {
                             {activeSection === 'consolidation' && (
                                 <motion.div key="consolidation" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-white dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/5 p-4 md:p-4 shadow-sm">
                                     <div className="space-y-1 border-b border-slate-100 dark:border-white/5 pb-4">
-                                        <h3 className="text-[15px] font-bold text-slate-800 dark:text-white">Cargos de Consolidación</h3>
+                                        <h3 className="text-sm font-bold text-slate-800 dark:text-white">Cargos de Consolidación</h3>
                                         <p className="text-[12px] text-slate-500 font-medium">Define los roles nativos que operan el seguimiento de personas.</p>
                                     </div>
 
                                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                                        <div className="space-y-4 p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+                                        <div className="space-y-4 p-4 rounded-md bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
                                             <div className="flex items-center justify-between">
                                                 <h4 className="text-xs font-bold text-slate-800 dark:text-white">
                                                     {editingPositionId ? 'Editar cargo' : 'Nuevo cargo'}
@@ -329,7 +329,7 @@ export default function CrmSettingsPage() {
                                                     value={positionForm.description}
                                                     onChange={(e) => setPositionForm({ ...positionForm, description: e.target.value })}
                                                     rows={4}
-                                                    className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400"
+                                                    className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400"
                                                 />
                                             </div>
                                             <label className="flex items-center gap-3 text-xs font-medium text-slate-700 dark:text-slate-200">
@@ -345,14 +345,14 @@ export default function CrmSettingsPage() {
                                                 type="button"
                                                 onClick={handleSavePosition}
                                                 disabled={isCreatingPosition || !positionForm.name.trim()}
-                                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white hover:bg-blue-700 transition-all disabled:opacity-50"
+                                                className="inline-flex items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white hover:bg-blue-700 transition-all disabled:opacity-50"
                                             >
                                                 {isCreatingPosition ? <SpinnerIcon className="animate-spin" size={14} /> : <Plus size={14} />}
                                                 {editingPositionId ? 'Guardar cambios' : 'Crear cargo'}
                                             </button>
                                         </div>
 
-                                        <div className="space-y-4 p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+                                        <div className="space-y-4 p-4 rounded-md bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
                                             <div className="flex items-center justify-between">
                                                 <h4 className="text-xs font-bold text-slate-800 dark:text-white">Catálogo actual</h4>
                                                 <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
@@ -363,17 +363,17 @@ export default function CrmSettingsPage() {
                                             {isLoadingPositions ? (
                                                 <div className="space-y-3">
                                                     {[...Array(3)].map((_, i) => (
-                                                        <div key={i} className="h-16 rounded-xl bg-white dark:bg-black/20 border border-slate-100 dark:border-white/10 animate-pulse" />
+                                                        <div key={i} className="h-8 rounded-md bg-white dark:bg-black/20 border border-slate-100 dark:border-white/10 animate-pulse" />
                                                     ))}
                                                 </div>
                                             ) : positions.length === 0 ? (
-                                                <div className="rounded-xl border border-dashed border-slate-200 dark:border-white/10 p-4 text-center text-slate-500">
+                                                <div className="rounded-md border border-dashed border-slate-200 dark:border-white/10 p-4 text-center text-slate-500">
                                                     No hay cargos registrados aún.
                                                 </div>
                                             ) : (
                                                 <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
                                                     {positions.map((position) => (
-                                                        <div key={position.id} className="flex items-start justify-between gap-4 rounded-xl bg-white dark:bg-[#111317] border border-slate-100 dark:border-white/10 p-4">
+                                                        <div key={position.id} className="flex items-start justify-between gap-4 rounded-md bg-white dark:bg-[#111317] border border-slate-100 dark:border-white/10 p-4">
                                                             <div className="min-w-0">
                                                                 <div className="flex items-center gap-2">
                                                                     <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{position.name}</p>
@@ -438,7 +438,7 @@ function SettingInput({ label, value, onChange, placeholder, type = "text" }: an
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 placeholder={placeholder}
-                className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400"
+                className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-black/20 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400"
             />
         </div>
     );
@@ -446,7 +446,7 @@ function SettingInput({ label, value, onChange, placeholder, type = "text" }: an
 
 function ToggleSetting({ icon: Icon, color, title, desc, active, onToggle }: any) {
     return (
-        <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 transition-colors group">
+        <div className="flex items-center justify-between p-4 rounded-md bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 transition-colors group">
             <div className="flex items-center gap-4">
                 <div className={clsx("size-9 rounded-lg flex items-center justify-center shrink-0", color)}>
                     <Icon size={16} strokeWidth={2.5} />

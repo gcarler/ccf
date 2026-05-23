@@ -140,14 +140,14 @@ export default function LeadDetailPage() {
                                 
                                 <div className="h-px bg-slate-100 dark:bg-white/5" />
                                 
-                                <button className="w-full py-1.5 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
+                                <button className="w-full py-1.5 bg-blue-600 text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
                                     Mover a Siguiente Etapa
                                 </button>
                             </div>
                         </DSCard>
 
-                        <div className="p-4 bg-slate-900 rounded-xl text-white space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400">
+                        <div className="p-4 bg-slate-900 rounded-md text-white space-y-4">
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-emerald-400">
                                 <MessageSquare size={14} /> Optimus Brain
                             </div>
                             <p className="text-[11px] font-medium leading-relaxed opacity-80">

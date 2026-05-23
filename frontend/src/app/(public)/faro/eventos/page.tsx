@@ -76,17 +76,17 @@ export default function EventosPage() {
     ];
 
     return (
-        <main className="pt-[88px] pb-20 px-6 md:px-12 max-w-7xl mx-auto">
-            <header className="mb-14 pt-12 md:grid md:grid-cols-12 gap-8 items-end">
+        <main className="pt-[88px] pb-4 px-3 md:px-4 max-w-7xl mx-auto">
+            <header className="mb-14 pt-12 md:grid md:grid-cols-12 gap-3 items-end">
                 <div className="md:col-span-8">
                     <span
-                        className="text-xs font-black uppercase tracking-[0.25em] mb-4 block"
+                        className="text-xs font-semibold uppercase tracking-wide mb-4 block"
                         style={{ color: "var(--faro-secondary)" }}
                     >
                         {heroEyebrow}
                     </span>
                     <h1
-                        className="font-black tracking-tighter leading-tight"
+                        className="font-bold tracking-tighter leading-tight"
                         style={{
                             fontSize: "clamp(2.5rem, 6vw, 5rem)",
                             color: "var(--faro-on-surface)",
@@ -95,14 +95,14 @@ export default function EventosPage() {
                         {heroTitle}
                     </h1>
                 </div>
-                <div className="md:col-span-4 mt-6 md:mt-0">
+                <div className="md:col-span-4 mt-3 md:mt-0">
                     <p style={{ color: "var(--faro-on-surface-variant)" }}>{heroDescription}</p>
                 </div>
             </header>
 
-            <section className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+            <section className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-16">
                 <div
-                    className="md:col-span-2 relative h-[440px] rounded-3xl overflow-hidden group"
+                    className="md:col-span-2 relative h-[440px] rounded-lg overflow-hidden group"
                     style={{ background: "var(--faro-surface-container)" }}
                 >
                     {featuredEvent?.img ? (
@@ -130,10 +130,10 @@ export default function EventosPage() {
                         }}
                     />
                     {featuredEvent ? (
-                        <div className="absolute bottom-0 p-8 w-full">
+                        <div className="absolute bottom-0 p-4 w-full">
                             <div className="flex items-center gap-2 mb-4">
                                 <span
-                                    className="px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase"
+                                    className="px-3 py-1 rounded-full font-semibold tracking-wide uppercase"
                                     style={{
                                         background: "var(--faro-primary-container)",
                                         color: "var(--faro-primary)",
@@ -151,14 +151,14 @@ export default function EventosPage() {
                                 ) : null}
                             </div>
                             <h2
-                                className="text-3xl font-black mb-4"
+                                className="text-xl font-black mb-4"
                                 style={{ color: "var(--faro-on-surface)" }}
                             >
                                 {featuredEvent.title || "Evento destacado"}
                             </h2>
-                            <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-3">
                                 <button
-                                    className="px-8 py-3 rounded-2xl font-black text-sm uppercase tracking-widest text-white transition-all hover:scale-105"
+                                    className="px-4 py-3 rounded-lg font-black text-sm uppercase tracking-wide text-white transition-all hover:scale-105"
                                     style={{
                                         background:
                                             "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
@@ -177,19 +177,19 @@ export default function EventosPage() {
                             </div>
                         </div>
                     ) : (
-                        <div className="absolute inset-0 flex items-center justify-center p-8">
+                        <div className="absolute inset-0 flex items-center justify-center p-4">
                             <div
-                                className="max-w-md rounded-3xl p-8 text-center"
+                                className="max-w-md rounded-lg p-4 text-center"
                                 style={{ background: "rgba(0,13,42,0.68)", backdropFilter: "blur(12px)" }}
                             >
                                 <p
-                                    className="text-[10px] font-black uppercase tracking-[0.2em] mb-3"
+                                    className="text-[10px] font-semibold uppercase tracking-wide mb-3"
                                     style={{ color: "var(--faro-on-surface-variant)" }}
                                 >
                                     Sin eventos publicados
                                 </p>
                                 <h2
-                                    className="text-3xl font-black mb-3"
+                                    className="text-xl font-black mb-3"
                                     style={{ color: "var(--faro-on-surface)" }}
                                 >
                                     Esperando agenda desde el CMS
@@ -206,12 +206,12 @@ export default function EventosPage() {
                 </div>
 
                 <div
-                    className="rounded-3xl p-8 flex flex-col justify-between"
+                    className="rounded-lg p-4 flex flex-col justify-between"
                     style={{ background: "var(--faro-surface-container-low)" }}
                 >
                     <div>
                         <h3
-                            className="text-xl font-black mb-6"
+                            className="text-xl font-black mb-3"
                             style={{ color: "var(--faro-on-surface)" }}
                         >
                             Filtrar por tipo
@@ -221,7 +221,7 @@ export default function EventosPage() {
                                 <button
                                     key={cat}
                                     onClick={() => setActiveFilter(cat)}
-                                    className="w-full px-4 py-3 rounded-2xl flex items-center justify-between text-sm font-bold transition-all text-left"
+                                    className="w-full px-4 py-3 rounded-lg flex items-center justify-between text-sm font-bold transition-all text-left"
                                     style={{
                                         background:
                                             activeFilter === cat
@@ -242,11 +242,11 @@ export default function EventosPage() {
                         </div>
                     </div>
                     <div
-                        className="mt-6 pt-6"
+                        className="mt-3 pt-6"
                         style={{ borderTop: "1px solid var(--faro-outline-variant)" }}
                     >
                         <p
-                            className="text-[10px] font-black uppercase tracking-[0.2em] mb-3"
+                            className="text-[10px] font-semibold uppercase tracking-wide mb-3"
                             style={{ color: "var(--faro-on-surface-variant)" }}
                         >
                             Proximo en 48 horas
@@ -254,7 +254,7 @@ export default function EventosPage() {
                         {upcomingEvent ? (
                             <div className="flex items-center gap-4">
                                 <div
-                                    className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shrink-0"
+                                    className="w-12 h-8 rounded-lg flex items-center justify-center font-black text-lg shrink-0"
                                     style={{
                                         background: "var(--faro-primary-container)",
                                         color: "var(--faro-primary)",
@@ -264,7 +264,7 @@ export default function EventosPage() {
                                 </div>
                                 <div>
                                     <p
-                                        className="text-sm font-black"
+                                        className="text-sm font-semibold"
                                         style={{ color: "var(--faro-on-surface)" }}
                                     >
                                         {upcomingEvent.title || "Proximo evento"}
@@ -286,14 +286,14 @@ export default function EventosPage() {
                 </div>
             </section>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-20">
                 {hasEvents ? (
                     upcomingCards.map((event) => {
                         const { month, day } = formatMonthDay(event.date);
                         return (
                             <article
                                 key={`${event.title || "event"}-${event.date || "date"}`}
-                                className="rounded-3xl overflow-hidden group transition-transform hover:-translate-y-1"
+                                className="rounded-lg overflow-hidden group transition-transform hover:-translate-y-1"
                                 style={{ background: "var(--faro-surface-container-low)" }}
                             >
                                 <div className="h-52 relative overflow-hidden">
@@ -315,7 +315,7 @@ export default function EventosPage() {
                                     )}
                                     {month || day ? (
                                         <div
-                                            className="absolute top-4 right-4 p-3 rounded-2xl text-center min-w-[64px]"
+                                            className="absolute top-4 right-4 p-3 rounded-lg text-center min-w-[64px]"
                                             style={{
                                                 background: "rgba(0,13,42,0.8)",
                                                 backdropFilter: "blur(12px)",
@@ -323,7 +323,7 @@ export default function EventosPage() {
                                         >
                                             {month ? (
                                                 <p
-                                                    className="text-[9px] font-black uppercase tracking-wider"
+                                                    className="text-[9px] font-semibold uppercase tracking-wider"
                                                     style={{ color: "var(--faro-on-surface-variant)" }}
                                                 >
                                                     {month}
@@ -342,7 +342,7 @@ export default function EventosPage() {
                                 </div>
                                 <div className="p-7">
                                     <span
-                                        className="text-[10px] font-black uppercase tracking-widest mb-2 block"
+                                        className="text-[10px] font-semibold uppercase tracking-wide mb-2 block"
                                         style={{ color: "var(--faro-secondary)" }}
                                     >
                                         {event.category || "Evento"}
@@ -365,17 +365,17 @@ export default function EventosPage() {
                     })
                 ) : (
                     <div
-                        className="md:col-span-3 rounded-3xl p-10 text-center"
+                        className="md:col-span-3 rounded-lg p-4 text-center"
                         style={{ background: "var(--faro-surface-container-low)" }}
                     >
                         <p
-                            className="text-[10px] font-black uppercase tracking-[0.2em] mb-3"
+                            className="text-[10px] font-semibold uppercase tracking-wide mb-3"
                             style={{ color: "var(--faro-on-surface-variant)" }}
                         >
                             Sin eventos publicados
                         </p>
                         <h3
-                            className="text-2xl font-black mb-2"
+                            className="text-lg font-black mb-2"
                             style={{ color: "var(--faro-on-surface)" }}
                         >
                             El calendario aun no tiene contenido real
@@ -388,10 +388,10 @@ export default function EventosPage() {
             </div>
 
             <section className="mb-20">
-                <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-3 gap-4">
                     <div>
                         <h2
-                            className="text-3xl font-black tracking-tight"
+                            className="text-xl font-bold tracking-tight"
                             style={{ color: "var(--faro-on-surface)" }}
                         >
                             Explora nuestro Calendario
@@ -404,13 +404,13 @@ export default function EventosPage() {
                         </p>
                     </div>
                     <div
-                        className="inline-flex p-1 rounded-2xl"
+                        className="inline-flex p-1 rounded-lg"
                         style={{ background: "var(--faro-surface-container-high)" }}
                     >
                         {["Semanal", "Mensual", "Anual"].map((value) => (
                             <button
                                 key={value}
-                                className="px-6 py-2 rounded-2xl text-xs font-black tracking-widest uppercase transition-all"
+                                className="px-3 py-2 rounded-lg text-xs font-bold tracking-wide uppercase transition-all"
                                 style={
                                     value === "Mensual"
                                         ? {
@@ -426,25 +426,25 @@ export default function EventosPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                     <div
-                        className="lg:col-span-8 rounded-3xl p-6 md:p-10"
+                        className="lg:col-span-8 rounded-lg p-3 md:p-4"
                         style={{
                             background: "var(--faro-surface-container-low)",
                             border: "1px solid var(--faro-outline-variant)",
                         }}
                     >
-                        <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-4">
                                 <h3
-                                    className="text-2xl font-black"
+                                    className="text-lg font-black"
                                     style={{ color: "var(--faro-on-surface)" }}
                                 >
                                     Junio 2025
                                 </h3>
                                 <div className="flex gap-1">
                                     <button
-                                        className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors hover:scale-110"
+                                        className="w-8 h-8 rounded-md flex items-center justify-center transition-colors hover:scale-110"
                                         style={{
                                             background: "var(--faro-surface-container)",
                                             color: "var(--faro-on-surface)",
@@ -453,7 +453,7 @@ export default function EventosPage() {
                                         <ChevronLeft size={16} />
                                     </button>
                                     <button
-                                        className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors hover:scale-110"
+                                        className="w-8 h-8 rounded-md flex items-center justify-center transition-colors hover:scale-110"
                                         style={{
                                             background: "var(--faro-surface-container)",
                                             color: "var(--faro-on-surface)",
@@ -464,7 +464,7 @@ export default function EventosPage() {
                                 </div>
                             </div>
                             <button
-                                className="text-xs font-black uppercase tracking-widest"
+                                className="text-xs font-semibold uppercase tracking-wide"
                                 style={{ color: "var(--faro-primary)" }}
                             >
                                 HOY
@@ -475,7 +475,7 @@ export default function EventosPage() {
                             {["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"].map((day) => (
                                 <div
                                     key={day}
-                                    className="text-center py-2 text-[10px] font-black uppercase tracking-widest"
+                                    className="text-center py-2 text-[10px] font-semibold uppercase tracking-wide"
                                     style={{ color: "var(--faro-on-surface-variant)" }}
                                 >
                                     {day}
@@ -487,7 +487,7 @@ export default function EventosPage() {
                             {calendarDays.map((day, index) => (
                                 <div
                                     key={index}
-                                    className="aspect-square p-1 flex flex-col items-center justify-between rounded-xl cursor-pointer transition-all hover:scale-105"
+                                    className="aspect-square p-1 flex flex-col items-center justify-between rounded-md cursor-pointer transition-all hover:scale-105"
                                     style={
                                         day.n === 24 && !day.prev
                                             ? {
@@ -523,14 +523,14 @@ export default function EventosPage() {
 
                     <div className="lg:col-span-4 space-y-5">
                         <div
-                            className="rounded-3xl p-8"
+                            className="rounded-lg p-4"
                             style={{
                                 background: "var(--faro-surface-container-low)",
                                 border: "1px solid var(--faro-outline-variant)",
                             }}
                         >
                             <h3
-                                className="text-xl font-black mb-6 flex items-center gap-2"
+                                className="text-xl font-black mb-3 flex items-center gap-2"
                                 style={{ color: "var(--faro-on-surface)" }}
                             >
                                 <Star size={18} style={{ color: "var(--faro-primary)" }} />
@@ -549,14 +549,14 @@ export default function EventosPage() {
                                             />
                                             <div>
                                                 <p
-                                                    className="text-[10px] font-black uppercase tracking-widest mb-0.5"
+                                                    className="text-[10px] font-semibold uppercase tracking-wide mb-0.5"
                                                     style={{ color: "var(--faro-primary)" }}
                                                 >
                                                     {event.category || "Evento"}
                                                     {event.date ? ` • ${event.date}` : ""}
                                                 </p>
                                                 <h4
-                                                    className="text-sm font-black group-hover:opacity-70 transition-opacity"
+                                                    className="text-sm font-semibold group-hover:opacity-70 transition-opacity"
                                                     style={{ color: "var(--faro-on-surface)" }}
                                                 >
                                                     {event.title || "Evento publicado"}
@@ -577,7 +577,7 @@ export default function EventosPage() {
                                 )}
                             </div>
                             <button
-                                className="w-full mt-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border transition-all hover:scale-105"
+                                className="w-full mt-3 py-3 rounded-lg text-xs font-semibold uppercase tracking-wide border transition-all hover:scale-105"
                                 style={{
                                     borderColor: "var(--faro-primary)",
                                     color: "var(--faro-primary)",
@@ -588,14 +588,14 @@ export default function EventosPage() {
                         </div>
 
                         <div
-                            className="rounded-3xl p-6 flex items-center gap-4"
+                            className="rounded-lg p-3 flex items-center gap-4"
                             style={{
                                 background: "var(--faro-primary-container)",
                                 border: "1px solid var(--faro-outline-variant)",
                             }}
                         >
                             <div
-                                className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
+                                className="w-12 h-8 rounded-lg flex items-center justify-center shrink-0"
                                 style={{
                                     background: "var(--faro-primary)",
                                     color: "var(--faro-on-primary)",

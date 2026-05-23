@@ -195,16 +195,16 @@ function RichTextEditor({ value, onChange }: { value: string; onChange: (value: 
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-[#0f1318]">
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 p-2 dark:border-white/10">
-        <button type="button" onClick={() => runCommand("bold")} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
+        <button type="button" onClick={() => runCommand("bold")} className="rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
           <Bold size={13} />
         </button>
-        <button type="button" onClick={() => runCommand("italic")} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
+        <button type="button" onClick={() => runCommand("italic")} className="rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
           <Italic size={13} />
         </button>
-        <button type="button" onClick={() => runCommand("formatBlock", "h2")} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
+        <button type="button" onClick={() => runCommand("formatBlock", "h2")} className="rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
           H2
         </button>
-        <button type="button" onClick={() => runCommand("insertUnorderedList")} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
+        <button type="button" onClick={() => runCommand("insertUnorderedList")} className="rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
           <List size={13} />
         </button>
         <button
@@ -213,7 +213,7 @@ function RichTextEditor({ value, onChange }: { value: string; onChange: (value: 
             const url = window.prompt("URL del enlace");
             if (url) runCommand("createLink", url);
           }}
-          className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide"
+          className="rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide"
         >
           <LinkIcon size={13} />
         </button>
@@ -223,7 +223,7 @@ function RichTextEditor({ value, onChange }: { value: string; onChange: (value: 
         contentEditable
         suppressContentEditableWarning
         onInput={() => onChange(editorRef.current?.innerHTML || "")}
-        className="prose prose-slate dark:prose-invert min-h-[340px] max-w-none p-5 text-sm outline-none"
+        className="prose prose-slate dark:prose-invert min-h-[340px] max-w-none p-3 text-sm outline-none"
       />
     </div>
   );
@@ -256,7 +256,7 @@ function EditableNode({
           <button
             type="button"
             onClick={() => setValue([...value, cloneTemplate(template)])}
-            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white dark:bg-white dark:text-slate-900"
+            className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white dark:bg-white dark:text-slate-900"
           >
             <Plus size={12} /> Agregar
           </button>
@@ -313,14 +313,14 @@ function EditableNode({
           type="number"
           value={value}
           onChange={event => setValue(Number(event.target.value))}
-          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none dark:border-white/10 dark:bg-[#0f1318]"
+          className="w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm outline-none dark:border-white/10 dark:bg-[#0f1318]"
         />
       </label>
     );
   }
 
   const stringValue = String(value ?? "");
-  const className = "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-[#0f1318]";
+  const className = "w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-[#0f1318]";
   return (
     <label className="block space-y-2">
       <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{formatLabel(fieldKey)}</span>
@@ -500,7 +500,7 @@ export default function CmsContentPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="max-w-3xl mx-auto py-24 text-center space-y-3">
+      <div className="max-w-3xl mx-auto py-1.5 text-center space-y-3">
         <h1 className="text-xl font-semibold">Inicia sesion</h1>
         <p className="text-slate-500">Necesitas una sesion valida para administrar contenido.</p>
       </div>
@@ -508,7 +508,7 @@ export default function CmsContentPage() {
   }
 
   return (
-    <div className="space-y-8 px-4 py-8">
+    <div className="space-y-3 px-4 py-8">
       <AdminHero
         eyebrow="CMS"
         title="Editor visual de contenido"
@@ -519,7 +519,7 @@ export default function CmsContentPage() {
         secondaryAction={currentBlock ? { label: "Abrir pagina", icon: Eye, onClick: () => window.open(currentBlock.page, "_blank") } : undefined}
       />
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[320px_1fr_300px]">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[320px_1fr_300px]">
         <aside className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#111418]">
           <div>
             <p className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Bloques FARO</p>
@@ -547,9 +547,9 @@ export default function CmsContentPage() {
                 value={newBlockName}
                 onChange={event => setNewBlockName(event.target.value)}
                 placeholder="ej. faro_about_body"
-                className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-transparent px-3 py-2 text-xs outline-none dark:border-white/10"
+                className="min-w-0 flex-1 rounded-md border border-slate-200 bg-transparent px-3 py-2 text-xs outline-none dark:border-white/10"
               />
-              <button type="button" onClick={createRichBlock} className="rounded-xl bg-primary px-3 text-white">
+              <button type="button" onClick={createRichBlock} className="rounded-md bg-primary px-3 text-white">
                 <Plus size={14} />
               </button>
             </div>
@@ -558,7 +558,7 @@ export default function CmsContentPage() {
           {extraBlocks.length > 0 && (
             <div>
               <p className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Otros bloques</p>
-              <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+              <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
                 {extraBlocks.map(record => (
                   <button
                     key={record.page_key}
@@ -576,7 +576,7 @@ export default function CmsContentPage() {
           )}
         </aside>
 
-        <section className="space-y-5 rounded-lg border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-[#111418]">
+        <section className="space-y-5 rounded-lg border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-[#111418]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-1">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Llave</p>
@@ -597,7 +597,7 @@ export default function CmsContentPage() {
                 value={title}
                 onChange={event => setTitle(event.target.value)}
                 placeholder="Titulo editorial"
-                className="w-full rounded-xl border border-slate-200 bg-transparent px-4 py-3 text-sm outline-none dark:border-white/10"
+                className="w-full rounded-md border border-slate-200 bg-transparent px-4 py-3 text-sm outline-none dark:border-white/10"
               />
             </label>
             <label className="block space-y-2">
@@ -606,7 +606,7 @@ export default function CmsContentPage() {
                 type="datetime-local"
                 value={publishAt}
                 onChange={event => setPublishAt(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-transparent px-3 py-2 text-sm outline-none dark:border-white/10"
+                className="w-full rounded-md border border-slate-200 bg-transparent px-3 py-2 text-sm outline-none dark:border-white/10"
               />
             </label>
             <label className="block space-y-2">
@@ -615,27 +615,27 @@ export default function CmsContentPage() {
                 type="datetime-local"
                 value={expireAt}
                 onChange={event => setExpireAt(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-transparent px-3 py-2 text-sm outline-none dark:border-white/10"
+                className="w-full rounded-md border border-slate-200 bg-transparent px-3 py-2 text-sm outline-none dark:border-white/10"
               />
             </label>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button onClick={() => transition("submit_review")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
+            <button onClick={() => transition("submit_review")} className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
               <Send size={13} /> Revision
             </button>
-            <button onClick={() => transition("approve")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
+            <button onClick={() => transition("approve")} className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
               <ShieldCheck size={13} /> Aprobar
             </button>
-            <button onClick={() => transition("publish")} className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white">
+            <button onClick={() => transition("publish")} className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white">
               <CheckCircle2 size={13} /> Publicar
             </button>
-            <button onClick={() => transition("revert_draft")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
+            <button onClick={() => transition("revert_draft")} className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
               Borrador
             </button>
             <button
               onClick={() => setShowMedia(prev => !prev)}
-              className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-colors ${
+              className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-colors ${
                 showMedia ? "border-primary bg-primary/10 text-primary" : "border-slate-200"
               }`}
             >
@@ -653,7 +653,7 @@ export default function CmsContentPage() {
             <button
               onClick={save}
               disabled={saving || loading}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-xs font-semibold uppercase tracking-wide text-white disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-3 text-xs font-semibold uppercase tracking-wide text-white disabled:opacity-60"
             >
               <Save size={14} />
               {saving ? "Guardando" : "Guardar"}
@@ -662,14 +662,14 @@ export default function CmsContentPage() {
             {message && <p className="text-sm text-slate-500">{message}</p>}
           </div>
 
-          <div className="rounded-xl border border-slate-200 p-4 dark:border-white/10">
+          <div className="rounded-md border border-slate-200 p-4 dark:border-white/10">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Versiones recientes</p>
             {versions.length === 0 ? (
               <p className="mt-2 text-xs text-slate-500">Sin versiones registradas aun.</p>
             ) : (
               <div className="mt-3 space-y-2">
                 {versions.map(version => (
-                  <div key={version.id} className="flex items-center justify-between rounded-xl border border-slate-100 px-3 py-2 dark:border-white/10">
+                  <div key={version.id} className="flex items-center justify-between rounded-md border border-slate-100 px-3 py-2 dark:border-white/10">
                     <p className="text-xs text-slate-500">#{version.id} - {new Date(version.created_at).toLocaleString()}</p>
                     <button onClick={() => rollback(version.id)} className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-primary">
                       <RotateCcw size={12} /> Restaurar
@@ -680,7 +680,7 @@ export default function CmsContentPage() {
             )}
           </div>
 
-          <div className="flex items-start gap-3 rounded-xl border border-slate-200 p-4 dark:border-white/10">
+          <div className="flex items-start gap-3 rounded-md border border-slate-200 p-4 dark:border-white/10">
             <FileText className="mt-0.5 h-4 w-4 text-primary" />
             <p className="text-xs leading-relaxed text-slate-500">
               Los heroes, menus y feeds siguen guardandose de forma estructurada para proteger la UI publica, pero esta pantalla ya no exige editar JSON manualmente.
@@ -706,7 +706,7 @@ export default function CmsContentPage() {
             <div className="max-h-[720px] space-y-3 overflow-y-auto pr-1">
               {media.map(item => (
                 <div key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                  <div className="relative mb-3 aspect-video overflow-hidden rounded-xl bg-slate-200 dark:bg-white/5">
+                  <div className="relative mb-3 aspect-video overflow-hidden rounded-md bg-slate-200 dark:bg-white/5">
                     {item.mime_type?.startsWith("image/") ? (
                       <Image src={item.url} alt={item.alt_text || ""} fill unoptimized className="object-cover" />
                     ) : (
@@ -720,7 +720,7 @@ export default function CmsContentPage() {
                   <button
                     type="button"
                     onClick={() => copyMediaUrl(item)}
-                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white dark:bg-white dark:text-slate-900"
+                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-slate-900 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white dark:bg-white dark:text-slate-900"
                   >
                     <Copy size={12} /> {copiedMediaId === item.id ? "Copiado" : "Copiar URL"}
                   </button>

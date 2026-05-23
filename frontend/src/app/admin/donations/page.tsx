@@ -14,8 +14,8 @@ import clsx from "clsx";
 
 const DONATION_TYPES = ["Diezmo", "Ofrenda", "Especial", "Misiones", "Construcción"];
 
-const INPUT = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-2.5 px-4 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all";
-const LABEL = "block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5";
+const INPUT = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md py-2.5 px-4 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all";
+const LABEL = "block text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1.5";
 
 function StatCard({ label, value, tone }: { label: string; value: string; tone: string }) {
     const colors: Record<string, string> = {
@@ -25,9 +25,9 @@ function StatCard({ label, value, tone }: { label: string; value: string; tone: 
         violet: "text-violet-600 bg-violet-50 dark:bg-violet-500/10",
     };
     return (
-        <div className="bg-white dark:bg-[#15171c] rounded-2xl border border-slate-200 dark:border-white/5 p-5 shadow-sm">
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">{label}</p>
-            <p className={clsx("text-2xl font-black tracking-tight", colors[tone]?.split(" ")[0])}>{value}</p>
+        <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
+            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 mb-2">{label}</p>
+            <p className={clsx("text-lg font-bold tracking-tight", colors[tone]?.split(" ")[0])}>{value}</p>
         </div>
     );
 }
@@ -148,7 +148,7 @@ export default function DonationsManagementPage() {
     const statusBadge = (status: string) => {
         const done = status === "completed";
         return (
-            <span className={clsx("inline-flex items-center px-2.5 py-0.5 rounded-lg border text-[9px] font-black uppercase tracking-widest",
+            <span className={clsx("inline-flex items-center px-2.5 py-0.5 rounded-lg border text-[9px] font-semibold uppercase tracking-wide",
                 done ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200/50"
                      : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200/50")}>
                 {done ? "Completado" : "Pendiente"}
@@ -166,14 +166,14 @@ export default function DonationsManagementPage() {
                 rightActions={
                     <button
                         onClick={openCreate}
-                        className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all"
+                        className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all"
                     >
                         <Plus size={14} /> Registrar Manual
                     </button>
                 }
             />
 
-            <main className="flex-1 overflow-y-auto scrollbar-thin p-6 lg:p-10 space-y-8">
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-3 lg:p-4 space-y-3">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <StatCard label="Recaudación Mensual" value={`$${metrics.monthlyTotal.toLocaleString()}`} tone="blue" />
                     <StatCard label="Donantes Activos" value={String(metrics.donorCount)} tone="emerald" />
@@ -187,48 +187,48 @@ export default function DonationsManagementPage() {
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                             <input value={query} onChange={(e) => setQuery(e.target.value)}
                                 placeholder="Buscar por donante o tipo..."
-                                className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 transition-all" />
+                                className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md py-2.5 pl-11 pr-4 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 transition-all" />
                         </div>
                         <div className="flex items-center gap-2">
-                            <button className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-all">
+                            <button className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-50 transition-all">
                                 <Filter size={13} /> Filtrar
                             </button>
-                            <button className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-all">
+                            <button className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-50 transition-all">
                                 <Download size={13} /> Exportar
                             </button>
                         </div>
                     </div>
 
-                    <div className="bg-white dark:bg-[#15171c] rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm overflow-hidden">
+                    <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 shadow-sm overflow-hidden">
                         <table className="w-full text-left">
                             <thead>
-                                <tr className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-100 dark:border-white/5">
-                                    <th className="px-6 py-4">Donante</th>
-                                    <th className="px-6 py-4">Monto</th>
-                                    <th className="px-6 py-4">Tipo</th>
-                                    <th className="px-6 py-4">Fecha</th>
-                                    <th className="px-6 py-4">Estado</th>
-                                    <th className="px-6 py-4 text-right">Acciones</th>
+                                <tr className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 border-b border-slate-100 dark:border-white/5">
+                                    <th className="px-3 py-1.5">Donante</th>
+                                    <th className="px-3 py-1.5">Monto</th>
+                                    <th className="px-3 py-1.5">Tipo</th>
+                                    <th className="px-3 py-1.5">Fecha</th>
+                                    <th className="px-3 py-1.5">Estado</th>
+                                    <th className="px-3 py-1.5 text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50 dark:divide-white/5">
                                 {filtered.length === 0 && (
-                                    <tr><td colSpan={6} className="px-6 py-16 text-center text-[10px] font-black uppercase tracking-widest text-slate-300">Sin donaciones registradas</td></tr>
+                                    <tr><td colSpan={6} className="px-3 py-1.5 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-300">Sin donaciones registradas</td></tr>
                                 )}
                                 {filtered.map((d) => (
                                     <tr key={d.id}
                                         className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors group"
                                         onMouseEnter={() => setHoverId(d.id)}
                                         onMouseLeave={() => setHoverId(null)}>
-                                        <td className="px-6 py-4">
+                                        <td className="px-3 py-1.5">
                                             <p className="text-sm font-bold text-slate-900 dark:text-white">{d.donor || "Anónimo"}</p>
                                             <p className="text-[10px] text-slate-400 font-black">#{d.id}</p>
                                         </td>
-                                        <td className="px-6 py-4 font-black text-slate-900 dark:text-white">${d.amount?.toLocaleString()}</td>
-                                        <td className="px-6 py-4 text-xs text-slate-500">{d.type}</td>
-                                        <td className="px-6 py-4 text-xs text-slate-400">{d.date ? new Date(d.date).toLocaleDateString("es-ES") : "—"}</td>
-                                        <td className="px-6 py-4">{statusBadge(d.status)}</td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-3 py-1.5 font-black text-slate-900 dark:text-white">${d.amount?.toLocaleString()}</td>
+                                        <td className="px-3 py-1.5 text-xs text-slate-500">{d.type}</td>
+                                        <td className="px-3 py-1.5 text-xs text-slate-400">{d.date ? new Date(d.date).toLocaleDateString("es-ES") : "—"}</td>
+                                        <td className="px-3 py-1.5">{statusBadge(d.status)}</td>
+                                        <td className="px-3 py-1.5">
                                             <div className="flex items-center justify-end gap-1">
                                                 <AnimatePresence>
                                                     {hoverId === d.id && (
@@ -241,7 +241,7 @@ export default function DonationsManagementPage() {
                                                             {deleteId === d.id ? (
                                                                 <div className="flex items-center gap-1">
                                                                     <button onClick={() => handleDelete()}
-                                                                        className="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-[9px] font-black uppercase">
+                                                                        className="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-[9px] font-semibold uppercase">
                                                                         Confirmar
                                                                     </button>
                                                                     <button onClick={() => setDeleteId(null)}
@@ -280,9 +280,9 @@ export default function DonationsManagementPage() {
                             exit={{ x: "100%", opacity: 0 }}
                             transition={{ type: "spring", damping: 26, stiffness: 260 }}
                             className="fixed top-0 right-0 h-screen z-[100] w-full max-w-md bg-white dark:bg-[#15171c] shadow-2xl rounded-l-[2.5rem] overflow-hidden flex flex-col">
-                            <div className="flex items-center justify-between p-8 border-b border-slate-100 dark:border-white/5 flex-shrink-0">
+                            <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-white/5 flex-shrink-0">
                                 <div>
-                                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                    <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">
                                         {drawerMode === "create" ? "Nueva Donación" : "Editar Donación"}
                                     </p>
                                     <h2 className="text-xl font-black text-slate-900 dark:text-white mt-1">
@@ -290,12 +290,12 @@ export default function DonationsManagementPage() {
                                     </h2>
                                 </div>
                                 <button onClick={() => setDrawerMode(null)}
-                                    className="size-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
+                                    className="size-10 rounded-md bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
                                     <X size={18} />
                                 </button>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto scrollbar-thin p-8 space-y-5">
+                            <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-5">
                                 <div>
                                     <label className={LABEL}>Monto *</label>
                                     <input type="number" value={fAmount} onChange={(e) => setFAmount(e.target.value)}
@@ -324,13 +324,13 @@ export default function DonationsManagementPage() {
                                 </div>
                             </div>
 
-                            <div className="p-6 border-t border-slate-100 dark:border-white/5 flex gap-3 flex-shrink-0">
+                            <div className="p-3 border-t border-slate-100 dark:border-white/5 flex gap-3 flex-shrink-0">
                                 <button onClick={() => setDrawerMode(null)}
-                                    className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-white/10 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
+                                    className="flex-1 py-3 rounded-md border border-slate-200 dark:border-white/10 text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
                                     Cancelar
                                 </button>
                                 <button onClick={handleSave} disabled={saving}
-                                    className="flex-1 py-3 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 disabled:opacity-50 transition-all">
+                                    className="flex-1 py-3 rounded-md bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 disabled:opacity-50 transition-all">
                                     {saving ? "Guardando..." : "Guardar"}
                                 </button>
                             </div>

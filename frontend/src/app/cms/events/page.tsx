@@ -84,7 +84,7 @@ export default function CmsEventsPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="max-w-3xl mx-auto py-24 text-center space-y-3">
+      <div className="max-w-3xl mx-auto py-1.5 text-center space-y-3">
         <h1 className="text-xl font-semibold">Inicia sesion</h1>
         <p className="text-slate-500">Necesitas una sesion valida para administrar eventos publicos.</p>
       </div>
@@ -92,7 +92,7 @@ export default function CmsEventsPage() {
   }
 
   return (
-    <div className="space-y-8 px-4 py-8">
+    <div className="space-y-3 px-4 py-8">
       <AdminHero
         eyebrow="CMS"
         title="Eventos publicos"
@@ -102,9 +102,9 @@ export default function CmsEventsPage() {
         primaryAction={{ label: saving ? "Guardando..." : "Guardar agenda", icon: Save, onClick: save }}
       />
 
-      <section className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-6 space-y-5">
+      <section className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-3 space-y-5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Eventos</p>
               <p className="text-xl font-semibold mt-1">{activeEvents.length}</p>
@@ -120,7 +120,7 @@ export default function CmsEventsPage() {
           </div>
           <button
             onClick={() => setEvents((prev) => [...prev, { ...EMPTY_EVENT }])}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-semibold uppercase tracking-wide"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-slate-200 dark:border-white/10 text-xs font-semibold uppercase tracking-wide"
           >
             <Plus size={14} />
             Nuevo evento
@@ -132,7 +132,7 @@ export default function CmsEventsPage() {
         ) : events.length === 0 ? (
           <button
             onClick={() => setEvents([{ ...EMPTY_EVENT }])}
-            className="w-full rounded-lg border border-dashed border-slate-200 dark:border-white/10 p-10 text-center text-sm text-slate-500"
+            className="w-full rounded-lg border border-dashed border-slate-200 dark:border-white/10 p-4 text-center text-sm text-slate-500"
           >
             Crear primer evento
           </button>
@@ -150,7 +150,7 @@ export default function CmsEventsPage() {
                       setEvents((prev) => prev.map((row, rowIndex) => (rowIndex === index ? { ...row, title: next } : row)));
                     }}
                     placeholder="Titulo"
-                    className="rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
+                    className="rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
                   />
                   <input
                     value={event.category}
@@ -159,7 +159,7 @@ export default function CmsEventsPage() {
                       setEvents((prev) => prev.map((row, rowIndex) => (rowIndex === index ? { ...row, category: next } : row)));
                     }}
                     placeholder="Categoria"
-                    className="rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
+                    className="rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
                   />
                   <input
                     value={event.date}
@@ -168,7 +168,7 @@ export default function CmsEventsPage() {
                       setEvents((prev) => prev.map((row, rowIndex) => (rowIndex === index ? { ...row, date: next } : row)));
                     }}
                     placeholder="24 JUN 2026"
-                    className="rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
+                    className="rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
                   />
                   <input
                     value={event.location}
@@ -177,7 +177,7 @@ export default function CmsEventsPage() {
                       setEvents((prev) => prev.map((row, rowIndex) => (rowIndex === index ? { ...row, location: next } : row)));
                     }}
                     placeholder="Auditorio Central"
-                    className="rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
+                    className="rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
                   />
                 </div>
                 <textarea
@@ -188,7 +188,7 @@ export default function CmsEventsPage() {
                     setEvents((prev) => prev.map((row, rowIndex) => (rowIndex === index ? { ...row, excerpt: next } : row)));
                   }}
                   placeholder="Descripcion corta del evento"
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
+                  className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
                 />
 
                 <div className="flex items-center justify-between">
@@ -224,7 +224,7 @@ export default function CmsEventsPage() {
           <button
             onClick={save}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-primary text-white text-xs font-semibold uppercase tracking-wide disabled:opacity-60"
+            className="inline-flex items-center gap-2 px-3 py-3 rounded-md bg-primary text-white text-xs font-semibold uppercase tracking-wide disabled:opacity-60"
           >
             <Save size={14} />
             {saving ? "Guardando" : "Guardar"}
@@ -232,7 +232,7 @@ export default function CmsEventsPage() {
           {message && <p className="text-sm text-slate-500">{message}</p>}
         </div>
 
-        <div className="rounded-xl border border-slate-200 dark:border-white/10 p-4 flex items-start gap-3">
+        <div className="rounded-md border border-slate-200 dark:border-white/10 p-4 flex items-start gap-3">
           <CalendarRange className="w-4 h-4 mt-0.5 text-primary" />
           <p className="text-xs text-slate-500 leading-relaxed">
             Este modulo persiste la agenda en el bloque <span className="font-mono">{FARO_EVENTS_BLOCK_KEY}</span> para ser consumida por la web publica.

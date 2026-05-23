@@ -57,7 +57,7 @@ export function SortableTaskCard({ task, onOpen }: Props) {
             style={style}
             onClick={() => onOpen(task)}
             className={clsx(
-                'bg-white dark:bg-[#25262b] rounded-xl shadow-sm border cursor-pointer',
+                'bg-white dark:bg-[#25262b] rounded-md shadow-sm border cursor-pointer',
                 'hover:shadow-md hover:border-blue-400/50 dark:hover:border-blue-500/40',
                 'transition-all duration-150 group/card relative overflow-hidden',
                 isDragging
@@ -119,7 +119,7 @@ export function SortableTaskCard({ task, onOpen }: Props) {
                             </span>
                         )}
                         <div
-                            className="size-6 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 dark:from-blue-600 dark:to-indigo-700 flex items-center justify-center text-[9px] font-black text-white shadow ring-2 ring-white dark:ring-[#25262b]"
+                            className="size-6 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 dark:from-blue-600 dark:to-indigo-700 flex items-center justify-center font-semibold text-white shadow ring-2 ring-white dark:ring-[#25262b]"
                             title={task.assignee_name || 'Sin asignar'}
                         >
                             {assigneeInitials}

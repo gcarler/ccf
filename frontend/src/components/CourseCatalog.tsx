@@ -127,19 +127,19 @@ export default function CourseCatalog({
         <div className="flex gap-3 flex-1">
         <button
           onClick={() => setFilterModality("all")}
-          className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${filterModality === "all" ? "bg-primary text-white shadow-lg shadow-primary/20" : "glass text-slate-500"}`}
+          className={`px-3 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${filterModality === "all" ? "bg-primary text-white shadow-lg shadow-primary/20" : "glass text-slate-500"}`}
         >
           Todos
         </button>
         <button
           onClick={() => setFilterModality("formal")}
-          className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${filterModality === "formal" ? "bg-primary text-white shadow-lg shadow-primary/20" : "glass text-slate-500"}`}
+          className={`px-3 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${filterModality === "formal" ? "bg-primary text-white shadow-lg shadow-primary/20" : "glass text-slate-500"}`}
         >
           Teología
         </button>
         <button
           onClick={() => setFilterModality("no_formal")}
-          className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${filterModality === "no_formal" ? "bg-primary text-white shadow-lg shadow-primary/20" : "glass text-slate-500"}`}
+          className={`px-3 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${filterModality === "no_formal" ? "bg-primary text-white shadow-lg shadow-primary/20" : "glass text-slate-500"}`}
         >
           Liderazgo
         </button>
@@ -155,7 +155,7 @@ export default function CourseCatalog({
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-10">
+        <div className="flex justify-center py-1.5">
           <div className="w-8 h-8 animate-spin border-4 border-primary border-t-transparent rounded-full" />
         </div>
       ) : (
@@ -164,10 +164,10 @@ export default function CourseCatalog({
         {resolvedViewType === 'grid' && (
         <div className="flex flex-col gap-4 px-4">
           {courses.map((course) => (
-            <div key={course.id} className="glass p-5 rounded-3xl flex flex-col gap-4 transition-transform active:scale-[0.98]">
+            <div key={course.id} className="glass p-3 rounded-lg flex flex-col gap-4 transition-transform active:scale-[0.98]">
               <div className="flex gap-4">
-                  <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <span className="material-symbols-outlined text-2xl">
+                  <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <span className="material-symbols-outlined text-lg">
                         {course.modality === 'formal' ? 'school' : 'menu_book'}
                     </span>
                   </div>
@@ -181,26 +181,26 @@ export default function CourseCatalog({
               </div>
               <div className="flex items-center gap-4 py-3 border-t border-b border-white/5">
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 flex items-center gap-1"><Clock size={10} /> Tiempo</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-1 flex items-center gap-1"><Clock size={10} /> Tiempo</span>
                   <span className="text-xs font-bold text-white">{course.total_minutes > 0 ? `${course.total_minutes}m` : `${course.duration_hours}h`}</span>
                 </div>
                 <div className="w-px h-6 bg-white/10"></div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 flex items-center gap-1"><School size={10} /> Lecciones</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-1 flex items-center gap-1"><School size={10} /> Lecciones</span>
                   <span className="text-xs font-bold text-white">{course.lesson_count} módulos</span>
                 </div>
               </div>
               <button
                 onClick={() => handleEnrollClick(course.id)}
-                className={`w-full py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${enrolledCourseIds.includes(course.id) ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90'}`}
+                className={`w-full py-1.5 rounded-md text-xs font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-2 ${enrolledCourseIds.includes(course.id) ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90'}`}
               >
                 {enrolledCourseIds.includes(course.id) ? (<>Continuar Curso <ArrowRight size={16} /></>) : (<>Inscribirme Ahora <ArrowRight size={16} /></>)}
               </button>
             </div>
           ))}
           {courses.length === 0 && (
-            <div className="rounded-3xl border border-dashed border-white/10 bg-slate-900/30 p-8 text-center">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">No hay cursos publicados.</p>
+            <div className="rounded-lg border border-dashed border-white/10 bg-slate-900/30 p-4 text-center">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">No hay cursos publicados.</p>
             </div>
           )}
         </div>
@@ -210,8 +210,8 @@ export default function CourseCatalog({
         {resolvedViewType === 'list' && (
         <div className="flex flex-col gap-2 px-4">
           {courses.map((course) => (
-            <div key={course.id} className="glass flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-white/10 transition-colors group">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <div key={course.id} className="glass flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-white/10 transition-colors group">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                 <School size={14} />
               </div>
               <div className="flex-1 min-w-0">
@@ -220,7 +220,7 @@ export default function CourseCatalog({
               </div>
               <button
                 onClick={() => handleEnrollClick(course.id)}
-                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${enrolledCourseIds.includes(course.id) ? 'bg-white/10 text-white' : 'bg-primary text-white'}`}
+                className={`px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all flex items-center gap-1.5 ${enrolledCourseIds.includes(course.id) ? 'bg-white/10 text-white' : 'bg-primary text-white'}`}
               >
                 {enrolledCourseIds.includes(course.id) ? 'Continuar' : 'Inscribirse'} <ArrowRight size={12} />
               </button>
@@ -235,29 +235,29 @@ export default function CourseCatalog({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-white/10">
-                <th className="pb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">Curso</th>
-                <th className="pb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">Código</th>
-                <th className="pb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">Duración</th>
-                <th className="pb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">Tipo</th>
-                <th className="pb-3 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Acción</th>
+                <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Curso</th>
+                <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Código</th>
+                <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Duración</th>
+                <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Tipo</th>
+                <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500 text-right">Acción</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {courses.map((course) => (
                 <tr key={course.id} className="hover:bg-white/5 transition-colors">
-                  <td className="py-4 pr-4">
+                  <td className="py-1.5 pr-4">
                     <p className="font-bold text-white text-sm">{course.title}</p>
                     <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{course.description}</p>
                   </td>
-                  <td className="py-4 pr-4">
+                  <td className="py-1.5 pr-4">
                     <span className="text-[10px] font-bold text-primary px-2 py-0.5 rounded bg-primary/10 uppercase">{course.code}</span>
                   </td>
-                  <td className="py-4 pr-4 text-sm text-slate-300 font-bold">{course.duration_hours}h</td>
-                  <td className="py-4 pr-4 text-xs text-slate-400">{course.is_self_paced ? 'Autoguiado' : 'Cohorte'}</td>
-                  <td className="py-4 text-right">
+                  <td className="py-1.5 pr-4 text-sm text-slate-300 font-bold">{course.duration_hours}h</td>
+                  <td className="py-1.5 pr-4 text-xs text-slate-400">{course.is_self_paced ? 'Autoguiado' : 'Cohorte'}</td>
+                  <td className="py-1.5 text-right">
                     <button
                       onClick={() => handleEnrollClick(course.id)}
-                      className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all inline-flex items-center gap-1 ${enrolledCourseIds.includes(course.id) ? 'bg-white/10 text-white' : 'bg-primary text-white'}`}
+                      className={`px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all inline-flex items-center gap-1 ${enrolledCourseIds.includes(course.id) ? 'bg-white/10 text-white' : 'bg-primary text-white'}`}
                     >
                       {enrolledCourseIds.includes(course.id) ? 'Continuar' : 'Inscribirse'} <ArrowRight size={10} />
                     </button>
@@ -267,8 +267,8 @@ export default function CourseCatalog({
             </tbody>
           </table>
           {courses.length === 0 && (
-            <div className="rounded-3xl border border-dashed border-white/10 bg-slate-900/30 p-8 text-center mt-4">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">No hay cursos publicados.</p>
+            <div className="rounded-lg border border-dashed border-white/10 bg-slate-900/30 p-4 text-center mt-4">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">No hay cursos publicados.</p>
             </div>
           )}
         </div>
@@ -277,23 +277,23 @@ export default function CourseCatalog({
         {(resolvedViewType === 'board' || resolvedViewType === 'kanban') && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 px-4">
           {boardColumns.map((column) => (
-            <div key={column.key} className="rounded-2xl border border-white/10 bg-slate-900/30 p-3">
+            <div key={column.key} className="rounded-lg border border-white/10 bg-slate-900/30 p-3">
               <div className="mb-3 flex items-center justify-between">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{column.label}</p>
-                <span className="text-[10px] font-black text-slate-500">{column.items.length}</span>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{column.label}</p>
+                <span className="font-semibold text-slate-500">{column.items.length}</span>
               </div>
               <div className="space-y-2">
                 {column.items.map((course) => (
                   <button
                     key={course.id}
                     onClick={() => handleEnrollClick(course.id)}
-                    className="w-full text-left rounded-xl border border-white/10 bg-white/5 p-3 hover:border-primary/40 transition-all"
+                    className="w-full text-left rounded-md border border-white/10 bg-white/5 p-3 hover:border-primary/40 transition-all"
                   >
-                    <p className="text-xs font-black text-white">{course.title}</p>
+                    <p className="text-xs font-semibold text-white">{course.title}</p>
                     <p className="text-[10px] text-slate-400">{course.code} · {course.duration_hours}h</p>
                   </button>
                 ))}
-                {column.items.length === 0 && <div className="py-5 text-center text-[10px] font-black uppercase tracking-widest text-slate-500">Vacío</div>}
+                {column.items.length === 0 && <div className="py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-500">Vacío</div>}
               </div>
             </div>
           ))}
@@ -303,12 +303,12 @@ export default function CourseCatalog({
         {resolvedViewType === 'calendar' && (
         <div className="space-y-4 px-4">
           {calendarBuckets.map(([bucket, items]) => (
-            <div key={bucket} className="rounded-2xl border border-white/10 bg-slate-900/30 p-4">
-              <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{bucket}</p>
+            <div key={bucket} className="rounded-lg border border-white/10 bg-slate-900/30 p-4">
+              <p className="mb-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400">{bucket}</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {items.map((course) => (
-                  <button key={course.id} onClick={() => handleEnrollClick(course.id)} className="rounded-xl border border-white/10 bg-white/5 p-3 text-left hover:border-primary/40 transition-all">
-                    <p className="text-sm font-black text-white">{course.title}</p>
+                  <button key={course.id} onClick={() => handleEnrollClick(course.id)} className="rounded-md border border-white/10 bg-white/5 p-3 text-left hover:border-primary/40 transition-all">
+                    <p className="text-sm font-semibold text-white">{course.title}</p>
                     <p className="text-[10px] text-slate-400">{course.code} · {course.is_self_paced ? 'Autoguiado' : 'Cohorte'}</p>
                   </button>
                 ))}
@@ -321,8 +321,8 @@ export default function CourseCatalog({
 
         {resolvedViewType === 'gantt' && (
         <div className="px-4">
-          <div className="rounded-2xl border border-white/10 bg-slate-900/30 p-4 space-y-3">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Progreso sugerido por curso</p>
+          <div className="rounded-lg border border-white/10 bg-slate-900/30 p-4 space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Progreso sugerido por curso</p>
             {courses.map((course) => {
               const progress = Math.min(100, Math.max(15, Math.round((course.lesson_count / 12) * 100)));
               return (
@@ -344,13 +344,13 @@ export default function CourseCatalog({
 
         {resolvedViewType === 'wiki' && (
         <div className="px-4">
-          <div className="rounded-2xl border border-white/10 bg-slate-900/30 p-4 space-y-3">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Wiki del catálogo</p>
+          <div className="rounded-lg border border-white/10 bg-slate-900/30 p-4 space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Wiki del catálogo</p>
             <textarea
               value={wikiNotes}
               onChange={(e) => setWikiNotes(e.target.value)}
               placeholder="Documenta rutas de cursos, prerequisitos, recomendaciones y lineamientos para estudiantes..."
-              className="w-full min-h-[320px] rounded-2xl border border-white/10 bg-black/20 p-4 text-sm font-medium text-slate-200 outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full min-h-[320px] rounded-lg border border-white/10 bg-black/20 p-4 text-sm font-medium text-slate-200 outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
         </div>

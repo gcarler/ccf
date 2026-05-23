@@ -116,38 +116,38 @@ export default function SocialMediaSettings() {
     const renderList = () => (
         <div className="space-y-4">
             {platformRows.map((row) => (
-                <div key={row.id} className="social-aura bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-6 rounded-[2rem] flex items-center justify-between gap-6" style={{ '--aura-color': row.aura } as any}>
+                <div key={row.id} className="social-aura bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-3 rounded-lg flex items-center justify-between gap-3" style={{ '--aura-color': row.aura } as any}>
                     <div className="flex items-center gap-5 min-w-0">
-                        <div className={clsx("size-12 rounded-2xl flex items-center justify-center bg-slate-50 dark:bg-black/20", row.color)}>
+                        <div className={clsx("size-7 rounded-lg flex items-center justify-center bg-slate-50 dark:bg-black/20", row.color)}>
                             <row.icon size={24} />
                         </div>
                         <div className="min-w-0">
-                            <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{row.label}</h3>
+                            <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{row.label}</h3>
                             <p className="mt-1 text-[10px] font-bold text-slate-400 truncate">{row.channel?.url || 'Sin URL configurada'}</p>
                         </div>
                     </div>
-                    <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", row.channel?.url ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{row.channel?.url ? 'Activo' : 'Pendiente'}</span>
+                    <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", row.channel?.url ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{row.channel?.url ? 'Activo' : 'Pendiente'}</span>
                 </div>
             ))}
         </div>
     );
 
     const renderTable = () => (
-        <div className="rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
             <table className="w-full text-left">
                 <thead className="bg-slate-50 dark:bg-white/5">
                     <tr>
-                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Canal</th>
-                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">URL</th>
-                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Estado</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Canal</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden md:table-cell">URL</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Estado</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                     {platformRows.map((row) => (
                         <tr key={row.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03]">
-                            <td className="px-5 py-4 text-sm font-bold text-slate-800 dark:text-slate-100">{row.label}</td>
-                            <td className="px-5 py-4 hidden md:table-cell text-[11px] text-slate-500 truncate max-w-[420px]">{row.channel?.url || '—'}</td>
-                            <td className="px-5 py-4"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", row.channel?.url ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{row.channel?.url ? 'Activo' : 'Pendiente'}</span></td>
+                            <td className="px-3 py-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">{row.label}</td>
+                            <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-slate-500 truncate max-w-[420px]">{row.channel?.url || '—'}</td>
+                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", row.channel?.url ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{row.channel?.url ? 'Activo' : 'Pendiente'}</span></td>
                         </tr>
                     ))}
                 </tbody>
@@ -158,15 +158,15 @@ export default function SocialMediaSettings() {
     const renderBoard = () => (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {groupedRows.map((group) => (
-                <section key={group.id} className="rounded-[2.5rem] bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-5">
+                <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{group.label}</span>
-                        <span className="text-[10px] font-black text-slate-400">{group.rows.length}</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{group.label}</span>
+                        <span className="font-semibold text-slate-400">{group.rows.length}</span>
                     </div>
                     <div className="space-y-3">
                         {group.rows.map((row) => (
-                            <div key={row.id} className="bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-[1.5rem] p-4">
-                                <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{row.label}</p>
+                            <div key={row.id} className="bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-4">
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{row.label}</p>
                                 <p className="mt-2 text-[10px] font-bold text-slate-400 truncate">{row.channel?.url || 'Sin enlace'}</p>
                             </div>
                         ))}
@@ -205,27 +205,27 @@ export default function SocialMediaSettings() {
                 rightActions={
                     <button 
                         onClick={handleSave} disabled={isSaving}
-                        className="flex items-center gap-3 px-8 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all"
+                        className="flex items-center gap-3 px-4 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl active:scale-95 transition-all"
                     >
                         {isSaving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />} Guardar Redes
                     </button>
                 }
             />
 
-            <main className="flex-1 overflow-y-auto scrollbar-thin p-8 lg:p-12 relative pb-40">
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative pb-4">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#3b82f605_0%,_transparent_50%)] pointer-events-none" />
 
-                <div className="max-w-5xl mx-auto space-y-12 relative z-10">
+                <div className="max-w-5xl mx-auto space-y-3 relative z-10">
                     
                     {/* Cinematic Header */}
                     <header className="space-y-4">
                         <motion.div 
                             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                            className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-[0.3em] border border-blue-500/20"
+                            className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 text-blue-600 rounded-full text-[10px] font-semibold uppercase tracking-wide border border-blue-500/20"
                         >
                             <Sparkles size={12} className="animate-pulse" /> Ecosistema Digital CCF
                         </motion.div>
-                        <h1 className="text-5xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                        <h1 className="text-xl lg:text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
                             Tu voz en la <br/> <span className="text-blue-600 italic">nube global.</span>
                         </h1>
                         <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-xl">
@@ -235,7 +235,7 @@ export default function SocialMediaSettings() {
 
                     <AnimatePresence mode="wait">
                         {loading ? (
-                            <div className="py-40 flex flex-col items-center justify-center gap-4 text-slate-400 font-black uppercase tracking-[0.4em] animate-pulse">
+                            <div className="py-1.5 flex flex-col items-center justify-center gap-4 text-slate-400 font-semibold uppercase tracking-wide animate-pulse">
                                 <Loader2 className="animate-spin" size={40} /> Conectando API...
                             </div>
                         ) : viewType === 'list' ? (
@@ -253,7 +253,7 @@ export default function SocialMediaSettings() {
                         ) : (
                             <motion.section 
                                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                                className="grid grid-cols-1 gap-6"
+                                className="grid grid-cols-1 gap-3"
                             >
                                 {PLATFORMS.map((platform, i) => {
                                     const channel = socials.find(s => s.platform.toLowerCase() === platform.id);
@@ -263,29 +263,29 @@ export default function SocialMediaSettings() {
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: i * 0.05 }}
-                                            className="social-aura bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-10 rounded-[3.5rem] flex flex-col md:flex-row md:items-center justify-between gap-8 group hover:shadow-2xl transition-all duration-500"
+                                            className="social-aura bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-3 group hover:shadow-2xl transition-all duration-500"
                                             style={{ '--aura-color': platform.aura } as any}
                                         >
-                                            <div className="flex items-center gap-8 flex-1">
-                                                <div className={clsx("size-20 rounded-[2rem] flex items-center justify-center shadow-inner group-hover:scale-110 transition-all duration-500 bg-slate-50 dark:bg-black/20", platform.color)}>
+                                            <div className="flex items-center gap-3 flex-1">
+                                                <div className={clsx("size-8 rounded-lg flex items-center justify-center shadow-inner group-hover:scale-110 transition-all duration-500 bg-slate-50 dark:bg-black/20", platform.color)}>
                                                     <platform.icon size={40} strokeWidth={1.5} />
                                                 </div>
                                                 <div className="flex-1 space-y-4">
                                                     <div>
                                                         <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none mb-1">{platform.label}</h3>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Perfil de la Congregación</p>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide leading-none">Perfil de la Congregación</p>
                                                     </div>
                                                     <div className="relative group/input">
                                                         <Link2 className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" size={18} />
                                                         <input 
                                                             defaultValue={channel?.url || ''}
-                                                            className="w-full pl-14 pr-6 py-4 bg-slate-50 dark:bg-black/40 border border-transparent focus:border-blue-500 rounded-2xl text-xs font-bold outline-none transition-all placeholder:text-slate-300"
+                                                            className="w-full pl-14 pr-6 py-1.5 bg-slate-50 dark:bg-black/40 border border-transparent focus:border-blue-500 rounded-lg text-xs font-bold outline-none transition-all placeholder:text-slate-300"
                                                             placeholder={`URL de tu ${platform.label}...`}
                                                         />
                                                     </div>
                                                 </div>
                                             </div>
-                                            <button className="px-10 h-14 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:shadow-xl hover:shadow-blue-500/20 transition-all transform active:scale-95 shrink-0 flex items-center gap-2">
+                                            <button className="px-4 h-8 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:shadow-xl hover:shadow-blue-500/20 transition-all transform active:scale-95 shrink-0 flex items-center gap-2">
                                                 Validar Enlace <ExternalLink size={14} />
                                             </button>
                                         </motion.div>
@@ -300,27 +300,27 @@ export default function SocialMediaSettings() {
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 }}
-                        className="bg-slate-900 p-12 rounded-[4rem] text-white relative overflow-hidden group shadow-2xl"
+                        className="bg-slate-900 p-4 rounded-lg text-white relative overflow-hidden group shadow-2xl"
                     >
-                        <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:rotate-12 transition-transform duration-1000"><Radio size={200} /></div>
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:rotate-12 transition-transform duration-1000"><Radio size={200} /></div>
                         
-                        <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
-                            <div className="size-24 rounded-[2rem] bg-rose-600 flex items-center justify-center shadow-2xl shadow-rose-500/40 border border-rose-400/20 shrink-0">
+                        <div className="relative z-10 flex flex-col md:flex-row items-center gap-3">
+                            <div className="size-10 rounded-lg bg-rose-600 flex items-center justify-center shadow-2xl shadow-rose-500/40 border border-rose-400/20 shrink-0">
                                 <Radio size={48} className="animate-pulse" />
                             </div>
-                            <div className="flex-1 space-y-8">
+                            <div className="flex-1 space-y-3">
                                 <div>
-                                    <h3 className="text-3xl font-black tracking-tight leading-none mb-3">Retransmisión en Vivo</h3>
+                                    <h3 className="text-xl font-bold tracking-tight leading-none mb-3">Retransmisión en Vivo</h3>
                                     <p className="text-slate-400 font-medium leading-relaxed italic">
                                         &ldquo;Introduce el link directo de tu servidor de streaming (RTMP/HLS) para integrar la señal en el muro comunitario.&rdquo;
                                     </p>
                                 </div>
                                 <div className="flex flex-col md:flex-row gap-4">
                                     <input 
-                                        className="flex-1 px-8 py-5 bg-black/40 border border-white/10 rounded-[2rem] text-sm font-bold outline-none focus:border-rose-500 transition-all"
+                                        className="flex-1 px-4 py-2 bg-black/40 border border-white/10 rounded-lg text-sm font-bold outline-none focus:border-rose-500 transition-all"
                                         placeholder="rtmp://servidor.iglesia.com/live"
                                     />
-                                    <button className="px-10 py-5 bg-white text-slate-900 rounded-[2rem] text-[11px] font-black uppercase tracking-[0.2em] shadow-xl hover:translate-y-[-4px] active:scale-95 transition-all">Sincronizar Señal</button>
+                                    <button className="px-4 py-2 bg-white text-slate-900 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:translate-y-[-4px] active:scale-95 transition-all">Sincronizar Señal</button>
                                 </div>
                             </div>
                         </div>

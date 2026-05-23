@@ -78,34 +78,34 @@ export function AuthShowcasePanel({ mode = "login", className }: AuthShowcasePan
 
     return (
         <section
-            className={`rounded-[2.5rem] border border-white/10 bg-white/10 dark:bg-white/5 backdrop-blur-3xl shadow-[0_25px_100px_rgba(15,23,42,0.55)] text-white p-8 relative overflow-hidden ${className ?? ""}`}
+            className={`rounded-lg border border-white/10 bg-white/10 dark:bg-white/5 backdrop-blur-3xl shadow-[0_25px_100px_rgba(15,23,42,0.55)] text-white p-4 relative overflow-hidden ${className ?? ""}`}
         >
             <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute -top-16 right-[-40px] w-64 h-64 bg-primary/40 blur-[150px]"></div>
-                <div className="absolute bottom-0 left-[-60px] w-72 h-72 bg-blue-500/30 blur-[180px]"></div>
+                <div className="absolute -top-16 right-[-40px] w-64 h-48 bg-primary/40 blur-[150px]"></div>
+                <div className="absolute bottom-0 left-[-60px] w-72 h-48 bg-blue-500/30 blur-[180px]"></div>
                 <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.08]"></div>
             </div>
 
-            <div className="relative space-y-8">
+            <div className="relative space-y-3">
                 <div>
-                    <p className="text-slate-300 text-[11px] font-black uppercase tracking-[0.35em] mb-3 flex items-center gap-2">
+                    <p className="text-slate-300 text-[11px] font-semibold uppercase tracking-[0.35em] mb-3 flex items-center gap-2">
                         <Sparkles className="w-4 h-4" /> {copy.eyebrow}
                     </p>
-                    <h2 className="text-3xl font-black leading-tight tracking-tight text-white mb-2">{copy.title}</h2>
+                    <h2 className="text-xl font-black leading-tight tracking-tight text-white mb-2">{copy.title}</h2>
                     <p className="text-slate-200 text-sm max-w-md">{copy.description}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     {copy.stats.map((stat) => (
-                        <div key={stat.label} className="rounded-2xl bg-white/5 border border-white/10 p-4">
-                            <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-1">{stat.label}</p>
-                            <p className="text-2xl font-black text-white">{stat.value}</p>
+                        <div key={stat.label} className="rounded-lg bg-white/5 border border-white/10 p-4">
+                            <p className="text-xs uppercase tracking-wide text-slate-400 mb-1">{stat.label}</p>
+                            <p className="text-lg font-black text-white">{stat.value}</p>
                             <p className="text-[11px] text-emerald-300 font-semibold mt-1">{stat.trend}</p>
                         </div>
                     ))}
                 </div>
 
-                <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-5 space-y-4">
+                <div className="rounded-lg border border-white/10 bg-slate-900/40 p-3 space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Ruta guiada</p>
@@ -127,12 +127,12 @@ export function AuthShowcasePanel({ mode = "login", className }: AuthShowcasePan
                     <p className="text-slate-200 text-sm leading-relaxed">
                         {copy.milestones[activeMilestone].description}
                     </p>
-                    <div className="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-slate-400">
+                    <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-slate-400">
                         <Activity className="w-4 h-4" /> Avance en vivo
                     </div>
                 </div>
 
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-3">
+                <div className="rounded-lg border border-white/10 bg-white/5 p-3 space-y-3">
                     <div className="flex items-center gap-3">
                         <ShieldCheck className="w-5 h-5 text-emerald-300" />
                         <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Testimonio real</p>
@@ -144,19 +144,19 @@ export function AuthShowcasePanel({ mode = "login", className }: AuthShowcasePan
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-200">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-200">
                         <Users className="w-4 h-4" /> Mentores 24/7
                     </div>
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-200">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-200">
                         <GraduationCap className="w-4 h-4" /> Academias premium
                     </div>
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-200">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-200">
                         <MapPinned className="w-4 h-4" /> Campus global
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/30 p-5">
-                    <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-400">
+                <div className="flex flex-col gap-3 rounded-lg border border-white/10 bg-slate-900/30 p-3">
+                    <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-400">
                         <PlayCircle className="w-4 h-4" /> Demo guiada
                     </div>
                     <p className="text-sm text-slate-200 leading-relaxed">
@@ -164,7 +164,7 @@ export function AuthShowcasePanel({ mode = "login", className }: AuthShowcasePan
                     </p>
                     <Link
                         href={copy.cta.href}
-                        className="inline-flex items-center justify-center rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+                        className="inline-flex items-center justify-center rounded-md bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
                     >
                         {copy.cta.label}
                     </Link>

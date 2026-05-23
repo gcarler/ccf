@@ -50,7 +50,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead }
     return (
         <div
             className={clsx(
-                "flex-shrink-0 w-80 flex flex-col h-full rounded-xl transition-all duration-500 ease-in-out",
+                "flex-shrink-0 w-80 flex flex-col h-full rounded-md transition-all duration-500 ease-in-out",
                 isOver ? "bg-blue-500/10 scale-[1.02] shadow-2xl" : "bg-transparent"
             )}
         >
@@ -73,11 +73,11 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead }
                 <div className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-all">
                     <button 
                         onClick={onNewLead}
-                        className="size-7 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 hover:text-blue-500 hover:border-blue-500/30 hover:shadow-lg transition-all"
+                        className="size-7 rounded-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 hover:text-blue-500 hover:border-blue-500/30 hover:shadow-lg transition-all"
                     >
                         <UserPlus size={12} />
                     </button>
-                    <button className="size-7 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all">
+                    <button className="size-7 rounded-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all">
                         <MoreHorizontal size={12} />
                     </button>
                 </div>
@@ -87,7 +87,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead }
             <div 
                 ref={setNodeRef}
                 className={clsx(
-                    "flex-1 flex flex-col p-3 rounded-xl transition-all duration-300",
+                    "flex-1 flex flex-col p-3 rounded-md transition-all duration-300",
                     isOver ? "bg-white/40 dark:bg-white/5 backdrop-blur-md ring-2 ring-blue-500/20" : "bg-slate-50/50 dark:bg-white/[0.02]"
                 )}
             >
@@ -122,7 +122,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead }
                     {/* Empty State */}
                     {leads.length === 0 && (
                         <div className={clsx(
-                            "flex flex-col items-center justify-center gap-3 py-4 px-4 rounded-lg border-2 border-dashed transition-all duration-500",
+                            "flex flex-col items-center justify-center gap-3 py-1.5 px-4 rounded-lg border-2 border-dashed transition-all duration-500",
                             isOver 
                                 ? "border-blue-500/50 bg-blue-500/5 scale-[0.98]" 
                                 : "border-slate-200 dark:border-white/5"

@@ -54,37 +54,37 @@ export default function MinistrySettings() {
         <div className="flex flex-col h-full bg-slate-950/20 font-display">
             {/* Header Area */}
             <div className="bg-slate-900/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
-                <div className="px-8 pt-10 pb-4 flex items-center justify-between">
-                    <button onClick={() => router.back()} className="p-3 rounded-2xl bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all">
+                <div className="px-4 pt-10 pb-4 flex items-center justify-between">
+                    <button onClick={() => router.back()} className="p-3 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all">
                         <ArrowLeft size={20} />
                     </button>
                     <h1 className="text-xl font-black text-white tracking-tight uppercase tracking-tight">Configuración</h1>
-                    <button className="p-3 rounded-2xl bg-white/5 border border-white/10 text-primary hover:bg-primary/10 transition-all">
+                    <button className="p-3 rounded-lg bg-white/5 border border-white/10 text-primary hover:bg-primary/10 transition-all">
                         <Bell size={20} />
                     </button>
                 </div>
             </div>
 
-            <main className="flex-1 px-8 py-10 pb-40 space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <main className="flex-1 px-4 py-1.5 pb-4 space-y-3 animate-in fade-in slide-in-from-bottom-8 duration-700">
 
                 {/* Hero Section */}
                 <section className="flex flex-col items-center">
                     <div className="relative group">
-                        <div className="size-32 rounded-full border-2 border-primary/20 p-1.5 bg-primary/5 shadow-2xl shadow-primary/10">
+                        <div className="size-10 rounded-full border-2 border-primary/20 p-1.5 bg-primary/5 shadow-2xl shadow-primary/10">
                             <div className="size-full rounded-full bg-cover bg-center border-2 border-white/5" style={{ backgroundImage: "url('https://picsum.photos/seed/1544427928-c49cddee14bb/800/600')" }}></div>
                         </div>
                         <button className="absolute bottom-1 right-1 size-10 rounded-full bg-primary text-white border-2 border-slate-950 flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl">
                             <Edit3 size={16} />
                         </button>
                     </div>
-                    <div className="mt-8 text-center space-y-2">
-                        <h2 className="text-3xl font-black text-white tracking-tight uppercase">Comunidad Cristiana el Faro</h2>
-                        <div className="flex items-center justify-center gap-2 text-slate-500 font-bold text-[10px] uppercase tracking-widest">
+                    <div className="mt-3 text-center space-y-2">
+                        <h2 className="text-xl font-black text-white tracking-tight uppercase">Comunidad Cristiana el Faro</h2>
+                        <div className="flex items-center justify-center gap-2 text-slate-500 font-bold text-[10px] uppercase tracking-wide">
                             <MapPin size={12} className="text-primary" />
                             Sede Central • Mocoa, Putumayo
                         </div>
                         <div className="mt-4 px-4 py-1.5 bg-primary/10 rounded-full border border-primary/20 inline-block">
-                            <span className="text-primary text-[10px] font-black uppercase tracking-widest">Admin ID: CCF-2024</span>
+                            <span className="text-primary text-[10px] font-semibold uppercase tracking-wide">Admin ID: CCF-2024</span>
                         </div>
                     </div>
                 </section>
@@ -92,21 +92,21 @@ export default function MinistrySettings() {
                 {/* Settings Groups */}
                 {settingsGroups.map((group, idx) => (
                     <section key={idx} className="space-y-6">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 ml-1">{group.title}</h3>
+                        <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-600 ml-1">{group.title}</h3>
                         <div className="space-y-4">
                             {group.items.map((item, iidx) => (
                                 <div
                                     key={iidx}
                                     onClick={() => router.push(item.path)}
-                                    className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-3xl p-6 flex items-center justify-between group cursor-pointer hover:border-white/10 hover:bg-white/5 transition-all active:scale-[0.98]"
+                                    className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-lg p-3 flex items-center justify-between group cursor-pointer hover:border-white/10 hover:bg-white/5 transition-all active:scale-[0.98]"
                                 >
-                                    <div className="flex items-center gap-6">
-                                        <div className="size-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-lg border border-white/5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-lg border border-white/5">
                                             <item.icon size={24} />
                                         </div>
                                         <div className="space-y-1">
                                             <p className="text-base font-black text-white tracking-tight uppercase tracking-tight">{item.label}</p>
-                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{item.sub}</p>
+                                            <p className="font-semibold text-slate-500 uppercase tracking-wide">{item.sub}</p>
                                         </div>
                                     </div>
                                     <ChevronRight className="text-slate-600 group-hover:text-primary transition-colors" size={20} />
@@ -120,12 +120,12 @@ export default function MinistrySettings() {
                 <section className="pt-6">
                     <button
                         onClick={handleLogout}
-                        className="w-full h-18 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white font-black rounded-3xl border border-rose-500/20 transition-all flex items-center justify-center gap-3 uppercase text-[11px] tracking-[0.2em] shadow-lg shadow-rose-500/5 active:scale-[0.98]"
+                        className="w-full h-8 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white font-black rounded-lg border border-rose-500/20 transition-all flex items-center justify-center gap-3 uppercase text-[11px] tracking-wide shadow-lg shadow-rose-500/5 active:scale-[0.98]"
                     >
                         <LogOut size={20} />
                         Cerrar Sesión Admin
                     </button>
-                    <p className="text-center text-[9px] font-black text-slate-700 uppercase tracking-[0.2em] mt-8">Versión 2.1.0 • Antigravity Engine</p>
+                    <p className="text-center font-semibold text-slate-700 uppercase tracking-wide mt-3">Versión 2.1.0 • Antigravity Engine</p>
                 </section>
             </main>
         </div>

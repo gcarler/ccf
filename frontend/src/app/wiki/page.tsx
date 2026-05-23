@@ -68,10 +68,10 @@ export default function WikiHomePage() {
     return (
         <div className="flex flex-col h-full bg-[#F8F9FB] dark:bg-[#1E1F21]">
             {/* TOOLBAR */}
-            <header className="h-14 border-b border-slate-200/60 dark:border-white/5 flex items-center px-6 gap-4 shrink-0 bg-white dark:bg-[#1E1F21]">
+            <header className="h-8 border-b border-slate-200/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-white dark:bg-[#1E1F21]">
                 <div className="flex items-center gap-2 flex-1">
                     <BookOpen size={16} className="text-indigo-600" />
-                    <h2 className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                    <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                         BASE DE CONOCIMIENTO
                     </h2>
                 </div>
@@ -89,7 +89,7 @@ export default function WikiHomePage() {
                     </div>
                     <button 
                         onClick={() => setIsQuickAddOpen(!isQuickAddOpen)}
-                        className="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 active:scale-95 transition-all flex items-center gap-2"
+                        className="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 active:scale-95 transition-all flex items-center gap-2"
                     >
                         <Plus size={14} />
                         Nuevo Doc
@@ -108,7 +108,7 @@ export default function WikiHomePage() {
                     >
                         <form 
                             onSubmit={handleCreateDoc}
-                            className="px-6 py-4 flex items-center gap-4"
+                            className="px-3 py-1.5 flex items-center gap-4"
                         >
                             <div className="size-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
                                 <Zap size={16} />
@@ -118,7 +118,7 @@ export default function WikiHomePage() {
                                 value={newTitle}
                                 onChange={(e) => setNewTitle(e.target.value)}
                                 placeholder="Nombre del documento (Enter para crear...)"
-                                className="flex-1 bg-transparent border-none text-[15px] font-bold text-blue-900 dark:text-blue-200 placeholder:text-blue-400 focus:ring-0"
+                                className="flex-1 bg-transparent border-none text-sm font-bold text-blue-900 dark:text-blue-200 placeholder:text-blue-400 focus:ring-0"
                             />
                         </form>
                     </motion.div>
@@ -126,22 +126,22 @@ export default function WikiHomePage() {
             </AnimatePresence>
 
             {/* CONTENT AREA */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
-                <div className="max-w-7xl mx-auto space-y-8">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
+                <div className="max-w-7xl mx-auto space-y-3">
                     {/* Featured Section */}
                     <section>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">
                             DOCUMENTOS RECIENTES
                         </p>
                         
                         {loading ? (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 {[1, 2, 3].map(i => (
-                                    <div key={i} className="h-48 bg-white dark:bg-[#252528] rounded-2xl animate-pulse border border-slate-200/70 dark:border-white/5" />
+                                    <div key={i} className="h-48 bg-white dark:bg-[#252528] rounded-lg animate-pulse border border-slate-200/70 dark:border-white/5" />
                                 ))}
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-3">
                                 {docs
                                     .filter((doc) => doc.title.toLowerCase().includes(search.trim().toLowerCase()))
                                     .map((doc, index) => (
@@ -150,14 +150,14 @@ export default function WikiHomePage() {
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: index * 0.05 }}
-                                        className="group relative bg-white dark:bg-[#252528] rounded-2xl border border-slate-200/70 dark:border-white/5 p-6 shadow-sm hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full"
+                                        className="group relative bg-white dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full"
                                     >
                                         {/* Acento de color top */}
                                         <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-600 to-indigo-600" />
                                         
                                         <div className="flex-1 space-y-4">
                                             <div className="flex items-start justify-between">
-                                                <div className="size-10 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-indigo-600 transition-colors">
+                                                <div className="size-10 rounded-md bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-indigo-600 transition-colors">
                                                     <FileText size={20} />
                                                 </div>
                                                 <button className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400">
@@ -166,7 +166,7 @@ export default function WikiHomePage() {
                                             </div>
                                             
                                             <div>
-                                                <h3 className="text-[15px] font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors line-clamp-2">
+                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors line-clamp-2">
                                                     {doc.title}
                                                 </h3>
                                                 <p className="text-[12px] text-slate-500 mt-2 line-clamp-3 leading-relaxed">
@@ -175,14 +175,14 @@ export default function WikiHomePage() {
                                             </div>
                                         </div>
 
-                                        <div className="mt-6 pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-                                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                        <div className="mt-3 pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wide">
                                                 <Clock size={12} />
                                                 <span>{new Date(doc.updated_at).toLocaleDateString()}</span>
                                             </div>
                                             <Link 
                                                 href={`/wiki/docs/${doc.page_key}`}
-                                                className="text-[10px] font-black uppercase tracking-widest text-indigo-600 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all"
+                                                className="text-[10px] font-semibold uppercase tracking-wide text-indigo-600 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all"
                                             >
                                                 EDITAR <ChevronRight size={12} />
                                             </Link>
@@ -195,8 +195,8 @@ export default function WikiHomePage() {
 
                     {/* Empty State */}
                     {!loading && docs.length === 0 && (
-                        <div className="py-24 flex flex-col items-center justify-center text-center space-y-4 opacity-50">
-                            <div className="size-20 rounded-[2.5rem] bg-white dark:bg-white/5 flex items-center justify-center text-slate-300 shadow-xl">
+                        <div className="py-1.5 flex flex-col items-center justify-center text-center space-y-4 opacity-50">
+                            <div className="size-8 rounded-lg bg-white dark:bg-white/5 flex items-center justify-center text-slate-300 shadow-xl">
                                 <BookOpen size={40} />
                             </div>
                             <div className="max-w-sm">

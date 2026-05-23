@@ -33,7 +33,7 @@ export default function OnboardingPage() {
     const prevStep = () => setStep(prev => prev - 1);
 
     return (
-        <div className="min-h-screen bg-white dark:bg-[#1e1f21] flex flex-col items-center justify-center p-6 lg:p-12 overflow-hidden relative">
+        <div className="min-h-screen bg-white dark:bg-[#1e1f21] flex flex-col items-center justify-center p-3 lg:p-4 overflow-hidden relative">
             {/* Background Orbs */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20 dark:opacity-40">
                 <div className="absolute top-[-10%] left-[-10%] size-96 bg-blue-500 rounded-full blur-[120px] animate-pulse" />
@@ -41,14 +41,14 @@ export default function OnboardingPage() {
             </div>
 
             {/* Stepper Indicator */}
-            <div className="relative z-10 w-full max-w-sm mb-12">
+            <div className="relative z-10 w-full max-w-sm mb-3">
                 <div className="flex justify-between items-center relative">
                     <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-100 dark:bg-white/5 -translate-y-1/2 z-0" />
                     {[1, 2, 3].map((s) => (
                         <div 
                             key={s} 
                             className={clsx(
-                                "size-8 rounded-full flex items-center justify-center text-[12px] font-black z-10 transition-all duration-500",
+                                "size-8 rounded-full flex items-center justify-center font-semibold z-10 transition-all duration-500",
                                 step >= s 
                                     ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-110" 
                                     : "bg-slate-50 dark:bg-white/5 text-slate-400 border border-slate-200 dark:border-white/5"
@@ -60,18 +60,18 @@ export default function OnboardingPage() {
                 </div>
             </div>
 
-            <main className="relative z-10 w-full max-w-2xl bg-white dark:bg-[#1e1f21] rounded-[2.5rem] p-8 lg:p-16 shadow-2xl border border-slate-100 dark:border-white/5 overflow-hidden">
+            <main className="relative z-10 w-full max-w-2xl bg-white dark:bg-[#1e1f21] rounded-lg p-4 lg:p-4 shadow-2xl border border-slate-100 dark:border-white/5 overflow-hidden">
                 <AnimatePresence mode="wait">
                     {step === 1 && (
                         <motion.div 
                             key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-                            className="space-y-10"
+                            className="space-y-3"
                         >
                             <div className="text-center space-y-4">
-                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-semibold uppercase tracking-wide">
                                     <Sparkles size={14} /> Bienvenido a la Familia
                                 </div>
-                                <h1 className="text-4xl lg:text-5xl font-black text-slate-800 dark:text-white tracking-tighter leading-tight">
+                                <h1 className="text-lg lg:text-xl font-black text-slate-800 dark:text-white tracking-tighter leading-tight">
                                     Tu viaje espiritual <br /> comienza aquí
                                 </h1>
                                 <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-md mx-auto">
@@ -87,7 +87,7 @@ export default function OnboardingPage() {
 
                             <button 
                                 onClick={nextStep}
-                                className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-3xl font-black text-sm uppercase tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
+                                className="w-full py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-black text-sm uppercase tracking-wide shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
                             >
                                 Empezar Experiencia <ArrowRight size={18} />
                             </button>
@@ -97,10 +97,10 @@ export default function OnboardingPage() {
                     {step === 2 && (
                         <motion.div 
                             key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-                            className="space-y-10"
+                            className="space-y-3"
                         >
                             <div className="text-center space-y-4">
-                                <h2 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight">¿En qué sede te encuentras?</h2>
+                                <h2 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">¿En qué sede te encuentras?</h2>
                                 <p className="text-slate-500 dark:text-slate-400 font-medium">Elige tu comunidad local para personalizar tu dashboard.</p>
                             </div>
 
@@ -110,20 +110,20 @@ export default function OnboardingPage() {
                                         key={campus.id}
                                         onClick={() => setSelectedCampus(campus.id)}
                                         className={clsx(
-                                            "p-6 rounded-[2rem] border-2 cursor-pointer transition-all flex flex-col items-center gap-4 group relative overflow-hidden",
+                                            "p-3 rounded-lg border-2 cursor-pointer transition-all flex flex-col items-center gap-4 group relative overflow-hidden",
                                             selectedCampus === campus.id 
                                                 ? "border-blue-600 bg-blue-50/50 dark:bg-blue-500/10 shadow-lg" 
                                                 : "border-slate-100 dark:border-white/5 hover:border-blue-200"
                                         )}
                                     >
                                         <div className={clsx(
-                                            "size-12 rounded-2xl flex items-center justify-center text-white shadow-xl bg-gradient-to-br",
+                                            "size-7 rounded-lg flex items-center justify-center text-white shadow-xl bg-gradient-to-br",
                                             campus.color
                                         )}>
                                             <MapPin size={24} />
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-[13px] font-black text-slate-800 dark:text-white">{campus.name}</p>
+                                            <p className="font-semibold text-slate-800 dark:text-white">{campus.name}</p>
                                             <p className="text-[10px] font-bold text-slate-400">{campus.location}</p>
                                         </div>
                                         {selectedCampus === campus.id && (
@@ -134,8 +134,8 @@ export default function OnboardingPage() {
                             </div>
 
                             <div className="flex gap-4">
-                                <button onClick={prevStep} className="px-8 py-5 border-2 border-slate-100 dark:border-white/5 rounded-3xl font-black text-xs uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-all">Atrás</button>
-                                <button onClick={nextStep} className="flex-1 py-5 bg-blue-600 text-white rounded-3xl font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-500/30 active:scale-95 transition-all flex items-center justify-center gap-3">Continuar <ArrowRight size={18} /></button>
+                                <button onClick={prevStep} className="px-4 py-2 border-2 border-slate-100 dark:border-white/5 rounded-lg font-black text-xs uppercase tracking-wide text-slate-400 hover:text-slate-600 transition-all">Atrás</button>
+                                <button onClick={nextStep} className="flex-1 py-2 bg-blue-600 text-white rounded-lg font-black text-sm uppercase tracking-wide shadow-xl shadow-blue-500/30 active:scale-95 transition-all flex items-center justify-center gap-3">Continuar <ArrowRight size={18} /></button>
                             </div>
                         </motion.div>
                     )}
@@ -143,19 +143,19 @@ export default function OnboardingPage() {
                     {step === 3 && (
                         <motion.div 
                             key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-                            className="space-y-10"
+                            className="space-y-3"
                         >
                             <div className="text-center space-y-4">
-                                <h2 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight">Últimos detalles</h2>
+                                <h2 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">Últimos detalles</h2>
                                 <p className="text-slate-500 dark:text-slate-400 font-medium">Configura cómo quieres interactuar con la plataforma.</p>
                             </div>
 
                             <div className="space-y-4">
-                                <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-3xl border border-slate-100 dark:border-white/5 flex items-center justify-between">
+                                <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between">
                                     <div className="flex items-center gap-4">
-                                        <div className={clsx("size-12 rounded-2xl flex items-center justify-center transition-all", notificationsOn ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-400")}><Bell size={24} /></div>
+                                        <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-all", notificationsOn ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-400")}><Bell size={24} /></div>
                                         <div>
-                                            <h4 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">Notificaciones</h4>
+                                            <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">Notificaciones</h4>
                                             <p className="text-xs text-slate-500">Alertas de tareas y eventos.</p>
                                         </div>
                                     </div>
@@ -164,17 +164,17 @@ export default function OnboardingPage() {
                                     </div>
                                 </div>
 
-                                <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-3xl border border-slate-100 dark:border-white/5 flex items-center gap-4">
-                                    <div className="size-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 shrink-0"><ShieldCheck size={24} /></div>
+                                <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center gap-4">
+                                    <div className="size-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 shrink-0"><ShieldCheck size={24} /></div>
                                     <p className="text-xs text-slate-500 font-medium leading-relaxed">Al completar el onboarding, aceptas nuestros términos de servicio y la política de protección de datos espirituales.</p>
                                 </div>
                             </div>
 
                             <div className="flex gap-4">
-                                <button onClick={prevStep} className="px-8 py-5 border-2 border-slate-100 dark:border-white/5 rounded-3xl font-black text-xs uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-all">Atrás</button>
+                                <button onClick={prevStep} className="px-4 py-2 border-2 border-slate-100 dark:border-white/5 rounded-lg font-black text-xs uppercase tracking-wide text-slate-400 hover:text-slate-600 transition-all">Atrás</button>
                                 <button 
                                     onClick={() => router.push('/academy')}
-                                    className="flex-1 py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-3xl font-black text-sm uppercase tracking-widest shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3"
+                                    className="flex-1 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-black text-sm uppercase tracking-wide shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3"
                                 >
                                     ¡Listo para empezar! <CheckCircle2 size={18} />
                                 </button>
@@ -185,19 +185,19 @@ export default function OnboardingPage() {
             </main>
 
             {/* Footer / Helper */}
-            <p className="relative z-10 mt-12 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Centro Cristiano Familiar © 2026</p>
+            <p className="relative z-10 mt-3 font-semibold text-slate-400 uppercase tracking-wide">Centro Cristiano Familiar © 2026</p>
         </div>
     );
 }
 
 function FeatureItem({ icon: Icon, title, desc }: any) {
     return (
-        <div className="flex items-start gap-5 p-5 bg-white dark:bg-white/5 rounded-3xl border border-slate-100 dark:border-white/10 group transition-all hover:border-blue-500/30 hover:shadow-lg">
-            <div className="size-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
+        <div className="flex items-start gap-5 p-3 bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/10 group transition-all hover:border-blue-500/30 hover:shadow-lg">
+            <div className="size-7 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
                 <Icon size={20} />
             </div>
             <div>
-                <h4 className="text-[15px] font-black text-slate-800 dark:text-white leading-tight mb-1">{title}</h4>
+                <h4 className="text-sm font-semibold text-slate-800 dark:text-white leading-tight mb-1">{title}</h4>
                 <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">{desc}</p>
             </div>
         </div>

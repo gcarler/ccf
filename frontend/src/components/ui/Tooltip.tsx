@@ -20,7 +20,7 @@ export default function Tooltip({ children, content, side = 'top' }: TooltipProp
                     <TooltipPrimitive.Content
                         side={side}
                         sideOffset={5}
-                        className="z-[10000] select-none rounded-lg bg-slate-900 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-xl border border-white/10 animate-in fade-in zoom-in-95 duration-200"
+                        className="z-[10000] select-none rounded-lg bg-slate-900 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow-xl border border-white/10 animate-in fade-in zoom-in-95 duration-200"
                     >
                         {content}
                         <TooltipPrimitive.Arrow className="fill-slate-900" />

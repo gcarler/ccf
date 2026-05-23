@@ -90,13 +90,13 @@ export default function ProjectsTasksPage() {
                 availableViews={PROJECT_TASK_VIEWS}
             />
 
-            <div className="px-6 py-3 border-b border-slate-200 dark:border-white/10 flex flex-wrap gap-2">
+            <div className="px-3 py-3 border-b border-slate-200 dark:border-white/10 flex flex-wrap gap-2">
                 {['all', 'todo', 'in_progress', 'review', 'done'].map((value) => (
                     <button
                         key={value}
                         onClick={() => setStatus(value as any)}
                         className={clsx(
-                            'px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black border',
+                            'px-3 py-1 rounded-full text-[10px] uppercase tracking-wide font-black border',
                             status === value
                                 ? 'bg-blue-600 text-white border-blue-600'
                                 : 'border-slate-200 dark:border-white/10 text-slate-500'
@@ -173,7 +173,7 @@ export default function ProjectsTasksPage() {
                                     </div>
                                     <button
                                         onClick={() => moveForward(task)}
-                                        className="px-3 py-1 rounded-lg bg-blue-600 text-white text-[10px] uppercase tracking-widest font-black"
+                                        className="px-3 py-1 rounded-lg bg-blue-600 text-white text-[10px] uppercase tracking-wide font-black"
                                     >
                                         Siguiente estado
                                     </button>

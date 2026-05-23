@@ -114,7 +114,7 @@ function TreeNode({
 
                 {/* Active indicator */}
                 {isActive && (
-                    <span className="text-[9px] font-black px-1.5 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded">
+                    <span className="font-semibold px-1.5 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded">
                         actual
                     </span>
                 )}
@@ -164,7 +164,7 @@ export default function TaskRouteTree({
         <div className="flex flex-col h-full">
             {/* Header */}
             <div className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.06]">
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Ruta de la tarea</p>
+                <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Ruta de la tarea</p>
 
                 {/* Breadcrumb path */}
                 <div className="flex flex-col gap-1">
@@ -210,7 +210,7 @@ export default function TaskRouteTree({
             {/* Tree */}
             <div className="flex-1 overflow-y-auto py-2 px-2">
                 {tree.length === 0 ? (
-                    <p className="text-[11px] text-slate-400 text-center py-6">
+                    <p className="text-[11px] text-slate-400 text-center py-2">
                         No hay datos de ruta disponibles.
                     </p>
                 ) : (

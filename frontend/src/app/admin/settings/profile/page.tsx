@@ -28,10 +28,10 @@ export default function AdminSettingsProfilePage() {
         <div className="min-h-full bg-slate-950/20 font-display">
             {/* Header */}
             <div className="bg-slate-900/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-20">
-                <div className="px-8 py-5 flex items-center justify-between">
+                <div className="px-4 py-2 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Church size={18} className="text-primary" />
-                        <h1 className="text-[13px] font-black uppercase tracking-widest text-white">
+                        <h1 className="text-[13px] font-semibold uppercase tracking-wide text-white">
                             Perfil del Ministerio
                         </h1>
                     </div>
@@ -40,7 +40,7 @@ export default function AdminSettingsProfilePage() {
                             <motion.span
                                 initial={{ opacity: 0, x: 10 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                                className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-md text-[10px] font-semibold uppercase tracking-wide"
                             >
                                 ✓ Guardado
                             </motion.span>
@@ -48,14 +48,14 @@ export default function AdminSettingsProfilePage() {
                         {!editing ? (
                             <button
                                 onClick={() => setEditing(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/15 text-white border border-white/10 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all"
+                                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/15 text-white border border-white/10 rounded-md text-[11px] font-semibold uppercase tracking-wide transition-all"
                             >
                                 <Edit2 size={14} /> Editar
                             </button>
                         ) : (
                             <button
                                 onClick={handleSave}
-                                className="flex items-center gap-2 px-5 py-2 bg-primary hover:bg-primary/80 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 transition-all"
+                                className="flex items-center gap-2 px-3 py-2 bg-primary hover:bg-primary/80 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-primary/20 transition-all"
                             >
                                 <Save size={14} /> Guardar Cambios
                             </button>
@@ -64,21 +64,21 @@ export default function AdminSettingsProfilePage() {
                 </div>
             </div>
 
-            <div className="max-w-2xl mx-auto px-8 py-10 space-y-8">
+            <div className="max-w-2xl mx-auto px-4 py-1.5 space-y-3">
                 {/* Logo Upload */}
                 <div className="flex flex-col items-center gap-5">
                     <div className="relative">
-                        <div className="size-28 rounded-3xl border-2 border-primary/30 bg-primary/10 flex items-center justify-center shadow-2xl shadow-primary/10 overflow-hidden">
+                        <div className="size-10 rounded-lg border-2 border-primary/30 bg-primary/10 flex items-center justify-center shadow-2xl shadow-primary/10 overflow-hidden">
                             <Church size={48} className="text-primary" />
                         </div>
                         {editing && (
-                            <button className="absolute -bottom-2 -right-2 size-9 rounded-xl bg-primary text-white flex items-center justify-center shadow-xl border-2 border-slate-950 hover:scale-110 transition-all">
+                            <button className="absolute -bottom-2 -right-2 size-9 rounded-md bg-primary text-white flex items-center justify-center shadow-xl border-2 border-slate-950 hover:scale-110 transition-all">
                                 <Camera size={16} />
                             </button>
                         )}
                     </div>
                     {editing && (
-                        <p className="text-[10px] text-slate-500 uppercase tracking-widest">
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wide">
                             Toca el ícono para cambiar el logo
                         </p>
                     )}
@@ -115,7 +115,7 @@ export default function AdminSettingsProfilePage() {
                 </Section>
 
                 {editing && (
-                    <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-[11px] text-amber-400 font-bold">
+                    <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg text-[11px] text-amber-400 font-bold">
                         <AlertCircle size={16} className="shrink-0 mt-0.5" />
                         Los cambios se reflejarán en todo el ecosistema CCF, incluyendo el sitio público.
                     </div>
@@ -130,9 +130,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-3xl p-6 space-y-4"
+            className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-lg p-3 space-y-4"
         >
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-5">{title}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-5">{title}</p>
             {children}
         </motion.div>
     );
@@ -144,20 +144,20 @@ function Field({ label, value, editing, onChange, multiline }: {
 }) {
     return (
         <div className="space-y-1.5">
-            <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">{label}</label>
+            <label className="text-[9px] font-semibold uppercase tracking-wide text-slate-500">{label}</label>
             {editing ? (
                 multiline ? (
                     <textarea
                         rows={3}
                         value={value}
                         onChange={e => onChange(e.target.value)}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder:text-slate-600 focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all resize-none outline-none"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-md text-sm text-white placeholder:text-slate-600 focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all resize-none outline-none"
                     />
                 ) : (
                     <input
                         value={value}
                         onChange={e => onChange(e.target.value)}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder:text-slate-600 focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all outline-none"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-md text-sm text-white placeholder:text-slate-600 focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all outline-none"
                     />
                 )
             ) : (

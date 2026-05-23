@@ -40,7 +40,7 @@ export default function StudentCurriculum() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="space-y-3 px-4 py-4">
+        <div className="space-y-3 px-4 py-1.5">
             <AdminHero
                 eyebrow="Currículo"
                 title="Organizador curricular"
@@ -50,7 +50,7 @@ export default function StudentCurriculum() {
                 primaryAction={{ label: 'Editar plan', icon: LinkIcon, onClick: () => router.push('/academy/coordination') }}
                 secondaryAction={{ label: 'Ver cronograma', icon: Calendar, onClick: () => router.push('/academy/schedule') }}
             />
-            <div className="rounded-xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] shadow-xl overflow-hidden">
+            <div className="rounded-md border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] shadow-xl overflow-hidden">
                 <div className="flex overflow-x-auto hide-scrollbar gap-3 p-4 border-b border-slate-100 dark:border-white/5">
                     {filters.map((filter) => (
                         <CommunityToolbarChip
@@ -64,7 +64,7 @@ export default function StudentCurriculum() {
                 </div>
                 <div className="px-4 py-2 flex items-center justify-between">
                     <h2 className="text-lg font-black text-slate-900 dark:text-white">{activeFilter}</h2>
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full">
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full">
                         {filtered.length} cursos
                     </span>
                 </div>
@@ -76,8 +76,8 @@ export default function StudentCurriculum() {
                 {loading && <p className="px-4 pb-6 text-sm text-slate-500">Sincronizando tus cursos...</p>}
                 {error && <p className="px-4 pb-6 text-sm text-rose-400">{error}</p>}
                 {!loading && filtered.length === 0 && (
-                    <div className="px-4 py-16 text-center text-slate-400 space-y-3">
-                        <BookOpen className="w-12 h-12 mx-auto text-slate-300" />
+                    <div className="px-4 py-1.5 text-center text-slate-400 space-y-3">
+                        <BookOpen className="w-12 h-8 mx-auto text-slate-300" />
                         <p className="text-sm font-bold text-slate-800 dark:text-white">No encontramos cursos en esta categoría</p>
                         <p className="text-sm">Inscríbete a una nueva cohorte para ampliar tu plan de estudios.</p>
                     </div>
@@ -87,7 +87,7 @@ export default function StudentCurriculum() {
                             <article 
                                 key={enrollment.id} 
                                 onClick={() => router.push(`/academy/course/${enrollment.course.id}`)}
-                                className="bg-slate-50 dark:bg-white/5 rounded-xl p-5 border border-slate-100 dark:border-white/10 flex items-center gap-4 group cursor-pointer hover:shadow-lg transition-all"
+                                className="bg-slate-50 dark:bg-white/5 rounded-md p-3 border border-slate-100 dark:border-white/10 flex items-center gap-4 group cursor-pointer hover:shadow-lg transition-all"
                             >
                                 <div className="text-slate-400 group-hover:text-primary transition-colors p-2">
                                     <BookOpen size={20} />
@@ -95,7 +95,7 @@ export default function StudentCurriculum() {
                                 <div className="flex-1">
                                     <div
                                         className={clsx(
-                                            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest mb-3 border',
+                                            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-semibold uppercase tracking-wide mb-3 border',
                                             enrollment.approved
                                                 ? 'text-emerald-500 border-emerald-200 bg-emerald-50'
                                                 : 'text-amber-500 border-amber-200 bg-amber-50'
@@ -109,17 +109,17 @@ export default function StudentCurriculum() {
                                     </h3>
                                     <p className="text-xs text-slate-500 font-medium">{enrollment.course.modality === 'formal' ? 'Programa formal' : 'Taller no formal'}</p>
                                 </div>
-                                <div className="w-20 h-20 rounded-2xl border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center bg-white dark:bg-black/20">
-                                    <p className="text-slate-900 dark:text-white text-sm font-black">{Math.round(enrollment.progress_percent)}%</p>
-                                    <p className="text-[9px] text-slate-500 uppercase tracking-widest">Progreso</p>
+                                <div className="w-20 h-20 rounded-lg border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center bg-white dark:bg-black/20">
+                                    <p className="text-slate-900 dark:text-white text-sm font-semibold">{Math.round(enrollment.progress_percent)}%</p>
+                                    <p className="text-[9px] text-slate-500 uppercase tracking-wide">Progreso</p>
                                 </div>
                             </article>
                         ))}
-                    <Link href="/academy" className="bg-primary/5 rounded-xl p-4 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center gap-3 group hover:border-primary/50 hover:bg-primary/10 transition-all cursor-pointer">
+                    <Link href="/academy" className="bg-primary/5 rounded-md p-4 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center gap-3 group hover:border-primary/50 hover:bg-primary/10 transition-all cursor-pointer">
                         <div className="text-primary/50 group-hover:text-primary transition-colors">
                             <PlusCircle size={32} />
                         </div>
-                        <p className="text-primary font-bold text-xs uppercase tracking-widest">Añadir nueva materia</p>
+                        <p className="text-primary font-bold text-xs uppercase tracking-wide">Añadir nueva materia</p>
                     </Link>
                 </div>
             </div>
@@ -134,9 +134,9 @@ function SummaryCard({ label, value, tone }: { label: string; value: string | nu
         emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10',
     };
     return (
-        <div className={`rounded-2xl border border-slate-100 dark:border-white/5 px-4 py-1.5 flex items-center justify-between ${colors[tone]}`}>
-            <span className="text-[10px] font-black uppercase tracking-[0.3em]">{label}</span>
-            <span className="text-sm font-black">{value}</span>
+        <div className={`rounded-lg border border-slate-100 dark:border-white/5 px-4 py-1.5 flex items-center justify-between ${colors[tone]}`}>
+            <span className="text-[10px] font-semibold uppercase tracking-wide">{label}</span>
+            <span className="text-sm font-semibold">{value}</span>
         </div>
     );
 }

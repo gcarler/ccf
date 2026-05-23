@@ -150,7 +150,7 @@ export default function InboxMessagesPage() {
         >
         <div className="p-3 border-b border-slate-100 dark:border-white/5">
             <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-black tracking-tight text-slate-800 dark:text-white uppercase">
+                <h2 className="text-sm font-bold tracking-tight text-slate-800 dark:text-white uppercase">
                 {isCreatingNew ? 'Nuevo Chat' : 'Conversaciones'}
                 </h2>
                 <button
@@ -193,18 +193,18 @@ export default function InboxMessagesPage() {
                     exit={{ opacity: 0, x: -5 }}
                     className="space-y-1"
                     >
-                        <p className="px-2 py-1 text-[9px] font-black uppercase tracking-widest text-slate-400">Contactos ({visibleMembers.length})</p>
+                        <p className="px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-slate-400">Contactos ({visibleMembers.length})</p>
                         {visibleMembers.map(member => (
                         <button
                             key={member.id}
                             onClick={() => handleStartNewChat(member)}
-                            className="flex w-full items-center gap-3 rounded-xl p-2 text-left hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors group"
+                            className="flex w-full items-center gap-3 rounded-md p-2 text-left hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors group"
                         >
-                            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-[10px] font-black uppercase text-slate-600 dark:bg-white/10 dark:text-white group-hover:bg-blue-200 group-hover:text-blue-700 transition-colors">
+                            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-[10px] font-semibold uppercase text-slate-600 dark:bg-white/10 dark:text-white group-hover:bg-blue-200 group-hover:text-blue-700 transition-colors">
                             {member.first_name.charAt(0)}{member.last_name.charAt(0)}
                             </div>
                             <div className="min-w-0 flex-1">
-                            <h4 className="truncate text-[11px] font-black text-slate-800 dark:text-slate-100">
+                            <h4 className="truncate font-semibold text-slate-800 dark:text-slate-100">
                                 {member.first_name} {member.last_name}
                             </h4>
                             </div>
@@ -225,20 +225,20 @@ export default function InboxMessagesPage() {
                     exit={{ opacity: 0, x: 5 }}
                     className="space-y-1"
                     >
-                        <p className="px-2 py-1 text-[9px] font-black uppercase tracking-widest text-slate-400">Recientes</p>
+                        <p className="px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-slate-400">Recientes</p>
                         {visibleChats.map(chat => (
                         <button
                             key={chat.id}
                             onClick={() => setActiveChat(chat)}
                             className={clsx(
-                            'flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors group',
+                            'flex w-full items-center gap-3 rounded-md p-2 text-left transition-colors group',
                             activeChat?.id === chat.id
                                 ? 'bg-blue-50 dark:bg-blue-600/10'
                                 : 'hover:bg-slate-100 dark:hover:bg-white/5'
                             )}
                         >
                             <div className={clsx(
-                            "flex size-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-black uppercase transition-colors shadow-sm",
+                            "flex size-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-semibold uppercase transition-colors shadow-sm",
                             activeChat?.id === chat.id
                                 ? "bg-blue-600 text-white shadow-blue-500/20"
                                 : "bg-slate-800 text-white dark:bg-white/10 group-hover:bg-slate-700"
@@ -248,7 +248,7 @@ export default function InboxMessagesPage() {
                             <div className="min-w-0 flex-1">
                             <div className="mb-0.5 flex items-baseline justify-between">
                                 <h4 className={clsx(
-                                    "truncate text-[11px] font-black",
+                                    "truncate font-semibold",
                                     activeChat?.id === chat.id ? "text-blue-700 dark:text-blue-400" : "text-slate-800 dark:text-slate-100"
                                 )}>
                                 {chat.name}
@@ -268,7 +268,7 @@ export default function InboxMessagesPage() {
                         ))}
                         {visibleChats.length === 0 && (
                             <div className="p-4 text-center space-y-2 mt-4">
-                                <div className="mx-auto size-8 bg-slate-200 dark:bg-white/5 rounded-xl flex items-center justify-center">
+                                <div className="mx-auto size-8 bg-slate-200 dark:bg-white/5 rounded-md flex items-center justify-center">
                                     <MessageSquare size={14} className="text-slate-400" />
                                 </div>
                                 <div>
@@ -297,14 +297,14 @@ export default function InboxMessagesPage() {
                 >
                 <ChevronLeft size={16} />
                 </button>
-                <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-[10px] font-black uppercase text-white shadow-sm">
+                <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-[10px] font-semibold uppercase text-white shadow-sm">
                 {activeChat.name.charAt(0)}
                 </div>
                 <div>
-                <h3 className="text-xs font-black text-slate-800 dark:text-white leading-tight">
+                <h3 className="text-xs font-semibold text-slate-800 dark:text-white leading-tight">
                     {activeChat.name}
                 </h3>
-                <p className="text-[9px] font-bold uppercase tracking-widest text-blue-500 leading-tight">
+                <p className="text-[9px] font-bold uppercase tracking-wide text-blue-500 leading-tight">
                     {activeChat.channel}
                 </p>
                 </div>
@@ -327,7 +327,7 @@ export default function InboxMessagesPage() {
                         animate={{ opacity: 1, y: 0 }}
                         className="ml-auto flex max-w-[85%] md:max-w-[70%] flex-col items-end"
                     >
-                        <div className="rounded-xl rounded-br-sm bg-blue-600 px-3 py-2 text-[11px] leading-relaxed font-medium text-white shadow-sm shadow-blue-500/10">
+                        <div className="rounded-md rounded-br-sm bg-blue-600 px-3 py-2 text-[11px] leading-relaxed font-medium text-white shadow-sm shadow-blue-500/10">
                         {message.content}
                         </div>
                         <div className="mt-1 flex items-center gap-1 px-1">
@@ -342,7 +342,7 @@ export default function InboxMessagesPage() {
             </div>
             
             <footer className="border-t border-slate-100 bg-white p-3 dark:border-white/5 dark:bg-[#1E1F21] shrink-0">
-                <div className="mx-auto flex w-full items-center gap-2 rounded-xl bg-slate-50 border border-slate-200/80 p-1 pl-3 pr-1 dark:border-white/10 dark:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-300 transition-all shadow-sm">
+                <div className="mx-auto flex w-full items-center gap-2 rounded-md bg-slate-50 border border-slate-200/80 p-1 pl-3 pr-1 dark:border-white/10 dark:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-300 transition-all shadow-sm">
                 <input
                     value={inputText}
                     onChange={event => setInputText(event.target.value)}
@@ -364,11 +364,11 @@ export default function InboxMessagesPage() {
             </>
         ) : (
             <div className="space-y-3 flex flex-col items-center">
-            <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-600/10 shadow-inner">
+            <div className="mx-auto flex size-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-600/10 shadow-inner">
                 <MessageSquare size={24} strokeWidth={2} />
             </div>
             <div className="space-y-1">
-                <h3 className="text-sm font-black text-slate-800 dark:text-white">
+                <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
                     Mis Mensajes
                 </h3>
                 <p className="mx-auto max-w-xs text-[10px] font-medium text-slate-500 leading-relaxed">
@@ -377,7 +377,7 @@ export default function InboxMessagesPage() {
             </div>
             <button 
                 onClick={() => setIsCreatingNew(true)}
-                className="mt-2 px-3 py-1.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-700 hover:shadow-md hover:shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-2"
+                className="mt-2 px-3 py-1.5 bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg hover:bg-blue-700 hover:shadow-md hover:shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-2"
             >
                 <Plus size={12} /> Nuevo Chat
             </button>

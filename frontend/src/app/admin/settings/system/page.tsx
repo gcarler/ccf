@@ -572,20 +572,20 @@ export default function SystemSettings() {
 
     const settingsSidebar = (
         <div className="flex flex-col h-full overflow-hidden">
-            <div className="p-8 border-b border-slate-100 dark:border-white/5 space-y-4">
-                <div className="size-16 rounded-3xl bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 shadow-xl">
+            <div className="p-4 border-b border-slate-100 dark:border-white/5 space-y-4">
+                <div className="size-8 rounded-lg bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 shadow-xl">
                     <Zap size={32} />
                 </div>
                 <div>
-                    <h3 className="text-xl font-black tracking-tight text-slate-800 dark:text-white">Motor Core</h3>
-                    <p className="text-[10px] font-bold text-blue-500 uppercase tracking-[0.2em]">Configuración Global</p>
+                    <h3 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white">Motor Core</h3>
+                    <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wide">Configuración Global</p>
                 </div>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                <button className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-white/5 shadow-md border border-blue-500/20 rounded-2xl text-blue-600 dark:text-blue-400 font-bold text-xs"><div className="flex items-center gap-3"><Settings size={16} /> Sistema Base</div> <ChevronRight size={14} /></button>
-                <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 rounded-2xl text-slate-500 font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Shield size={16} /> Permisos y Roles</div></button>
-                <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 rounded-2xl text-slate-500 font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Database size={16} /> Respaldos</div></button>
-                <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 rounded-2xl text-slate-500 font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Activity size={16} /> Monitor de Salud</div></button>
+                <button className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-white/5 shadow-md border border-blue-500/20 rounded-lg text-blue-600 dark:text-blue-400 font-bold text-xs"><div className="flex items-center gap-3"><Settings size={16} /> Sistema Base</div> <ChevronRight size={14} /></button>
+                <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg text-slate-500 font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Shield size={16} /> Permisos y Roles</div></button>
+                <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg text-slate-500 font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Database size={16} /> Respaldos</div></button>
+                <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg text-slate-500 font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Activity size={16} /> Monitor de Salud</div></button>
             </div>
         </div>
     );
@@ -622,25 +622,25 @@ export default function SystemSettings() {
                 }}
             />
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-20">
-                <div className="lg:col-span-8 space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 pb-4">
+                <div className="lg:col-span-8 space-y-3">
                     {/* Real-time Health Monitor */}
-                    <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <HealthCard label="Latencia de Red" value={loading ? '...' : config?.health?.latency} status="optimal" icon={Activity} />
                         <HealthCard label="Uptime de Sistema" value={loading ? '...' : config?.health?.uptime} status="optimal" icon={Server} />
                         <HealthCard label="Consumo de RAM" value={loading ? '...' : config?.health?.memory} status="stable" icon={Cpu} />
                     </section>
 
                     {/* Feature Flags Grid */}
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] p-10 shadow-xl space-y-10 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 -mr-16 -mt-16 size-64 bg-blue-600/5 rounded-full blur-[100px]" />
+                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 -mr-16 -mt-16 size-10 bg-blue-600/5 rounded-full blur-[100px]" />
                         <div className="relative z-10">
-                            <div className="flex items-center gap-3 mb-10">
+                            <div className="flex items-center gap-3 mb-3">
                                 <Layers size={20} className="text-blue-600" />
-                                <h3 className="text-lg font-black tracking-tight uppercase tracking-widest">Feature Flags & Módulos</h3>
+                                <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Feature Flags & Módulos</h3>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <FeatureToggle 
                                     label="Academia & LMS" desc="Habilita el reproductor de cursos y certificados." 
                                     active={config?.features_enabled?.lms} onToggle={() => toggleFeature('lms')} 
@@ -680,10 +680,10 @@ export default function SystemSettings() {
                     </section>
 
                     {/* Integrated Providers */}
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] p-10 shadow-xl space-y-8">
+                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
                         <div className="flex items-center gap-3">
                             <Globe size={20} className="text-blue-600" />
-                            <h3 className="text-lg font-black tracking-tight uppercase tracking-widest">Pasarelas & Comunicaciones</h3>
+                            <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Pasarelas & Comunicaciones</h3>
                         </div>
 
                         <div className="space-y-4">
@@ -693,10 +693,10 @@ export default function SystemSettings() {
                         </div>
                     </section>
 
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] p-10 shadow-xl space-y-6">
+                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-6">
                         <div className="flex items-center justify-between gap-3">
-                            <h3 className="text-lg font-black tracking-tight uppercase tracking-widest">Rollout Segmentado</h3>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Roles y porcentaje</span>
+                            <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Rollout Segmentado</h3>
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Roles y porcentaje</span>
                         </div>
                         <RolloutControl
                             featureId="knowledge_graph"
@@ -728,33 +728,33 @@ export default function SystemSettings() {
                         />
                     </section>
 
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] p-10 shadow-xl space-y-5">
+                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-5">
                         <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
-                                <h3 className="text-lg font-black tracking-tight uppercase tracking-widest">Auditoría de Flags</h3>
+                                <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Auditoría de Flags</h3>
                                 {auditAnomalies?.has_anomaly ? (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-rose-600">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-600">
                                         <AlertTriangle size={12} /> Anomalía
                                     </span>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-600">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-600">
                                         <CheckCircle2 size={12} /> Normal
                                     </span>
                                 )}
                             </div>
                             <div className="flex items-center gap-2">
-                                <button onClick={scanIncidents} className="h-9 rounded-xl border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 dark:hover:bg-white/10">
+                                <button onClick={scanIncidents} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-blue-600 hover:bg-blue-50 dark:hover:bg-white/10">
                                     {actionLoading === 'scan-incidents' ? 'Escaneando...' : 'Scan Incidents'}
                                 </button>
-                                <button onClick={() => downloadAudit('json')} className="h-9 rounded-xl border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10">Export JSON</button>
-                                <button onClick={() => downloadAudit('csv')} className="h-9 rounded-xl border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10">Export CSV</button>
+                                <button onClick={() => downloadAudit('json')} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10">Export JSON</button>
+                                <button onClick={() => downloadAudit('csv')} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10">Export CSV</button>
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <select
                                 value={auditFilters.action}
                                 onChange={(event) => setAuditFilters((prev) => ({ ...prev, action: event.target.value }))}
-                                className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-200"
+                                className="h-10 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200"
                             >
                                 <option value="">Todas las acciones</option>
                                 <option value="update_flags">update_flags</option>
@@ -763,7 +763,7 @@ export default function SystemSettings() {
                             <select
                                 value={auditFilters.feature}
                                 onChange={(event) => setAuditFilters((prev) => ({ ...prev, feature: event.target.value }))}
-                                className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-200"
+                                className="h-10 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200"
                             >
                                 <option value="">Todas las features</option>
                                 {Object.keys(config?.features_enabled || {}).map((feature) => (
@@ -774,7 +774,7 @@ export default function SystemSettings() {
                                 value={auditFilters.actor}
                                 onChange={(event) => setAuditFilters((prev) => ({ ...prev, actor: event.target.value }))}
                                 placeholder="Filtrar actor (id usuario)"
-                                className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-xs font-bold text-slate-600 dark:text-slate-200"
+                                className="h-10 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-xs font-bold text-slate-600 dark:text-slate-200"
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -784,8 +784,8 @@ export default function SystemSettings() {
                             <AuditMetric label="Actores únicos" value={String((auditSummary?.top_actors || []).length)} />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Top Actores</p>
+                            <div className="rounded-lg border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Top Actores</p>
                                 <div className="space-y-2">
                                     {(auditSummary?.top_actors || []).slice(0, 4).map((item: any) => (
                                         <div key={`${item.actor}-${item.count}`} className="flex items-center justify-between text-xs">
@@ -798,8 +798,8 @@ export default function SystemSettings() {
                                     ) : null}
                                 </div>
                             </div>
-                            <div className="rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Top Features</p>
+                            <div className="rounded-lg border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Top Features</p>
                                 <div className="space-y-2">
                                     {(auditSummary?.top_features || []).slice(0, 4).map((item: any) => (
                                         <div key={`${item.feature}-${item.count}`} className="flex items-center justify-between text-xs">
@@ -814,8 +814,8 @@ export default function SystemSettings() {
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Picos por Actor (24h)</p>
+                            <div className="rounded-lg border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Picos por Actor (24h)</p>
                                 {(auditAnomalies?.actor_spikes || []).length > 0 ? (
                                     <div className="space-y-2">
                                         {auditAnomalies.actor_spikes.map((item: any) => (
@@ -829,8 +829,8 @@ export default function SystemSettings() {
                                     <p className="text-xs font-semibold text-slate-400">Sin picos detectados.</p>
                                 )}
                             </div>
-                            <div className="rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Picos por Acción (24h)</p>
+                            <div className="rounded-lg border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Picos por Acción (24h)</p>
                                 {(auditAnomalies?.action_spikes || []).length > 0 ? (
                                     <div className="space-y-2">
                                         {auditAnomalies.action_spikes.map((item: any) => (
@@ -846,19 +846,19 @@ export default function SystemSettings() {
                             </div>
                         </div>
                         {auditEvents.length === 0 ? (
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Sin eventos registrados.</p>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Sin eventos registrados.</p>
                         ) : (
                             <div className="space-y-3">
                                 {auditEvents.slice().reverse().map((event, idx) => (
-                                    <div key={`${event.timestamp || idx}-${event.action || 'event'}`} className="rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
+                                    <div key={`${event.timestamp || idx}-${event.action || 'event'}`} className="rounded-lg border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
                                         <div className="flex items-center justify-between gap-3 mb-2">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{event.action || 'update'}</p>
-                                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{event.timestamp ? new Date(event.timestamp).toLocaleString() : 'n/a'}</p>
+                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{event.action || 'update'}</p>
+                                            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{event.timestamp ? new Date(event.timestamp).toLocaleString() : 'n/a'}</p>
                                         </div>
                                         <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">actor: {event.updated_by || 'unknown'} {event.feature_id ? `| feature: ${event.feature_id}` : ''}</p>
                                         {event?.diff?.count ? (
                                             <div className="mt-2 space-y-1">
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{event.diff.summary}</p>
+                                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{event.diff.summary}</p>
                                                 {event.diff.changes.slice(0, 3).map((change: any) => (
                                                     <p key={`${change.key}-${String(change.before)}-${String(change.after)}`} className="text-xs text-slate-500 dark:text-slate-400">
                                                         {change.key}: {String(change.before)} {'->'} {String(change.after)}
@@ -872,21 +872,21 @@ export default function SystemSettings() {
                         )}
                     </section>
 
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] p-10 shadow-xl space-y-5">
+                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-5">
                         <div className="flex items-center justify-between gap-3">
-                            <h3 className="text-lg font-black tracking-tight uppercase tracking-widest">Incidentes de Flags</h3>
+                            <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Incidentes de Flags</h3>
                             <div className="flex items-center gap-2">
-                                <select value={incidentStatsWindow} onChange={(event) => setIncidentStatsWindow(event.target.value as 'weekly' | 'monthly')} className="h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-200">
+                                <select value={incidentStatsWindow} onChange={(event) => setIncidentStatsWindow(event.target.value as 'weekly' | 'monthly')} className="h-9 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200">
                                     <option value="weekly">weekly</option>
                                     <option value="monthly">monthly</option>
                                 </select>
-                                <button onClick={downloadComplianceSnapshot} className="h-9 rounded-xl border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-indigo-50 dark:hover:bg-white/10">Compliance Snapshot</button>
-                                <button onClick={() => downloadIncidents('json')} className="h-9 rounded-xl border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10">Export Incidents JSON</button>
-                                <button onClick={() => downloadIncidents('csv')} className="h-9 rounded-xl border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10">Export Incidents CSV</button>
-                                <button onClick={cleanupIncidents} className="h-9 rounded-xl border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10">
+                                <button onClick={downloadComplianceSnapshot} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-indigo-600 hover:bg-indigo-50 dark:hover:bg-white/10">Compliance Snapshot</button>
+                                <button onClick={() => downloadIncidents('json')} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10">Export Incidents JSON</button>
+                                <button onClick={() => downloadIncidents('csv')} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10">Export Incidents CSV</button>
+                                <button onClick={cleanupIncidents} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10">
                                     {actionLoading === 'cleanup-incidents' ? 'Cleaning...' : 'Cleanup'}
                                 </button>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{incidents.length} items</span>
+                                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{incidents.length} items</span>
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -914,14 +914,14 @@ export default function SystemSettings() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div className={clsx(
-                                'rounded-2xl border p-3 text-xs font-black uppercase tracking-widest',
+                                'rounded-lg border p-3 text-xs font-semibold uppercase tracking-wide',
                                 incidentsSummary?.breaches?.mtta ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700',
                             )}>
                                 MTTA SLA {incidentsSummary?.breaches?.mtta ? 'BREACH' : 'OK'}
                                 <span className="ml-2 font-bold">target {incidentsSummary?.targets?.mtta_minutes ?? slaTargets.mtta}m</span>
                             </div>
                             <div className={clsx(
-                                'rounded-2xl border p-3 text-xs font-black uppercase tracking-widest',
+                                'rounded-lg border p-3 text-xs font-semibold uppercase tracking-wide',
                                 incidentsSummary?.breaches?.mttr ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700',
                             )}>
                                 MTTR SLA {incidentsSummary?.breaches?.mttr ? 'BREACH' : 'OK'}
@@ -929,18 +929,18 @@ export default function SystemSettings() {
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 space-y-2">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Target MTTA (min)</p>
-                                <input type="number" min={1} max={10080} value={slaTargets.mtta} onChange={(event) => setSlaTargets((prev) => ({ ...prev, mtta: Number(event.target.value) || 1 }))} className="h-10 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/30 px-3 text-xs font-bold" />
+                            <div className="rounded-lg border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 space-y-2">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Target MTTA (min)</p>
+                                <input type="number" min={1} max={10080} value={slaTargets.mtta} onChange={(event) => setSlaTargets((prev) => ({ ...prev, mtta: Number(event.target.value) || 1 }))} className="h-10 w-full rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/30 px-3 text-xs font-bold" />
                             </div>
-                            <div className="rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 space-y-2">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Target MTTR (min)</p>
-                                <input type="number" min={1} max={10080} value={slaTargets.mttr} onChange={(event) => setSlaTargets((prev) => ({ ...prev, mttr: Number(event.target.value) || 1 }))} className="h-10 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/30 px-3 text-xs font-bold" />
+                            <div className="rounded-lg border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 space-y-2">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Target MTTR (min)</p>
+                                <input type="number" min={1} max={10080} value={slaTargets.mttr} onChange={(event) => setSlaTargets((prev) => ({ ...prev, mttr: Number(event.target.value) || 1 }))} className="h-10 w-full rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/30 px-3 text-xs font-bold" />
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Tendencia (14 dias)</p>
+                            <div className="rounded-lg border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Tendencia (14 dias)</p>
                                 {incidentTrends.length === 0 ? (
                                     <p className="text-xs font-semibold text-slate-400">Sin datos de tendencia.</p>
                                 ) : (
@@ -956,15 +956,15 @@ export default function SystemSettings() {
                                     </div>
                                 )}
                             </div>
-                            <div className="rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Notificaciones internas</p>
+                            <div className="rounded-lg border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Notificaciones internas</p>
                                 {incidentNotifications.length === 0 ? (
                                     <p className="text-xs font-semibold text-slate-400">Sin notificaciones.</p>
                                 ) : (
                                     <div className="max-h-52 overflow-y-auto space-y-2">
                                         {incidentNotifications.slice().reverse().slice(0, 8).map((item, idx) => (
                                             <div key={`${item.timestamp || idx}-${item.type || 'notif'}`} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/30 p-2">
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{item.type || 'notification'}</p>
+                                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{item.type || 'notification'}</p>
                                                 <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                                                     incident: {item.incident_id || 'n/a'} | sev: {item.severity || 'n/a'}
                                                 </p>
@@ -981,37 +981,37 @@ export default function SystemSettings() {
                                 )}
                             </div>
                         </div>
-                        <div className="rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Compliance Snapshot History</p>
+                        <div className="rounded-lg border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Compliance Snapshot History</p>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
-                                <select value={compareSnapshotIds.from} onChange={(event) => setCompareSnapshotIds((prev) => ({ ...prev, from: event.target.value }))} className="h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-200">
+                                <select value={compareSnapshotIds.from} onChange={(event) => setCompareSnapshotIds((prev) => ({ ...prev, from: event.target.value }))} className="h-9 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200">
                                     <option value="">from snapshot</option>
                                     {complianceHistory.map((item) => (
                                         <option key={`from-${item.snapshot_id}`} value={item.snapshot_id}>{item.snapshot_id}</option>
                                     ))}
                                 </select>
-                                <select value={compareSnapshotIds.to} onChange={(event) => setCompareSnapshotIds((prev) => ({ ...prev, to: event.target.value }))} className="h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-200">
+                                <select value={compareSnapshotIds.to} onChange={(event) => setCompareSnapshotIds((prev) => ({ ...prev, to: event.target.value }))} className="h-9 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200">
                                     <option value="">to snapshot</option>
                                     {complianceHistory.map((item) => (
                                         <option key={`to-${item.snapshot_id}`} value={item.snapshot_id}>{item.snapshot_id}</option>
                                     ))}
                                 </select>
-                                <button onClick={runComplianceCompare} className="h-9 rounded-xl border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-indigo-50 dark:hover:bg-white/10">
+                                <button onClick={runComplianceCompare} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-indigo-600 hover:bg-indigo-50 dark:hover:bg-white/10">
                                     {actionLoading === 'compare-compliance' ? 'Comparando...' : 'Compare'}
                                 </button>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 mb-3">
-                                <input type="number" min={1} max={3650} value={historyRetentionDays} onChange={(event) => setHistoryRetentionDays(Number(event.target.value) || 90)} className="h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-200" />
-                                <button onClick={cleanupComplianceHistory} className="h-9 rounded-xl border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-100 dark:hover:bg-white/10">
+                                <input type="number" min={1} max={3650} value={historyRetentionDays} onChange={(event) => setHistoryRetentionDays(Number(event.target.value) || 90)} className="h-9 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200" />
+                                <button onClick={cleanupComplianceHistory} className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-600 hover:bg-slate-100 dark:hover:bg-white/10">
                                     {actionLoading === 'cleanup-history' ? 'Cleaning...' : 'Cleanup History'}
                                 </button>
                             </div>
                             {compareResult?.diff ? (
-                                <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/30 p-3 mb-3 space-y-1">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Comparison Result</p>
+                                <div className="rounded-md border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/30 p-3 mb-3 space-y-1">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Comparison Result</p>
                                     <p className="text-xs text-slate-600 dark:text-slate-300">feature changes: {compareResult.diff.feature_changes_count ?? 0}</p>
                                     <p className="text-xs text-slate-600 dark:text-slate-300">drift severity: <span className={clsx(
-                                        'font-black uppercase',
+                                        'font-semibold uppercase',
                                         compareResult.diff?.drift?.severity === 'critical' && 'text-rose-700',
                                         compareResult.diff?.drift?.severity === 'high' && 'text-orange-700',
                                         compareResult.diff?.drift?.severity === 'medium' && 'text-amber-700',
@@ -1045,10 +1045,10 @@ export default function SystemSettings() {
                             ) : (
                                 <div className="space-y-2 max-h-56 overflow-y-auto">
                                     {complianceHistory.slice().reverse().map((item) => (
-                                        <div key={`${item.snapshot_id}-${item.recorded_at}`} className="rounded-xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/30 p-3">
+                                        <div key={`${item.snapshot_id}-${item.recorded_at}`} className="rounded-md border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/30 p-3">
                                             <div className="flex flex-wrap items-center justify-between gap-2">
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{item.snapshot_id}</p>
-                                                <button onClick={() => downloadComplianceHistoryItem(String(item.snapshot_id || ''))} className="h-7 rounded-lg border border-slate-200 dark:border-white/10 px-2 text-[10px] font-black uppercase tracking-widest text-indigo-600">Download</button>
+                                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{item.snapshot_id}</p>
+                                                <button onClick={() => downloadComplianceHistoryItem(String(item.snapshot_id || ''))} className="h-7 rounded-lg border border-slate-200 dark:border-white/10 px-2 text-[10px] font-semibold uppercase tracking-wide text-indigo-600">Download</button>
                                             </div>
                                             <p className="text-[11px] text-slate-600 dark:text-slate-300">{item.recorded_at ? new Date(item.recorded_at).toLocaleString() : 'n/a'}</p>
                                             <p className="text-[10px] text-slate-400">events: {item.summary?.audit_events ?? '-'} | incidents: {item.summary?.incidents ?? '-'}</p>
@@ -1060,8 +1060,8 @@ export default function SystemSettings() {
                                 </div>
                             )}
                         </div>
-                        <div className="rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Weekly Compliance Summary</p>
+                        <div className="rounded-lg border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Weekly Compliance Summary</p>
                             {complianceWeeklySummary.length === 0 ? (
                                 <p className="text-xs font-semibold text-slate-400">Sin resumen semanal.</p>
                             ) : (
@@ -1078,16 +1078,16 @@ export default function SystemSettings() {
                                 </div>
                             )}
                         </div>
-                        <div className="rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 space-y-3">
+                        <div className="rounded-lg border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 space-y-3">
                             <div className="flex items-center justify-between gap-2">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Drift Policy Engine</p>
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Drift Policy Engine</p>
                                 <span className="text-[10px] font-bold text-slate-500">env: {compliancePolicy?.resolved?.environment || 'production'}</span>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                                 <select
                                     value={compliancePolicy?.policy?.active_environment || 'production'}
                                     onChange={(event) => updateCompliancePolicy({ active_environment: event.target.value })}
-                                    className="h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-200"
+                                    className="h-9 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200"
                                 >
                                     <option value="development">development</option>
                                     <option value="staging">staging</option>
@@ -1105,18 +1105,18 @@ export default function SystemSettings() {
                                             },
                                         },
                                     })}
-                                    className="h-9 rounded-xl border border-slate-200 dark:border-white/10 px-2 text-[10px] font-black uppercase tracking-widest text-indigo-600"
+                                    className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-2 text-[10px] font-semibold uppercase tracking-wide text-indigo-600"
                                 >
                                     {actionLoading === 'update-policy' ? 'Saving...' : 'Save Policy'}
                                 </button>
-                                <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/30 px-2 py-1 text-[10px] font-bold text-slate-500">
+                                <div className="rounded-md border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/30 px-2 py-1 text-[10px] font-bold text-slate-500">
                                     spike {compliancePolicy?.resolved?.incident_spike_delta ?? '-'} | mtta {compliancePolicy?.resolved?.mtta_regression_pct ?? '-'}
                                 </div>
                             </div>
-                            <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/30 p-3 space-y-2">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Suppressions</p>
+                            <div className="rounded-md border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/30 p-3 space-y-2">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Suppressions</p>
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                                    <select value={suppressionDraft.kind} onChange={(event) => setSuppressionDraft((prev) => ({ ...prev, kind: event.target.value }))} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-200">
+                                    <select value={suppressionDraft.kind} onChange={(event) => setSuppressionDraft((prev) => ({ ...prev, kind: event.target.value }))} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200">
                                         <option value="severity">severity</option>
                                         <option value="feature">feature</option>
                                         <option value="metric_alert">metric_alert</option>
@@ -1124,14 +1124,14 @@ export default function SystemSettings() {
                                     </select>
                                     <input value={suppressionDraft.value} onChange={(event) => setSuppressionDraft((prev) => ({ ...prev, value: event.target.value }))} placeholder="value" className="h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-bold" />
                                     <input type="number" min={1} max={720} value={suppressionDraft.hours} onChange={(event) => setSuppressionDraft((prev) => ({ ...prev, hours: Number(event.target.value) || 24 }))} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-2 text-[10px] font-bold" />
-                                    <button onClick={createSuppression} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-2 text-[10px] font-black uppercase tracking-widest text-indigo-600">{actionLoading === 'create-suppression' ? 'Creating...' : 'Add'}</button>
+                                    <button onClick={createSuppression} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-2 text-[10px] font-semibold uppercase tracking-wide text-indigo-600">{actionLoading === 'create-suppression' ? 'Creating...' : 'Add'}</button>
                                 </div>
                                 {Array.isArray(compliancePolicy?.resolved?.suppressions) && compliancePolicy.resolved.suppressions.length > 0 ? (
                                     <div className="space-y-1 max-h-36 overflow-y-auto">
                                         {compliancePolicy.resolved.suppressions.map((item: any) => (
                                             <div key={item.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-black/30 px-2 py-1 text-[10px]">
                                                 <span className="font-bold text-slate-600 dark:text-slate-300">{item.kind}:{item.value || '*'} (exp {item.expires_at ? new Date(item.expires_at).toLocaleString() : 'n/a'})</span>
-                                                <button onClick={() => deleteSuppression(String(item.id || ''))} className="font-black uppercase tracking-widest text-rose-600">del</button>
+                                                <button onClick={() => deleteSuppression(String(item.id || ''))} className="font-semibold uppercase tracking-wide text-rose-600">del</button>
                                             </div>
                                         ))}
                                     </div>
@@ -1145,19 +1145,19 @@ export default function SystemSettings() {
                         ) : (
                             <div className="space-y-3">
                                 {incidents.slice().reverse().map((incident) => (
-                                    <div key={incident.id} className="rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
+                                    <div key={incident.id} className="rounded-lg border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
                                         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{incident.kind} | {incident.key}</p>
+                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{incident.kind} | {incident.key}</p>
                                             <div className="flex items-center gap-2">
                                                 <span className={clsx(
-                                                    'rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-widest',
+                                                    'rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide',
                                                     incident.severity === 'critical' && 'bg-rose-100 text-rose-700',
                                                     incident.severity === 'high' && 'bg-orange-100 text-orange-700',
                                                     incident.severity === 'medium' && 'bg-amber-100 text-amber-700',
                                                     (!incident.severity || incident.severity === 'low') && 'bg-slate-100 text-slate-600',
                                                 )}>{incident.severity || 'low'}</span>
                                                 <span className={clsx(
-                                                    'rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-widest',
+                                                    'rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide',
                                                     incident.status === 'open' && 'bg-rose-50 text-rose-600',
                                                     incident.status === 'acknowledged' && 'bg-amber-50 text-amber-600',
                                                     incident.status === 'silenced' && 'bg-blue-50 text-blue-600',
@@ -1166,17 +1166,17 @@ export default function SystemSettings() {
                                             </div>
                                         </div>
                                         <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">count: {incident.count} | threshold: {incident.threshold}</p>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">updated: {incident.updated_at ? new Date(incident.updated_at).toLocaleString() : 'n/a'}</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-1">updated: {incident.updated_at ? new Date(incident.updated_at).toLocaleString() : 'n/a'}</p>
                                         <div className="mt-3 flex flex-wrap gap-2">
-                                            <button onClick={() => updateIncident(incident.id, 'acknowledge')} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-slate-600">Acknowledge</button>
-                                            <button onClick={() => updateIncident(incident.id, 'silence')} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-blue-600">Silence 3h</button>
-                                            <button onClick={() => updateIncident(incident.id, 'reopen')} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-amber-600">Reopen</button>
-                                            <button onClick={() => updateIncident(incident.id, 'close')} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-emerald-600">Close</button>
-                                            <button onClick={() => addIncidentNote(incident.id)} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-blue-600">Add note</button>
+                                            <button onClick={() => updateIncident(incident.id, 'acknowledge')} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-600">Acknowledge</button>
+                                            <button onClick={() => updateIncident(incident.id, 'silence')} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-blue-600">Silence 3h</button>
+                                            <button onClick={() => updateIncident(incident.id, 'reopen')} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-amber-600">Reopen</button>
+                                            <button onClick={() => updateIncident(incident.id, 'close')} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-emerald-600">Close</button>
+                                            <button onClick={() => addIncidentNote(incident.id)} className="h-8 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-blue-600">Add note</button>
                                         </div>
                                         {Array.isArray(incident.history) && incident.history.length > 0 ? (
-                                            <div className="mt-3 rounded-xl border border-slate-100 dark:border-white/10 bg-white/60 dark:bg-black/30 p-3">
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Timeline</p>
+                                            <div className="mt-3 rounded-md border border-slate-100 dark:border-white/10 bg-white/60 dark:bg-black/30 p-3">
+                                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Timeline</p>
                                                 <div className="space-y-2">
                                                     {incident.history.slice(-4).reverse().map((entry: any, idx: number) => (
                                                         <div key={`${entry.at || idx}-${entry.event || 'event'}`} className="text-xs">
@@ -1196,13 +1196,13 @@ export default function SystemSettings() {
                 </div>
 
                 {/* Cyber Security Sidebar */}
-                <aside className="lg:col-span-4 space-y-8">
-                    <section className="p-8 bg-slate-900 rounded-[3rem] text-white shadow-2xl space-y-10 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 -mr-10 -mt-10 size-40 bg-blue-600/20 rounded-full blur-3xl" />
+                <aside className="lg:col-span-4 space-y-3">
+                    <section className="p-4 bg-slate-900 rounded-lg text-white shadow-2xl space-y-3 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-blue-600/20 rounded-full blur-3xl" />
                         <div className="relative z-10">
-                            <div className="flex items-center gap-3 mb-8">
+                            <div className="flex items-center gap-3 mb-3">
                                 <Lock size={20} className="text-blue-400" />
-                                <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-blue-400">Security Hardening</h4>
+                                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-blue-400">Security Hardening</h4>
                             </div>
                             <div className="space-y-5">
                                 <SecurityCheck label="HSTS / SSL Enforcement" active />
@@ -1210,15 +1210,15 @@ export default function SystemSettings() {
                                 <SecurityCheck label="RBAC Policy v3.0" active />
                                 <SecurityCheck label="Data Encryption at Rest" active />
                             </div>
-                            <button className="w-full mt-10 py-5 bg-white text-slate-900 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-slate-100 transition-all active:scale-95">
+                            <button className="w-full mt-3 py-2 bg-white text-slate-900 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:bg-slate-100 transition-all active:scale-95">
                                 Ver Registro de Amenazas
                             </button>
                         </div>
                     </section>
 
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] p-10 shadow-xl space-y-8">
+                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Estado del Cluster</h4>
+                            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Estado del Cluster</h4>
                             <RefreshCw size={18} className="text-slate-300" />
                         </div>
                         <div className="space-y-6">
@@ -1236,19 +1236,19 @@ export default function SystemSettings() {
 
 function HealthCard({ label, value, status, icon: Icon }: any) {
     return (
-        <div className="p-8 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] shadow-sm flex flex-col gap-6 group hover:shadow-xl transition-all">
+        <div className="p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-sm flex flex-col gap-3 group hover:shadow-xl transition-all">
             <div className="flex justify-between items-start">
-                <div className="size-12 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Icon size={24} />
                 </div>
                 <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg">
                     <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[8px] font-black uppercase">{status}</span>
+                    <span className="text-[8px] font-semibold uppercase">{status}</span>
                 </div>
             </div>
             <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
-                <h4 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{value}</h4>
+                <p className="font-semibold text-slate-400 uppercase tracking-wide mb-1">{label}</p>
+                <h4 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">{value}</h4>
             </div>
         </div>
     );
@@ -1256,10 +1256,10 @@ function HealthCard({ label, value, status, icon: Icon }: any) {
 
 function FeatureToggle({ label, desc, active, onToggle, loading }: any) {
     return (
-        <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-3xl border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/20 transition-all">
+        <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/20 transition-all">
             <div className="flex-1 pr-4">
-                <h5 className="text-[13px] font-black text-slate-800 dark:text-white uppercase mb-1">{label}</h5>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">{desc}</p>
+                <h5 className="font-semibold text-slate-800 dark:text-white uppercase mb-1">{label}</h5>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide leading-tight">{desc}</p>
             </div>
             <button onClick={onToggle} disabled={loading} className="transition-all active:scale-90 disabled:opacity-60">
                 {loading ? (
@@ -1276,9 +1276,9 @@ function FeatureToggle({ label, desc, active, onToggle, loading }: any) {
 
 function AuditMetric({ label, value }: { label: string; value: string }) {
     return (
-        <div className="rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</p>
-            <p className="text-2xl font-black text-slate-800 dark:text-white mt-1">{value}</p>
+        <div className="rounded-lg border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
+            <p className="text-lg font-black text-slate-800 dark:text-white mt-1">{value}</p>
         </div>
     );
 }
@@ -1289,8 +1289,8 @@ function DeltaMetric({ label, value, inverse }: { label: string; value: number |
     const tone = isGood == null ? 'text-slate-500 bg-slate-50 border-slate-200' : isGood ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-rose-700 bg-rose-50 border-rose-200';
 
     return (
-        <div className={clsx('rounded-2xl border p-4', tone)}>
-            <p className="text-[10px] font-black uppercase tracking-widest">{label}</p>
+        <div className={clsx('rounded-lg border p-4', tone)}>
+            <p className="text-[10px] font-semibold uppercase tracking-wide">{label}</p>
             <p className="text-xl font-black mt-1">{numeric == null ? '-' : `${numeric > 0 ? '+' : ''}${numeric}%`}</p>
         </div>
     );
@@ -1303,17 +1303,17 @@ function ProviderRow({ icon: Icon, name, status, color, detail }: any) {
         blue: 'text-blue-500 bg-blue-50 dark:bg-blue-900/20'
     };
     return (
-        <div className="flex items-center justify-between p-6 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[2rem] group hover:border-blue-500/20 transition-all shadow-sm">
+        <div className="flex items-center justify-between p-3 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg group hover:border-blue-500/20 transition-all shadow-sm">
             <div className="flex items-center gap-5">
-                <div className={clsx("size-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110", colors[color])}>
+                <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110", colors[color])}>
                     <Icon size={24} />
                 </div>
                 <div>
-                    <span className="text-[14px] font-black text-slate-800 dark:text-white uppercase leading-none block mb-1">{name}</span>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{detail}</span>
+                    <span className="text-sm font-semibold text-slate-800 dark:text-white uppercase leading-none block mb-1">{name}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{detail}</span>
                 </div>
             </div>
-            <div className={clsx("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest", colors[color])}>
+            <div className={clsx("px-4 py-1.5 rounded-full text-[9px] font-semibold uppercase tracking-wide", colors[color])}>
                 {status}
             </div>
         </div>
@@ -1324,7 +1324,7 @@ function SecurityCheck({ label }: any) {
     return (
         <div className="flex items-center gap-3">
             <div className="size-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]" />
-            <span className="text-[11px] font-black text-blue-100/80 uppercase tracking-[0.1em]">{label}</span>
+            <span className="font-semibold text-blue-100/80 uppercase tracking-[0.1em]">{label}</span>
         </div>
     );
 }
@@ -1334,9 +1334,9 @@ function ClusterNode({ label, status, load }: any) {
         <div className="flex items-center justify-between p-2">
             <div className="flex items-center gap-3">
                 <div className={clsx("size-2 rounded-full", status === 'running' ? 'bg-emerald-500' : 'bg-slate-400')} />
-                <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase">{label}</span>
+                <span className="font-semibold text-slate-700 dark:text-slate-200 uppercase">{label}</span>
             </div>
-            <span className="text-[10px] font-black text-blue-600 uppercase">{load}</span>
+            <span className="font-semibold text-blue-600 uppercase">{load}</span>
         </div>
     );
 }
@@ -1354,14 +1354,14 @@ interface RolloutControlProps {
 function RolloutControl({ featureId, label, rule, selectedRole, onRoleChange, onSave, loading }: RolloutControlProps) {
     const [percent, setPercent] = React.useState(rule?.rollout_percent ?? 100);
     return (
-        <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 space-y-4">
+        <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 space-y-4">
             <div className="flex items-center justify-between">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">{label}</span>
-                <span className="text-[9px] font-black bg-blue-100 dark:bg-blue-900/30 text-blue-600 px-2 py-0.5 rounded-full uppercase">{featureId}</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">{label}</span>
+                <span className="font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-600 px-2 py-0.5 rounded-full uppercase">{featureId}</span>
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                    <label className="text-[9px] uppercase font-black text-slate-400 tracking-widest">Rol</label>
+                    <label className="text-[9px] uppercase font-black text-slate-400 tracking-wide">Rol</label>
                     <select
                         value={selectedRole}
                         onChange={(e) => onRoleChange(e.target.value)}
@@ -1374,7 +1374,7 @@ function RolloutControl({ featureId, label, rule, selectedRole, onRoleChange, on
                     </select>
                 </div>
                 <div className="space-y-1">
-                    <label className="text-[9px] uppercase font-black text-slate-400 tracking-widest">Rollout {percent}%</label>
+                    <label className="text-[9px] uppercase font-black text-slate-400 tracking-wide">Rollout {percent}%</label>
                     <input
                         type="range" min={0} max={100} value={percent}
                         onChange={(e) => setPercent(Number(e.target.value))}
@@ -1385,7 +1385,7 @@ function RolloutControl({ featureId, label, rule, selectedRole, onRoleChange, on
             <button
                 onClick={() => onSave({ role: selectedRole, percent, usersAllow: rule?.users_allow || [], usersDeny: rule?.users_deny || [] })}
                 disabled={loading}
-                className="w-full py-3 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all disabled:opacity-50"
+                className="w-full py-3 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-blue-700 transition-all disabled:opacity-50"
             >
                 {loading ? 'Guardando...' : 'Aplicar Regla'}
             </button>

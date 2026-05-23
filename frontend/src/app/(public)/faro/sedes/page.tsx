@@ -84,11 +84,11 @@ export default function SedesPage() {
         <main className="pt-[88px] min-h-screen flex flex-col md:flex-row bg-faro-surface">
             {/* ── LISTADO DE SEDES ──────────────────────────── */}
             <aside className="w-full md:w-[450px] lg:w-[500px] flex flex-col h-[calc(100vh-88px)] bg-faro-surface-container-lowest border-r border-faro-outline-variant/10 z-20">
-                <div className="p-8 lg:p-10 border-b border-faro-outline-variant/10">
-                    <span className="text-faro-primary font-black text-[10px] tracking-[0.3em] uppercase block mb-4">
+                <div className="p-4 lg:p-4 border-b border-faro-outline-variant/10">
+                    <span className="text-faro-primary font-black text-[10px] tracking-wide uppercase block mb-4">
                         {heroContent?.eyebrow || "Nuestra Presencia"}
                     </span>
-                    <h1 className="text-4xl font-black tracking-tight text-faro-on-surface mb-8">
+                    <h1 className="text-lg font-bold tracking-tight text-faro-on-surface mb-3">
                         {heroContent?.title || "Nuestras Sedes"}
                     </h1>
                     <div className="relative">
@@ -96,14 +96,14 @@ export default function SedesPage() {
                         <input
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full bg-faro-surface-container-highest rounded-2xl py-4 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-faro-primary/30 transition-all"
+                            className="w-full bg-faro-surface-container-highest rounded-lg py-1.5 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-faro-primary/30 transition-all"
                             placeholder={heroContent?.search_placeholder || "Buscar ciudad o dirección..."}
                         />
                     </div>
                 </div>
 
                 {locations.length === 0 ? (
-                    <div className="flex-1 flex items-center justify-center p-8 text-center">
+                    <div className="flex-1 flex items-center justify-center p-4 text-center">
                         <div>
                             <Home size={40} className="mx-auto mb-4 opacity-20" style={{ color: "var(--faro-primary)" }} />
                             <p className="text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>
@@ -112,27 +112,27 @@ export default function SedesPage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin">
+                    <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
                         {filtered.map((loc) => (
                             <motion.div
                                 key={loc.id}
                                 onClick={() => setSelected(loc)}
-                                className={`p-6 rounded-3xl border-2 transition-all cursor-pointer group ${
+                                className={`p-3 rounded-lg border-2 transition-all cursor-pointer group ${
                                     selected?.id === loc.id
                                     ? "border-faro-primary bg-faro-primary-container/20"
                                     : "border-transparent bg-faro-surface-container hover:bg-faro-surface-container-high"
                                 }`}
                             >
                                 <div className="flex justify-between items-start mb-4">
-                                    <div className={`p-3 rounded-2xl ${selected?.id === loc.id ? "bg-faro-primary text-white" : "bg-faro-primary-container text-faro-primary"}`}>
+                                    <div className={`p-3 rounded-lg ${selected?.id === loc.id ? "bg-faro-primary text-white" : "bg-faro-primary-container text-faro-primary"}`}>
                                         <Home size={20} />
                                     </div>
                                     {loc.isMain && (
-                                        <span className="text-[9px] font-black uppercase tracking-widest bg-faro-secondary text-white px-2.5 py-1 rounded-full">Principal</span>
+                                        <span className="text-[9px] font-semibold uppercase tracking-wide bg-faro-secondary text-white px-2.5 py-1 rounded-full">Principal</span>
                                     )}
                                 </div>
                                 <h3 className="text-xl font-black text-faro-on-surface mb-2">{loc.name}</h3>
-                                <p className="text-faro-on-surface-variant text-sm mb-6 leading-relaxed opacity-80">{loc.address}</p>
+                                <p className="text-faro-on-surface-variant text-sm mb-3 leading-relaxed opacity-80">{loc.address}</p>
 
                                 <AnimatePresence>
                                     {selected?.id === loc.id && (
@@ -162,7 +162,7 @@ export default function SedesPage() {
                             </motion.div>
                         ))}
                         {filtered.length === 0 && (
-                            <div className="rounded-3xl border border-dashed border-faro-outline-variant/20 p-6 text-center text-sm text-faro-on-surface-variant">
+                            <div className="rounded-lg border border-dashed border-faro-outline-variant/20 p-3 text-center text-sm text-faro-on-surface-variant">
                                 No se encontraron sedes con ese criterio.
                             </div>
                         )}
@@ -206,7 +206,7 @@ export default function SedesPage() {
                                     />
                                 )}
                             </AnimatePresence>
-                            <div className={`relative p-3 rounded-2xl shadow-2xl transition-all ${
+                            <div className={`relative p-3 rounded-lg shadow-2xl transition-all ${
                                 selected?.id === loc.id ? "bg-faro-primary text-white" : "bg-faro-surface-bright text-faro-primary border border-faro-primary/20"
                             }`}>
                                 <MapPin size={24} fill={selected?.id === loc.id ? "currentColor" : "none"} />
@@ -217,9 +217,9 @@ export default function SedesPage() {
                                     <motion.div
                                         initial={{ y: 10, opacity: 0 }}
                                         animate={{ y: 0, opacity: 1 }}
-                                        className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 whitespace-nowrap bg-faro-surface-container-highest px-4 py-2 rounded-xl border border-faro-primary/20 shadow-2xl"
+                                        className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 whitespace-nowrap bg-faro-surface-container-highest px-4 py-2 rounded-md border border-faro-primary/20 shadow-2xl"
                                     >
-                                        <p className="text-[10px] font-black text-faro-primary uppercase tracking-widest">{loc.name}</p>
+                                        <p className="font-semibold text-faro-primary uppercase tracking-wide">{loc.name}</p>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
@@ -229,13 +229,13 @@ export default function SedesPage() {
 
                 {/* Map Controls */}
                 <div className="absolute bottom-10 right-10 flex flex-col gap-4 z-20">
-                    <button onClick={() => setZoom(value => Math.min(value + 0.1, 1.4))} className="w-14 h-14 rounded-2xl bg-faro-surface-bright/80 backdrop-blur-xl border border-faro-outline-variant/20 flex items-center justify-center text-faro-primary shadow-xl hover:scale-110 transition-all">
+                    <button onClick={() => setZoom(value => Math.min(value + 0.1, 1.4))} className="w-14 h-8 rounded-lg bg-faro-surface-bright/80 backdrop-blur-xl border border-faro-outline-variant/20 flex items-center justify-center text-faro-primary shadow-xl hover:scale-110 transition-all">
                         <Plus size={20} />
                     </button>
-                    <button onClick={() => setZoom(value => Math.max(value - 0.1, 1))} className="w-14 h-14 rounded-2xl bg-faro-surface-bright/80 backdrop-blur-xl border border-faro-outline-variant/20 flex items-center justify-center text-faro-primary shadow-xl hover:scale-110 transition-all">
+                    <button onClick={() => setZoom(value => Math.max(value - 0.1, 1))} className="w-14 h-8 rounded-lg bg-faro-surface-bright/80 backdrop-blur-xl border border-faro-outline-variant/20 flex items-center justify-center text-faro-primary shadow-xl hover:scale-110 transition-all">
                         <Minus size={20} />
                     </button>
-                    <button onClick={() => selected && window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selected.address)}`, "_blank", "noopener,noreferrer")} className="w-14 h-14 rounded-2xl bg-faro-primary text-white flex items-center justify-center shadow-2xl hover:scale-110 transition-all">
+                    <button onClick={() => selected && window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selected.address)}`, "_blank", "noopener,noreferrer")} className="w-14 h-8 rounded-lg bg-faro-primary text-white flex items-center justify-center shadow-2xl hover:scale-110 transition-all">
                         <Navigation size={20} />
                     </button>
                 </div>

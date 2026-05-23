@@ -116,7 +116,7 @@ function MentorAssignmentDrawer({
                                     value={search}
                                     onChange={e => setSearch(e.target.value)}
                                     placeholder="Buscar por nombre o especialidad..."
-                                    className="w-full pl-10 pr-4 py-1.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                    className="w-full pl-10 pr-4 py-1.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                                 />
                             </div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
@@ -198,7 +198,7 @@ function QuickStat({ label, value, icon: Icon, color }: any) {
             <Icon size={20} className={color} />
             <div>
                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{label}</p>
-                <p className="text-[15px] font-bold text-slate-800 dark:text-white leading-none mt-1">{value ?? '—'}</p>
+                <p className="text-sm font-bold text-slate-800 dark:text-white leading-none mt-1">{value ?? '—'}</p>
             </div>
         </div>
     );
@@ -220,8 +220,8 @@ function HealthIndicator({ label, value, color }: { label: string; value: number
 
 function EmptyState({ icon: Icon, title, description, action }: { icon: any; title: string; description: string; action?: React.ReactNode }) {
     return (
-        <div className="lg:col-span-12 py-4 flex flex-col items-center gap-4 text-center">
-            <div className="size-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+        <div className="lg:col-span-12 py-1.5 flex flex-col items-center gap-4 text-center">
+            <div className="size-10 rounded-md bg-slate-100 dark:bg-white/5 flex items-center justify-center">
                 <Icon size={36} className="text-slate-300" />
             </div>
             <div className="space-y-2">
@@ -370,9 +370,9 @@ export default function MemberDetailPage() {
             ]}
             rightActions={
                 <div className="flex gap-2">
-                    <button title="Editar" className="p-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-400 hover:text-blue-600 hover:border-blue-500/30 transition-all"><Edit3 size={16} /></button>
-                    <button title="Compartir" className="p-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-400 hover:text-blue-600 hover:border-blue-500/30 transition-all"><Share2 size={16} /></button>
-                    <button title="Más acciones" className="p-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-400 hover:text-blue-600 hover:border-blue-500/30 transition-all"><MoreHorizontal size={16} /></button>
+                    <button title="Editar" className="p-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-blue-600 hover:border-blue-500/30 transition-all"><Edit3 size={16} /></button>
+                    <button title="Compartir" className="p-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-blue-600 hover:border-blue-500/30 transition-all"><Share2 size={16} /></button>
+                    <button title="Más acciones" className="p-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-blue-600 hover:border-blue-500/30 transition-all"><MoreHorizontal size={16} /></button>
                 </div>
             }
         >
@@ -387,7 +387,7 @@ export default function MemberDetailPage() {
                 <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-5">
                     {/* Avatar */}
                     <div className="relative shrink-0">
-                        <div className="size-10 lg:size-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-700 flex items-center justify-center text-white text-xl font-bold shadow-2xl shadow-blue-500/30 group-hover:scale-105 transition-transform duration-500">
+                        <div className="size-10 lg:size-10 rounded-md bg-gradient-to-tr from-blue-600 to-indigo-700 flex items-center justify-center text-white text-xl font-bold shadow-2xl shadow-blue-500/30 group-hover:scale-105 transition-transform duration-500">
                             {initials}
                         </div>
                         <div className="absolute -bottom-3 -right-3 size-9 bg-white dark:bg-[#15171c] rounded-lg flex items-center justify-center shadow-xl border border-slate-50 dark:border-white/10">
@@ -429,7 +429,7 @@ export default function MemberDetailPage() {
                             key={tabId}
                             onClick={() => setActiveTab(tabId)}
                             className={clsx(
-                                "flex items-center gap-2 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.15em] transition-all relative whitespace-nowrap shrink-0",
+                                "flex items-center gap-2 px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-all relative whitespace-nowrap shrink-0",
                                 active ? "text-blue-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                             )}
                         >
@@ -455,7 +455,7 @@ export default function MemberDetailPage() {
                     {activeTab === 'overview' && <>
                         <div className="lg:col-span-8 space-y-3">
                             {/* Perfil de Consolidación */}
-                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                            <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                 <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Perfil de Consolidación</h3>
                                 <InfoGrid items={[
                                     { label: 'Fecha de Ingreso', value: formatDate(member.joinedAt), icon: Calendar },
@@ -472,7 +472,7 @@ export default function MemberDetailPage() {
                             </div>
 
                             {/* Núcleo Familiar */}
-                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                            <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Núcleo Familiar</h3>
                                     <button className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600 uppercase tracking-wide hover:text-blue-700 transition-all">
@@ -484,7 +484,7 @@ export default function MemberDetailPage() {
                                         {member.family.map((f: any) => (
                                             <div key={f.id} className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all cursor-pointer">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="size-9 rounded-xl bg-white dark:bg-[#15171c] flex items-center justify-center shadow-sm border border-slate-100 dark:border-white/10">
+                                                    <div className="size-9 rounded-md bg-white dark:bg-[#15171c] flex items-center justify-center shadow-sm border border-slate-100 dark:border-white/10">
                                                         <User size={16} className="text-slate-400" />
                                                     </div>
                                                     <div>
@@ -508,7 +508,7 @@ export default function MemberDetailPage() {
 
                         <div className="lg:col-span-4 space-y-3">
                             {/* MESH Insight */}
-                            <div className="p-4 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-xl text-white shadow-xl relative overflow-hidden group">
+                            <div className="p-4 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-md text-white shadow-xl relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-700"><Sparkles size={100} /></div>
                                 <div className="relative z-10 space-y-2">
                                     <div className="flex items-center gap-2">
@@ -526,7 +526,7 @@ export default function MemberDetailPage() {
                                             });
                                             setMentorDrawerOpen(true);
                                         }}
-                                        className="w-full py-1.5 bg-white text-indigo-900 rounded-lg font-bold text-[10px] uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all"
+                                        className="w-full py-1.5 bg-white text-indigo-900 rounded-lg font-bold text-[10px] uppercase tracking-wide shadow-xl hover:scale-105 active:scale-95 transition-all"
                                     >
                                         Asignar Mentoría
                                     </button>
@@ -534,7 +534,7 @@ export default function MemberDetailPage() {
                             </div>
 
                             {/* Indicadores de Salud */}
-                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-4 border border-slate-100 dark:border-white/5 shadow-sm space-y-2">
+                            <div className="bg-white dark:bg-[#15171c] rounded-md p-4 border border-slate-100 dark:border-white/5 shadow-sm space-y-2">
                                 <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Indicadores de Salud</h3>
                                 <HealthIndicator label="Asistencia Mensual" value={85} color="bg-emerald-500" />
                                 <HealthIndicator label="Progreso Academia" value={65} color="bg-blue-500" />
@@ -546,7 +546,7 @@ export default function MemberDetailPage() {
                     {/* ── VIDA ESPIRITUAL ── */}
                     {activeTab === 'spiritual' && <>
                         <div className="lg:col-span-8 space-y-3">
-                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                            <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                 <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Datos Espirituales</h3>
                                 <InfoGrid items={[
                                     { label: 'Fecha de Bautismo', value: formatDate(member.baptism_date), icon: CheckCircle2 },
@@ -559,7 +559,7 @@ export default function MemberDetailPage() {
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Dones Espirituales</p>
                                         <div className="flex flex-wrap gap-2">
                                             {member.spiritual_gifts.split(',').map((gift: string, i: number) => (
-                                                <span key={i} className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 text-[11px] font-bold rounded-xl border border-indigo-100 dark:border-indigo-500/20 uppercase tracking-wide">
+                                                <span key={i} className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 text-[11px] font-bold rounded-md border border-indigo-100 dark:border-indigo-500/20 uppercase tracking-wide">
                                                     {gift.trim()}
                                                 </span>
                                             ))}
@@ -579,7 +579,7 @@ export default function MemberDetailPage() {
                             </div>
                         </div>
                         <div className="lg:col-span-4 space-y-3">
-                            <div className="p-4 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl text-white shadow-xl relative overflow-hidden">
+                            <div className="p-4 bg-gradient-to-br from-rose-500 to-pink-600 rounded-md text-white shadow-xl relative overflow-hidden">
                                 <div className="absolute top-0 right-0 p-4 opacity-10"><Heart size={80} /></div>
                                 <div className="relative z-10 space-y-4">
                                     <h4 className="text-sm font-bold uppercase tracking-wide">Cuidado Pastoral</h4>
@@ -604,7 +604,7 @@ export default function MemberDetailPage() {
                     {/* ── ACADEMIA ── */}
                     {activeTab === 'academy' && <>
                         <div className="lg:col-span-12">
-                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-3 border border-slate-100 dark:border-white/5 shadow-sm">
+                            <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm">
                                 <div className="flex items-center justify-between mb-3">
                                     <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Progreso Académico</h3>
                                     <a href="/academy" className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600 uppercase tracking-wide hover:text-blue-700 transition-all">
@@ -635,8 +635,8 @@ export default function MemberDetailPage() {
                                     { label: 'Total Ofrendas', value: donations.filter(d => d.donation_type === 'ofrenda').reduce((s: number, d: any) => s + d.amount, 0), color: 'bg-blue-500', icon: DollarSign },
                                     { label: 'Total Registrado', value: donations.reduce((s: number, d: any) => s + d.amount, 0), color: 'bg-indigo-500', icon: Award },
                                 ].map((stat, i) => (
-                                    <div key={i} className="bg-white dark:bg-[#15171c] rounded-xl p-4 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
-                                        <div className={clsx('size-8 rounded-xl flex items-center justify-center text-white', stat.color)}>
+                                    <div key={i} className="bg-white dark:bg-[#15171c] rounded-md p-4 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                                        <div className={clsx('size-8 rounded-md flex items-center justify-center text-white', stat.color)}>
                                             <stat.icon size={18} />
                                         </div>
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{stat.label}</p>
@@ -646,7 +646,7 @@ export default function MemberDetailPage() {
                             </div>
 
                             {/* Transactions */}
-                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-3 border border-slate-100 dark:border-white/5 shadow-sm">
+                            <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm">
                                 <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-3">Historial de Siembras</h3>
                                 {loadingDonations ? (
                                     <div className="py-2 text-center text-slate-400 text-sm">Cargando...</div>
@@ -655,7 +655,7 @@ export default function MemberDetailPage() {
                                         {donations.map((d: any, i: number) => (
                                             <div key={i} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-lg">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="size-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
+                                                    <div className="size-9 rounded-md bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
                                                         <DollarSign size={16} className="text-emerald-600" />
                                                     </div>
                                                     <div>
@@ -681,7 +681,7 @@ export default function MemberDetailPage() {
                     {/* ── HISTORIAL ── */}
                     {activeTab === 'history' && <>
                         <div className="lg:col-span-12">
-                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-3 border border-slate-100 dark:border-white/5 shadow-sm">
+                            <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm">
                                 <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-3">Línea de Tiempo Pastoral</h3>
                                 {loadingHistory ? (
                                     <div className="py-2 text-center text-slate-400 text-sm">Cargando historial...</div>
@@ -690,7 +690,7 @@ export default function MemberDetailPage() {
                                         <div className="absolute left-5 top-0 bottom-0 w-px bg-slate-100 dark:bg-white/5" />
                                         {history.map((event: any, i: number) => (
                                             <div key={i} className="flex gap-4 pl-12 pb-8 relative">
-                                                <div className="absolute left-0 top-1 size-8 rounded-xl bg-white dark:bg-[#15171c] border border-slate-100 dark:border-white/10 flex items-center justify-center shadow-sm z-10">
+                                                <div className="absolute left-0 top-1 size-8 rounded-md bg-white dark:bg-[#15171c] border border-slate-100 dark:border-white/10 flex items-center justify-center shadow-sm z-10">
                                                     <MessageSquare size={16} className="text-blue-500" />
                                                 </div>
                                                 <div className="flex-1 bg-slate-50 dark:bg-white/5 rounded-lg p-3">

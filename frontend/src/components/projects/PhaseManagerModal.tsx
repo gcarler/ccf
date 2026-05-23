@@ -100,7 +100,7 @@ export function PhaseManagerModal({ projectId, phases, onClose, onSaved }: Props
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col border border-slate-200 dark:border-white/10">
+            <div className="bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col border border-slate-200 dark:border-white/10">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 dark:border-white/5 shrink-0">
                     <h2 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wide">
@@ -116,15 +116,15 @@ export function PhaseManagerModal({ projectId, phases, onClose, onSaved }: Props
                     {items.map((phase, i) => (
                         <div
                             key={phase.slug}
-                            className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/10 group"
+                            className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-md border border-slate-100 dark:border-white/10 group"
                         >
                             {/* Reorder buttons */}
                             <div className="flex flex-col gap-0.5 shrink-0">
                                 <button onClick={() => handleMoveUp(i)} disabled={i === 0} className="size-4 flex items-center justify-center text-slate-300 hover:text-slate-600 disabled:opacity-20 disabled:cursor-not-allowed">
-                                    <span className="text-[8px] font-black leading-none">▲</span>
+                                    <span className="font-semibold leading-none">▲</span>
                                 </button>
                                 <button onClick={() => handleMoveDown(i)} disabled={i === items.length - 1} className="size-4 flex items-center justify-center text-slate-300 hover:text-slate-600 disabled:opacity-20 disabled:cursor-not-allowed">
-                                    <span className="text-[8px] font-black leading-none">▼</span>
+                                    <span className="font-semibold leading-none">▼</span>
                                 </button>
                             </div>
 
@@ -169,7 +169,7 @@ export function PhaseManagerModal({ projectId, phases, onClose, onSaved }: Props
                     {/* Add phase */}
                     <button
                         onClick={handleAdd}
-                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-slate-200 dark:border-white/10 text-slate-400 hover:text-blue-500 hover:border-blue-500/30 transition-all text-[11px] font-black uppercase tracking-widest"
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-md border-2 border-dashed border-slate-200 dark:border-white/10 text-slate-400 hover:text-blue-500 hover:border-blue-500/30 transition-all text-[11px] font-semibold uppercase tracking-wide"
                     >
                         <Plus size={14} /> Agregar Fase
                     </button>

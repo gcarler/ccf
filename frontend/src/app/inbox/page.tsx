@@ -79,12 +79,12 @@ export default function InboxPage() {
 
     return (
         <div className="h-full flex flex-col bg-white dark:bg-[#1E1F21] overflow-hidden font-display">
-            <div className="h-12 border-b border-slate-100 dark:border-white/5 flex items-center px-6 gap-3 shrink-0 bg-slate-50/50 dark:bg-[#1E1F21]">
-                <h1 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-700 dark:text-slate-300 flex items-center gap-2">
+            <div className="h-8 border-b border-slate-100 dark:border-white/5 flex items-center px-3 gap-3 shrink-0 bg-slate-50/50 dark:bg-[#1E1F21]">
+                <h1 className="text-[11px] font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-300 flex items-center gap-2">
                     <Bell size={13} />
                     Bandeja de Entrada
                     {unreadCount > 0 && (
-                        <span className="inline-flex items-center justify-center size-5 rounded-full bg-rose-500 text-white text-[9px] font-black">
+                        <span className="inline-flex items-center justify-center size-5 rounded-full bg-rose-500 text-white font-semibold">
                             {unreadCount}
                         </span>
                     )}
@@ -108,7 +108,7 @@ export default function InboxPage() {
                             key={item}
                             onClick={() => setFilter(item)}
                             className={clsx(
-                                'px-3 py-1.5 text-[10px] font-black uppercase tracking-wide transition-colors',
+                                'px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors',
                                 filter === item
                                     ? 'bg-blue-600 text-white'
                                     : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
@@ -121,7 +121,7 @@ export default function InboxPage() {
 
                 <button
                     onClick={() => void refresh()}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 font-semibold text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors"
                 >
                     <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
                     Actualizar
@@ -130,7 +130,7 @@ export default function InboxPage() {
                 {unreadCount > 0 && (
                     <button
                         onClick={() => void markAllRead()}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 font-semibold text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors"
                     >
                         <Check size={12} />
                         Marcar todo como leido
@@ -138,7 +138,7 @@ export default function InboxPage() {
                 )}
             </div>
 
-            <div className="px-6 py-2 border-b border-slate-100 dark:border-white/5 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+            <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                 {FILTER_LABEL[filter]}
             </div>
 
@@ -148,7 +148,7 @@ export default function InboxPage() {
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="flex h-full items-center justify-center text-xs font-black uppercase tracking-[0.2em] text-slate-400"
+                            className="flex h-full items-center justify-center text-xs font-semibold uppercase tracking-wide text-slate-400"
                         >
                             Sincronizando notificaciones...
                         </motion.div>
@@ -156,9 +156,9 @@ export default function InboxPage() {
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="flex flex-col items-center justify-center h-full gap-4 text-center px-8"
+                            className="flex flex-col items-center justify-center h-full gap-4 text-center px-4"
                         >
-                            <div className="size-16 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+                            <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center">
                                 <Bell size={28} className="text-slate-300 dark:text-slate-600" />
                             </div>
                             <p className="text-sm font-bold text-slate-500">Sin notificaciones</p>
@@ -179,7 +179,7 @@ export default function InboxPage() {
                                         exit={{ opacity: 0, height: 0 }}
                                         transition={{ delay: index * 0.02 }}
                                         className={clsx(
-                                            'w-full text-left flex items-start gap-4 px-6 py-4 group relative transition-colors',
+                                            'w-full text-left flex items-start gap-4 px-3 py-1.5 group relative transition-colors',
                                             notification.read
                                                 ? 'hover:bg-slate-50/50 dark:hover:bg-white/[0.02]'
                                                 : 'bg-blue-50/30 dark:bg-blue-500/[0.04] hover:bg-blue-50/50 dark:hover:bg-blue-500/[0.07]',
@@ -190,7 +190,7 @@ export default function InboxPage() {
                                             <div className="absolute left-2.5 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-blue-500" />
                                         )}
 
-                                        <div className={clsx('size-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5', config.bg)}>
+                                        <div className={clsx('size-9 rounded-md flex items-center justify-center shrink-0 mt-0.5', config.bg)}>
                                             <Icon size={16} className={config.color} />
                                         </div>
 

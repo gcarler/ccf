@@ -73,7 +73,7 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
             {/* Weekday Labels */}
             <div className="grid grid-cols-7 border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#1e1f21] z-10">
                 {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
-                    <div key={day} className="py-2 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{day}</div>
+                    <div key={day} className="py-2 text-center font-semibold text-slate-400 uppercase tracking-wide">{day}</div>
                 ))}
             </div>
 
@@ -87,7 +87,7 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
                             <Popover.Trigger asChild>
                                 <div 
                                     className={clsx(
-                                        "min-h-[80px] p-1.5 border-r border-b border-slate-50 dark:border-white/5 transition-colors relative group cursor-pointer",
+                                        "min-h-12 p-1.5 border-r border-b border-slate-50 dark:border-white/5 transition-colors relative group cursor-pointer",
                                         !isSameMonth(day, currentMonth) ? "bg-slate-50/50 dark:bg-black/10" : "bg-white dark:bg-[#1e1f21]",
                                         isToday(day) && "bg-blue-50/20 dark:bg-blue-500/5",
                                         openPopoverDay === dayKey && "ring-2 ring-inset ring-blue-500/50"
@@ -95,7 +95,7 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
                                 >
                                     <header className="flex justify-between items-center mb-2">
                                         <span className={clsx(
-                                            "size-6 flex items-center justify-center text-[11px] font-black rounded-full transition-all",
+                                            "size-6 flex items-center justify-center font-semibold rounded-full transition-all",
                                             isToday(day) ? "bg-blue-600 text-white shadow-lg" : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200"
                                         )}>
                                             {format(day, 'd')}
@@ -108,7 +108,7 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
                                         </button>
                                     </header>
 
-                                    <div className="space-y-1 overflow-y-auto max-h-[80px] scrollbar-none">
+                                    <div className="space-y-1 overflow-y-auto max-h-12 scrollbar-none">
                                         {dayTasks.map(task => (
                                             <motion.div
                                                 key={task.id}

@@ -81,7 +81,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                         </h2>
                         <div className="flex items-center gap-2.5">
                             {currentStage && (
-                                <span className={clsx('px-3 py-1 rounded-xl text-[9px] font-bold uppercase tracking-wider border flex items-center gap-2', currentStage.bg, currentStage.text, currentStage.border)}>
+                                <span className={clsx('px-3 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider border flex items-center gap-2', currentStage.bg, currentStage.text, currentStage.border)}>
                                     <div className={clsx("size-1.5 rounded-full animate-pulse", currentStage.color)} />
                                     {currentStage.label}
                                 </span>
@@ -90,15 +90,15 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                     </div>
                 </div>
 
-                <div className="p-4 bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm rounded-xl border border-slate-100 dark:border-white/[0.05] shadow-sm mt-3 relative z-10 flex items-center justify-between">
+                <div className="p-4 bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm rounded-md border border-slate-100 dark:border-white/[0.05] shadow-sm mt-3 relative z-10 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-600"><Smartphone size={16} /></div>
+                        <div className="p-2.5 bg-blue-500/10 rounded-md text-blue-600"><Smartphone size={16} /></div>
                         <div>
                             <p className="text-[11px] font-bold text-slate-800 dark:text-slate-100">{lead.phone || 'Sin teléfono'}</p>
                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">WhatsApp Disponible</p>
                         </div>
                     </div>
-                    <button className="p-2.5 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20 active:scale-90 transition-all">
+                    <button className="p-2.5 bg-blue-600 text-white rounded-md shadow-lg shadow-blue-500/20 active:scale-90 transition-all">
                         <Phone size={14} />
                     </button>
                 </div>
@@ -113,7 +113,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                     <div className="space-y-2">
                         <button
                             onClick={() => onViewFullProfile(lead.id)}
-                            className="w-full flex items-center gap-4 p-3 bg-blue-600 text-white rounded-xl text-[11px] font-bold uppercase tracking-[0.1em] hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 active:scale-95 group"
+                            className="w-full flex items-center gap-4 p-3 bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-[0.1em] hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 active:scale-95 group"
                         >
                             <ExternalLink size={16} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /> 
                             Ver Expediente Completo
@@ -185,7 +185,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                                                 </span>
                                             </div>
                                             
-                                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.04] text-[11px] leading-relaxed">
+                                            <div className="p-4 rounded-md bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.04] text-[11px] leading-relaxed">
                                                 <p className="text-slate-600 dark:text-slate-400 font-medium">
                                                     {log.metadata?.stage ? (
                                                         <>Se movió a <span className="font-bold text-blue-600 dark:text-blue-400">{STAGE_LABEL[log.metadata.stage] || log.metadata.stage}</span></>

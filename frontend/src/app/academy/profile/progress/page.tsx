@@ -109,7 +109,7 @@ export default function StudentProgressPage() {
                 availableViews={['grid', 'list', 'table', 'calendar', 'gantt']}
             />
 
-            <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-5 relative z-10">
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-3 relative z-10">
                 {viewType === 'calendar' && (
                     <UniversalCalendarView
                         title="Actividad académica"
@@ -136,9 +136,9 @@ export default function StudentProgressPage() {
                     />
                 )}
                 {viewType === 'table' && (
-                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+                    <div className="overflow-hidden rounded-md border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
                         <table className="w-full text-left">
-                            <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                 <tr><th className="px-4 py-2">Curso</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2">Progreso</th><th className="px-4 py-2">Nota</th></tr>
                             </thead>
                             <tbody>
@@ -157,13 +157,13 @@ export default function StudentProgressPage() {
                 {viewType === 'list' && (
                     <div className="space-y-2">
                         {progress.map((course) => (
-                            <article key={course.id} className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                            <article key={course.id} className="rounded-md border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
-                                        <h3 className="text-sm font-black text-slate-900 dark:text-white">{course.title}</h3>
+                                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{course.title}</h3>
                                         <p className="mt-2 text-sm text-slate-500">{course.lessons_completed}/{course.total_lessons} lecciones</p>
                                     </div>
-                                    <span className="text-sm font-black text-blue-600">{course.progress_percent}%</span>
+                                    <span className="text-sm font-semibold text-blue-600">{course.progress_percent}%</span>
                                 </div>
                             </article>
                         ))}
@@ -174,19 +174,19 @@ export default function StudentProgressPage() {
                     variants={containerVariants}
                     initial="hidden"
                     animate="show"
-                    className="max-w-[1400px] mx-auto space-y-12"
+                    className="max-w-[1400px] mx-auto space-y-3"
                 >
                     {/* Hero Section Premium */}
-                    <motion.section variants={itemVariants} className="relative rounded-[3.5rem] bg-[#001b48] overflow-hidden group border border-white/10 shadow-2xl">
+                    <motion.section variants={itemVariants} className="relative rounded-lg bg-[#001b48] overflow-hidden group border border-white/10 shadow-2xl">
                         <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.05] mix-blend-overlay" />
                         <div className="absolute top-[-50%] right-[-10%] w-[80%] h-[200%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-400/20 via-blue-900/10 to-transparent blur-3xl pointer-events-none" />
                         
-                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between p-4 lg:p-16 gap-4">
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between p-4 lg:p-4 gap-4">
                             <div className="space-y-3 max-w-xl">
-                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-xl rounded-full text-[10px] font-black uppercase tracking-[0.3em] text-blue-100 border border-white/10">
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-xl rounded-full text-[10px] font-semibold uppercase tracking-wide text-blue-100 border border-white/10">
                                     <Trophy size={14} className="text-amber-400" /> Rendimiento Académico
                                 </div>
-                                <h1 className="text-5xl lg:text-7xl font-black text-white tracking-tighter leading-[0.9] mb-4">
+                                <h1 className="text-xl lg:text-xl font-black text-white tracking-tighter leading-[0.9] mb-4">
                                     Tu camino <br /> al <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-500">Propósito.</span>
                                 </h1>
                                 <p className="text-blue-100/60 text-sm font-medium leading-relaxed">
@@ -207,38 +207,38 @@ export default function StudentProgressPage() {
                     <motion.section variants={itemVariants} className="space-y-3">
                         <div className="flex items-end justify-between px-4">
                             <div>
-                                <h2 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight">Detalle por Curso</h2>
+                                <h2 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">Detalle por Curso</h2>
                                 <p className="text-slate-500 font-medium">Desglose de notas y asistencia de tus inscripciones.</p>
                             </div>
                             <div className="flex gap-2">
-                                <button className="p-3 bg-white dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm"><Search size={18} className="text-slate-400" /></button>
+                                <button className="p-3 bg-white dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg shadow-sm"><Search size={18} className="text-slate-400" /></button>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 gap-4">
                             {loading ? (
                                 Array(3).fill(0).map((_, i) => (
-                                    <div key={i} className="h-40 bg-slate-100 dark:bg-white/5 rounded-xl animate-pulse" />
+                                    <div key={i} className="h-40 bg-slate-100 dark:bg-white/5 rounded-md animate-pulse" />
                                 ))
                             ) : progress.length > 0 ? (
                                 progress.map(course => (
                                     <div 
                                         key={course.id} 
-                                        className="bg-white dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-2xl p-4 lg:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-5 group hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500"
+                                        className="bg-white dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg p-4 lg:p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-5 group hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500"
                                     >
                                         <div className="flex-1 space-y-4">
                                             <div className="flex items-center gap-3">
                                                 <span className={clsx(
-                                                    "px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-[0.2em]",
+                                                    "px-3 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wide",
                                                     course.status === 'completed' ? "bg-emerald-500/10 text-emerald-500" : "bg-blue-500/10 text-blue-500"
                                                 )}>
                                                     {course.status === 'completed' ? 'Completado' : 'En Curso'}
                                                 </span>
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-1.5">
+                                                <span className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
                                                     <BookOpen size={12} /> {course.lessons_completed} / {course.total_lessons} Lecciones
                                                 </span>
                                             </div>
-                                            <h3 className="text-3xl font-black text-slate-800 dark:text-white group-hover:text-blue-600 transition-colors leading-none tracking-tight">{course.title}</h3>
+                                            <h3 className="text-xl font-black text-slate-800 dark:text-white group-hover:text-blue-600 transition-colors leading-none tracking-tight">{course.title}</h3>
                                             <div className="flex items-center gap-4">
                                                 <div className="flex items-center gap-2 text-slate-500">
                                                     <Clock size={14} strokeWidth={2.5} />
@@ -247,7 +247,7 @@ export default function StudentProgressPage() {
                                                 {course.certificate_issued && (
                                                     <div className="flex items-center gap-2 text-amber-500 bg-amber-500/10 px-3 py-1 rounded-full">
                                                         <Award size={14} strokeWidth={2.5} />
-                                                        <span className="text-[10px] font-black uppercase tracking-widest">Certificado Disponible</span>
+                                                        <span className="text-[10px] font-semibold uppercase tracking-wide">Certificado Disponible</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -256,8 +256,8 @@ export default function StudentProgressPage() {
                                         <div className="w-full lg:w-[400px] flex flex-col md:flex-row items-center gap-5">
                                             <div className="flex-1 w-full space-y-4">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Progreso General</span>
-                                                    <span className="text-sm font-black text-slate-800 dark:text-white">{course.progress_percent}%</span>
+                                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Progreso General</span>
+                                                    <span className="text-sm font-semibold text-slate-800 dark:text-white">{course.progress_percent}%</span>
                                                 </div>
                                                 <div className="h-3 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden p-0.5">
                                                     <motion.div 
@@ -273,14 +273,14 @@ export default function StudentProgressPage() {
 
                                             <div className="flex items-center gap-4 md:border-l border-slate-100 dark:border-white/5 md:pl-8 shrink-0">
                                                 <div className="text-center">
-                                                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Nota</p>
-                                                    <p className={clsx("text-3xl font-black tracking-tighter", course.average_grade >= 70 ? "text-emerald-500" : "text-rose-500")}>
+                                                    <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Nota</p>
+                                                    <p className={clsx("text-xl font-bold tracking-tighter", course.average_grade >= 70 ? "text-emerald-500" : "text-rose-500")}>
                                                         {course.average_grade.toFixed(1)}
                                                     </p>
                                                 </div>
                                                 <button 
                                                     onClick={() => router.push(`/academy/course/${course.id}`)}
-                                                    className="size-14 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl shadow-slate-900/10"
+                                                    className="size-7 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl shadow-slate-900/10"
                                                 >
                                                     <ArrowRight size={24} strokeWidth={3} />
                                                 </button>
@@ -289,14 +289,14 @@ export default function StudentProgressPage() {
                                     </div>
                                 ))
                             ) : (
-                                <div className="bg-white dark:bg-[#15171c] rounded-[4rem] p-20 text-center space-y-3 border border-slate-100 dark:border-white/5 shadow-inner">
-                                    <div className="size-24 bg-slate-100 dark:bg-white/5 rounded-xl flex items-center justify-center mx-auto text-slate-300">
+                                <div className="bg-white dark:bg-[#15171c] rounded-lg p-4 text-center space-y-3 border border-slate-100 dark:border-white/5 shadow-inner">
+                                    <div className="size-10 bg-slate-100 dark:bg-white/5 rounded-md flex items-center justify-center mx-auto text-slate-300">
                                         <BookOpen size={48} />
                                     </div>
                                     <div className="max-w-md mx-auto space-y-4">
                                         <h3 className="text-lg font-black text-slate-800 dark:text-white">Aún no tienes progreso registrado</h3>
                                         <p className="text-slate-500 font-medium">Inscríbete en un curso de nuestro catálogo para comenzar tu formación espiritual hoy mismo.</p>
-                                        <button onClick={() => router.push('/academy')} className="mt-6 px-6 py-5 bg-blue-600 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-blue-500/30 hover:scale-105 transition-all">Explorar Catálogo</button>
+                                        <button onClick={() => router.push('/academy')} className="mt-3 px-3 py-2 bg-blue-600 text-white rounded-md font-black text-xs uppercase tracking-wide shadow-2xl shadow-blue-500/30 hover:scale-105 transition-all">Explorar Catálogo</button>
                                     </div>
                                 </div>
                             )}
@@ -311,13 +311,13 @@ export default function StudentProgressPage() {
 
 function HeaderStat({ label, value, icon: Icon, color, bg }: any) {
     return (
-        <div className="p-4 bg-white/5 backdrop-blur-2xl rounded-xl border border-white/10 flex items-center gap-5 group hover:bg-white/10 transition-all cursor-default">
-            <div className={clsx('size-9 rounded-2xl flex items-center justify-center shadow-inner transition-transform group-hover:scale-110', bg, color)}>
+        <div className="p-4 bg-white/5 backdrop-blur-2xl rounded-md border border-white/10 flex items-center gap-5 group hover:bg-white/10 transition-all cursor-default">
+            <div className={clsx('size-9 rounded-lg flex items-center justify-center shadow-inner transition-transform group-hover:scale-110', bg, color)}>
                 <Icon size={22} strokeWidth={2.5} />
             </div>
             <div>
-                <p className="text-[10px] font-black text-blue-200/50 uppercase tracking-[0.2em] mb-1 leading-none">{label}</p>
-                <p className="text-3xl font-black text-white tracking-tighter leading-none">{value}</p>
+                <p className="font-semibold text-blue-200/50 uppercase tracking-wide mb-1 leading-none">{label}</p>
+                <p className="text-xl font-black text-white tracking-tighter leading-none">{value}</p>
             </div>
         </div>
     );

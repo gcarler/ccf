@@ -69,32 +69,32 @@ export default function GlobalEventAnalyticsPage() {
                 watchers={['Sistema Optimus', 'Módulo Analítico']}
             />
             
-            <div className="p-4 lg:p-5 space-y-3 max-w-7xl mx-auto">
+            <div className="p-4 lg:p-3 space-y-3 max-w-7xl mx-auto">
                 
                 {/* FILTROS */}
-                <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 shadow-sm flex flex-col md:flex-row gap-4 items-center">
-                    <div className="flex items-center gap-3 text-slate-800 dark:text-white font-black uppercase tracking-widest text-xs">
+                <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm flex flex-col md:flex-row gap-4 items-center">
+                    <div className="flex items-center gap-3 text-slate-800 dark:text-white font-semibold uppercase tracking-wide text-xs">
                         <Filter size={18} className="text-blue-500" /> Filtros Activos
                     </div>
                     <div className="h-10 w-px bg-slate-200 dark:bg-white/10 hidden md:block"></div>
                     
                     <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Agrupación de Tiempo</label>
+                            <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2 block">Agrupación de Tiempo</label>
                             <select 
                                 value={period}
                                 onChange={e => setPeriod(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 px-4 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 px-4 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
                             >
                                 {periodOptions.map(o => <option key={o.value} value={o.value} className="dark:bg-slate-900">{o.label}</option>)}
                             </select>
                         </div>
                         <div>
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Tipo de Evento</label>
+                            <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2 block">Tipo de Evento</label>
                             <select 
                                 value={eventType}
                                 onChange={e => setEventType(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 px-4 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 px-4 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
                             >
                                 {typeOptions.map(o => <option key={o.value} value={o.value} className="dark:bg-slate-900">{o.label}</option>)}
                             </select>
@@ -103,56 +103,56 @@ export default function GlobalEventAnalyticsPage() {
                 </div>
 
                 {loading ? (
-                    <div className="py-24 text-center">
+                    <div className="py-1.5 text-center">
                         <div className="size-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
-                        <p className="text-sm font-black uppercase tracking-widest text-slate-400 animate-pulse">Procesando cubos de datos...</p>
+                        <p className="text-sm font-semibold uppercase tracking-wide text-slate-400 animate-pulse">Procesando cubos de datos...</p>
                     </div>
                 ) : !data ? (
-                    <div className="text-center py-20 text-slate-500">Error al cargar datos.</div>
+                    <div className="text-center py-1.5 text-slate-500">Error al cargar datos.</div>
                 ) : (
                     <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
                         {/* KPIs */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 shadow-sm flex flex-col justify-between">
-                                <div className="size-9 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-6">
+                            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm flex flex-col justify-between">
+                                <div className="size-9 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center mb-3">
                                     <Users size={24} />
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Asistencia Total</p>
-                                    <p className="text-3xl font-black text-slate-900 dark:text-white mt-1">{data.kpis.total_attendance}</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Asistencia Total</p>
+                                    <p className="text-xl font-black text-slate-900 dark:text-white mt-1">{data.kpis.total_attendance}</p>
                                 </div>
                             </div>
 
-                            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 shadow-sm flex flex-col justify-between">
-                                <div className="size-9 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-6">
+                            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm flex flex-col justify-between">
+                                <div className="size-9 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-3">
                                     <TrendingUp size={24} />
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Promedio por Sesión</p>
-                                    <p className="text-3xl font-black text-slate-900 dark:text-white mt-1">{data.kpis.avg_per_session}</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Promedio por Sesión</p>
+                                    <p className="text-xl font-black text-slate-900 dark:text-white mt-1">{data.kpis.avg_per_session}</p>
                                 </div>
                             </div>
 
-                            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 shadow-sm flex flex-col justify-between">
-                                <div className="size-9 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-6">
+                            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm flex flex-col justify-between">
+                                <div className="size-9 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-3">
                                     <Award size={24} />
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Período Pico</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Período Pico</p>
                                     <p className="text-base font-black text-slate-900 dark:text-white mt-1">{data.kpis.peak_period?.label}</p>
                                     <p className="text-xs text-emerald-500 font-bold mt-1">{data.kpis.peak_period?.total} asistencias</p>
                                 </div>
                             </div>
 
-                            <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/5 rounded-xl p-4 shadow-sm flex flex-col justify-between relative overflow-hidden group">
+                            <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/5 rounded-md p-4 shadow-sm flex flex-col justify-between relative overflow-hidden group">
                                 <div className={`absolute top-0 inset-x-0 h-1 ${data.kpis.trend_percentage >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
-                                <div className={`size-9 rounded-2xl flex items-center justify-center mb-6 ${data.kpis.trend_percentage >= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+                                <div className={`size-9 rounded-lg flex items-center justify-center mb-3 ${data.kpis.trend_percentage >= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
                                     <TrendingUp size={24} className={data.kpis.trend_percentage < 0 ? 'rotate-180' : ''} />
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Crecimiento Cierre</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Crecimiento Cierre</p>
                                     <div className="flex items-end gap-2 mt-1">
-                                        <p className="text-3xl font-black text-slate-900 dark:text-white">
+                                        <p className="text-xl font-black text-slate-900 dark:text-white">
                                             {data.kpis.trend_percentage > 0 ? '+' : ''}{data.kpis.trend_percentage}%
                                         </p>
                                     </div>
@@ -162,13 +162,13 @@ export default function GlobalEventAnalyticsPage() {
                         </div>
 
                         {/* GRÁFICO MOTOR CSS */}
-                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 shadow-sm">
-                            <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-8 flex items-center gap-2">
+                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm">
+                            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-3 flex items-center gap-2">
                                 <BarChart3 size={16} /> Tendencia en el Tiempo
                             </h3>
                             
                             {data.series.length === 0 ? (
-                                <div className="text-center py-20 text-slate-400 text-sm font-bold">No hay datos de asistencia para mostrar en este filtro.</div>
+                                <div className="text-center py-1.5 text-slate-400 text-sm font-bold">No hay datos de asistencia para mostrar en este filtro.</div>
                             ) : (
                                 <div className="flex items-end gap-3 h-80 mt-4 w-full overflow-x-auto pb-6 scrollbar-thin">
                                     {data.series.map((d) => {
@@ -179,7 +179,7 @@ export default function GlobalEventAnalyticsPage() {
                                         return (
                                             <div key={d.key} className="flex-1 min-w-[60px] max-w-[100px] flex flex-col items-center justify-end group relative h-full">
                                                 {/* Tooltip */}
-                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-4 bg-slate-800 text-white text-[10px] font-bold px-3 py-2 rounded-xl whitespace-nowrap z-10 flex flex-col items-center shadow-xl">
+                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-4 bg-slate-800 text-white text-[10px] font-bold px-3 py-2 rounded-md whitespace-nowrap z-10 flex flex-col items-center shadow-xl">
                                                     <span className="text-blue-400 mb-1">{d.label}</span>
                                                     <span>{d.total} Asistentes</span>
                                                     <span className="text-slate-400 text-[8px]">{d.sessions} sesiones</span>
@@ -192,7 +192,7 @@ export default function GlobalEventAnalyticsPage() {
                                                 ></div>
                                                 
                                                 {/* Label Eje X */}
-                                                <div className="mt-4 text-[9px] font-black uppercase tracking-widest text-slate-500 rotate-[-45deg] origin-top-left translate-y-2 translate-x-2 whitespace-nowrap">
+                                                <div className="mt-4 text-[9px] font-semibold uppercase tracking-wide text-slate-500 rotate-[-45deg] origin-top-left translate-y-2 translate-x-2 whitespace-nowrap">
                                                     {d.label}
                                                 </div>
                                             </div>

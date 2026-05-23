@@ -47,7 +47,7 @@ export default function MyCardPage() {
         return (
             <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-4">
                 <Loader2 className="animate-spin text-primary" size={48} />
-                <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px]">Generando Credencial...</p>
+                <p className="text-slate-500 font-bold uppercase tracking-wide text-[10px]">Generando Credencial...</p>
             </div>
         );
     }
@@ -145,7 +145,7 @@ export default function MyCardPage() {
 
                 {/* Textures/Overlays */}
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
-                <div className="absolute -top-24 -right-24 size-48 bg-white/10 rounded-full blur-3xl"></div>
+                <div className="absolute -top-24 -right-24 size-10 bg-white/10 rounded-full blur-3xl"></div>
 
                 {/* Card Header */}
                 <div className="flex justify-between items-start relative z-10 mb-3">
@@ -175,7 +175,7 @@ export default function MyCardPage() {
 
                 {/* QR Code Container */}
                 <div className="flex-1 flex flex-col items-center justify-center relative z-10">
-                    <div className="p-4 bg-white rounded-xl shadow-2xl relative group-hover:rotate-1 transition-transform duration-500">
+                    <div className="p-4 bg-white rounded-md shadow-2xl relative group-hover:rotate-1 transition-transform duration-500">
                         <QRCodeSVG
                             value={member.qr_token}
                             size={140}
@@ -191,7 +191,7 @@ export default function MyCardPage() {
                             }}
                         />
                     </div>
-                    <p className="text-[8px] font-bold text-white/40 uppercase tracking-[0.2em] mt-3">
+                    <p className="text-[8px] font-bold text-white/40 uppercase tracking-wide mt-3">
                         Escanea para validar asistencia
                     </p>
                 </div>
@@ -210,15 +210,15 @@ export default function MyCardPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4 w-full max-w-sm relative z-10">
-                <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-xl transition-all active:scale-95 group">
+                <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-md transition-all active:scale-95 group">
                     <Share2 size={18} className="text-slate-400 group-hover:text-primary transition-colors" />
                     <span className="text-[10px] font-bold uppercase tracking-wide">Compartir</span>
                 </button>
-                <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-xl transition-all active:scale-95 group">
+                <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-md transition-all active:scale-95 group">
                     <Download size={18} className="text-slate-400 group-hover:text-emerald-500 transition-colors" />
                     <span className="text-[10px] font-bold uppercase tracking-wide">Descargar</span>
                 </button>
-                <button className="col-span-2 flex items-center justify-center gap-3 bg-white text-slate-900 p-3 rounded-xl font-bold uppercase tracking-wide text-[11px] shadow-2xl hover:scale-105 transition-all active:scale-95">
+                <button className="col-span-2 flex items-center justify-center gap-3 bg-white text-slate-900 p-3 rounded-md font-bold uppercase tracking-wide text-[11px] shadow-2xl hover:scale-105 transition-all active:scale-95">
                     <Sparkles size={20} className="text-amber-500" /> Añadir a Google Wallet
                 </button>
             </div>

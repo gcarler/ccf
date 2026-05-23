@@ -76,11 +76,11 @@ export default function AdminMembersPage() {
             size: 300,
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-white/10 shrink-0">
+                    <div className="size-8 rounded-md bg-slate-100 dark:bg-white/5 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-white/10 shrink-0">
                         <Image src={`https://ui-avatars.com/api/?name=${row.original.username}&background=random&color=fff`} alt="AV" width={32} height={32} unoptimized />
                     </div>
                     <div className="truncate flex-1">
-                        <p className="text-[13px] font-black text-slate-800 dark:text-white leading-tight truncate">{row.original.username}</p>
+                        <p className="font-semibold text-slate-800 dark:text-white leading-tight truncate">{row.original.username}</p>
                         <p className="text-[10px] text-slate-400 font-medium truncate">{row.original.email}</p>
                     </div>
                 </div>
@@ -101,9 +101,9 @@ export default function AdminMembersPage() {
             cell: info => (
                 <div className="flex items-center gap-1.5">
                     {info.getValue() ? (
-                        <span className="flex items-center gap-1 text-[10px] font-black text-emerald-500 uppercase"><CheckCircle2 size={12} /> Activo</span>
+                        <span className="flex items-center gap-1 font-semibold text-emerald-500 uppercase"><CheckCircle2 size={12} /> Activo</span>
                     ) : (
-                        <span className="flex items-center gap-1 text-[10px] font-black text-rose-500 uppercase"><XCircle size={12} /> Bloqueado</span>
+                        <span className="flex items-center gap-1 font-semibold text-rose-500 uppercase"><XCircle size={12} /> Bloqueado</span>
                     )}
                 </div>
             )
@@ -172,7 +172,7 @@ export default function AdminMembersPage() {
                 breadcrumbs={[{ label: 'Gestión Central', icon: Shield }, { label: 'Usuarios y Roles', icon: Users }]}
                 viewType={viewType} setViewType={setViewType} availableViews={MEMBER_VIEWS} onSearch={setSearch}
                 rightActions={
-                    <button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                    <button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
                         <UserPlus size={14} /> Añadir Usuario
                     </button>
                 }
@@ -180,45 +180,45 @@ export default function AdminMembersPage() {
 
             <main className="flex-1 overflow-auto scrollbar-thin">
                 {loading ? (
-                    <div className="p-8 space-y-4">
-                        {[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-14 w-full rounded-2xl" />)}
+                    <div className="p-4 space-y-4">
+                        {[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-8 w-full rounded-lg" />)}
                     </div>
                 ) : viewType === 'table' ? (
                     <DataTable data={filtered} columns={columns} onRowClick={handleOpenMember} />
                 ) : viewType === 'list' ? (
-                    <div className="divide-y divide-slate-100 p-6 dark:divide-white/5">
+                    <div className="divide-y divide-slate-100 p-3 dark:divide-white/5">
                         {filtered.map((member) => (
-                            <button key={member.id} onClick={() => handleOpenMember(member)} className="flex w-full items-center justify-between gap-4 rounded-xl px-4 py-4 text-left hover:bg-slate-50 dark:hover:bg-white/5">
+                            <button key={member.id} onClick={() => handleOpenMember(member)} className="flex w-full items-center justify-between gap-4 rounded-md px-4 py-1.5 text-left hover:bg-slate-50 dark:hover:bg-white/5">
                                 <div>
-                                    <p className="text-sm font-black text-slate-900 dark:text-white">{member.username}</p>
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{member.username}</p>
                                     <p className="text-xs font-semibold text-slate-400">{member.email}</p>
                                 </div>
-                                <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:bg-white/10">{member.role}</span>
+                                <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-white/10">{member.role}</span>
                             </button>
                         ))}
                     </div>
                 ) : viewType === 'grid' ? (
-                    <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2 xl:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-4 p-3 md:grid-cols-2 xl:grid-cols-4">
                         {filtered.map((member) => (
-                            <button key={member.id} onClick={() => handleOpenMember(member)} className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-left dark:border-white/10 dark:bg-white/[0.03]">
-                                <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-blue-600 text-sm font-black text-white">{member.username?.slice(0, 2).toUpperCase()}</div>
-                                <p className="truncate text-sm font-black text-slate-900 dark:text-white">{member.username}</p>
+                            <button key={member.id} onClick={() => handleOpenMember(member)} className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-left dark:border-white/10 dark:bg-white/[0.03]">
+                                <div className="mb-4 flex size-7 items-center justify-center rounded-md bg-blue-600 text-sm font-semibold text-white">{member.username?.slice(0, 2).toUpperCase()}</div>
+                                <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{member.username}</p>
                                 <p className="truncate text-xs font-semibold text-slate-400">{member.email}</p>
                             </button>
                         ))}
                     </div>
                 ) : viewType === 'board' || viewType === 'kanban' ? (
-                    <div className="flex gap-4 overflow-x-auto p-6">
+                    <div className="flex gap-4 overflow-x-auto p-3">
                         {groupedMembers.map((column) => (
-                            <section key={column.role} className="w-80 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                            <section key={column.role} className="w-80 shrink-0 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
                                 <div className="mb-3 flex items-center justify-between px-1">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{column.role}</p>
-                                    <span className="text-[10px] font-black text-slate-400">{column.items.length}</span>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{column.role}</p>
+                                    <span className="font-semibold text-slate-400">{column.items.length}</span>
                                 </div>
                                 <div className="space-y-2">
                                     {column.items.map((member) => (
-                                        <button key={member.id} onClick={() => handleOpenMember(member)} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-left dark:border-white/10 dark:bg-white/5">
-                                            <p className="text-xs font-black text-slate-900 dark:text-white">{member.username}</p>
+                                        <button key={member.id} onClick={() => handleOpenMember(member)} className="w-full rounded-md border border-slate-200 bg-white p-3 text-left dark:border-white/10 dark:bg-white/5">
+                                            <p className="text-xs font-semibold text-slate-900 dark:text-white">{member.username}</p>
                                             <p className="mt-1 truncate text-[10px] font-semibold text-slate-400">{member.email}</p>
                                         </button>
                                     ))}
@@ -227,11 +227,11 @@ export default function AdminMembersPage() {
                         ))}
                     </div>
                 ) : viewType === 'calendar' ? (
-                    <div className="h-[720px] p-6"><UniversalCalendarView events={calendarEvents} title="Calendario de usuarios" /></div>
+                    <div className="h-[720px] p-3"><UniversalCalendarView events={calendarEvents} title="Calendario de usuarios" /></div>
                 ) : viewType === 'gantt' ? (
-                    <div className="h-[720px] p-6"><UniversalGanttView items={ganttItems} moduleName="Usuarios y roles" /></div>
+                    <div className="h-[720px] p-3"><UniversalGanttView items={ganttItems} moduleName="Usuarios y roles" /></div>
                 ) : (
-                    <div className="p-6"><UniversalWikiView moduleName="Usuarios y roles" storageKey="wiki_admin_members" /></div>
+                    <div className="p-3"><UniversalWikiView moduleName="Usuarios y roles" storageKey="wiki_admin_members" /></div>
                 )}
             </main>
 
@@ -239,15 +239,15 @@ export default function AdminMembersPage() {
                 isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}
                 title={selectedMember?.username || 'Detalles de Usuario'}
                 subtitle="Configuración Técnica de Cuenta"
-                actions={<><button className="px-4 py-2 text-[11px] font-bold text-rose-500">Bloquear Cuenta</button><button className="px-6 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[11px] font-bold shadow-lg">Guardar Cambios</button></>}
+                actions={<><button className="px-4 py-2 text-[11px] font-bold text-rose-500">Bloquear Cuenta</button><button className="px-3 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[11px] font-bold shadow-lg">Guardar Cambios</button></>}
             >
-                <div className="space-y-10 animate-fade-in">
-                    <section className="flex items-center gap-6">
-                        <div className="size-20 rounded-[2rem] bg-slate-100 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 flex items-center justify-center overflow-hidden shadow-xl">
+                <div className="space-y-3 animate-fade-in">
+                    <section className="flex items-center gap-3">
+                        <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 flex items-center justify-center overflow-hidden shadow-xl">
                             <Image src={`https://ui-avatars.com/api/?name=${selectedMember?.username}&background=random&color=fff`} alt="AV" width={80} height={80} unoptimized />
                         </div>
                         <div className="space-y-1">
-                            <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{selectedMember?.username}</h3>
+                            <h3 className="text-lg font-black text-slate-800 dark:text-white tracking-tight">{selectedMember?.username}</h3>
                             <p className="text-sm text-slate-500 font-medium">{selectedMember?.email}</p>
                         </div>
                     </section>
@@ -259,11 +259,11 @@ export default function AdminMembersPage() {
                         <AdminStat label="Dispositivo" value="Desktop (Win32)" icon={Smartphone} />
                     </section>
 
-                    <section className="p-6 bg-blue-50 dark:bg-blue-900/10 rounded-[2.5rem] border border-blue-100 dark:border-blue-900/30 flex items-center justify-between">
+                    <section className="p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/30 flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="size-12 rounded-2xl bg-white dark:bg-white/10 flex items-center justify-center text-blue-600 shadow-sm"><Fingerprint size={24} /></div>
+                            <div className="size-7 rounded-lg bg-white dark:bg-white/10 flex items-center justify-center text-blue-600 shadow-sm"><Fingerprint size={24} /></div>
                             <div>
-                                <h4 className="text-[11px] font-black uppercase tracking-widest text-blue-600">Seguridad Biométrica / 2FA</h4>
+                                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-blue-600">Seguridad Biométrica / 2FA</h4>
                                 <p className="text-xs text-slate-500">Forzar autenticación de dos factores.</p>
                             </div>
                         </div>
@@ -280,15 +280,15 @@ export default function AdminMembersPage() {
                 actions={
                     <>
                         <button onClick={() => setIsCreateOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500">Cancelar</button>
-                        <button onClick={handleCreateMember} className="px-6 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-bold shadow-lg">Crear usuario</button>
+                        <button onClick={handleCreateMember} className="px-3 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-bold shadow-lg">Crear usuario</button>
                     </>
                 }
             >
                 <div className="space-y-4">
-                    <input value={newMember.username} onChange={(e) => setNewMember((prev) => ({ ...prev, username: e.target.value }))} placeholder="Usuario" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none dark:border-white/10 dark:bg-white/5" />
-                    <input value={newMember.email} onChange={(e) => setNewMember((prev) => ({ ...prev, email: e.target.value }))} placeholder="Correo" type="email" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none dark:border-white/10 dark:bg-white/5" />
-                    <input value={newMember.password} onChange={(e) => setNewMember((prev) => ({ ...prev, password: e.target.value }))} placeholder="Contraseña inicial" type="password" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none dark:border-white/10 dark:bg-white/5" />
-                    <select value={newMember.role} onChange={(e) => setNewMember((prev) => ({ ...prev, role: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none dark:border-white/10 dark:bg-white/5">
+                    <input value={newMember.username} onChange={(e) => setNewMember((prev) => ({ ...prev, username: e.target.value }))} placeholder="Usuario" className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none dark:border-white/10 dark:bg-white/5" />
+                    <input value={newMember.email} onChange={(e) => setNewMember((prev) => ({ ...prev, email: e.target.value }))} placeholder="Correo" type="email" className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none dark:border-white/10 dark:bg-white/5" />
+                    <input value={newMember.password} onChange={(e) => setNewMember((prev) => ({ ...prev, password: e.target.value }))} placeholder="Contraseña inicial" type="password" className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none dark:border-white/10 dark:bg-white/5" />
+                    <select value={newMember.role} onChange={(e) => setNewMember((prev) => ({ ...prev, role: e.target.value }))} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold outline-none dark:border-white/10 dark:bg-white/5">
                         {ROLE_OPTIONS.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}
                     </select>
                 </div>
@@ -299,12 +299,12 @@ export default function AdminMembersPage() {
 
 function AdminStat({ label, value, icon: Icon }: any) {
     return (
-        <div className="p-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-2xl group hover:border-blue-500/20 transition-all">
+        <div className="p-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg group hover:border-blue-500/20 transition-all">
             <div className="flex items-center gap-2 mb-2">
                 <Icon size={14} className="text-slate-400 group-hover:text-blue-500" />
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
+                <span className="font-semibold text-slate-400 uppercase tracking-wide">{label}</span>
             </div>
-            <p className="text-[13px] font-black text-slate-800 dark:text-white capitalize">{value}</p>
+            <p className="font-semibold text-slate-800 dark:text-white capitalize">{value}</p>
         </div>
     );
 }

@@ -46,28 +46,28 @@ export default function DonationDetailPage() {
                 leftActions={
                     <button
                         onClick={() => router.push("/admin/donations")}
-                        className="rounded-xl border border-slate-200 p-2 text-slate-500 hover:text-blue-600 dark:border-white/10"
+                        className="rounded-md border border-slate-200 p-2 text-slate-500 hover:text-blue-600 dark:border-white/10"
                     >
                         <ArrowLeft size={16} />
                     </button>
                 }
             />
 
-            <main className="flex-1 overflow-y-auto p-8 lg:p-12">
-                <section className="mx-auto max-w-4xl rounded-[2.5rem] border border-slate-200 bg-white p-8 shadow-xl dark:border-white/10 dark:bg-white/5">
+            <main className="flex-1 overflow-y-auto p-4 lg:p-4">
+                <section className="mx-auto max-w-4xl rounded-lg border border-slate-200 bg-white p-4 shadow-xl dark:border-white/10 dark:bg-white/5">
                     {loading ? (
-                        <div className="py-16 text-center text-sm font-semibold text-slate-400">Cargando donacion...</div>
+                        <div className="py-1.5 text-center text-sm font-semibold text-slate-400">Cargando donacion...</div>
                     ) : donation ? (
-                        <div className="space-y-8">
+                        <div className="space-y-3">
                             <header className="flex flex-col gap-4 border-b border-slate-100 pb-6 dark:border-white/10 md:flex-row md:items-start md:justify-between">
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.35em] text-blue-500">Detalle de aporte</p>
-                                    <h1 className="mt-2 text-3xl font-black text-slate-950 dark:text-white">{donation.donor || "Donante"}</h1>
+                                    <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-blue-500">Detalle de aporte</p>
+                                    <h1 className="mt-2 text-xl font-black text-slate-950 dark:text-white">{donation.donor || "Donante"}</h1>
                                     <p className="mt-2 text-sm font-semibold text-slate-500">Referencia: {donation.reference_code || `DON-${donationId}`}</p>
                                 </div>
-                                <div className="rounded-3xl bg-blue-50 px-6 py-4 text-right dark:bg-blue-500/10">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">Monto</p>
-                                    <p className="text-3xl font-black text-blue-700 dark:text-blue-300">${amount.toLocaleString()}</p>
+                                <div className="rounded-lg bg-blue-50 px-3 py-1.5 text-right dark:bg-blue-500/10">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-500">Monto</p>
+                                    <p className="text-xl font-black text-blue-700 dark:text-blue-300">${amount.toLocaleString()}</p>
                                 </div>
                             </header>
 
@@ -78,15 +78,15 @@ export default function DonationDetailPage() {
                                 <Info label="Metodo" value={donation.method || donation.payment_method || "No especificado"} />
                             </div>
 
-                            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-black/20">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Notas internas</p>
+                            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-black/20">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Notas internas</p>
                                 <p className="mt-2 text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
                                     {donation.notes || "Sin notas registradas para esta donacion."}
                                 </p>
                             </div>
                         </div>
                     ) : (
-                        <div className="py-16 text-center">
+                        <div className="py-1.5 text-center">
                             <ReceiptText className="mx-auto mb-4 text-slate-300" size={42} />
                             <h1 className="text-xl font-black text-slate-900 dark:text-white">Donacion no encontrada</h1>
                             <p className="mt-2 text-sm font-semibold text-slate-400">No hay datos para el registro #{donationId}.</p>
@@ -100,9 +100,9 @@ export default function DonationDetailPage() {
 
 function Info({ label, value }: { label: string; value: string }) {
     return (
-        <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-black/20">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</p>
-            <p className="mt-2 text-sm font-black text-slate-900 dark:text-white">{value}</p>
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-black/20">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
+            <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">{value}</p>
         </div>
     );
 }

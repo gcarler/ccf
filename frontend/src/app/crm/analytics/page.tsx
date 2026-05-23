@@ -245,13 +245,13 @@ export default function CrmAnalyticsPage() {
                             <motion.aside variants={itemVariants} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#15171c] p-3 shadow-sm">
                                 <div className="mb-4 flex items-center gap-2">
                                     <Activity size={15} className="text-blue-600" />
-                                    <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                                    <h2 className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
                                         Pipeline
                                     </h2>
                                 </div>
 
                                 {funnelRows.length === 0 ? (
-                                    <p className="rounded-xl bg-slate-50 px-3 py-2 text-sm font-medium text-slate-400 dark:bg-white/[0.03]">
+                                    <p className="rounded-md bg-slate-50 px-3 py-2 text-sm font-medium text-slate-400 dark:bg-white/[0.03]">
                                         No hay leads registrados.
                                     </p>
                                 ) : (
@@ -325,7 +325,7 @@ function BoardView({ rows }: { rows: KpiRow[] }) {
                     <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{column.title}</p>
                     <div className="space-y-2">
                         {column.items.map((item) => (
-                            <div key={item.label} className="rounded-xl border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+                            <div key={item.label} className="rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
                                 <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{item.label}</p>
                                 <p className="mt-1 text-[10px] text-slate-400">{item.value}</p>
                                 <div className="mt-2"><Badge tone={item.tone}>{item.context}</Badge></div>
@@ -403,7 +403,7 @@ function AnalyticsKpi({ row }: { row: KpiRow }) {
             className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-[#15171c]"
         >
             <div className="mb-3 flex items-center justify-between gap-3">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">{row.label}</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{row.label}</p>
                 <Badge tone={row.tone}>{row.context}</Badge>
             </div>
             <p className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">{row.value}</p>
@@ -422,7 +422,7 @@ function SummaryTile({
 }) {
     return (
         <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
-            <div className="mb-3 flex size-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10">
+            <div className="mb-3 flex size-9 items-center justify-center rounded-md bg-blue-50 text-blue-600 dark:bg-blue-500/10">
                 <Icon size={16} />
             </div>
             <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</p>

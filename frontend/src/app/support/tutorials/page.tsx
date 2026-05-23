@@ -31,23 +31,23 @@ export default function SupportTutorialsPage() {
 
     return (
         <div className="h-full flex flex-col bg-slate-50 dark:bg-[#0f1117]">
-            <header className="h-14 border-b border-slate-200/60 dark:border-white/5 flex items-center px-6 gap-4 shrink-0 bg-white dark:bg-[#1a1d27]">
+            <header className="h-8 border-b border-slate-200/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-white dark:bg-[#1a1d27]">
                 <FileText size={16} className="text-sky-500" />
-                <h1 className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex-1">Tutoriales de la Plataforma</h1>
+                <h1 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex-1">Tutoriales de la Plataforma</h1>
                 <div className="relative">
                     <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input value={search} onChange={e => setSearch(e.target.value)}
                         placeholder="Buscar tutorial..."
-                        className="pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-white/5 border-none rounded-xl text-[12px] focus:ring-2 focus:ring-sky-500/20 w-56 transition-all text-slate-700 dark:text-slate-200" />
+                        className="pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-white/5 border-none rounded-md text-[12px] focus:ring-2 focus:ring-sky-500/20 w-56 transition-all text-slate-700 dark:text-slate-200" />
                 </div>
             </header>
 
             {/* Level filter */}
-            <div className="flex items-center gap-2 px-6 py-3 border-b border-slate-200/60 dark:border-white/5 bg-white dark:bg-[#1a1d27] shrink-0">
+            <div className="flex items-center gap-2 px-3 py-3 border-b border-slate-200/60 dark:border-white/5 bg-white dark:bg-[#1a1d27] shrink-0">
                 <Filter size={12} className="text-slate-400" />
                 {['all', 'Básico', 'Intermedio', 'Avanzado'].map(level => (
                     <button key={level} onClick={() => setSelectedLevel(level)}
-                        className={clsx("px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                        className={clsx("px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all",
                             selectedLevel === level ? "bg-sky-50 dark:bg-sky-500/10 text-sky-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300")}>
                         {level === 'all' ? 'Todos' : level}
                     </button>
@@ -55,7 +55,7 @@ export default function SupportTutorialsPage() {
                 <span className="ml-auto text-[10px] text-slate-400">{filtered.length} tutoriales</span>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-3">
                 <div className="max-w-5xl mx-auto grid grid-cols-3 gap-5">
                     {filtered.map((t, i) => (
                         <motion.div
@@ -63,15 +63,15 @@ export default function SupportTutorialsPage() {
                             initial={{ opacity: 0, y: 12 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.05 }}
-                            className="bg-white dark:bg-[#1a1d27] rounded-2xl border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group"
+                            className="bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group"
                         >
                             {/* Thumbnail */}
                             <div className={`h-36 bg-gradient-to-br ${t.thumbnail} flex items-center justify-center relative`}>
-                                <div className="size-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center group-hover:scale-110 transition-all">
+                                <div className="size-7 rounded-lg bg-white/20 backdrop-blur flex items-center justify-center group-hover:scale-110 transition-all">
                                     <Play size={22} className="text-white ml-0.5" />
                                 </div>
                                 {!t.free && (
-                                    <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 bg-black/40 backdrop-blur rounded-lg text-[9px] text-white font-black uppercase tracking-widest">
+                                    <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 bg-black/40 backdrop-blur rounded-lg text-[9px] text-white font-semibold uppercase tracking-wide">
                                         <Lock size={9} /> Pro
                                     </div>
                                 )}
@@ -82,7 +82,7 @@ export default function SupportTutorialsPage() {
 
                             <div className="p-4 space-y-3">
                                 <div className="flex items-center gap-2">
-                                    <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest", LEVEL_COLOR[t.level])}>
+                                    <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide", LEVEL_COLOR[t.level])}>
                                         {t.level}
                                     </span>
                                     <span className="text-[9px] text-slate-400 font-bold">{t.category}</span>

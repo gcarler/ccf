@@ -61,29 +61,29 @@ export default function CmsSitesPage() {
   };
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-6 flex items-center justify-between">
+    <div className="space-y-6 p-3">
+      <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-3 flex items-center justify-between">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">CMS V2</p>
-          <h1 className="mt-2 text-2xl font-semibold">Gestión de sitios</h1>
+          <h1 className="mt-2 text-lg font-semibold">Gestión de sitios</h1>
         </div>
-        <div className="rounded-xl bg-primary/10 px-3 py-2 text-primary text-xs font-semibold uppercase tracking-wide inline-flex items-center gap-2">
+        <div className="rounded-md bg-primary/10 px-3 py-2 text-primary text-xs font-semibold uppercase tracking-wide inline-flex items-center gap-2">
           <Globe size={14} /> Multisitio
         </div>
       </div>
 
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-3">
           {!canManage && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
               Tu rol puede consultar sitios, pero no crear ni activar/desactivar.
             </div>
           )}
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Nuevo sitio</p>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre (ej. Comunidad)" className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm" disabled={!canManage} />
-          <input value={siteKey} onChange={(e) => setSiteKey(sanitizeSiteKey(e.target.value))} placeholder="site_key (ej. comunidad)" className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm" disabled={!canManage} />
-          <input value={basePath} onChange={(e) => setBasePath(e.target.value)} placeholder="base_path (ej. /comunidad)" className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm" disabled={!canManage} />
-          <button onClick={create} disabled={!canManage} className="w-full rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white inline-flex items-center justify-center gap-2 disabled:opacity-50"><Plus size={13} /> Crear sitio</button>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre (ej. Comunidad)" className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm" disabled={!canManage} />
+          <input value={siteKey} onChange={(e) => setSiteKey(sanitizeSiteKey(e.target.value))} placeholder="site_key (ej. comunidad)" className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm" disabled={!canManage} />
+          <input value={basePath} onChange={(e) => setBasePath(e.target.value)} placeholder="base_path (ej. /comunidad)" className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm" disabled={!canManage} />
+          <button onClick={create} disabled={!canManage} className="w-full rounded-md bg-primary px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white inline-flex items-center justify-center gap-2 disabled:opacity-50"><Plus size={13} /> Crear sitio</button>
         </div>
 
         <div className="lg:col-span-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-3">
@@ -93,7 +93,7 @@ export default function CmsSitesPage() {
           ) : (
             <div className="space-y-2">
               {sites.map((site) => (
-                <div key={site.id} className="rounded-xl border border-slate-200 dark:border-white/10 p-3 flex items-center justify-between">
+                <div key={site.id} className="rounded-md border border-slate-200 dark:border-white/10 p-3 flex items-center justify-between">
                   <div>
                     <p className="text-sm font-bold">{site.name}</p>
                     <p className="text-[10px] uppercase tracking-wide text-slate-400">{site.site_key} · {site.base_path}</p>

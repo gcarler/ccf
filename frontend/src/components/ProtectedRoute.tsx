@@ -42,8 +42,8 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
         return (
             <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-[#111213]">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-                    <p className="text-sm font-bold text-slate-500 animate-pulse uppercase tracking-widest">Verificando Credenciales...</p>
+                    <div className="h-8 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+                    <p className="text-sm font-bold text-slate-500 animate-pulse uppercase tracking-wide">Verificando Credenciales...</p>
                 </div>
             </div>
         );

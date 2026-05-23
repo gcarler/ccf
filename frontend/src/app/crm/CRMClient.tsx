@@ -27,6 +27,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { DSCard } from '@/design/components/DSCard';
+import { DSMetric } from '@/design/components/DSMetric';
+import { DSChart } from '@/design/components/DSChart';
 import { toast } from 'sonner';
 import DSSkeleton from '@/components/ui/Skeleton';
 import { ViewType } from '@/components/ViewSwitcher';
@@ -58,10 +61,23 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
     const { openLayer, closeLayer, setRightMode, layers } = useSidebarLayers();
     const [members, setMembers] = useState<Member[]>(() => initialMembers as unknown as Member[]);
     const [loading, setLoading] = useState(true);
-    const [analytics, setAnalytics] = useState<CrmAnalyticsSummary | null>(null);
+    const [dashboard, setDashboard] = useState<any>(null);
     const [search, setSearch] = useState('');
     const [selectedMember, setSelectedMember] = useState<Member | null>(null);
     const [viewType, setViewType] = useState<ViewType>('grid');
+
+    useEffect(() => {
+        if (!token) return;
+        const loadDashboard = async () => {
+            try {
+                const data = await apiFetch<any>('/dashboard/crm', { token });
+                setDashboard(data);
+            } catch (err) {
+                console.error('Error fetching CRM dashboard', err);
+            }
+        };
+        loadDashboard();
+    }, [token]);
 
     useEffect(() => {
         if (!layers?.RIGHT && selectedMember) {
@@ -145,7 +161,7 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
                 />
             }
         >
-            <main className="flex-1 overflow-y-auto scrollbar-thin p-5 relative">
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-3 relative">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
                 
                 <div className="max-w-[1400px] mx-auto space-y-4 relative z-10">
@@ -160,25 +176,25 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
                     <section className="space-y-2">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-[18px] font-bold text-slate-900 dark:text-white tracking-tight">Directorio de Consolidación</h3>
+                                <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Directorio de Consolidación</h3>
                                 <p className="text-[11px] text-slate-400 font-medium mt-0.5">Gestión de miembros en tiempo real</p>
                             </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 dark:bg-white/5 px-3 py-1.5 rounded-lg">
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 bg-slate-100 dark:bg-white/5 px-3 py-1.5 rounded-lg">
                                 {members.length} miembros
                             </span>
                         </div>
 
                         {loading ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {[...Array(6)].map((_, i) => <DSSkeleton key={i} className="h-48 rounded-xl" />)}
+                                {[...Array(6)].map((_, i) => <DSSkeleton key={i} className="h-48 rounded-md" />)}
                             </div>
                         ) : members.length === 0 ? (
-                            <div className="p-20 text-center bg-slate-50 dark:bg-white/5 rounded-[3.5rem] border-2 border-dashed border-slate-200">
+                            <div className="p-4 text-center bg-slate-50 dark:bg-white/5 rounded-lg border-2 border-dashed border-slate-200">
                                 <Search className="size-9 text-slate-300 mx-auto mb-4" />
-                                <p className="text-sm font-black text-slate-400 uppercase">No se encontraron miembros</p>
+                                <p className="text-sm font-semibold text-slate-400 uppercase">No se encontraron miembros</p>
                             </div>
                         ) : (
-                            <div className="pb-20">
+                            <div className="pb-4">
                                 {viewType === 'grid' && <CrmGridView members={members} onSelect={(m) => { setSelectedMember(m); setRightMode('overlay'); openLayer('RIGHT'); }} />}
                                 {(viewType === 'table' || viewType === 'list') && <CrmTableView members={members} onSelect={(m) => { setSelectedMember(m); setRightMode('overlay'); openLayer('RIGHT'); }} isList={viewType === 'list'} />}
                                 {(viewType === 'kanban' || viewType === 'board') && <CrmKanbanView members={members} onSelect={(m) => { setSelectedMember(m); setRightMode('overlay'); openLayer('RIGHT'); }} />}
@@ -205,19 +221,19 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
 
 function MetricCard({ title, value, icon: Icon, color, bg }: any) {
     return (
-        <div className="relative p-4 rounded-2xl bg-white dark:bg-[#1e2025] border border-slate-100 dark:border-white/[0.06] shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer overflow-hidden">
+        <div className="relative p-4 rounded-lg bg-white dark:bg-[#1e2025] border border-slate-100 dark:border-white/[0.06] shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer overflow-hidden">
             {/* Subtle gradient glow top-right */}
-            <div className={`absolute -top-4 -right-6 size-24 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity ${bg}`} />
+            <div className={`absolute -top-4 -right-6 size-10 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity ${bg}`} />
             <div className="flex items-start justify-between mb-5 relative z-10">
-                <div className={`inline-flex items-center justify-center size-11 rounded-xl ${bg} ${color} shadow-sm`}>
+                <div className={`inline-flex items-center justify-center size-6 rounded-md ${bg} ${color} shadow-sm`}>
                     <Icon size={20} />
                 </div>
-                <span className={`text-[10px] font-black px-2 py-1 rounded-lg ${bg} ${color} opacity-0 group-hover:opacity-100 transition-opacity`}>
+                <span className={`font-semibold px-2 py-1 rounded-lg ${bg} ${color} opacity-0 group-hover:opacity-100 transition-opacity`}>
                     Ver todo
                 </span>
             </div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 mb-1 relative z-10">{title}</p>
-            <div className="text-4xl font-black text-slate-900 dark:text-white leading-none tracking-tight relative z-10">{value}</div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1 relative z-10">{title}</p>
+            <div className="text-lg font-black text-slate-900 dark:text-white leading-none tracking-tight relative z-10">{value}</div>
         </div>
     );
 }
@@ -332,7 +348,7 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
             <header className="p-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-black/20 shrink-0">
                 <div className="flex items-center gap-4">
                     <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-white/5 rounded-full transition-colors text-slate-400"><ChevronRight size={20} /></button>
-                    <h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-800 dark:text-white">Ficha de Consolidación</h3>
+                    <h3 className="text-[12px] font-semibold uppercase tracking-wide text-slate-800 dark:text-white">Ficha de Consolidación</h3>
                 </div>
                 <div className="flex items-center gap-2">
                     <button className="p-2.5 text-slate-400 hover:text-blue-600 transition-all"><MessageCircle size={18} /></button>
@@ -340,31 +356,31 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
                 </div>
             </header>
 
-            <div className="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-hide">
+            <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-hide">
                 {/* Perfil Header */}
                 <div className="text-center space-y-4">
-                    <div className="size-24 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center mx-auto text-3xl font-black shadow-xl shadow-blue-500/20">
+                    <div className="size-10 rounded-md bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center mx-auto text-xl font-black shadow-xl shadow-blue-500/20">
                         {member.first_name[0]}{member.last_name[0]}
                     </div>
                     <div>
-                        <h2 className="text-3xl font-black tracking-tight leading-none mb-2">{member.first_name} {member.last_name}</h2>
-                        <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-lg text-blue-600 text-[10px] font-black uppercase tracking-widest">{member.church_role || 'Miembro Activo'}</span>
+                        <h2 className="text-xl font-bold tracking-tight leading-none mb-2">{member.first_name} {member.last_name}</h2>
+                        <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-lg text-blue-600 text-[10px] font-semibold uppercase tracking-wide">{member.church_role || 'Miembro Activo'}</span>
                     </div>
                 </div>
 
                 {/* Optimus Brain Action */}
                 <div className="relative group cursor-pointer" onClick={handleAiAnalysis}>
-                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl blur opacity-10 group-hover:opacity-30 transition-opacity" />
-                    <div className="relative p-4 bg-white dark:bg-[#1e1f21] rounded-xl border border-blue-500/20 shadow-sm flex flex-col items-center text-center gap-3">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-md blur opacity-10 group-hover:opacity-30 transition-opacity" />
+                    <div className="relative p-4 bg-white dark:bg-[#1e1f21] rounded-md border border-blue-500/20 shadow-sm flex flex-col items-center text-center gap-3">
                         {isAnalyzing ? (
                             <Loader2 className="size-8 text-blue-600 animate-spin" />
                         ) : (
-                            <div className="size-9 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
+                            <div className="size-9 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
                                 <Sparkles size={24} />
                             </div>
                         )}
                         <div>
-                            <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-900 dark:text-white mb-1">Optimus Consolidación</h4>
+                            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-900 dark:text-white mb-1">Optimus Consolidación</h4>
                             <p className="text-xs text-slate-500 font-medium">Haz clic para generar un análisis espiritual con IA basado en su métrica.</p>
                         </div>
                         
@@ -386,19 +402,19 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
 
                 {/* Status Bento */}
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5 hover:shadow-md transition-all">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Salud Espiritual</span>
-                        <div className="text-3xl font-black text-blue-600">{Math.round((member.spiritual_health || 0.8) * 100)}%</div>
+                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-md border border-slate-100 dark:border-white/5 hover:shadow-md transition-all">
+                        <span className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 block mb-2">Salud Espiritual</span>
+                        <div className="text-xl font-black text-blue-600">{Math.round((member.spiritual_health || 0.8) * 100)}%</div>
                     </div>
-                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5 hover:shadow-md transition-all">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Academia</span>
-                        <div className="text-3xl font-black text-emerald-600">{Math.round((member.academy_progress || 0) * 100)}%</div>
+                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-md border border-slate-100 dark:border-white/5 hover:shadow-md transition-all">
+                        <span className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 block mb-2">Academia</span>
+                        <div className="text-xl font-black text-emerald-600">{Math.round((member.academy_progress || 0) * 100)}%</div>
                     </div>
                 </div>
 
                 {/* Contact Info */}
                 <section className="space-y-4">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Directorio de Contacto</h4>
+                    <h4 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Directorio de Contacto</h4>
                     <div className="space-y-2">
                         <ContactItem icon={Mail} value={member.email || 'Sin correo'} />
                         <ContactItem icon={Phone} value={member.phone || 'Sin teléfono'} />
@@ -409,33 +425,33 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
 
                 <section className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Consolidación</h4>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        <h4 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Consolidación</h4>
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                             {loadingProfile ? 'Cargando...' : `${consolidationProfile?.cases?.length ?? 0} casos`}
                         </span>
                     </div>
                     <div className="space-y-3">
                         {loadingProfile ? (
-                            <div className="rounded-2xl border border-slate-100 dark:border-white/5 p-4 text-sm text-slate-400">
+                            <div className="rounded-lg border border-slate-100 dark:border-white/5 p-4 text-sm text-slate-400">
                                 Cargando perfil...
                             </div>
                         ) : (
                             <>
-                                <div className="rounded-2xl border border-slate-100 dark:border-white/5 bg-white dark:bg-white/5 p-4">
+                                <div className="rounded-lg border border-slate-100 dark:border-white/5 bg-white dark:bg-white/5 p-4">
                                     <div className="flex items-center justify-between mb-3">
-                                        <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Cargos actuales</h5>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">{consolidationProfile?.positions?.filter(p => p.is_active).length ?? 0}</span>
+                                        <h5 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Cargos actuales</h5>
+                                        <span className="text-[10px] font-semibold uppercase tracking-wide text-blue-600">{consolidationProfile?.positions?.filter(p => p.is_active).length ?? 0}</span>
                                     </div>
                                     <div className="space-y-2">
                                         {consolidationProfile?.positions?.length ? (
                                             consolidationProfile.positions.map((row) => (
-                                                <div key={row.id} className="rounded-xl bg-slate-50 dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 px-3 py-2">
+                                                <div key={row.id} className="rounded-md bg-slate-50 dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 px-3 py-2">
                                                     <div className="flex items-center justify-between gap-3">
                                                         <div className="min-w-0">
                                                             <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{row.position_name || 'Cargo'}</p>
-                                                            <p className="text-[10px] uppercase font-black tracking-widest text-slate-400">{row.category || 'Sin categoría'}</p>
+                                                            <p className="text-[10px] uppercase font-bold tracking-wide text-slate-400">{row.category || 'Sin categoría'}</p>
                                                         </div>
-                                                        <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${row.is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400'}`}>
+                                                        <span className={`px-2 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wide ${row.is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400'}`}>
                                                             {row.is_active ? 'Activo' : 'Histórico'}
                                                         </span>
                                                     </div>
@@ -447,25 +463,25 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
                                     </div>
                                 </div>
 
-                                <div className="rounded-2xl border border-slate-100 dark:border-white/5 bg-white dark:bg-white/5 p-4">
+                                <div className="rounded-lg border border-slate-100 dark:border-white/5 bg-white dark:bg-white/5 p-4">
                                     <div className="flex items-center justify-between mb-3">
-                                        <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Casos de consolidación</h5>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">{consolidationProfile?.cases?.length ?? 0}</span>
+                                        <h5 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Casos de consolidación</h5>
+                                        <span className="text-[10px] font-semibold uppercase tracking-wide text-blue-600">{consolidationProfile?.cases?.length ?? 0}</span>
                                     </div>
                                     <div className="space-y-2">
                                         {consolidationProfile?.cases?.length ? (
                                             consolidationProfile.cases.map((row) => (
-                                                <div key={row.id} className="rounded-xl bg-slate-50 dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 px-3 py-2">
+                                                <div key={row.id} className="rounded-md bg-slate-50 dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 px-3 py-2">
                                                     <div className="flex items-start justify-between gap-3">
                                                         <div className="min-w-0">
                                                             <p className="text-sm font-bold text-slate-800 dark:text-white truncate">Etapa {row.stage}</p>
-                                                            <p className="text-[10px] uppercase font-black tracking-widest text-slate-400">{row.source || 'Sin origen'}</p>
+                                                            <p className="text-[10px] uppercase font-bold tracking-wide text-slate-400">{row.source || 'Sin origen'}</p>
                                                         </div>
-                                                        <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${row.status === 'active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400'}`}>
+                                                        <span className={`px-2 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wide ${row.status === 'active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400'}`}>
                                                             {row.status}
                                                         </span>
                                                     </div>
-                                                    <div className="mt-2 flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                                    <div className="mt-2 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                                         <span>{row.assignments_count} asignaciones</span>
                                                         <span>{row.interactions_count} interacciones</span>
                                                         <span>{row.open_tasks_count} tareas</span>
@@ -484,19 +500,19 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
 
                 <section className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Asistencia a Eventos</h4>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        <h4 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Asistencia a Eventos</h4>
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                             {loadingAttendance ? 'Cargando...' : `${attendanceHistory?.total_records ?? 0} registros`}
                         </span>
                     </div>
                     <div className="space-y-2">
                         {loadingAttendance ? (
-                            <div className="rounded-2xl border border-slate-100 dark:border-white/5 p-4 text-sm text-slate-400">
+                            <div className="rounded-lg border border-slate-100 dark:border-white/5 p-4 text-sm text-slate-400">
                                 Cargando historial...
                             </div>
                         ) : attendanceHistory?.history?.length ? (
                             attendanceHistory.history.slice(0, 6).map((row) => (
-                                <div key={`${row.event_id}-${row.session_date}`} className="rounded-2xl border border-slate-100 dark:border-white/5 bg-white dark:bg-white/5 p-4">
+                                <div key={`${row.event_id}-${row.session_date}`} className="rounded-lg border border-slate-100 dark:border-white/5 bg-white dark:bg-white/5 p-4">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
                                             <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{row.event_name || 'Evento'}</p>
@@ -504,14 +520,14 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
                                                 {row.event_date ? new Date(row.event_date).toLocaleDateString() : 'Sin fecha'} Â· {row.status}
                                             </p>
                                         </div>
-                                        <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${row.status === 'present' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400'}`}>
+                                        <span className={`px-2 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wide ${row.status === 'present' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400'}`}>
                                             {row.status}
                                         </span>
                                     </div>
                                 </div>
                             ))
                         ) : (
-                            <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 p-4 text-sm text-slate-400">
+                            <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 p-4 text-sm text-slate-400">
                                 Sin asistencia registrada.
                             </div>
                         )}
@@ -520,8 +536,8 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
             </div>
             
             <footer className="p-4 border-t border-slate-100 dark:border-white/5 flex gap-4 bg-white dark:bg-[#1e1f21] shrink-0">
-                <button className="flex-1 py-2 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all">Editar Perfil</button>
-                <button className="px-5 py-2 bg-blue-600 text-white rounded-2xl shadow-xl shadow-blue-500/20 hover:scale-[1.02] transition-all"><ArrowUpRight size={20} /></button>
+                <button className="flex-1 py-2 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:bg-slate-100 transition-all">Editar Perfil</button>
+                <button className="px-3 py-2 bg-blue-600 text-white rounded-lg shadow-xl shadow-blue-500/20 hover:scale-[1.02] transition-all"><ArrowUpRight size={20} /></button>
             </footer>
         </div>
     );
@@ -529,7 +545,7 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
 
 function ContactItem({ icon: Icon, value }: any) {
     return (
-        <div className="flex items-center gap-4 p-4 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-2xl">
+        <div className="flex items-center gap-4 p-4 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg">
             <div className="p-2 bg-slate-50 dark:bg-white/5 rounded-lg text-slate-400"><Icon size={16} /></div>
             <span className="text-sm font-bold text-slate-600 dark:text-slate-300 truncate">{value}</span>
         </div>

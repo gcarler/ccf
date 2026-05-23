@@ -149,7 +149,7 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
                                 <Dialog.Title className="sr-only">Pizarra Infinita Ministerial</Dialog.Title>
 
                                 {/* Top Bar: Calidad Premium */}
-                                <header className="h-12 px-4 border-b border-slate-200 dark:border-white/5 flex items-center justify-between bg-white dark:bg-[#1e1f21] shrink-0">
+                                <header className="h-8 px-4 border-b border-slate-200 dark:border-white/5 flex items-center justify-between bg-white dark:bg-[#1e1f21] shrink-0">
                                     <div className="flex items-center gap-3">
                                         <div className="size-8 rounded-md bg-orange-500 flex items-center justify-center text-white shadow-xl shadow-orange-500/20">
                                             <LayoutDashboard size={16} />
@@ -158,9 +158,9 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
                                             <h3 className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-wide">Lienzo Creativo: Proyecto {project_id}</h3>
                                             <div className="flex items-center gap-2 mt-0.5">
                                                 {saveStatus === 'saving' ? (
-                                                    <><Loader2 size={10} className="animate-spin text-blue-500" /> <span className="text-[8px] font-black uppercase text-blue-500">Sincronizando...</span></>
+                                                    <><Loader2 size={10} className="animate-spin text-blue-500" /> <span className="text-[8px] font-semibold uppercase text-blue-500">Sincronizando...</span></>
                                                 ) : (
-                                                    <><Cloud size={10} className="text-emerald-500" /> <span className="text-[8px] font-black uppercase text-emerald-500">Persistido en DB</span></>
+                                                    <><Cloud size={10} className="text-emerald-500" /> <span className="text-[8px] font-semibold uppercase text-emerald-500">Persistido en DB</span></>
                                                 )}
                                             </div>
                                         </div>
@@ -199,12 +199,12 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
                                     {/* Floating Zoom & Controls */}
                                     <div className="absolute bottom-4 right-4 flex items-center gap-3 bg-white/80 dark:bg-[#1e1f21]/80 backdrop-blur-xl px-3 py-2 rounded-full border border-slate-200 dark:border-white/10 shadow-2xl">
                                         <button className="text-slate-400 hover:text-blue-600"><ZoomOut size={18} /></button>
-                                        <span className="text-xs font-black w-12 text-center text-slate-600 dark:text-slate-200">100%</span>
+                                        <span className="text-xs font-semibold w-12 text-center text-slate-600 dark:text-slate-200">100%</span>
                                         <button className="text-slate-400 hover:text-blue-600"><ZoomIn size={18} /></button>
                                         <div className="w-[1px] h-4 bg-slate-200 dark:bg-white/10 mx-2" />
                                         <button className="text-slate-400 hover:text-blue-600 group relative">
                                             <Layers size={18} />
-                                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-[8px] font-black uppercase text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity">Capas</div>
+                                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-[8px] font-semibold uppercase text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity">Capas</div>
                                         </button>
                                     </div>
                                 </main>
@@ -227,7 +227,7 @@ function ToolBtn({ active, onClick, icon: Icon, label, color = "text-slate-500" 
             )}
         >
             <Icon size={20} className={clsx(active ? "text-white" : color)} />
-            <div className="absolute left-16 px-2 py-1 bg-slate-800 text-white text-[9px] font-black uppercase rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-[100]">
+            <div className="absolute left-16 px-2 py-1 bg-slate-800 text-white text-[9px] font-semibold uppercase rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-[100]">
                 {label}
             </div>
         </button>

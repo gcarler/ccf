@@ -53,7 +53,7 @@ function MemberCard({ member, index, onClick }: { member: Member, index: number,
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.02 }}
             onClick={onClick}
-            className="group p-4 rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:border-blue-500/50 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden"
+            className="group p-4 rounded-md bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:border-blue-500/50 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden"
         >
             <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-4">
@@ -69,7 +69,7 @@ function MemberCard({ member, index, onClick }: { member: Member, index: number,
                         </span>
                     </div>
                 </div>
-                <div className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                <div className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-md">
                     <Heart size={12} className="text-blue-600" fill="currentColor" />
                     <span className="text-[10px] font-bold text-blue-600">{Math.round((member.spiritual_health || 0.8) * 100)}%</span>
                 </div>
@@ -131,7 +131,7 @@ export function CrmTableView({ members, onSelect, isList = false }: TableProps) 
                             >
                                 <td className="px-4 py-2">
                                     <div className="flex items-center gap-3">
-                                        <div className="size-8 rounded-xl bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/20 text-blue-600 flex items-center justify-center font-bold text-sm group-hover:scale-110 transition-transform">
+                                        <div className="size-8 rounded-md bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/20 text-blue-600 flex items-center justify-center font-bold text-sm group-hover:scale-110 transition-transform">
                                             {(m.first_name?.[0] || '')}{(m.last_name?.[0] || '')}
                                         </div>
                                         <div>
@@ -202,7 +202,7 @@ export function CrmKanbanView({ members, onSelect }: CrmViewProps) {
     return (
         <div className="flex gap-4 overflow-x-auto pb-8 snap-x snap-mandatory animate-fade-in" style={{ minHeight: '60vh' }}>
             {columns.map(col => (
-                <div key={col.id} className="w-[320px] shrink-0 snap-start flex flex-col bg-slate-50/50 dark:bg-black/10 rounded-xl border border-slate-200/50 dark:border-white/5 overflow-hidden">
+                <div key={col.id} className="w-[320px] shrink-0 snap-start flex flex-col bg-slate-50/50 dark:bg-black/10 rounded-md border border-slate-200/50 dark:border-white/5 overflow-hidden">
                     <div className="p-4 border-b border-slate-200/50 dark:border-white/5 flex items-center justify-between bg-slate-100/50 dark:bg-white/5">
                         <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                             {col.title}
@@ -259,7 +259,7 @@ export function CrmCalendarView({ members, onSelect }: CrmViewProps) {
     const days = Array.from({ length: 35 }, (_, i) => i + 1);
     
     return (
-        <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden animate-fade-in shadow-sm">
+        <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md overflow-hidden animate-fade-in shadow-sm">
             <div className="p-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
                 <h3 className="text-sm font-bold tracking-tight"><Calendar size={20} className="inline mr-2 text-slate-400" /> Calendario de Registros</h3>
             </div>
@@ -278,7 +278,7 @@ export function CrmCalendarView({ members, onSelect }: CrmViewProps) {
                     });
 
                     return (
-                        <div key={d} className="bg-white dark:bg-[#1e1f21] min-h-[120px] p-2 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                        <div key={d} className="bg-white dark:bg-[#1e1f21] min-h-12 p-2 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                             <span className="text-xs font-bold text-slate-400 mb-2 block">{d > 31 ? d - 31 : d}</span>
                             <div className="space-y-1">
                                 {dayMembers.map(m => (
@@ -307,7 +307,7 @@ export function CrmGanttView({ members }: CrmViewProps) {
     const sorted = [...members].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).slice(0, 15);
 
     return (
-        <div className="bg-white dark:bg-[#1e1f21] shadow-sm rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden animate-fade-in py-4 px-3">
+        <div className="bg-white dark:bg-[#1e1f21] shadow-sm rounded-md border border-slate-200 dark:border-white/10 overflow-hidden animate-fade-in py-1.5 px-3">
             <h3 className="text-sm font-bold tracking-tight mb-3">Timeline de Integración (Últimos 15)</h3>
             <div className="space-y-3 relative before:absolute before:inset-0 before:ml-[11px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 dark:before:via-white/5 before:to-transparent">
                 {sorted.map(m => (

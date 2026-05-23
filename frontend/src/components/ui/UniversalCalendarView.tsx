@@ -65,33 +65,33 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
     };
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#0b0d11] rounded-[2rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
+        <div className="flex flex-col h-full bg-white dark:bg-[#0b0d11] rounded-lg border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
             
             {/* ─── Control Header ─── */}
-            <div className="p-8 border-b border-slate-100 dark:border-white/5 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div className="flex items-center gap-6">
-                    <div className="size-16 rounded-[2rem] bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 border border-indigo-100/50 dark:border-indigo-500/20">
+            <div className="p-4 border-b border-slate-100 dark:border-white/5 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 border border-indigo-100/50 dark:border-indigo-500/20">
                         <CalendarIcon size={28} />
                     </div>
                     <div>
-                        <h2 className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white uppercase italic leading-none">{title}</h2>
+                        <h2 className="text-xl font-bold tracking-tighter text-slate-900 dark:text-white uppercase italic leading-none">{title}</h2>
                         <div className="flex items-center gap-2 mt-2">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{currentDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}</span>
+                            <span className="font-semibold text-slate-400 uppercase tracking-wide">{currentDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}</span>
                             <Sparkles size={12} className="text-amber-500" />
                         </div>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <div className="flex bg-slate-100 dark:bg-white/5 p-1.5 rounded-2xl gap-1">
-                        <button onClick={prevMonth} className="p-3 bg-white dark:bg-white/10 rounded-xl text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition-all shadow-sm"><ChevronLeft size={18} /></button>
-                        <button onClick={() => setCurrentDate(new Date())} className="px-6 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-colors">Hoy</button>
-                        <button onClick={nextMonth} className="p-3 bg-white dark:bg-white/10 rounded-xl text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition-all shadow-sm"><ChevronRight size={18} /></button>
+                    <div className="flex bg-slate-100 dark:bg-white/5 p-1.5 rounded-lg gap-1">
+                        <button onClick={prevMonth} className="p-3 bg-white dark:bg-white/10 rounded-md text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition-all shadow-sm"><ChevronLeft size={18} /></button>
+                        <button onClick={() => setCurrentDate(new Date())} className="px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:text-indigo-600 transition-colors">Hoy</button>
+                        <button onClick={nextMonth} className="p-3 bg-white dark:bg-white/10 rounded-md text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition-all shadow-sm"><ChevronRight size={18} /></button>
                     </div>
                     {onCreate && (
                         <button
                             onClick={onCreate}
-                            className="p-4 bg-slate-900 dark:bg-white/10 text-white rounded-2xl shadow-xl shadow-slate-900/20 hover:scale-105 transition-all"
+                            className="p-4 bg-slate-900 dark:bg-white/10 text-white rounded-lg shadow-xl shadow-slate-900/20 hover:scale-105 transition-all"
                         >
                             <Plus size={20} />
                         </button>
@@ -100,16 +100,16 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
             </div>
 
             {/* ─── Calendar Grid ─── */}
-            <div className="flex-1 overflow-hidden flex flex-col p-6 lg:p-8">
+            <div className="flex-1 overflow-hidden flex flex-col p-3 p-4">
                 {/* Labels */}
                 <div className="grid grid-cols-7 gap-1 mb-4">
                     {DAY_LABELS.map(label => (
-                        <div key={label} className="py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">{label}</div>
+                        <div key={label} className="py-3 text-center font-semibold text-slate-400 uppercase tracking-wide">{label}</div>
                     ))}
                 </div>
 
                 {/* Days Grid */}
-                <div className="flex-1 grid grid-cols-7 gap-1 bg-slate-100 dark:bg-white/5 rounded-[2.5rem] p-1 overflow-hidden border border-slate-200 dark:border-white/5">
+                <div className="flex-1 grid grid-cols-7 gap-1 bg-slate-100 dark:bg-white/5 rounded-lg p-1 overflow-hidden border border-slate-200 dark:border-white/5">
                     {days.map((day, idx) => {
                         if (!day) return <div key={`empty-${idx}`} className="bg-white/40 dark:bg-black/20" />;
                         
@@ -144,7 +144,7 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                                             key={ev.id}
                                             onClick={(e) => { e.stopPropagation(); onEventClick?.(ev); }}
                                             className={clsx(
-                                                "w-full text-left p-2 rounded-xl text-[10px] font-black uppercase tracking-tight truncate transition-all hover:scale-[1.03] active:scale-95",
+                                                "w-full text-left p-2 rounded-md text-[10px] font-semibold uppercase tracking-tight truncate transition-all hover:scale-[1.03] active:scale-95",
                                                 COLORS[ev.color || 'blue']
                                             )}
                                         >
@@ -152,7 +152,7 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                                         </button>
                                     ))}
                                     {dayEvents.length > 3 && (
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-2">+{dayEvents.length - 3} más</p>
+                                        <p className="font-semibold text-slate-400 uppercase tracking-wide pl-2">+{dayEvents.length - 3} más</p>
                                     )}
                                 </div>
 
@@ -167,22 +167,22 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
             </div>
 
             {/* ─── Summary Footer ─── */}
-            <div className="px-8 py-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-                <div className="flex gap-8">
+            <div className="px-4 py-1.5 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                <div className="flex gap-3">
                     <div className="flex items-center gap-2">
                         <div className="size-2 rounded-full bg-indigo-600" />
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Servicios Centrales</span>
+                        <span className="font-semibold text-slate-400 uppercase tracking-wide">Servicios Centrales</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="size-2 rounded-full bg-emerald-600" />
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Eventos de Red</span>
+                        <span className="font-semibold text-slate-400 uppercase tracking-wide">Eventos de Red</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="size-2 rounded-full bg-amber-600" />
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Consejería Especial</span>
+                        <span className="font-semibold text-slate-400 uppercase tracking-wide">Consejería Especial</span>
                     </div>
                 </div>
-                <div className="flex items-center gap-4 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                <div className="flex items-center gap-4 text-slate-400 text-[10px] font-semibold uppercase tracking-wide">
                     <span>Vistas:</span>
                     <button className="text-indigo-600">Mes</button>
                     <button className="hover:text-slate-600">Semana</button>

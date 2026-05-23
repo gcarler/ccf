@@ -47,20 +47,20 @@ export default function WorkspaceDrawer({
                         className="fixed top-0 right-0 h-screen w-full max-w-[600px] lg:max-w-[800px] bg-white dark:bg-[#1e1f21] shadow-[var(--shadow-floating)] z-[1001] border-l border-slate-200 dark:border-white/5 flex flex-col focus:outline-none"
                         >
                         {/* Drawer Header */}
-                        <header className="h-14 flex items-center justify-between px-6 border-b border-slate-100 dark:border-white/5 shrink-0 bg-slate-50/50 dark:bg-white/5">
+                        <header className="h-8 flex items-center justify-between px-3 border-b border-slate-100 dark:border-white/5 shrink-0 bg-slate-50/50 dark:bg-white/5">
                             <div className="flex items-center gap-4 overflow-hidden">
                                 <Dialog.Close asChild>
-                                    <button className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-xl transition-colors text-slate-500">
+                                    <button className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-md transition-colors text-slate-500">
                                         <X size={20} />
                                     </button>
                                 </Dialog.Close>
                                 <div className="h-6 w-[1px] bg-slate-200 dark:bg-white/10" />
                                 <div className="flex flex-col overflow-hidden">
-                                    <Dialog.Title className="text-[15px] font-black text-slate-800 dark:text-slate-100 truncate tracking-tight">
+                                    <Dialog.Title className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate tracking-tight">
                                         {title}
                                     </Dialog.Title>
                                     {subtitle && (
-                                        <Dialog.Description className="text-[10px] text-slate-400 font-black truncate uppercase tracking-widest">
+                                        <Dialog.Description className="text-[10px] text-slate-400 font-black truncate uppercase tracking-wide">
                                             {subtitle}
                                         </Dialog.Description>
                                     )}
@@ -68,7 +68,7 @@ export default function WorkspaceDrawer({
                             </div>
 
                             <div className="flex items-center gap-1">
-                                <button className="flex items-center gap-2 px-3 py-1.5 bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 rounded-lg text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-all border border-sky-100 dark:border-sky-900/50">
+                                <button className="flex items-center gap-2 px-3 py-1.5 bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:opacity-80 transition-all border border-sky-100 dark:border-sky-900/50">
                                     <Sparkles size={14} /> Resumir
                                 </button>
                                 <div className="h-5 w-[1px] bg-slate-200 dark:bg-white/10 mx-2" />
@@ -78,13 +78,13 @@ export default function WorkspaceDrawer({
                             </div>
                         </header>
                                 {/* Drawer Body */}
-                                <main className="flex-1 overflow-y-auto scrollbar-thin p-8">
+                                <main className="flex-1 overflow-y-auto scrollbar-thin p-4">
                                     {children}
                                 </main>
 
                                 {/* Drawer Footer */}
                                 {actions && (
-                                    <footer className="p-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-end gap-4 bg-slate-50/50 dark:bg-white/5">
+                                    <footer className="p-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-end gap-4 bg-slate-50/50 dark:bg-white/5">
                                         {actions}
                                     </footer>
                                 )}
@@ -103,7 +103,7 @@ function HeaderButton({ icon: Icon, onClick, tooltip }: { icon: any, onClick?: (
         <div className="relative group/drawer-btn">
             <button 
                 onClick={onClick}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                className="p-2 rounded-md text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
             >
                 <Icon size={18} />
             </button>

@@ -5,7 +5,7 @@ const meta: Meta<typeof DSSkeleton> = {
     title: 'Design/Skeleton',
     component: DSSkeleton,
     args: {
-        className: 'h-12 w-64',
+        className: 'h-8 w-64',
     },
     parameters: { layout: 'centered' },
 };
@@ -14,4 +14,4 @@ export default meta;
 type Story = StoryObj<typeof DSSkeleton>;
 
 export const Base: Story = {};
-export const Rounded: Story = { args: { rounded: 'pill', className: 'h-14 w-72' } };
+export const Rounded: Story = { args: { rounded: 'pill', className: 'h-8 w-72' } };

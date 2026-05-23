@@ -16,13 +16,13 @@ import {
 
 export default function FamilyNucleusPage() {
     return (
-        <div className="p-4 space-y-12 animate-in slide-in-from-right-4 duration-700">
+        <div className="p-4 space-y-3 animate-in slide-in-from-right-4 duration-700">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div className="space-y-2">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-rose-500/10 text-rose-500 rounded-full text-[10px] font-black uppercase tracking-[0.2em] w-fit">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-rose-500/10 text-rose-500 rounded-full text-[10px] font-semibold uppercase tracking-wide w-fit">
                         <Heart size={12} /> Gestion Familiar Ministerial
                     </div>
-                    <h1 className="text-4xl font-black tracking-tighter text-white uppercase italic">
+                    <h1 className="text-lg font-bold tracking-tighter text-white uppercase italic">
                         Mi Núcleo <span className="text-rose-500">Familiar</span>
                     </h1>
                     <p className="text-muted-foreground text-sm max-w-xl">
@@ -30,26 +30,26 @@ export default function FamilyNucleusPage() {
                     </p>
                 </div>
 
-                <button className="px-4 py-1.5 bg-rose-500 hover:bg-rose-600 text-black text-xs font-black uppercase tracking-widest rounded-2xl transition-all shadow-[0_0_20px_rgba(244,63,94,0.3)] flex items-center gap-2">
+                <button className="px-4 py-1.5 bg-rose-500 hover:bg-rose-600 text-black text-xs font-semibold uppercase tracking-wide rounded-lg transition-all shadow-[0_0_20px_rgba(244,63,94,0.3)] flex items-center gap-2">
                     <UserPlus size={16} /> Vincular Familiar
                 </button>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div className="lg:col-span-2 space-y-3">
-                    <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-xl relative overflow-hidden group">
+                    <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-md relative overflow-hidden group">
                         <div className="absolute -top-5 -right-10 opacity-[0.03] group-hover:scale-110 transition-transform duration-1000 text-rose-500">
                             <Home size={300} />
                         </div>
                         
                         <div className="relative z-10 space-y-3">
                             <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-primary rounded-xl flex items-center justify-center text-white text-lg font-black shadow-xl">
+                                <div className="w-16 h-8 bg-gradient-to-br from-rose-500 to-primary rounded-md flex items-center justify-center text-white text-lg font-black shadow-xl">
                                     F
                                 </div>
                                 <div>
                                     <h2 className="text-lg font-black text-white tracking-tight uppercase italic">Familia <span className="text-rose-500">Gomez Sanchez</span></h2>
-                                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest flex items-center gap-2">
+                                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wide flex items-center gap-2">
                                         <Shield size={12} className="text-rose-500" /> Miembros Activos: 4
                                     </p>
                                 </div>
@@ -62,9 +62,9 @@ export default function FamilyNucleusPage() {
                                     { name: 'Samuel Gomez', role: 'Hijo', status: 'Estudiante', icon: Baby, color: 'text-amber-400' },
                                     { name: 'Lucia Gomez', role: 'Hija', status: 'Estudiante', icon: Star, color: 'text-sky-400' },
                                 ].map((member, i) => (
-                                    <div key={i} className="bg-white/5 border border-white/5 p-5 rounded-xl hover:border-white/10 transition-all flex items-center justify-between group/item">
+                                    <div key={i} className="bg-white/5 border border-white/5 p-3 rounded-md hover:border-white/10 transition-all flex items-center justify-between group/item">
                                         <div className="flex items-center gap-4">
-                                            <div className={`w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center ${member.color}`}>
+                                            <div className={`w-12 h-8 bg-white/5 rounded-lg flex items-center justify-center ${member.color}`}>
                                                 <member.icon size={20} />
                                             </div>
                                             <div>
@@ -82,25 +82,25 @@ export default function FamilyNucleusPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-xl space-y-4">
-                            <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                        <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-md space-y-4">
+                            <h3 className="text-xs font-semibold text-white uppercase tracking-wide flex items-center gap-2">
                                 <MessageCircle size={14} className="text-rose-500" /> Consejería Familiar
                             </h3>
                             <p className="text-[11px] text-muted-foreground leading-relaxed">
                                 Accede a recursos especializados para matrimonios y crianza de hijos según principios bíblicos.
                             </p>
-                            <button className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border border-white/5">
+                            <button className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-semibold uppercase tracking-wide rounded-md transition-all border border-white/5">
                                 Ver Recursos
                             </button>
                         </div>
-                        <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-xl space-y-4">
-                            <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                        <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-md space-y-4">
+                            <h3 className="text-xs font-semibold text-white uppercase tracking-wide flex items-center gap-2">
                                 <Users size={14} className="text-rose-500" /> Faro en Casa
                             </h3>
                             <p className="text-[11px] text-muted-foreground leading-relaxed">
                                 Su familia está vinculada a la <span className="text-white font-bold">Faro en Casa &quot;Norte 1&quot;</span> dirigida por Juan y Paula.
                             </p>
-                            <button className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border border-white/5">
+                            <button className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-semibold uppercase tracking-wide rounded-md transition-all border border-white/5">
                                 Contactar Líder
                             </button>
                         </div>
@@ -108,7 +108,7 @@ export default function FamilyNucleusPage() {
                 </div>
 
                 <div className="space-y-3">
-                    <div className="bg-gradient-to-br from-rose-500/20 to-primary/20 border border-rose-500/20 p-4 rounded-xl space-y-3">
+                    <div className="bg-gradient-to-br from-rose-500/20 to-primary/20 border border-rose-500/20 p-4 rounded-md space-y-3">
                         <h3 className="text-base font-black text-white tracking-tighter uppercase italic">Impacto <span className="text-rose-500">Espiritual</span></h3>
                         <div className="space-y-4">
                             {[
@@ -117,7 +117,7 @@ export default function FamilyNucleusPage() {
                                 { label: 'Servicio Voluntario', value: '100%', color: 'bg-emerald-500' },
                             ].map((stat, i) => (
                                 <div key={i} className="space-y-2">
-                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                                    <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide">
                                         <span className="text-white/60">{stat.label}</span>
                                         <span className="text-white">{stat.value}</span>
                                     </div>
@@ -129,15 +129,15 @@ export default function FamilyNucleusPage() {
                         </div>
                     </div>
 
-                    <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-xl space-y-3">
-                        <h3 className="text-xs font-black text-white uppercase tracking-widest">Próximos Eventos</h3>
+                    <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-md space-y-3">
+                        <h3 className="text-xs font-semibold text-white uppercase tracking-wide">Próximos Eventos</h3>
                         <div className="space-y-4">
                             {[
                                 { title: 'Cena de Matrimonios', date: 'Viernes 20:00' },
                                 { title: 'Escuela de Padres', date: 'Sábado 10:00' },
                             ].map((ev, i) => (
                                 <div key={i} className="flex items-center gap-4 group">
-                                    <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-rose-500 group-hover:bg-rose-500 group-hover:text-black transition-all">
+                                    <div className="w-10 h-10 bg-white/5 rounded-md flex items-center justify-center text-rose-500 group-hover:bg-rose-500 group-hover:text-black transition-all">
                                         <Star size={16} />
                                     </div>
                                     <div>

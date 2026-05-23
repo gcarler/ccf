@@ -123,13 +123,13 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 mt-3 relative z-10">
-                    <div className="bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm p-4 rounded-xl border border-slate-100 dark:border-white/[0.05] shadow-sm">
+                    <div className="bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm p-4 rounded-md border border-slate-100 dark:border-white/[0.05] shadow-sm">
                         <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Fecha de Sesión</p>
                         <p className="text-[11px] font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">
                             {session.scheduled_at ? new Date(session.scheduled_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Pendiente'}
                         </p>
                     </div>
-                    <div className="bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm p-4 rounded-xl border border-slate-100 dark:border-white/[0.05] shadow-sm">
+                    <div className="bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm p-4 rounded-md border border-slate-100 dark:border-white/[0.05] shadow-sm">
                         <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Duración Est.</p>
                         <p className="text-[11px] font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">{session.duration_minutes || 60} MINUTOS</p>
                     </div>
@@ -165,7 +165,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                 <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-2">
                                     <BookOpen size={14} className="text-sky-600" /> Resumen
                                 </h3>
-                                <div className="p-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl text-sm text-slate-700 dark:text-slate-300 italic leading-relaxed">
+                                <div className="p-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-md text-sm text-slate-700 dark:text-slate-300 italic leading-relaxed">
                                     &quot;{session.summary || 'No hay un resumen registrado para esta sesión.'}&quot;
                                 </div>
                             </section>
@@ -177,12 +177,12 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                     </h3>
                                     <button 
                                         onClick={() => setShowNotes(!showNotes)}
-                                        className="text-[9px] font-bold text-sky-600 uppercase tracking-wider flex items-center gap-1.5 p-1 px-2.5 bg-sky-50 dark:bg-white/5 rounded-xl border border-sky-100 dark:border-white/10 active:scale-90 transition-all"
+                                        className="text-[9px] font-bold text-sky-600 uppercase tracking-wider flex items-center gap-1.5 p-1 px-2.5 bg-sky-50 dark:bg-white/5 rounded-md border border-sky-100 dark:border-white/10 active:scale-90 transition-all"
                                     >
                                         {showNotes ? <EyeOff size={12} /> : <Eye size={12} />} {showNotes ? 'Ocultar' : 'Revelar Portal'}
                                     </button>
                                 </div>
-                                <div className="relative group overflow-hidden rounded-xl">
+                                <div className="relative group overflow-hidden rounded-md">
                                     <AnimatePresence>
                                         {!showNotes && (
                                             <motion.div 
@@ -200,7 +200,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                         )}
                                     </AnimatePresence>
                                     <div className={clsx(
-                                        "p-4 rounded-xl border transition-all duration-700 min-h-[140px]",
+                                        "p-4 rounded-md border transition-all duration-700 min-h-[140px]",
                                         showNotes 
                                             ? "bg-rose-50 dark:bg-rose-500/[0.03] border-rose-100 dark:border-rose-500/20" 
                                             : "bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/[0.05]"
@@ -258,7 +258,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                     ))}
                                 </div>
                             ) : (
-                                <div className="p-3 text-center border-2 border-dashed border-slate-100 dark:border-white/10 rounded-xl text-[10px] font-bold uppercase tracking-wide text-slate-300">
+                                <div className="p-3 text-center border-2 border-dashed border-slate-100 dark:border-white/10 rounded-md text-[10px] font-bold uppercase tracking-wide text-slate-300">
                                     Sin historial previo
                                 </div>
                             )}
@@ -276,7 +276,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                     IA analizando indicadores emocionales para salud espiritual de 360°.
                                 </p>
                             </div>
-                            <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center gap-4">
+                            <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-md border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center gap-4">
                                 <Loader2 size={24} className="animate-spin text-indigo-400" />
                                 <span className="text-[9px] font-bold uppercase tracking-wide text-slate-400 animate-pulse">Sincronizando Grafo...</span>
                             </div>

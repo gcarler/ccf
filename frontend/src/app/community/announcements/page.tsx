@@ -73,7 +73,7 @@ export default function AnnouncementsPage() {
                     <div className="size-2 rounded-full bg-current shadow-[0_0_10px_currentColor]"></div>
                     Comunicación Oficial
                 </div>
-                <h1 className="text-4xl font-bold text-[hsl(var(--text-primary))] tracking-tighter">Anuncios</h1>
+                <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tighter">Anuncios</h1>
                 <p className="text-[hsl(var(--text-secondary))] font-medium">Mantente al tanto de las últimas noticias y actualizaciones de nuestra comunidad.</p>
             </header>
 
@@ -84,7 +84,7 @@ export default function AnnouncementsPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
                         key={item.id}
-                        className="relative bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-xl p-4 hover:border-[hsl(var(--primary)/0.3)] hover:shadow-xl hover:shadow-primary/5 transition-all group overflow-hidden"
+                        className="relative bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md p-4 hover:border-[hsl(var(--primary)/0.3)] hover:shadow-xl hover:shadow-primary/5 transition-all group overflow-hidden"
                     >
                         {item.isPinned && (
                             <div className="absolute top-4 right-8 text-[hsl(var(--primary))] opacity-50">
@@ -93,7 +93,7 @@ export default function AnnouncementsPage() {
                         )}
 
                         <div className="flex items-start gap-4">
-                            <div className="size-14 rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--primary))] group-hover:scale-110 transition-transform">
+                            <div className="size-7 rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--primary))] group-hover:scale-110 transition-transform">
                                 <Megaphone size={24} strokeWidth={2.5} />
                             </div>
 
@@ -120,14 +120,14 @@ export default function AnnouncementsPage() {
 
             {/* Empty State / More Info */}
             <div className="bg-[hsl(var(--surface-3))] rounded-lg p-4 text-center border-2 border-dashed border-[hsl(var(--border))]">
-                <div className="size-16 rounded-lg bg-[hsl(var(--surface-1))] flex items-center justify-center text-[hsl(var(--text-secondary)/0.3)] mx-auto mb-6">
+                <div className="size-8 rounded-lg bg-[hsl(var(--surface-1))] flex items-center justify-center text-[hsl(var(--text-secondary)/0.3)] mx-auto mb-3">
                     <Sparkles size={32} />
                 </div>
                 <h4 className="text-sm font-bold text-[hsl(var(--text-primary))] tracking-tight mb-2">¿Tienes algo que anunciar?</h4>
-                <p className="text-[hsl(var(--text-secondary))] text-sm font-medium max-w-xs mx-auto mb-8">
+                <p className="text-[hsl(var(--text-secondary))] text-sm font-medium max-w-xs mx-auto mb-3">
                     Si eres líder de ministerio y tienes una actualización importante, contacta al equipo de comunicaciones.
                 </p>
-                <button className="px-5 h-12 bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] rounded-lg font-bold uppercase tracking-wide text-[10px] hover:opacity-90 transition-all">
+                <button className="px-3 h-8 bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] rounded-lg font-bold uppercase tracking-wide text-[10px] hover:opacity-90 transition-all">
                     Contactar Equipo
                 </button>
             </div>

@@ -144,7 +144,7 @@ function InlineUserPicker({
                     aria-label="Selector de persona asignada"
                 >
                     {currentUser ? (
-                        <div className="size-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[9px] font-black text-white shrink-0 shadow-sm">
+                        <div className="size-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-semibold text-white shrink-0 shadow-sm">
                             {initials}
                         </div>
                     ) : (
@@ -157,7 +157,7 @@ function InlineUserPicker({
 
             <Popover.Portal>
                 <Popover.Content
-                    className="z-[500] w-64 bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden"
+                    className="z-[500] w-64 bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden"
                     sideOffset={6}
                     align="start"
                     onOpenAutoFocus={e => e.preventDefault()}
@@ -178,11 +178,11 @@ function InlineUserPicker({
                     {/* List */}
                     <div className="max-h-52 overflow-y-auto p-1 scrollbar-thin">
                         {loading ? (
-                            <div className="flex items-center justify-center py-6">
+                            <div className="flex items-center justify-center py-2">
                                 <Loader2 size={16} className="animate-spin text-blue-500" />
                             </div>
                         ) : filtered.length === 0 ? (
-                            <p className="text-center text-[11px] text-slate-400 py-4">
+                            <p className="text-center text-[11px] text-slate-400 py-1.5">
                                 {search ? 'Sin resultados' : 'No hay usuarios disponibles'}
                             </p>
                         ) : filtered.map(user => (
@@ -196,7 +196,7 @@ function InlineUserPicker({
                                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
                                 )}
                             >
-                                <div className="size-6 rounded-full bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center text-[9px] font-black text-white shrink-0">
+                                <div className="size-6 rounded-full bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center font-semibold text-white shrink-0">
                                     {user.username.slice(0, 2).toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -270,7 +270,7 @@ function InlineDatePicker({
 
             <Popover.Portal>
                 <Popover.Content
-                    className="z-[500] w-[248px] bg-white dark:bg-[#1e1f21] rounded-2xl shadow-2xl border border-slate-200/80 dark:border-white/10 p-3 select-none"
+                    className="z-[500] w-[248px] bg-white dark:bg-[#1e1f21] rounded-lg shadow-2xl border border-slate-200/80 dark:border-white/10 p-3 select-none"
                     sideOffset={6}
                     align="start"
                     onOpenAutoFocus={e => e.preventDefault()}
@@ -291,7 +291,7 @@ function InlineDatePicker({
                     {/* Day names */}
                     <div className="grid grid-cols-7 mb-1">
                         {DAYS_ES.map(d => (
-                            <div key={d} className="text-[9px] font-black uppercase tracking-wider text-slate-400 text-center py-0.5">{d}</div>
+                            <div key={d} className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-center py-0.5">{d}</div>
                         ))}
                     </div>
 
@@ -380,11 +380,11 @@ function InlinePriorityPicker({
 
             <Popover.Portal>
                 <Popover.Content
-                    className="z-[500] w-44 bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 p-1"
+                    className="z-[500] w-44 bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200 dark:border-white/10 p-1"
                     sideOffset={6}
                     align="start"
                 >
-                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-3 py-1.5">Prioridad</p>
+                    <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-3 py-1.5">Prioridad</p>
                     {PRIORITY_OPTIONS.map(opt => (
                         <button
                             key={opt.value}
@@ -426,7 +426,7 @@ function InlineStatusPicker({
             <Popover.Trigger asChild>
                 <button
                     className={clsx(
-                        'flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest transition-all min-h-[28px]',
+                        'flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all min-h-[28px]',
                         cfg.bg, cfg.text,
                         'border',
                         open ? 'ring-2 ring-blue-500/30 border-blue-400' : cfg.border,
@@ -443,11 +443,11 @@ function InlineStatusPicker({
 
             <Popover.Portal>
                 <Popover.Content
-                    className="z-[500] w-48 bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 p-1"
+                    className="z-[500] w-48 bg-white dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200 dark:border-white/10 p-1"
                     sideOffset={6}
                     align="start"
                 >
-                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-3 py-1.5">Estado</p>
+                    <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-3 py-1.5">Estado</p>
                     {STATUS_OPTIONS.filter((s, i, arr) => arr.findIndex(x => x.label === s.label) === i).map(opt => (
                         <button
                             key={opt.value}
@@ -474,10 +474,10 @@ function InlineStatusPicker({
 function CommentPopover({ onClose }: { onClose: () => void }) {
     const [text, setText] = useState('');
     return (
-        <div className="absolute right-0 top-full mt-1 w-80 bg-white dark:bg-[#252528] rounded-2xl shadow-2xl border border-slate-200/80 dark:border-white/10 z-[500] overflow-hidden">
+        <div className="absolute right-0 top-full mt-1 w-80 bg-white dark:bg-[#252528] rounded-lg shadow-2xl border border-slate-200/80 dark:border-white/10 z-[500] overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 dark:border-white/5">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Comentario rápido</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Comentario rápido</span>
                 <button onClick={onClose} className="p-0.5 rounded text-slate-300 hover:text-slate-500 dark:hover:text-slate-200 transition-colors">
                     <X size={13}/>
                 </button>
@@ -512,7 +512,7 @@ function CommentPopover({ onClose }: { onClose: () => void }) {
                 <button
                     onClick={onClose}
                     className={clsx(
-                        'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all',
+                        'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-bold transition-all',
                         text.trim()
                             ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/20 active:scale-95'
                             : 'bg-slate-100 dark:bg-white/5 text-slate-400 cursor-not-allowed'
@@ -729,7 +729,7 @@ function StatusGroup({
                 >
                     {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
                 </button>
-                <span className={clsx('px-3 py-1 rounded-md text-[11px] font-black uppercase tracking-widest', pillCls)}>
+                <span className={clsx('px-3 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wide', pillCls)}>
                     {cfg.label}
                 </span>
                 <span className="text-[12px] font-bold text-slate-400">{tasks.length}</span>
@@ -747,12 +747,12 @@ function StatusGroup({
                         {/* Column Headers */}
                         <div className="flex items-center border-b border-slate-100 dark:border-white/[0.04] bg-slate-50/50 dark:bg-white/[0.01]">
                             <div className="w-8 flex-shrink-0" />
-                            <div className="flex-1 px-3 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Nombre</div>
-                            <div className="w-28 flex-shrink-0 px-1 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 text-center whitespace-nowrap">Asignado</div>
-                            <div className="w-32 flex-shrink-0 px-1 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 whitespace-nowrap">Fecha L&iacute;mite</div>
-                            <div className="w-20 flex-shrink-0 px-1 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 text-center whitespace-nowrap">Prior.</div>
-                            <div className="w-36 flex-shrink-0 px-2 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 whitespace-nowrap">Estado</div>
-                            <div className="w-24 flex-shrink-0 px-1 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 text-center whitespace-nowrap">Coment.</div>
+                            <div className="flex-1 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Nombre</div>
+                            <div className="w-28 flex-shrink-0 px-1 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 text-center whitespace-nowrap">Asignado</div>
+                            <div className="w-32 flex-shrink-0 px-1 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 whitespace-nowrap">Fecha L&iacute;mite</div>
+                            <div className="w-20 flex-shrink-0 px-1 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 text-center whitespace-nowrap">Prior.</div>
+                            <div className="w-36 flex-shrink-0 px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 whitespace-nowrap">Estado</div>
+                            <div className="w-24 flex-shrink-0 px-1 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 text-center whitespace-nowrap">Coment.</div>
                             <div className="w-8 flex-shrink-0" />
                         </div>
 
@@ -919,8 +919,8 @@ export default function ProjectListView({
             )}
 
             {propTasks.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-24 gap-4">
-                    <div className="size-16 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+                <div className="flex flex-col items-center justify-center py-1.5 gap-4">
+                    <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center">
                         <CheckCircle2 size={28} className="text-slate-300 dark:text-slate-600" />
                     </div>
                     <div className="text-center">

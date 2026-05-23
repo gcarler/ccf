@@ -37,7 +37,7 @@ export default function AdminShell({
                 rightActions={rightActions}
             />
             <main className="flex-1 overflow-y-auto scrollbar-thin">
-                <div className="p-4 lg:p-6 space-y-6">
+                <div className="p-4 lg:p-3 space-y-6">
                     {children}
                 </div>
             </main>

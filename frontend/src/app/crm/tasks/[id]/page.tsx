@@ -96,7 +96,7 @@ export default function CrmTaskDetailPage() {
                                             <p className="text-[10px] text-slate-400 uppercase font-bold">12 ABR 2026 · 10:30 AM</p>
                                         </div>
                                     </div>
-                                    <div className="h-12 border-l-2 border-slate-100 dark:border-white/5 ml-4" />
+                                    <div className="h-8 border-l-2 border-slate-100 dark:border-white/5 ml-4" />
                                     <div className="p-4 rounded-lg bg-slate-50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10 text-center">
                                         <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Esperando actualizaciones...</p>
                                     </div>
@@ -109,7 +109,7 @@ export default function CrmTaskDetailPage() {
                                 <div className="space-y-3">
                                     <div className="space-y-2">
                                         <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Asignado a</p>
-                                        <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                                        <div className="flex items-center gap-2 p-2 rounded-md bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
                                             <div className="size-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xs">
                                                 {task.assigned_to?.charAt(0)}
                                             </div>
@@ -120,7 +120,7 @@ export default function CrmTaskDetailPage() {
                                     <div className="space-y-2">
                                         <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Prioridad</p>
                                         <div className={clsx(
-                                            'flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold',
+                                            'flex items-center gap-2 px-3 py-2 rounded-md text-xs font-bold',
                                             task.priority === 'high' ? 'bg-rose-500/10 text-rose-600' : 'bg-amber-500/10 text-amber-600'
                                         )}>
                                             <Flag size={14} /> {task.priority.toUpperCase()}
@@ -134,14 +134,14 @@ export default function CrmTaskDetailPage() {
                                         </div>
                                     </div>
 
-                                    <button className="w-full py-1.5 bg-emerald-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all">
+                                    <button className="w-full py-1.5 bg-emerald-600 text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all">
                                         Marcar como Completada
                                     </button>
                                 </div>
                             </DSCard>
 
-                            <div className="p-4 bg-slate-900 rounded-xl text-white space-y-4">
-                                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400">
+                            <div className="p-4 bg-slate-900 rounded-md text-white space-y-4">
+                                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-emerald-400">
                                     <AlertCircle size={14} /> Optimus Guard
                                 </div>
                                 <p className="text-[11px] font-bold leading-relaxed opacity-90 italic">

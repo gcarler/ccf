@@ -27,12 +27,12 @@ export default function TalentSearchPage() {
     }, [search]);
 
     return (
-        <div className="p-8 space-y-8 animate-in fade-in duration-700">
+        <div className="p-4 space-y-3 animate-in fade-in duration-700">
             <div className="flex flex-col gap-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/10 text-amber-500 rounded-full text-[10px] font-black uppercase tracking-[0.2em] w-fit">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/10 text-amber-500 rounded-full text-[10px] font-semibold uppercase tracking-wide w-fit">
                     <Award size={12} /> Gestion de Talento Humano
                 </div>
-                <h1 className="text-4xl font-black tracking-tighter text-white uppercase italic">
+                <h1 className="text-lg font-bold tracking-tighter text-white uppercase italic">
                     Buscador de <span className="text-amber-500">Talentos</span>
                 </h1>
                 <p className="text-muted-foreground text-sm max-w-2xl">
@@ -46,7 +46,7 @@ export default function TalentSearchPage() {
                     <input 
                         type="text" 
                         placeholder="Buscar por nombre o habilidad..."
-                        className="w-full bg-[#1e1f21] border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-amber-500/50 transition-all shadow-2xl"
+                        className="w-full bg-[#1e1f21] border border-white/5 rounded-lg py-1.5 pl-12 pr-4 text-white focus:outline-none focus:border-amber-500/50 transition-all shadow-2xl"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
@@ -54,20 +54,20 @@ export default function TalentSearchPage() {
             </div>
 
             <div className="space-y-4">
-                <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.3em] flex items-center gap-2">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                     <Zap size={14} className="text-amber-500" /> {loading ? 'Buscando...' : 'Resultados Reales'}
                 </h3>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {talents.map((talent, i) => (
-                        <div key={i} className="bg-[#1e1f21] border border-white/5 p-6 rounded-3xl group hover:border-amber-500/30 transition-all flex items-center justify-between">
+                        <div key={i} className="bg-[#1e1f21] border border-white/5 p-3 rounded-lg group hover:border-amber-500/30 transition-all flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-500 font-black text-xl">
+                                <div className="w-14 h-8 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-500 font-black text-xl">
                                     {talent.first_name.charAt(0)}
                                 </div>
                                 <div className="space-y-1">
                                     <h4 className="font-bold text-white uppercase">{talent.first_name} {talent.last_name}</h4>
-                                    <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{talent.email}</div>
+                                    <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wide">{talent.email}</div>
                                     <div className="flex flex-wrap gap-1 mt-2">
                                         {talent.skills?.map((s: any, idx: number) => (
                                             <span key={idx} className="text-[8px] bg-white/5 text-white/60 px-2 py-0.5 rounded-full border border-white/5 uppercase">
@@ -77,13 +77,13 @@ export default function TalentSearchPage() {
                                     </div>
                                 </div>
                             </div>
-                            <button className="p-3 bg-white/5 group-hover:bg-amber-500 group-hover:text-black rounded-2xl transition-all">
+                            <button className="p-3 bg-white/5 group-hover:bg-amber-500 group-hover:text-black rounded-lg transition-all">
                                 <ChevronRight size={20} />
                             </button>
                         </div>
                     ))}
                     {!loading && talents.length === 0 && (
-                        <div className="col-span-full py-12 text-center text-muted-foreground border border-dashed border-white/10 rounded-3xl uppercase text-[10px] font-black tracking-widest">
+                        <div className="col-span-full py-1.5 text-center text-muted-foreground border border-dashed border-white/10 rounded-lg uppercase font-semibold tracking-wide">
                             No se encontraron talentos con los criterios de busqueda
                         </div>
                     )}

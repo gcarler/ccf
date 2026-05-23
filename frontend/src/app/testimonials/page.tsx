@@ -46,7 +46,7 @@ export default function TestimonialsPage() {
             <div className="pt-28" />
 
             {/* Hero */}
-            <section className="py-4 px-6 text-center relative overflow-hidden">
+            <section className="py-1.5 px-3 text-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-rose-600/10 to-transparent pointer-events-none" />
                 <div className="max-w-4xl mx-auto relative">
                     <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-500/20 text-rose-400 text-[11px] font-bold uppercase tracking-wide mb-3">
@@ -62,23 +62,23 @@ export default function TestimonialsPage() {
                         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
                         <input value={search} onChange={e => setSearch(e.target.value)}
                             placeholder="Buscar testimonio..."
-                            className="w-full pl-12 pr-5 py-4 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-[14px] outline-none focus:ring-2 focus:ring-rose-500/30 backdrop-blur" />
+                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-sm outline-none focus:ring-2 focus:ring-rose-500/30 backdrop-blur" />
                     </div>
                 </div>
             </section>
 
             {loading ? (
-                <div className="max-w-6xl mx-auto px-6 pb-20 text-center">
+                <div className="max-w-6xl mx-auto px-3 pb-4 text-center">
                     <p className="text-slate-400">Cargando testimonios...</p>
                 </div>
             ) : testimonials.length === 0 ? (
-                <div className="max-w-6xl mx-auto px-6 pb-20 text-center">
+                <div className="max-w-6xl mx-auto px-3 pb-4 text-center">
                     <p className="text-slate-400 text-lg">Aún no hay testimonios publicados.</p>
                 </div>
             ) : (
                 <>
                     {/* Category Filter */}
-                    <div className="max-w-6xl mx-auto px-6 flex items-center gap-2 flex-wrap mb-3">
+                    <div className="max-w-6xl mx-auto px-3 flex items-center gap-2 flex-wrap mb-3">
                         {categories.map(c => (
                             <button key={c} onClick={() => setCat(c)}
                                 className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all ${cat === c ? 'bg-rose-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'}`}>
@@ -88,7 +88,7 @@ export default function TestimonialsPage() {
                     </div>
 
                     {/* Grid */}
-                    <div className="max-w-6xl mx-auto px-6 pb-20">
+                    <div className="max-w-6xl mx-auto px-3 pb-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {filtered.map((t, i) => (
                                 <motion.div key={t.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
@@ -99,7 +99,7 @@ export default function TestimonialsPage() {
                                         {t.content}
                                     </p>
                                     <div className="flex items-center gap-3">
-                                        <div className="size-10 rounded-xl bg-gradient-to-br from-rose-500/20 to-pink-500/20 flex items-center justify-center text-rose-400 text-sm font-black shrink-0">
+                                        <div className="size-10 rounded-md bg-gradient-to-br from-rose-500/20 to-pink-500/20 flex items-center justify-center text-rose-400 text-sm font-semibold shrink-0">
                                             <User size={16} />
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -126,9 +126,9 @@ export default function TestimonialsPage() {
                 {selected && (
                     <div className="space-y-3 mt-4">
                         <div className="text-xl text-rose-500/30 font-bold leading-none">&quot;</div>
-                        <p className="text-slate-700 dark:text-slate-200 text-[15px] leading-relaxed">{selected.content}</p>
+                        <p className="text-slate-700 dark:text-slate-200 text-sm leading-relaxed">{selected.content}</p>
                         <div className="flex items-center gap-4">
-                            <div className="size-14 rounded-lg bg-gradient-to-br from-rose-500/20 to-pink-500/20 flex items-center justify-center text-rose-400">
+                            <div className="size-7 rounded-lg bg-gradient-to-br from-rose-500/20 to-pink-500/20 flex items-center justify-center text-rose-400">
                                 <User size={24} />
                             </div>
                             <div>

@@ -133,24 +133,24 @@ export default function ProjectsInboxPage() {
                                 <div className="flex-1 space-y-1">
                                     <div className="flex justify-between items-center">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-[13px] font-black text-slate-800 dark:text-white uppercase tracking-tight">{msg.user}</span>
+                                            <span className="font-semibold text-slate-800 dark:text-white uppercase tracking-tight">{msg.user}</span>
                                             <div className="size-1 rounded-full bg-slate-300" />
-                                            <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{msg.project}</span>
+                                            <span className="font-semibold text-blue-600 uppercase tracking-wide">{msg.project}</span>
                                         </div>
                                         <span className="text-[10px] font-bold text-slate-400">{formatRelative(msg.created_at)}</span>
                                     </div>
-                                    <p className="text-[14px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium">{msg.content}</p>
+                                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">{msg.content}</p>
                                     <div className="pt-3 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button
                                             onClick={() => handleRespond(msg)}
-                                            className="px-3 py-1 bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-black uppercase text-slate-600 dark:text-slate-200"
+                                            className="px-3 py-1 bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase text-slate-600 dark:text-slate-200"
                                         >
                                             Responder
                                         </button>
                                         <button
                                             onClick={() => handleResolve(msg)}
                                             disabled={resolvingId === msg.id}
-                                            className="px-3 py-1 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase shadow-lg disabled:opacity-50"
+                                            className="px-3 py-1 bg-blue-600 text-white rounded-lg text-[10px] font-semibold uppercase shadow-lg disabled:opacity-50"
                                         >
                                             {resolvingId === msg.id ? 'Resolviendo...' : 'Resolver'}
                                         </button>

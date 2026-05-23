@@ -78,13 +78,13 @@ export default function CmsPageDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-full items-center justify-center gap-6 bg-white dark:bg-[#0d0e11]">
-        <div className="size-16 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center animate-pulse">
+      <div className="flex flex-col h-full items-center justify-center gap-3 bg-white dark:bg-[#0d0e11]">
+        <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center animate-pulse">
           <Layout size={28} strokeWidth={1} className="text-slate-400" />
         </div>
         <div className="space-y-2 text-center">
-          <div className="h-5 w-48 bg-slate-100 dark:bg-white/5 rounded-xl animate-pulse mx-auto" />
-          <div className="h-3 w-32 bg-slate-100 dark:bg-white/5 rounded-xl animate-pulse mx-auto" />
+          <div className="h-5 w-48 bg-slate-100 dark:bg-white/5 rounded-md animate-pulse mx-auto" />
+          <div className="h-3 w-32 bg-slate-100 dark:bg-white/5 rounded-md animate-pulse mx-auto" />
         </div>
       </div>
     );
@@ -93,15 +93,15 @@ export default function CmsPageDetailPage() {
   const status = STATUS_STYLES[page?.status ?? "draft"] ?? STATUS_STYLES["draft"];
 
   return (
-    <div className="flex flex-col h-full items-center justify-center bg-white dark:bg-[#0d0e11] p-8">
+    <div className="flex flex-col h-full items-center justify-center bg-white dark:bg-[#0d0e11] p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-lg space-y-8 text-center"
+        className="w-full max-w-lg space-y-3 text-center"
       >
         {/* Icon */}
         <div className="flex justify-center">
-          <div className="size-20 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-2xl shadow-blue-500/30">
+          <div className="size-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-2xl shadow-blue-500/30">
             <PenTool size={32} className="text-white" strokeWidth={1.5} />
           </div>
         </div>
@@ -138,7 +138,7 @@ export default function CmsPageDetailPage() {
         </div>
 
         {/* Redirect card */}
-        <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-6 space-y-5">
+        <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 space-y-5">
           <div className="space-y-1">
             <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
               Redirigiendo al Builder
@@ -150,8 +150,8 @@ export default function CmsPageDetailPage() {
 
           {/* Countdown */}
           <div className="flex items-center justify-center">
-            <div className="relative size-16">
-              <svg className="size-16 -rotate-90" viewBox="0 0 56 56">
+            <div className="relative size-8">
+              <svg className="size-8 -rotate-90" viewBox="0 0 56 56">
                 <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="4" className="text-slate-200 dark:text-white/10" />
                 <circle
                   cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="4"
@@ -170,7 +170,7 @@ export default function CmsPageDetailPage() {
           {/* CTA button */}
           <button
             onClick={handleGoNow}
-            className="w-full flex items-center justify-center gap-3 py-4 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all"
+            className="w-full flex items-center justify-center gap-3 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all"
           >
             <PenTool size={16} />
             Abrir en el Builder ahora

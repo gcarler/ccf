@@ -96,7 +96,7 @@ export default function FaroNavbar() {
                     borderBottom: scrolled ? "1px solid rgba(165, 200, 255, 0.08)" : "none",
                 }}
             >
-                <nav className="max-w-[1400px] mx-auto px-6 md:px-10 h-[72px] flex items-center justify-between gap-8">
+                <nav className="max-w-[1400px] mx-auto px-3 md:px-4 h-[72px] flex items-center justify-between gap-3">
                     {/* Logo */}
                     <Link href="/faro" className="flex items-center gap-3 shrink-0">
                         {logoUrl ? (
@@ -128,7 +128,7 @@ export default function FaroNavbar() {
                                 <Link
                                     key={href}
                                     href={href}
-                                    className="relative px-4 py-2 text-[13px] font-semibold uppercase tracking-[0.1em] transition-colors duration-200 rounded-lg"
+                                    className="relative px-4 py-2 text-[13px] font-semibold uppercase tracking-wide transition-colors duration-200 rounded-lg"
                                     style={{
                                         color: active
                                             ? "var(--faro-primary)"
@@ -147,7 +147,7 @@ export default function FaroNavbar() {
                                     )}
                                 </Link>
                                 {(children || []).length > 0 && (
-                                    <div className="absolute left-0 top-full mt-2 hidden group-hover:block min-w-[220px] rounded-2xl border border-white/10 bg-[#0a1630]/95 backdrop-blur-xl shadow-2xl p-2">
+                                    <div className="absolute left-0 top-full mt-2 hidden group-hover:block min-w-[220px] rounded-lg border border-white/10 bg-[#0a1630]/95 backdrop-blur-xl shadow-2xl p-2">
                                         {(children || []).map((child: any) => (
                                             <Link
                                                 key={`${href}-${child.href}`}
@@ -197,7 +197,7 @@ export default function FaroNavbar() {
                             <Link
                                 href={ctaHref}
                                 onClick={() => setMobileOpen && setMobileOpen(false)}
-                                className="hidden lg:flex items-center gap-2 px-6 py-2.5 rounded-full text-[11px] font-black uppercase tracking-[0.15em] transition-all hover:scale-105 animate-gradient-xy"
+                                className="hidden lg:flex items-center gap-2 px-3 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all hover:scale-105 animate-gradient-xy"
                                 style={{
                                     backgroundImage: "linear-gradient(to right, #004581, #018abd, #004581)",
                                     backgroundSize: "200% auto",
@@ -231,13 +231,13 @@ export default function FaroNavbar() {
                         backdropFilter: "blur(20px)",
                     }}
                 >
-                    <div className="flex flex-col items-center justify-center flex-1 gap-6 p-8">
+                    <div className="flex flex-col items-center justify-center flex-1 gap-3 p-4">
                         {navLinks.map(({ href, label, children }: any) => (
                             <div key={href} className="text-center space-y-2">
                                 <Link
                                     href={href}
                                     onClick={() => setMobileOpen(false)}
-                                    className="text-2xl font-black uppercase tracking-widest transition-colors"
+                                    className="text-xl font-bold uppercase tracking-wide transition-colors"
                                     style={{ color: pathname === href ? "var(--faro-primary)" : "var(--faro-on-background)" }}
                                 >
                                     {label}
@@ -249,7 +249,7 @@ export default function FaroNavbar() {
                                                 key={`${href}-${child.href}`}
                                                 href={child.href}
                                                 onClick={() => setMobileOpen(false)}
-                                                className="block text-sm font-bold uppercase tracking-widest"
+                                                className="block text-sm font-bold uppercase tracking-wider"
                                                 style={{ color: "var(--faro-on-surface-variant)" }}
                                             >
                                                 {child.label}
@@ -263,7 +263,7 @@ export default function FaroNavbar() {
                             <Link
                                 href={ctaHref}
                                 onClick={() => setMobileOpen && setMobileOpen(false)}
-                                className="flex items-center justify-center gap-2 px-6 py-3 mt-4 w-full rounded-full text-[12px] font-black uppercase tracking-[0.15em] transition-all hover:scale-105 animate-gradient-xy"
+                                className="flex items-center justify-center gap-2 px-3 py-3 mt-4 w-full rounded-full text-[12px] font-bold uppercase tracking-wider transition-all hover:scale-105 animate-gradient-xy"
                                 style={{
                                     backgroundImage: "linear-gradient(to right, #004581, #018abd, #004581)",
                                     backgroundSize: "200% auto",

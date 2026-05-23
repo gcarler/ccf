@@ -35,7 +35,7 @@ export default function SermonsPage() {
             <div className="pt-28" />
 
             {/* Hero */}
-            <section className="relative py-4 px-6 overflow-hidden">
+            <section className="relative py-1.5 px-3 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-blue-600/10 to-transparent" />
                 <div className="max-w-6xl mx-auto relative text-center">
                     <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 text-blue-400 text-[11px] font-bold uppercase tracking-wide mb-3">
@@ -51,13 +51,13 @@ export default function SermonsPage() {
                         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
                         <input value={search} onChange={e => setSearch(e.target.value)}
                             placeholder="Buscar prédica..."
-                            className="w-full pl-12 pr-5 py-4 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-[14px] outline-none focus:ring-2 focus:ring-blue-500/30 backdrop-blur" />
+                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-sm outline-none focus:ring-2 focus:ring-blue-500/30 backdrop-blur" />
                     </div>
                 </div>
             </section>
 
             {/* Series */}
-            <section className="max-w-6xl mx-auto px-6 py-4">
+            <section className="max-w-6xl mx-auto px-3 py-1.5">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-3">Series Destacadas</p>
                 <div className="grid grid-cols-3 gap-3 mb-3">
                     {SERIES.map((s, i) => (
@@ -76,7 +76,7 @@ export default function SermonsPage() {
                 </div>
 
                 {/* Category Filter */}
-                <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
+                <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-2">
                     <Filter size={12} className="text-slate-600 shrink-0" />
                     {CATEGORIES.map(c => (
                         <button key={c} onClick={() => setCat(c)}
@@ -91,7 +91,7 @@ export default function SermonsPage() {
                     {filtered.map((s, i) => (
                         <motion.div key={s.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
                             className="bg-white/5 hover:bg-white/8 border border-white/5 hover:border-white/10 rounded-lg p-3 flex items-center gap-4 cursor-pointer group transition-all">
-                            <div className="size-14 rounded-2xl bg-blue-600/20 flex items-center justify-center text-blue-400 shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                            <div className="size-7 rounded-lg bg-blue-600/20 flex items-center justify-center text-blue-400 shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all">
                                 <Play size={22} className="ml-0.5" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -113,7 +113,7 @@ export default function SermonsPage() {
                 </div>
             </section>
 
-            <div className="pb-20" />
+            <div className="pb-4" />
         </main>
     );
 }

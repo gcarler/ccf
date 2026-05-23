@@ -16,9 +16,9 @@ type Story = StoryObj;
 
 export const Preview: Story = {
   render: () => (
-    <div className="min-h-screen bg-slate-100 p-6 md:p-10">
+    <div className="min-h-screen bg-slate-100 p-3 md:p-4">
       <div className="mx-auto max-w-6xl space-y-6">
-        <DSCard tone="light" className="p-4 md:p-6">
+        <DSCard tone="light" className="p-4 md:p-3">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <DSToolbarChip label="CRM" active />
@@ -33,7 +33,7 @@ export const Preview: Story = {
           </div>
         </DSCard>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
           <DSCard tone="light" className="space-y-4 lg:col-span-4">
             <DSSectionHeader eyebrow="Command" title="Quick Actions" description="Entradas del command palette listas para integracion." />
             <div className="space-y-2">
@@ -43,7 +43,7 @@ export const Preview: Story = {
             </div>
           </DSCard>
 
-          <div className="grid grid-cols-1 gap-6 lg:col-span-8 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 lg:col-span-8 md:grid-cols-3">
             <DSMetric label="TTFB" value="56 ms" trend="baseline" tone="blue" />
             <DSMetric label="LCP" value="2.86 s" trend="projects" tone="amber" />
             <DSMetric label="Graph Nodes" value="120" trend="snapshot" tone="emerald" />

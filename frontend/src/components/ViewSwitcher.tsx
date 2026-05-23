@@ -55,7 +55,7 @@ export default function ViewSwitcher({
                     title={label}
                     onClick={() => setViewType(id)}
                     className={clsx(
-                        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-widest transition-all",
+                        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wide transition-all",
                         viewType === id
                             ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm"
                             : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"

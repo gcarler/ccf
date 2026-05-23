@@ -40,7 +40,7 @@ export default function ProjectActivityFeed({ activities }: Props) {
                 {sorted.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-40 text-center space-y-3 opacity-40">
                         <Clock size={24} />
-                        <p className="text-[10px] font-black uppercase tracking-widest">Sin actividad aún</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide">Sin actividad aún</p>
                     </div>
                 ) : (
                     sorted.map((log, idx) => (

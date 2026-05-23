@@ -132,7 +132,7 @@ export default function GloryHouseAdmin() {
                             initial={{ opacity: 0, y: 16 }}
                             animate={{ opacity: 1, y: 0 }}
                             onClick={() => openReport(house)}
-                            className="rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-white/5"
+                            className="rounded-md border border-slate-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-white/5"
                         >
                             <div className="mb-3 flex items-start justify-between">
                                 <div className="flex size-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/20"><Home size={24} /></div>
@@ -178,7 +178,7 @@ export default function GloryHouseAdmin() {
                         </div>
                     </section>
 
-                    <button onClick={sendReport} disabled={submitting} className="flex w-full items-center justify-center gap-3 rounded-lg bg-blue-600 py-2 text-[11px] font-bold uppercase tracking-[0.2em] text-white disabled:opacity-50">
+                    <button onClick={sendReport} disabled={submitting} className="flex w-full items-center justify-center gap-3 rounded-lg bg-blue-600 py-2 text-[11px] font-bold uppercase tracking-wide text-white disabled:opacity-50">
                         {submitting ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} fill="currentColor" />}
                         Enviar Reporte Semanal
                     </button>
@@ -189,9 +189,9 @@ export default function GloryHouseAdmin() {
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
-    return <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</p><h4 className="mt-2 text-lg font-bold">{value}</h4></div>;
+    return <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</p><h4 className="mt-2 text-lg font-bold">{value}</h4></div>;
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-    return <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-white/5 dark:bg-white/5"><p className="mb-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">{label}</p>{children}</div>;
+    return <div className="rounded-md border border-slate-100 bg-slate-50 p-4 dark:border-white/5 dark:bg-white/5"><p className="mb-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">{label}</p>{children}</div>;
 }

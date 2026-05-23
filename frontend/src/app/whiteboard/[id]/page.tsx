@@ -281,7 +281,7 @@ export default function WhiteboardSessionPage() {
                 ]}
                 rightActions={
                     <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:border-white/10 dark:bg-white/5">
+                        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:border-white/10 dark:bg-white/5">
                             {saveStatus === "saving" ? <Loader2 size={12} className="animate-spin text-blue-500" /> : <Cloud size={12} className="text-emerald-500" />}
                             {saveStatus === "saving" ? "Guardando" : saveStatus === "saved" ? "Guardado" : "Local"}
                         </div>
@@ -291,7 +291,7 @@ export default function WhiteboardSessionPage() {
                         <button onClick={exportCanvas} className="p-2 text-slate-400 transition-all hover:text-blue-600" title="Exportar JSON">
                             <Download size={18} />
                         </button>
-                        <button onClick={saveNow} className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105">
+                        <button onClick={saveNow} className="flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105">
                             <Save size={14} /> Guardar
                         </button>
                     </div>
@@ -299,7 +299,7 @@ export default function WhiteboardSessionPage() {
             />
 
             <div className="relative flex flex-1 overflow-hidden">
-                <div className="absolute left-6 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-2 rounded-2xl border border-slate-200 bg-white/90 p-2 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/90">
+                <div className="absolute left-6 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-2 rounded-lg border border-slate-200 bg-white/90 p-2 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/90">
                     <ToolbarButton icon={MousePointer2} active={tool === "select"} onClick={() => activateTool("select")} label="Seleccionar" />
                     <ToolbarButton icon={Pencil} active={tool === "draw"} onClick={() => activateTool("draw")} label="Dibujo libre" />
                     <ToolbarButton icon={Square} active={false} onClick={addRect} label="Rectangulo" />
@@ -312,30 +312,30 @@ export default function WhiteboardSessionPage() {
 
                 <main
                     className={clsx(
-                        "flex-1 overflow-auto bg-white bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:32px_32px] p-8 pl-24 dark:bg-[#0f1114] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)]",
+                        "flex-1 overflow-auto bg-white bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:32px_32px] p-4 pl-24 dark:bg-[#0f1114] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)]",
                         tool === "select" ? "cursor-default" : "cursor-crosshair"
                     )}
                 >
-                    <div className="inline-block overflow-hidden rounded-[2rem] border-8 border-white bg-white shadow-[0_48px_96px_-32px_rgba(15,23,42,0.35)] dark:border-[#1e1f21]">
+                    <div className="inline-block overflow-hidden rounded-lg border-8 border-white bg-white shadow-[0_48px_96px_-32px_rgba(15,23,42,0.35)] dark:border-[#1e1f21]">
                         <canvas ref={canvasRef} />
                     </div>
                 </main>
 
-                <aside className="w-80 shrink-0 space-y-6 overflow-y-auto border-l border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-[#111418]">
+                <aside className="w-80 shrink-0 space-y-6 overflow-y-auto border-l border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-[#111418]">
                     <section className="space-y-2">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Objetivo</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Objetivo</p>
                         <h1 className="text-lg font-black text-slate-900 dark:text-white">{title}</h1>
                         <p className="text-xs font-medium leading-5 text-slate-500">{description || "Sin objetivo documentado."}</p>
                     </section>
 
                     <section className="space-y-4">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Capas reales</h3>
+                        <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Capas reales</h3>
                         <div className="space-y-2">
                             {layers.map((layer) => (
                                 <button
                                     key={`${layer.type}-${layer.index}`}
                                     onClick={() => focusLayer(layer.index)}
-                                    className="flex w-full items-center justify-between rounded-xl border border-slate-100 p-3 text-left text-xs font-medium text-slate-500 transition-all hover:border-blue-200 hover:bg-blue-50/40 dark:border-white/5 dark:hover:bg-blue-500/10"
+                                    className="flex w-full items-center justify-between rounded-md border border-slate-100 p-3 text-left text-xs font-medium text-slate-500 transition-all hover:border-blue-200 hover:bg-blue-50/40 dark:border-white/5 dark:hover:bg-blue-500/10"
                                 >
                                     <span className="flex items-center gap-2">
                                         <History size={12} /> {layer.label}
@@ -344,7 +344,7 @@ export default function WhiteboardSessionPage() {
                                 </button>
                             ))}
                             {layers.length === 0 && (
-                                <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-xs font-semibold text-slate-400 dark:border-white/10">
+                                <div className="rounded-md border border-dashed border-slate-200 p-4 text-center text-xs font-semibold text-slate-400 dark:border-white/10">
                                     No hay objetos en el lienzo.
                                 </div>
                             )}
@@ -416,7 +416,7 @@ function ToolbarButton({
             onClick={onClick}
             title={label}
             className={clsx(
-                "group relative flex size-10 items-center justify-center rounded-xl transition-all",
+                "group relative flex size-10 items-center justify-center rounded-md transition-all",
                 active
                     ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
                     : tone === "danger"
@@ -425,7 +425,7 @@ function ToolbarButton({
             )}
         >
             <Icon size={20} />
-            <span className="pointer-events-none absolute left-full z-50 ml-4 whitespace-nowrap rounded-lg bg-slate-900 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-white opacity-0 transition-opacity group-hover:opacity-100">
+            <span className="pointer-events-none absolute left-full z-50 ml-4 whitespace-nowrap rounded-lg bg-slate-900 px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-white opacity-0 transition-opacity group-hover:opacity-100">
                 {label}
             </span>
         </button>

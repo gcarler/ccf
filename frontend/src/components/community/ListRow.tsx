@@ -41,7 +41,7 @@ export default function CommunityListRow({
         <div
             onClick={onClick}
             className={clsx(
-                'grid grid-cols-[32px_minmax(0,2.4fr)_1.4fr_1.1fr_0.9fr_1fr_0.9fr] items-center gap-4 px-6 py-4 border-t border-[hsl(var(--border))] text-sm text-[hsl(var(--text-secondary))] bg-white transition-colors',
+                'grid grid-cols-[32px_minmax(0,2.4fr)_1.4fr_1.1fr_0.9fr_1fr_0.9fr] items-center gap-4 px-3 py-1.5 border-t border-[hsl(var(--border))] text-sm text-[hsl(var(--text-secondary))] bg-white transition-colors',
                 onClick ? 'hover:bg-[hsl(var(--surface-2))] cursor-pointer' : '',
                 className
             )}
@@ -54,7 +54,7 @@ export default function CommunityListRow({
                     </span>
                     {item.name}
                 </div>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                <p className="text-[10px] uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
                     <span className={`size-2 rounded-full ${accentClass}`}></span>
                     {item.stage}
                 </p>
@@ -69,10 +69,10 @@ export default function CommunityListRow({
                 <Calendar size={14} /> {item.due}
             </div>
             <div className="flex items-center">
-                <span className={`px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-[0.3em] ${priorityClass}`}>{item.priority}</span>
+                <span className={`px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide ${priorityClass}`}>{item.priority}</span>
             </div>
             <div className="flex items-center">
-                <span className={`px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-[0.3em] ${statusClass}`}>{item.status}</span>
+                <span className={`px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide ${statusClass}`}>{item.status}</span>
             </div>
             <div className="flex items-center justify-end gap-1 text-[12px] text-[hsl(var(--text-secondary))]">
                 <MessageCircle size={14} />

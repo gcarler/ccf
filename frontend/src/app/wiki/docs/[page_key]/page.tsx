@@ -55,11 +55,11 @@ export default function WikiDocEditPage() {
     return (
         <div className="flex-1 flex flex-col bg-white dark:bg-[#141517] overflow-hidden">
             {/* Minimal Header */}
-            <header className="h-14 px-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between shrink-0 bg-white/80 dark:bg-[#141517]/80 backdrop-blur-md sticky top-0 z-10">
+            <header className="h-8 px-3 border-b border-slate-100 dark:border-white/5 flex items-center justify-between shrink-0 bg-white/80 dark:bg-[#141517]/80 backdrop-blur-md sticky top-0 z-10">
                 <div className="flex items-center gap-4">
                     <button 
                         onClick={() => router.push('/wiki')}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl text-slate-400 transition-all"
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400 transition-all"
                     >
                         <ChevronLeft size={20} />
                     </button>
@@ -70,13 +70,13 @@ export default function WikiDocEditPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <button className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl text-slate-400">
+                    <button className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400">
                         <History size={18} />
                     </button>
-                    <button className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl text-slate-400">
+                    <button className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400">
                         <Share2 size={18} />
                     </button>
-                    <button className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl text-slate-400">
+                    <button className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400">
                         <MoreHorizontal size={18} />
                     </button>
                 </div>

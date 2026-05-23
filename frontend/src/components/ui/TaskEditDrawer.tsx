@@ -245,7 +245,7 @@ export default function TaskEditDrawer({
                         <div className={clsx('h-[3px] w-full shrink-0', cp.bar)} />
 
                         {/* ── HEADER ── */}
-                        <header className="shrink-0 px-5 pt-3.5 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
+                        <header className="shrink-0 px-3 pt-3.5 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
                             <div className="flex items-center justify-between mb-3">
 
                                 {/* Left: status + xp */}
@@ -272,7 +272,7 @@ export default function TaskEditDrawer({
                                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                                     exit={{ opacity: 0, y: -6, scale: 0.96 }}
                                                     transition={{ duration: 0.13 }}
-                                                    className="absolute left-0 top-full mt-2 w-48 bg-white dark:bg-[#222326] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl z-[200] overflow-hidden py-1"
+                                                    className="absolute left-0 top-full mt-2 w-48 bg-white dark:bg-[#222326] border border-slate-200 dark:border-white/10 rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
                                                 >
                                                     {STATUS_OPTIONS.map(opt => (
                                                         <button key={opt.value}
@@ -295,7 +295,7 @@ export default function TaskEditDrawer({
                                     </div>
 
                                     {/* XP badge */}
-                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg text-[10px] font-black tracking-wide border border-amber-200/50 dark:border-amber-500/20">
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg font-semibold tracking-wide border border-amber-200/50 dark:border-amber-500/20">
                                         <Zap size={9} fill="currentColor" /> +{xp} XP
                                     </span>
                                 </div>
@@ -346,7 +346,7 @@ export default function TaskEditDrawer({
                         <div className="flex-1 overflow-y-auto scrollbar-thin">
 
                             {/* ─ META FIELDS ─ */}
-                            <div className="px-5 py-4 space-y-3 border-b border-slate-100 dark:border-white/[0.05]">
+                            <div className="px-3 py-1.5 space-y-3 border-b border-slate-100 dark:border-white/[0.05]">
 
                                 {/* Priority row */}
                                 <MetaRow label="Prioridad">
@@ -369,7 +369,7 @@ export default function TaskEditDrawer({
                                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                                     exit={{ opacity: 0, y: -6, scale: 0.96 }}
                                                     transition={{ duration: 0.13 }}
-                                                    className="absolute left-0 top-full mt-2 w-44 bg-white dark:bg-[#222326] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl z-[200] overflow-hidden py-1"
+                                                    className="absolute left-0 top-full mt-2 w-44 bg-white dark:bg-[#222326] border border-slate-200 dark:border-white/10 rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
                                                 >
                                                     {PRIORITY_OPTIONS.map(opt => (
                                                         <button key={opt.value}
@@ -416,8 +416,8 @@ export default function TaskEditDrawer({
                             </div>
 
                             {/* ─ DESCRIPTION ─ */}
-                            <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.05]">
-                                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 flex items-center gap-1.5">
+                            <div className="px-3 py-1.5 border-b border-slate-100 dark:border-white/[0.05]">
+                                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
                                     <AlignLeft size={11} /> Descripción
                                 </p>
                                 <textarea
@@ -425,21 +425,21 @@ export default function TaskEditDrawer({
                                     onChange={e => updateField('description', e.target.value || null)}
                                     rows={3}
                                     placeholder="Añade contexto o detalles sobre esta tarea..."
-                                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.07] text-[13px] font-medium text-slate-700 dark:text-slate-300 placeholder:text-slate-300 dark:placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400/50 resize-none transition-all leading-relaxed"
+                                    className="w-full px-3 py-2.5 rounded-md bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.07] text-[13px] font-medium text-slate-700 dark:text-slate-300 placeholder:text-slate-300 dark:placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400/50 resize-none transition-all leading-relaxed"
                                 />
                             </div>
 
                             {/* ─ MESH AI ─ */}
-                            <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.05]">
-                                <div className="rounded-2xl bg-gradient-to-br from-blue-50 via-indigo-50/50 to-blue-50/30 dark:from-blue-900/15 dark:via-indigo-900/10 dark:to-transparent border border-blue-200/60 dark:border-blue-500/20 overflow-hidden">
+                            <div className="px-3 py-1.5 border-b border-slate-100 dark:border-white/[0.05]">
+                                <div className="rounded-lg bg-gradient-to-br from-blue-50 via-indigo-50/50 to-blue-50/30 dark:from-blue-900/15 dark:via-indigo-900/10 dark:to-transparent border border-blue-200/60 dark:border-blue-500/20 overflow-hidden">
                                     {/* AI header */}
                                     <div className="flex items-center justify-between px-4 py-3 border-b border-blue-200/40 dark:border-blue-500/15">
                                         <div className="flex items-center gap-2">
                                             <div className="size-6 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-sm">
                                                 <Sparkles size={11} className="text-white" />
                                             </div>
-                                            <span className="text-[11px] font-black text-blue-700 dark:text-blue-300 tracking-wide uppercase">MESH AI</span>
-                                            <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-[9px] font-black rounded-md uppercase tracking-wider">Beta</span>
+                                            <span className="font-semibold text-blue-700 dark:text-blue-300 tracking-wide uppercase">MESH AI</span>
+                                            <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 font-semibold rounded-md uppercase tracking-wider">Beta</span>
                                         </div>
                                         <button
                                             onClick={handleAiSuggest}
@@ -479,8 +479,8 @@ export default function TaskEditDrawer({
                             </div>
 
                             {/* ─ QUICK ACTIONS ─ */}
-                            <div className="px-5 py-4">
-                                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-3">Acciones</p>
+                            <div className="px-3 py-1.5">
+                                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">Acciones</p>
                                 <div className="grid grid-cols-2 gap-2">
                                     <QuickBtn icon={MessageSquare} label="Comentar" />
                                     <QuickBtn icon={Link2} label="Adjuntar" />
@@ -496,18 +496,18 @@ export default function TaskEditDrawer({
                                             exit={{ opacity: 0, height: 0 }}
                                             className="overflow-hidden mt-3"
                                         >
-                                            <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 space-y-3">
+                                            <div className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 space-y-3">
                                                 <p className="text-[12px] font-bold text-rose-700 dark:text-rose-300">
                                                     ¿Eliminar &ldquo;{form.title.slice(0, 40)}{form.title.length > 40 ? '...' : ''}&rdquo;?
                                                 </p>
                                                 <p className="text-[11px] text-rose-500/80 dark:text-rose-400/60">Esta acción no se puede deshacer.</p>
                                                 <div className="flex gap-2">
                                                     <button onClick={handleDelete}
-                                                        className="flex-1 py-2.5 bg-rose-600 text-white rounded-xl text-[11px] font-bold hover:bg-rose-700 active:scale-95 transition-all shadow-md shadow-rose-500/20">
+                                                        className="flex-1 py-2.5 bg-rose-600 text-white rounded-md text-[11px] font-bold hover:bg-rose-700 active:scale-95 transition-all shadow-md shadow-rose-500/20">
                                                         Sí, eliminar
                                                     </button>
                                                     <button onClick={() => setShowDeleteConfirm(false)}
-                                                        className="flex-1 py-2.5 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 rounded-xl text-[11px] font-bold hover:bg-slate-50 dark:hover:bg-white/8 transition-all">
+                                                        className="flex-1 py-2.5 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 rounded-md text-[11px] font-bold hover:bg-slate-50 dark:hover:bg-white/8 transition-all">
                                                         Cancelar
                                                     </button>
                                                 </div>
@@ -520,7 +520,7 @@ export default function TaskEditDrawer({
                         </div>
 
                         {/* ── FOOTER ── */}
-                        <footer className="shrink-0 px-5 py-3 border-t border-slate-100 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02] flex items-center justify-between">
+                        <footer className="shrink-0 px-3 py-3 border-t border-slate-100 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02] flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <span className={clsx('size-2 rounded-full shrink-0', cp.dot)} />
                                 <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
@@ -589,7 +589,7 @@ function QuickBtn({ icon: Icon, label, onClick, danger = false }: { icon: any; l
         <button
             onClick={onClick}
             className={clsx(
-                'flex items-center gap-2 px-3 py-2.5 rounded-xl text-[11px] font-semibold border transition-all group hover:-translate-y-[1px] hover:shadow-sm active:scale-95',
+                'flex items-center gap-2 px-3 py-2.5 rounded-md text-[11px] font-semibold border transition-all group hover:-translate-y-[1px] hover:shadow-sm active:scale-95',
                 danger
                     ? 'text-rose-500 dark:text-rose-400 bg-transparent border-rose-200 dark:border-rose-500/20 hover:bg-rose-50 dark:hover:bg-rose-500/10'
                     : 'text-slate-500 dark:text-slate-400 bg-white dark:bg-white/[0.03] border-slate-200 dark:border-white/[0.07] hover:bg-slate-50 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'

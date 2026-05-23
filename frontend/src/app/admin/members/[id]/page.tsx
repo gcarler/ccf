@@ -18,11 +18,11 @@ function InfoRow({ icon: Icon, label, value, color = 'text-blue-600' }: { icon: 
     if (!value) return null;
     return (
         <div className="flex items-center gap-4">
-            <div className={clsx("size-10 rounded-2xl flex items-center justify-center flex-shrink-0", "bg-slate-50 dark:bg-white/5", color)}>
+            <div className={clsx("size-10 rounded-lg flex items-center justify-center flex-shrink-0", "bg-slate-50 dark:bg-white/5", color)}>
                 <Icon size={18} />
             </div>
             <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">{label}</p>
+                <p className="font-semibold text-slate-400 uppercase tracking-wider">{label}</p>
                 <p className="text-sm font-bold text-slate-800 dark:text-white">{value}</p>
             </div>
         </div>
@@ -37,7 +37,7 @@ function Badge({ label, color = 'blue' }: { label: string; color?: string }) {
         rose:   'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-200/50 dark:border-rose-500/20',
     };
     return (
-        <span className={clsx("inline-flex items-center px-3 py-1 rounded-xl border text-[9px] font-black uppercase tracking-[0.15em]", styles[color] ?? styles.blue)}>
+        <span className={clsx("inline-flex items-center px-3 py-1 rounded-md border text-[9px] font-semibold uppercase tracking-wider", styles[color] ?? styles.blue)}>
             {label}
         </span>
     );
@@ -71,10 +71,10 @@ export default function MemberDetailPage() {
     if (loading) {
         return (
             <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] items-center justify-center gap-3">
-                <div className="size-12 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
+                <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
                     <User className="text-blue-600 animate-pulse" size={24} />
                 </div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 animate-pulse">Cargando expediente...</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 animate-pulse">Cargando expediente...</p>
             </div>
         );
     }
@@ -94,27 +94,27 @@ export default function MemberDetailPage() {
                 rightActions={
                     <button
                         onClick={() => setSidebarOpen(true)}
-                        className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all">
+                        className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all">
                         <PencilLine size={14} /> Editar Expediente
                     </button>
                 }
             />
 
-            <main className="flex-1 overflow-y-auto scrollbar-thin p-6 lg:p-10">
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-3 lg:p-4">
                 <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-                    className="max-w-5xl mx-auto space-y-8">
+                    className="max-w-5xl mx-auto space-y-3">
 
                     {/* Hero */}
-                    <header className="bg-white dark:bg-[#15171c] rounded-3xl border border-slate-200 dark:border-white/5 p-6 lg:p-10 shadow-sm flex flex-col md:flex-row md:items-center gap-8 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-6 opacity-[0.03] pointer-events-none text-blue-600">
+                    <header className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-sm flex flex-col md:flex-row md:items-center gap-3 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-3 opacity-[0.03] pointer-events-none text-blue-600">
                             <User size={180} />
                         </div>
                         <motion.div whileHover={{ scale: 1.04 }}
-                            className="size-28 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-black text-4xl shadow-2xl shadow-blue-500/25 border-4 border-white dark:border-[#1e1f21] flex-shrink-0 relative z-10">
+                            className="size-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-black text-lg shadow-2xl shadow-blue-500/25 border-4 border-white dark:border-[#1e1f21] flex-shrink-0 relative z-10">
                             {initials || <User size={48} />}
                         </motion.div>
                         <div className="relative z-10 space-y-3">
-                            <h1 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">
+                            <h1 className="text-xl lg:text-lg font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">
                                 {member.first_name} <span className="text-blue-600">{member.last_name}</span>
                             </h1>
                             <div className="flex flex-wrap items-center gap-2">
@@ -123,18 +123,18 @@ export default function MemberDetailPage() {
                                 {member.is_baptized && <Badge label="BAUTIZADO" color="blue" />}
                             </div>
                             {member.joined_date && (
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                <p className="font-semibold text-slate-400 uppercase tracking-wide">
                                     Miembro desde {new Date(member.joined_date).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
                                 </p>
                             )}
                         </div>
                     </header>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                         {/* Contacto */}
                         <div className="lg:col-span-2 space-y-6">
-                            <div className="bg-white dark:bg-[#15171c] rounded-2xl border border-slate-200 dark:border-white/5 p-6 shadow-sm space-y-5">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Canales de Comunicación</p>
+                            <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm space-y-5">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Canales de Comunicación</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                     <InfoRow icon={Phone} label="Teléfono Móvil" value={member.phone} />
                                     <InfoRow icon={Mail} label="Correo Electrónico" value={member.email} />
@@ -152,13 +152,13 @@ export default function MemberDetailPage() {
                                 ].map(s => {
                                     const Icon = s.icon;
                                     return (
-                                        <div key={s.label} className="bg-white dark:bg-[#15171c] rounded-2xl border border-slate-200 dark:border-white/5 p-4 shadow-sm flex flex-col gap-3">
-                                            <div className={clsx("size-9 rounded-xl flex items-center justify-center", s.bg, s.color)}>
+                                        <div key={s.label} className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-4 shadow-sm flex flex-col gap-3">
+                                            <div className={clsx("size-9 rounded-md flex items-center justify-center", s.bg, s.color)}>
                                                 <Icon size={16} />
                                             </div>
                                             <div>
                                                 <p className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">{s.value}</p>
-                                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">{s.label}</p>
+                                                <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">{s.label}</p>
                                             </div>
                                         </div>
                                     );
@@ -168,24 +168,24 @@ export default function MemberDetailPage() {
 
                         {/* Info ministerial */}
                         <aside className="space-y-6">
-                            <div className="bg-white dark:bg-[#15171c] rounded-2xl border border-slate-200 dark:border-white/5 p-6 shadow-sm space-y-5">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Posición Ministerial</p>
+                            <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm space-y-5">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Posición Ministerial</p>
                                 <div className="space-y-4">
                                     {member.ministry_id && (
-                                        <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-black/20 rounded-xl">
-                                            <div className="size-8 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600"><Briefcase size={15} /></div>
+                                        <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-black/20 rounded-md">
+                                            <div className="size-8 rounded-md bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600"><Briefcase size={15} /></div>
                                             <div>
-                                                <p className="text-[9px] text-slate-400 font-black uppercase">Ministerio</p>
-                                                <p className="text-xs font-black text-slate-800 dark:text-white">#{member.ministry_id}</p>
+                                                <p className="text-[9px] text-slate-400 font-semibold uppercase">Ministerio</p>
+                                                <p className="text-xs font-semibold text-slate-800 dark:text-white">#{member.ministry_id}</p>
                                             </div>
                                         </div>
                                     )}
                                     {member.joined_date && (
-                                        <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-500/5 rounded-xl border border-emerald-100 dark:border-emerald-500/20">
-                                            <div className="size-8 rounded-xl bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600"><Zap size={15} fill="currentColor" /></div>
+                                        <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-500/5 rounded-md border border-emerald-100 dark:border-emerald-500/20">
+                                            <div className="size-8 rounded-md bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600"><Zap size={15} fill="currentColor" /></div>
                                             <div>
-                                                <p className="text-[9px] text-emerald-600 font-black uppercase">Ingreso a CCF</p>
-                                                <p className="text-xs font-black text-slate-800 dark:text-white">{new Date(member.joined_date).toLocaleDateString()}</p>
+                                                <p className="text-[9px] text-emerald-600 font-semibold uppercase">Ingreso a CCF</p>
+                                                <p className="text-xs font-semibold text-slate-800 dark:text-white">{new Date(member.joined_date).toLocaleDateString()}</p>
                                             </div>
                                         </div>
                                     )}
@@ -194,13 +194,13 @@ export default function MemberDetailPage() {
 
                             {/* Notas pastorales (preview) */}
                             {member.pastoral_notes && (
-                                <div className="bg-white dark:bg-[#15171c] rounded-2xl border border-slate-200 dark:border-white/5 p-6 shadow-sm">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Notas Pastorales</p>
+                                <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Notas Pastorales</p>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed italic line-clamp-4">
                                         &ldquo;{member.pastoral_notes}&rdquo;
                                     </p>
                                     <button onClick={() => setSidebarOpen(true)}
-                                        className="mt-3 text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">
+                                        className="mt-3 font-semibold text-blue-600 uppercase tracking-wide hover:underline">
                                         Ver completo →
                                     </button>
                                 </div>

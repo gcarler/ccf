@@ -107,14 +107,14 @@ export default function ProjectsResponsesPage() {
                                 <div className="mt-3 flex items-center gap-2">
                                     <button
                                         onClick={() => router.push(`/projects/${item.project_id}`)}
-                                        className="px-3 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[10px] font-black uppercase tracking-widest text-slate-500"
+                                        className="px-3 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[10px] font-semibold uppercase tracking-wide text-slate-500"
                                     >
                                         Ver proyecto
                                     </button>
                                     <button
                                         onClick={() => resolveItem(item)}
                                         disabled={resolvingId === item.id}
-                                        className="px-3 py-1 rounded-lg bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                                        className="px-3 py-1 rounded-lg bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
                                     >
                                         {resolvingId === item.id ? 'Resolviendo...' : 'Resolver'}
                                     </button>

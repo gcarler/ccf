@@ -14,7 +14,7 @@ import clsx from 'clsx';
 import { motion } from 'framer-motion';
 
 const INPUT = "w-full bg-slate-50 dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-3 py-1.5 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all text-slate-900 dark:text-white";
-const LABEL = "text-[10px] font-black uppercase tracking-wide text-slate-400 ml-4";
+const LABEL = "text-[10px] font-semibold uppercase tracking-wide text-slate-400 ml-4";
 
 export default function EditCoursePage() {
     const params = useParams();
@@ -76,7 +76,7 @@ export default function EditCoursePage() {
 
     return (
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute top-0 right-0 w-[500px] h-48 bg-blue-600/5 rounded-full blur-[100px] pointer-events-none" />
 
             <WorkspaceToolbar
                 breadcrumbs={[
@@ -96,14 +96,14 @@ export default function EditCoursePage() {
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative z-10">
                 {loading ? (
-                    <div className="flex justify-center items-center h-64">
+                    <div className="flex justify-center items-center h-48">
                         <Loader2 className="animate-spin text-blue-600" size={32} />
                     </div>
                 ) : (
                     <motion.div variants={containerVariants} initial="hidden" animate="show" className="max-w-4xl mx-auto space-y-3">
 
                         <motion.header variants={itemVariants} className="space-y-3">
-                            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/10 rounded-full text-[10px] font-black uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/10 rounded-full text-[10px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
                                 <FileText size={13} strokeWidth={3} /> Edicion de Contenido
                             </div>
                             <h1 className="text-lg lg:text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
@@ -118,7 +118,7 @@ export default function EditCoursePage() {
                                     <div className="size-9 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shadow-inner">
                                         <FileText size={22} strokeWidth={2.5} />
                                     </div>
-                                    <h2 className="text-base font-black uppercase tracking-wide">Identidad del Programa</h2>
+                                    <h2 className="text-base font-semibold uppercase tracking-wide">Identidad del Programa</h2>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div className="space-y-2">
@@ -142,7 +142,7 @@ export default function EditCoursePage() {
                                     <div className="size-9 rounded-lg bg-sky-50 dark:bg-sky-500/10 flex items-center justify-center shadow-inner">
                                         <Clock size={22} strokeWidth={2.5} />
                                     </div>
-                                    <h2 className="text-base font-black uppercase tracking-wide">Configuracion Academica</h2>
+                                    <h2 className="text-base font-semibold uppercase tracking-wide">Configuracion Academica</h2>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                     <div className="space-y-2">
@@ -169,7 +169,7 @@ export default function EditCoursePage() {
                                     ].map(({ key, title, desc }) => (
                                         <label key={key} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-black/20 border-2 border-transparent cursor-pointer hover:border-blue-500/20 transition-all">
                                             <div>
-                                                <p className="text-sm font-black text-slate-800 dark:text-white">{title}</p>
+                                                <p className="text-sm font-semibold text-slate-800 dark:text-white">{title}</p>
                                                 <p className={LABEL}>{desc}</p>
                                             </div>
                                             <input type="checkbox" checked={(form as any)[key]}
@@ -182,7 +182,7 @@ export default function EditCoursePage() {
 
                             <div className="flex items-center justify-end gap-4 pt-4">
                                 <button type="button" onClick={() => router.back()}
-                                    className="px-3 py-1.5 text-[11px] font-black uppercase tracking-wide text-slate-400 hover:text-slate-800 dark:hover:text-white transition-all">
+                                    className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 hover:text-slate-800 dark:hover:text-white transition-all">
                                     Descartar
                                 </button>
                                 <button type="submit" disabled={saving}

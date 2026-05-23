@@ -41,7 +41,7 @@ export default function SpiritualTimelinePage() {
 
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-[#0f1012] overflow-y-auto font-display">
-            <div className="max-w-4xl mx-auto w-full p-6 space-y-6 pb-20">
+            <div className="max-w-4xl mx-auto w-full p-3 space-y-6 pb-4">
 
                 {/* Sub-header */}
                 <div className="flex items-center justify-between">
@@ -50,16 +50,16 @@ export default function SpiritualTimelinePage() {
                             <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
                                 <Calendar size={14} className="text-blue-600" />
                             </div>
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">Línea de Tiempo</span>
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-blue-600">Línea de Tiempo</span>
                         </div>
-                        <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white leading-none">
+                        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">
                             Mi Ruta de Victoria
                         </h1>
                         <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
                             Cada hito de tu caminar con Cristo, registrado y celebrado.
                         </p>
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all">
+                    <button className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all">
                         <Plus size={13} /> Registrar Hito
                     </button>
                 </div>
@@ -67,7 +67,7 @@ export default function SpiritualTimelinePage() {
                 {/* Timeline */}
                 {loading ? (
                     <div className="space-y-4">
-                        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-20 rounded-2xl" />)}
+                        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-20 rounded-lg" />)}
                     </div>
                 ) : milestones.length === 0 ? (
                     <EmptyState
@@ -100,14 +100,14 @@ export default function SpiritualTimelinePage() {
                                     >
                                         {/* Dot */}
                                         <div className={clsx(
-                                            'size-11 rounded-2xl flex items-center justify-center shrink-0 border relative z-10',
+                                            'size-6 rounded-lg flex items-center justify-center shrink-0 border relative z-10',
                                             def.bg, def.border
                                         )}>
                                             <Icon size={18} className={def.color} />
                                         </div>
 
                                         {/* Card */}
-                                        <div className="flex-1 bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/15 transition-all">
+                                        <div className="flex-1 bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-lg p-4 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/15 transition-all">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
                                                     <p className="text-[13px] font-bold text-slate-800 dark:text-white">{def.label}</p>
@@ -115,7 +115,7 @@ export default function SpiritualTimelinePage() {
                                                         <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">{m.notes}</p>
                                                     )}
                                                 </div>
-                                                <span className="shrink-0 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                                <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                                     {new Date(m.event_date).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' })}
                                                 </span>
                                             </div>
@@ -130,15 +130,15 @@ export default function SpiritualTimelinePage() {
                 {/* Upcoming milestones preview */}
                 {!loading && (
                     <section>
-                        <h2 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-3">Próximos Hitos</h2>
-                        <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-2xl overflow-hidden shadow-sm divide-y divide-slate-100 dark:divide-white/5">
+                        <h2 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">Próximos Hitos</h2>
+                        <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-lg overflow-hidden shadow-sm divide-y divide-slate-100 dark:divide-white/5">
                             {Object.entries(MILESTONE_DEFS)
                                 .filter(([key]) => !milestones.some(m => m.type === key))
                                 .map(([key, def]) => {
                                     const Icon = def.icon;
                                     return (
                                         <div key={key} className="flex items-center gap-3 px-4 py-3 opacity-50">
-                                            <div className={clsx('size-8 rounded-xl flex items-center justify-center border shrink-0', def.bg, def.border)}>
+                                            <div className={clsx('size-8 rounded-md flex items-center justify-center border shrink-0', def.bg, def.border)}>
                                                 <Icon size={14} className={def.color} />
                                             </div>
                                             <p className="text-[12px] font-bold text-slate-700 dark:text-slate-300 flex-1">{def.label}</p>

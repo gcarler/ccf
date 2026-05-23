@@ -28,15 +28,15 @@ export default function CertificateView({ data }: CertificateProps) {
             {/* Professional Certificate Render */}
             <div className="relative aspect-[1.414/1] w-full bg-white dark:bg-slate-900 border-[16px] border-slate-900 dark:border-blue-900/20 shadow-2xl p-4 flex flex-col items-center justify-between text-center overflow-hidden group">
                 {/* Background Decoration */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50 dark:bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-slate-50 dark:bg-blue-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+                <div className="absolute top-0 right-0 w-64 h-48 bg-slate-50 dark:bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                <div className="absolute bottom-0 left-0 w-64 h-48 bg-slate-50 dark:bg-blue-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
                 {/* Header */}
                 <div className="relative z-10 space-y-4">
                     <div className="size-10 bg-slate-900 dark:bg-blue-600 rounded-lg mx-auto flex items-center justify-center text-white shadow-xl">
                         <Award size={40} />
                     </div>
-                    <h1 className="text-sm font-black uppercase tracking-wide text-slate-400">Certificado de Logro Academico</h1>
+                    <h1 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Certificado de Logro Academico</h1>
                 </div>
 
                 {/* Body */}
@@ -59,7 +59,7 @@ export default function CertificateView({ data }: CertificateProps) {
                 {/* Footer */}
                 <div className="relative z-10 w-full flex justify-between items-end border-t border-slate-100 dark:border-white/5 pt-8">
                     <div className="text-left space-y-1">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Fecha de Emision</p>
+                        <p className="font-semibold text-slate-400 uppercase tracking-wide">Fecha de Emision</p>
                         <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{issueDate}</p>
                     </div>
 
@@ -73,11 +73,11 @@ export default function CertificateView({ data }: CertificateProps) {
                                 className="object-contain p-1"
                             />
                         </div>
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Validar: {data.certificate_code}</p>
+                        <p className="font-semibold text-slate-400 uppercase tracking-tighter">Validar: {data.certificate_code}</p>
                     </div>
 
                     <div className="text-right space-y-1">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Firma Autorizada</p>
+                        <p className="font-semibold text-slate-400 uppercase tracking-wide">Firma Autorizada</p>
                         <p className="text-sm font-bold text-slate-700 dark:text-slate-200 font-serif italic">Direccion Academica CCF</p>
                     </div>
                 </div>

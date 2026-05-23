@@ -173,25 +173,25 @@ export default function IntelligenceConsole() {
                 secondaryAction={{ label: 'Ver Logs', icon: Terminal, onClick: () => router.push('/admin/audit') }}
             />
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-20">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 pb-4">
                 {/* Main AI Stats */}
-                <div className="lg:col-span-8 space-y-8">
-                    <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="lg:col-span-8 space-y-3">
+                    <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <StatusCard label="Salud del Core" value={loadError ? 'DEGRADADA' : 'ÓPTIMA'} status={loadError ? 'degraded' : 'online'} icon={Cpu} color="blue" />
                         <StatusCard label="Insights Activos" value={insights.length.toString()} status="ready" icon={Sparkles} color="purple" />
                         <StatusCard label="Tareas en Cola" value={tasks.length.toString()} status="processing" icon={Layers} color="amber" />
                     </section>
 
                     {/* Ask Optimus Interface */}
-                    <section className="bg-slate-900 rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 -mr-20 -mt-20 size-64 bg-blue-600/20 rounded-full blur-[80px] group-hover:bg-blue-600/30 transition-all duration-1000" />
+                    <section className="bg-slate-900 rounded-lg p-4 text-white shadow-2xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 -mr-20 -mt-20 size-10 bg-blue-600/20 rounded-full blur-[80px] group-hover:bg-blue-600/30 transition-all duration-1000" />
                         
-                        <div className="relative z-10 space-y-8">
+                        <div className="relative z-10 space-y-3">
                             <div className="flex items-center gap-4">
-                                <div className="size-12 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20"><Bot size={28} /></div>
+                                <div className="size-7 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20"><Bot size={28} /></div>
                                 <div>
-                                    <h3 className="text-2xl font-black tracking-tight leading-none mb-1 uppercase">Consultar Base de Conocimientos</h3>
-                                    <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em]">Query el Cerebro Central de CCF</p>
+                                    <h3 className="text-lg font-bold tracking-tight leading-none mb-1 uppercase">Consultar Base de Conocimientos</h3>
+                                    <p className="font-semibold text-blue-400 uppercase tracking-wide">Query el Cerebro Central de CCF</p>
                                 </div>
                             </div>
 
@@ -199,11 +199,11 @@ export default function IntelligenceConsole() {
                                 <input 
                                     value={query} onChange={(e) => setQuery(e.target.value)}
                                     placeholder="¿Cuál es la tendencia de crecimiento en el curso de liderazgo?"
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 px-8 pr-16 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all placeholder:text-slate-500"
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-4 pr-16 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all placeholder:text-slate-500"
                                 />
                                 <button 
                                     onClick={handleAskOptimus} disabled={isAsking}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 size-12 bg-blue-600 hover:bg-blue-500 rounded-xl flex items-center justify-center transition-all active:scale-90"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 size-7 bg-blue-600 hover:bg-blue-500 rounded-md flex items-center justify-center transition-all active:scale-90"
                                 >
                                     {isAsking ? <Activity size={20} className="animate-spin" /> : <Send size={20} />}
                                 </button>
@@ -213,13 +213,13 @@ export default function IntelligenceConsole() {
                                 {aiResponse && (
                                     <motion.div 
                                         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                                        className="p-8 bg-white/5 border border-white/10 rounded-[2rem] space-y-4"
+                                        className="p-4 bg-white/5 border border-white/10 rounded-lg space-y-4"
                                     >
-                                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-400"><ShieldCheck size={14} /> Respuesta Certificada</div>
+                                        <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-emerald-400"><ShieldCheck size={14} /> Respuesta Certificada</div>
                                         <p className="text-slate-300 leading-relaxed text-sm font-medium">{aiResponse.answer}</p>
                                         <div className="pt-4 border-t border-white/5 flex gap-3 flex-wrap">
                                             {aiResponse.sources?.map((s: string, i: number) => (
-                                                <span key={i} className="px-3 py-1 bg-white/5 rounded-full text-[9px] font-black text-slate-500 uppercase">{s}</span>
+                                                <span key={i} className="px-3 py-1 bg-white/5 rounded-full font-semibold text-slate-500 uppercase">{s}</span>
                                             ))}
                                         </div>
                                     </motion.div>
@@ -231,50 +231,50 @@ export default function IntelligenceConsole() {
                     {/* Insights Wall */}
                     <section className="space-y-6">
                         <div className="flex justify-between items-center px-4">
-                            <h3 className="text-lg font-black tracking-tight uppercase tracking-widest">Intelligent Insights</h3>
+                            <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Intelligent Insights</h3>
                             <button
                                 onClick={() => void handleAcknowledgeAll()}
                                 disabled={acknowledgingAll || insights.every((insight) => insight.acknowledged)}
-                                className="text-[11px] font-black text-blue-600 uppercase tracking-widest hover:underline disabled:opacity-40 disabled:no-underline"
+                                className="font-semibold text-blue-600 uppercase tracking-wide hover:underline disabled:opacity-40 disabled:no-underline"
                             >
                                 {acknowledgingAll ? 'Procesando...' : 'Reconocer Todo'}
                             </button>
                         </div>
                         {loadError && (
-                            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600">
+                            <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600">
                                 {loadError}
                             </div>
                         )}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {insights.map((insight) => (
-                                <div key={insight.id} className="p-8 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity"><Zap size={48} className="text-blue-600" /></div>
+                                <div key={insight.id} className="p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity"><Zap size={48} className="text-blue-600" /></div>
                                     <div className="relative z-10 space-y-4">
                                         <div className="flex justify-between items-start">
-                                            <div className="size-10 rounded-2xl bg-slate-100 dark:bg-white/10 flex items-center justify-center text-blue-600"><BrainCircuit size={20} /></div>
-                                            {!insight.acknowledged && <div className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded text-[8px] font-black uppercase tracking-widest">NUEVO</div>}
+                                            <div className="size-10 rounded-lg bg-slate-100 dark:bg-white/10 flex items-center justify-center text-blue-600"><BrainCircuit size={20} /></div>
+                                            {!insight.acknowledged && <div className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded text-[8px] font-semibold uppercase tracking-wide">NUEVO</div>}
                                         </div>
                                         <div>
-                                            <h4 className="text-[15px] font-black text-slate-900 dark:text-white mb-1 uppercase tracking-tight">{insight.title}</h4>
+                                            <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 uppercase tracking-tight">{insight.title}</h4>
                                             <p className="text-[12px] font-medium text-slate-500 leading-tight">{insight.payload}</p>
                                         </div>
                                         {!insight.acknowledged ? (
                                             <button
                                                 onClick={() => void handleAcknowledgeInsight(insight.id)}
                                                 disabled={acknowledgingId === insight.id}
-                                                className="flex items-center gap-2 text-[10px] font-black text-blue-600 uppercase tracking-widest group-hover:gap-3 transition-all disabled:opacity-40"
+                                                className="flex items-center gap-2 font-semibold text-blue-600 uppercase tracking-wide group-hover:gap-3 transition-all disabled:opacity-40"
                                             >
                                                 {acknowledgingId === insight.id ? 'Procesando...' : 'Reconocer'} <ChevronRight size={14} />
                                             </button>
                                         ) : (
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Reconocido</span>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-600">Reconocido</span>
                                         )}
                                     </div>
                                 </div>
                             ))}
                         </div>
                         {!loading && insights.length === 0 && (
-                            <div className="rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-8 text-sm font-semibold text-slate-500">
+                            <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 text-sm font-semibold text-slate-500">
                                 No hay insights disponibles.
                             </div>
                         )}
@@ -282,11 +282,11 @@ export default function IntelligenceConsole() {
                 </div>
 
                 {/* Sidebar: Agents Status & Tasks */}
-                <aside className="lg:col-span-4 space-y-8">
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] p-10 shadow-xl space-y-10">
+                <aside className="lg:col-span-4 space-y-3">
+                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
                         <div>
-                            <div className="flex items-center justify-between mb-8">
-                                <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Estado de la Red</h4>
+                            <div className="flex items-center justify-between mb-3">
+                                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Estado de la Red</h4>
                                 <BarChart3 size={18} className="text-slate-300" />
                             </div>
                             <div className="space-y-6">
@@ -297,22 +297,22 @@ export default function IntelligenceConsole() {
                         </div>
 
                         <div className="pt-10 border-t border-slate-100 dark:border-white/5">
-                            <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-8">Cola de Procesos</h4>
+                            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Cola de Procesos</h4>
                             <div className="space-y-4">
                                 {tasks.map((task) => (
-                                    <div key={task.id} className="p-5 bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-between group">
+                                    <div key={task.id} className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg flex items-center justify-between group">
                                         <div className="flex items-center gap-4">
                                             <div className={clsx("size-3 rounded-full animate-pulse", task.status === 'running' ? 'bg-blue-500' : 'bg-slate-300')} />
                                             <div>
-                                                <p className="text-[12px] font-black text-slate-800 dark:text-white uppercase leading-none mb-1">{task.title}</p>
-                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{task.status}</p>
+                                                <p className="font-semibold text-slate-800 dark:text-white uppercase leading-none mb-1">{task.title}</p>
+                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{task.status}</p>
                                             </div>
                                         </div>
                                         <button className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity"><MoreHorizontal size={16} /></button>
                                     </div>
                                 ))}
                                 {!loading && tasks.length === 0 && (
-                                    <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 p-5 text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                                    <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 p-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">
                                         Sin tareas en cola
                                     </div>
                                 )}
@@ -320,17 +320,17 @@ export default function IntelligenceConsole() {
                         </div>
 
                         {showTaskComposer ? (
-                            <div className="space-y-3 rounded-2xl border border-slate-200 dark:border-white/10 p-4">
+                            <div className="space-y-3 rounded-lg border border-slate-200 dark:border-white/10 p-4">
                                 <input
                                     value={newTaskTitle}
                                     onChange={(event) => setNewTaskTitle(event.target.value)}
                                     placeholder="Título de la tarea"
-                                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none"
+                                    className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none"
                                 />
                                 <select
                                     value={newTaskPriority}
                                     onChange={(event) => setNewTaskPriority(event.target.value)}
-                                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none"
+                                    className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none"
                                 >
                                     <option value="low">Baja</option>
                                     <option value="medium">Media</option>
@@ -340,13 +340,13 @@ export default function IntelligenceConsole() {
                                     <button
                                         onClick={() => void handleCreateTask()}
                                         disabled={creatingTask || !newTaskTitle.trim()}
-                                        className="flex-1 rounded-xl bg-blue-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-40"
+                                        className="flex-1 rounded-md bg-blue-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-40"
                                     >
                                         {creatingTask ? 'Guardando...' : 'Crear'}
                                     </button>
                                     <button
                                         onClick={() => setShowTaskComposer(false)}
-                                        className="rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500"
+                                        className="rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500"
                                     >
                                         Cancelar
                                     </button>
@@ -355,22 +355,22 @@ export default function IntelligenceConsole() {
                         ) : (
                             <button
                                 onClick={() => setShowTaskComposer(true)}
-                                className="w-full py-5 bg-slate-900 dark:bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95"
+                                className="w-full py-2 bg-slate-900 dark:bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl transition-all active:scale-95"
                             >
                                 Asignar Tarea Manual
                             </button>
                         )}
                     </section>
 
-                    <section className="p-8 bg-blue-50 dark:bg-blue-900/10 rounded-[3rem] border border-blue-100 dark:border-blue-500/20">
+                    <section className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-500/20">
                         <div className="flex items-center gap-3 text-blue-600 dark:text-blue-400 mb-4">
                             <Activity size={18} />
-                            <h5 className="text-[11px] font-black uppercase tracking-widest">Uptime del Cerebro</h5>
+                            <h5 className="text-[11px] font-semibold uppercase tracking-wide">Uptime del Cerebro</h5>
                         </div>
                         <div className="h-2 w-full bg-blue-200 dark:bg-white/10 rounded-full overflow-hidden mb-2">
                             <div className="h-full bg-blue-600 w-[99.9%]" />
                         </div>
-                        <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest text-right">99.98% Anual</p>
+                        <p className="font-semibold text-blue-500 uppercase tracking-wide text-right">99.98% Anual</p>
                     </section>
                 </aside>
             </div>
@@ -388,19 +388,19 @@ function StatusCard({ label, value, status, icon: Icon, color }: any) {
         ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600'
         : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600';
     return (
-        <div className="p-8 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] shadow-sm flex flex-col gap-6 group hover:shadow-xl transition-all relative overflow-hidden">
+        <div className="p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-sm flex flex-col gap-3 group hover:shadow-xl transition-all relative overflow-hidden">
             <div className="flex justify-between items-start">
-                <div className={clsx("size-14 rounded-2xl flex items-center justify-center transition-transform group-hover:rotate-12", colors[color])}>
+                <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:rotate-12", colors[color])}>
                     <Icon size={28} />
                 </div>
                 <div className={clsx("flex items-center gap-1.5 px-2 py-1 rounded-lg", statusTone)}>
                     <div className={clsx("size-1.5 rounded-full animate-pulse", status === 'degraded' ? 'bg-rose-500' : 'bg-emerald-500')} />
-                    <span className="text-[8px] font-black uppercase">{status}</span>
+                    <span className="text-[8px] font-semibold uppercase">{status}</span>
                 </div>
             </div>
             <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
-                <h4 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{value}</h4>
+                <p className="font-semibold text-slate-400 uppercase tracking-wide mb-1">{label}</p>
+                <h4 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{value}</h4>
             </div>
         </div>
     );
@@ -410,7 +410,7 @@ function AgentState({ label, load, status, color }: any) {
     return (
         <div className="space-y-3">
             <div className="flex justify-between items-end">
-                <p className="text-[10px] font-black text-slate-800 dark:text-white uppercase leading-none">{label}</p>
+                <p className="font-semibold text-slate-800 dark:text-white uppercase leading-none">{label}</p>
                 <span className="text-[9px] font-bold text-slate-400 uppercase">{status}</span>
             </div>
             <div className="h-1.5 w-full bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">

@@ -199,7 +199,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                     <div className="relative">
                         <motion.div 
                             whileHover={{ scale: 1.05 }}
-                            className="size-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-lg shadow-2xl shadow-blue-500/30 border-4 border-white dark:border-[#1e1f21]"
+                            className="size-10 rounded-md bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-lg shadow-2xl shadow-blue-500/30 border-4 border-white dark:border-[#1e1f21]"
                         >
                             {selectedMember.first_name.charAt(0)}
                         </motion.div>
@@ -213,7 +213,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                             <span className="text-blue-600 dark:text-blue-400">{selectedMember.last_name}</span>
                         </h2>
                         <div className="flex items-center gap-2.5">
-                            <span className="px-3 py-1 rounded-xl bg-blue-500/10 text-blue-700 dark:text-blue-300 text-[9px] font-bold uppercase tracking-wider border border-blue-500/20">
+                            <span className="px-3 py-1 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 text-[9px] font-bold uppercase tracking-wider border border-blue-500/20">
                                 {selectedMember.role_in_family || 'Miembro'}
                             </span>
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide opacity-60">
@@ -231,7 +231,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                         { label: 'Asistencia', value: '92%', color: 'text-sky-600', bg: 'bg-sky-500/5', border: 'border-sky-500/10' }
                     ].map((kpi, i) => (
                         <div key={i} className={clsx(
-                            "p-4 rounded-xl border backdrop-blur-sm transition-all hover:scale-105 cursor-default",
+                            "p-4 rounded-md border backdrop-blur-sm transition-all hover:scale-105 cursor-default",
                             "bg-white/40 dark:bg-white/[0.03]",
                             kpi.border
                         )}>
@@ -272,7 +272,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                             <div>
                                 <h3 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wide mb-3 flex items-center gap-3"><Award className="text-blue-600" size={16} /> Perfil Ministerial</h3>
                                 <div className="space-y-4">
-                                    <div className={clsx("p-3 rounded-xl border transition-all", editMode ? "bg-white border-blue-200 ring-4 ring-blue-50" : "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/5")}>
+                                    <div className={clsx("p-3 rounded-md border transition-all", editMode ? "bg-white border-blue-200 ring-4 ring-blue-50" : "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/5")}>
                                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mb-2">Talentos Detectados</p>
                                         {editMode ? (
                                             <textarea 
@@ -284,7 +284,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                                             <p className="text-xs font-bold text-slate-700 dark:text-slate-300 italic">&quot;{selectedMember.talents || 'Pendiente por registrar'}&quot;</p>
                                         )}
                                     </div>
-                                    <div className={clsx("p-3 rounded-xl border transition-all", editMode ? "bg-white border-indigo-200 ring-4 ring-indigo-50" : "bg-blue-50/30 dark:bg-indigo-900/10 border-blue-100 dark:border-indigo-900/30")}>
+                                    <div className={clsx("p-3 rounded-md border transition-all", editMode ? "bg-white border-indigo-200 ring-4 ring-indigo-50" : "bg-blue-50/30 dark:bg-indigo-900/10 border-blue-100 dark:border-indigo-900/30")}>
                                         <p className="text-[9px] font-bold text-blue-400 uppercase tracking-wide mb-2">Dones Espirituales</p>
                                         {editMode ? (
                                             <textarea 
@@ -325,7 +325,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                                                         {event.type}
                                                     </span>
                                                 </div>
-                                                <div className="p-3 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-xl group-hover:bg-white dark:group-hover:bg-white/[0.05] transition-all group-hover:shadow-xl group-hover:shadow-blue-500/5 group-hover:border-blue-500/20">
+                                                <div className="p-3 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-md group-hover:bg-white dark:group-hover:bg-white/[0.05] transition-all group-hover:shadow-xl group-hover:shadow-blue-500/5 group-hover:border-blue-500/20">
                                                     <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">
                                                         {event.title || event.name || event.event_name || 'Evento'}
                                                     </h4>
@@ -335,7 +335,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="p-3 text-center bg-slate-50 dark:bg-white/5 rounded-xl border-2 border-dashed border-slate-100 dark:border-white/10 text-slate-300 text-[10px] font-bold uppercase tracking-wide">Sin actividad</div>
+                                    <div className="p-3 text-center bg-slate-50 dark:bg-white/5 rounded-md border-2 border-dashed border-slate-100 dark:border-white/10 text-slate-300 text-[10px] font-bold uppercase tracking-wide">Sin actividad</div>
                                 )}
                             </div>
                         </motion.div>
@@ -353,7 +353,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                             ) : tasks.length > 0 ? (
                                 <div className="space-y-3">
                                     {tasks.map(task => (
-                                        <div key={task.id} className="p-3 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl flex items-center justify-between group transition-all hover:border-blue-500/30">
+                                        <div key={task.id} className="p-3 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-md flex items-center justify-between group transition-all hover:border-blue-500/30">
                                             <div className="flex items-center gap-4">
                                                 <button 
                                                     onClick={() => handleUpdateTaskStatus(task.id, task.status === 'done' ? 'todo' : 'done')}
@@ -373,7 +373,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                                     ))}
                                 </div>
                             ) : (
-                                <div className="p-3 text-center text-slate-300 text-[10px] font-bold uppercase tracking-wide border-2 border-dashed border-slate-100 dark:border-white/10 rounded-xl">Sin tareas asignadas</div>
+                                <div className="p-3 text-center text-slate-300 text-[10px] font-bold uppercase tracking-wide border-2 border-dashed border-slate-100 dark:border-white/10 rounded-md">Sin tareas asignadas</div>
                             )}
                         </motion.div>
                     )}
@@ -385,11 +385,11 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                                 <div className="py-2 flex justify-center"><Loader2 className="animate-spin text-emerald-600" /></div>
                             ) : donations.length > 0 ? (
                                 <div className="space-y-3">
-                                    <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30">
+                                    <div className="p-4 rounded-md bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30">
                                         <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-1">Impacto Total</p>
                                         <p className="text-lg font-bold text-emerald-900 dark:text-emerald-50 tracking-tighter">${donations.reduce((a,b)=>a+b.amount, 0).toLocaleString()}</p>
                                     </div>
-                                    <div className="divide-y divide-slate-50 dark:divide-white/5 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-100 dark:border-white/10 overflow-hidden text-left">
+                                    <div className="divide-y divide-slate-50 dark:divide-white/5 bg-slate-50 dark:bg-black/20 rounded-md border border-slate-100 dark:border-white/10 overflow-hidden text-left">
                                         {donations.map((d,i) => (
                                             <div key={i} className="p-4 flex justify-between items-center">
                                                 <div className="space-y-0.5">
@@ -402,7 +402,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                                     </div>
                                 </div>
                             ) : (
-                                <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border-2 border-dashed border-slate-100 dark:border-white/10 text-slate-300 text-[10px] font-bold uppercase tracking-wide">Sin registros contables</div>
+                                <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-md border-2 border-dashed border-slate-100 dark:border-white/10 text-slate-300 text-[10px] font-bold uppercase tracking-wide">Sin registros contables</div>
                             )}
                         </motion.div>
                     )}
@@ -410,7 +410,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                     {modalTab === 'messages' && (
                         <motion.div key="messages" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="space-y-3">
                             <h3 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-3"><Mail className="text-blue-600" size={16} /> Mensajería Directa</h3>
-                            <form onSubmit={handleSendMessage} className="bg-slate-50 dark:bg-black/20 p-4 rounded-xl border border-slate-100 dark:border-white/10 space-y-2">
+                            <form onSubmit={handleSendMessage} className="bg-slate-50 dark:bg-black/20 p-4 rounded-md border border-slate-100 dark:border-white/10 space-y-2">
                                 <div className="flex p-1 bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/10">
                                     {['WhatsApp', 'SMS', 'Email'].map(ch => (
                                         <button 
@@ -418,7 +418,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                                             type="button" 
                                             onClick={() => setMessageChannel(ch.toLowerCase())} 
                                             className={clsx(
-                                                "flex-1 py-2 rounded-xl text-[9px] font-bold uppercase tracking-wide transition-all", 
+                                                "flex-1 py-2 rounded-md text-[9px] font-bold uppercase tracking-wide transition-all", 
                                                 messageChannel === ch.toLowerCase() ? "bg-blue-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"
                                             )}
                                         >
@@ -430,10 +430,10 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                                     required 
                                     value={newMessageContent} 
                                     onChange={e => setNewMessageContent(e.target.value)} 
-                                    className="w-full p-3 rounded-xl border border-slate-100 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-bold focus:ring-4 focus:ring-blue-500/10 outline-none transition-all min-h-[120px] dark:text-white" 
+                                    className="w-full p-3 rounded-md border border-slate-100 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-bold focus:ring-4 focus:ring-blue-500/10 outline-none transition-all min-h-12 dark:text-white" 
                                     placeholder={`Escribe mensaje para ${selectedMember.first_name}...`}
                                 />
-                                <button type="submit" disabled={!newMessageContent} className="w-full py-2 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 group">
+                                <button type="submit" disabled={!newMessageContent} className="w-full py-2 bg-blue-600 text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 group">
                                     Enviar Ahora <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                                 </button>
                             </form>
@@ -445,7 +445,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                             <h3 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-3"><ShieldCheck className="text-blue-600" size={16} /> Notas del Pastor</h3>
                             <div className="space-y-1.5">
                                 <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wide ml-2">Información Privada y de Seguimiento</label>
-                                <div className={clsx("p-4 rounded-xl border transition-all min-h-[200px]", editMode ? "bg-white dark:bg-[#1e1f21] border-blue-200 ring-4 ring-blue-50" : "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/10")}>
+                                <div className={clsx("p-4 rounded-md border transition-all min-h-[200px]", editMode ? "bg-white dark:bg-[#1e1f21] border-blue-200 ring-4 ring-blue-50" : "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/10")}>
                                     {editMode ? (
                                         <textarea 
                                             value={editedMember.pastoral_notes || ''} 

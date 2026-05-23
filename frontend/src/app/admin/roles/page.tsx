@@ -151,22 +151,22 @@ export default function RolesPage() {
                 }}
             />
 
-            <div className="max-w-6xl mx-auto p-8 relative z-10 -mt-10">
+            <div className="max-w-6xl mx-auto p-4 relative z-10 -mt-3">
                 {loading ? (
-                    <div className="flex items-center justify-center h-64">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
+                    <div className="flex items-center justify-center h-48">
+                        <div className="animate-spin rounded-full h-8 w-12 border-b-2 border-slate-900"></div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {roles.map(role => (
                             <div 
                                 key={role.role_id}
                                 onClick={() => openEditDrawer(role)}
-                                className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xl shadow-slate-200/20 hover:shadow-2xl hover:-translate-y-1 transition-all cursor-pointer group"
+                                className="bg-white rounded-lg p-3 border border-slate-100 shadow-xl shadow-slate-200/20 hover:shadow-2xl hover:-translate-y-1 transition-all cursor-pointer group"
                             >
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                        <div className="w-10 h-10 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center">
                                             <Shield size={20} />
                                         </div>
                                         <h3 className="font-bold text-slate-800">{role.name}</h3>
@@ -176,7 +176,7 @@ export default function RolesPage() {
                                     </button>
                                 </div>
                                 <div className="space-y-3">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                         {role.permissions.length} Permisos Activos
                                     </p>
                                     <div className="flex flex-wrap gap-1.5">
@@ -205,20 +205,20 @@ export default function RolesPage() {
                 title={editingRole.role_id ? "Editar Rol" : "Nuevo Rol"}
                 subtitle="Configura los alcances de este perfil"
                 actions={
-                    <button onClick={handleSaveRole} className="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 active:scale-95 transition-all shadow-xl">
+                    <button onClick={handleSaveRole} className="flex items-center gap-2 px-3 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-wide hover:bg-slate-800 active:scale-95 transition-all shadow-xl">
                         <Save size={14} /> Guardar Cambios
                     </button>
                 }
             >
-                <div className="space-y-8 p-1">
+                <div className="space-y-3 p-1">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Nombre del Rol</label>
+                        <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 ml-2">Nombre del Rol</label>
                         <input 
                             type="text"
                             value={editingRole.name || ''}
                             onChange={e => setEditingRole({...editingRole, name: e.target.value})}
                             placeholder="Ej. Secretaria CRM"
-                            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 font-bold text-slate-800 transition-all"
+                            className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 font-bold text-slate-800 transition-all"
                         />
                     </div>
 
@@ -232,7 +232,7 @@ export default function RolesPage() {
                             if (perms.length === 0) return null;
                             return (
                                 <div key={group} className="space-y-3">
-                                    <h5 className="text-[11px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg inline-block">{group}</h5>
+                                    <h5 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg inline-block">{group}</h5>
                                     <div className="grid grid-cols-1 gap-2">
                                         {perms.map(p => {
                                             const isActive = editingRole.permissions?.includes(p);
@@ -240,7 +240,7 @@ export default function RolesPage() {
                                                 <div 
                                                     key={p} 
                                                     onClick={() => togglePermission(p)}
-                                                    className={`flex items-start gap-4 p-4 rounded-xl cursor-pointer border transition-all ${isActive ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50'}`}
+                                                    className={`flex items-start gap-4 p-4 rounded-md cursor-pointer border transition-all ${isActive ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50'}`}
                                                 >
                                                     <div className={`mt-0.5 shrink-0 w-5 h-5 rounded flex items-center justify-center transition-all ${isActive ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-transparent border border-slate-200'}`}>
                                                         <Check size={12} strokeWidth={4} />

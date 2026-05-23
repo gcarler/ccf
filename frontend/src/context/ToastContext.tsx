@@ -42,13 +42,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 {toasts.map((toast) => (
                     <div
                         key={toast.id}
-                        className={`pointer-events-auto flex items-center gap-3 p-4 rounded-2xl border shadow-2xl glass-card animate-in slide-in-from-right-10 fade-in duration-300 min-w-[300px] max-w-md ${toast.type === 'success' ? 'bg-emerald-50/90 border-emerald-100 text-emerald-800' :
+                        className={`pointer-events-auto flex items-center gap-3 p-4 rounded-lg border shadow-2xl glass-card animate-in slide-in-from-right-10 fade-in duration-300 min-w-[300px] max-w-md ${toast.type === 'success' ? 'bg-emerald-50/90 border-emerald-100 text-emerald-800' :
                                 toast.type === 'error' ? 'bg-rose-50/90 border-rose-100 text-rose-800' :
                                     toast.type === 'warning' ? 'bg-amber-50/90 border-amber-100 text-amber-800' :
                                         'bg-blue-50/90 border-blue-100 text-blue-800'
                             }`}
                     >
-                        <div className={`p-2 rounded-xl ${toast.type === 'success' ? 'bg-emerald-500 text-white' :
+                        <div className={`p-2 rounded-md ${toast.type === 'success' ? 'bg-emerald-500 text-white' :
                                 toast.type === 'error' ? 'bg-rose-500 text-white' :
                                     toast.type === 'warning' ? 'bg-amber-500 text-white' :
                                         'bg-blue-500 text-white'

@@ -275,7 +275,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 20, scale: 0.96 }}
                     transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="fixed bottom-24 right-4 left-4 sm:right-8 sm:left-auto w-auto sm:w-[550px] max-w-full z-[9000] shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] rounded-2xl bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 flex flex-col overflow-hidden font-display pointer-events-auto"
+                    className="fixed bottom-24 right-4 left-4 sm:right-8 sm:left-auto w-auto sm:w-[550px] max-w-full z-[9000] shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] rounded-lg bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 flex flex-col overflow-hidden font-display pointer-events-auto"
                 >
                     {/* ── TAB BAR ─────────────────────────────── */}
                     <div className="flex items-center border-b border-slate-100 dark:border-white/5 px-2 justify-between">
@@ -338,7 +338,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                             {type === 'task' && (
                                                 <div className="flex flex-col">
                                                     {/* Breadcrumb path */}
-                                                    <div className="flex items-center gap-1 px-5 pt-3 pb-1 text-[11px] text-slate-400">
+                                                    <div className="flex items-center gap-1 px-3 pt-3 pb-1 text-[11px] text-slate-400">
                                                         <span className="hover:text-slate-600 cursor-pointer">Espacio del equipo</span>
                                                         <ChevronRight size={11} />
                                                         <span className="hover:text-slate-600 cursor-pointer">Proyectos</span>
@@ -346,7 +346,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         <span className="font-medium text-slate-600 dark:text-slate-300">General</span>
                                                     </div>
                                                     {/* Project + type selectors */}
-                                                    <div className="flex items-center gap-2 px-5 pt-2 pb-2 relative z-[95]">
+                                                    <div className="flex items-center gap-2 px-3 pt-2 pb-2 relative z-[95]">
                                                         <div className="relative">
                                                             <button 
                                                                 onClick={(e) => { e.stopPropagation(); setShowProjectDropdown(!showProjectDropdown); }}
@@ -358,7 +358,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                                 <ChevronDown size={11} />
                                                             </button>
                                                             {showProjectDropdown && (
-                                                                <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg z-[9999] py-1 max-h-48 overflow-y-auto scrollbar-thin">
+                                                                <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-lg z-[9999] py-1 max-h-48 overflow-y-auto scrollbar-thin">
                                                                     {projects.map(p => (
                                                                         <button
                                                                             key={p.id}
@@ -389,11 +389,11 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         onChange={e => setTitle(e.target.value)}
                                                         onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSubmit()}
                                                         placeholder="Escribe el nombre de Tarea o pulsa «/» para ver comandos"
-                                                        className="px-5 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none w-full"
+                                                        className="px-3 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none w-full"
                                                     />
 
                                                     {/* Description section */}
-                                                    <div className="px-5 pb-3">
+                                                    <div className="px-3 pb-3">
                                                         {showDescription ? (
                                                             <div className="space-y-2 w-full">
                                                                 <textarea
@@ -439,13 +439,13 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                     </div>
 
                                                     {/* Properties bar */}
-                                                    <div className="flex items-center gap-2 px-5 py-3 border-t border-slate-100 dark:border-white/5 flex-wrap">
+                                                    <div className="flex items-center gap-2 px-3 py-3 border-t border-slate-100 dark:border-white/5 flex-wrap">
                                                         {/* Status */}
                                                         <button 
                                                             onClick={cycleStatus}
                                                             title="Clic para cambiar estado"
                                                             className={clsx(
-                                                                'px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-wide cursor-pointer hover:opacity-85 transition-all active:scale-95',
+                                                                'px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wide cursor-pointer hover:opacity-85 transition-all active:scale-95',
                                                                 STATUS_COLORS[status] ?? 'bg-slate-100 text-slate-600'
                                                             )}
                                                         >
@@ -461,7 +461,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                                 }}
                                                                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-blue-200 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-500/10 text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:opacity-85 transition-colors"
                                                             >
-                                                                <span className="size-4 rounded-full bg-blue-600 flex items-center justify-center text-white text-[9px] font-black uppercase">
+                                                                <span className="size-4 rounded-full bg-blue-600 flex items-center justify-center text-white text-[9px] font-semibold uppercase">
                                                                     {user?.username?.substring(0, 2).toUpperCase() || 'MI'}
                                                                 </span>
                                                                 Asignado a mí
@@ -537,7 +537,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                             {showTagsDropdown && (
                                                                 <div 
                                                                     onClick={e => e.stopPropagation()}
-                                                                    className="absolute bottom-full left-0 mb-1 w-44 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg z-[9999] py-1"
+                                                                    className="absolute bottom-full left-0 mb-1 w-44 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-lg z-[9999] py-1"
                                                                 >
                                                                     {['Ministerio', 'Comunidad', 'Servicio', 'Planeación', 'Logística'].map(t => {
                                                                         const isSelected = tags.includes(t);
@@ -564,7 +564,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                     </div>
 
                                                     {/* Custom fields section */}
-                                                    <div className="px-5 py-3 border-t border-slate-100 dark:border-white/5">
+                                                    <div className="px-3 py-3 border-t border-slate-100 dark:border-white/5">
                                                         <p className="text-[11px] font-bold text-slate-400 mb-2">Campos</p>
                                                         <button className="flex items-center gap-1.5 px-3 py-1.5 border border-dashed border-slate-200 dark:border-white/10 rounded-lg text-[11px] font-medium text-slate-400 hover:border-slate-300 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
                                                             <Plus size={12} />
@@ -578,7 +578,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                             {type === 'event' && (
                                                 <div className="flex flex-col">
                                                     {/* Top options */}
-                                                    <div className="flex items-center gap-2 px-5 pt-3 pb-2 text-[12px] text-slate-500 relative z-[95]">
+                                                    <div className="flex items-center gap-2 px-3 pt-3 pb-2 text-[12px] text-slate-500 relative z-[95]">
                                                         {/* Event Type dropdown */}
                                                         <div className="relative">
                                                             <button 
@@ -590,7 +590,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                                 <ChevronDown size={11} />
                                                             </button>
                                                             {showEventTypeDropdown && (
-                                                                <div className="absolute top-full left-0 mt-1 w-32 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg z-[9999] py-1">
+                                                                <div className="absolute top-full left-0 mt-1 w-32 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-lg z-[9999] py-1">
                                                                     {['Reunión', 'Cita', 'Celebración', 'Taller'].map(opt => (
                                                                         <button
                                                                             key={opt}
@@ -622,7 +622,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                                 <ChevronDown size={11} />
                                                             </button>
                                                             {showProjectDropdown && (
-                                                                <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg z-[9999] py-1 max-h-48 overflow-y-auto scrollbar-thin">
+                                                                <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-lg z-[9999] py-1 max-h-48 overflow-y-auto scrollbar-thin">
                                                                     <button
                                                                         onClick={() => {
                                                                             setSelectedProjectId(null);
@@ -658,11 +658,11 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         onChange={e => setTitle(e.target.value)}
                                                         onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSubmit()}
                                                         placeholder="Añade un título a la reunión o cita..."
-                                                        className="px-5 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
+                                                        className="px-3 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
                                                     />
 
                                                     {/* Event details */}
-                                                    <div className="px-5 py-3 space-y-2">
+                                                    <div className="px-3 py-3 space-y-2">
                                                         <div className="flex items-center gap-3 flex-wrap">
                                                             <Calendar size={14} className="text-slate-400 font-semibold" />
                                                             <input 
@@ -705,7 +705,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                             {/* ─── ESTRATEGIA EVANGELISMO ─── */}
                                             {type === 'evangelism_strategy' && (
                                                 <div className="flex flex-col">
-                                                    <div className="flex items-center gap-2 px-5 pt-3 pb-2 text-[12px] text-slate-500 relative z-[95]">
+                                                    <div className="flex items-center gap-2 px-3 pt-3 pb-2 text-[12px] text-slate-500 relative z-[95]">
                                                         <div className="relative">
                                                             <button 
                                                                 onClick={(e) => { e.stopPropagation(); setShowStrategyTypeDropdown(!showStrategyTypeDropdown); }}
@@ -716,7 +716,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                                 <ChevronDown size={11} />
                                                             </button>
                                                             {showStrategyTypeDropdown && (
-                                                                <div className="absolute top-full left-0 mt-1 w-44 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg z-[9999] py-1">
+                                                                <div className="absolute top-full left-0 mt-1 w-44 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-lg z-[9999] py-1">
                                                                     {['Campaña de Alcance', 'Consolidación', 'Discipulado', 'Evangelismo Personal'].map(opt => (
                                                                         <button
                                                                             key={opt}
@@ -740,10 +740,10 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         onChange={e => setTitle(e.target.value)}
                                                         onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSubmit()}
                                                         placeholder="Nombre de la estrategia..."
-                                                        className="px-5 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none w-full"
+                                                        className="px-3 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none w-full"
                                                     />
 
-                                                    <div className="px-5 py-3 space-y-2">
+                                                    <div className="px-3 py-3 space-y-2">
                                                         <div className="flex items-center gap-3 flex-wrap">
                                                             <Calendar size={14} className="text-slate-400 font-semibold" />
                                                             <input 
@@ -776,7 +776,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                             {/* ─── DOCUMENTO ─── */}
                                             {type === 'doc' && (
                                                 <div className="flex flex-col py-2">
-                                                    <div className="flex items-center gap-2 px-5 pt-2 pb-3">
+                                                    <div className="flex items-center gap-2 px-3 pt-2 pb-3">
                                                         <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                                                             <List size={12} />
                                                             Mis documentos
@@ -788,9 +788,9 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         value={title}
                                                         onChange={e => setTitle(e.target.value)}
                                                         placeholder="Ponle un nombre a este documento..."
-                                                        className="px-5 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
+                                                        className="px-3 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
                                                     />
-                                                    <div className="px-5 py-3 border-t border-slate-100 dark:border-white/5 mt-3">
+                                                    <div className="px-3 py-3 border-t border-slate-100 dark:border-white/5 mt-3">
                                                         {showDescription ? (
                                                             <textarea
                                                                 value={description}
@@ -820,7 +820,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                             </div>
                                                         )}
                                                         <div className="pt-4">
-                                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Añadir nuevo elemento</p>
+                                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Añadir nuevo elemento</p>
                                                             <div className="space-y-1">
                                                                 <DocAddBtn icon={Table2} label="Tabla" />
                                                                 <DocAddBtn icon={Columns} label="Columna" />
@@ -839,9 +839,9 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         value={title}
                                                         onChange={e => setTitle(e.target.value)}
                                                         placeholder="Escribe el nombre del recordatorio o pulsa «/» para ver comandos"
-                                                        className="px-5 py-4 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none w-full"
+                                                        className="px-3 py-1.5 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none w-full"
                                                     />
-                                                    <div className="px-5 pb-3">
+                                                    <div className="px-3 pb-3">
                                                         {showDescription ? (
                                                             <textarea
                                                                 value={description}
@@ -859,7 +859,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                             </button>
                                                         )}
                                                     </div>
-                                                    <div className="flex items-center gap-2 px-5 py-3 border-t border-slate-100 dark:border-white/5">
+                                                    <div className="flex items-center gap-2 px-3 py-3 border-t border-slate-100 dark:border-white/5">
                                                         <ReminderChip icon={Calendar} label="Hoy" />
                                                         <ReminderChip label="Para mí" avatar />
                                                         <ReminderChip icon={Bell} label="Notificarme" />
@@ -870,7 +870,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                             {/* ─── PIZARRA ─── */}
                                             {type === 'whiteboard' && (
                                                 <div className="flex flex-col py-2">
-                                                    <div className="flex items-center gap-2 px-5 pt-2 pb-3">
+                                                    <div className="flex items-center gap-2 px-3 pt-2 pb-3">
                                                         <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-600 dark:text-slate-300">
                                                             <List size={12} />
                                                             Mis pizarras
@@ -882,11 +882,11 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         value={title}
                                                         onChange={e => setTitle(e.target.value)}
                                                         placeholder="Ponle un nombre a esta pizarra..."
-                                                        className="px-5 py-4 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
+                                                        className="px-3 py-1.5 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
                                                     />
                                                     
                                                     {/* Background option styling */}
-                                                    <div className="px-5 py-3 border-t border-slate-100 dark:border-white/5 space-y-2">
+                                                    <div className="px-3 py-3 border-t border-slate-100 dark:border-white/5 space-y-2">
                                                         <p className="text-[11px] font-bold text-slate-400">Diseño de Pizarra</p>
                                                         <div className="flex gap-2">
                                                             {['grid', 'dots', 'blank'].map(bg => (
@@ -917,11 +917,11 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                         value={title}
                                                         onChange={e => setTitle(e.target.value)}
                                                         placeholder="Nombre del panel..."
-                                                        className="px-5 py-4 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
+                                                        className="px-3 py-1.5 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
                                                     />
                                                     
                                                     {/* Layout style option */}
-                                                    <div className="px-5 py-3 border-t border-slate-100 dark:border-white/5 space-y-2">
+                                                    <div className="px-3 py-3 border-t border-slate-100 dark:border-white/5 space-y-2">
                                                         <p className="text-[11px] font-bold text-slate-400">Vista predeterminada del Panel</p>
                                                         <div className="flex gap-2 flex-wrap">
                                                             {[
@@ -952,7 +952,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                     </AnimatePresence>
 
                                     {/* ── FOOTER ──────────────────────────────── */}
-                                    <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100 dark:border-white/5">
+                                    <div className="flex items-center justify-between px-3 py-3 border-t border-slate-100 dark:border-white/5">
                                         {/* Left actions */}
                                         <div className="flex items-center gap-2">
                                             {(type === 'doc' || type === 'whiteboard') && (
@@ -1009,7 +1009,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                 <ChevronDown size={13} />
                                             </button>
                                             {showSubmitDropdown && (
-                                                <div className="absolute bottom-full right-0 mb-1 w-44 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg z-[9999] py-1">
+                                                <div className="absolute bottom-full right-0 mb-1 w-44 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-lg z-[9999] py-1">
                                                     <button
                                                         onClick={() => {
                                                             setSubmitOption('create');

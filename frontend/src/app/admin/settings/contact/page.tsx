@@ -39,28 +39,28 @@ export default function AdminSettingsContactPage() {
     return (
         <div className="min-h-full bg-slate-950/20 font-display">
             <div className="bg-slate-900/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-20">
-                <div className="px-8 py-5 flex items-center justify-between">
+                <div className="px-4 py-2 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Contact size={18} className="text-primary" />
-                        <h1 className="text-[13px] font-black uppercase tracking-widest text-white">
+                        <h1 className="text-[13px] font-semibold uppercase tracking-wide text-white">
                             Información de Contacto
                         </h1>
                     </div>
                     <div className="flex items-center gap-3">
                         {saved && (
                             <motion.span initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
-                                className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-xl text-[10px] font-black uppercase tracking-widest">
+                                className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-md text-[10px] font-semibold uppercase tracking-wide">
                                 ✓ Guardado
                             </motion.span>
                         )}
                         {!editing ? (
                             <button onClick={() => setEditing(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/15 text-white border border-white/10 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all">
+                                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/15 text-white border border-white/10 rounded-md text-[11px] font-semibold uppercase tracking-wide transition-all">
                                 <Edit2 size={14} /> Editar
                             </button>
                         ) : (
                             <button onClick={handleSave}
-                                className="flex items-center gap-2 px-5 py-2 bg-primary hover:bg-primary/80 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 transition-all">
+                                className="flex items-center gap-2 px-3 py-2 bg-primary hover:bg-primary/80 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-primary/20 transition-all">
                                 <Save size={14} /> Guardar
                             </button>
                         )}
@@ -68,14 +68,14 @@ export default function AdminSettingsContactPage() {
                 </div>
             </div>
 
-            <div className="max-w-2xl mx-auto px-8 py-10 space-y-8">
+            <div className="max-w-2xl mx-auto px-4 py-1.5 space-y-3">
                 {/* Contact Points */}
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                    className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-3xl p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Medios de Contacto</p>
+                    className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Medios de Contacto</p>
                         {editing && (
-                            <button className="flex items-center gap-1 text-primary text-[10px] font-black uppercase tracking-widest hover:opacity-70 transition-opacity">
+                            <button className="flex items-center gap-1 text-primary text-[10px] font-semibold uppercase tracking-wide hover:opacity-70 transition-opacity">
                                 <Plus size={12} /> Agregar
                             </button>
                         )}
@@ -84,12 +84,12 @@ export default function AdminSettingsContactPage() {
                         {contacts.map(c => {
                             const Icon = TYPE_ICON[c.type] ?? Phone;
                             return (
-                                <div key={c.id} className="flex items-center gap-4 p-3 rounded-2xl bg-white/5 hover:bg-white/8 transition-all">
-                                    <div className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${TYPE_COLOR[c.type]}`}>
+                                <div key={c.id} className="flex items-center gap-4 p-3 rounded-lg bg-white/5 hover:bg-white/8 transition-all">
+                                    <div className={`size-10 rounded-md flex items-center justify-center shrink-0 ${TYPE_COLOR[c.type]}`}>
                                         <Icon size={16} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{c.label}</p>
+                                        <p className="font-semibold text-slate-500 uppercase tracking-wide">{c.label}</p>
                                         {editing ? (
                                             <input
                                                 value={c.value}
@@ -122,14 +122,14 @@ export default function AdminSettingsContactPage() {
 
                 {/* Office Hours */}
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                    className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-3xl p-6">
-                    <div className="flex items-center gap-2 mb-6">
+                    className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-3">
                         <Clock size={14} className="text-primary" />
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Horarios de Atención</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Horarios de Atención</p>
                     </div>
                     <div className="space-y-3">
                         {schedule.map((s, i) => (
-                            <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-white/5">
+                            <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                                 <p className="text-sm font-bold text-slate-300">{s.day}</p>
                                 {editing ? (
                                     <input

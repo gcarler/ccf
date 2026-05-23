@@ -18,9 +18,9 @@ function ResetPasswordContent() {
 
     if (!token) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 px-6">
-                <div className="p-8 rounded-3xl bg-slate-900 border border-white/10 text-center space-y-4">
-                    <h1 className="text-2xl font-black">Token inválido</h1>
+            <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 px-3">
+                <div className="p-4 rounded-lg bg-slate-900 border border-white/10 text-center space-y-4">
+                    <h1 className="text-lg font-black">Token inválido</h1>
                     <p className="text-slate-400 text-sm">El enlace no es válido o ya fue utilizado.</p>
                     <Link href="/auth/forgot" className="text-primary font-semibold text-sm hover:underline">
                         Solicitar uno nuevo
@@ -56,15 +56,15 @@ function ResetPasswordContent() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 px-6">
-            <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl p-8 space-y-6">
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 px-3">
+            <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl rounded-lg border border-white/10 shadow-2xl p-4 space-y-6">
                 <div>
-                    <h1 className="text-3xl font-black tracking-tight">Restablecer contraseña</h1>
+                    <h1 className="text-xl font-bold tracking-tight">Restablecer contraseña</h1>
                     <p className="text-slate-400 text-sm mt-2">Crea una nueva contraseña segura para tu cuenta.</p>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-black uppercase tracking-[0.3em] text-slate-500">Nueva contraseña</label>
+                        <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Nueva contraseña</label>
                         <div className="relative">
                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                             <input
@@ -73,13 +73,13 @@ function ResetPasswordContent() {
                                 minLength={6}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-slate-900 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-primary"
+                                className="w-full bg-slate-900 border border-white/10 rounded-lg py-1.5 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-primary"
                                 placeholder="••••••••"
                             />
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-black uppercase tracking-[0.3em] text-slate-500">Confirmar contraseña</label>
+                        <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Confirmar contraseña</label>
                         <div className="relative">
                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                             <input
@@ -88,7 +88,7 @@ function ResetPasswordContent() {
                                 minLength={6}
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="w-full bg-slate-900 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-primary"
+                                className="w-full bg-slate-900 border border-white/10 rounded-lg py-1.5 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-primary"
                                 placeholder="••••••••"
                             />
                         </div>
@@ -96,7 +96,7 @@ function ResetPasswordContent() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-4 bg-primary rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-primary/90 transition flex items-center justify-center gap-2 disabled:opacity-60"
+                        className="w-full py-1.5 bg-primary rounded-lg font-semibold uppercase tracking-wide text-sm hover:bg-primary/90 transition flex items-center justify-center gap-2 disabled:opacity-60"
                     >
                         {loading && <Loader2 className="w-4 h-4 animate-spin" />} Actualizar contraseña
                     </button>

@@ -81,7 +81,7 @@ export function DataTable({ data, columns, onRowClick }: DataTableProps) {
                     ))}
                     {table.getRowModel().rows.length === 0 && (
                         <tr>
-                            <td colSpan={columns.length} className="h-16 text-center text-slate-400 font-medium text-xs">
+                            <td colSpan={columns.length} className="h-8 text-center text-slate-400 font-medium text-xs">
                                 No se encontraron resultados.
                             </td>
                         </tr>

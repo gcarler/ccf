@@ -129,7 +129,7 @@ export default function AdminContentList() {
                 rightActions={
                     <button 
                         onClick={() => router.push('/admin/content/courses/new')}
-                        className="flex items-center gap-3 px-8 py-3 bg-blue-600 text-white rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all hover:bg-blue-700"
+                        className="flex items-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all hover:bg-blue-700"
                     >
                         <Plus size={18} /> Crear Nuevo
                     </button>
@@ -137,15 +137,15 @@ export default function AdminContentList() {
             />
 
             {/* Cinematic Tabs */}
-            <div className="flex px-10 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 shrink-0 relative overflow-hidden">
+            <div className="flex px-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 shrink-0 relative overflow-hidden">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#3b82f605_0%,_transparent_50%)] pointer-events-none" />
                 <TabBtn label="Cursos Faro" active={activeTab === 'courses'} onClick={() => setActiveTab('courses')} icon={BookOpen} />
                 <TabBtn label="Prédicas HD" active={activeTab === 'sermons'} onClick={() => setActiveTab('sermons')} icon={Video} />
                 <TabBtn label="Guías y Material" active={activeTab === 'resources'} onClick={() => setActiveTab('resources')} icon={FileText} />
             </div>
 
-            <main className="flex-1 overflow-y-auto scrollbar-thin p-8 lg:p-12 relative pb-40">
-                <div className="max-w-6xl mx-auto space-y-10 relative z-10">
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative pb-4">
+                <div className="max-w-6xl mx-auto space-y-3 relative z-10">
                     
                     {/* Search Bar Cinematic */}
                     <div className="relative group">
@@ -153,18 +153,18 @@ export default function AdminContentList() {
                         <input 
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
-                            className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] py-6 pl-16 pr-8 text-sm font-bold shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none"
+                            className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2 pl-16 pr-8 text-sm font-bold shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none"
                             placeholder={`Buscar en la biblioteca de ${activeTab === 'courses' ? 'cursos' : 'contenidos'}...`}
                         />
                     </div>
 
                     <AnimatePresence mode="wait">
                         {loading ? (
-                            <div className="py-40 flex flex-col items-center justify-center gap-6 text-slate-400 font-black uppercase tracking-[0.5em] animate-pulse">
+                            <div className="py-1.5 flex flex-col items-center justify-center gap-3 text-slate-400 font-semibold uppercase tracking-wide animate-pulse">
                                 <Loader2 className="animate-spin" size={48} strokeWidth={1.5} /> Sincronizando Biblioteca...
                             </div>
                         ) : filteredItems.length > 0 && viewType === 'grid' ? (
-                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                                 {filteredItems.map((item, i) => (
                                     <motion.button
                                         key={item.id}
@@ -172,53 +172,53 @@ export default function AdminContentList() {
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: i * 0.04 }}
                                         onClick={() => openItem(item)}
-                                        className="text-left content-aura bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-7 rounded-[2.5rem] shadow-sm hover:shadow-2xl transition-all"
+                                        className="text-left content-aura bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-7 rounded-lg shadow-sm hover:shadow-2xl transition-all"
                                     >
-                                        <div className={clsx("size-16 rounded-[1.5rem] flex items-center justify-center mb-8", item.is_published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>
+                                        <div className={clsx("size-8 rounded-lg flex items-center justify-center mb-3", item.is_published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>
                                             <BookOpen size={30} strokeWidth={1.5} />
                                         </div>
                                         <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight line-clamp-2">{item.title}</h3>
-                                        <p className="mt-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.code || activeTab} · {item.duration_hours || 0} horas</p>
-                                        <span className={clsx("inline-flex mt-6 px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest", item.is_published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{item.is_published ? 'Publicado' : 'Borrador'}</span>
+                                        <p className="mt-3 text-[10px] font-bold text-slate-400 uppercase tracking-wide">{item.code || activeTab} · {item.duration_hours || 0} horas</p>
+                                        <span className={clsx("inline-flex mt-3 px-3 py-1 rounded-md text-[9px] font-semibold uppercase tracking-wide", item.is_published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{item.is_published ? 'Publicado' : 'Borrador'}</span>
                                     </motion.button>
                                 ))}
                             </motion.div>
                         ) : filteredItems.length > 0 && viewType === 'table' ? (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
                                 <table className="w-full text-left">
                                     <thead className="bg-slate-50 dark:bg-white/5">
                                         <tr>
-                                            <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Contenido</th>
-                                            <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Código</th>
-                                            <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Estado</th>
-                                            <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Editar</th>
+                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Contenido</th>
+                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden md:table-cell">Código</th>
+                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden lg:table-cell">Estado</th>
+                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Editar</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                                         {filteredItems.map(item => (
                                             <tr key={item.id} onClick={() => openItem(item)} className="hover:bg-slate-50 dark:hover:bg-white/[0.03] cursor-pointer">
-                                                <td className="px-5 py-4 text-sm font-bold text-slate-800 dark:text-slate-100">{item.title}</td>
-                                                <td className="px-5 py-4 hidden md:table-cell text-[11px] font-mono text-slate-400">{item.code || '—'}</td>
-                                                <td className="px-5 py-4 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", item.is_published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{item.is_published ? 'Publicado' : 'Borrador'}</span></td>
-                                                <td className="px-5 py-4"><Edit3 size={16} className="text-blue-600" /></td>
+                                                <td className="px-3 py-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">{item.title}</td>
+                                                <td className="px-3 py-1.5 hidden md:table-cell text-[11px] font-mono text-slate-400">{item.code || '—'}</td>
+                                                <td className="px-3 py-1.5 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", item.is_published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{item.is_published ? 'Publicado' : 'Borrador'}</span></td>
+                                                <td className="px-3 py-1.5"><Edit3 size={16} className="text-blue-600" /></td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             </motion.div>
                         ) : filteredItems.length > 0 && (viewType === 'board' || viewType === 'kanban') ? (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                                 {groupedItems.map(group => (
-                                    <section key={group.id} className="rounded-[2.5rem] bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-5">
+                                    <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
                                         <div className="flex items-center justify-between mb-5">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{group.label}</span>
-                                            <span className="text-[10px] font-black text-slate-400">{group.items.length}</span>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{group.label}</span>
+                                            <span className="font-semibold text-slate-400">{group.items.length}</span>
                                         </div>
                                         <div className="space-y-4">
                                             {group.items.map(item => (
-                                                <button key={item.id} onClick={() => openItem(item)} className="w-full text-left bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-[1.5rem] p-5 hover:border-blue-300 transition-all">
-                                                    <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{item.title}</p>
-                                                    <p className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.code || item.modality || activeTab}</p>
+                                                <button key={item.id} onClick={() => openItem(item)} className="w-full text-left bg-white dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-3 hover:border-blue-300 transition-all">
+                                                    <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{item.title}</p>
+                                                    <p className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide">{item.code || item.modality || activeTab}</p>
                                                 </button>
                                             ))}
                                         </div>
@@ -248,7 +248,7 @@ export default function AdminContentList() {
                         ) : filteredItems.length > 0 ? (
                             <motion.div 
                                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                                className="grid grid-cols-1 gap-6"
+                                className="grid grid-cols-1 gap-3"
                             >
                                 {filteredItems.map((item, i) => (
                                     <motion.div 
@@ -256,12 +256,12 @@ export default function AdminContentList() {
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: i * 0.05 }}
-                                        className="content-aura group bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-8 rounded-[3rem] shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col md:flex-row md:items-center justify-between gap-8"
+                                        className="content-aura group bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-4 rounded-lg shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col md:flex-row md:items-center justify-between gap-3"
                                         style={{ '--aura-color': item.is_published ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)' } as any}
                                     >
-                                        <div className="flex items-center gap-8 flex-1">
+                                        <div className="flex items-center gap-3 flex-1">
                                             <div className={clsx(
-                                                "size-20 rounded-[2rem] flex items-center justify-center shadow-inner group-hover:scale-110 transition-all duration-500",
+                                                "size-8 rounded-lg flex items-center justify-center shadow-inner group-hover:scale-110 transition-all duration-500",
                                                 item.is_published ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600" : "bg-amber-50 dark:bg-amber-900/20 text-amber-600"
                                             )}>
                                                 <BookOpen size={36} strokeWidth={1.5} />
@@ -269,9 +269,9 @@ export default function AdminContentList() {
                                             <div className="flex-1 space-y-2">
                                                 <div className="flex items-center gap-3">
                                                     <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none group-hover:text-blue-600 transition-colors">{item.title}</h3>
-                                                    <span className="px-2 py-0.5 bg-slate-100 dark:bg-white/10 rounded text-[8px] font-black text-slate-400 uppercase tracking-widest">{item.code}</span>
+                                                    <span className="px-2 py-0.5 bg-slate-100 dark:bg-white/10 rounded font-semibold text-slate-400 uppercase tracking-wide">{item.code}</span>
                                                 </div>
-                                                <div className="flex items-center gap-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-wide">
                                                     <span className="flex items-center gap-1.5"><Clock size={12} /> {item.duration_hours} Horas</span>
                                                     <span className="flex items-center gap-1.5"><Globe size={12} /> {item.modality}</span>
                                                     <span className="flex items-center gap-1.5 text-blue-500"><CheckCircle2 size={12} /> {item.certificate_type}</span>
@@ -281,14 +281,14 @@ export default function AdminContentList() {
 
                                         <div className="flex items-center gap-4 shrink-0">
                                             <div className={clsx(
-                                                "px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border",
+                                                "px-4 py-1.5 rounded-md text-[9px] font-semibold uppercase tracking-wide border",
                                                 item.is_published ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-amber-50 text-amber-600 border-amber-100"
                                             )}>
                                                 {item.is_published ? 'Publicado' : 'Borrador'}
                                             </div>
                                             <button 
                                                 onClick={() => router.push(`/admin/content/courses/${item.id}`)}
-                                                className="p-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl shadow-xl hover:scale-110 active:scale-95 transition-all"
+                                                className="p-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg shadow-xl hover:scale-110 active:scale-95 transition-all"
                                             >
                                                 <Edit3 size={20} />
                                             </button>
@@ -297,13 +297,13 @@ export default function AdminContentList() {
                                 ))}
                             </motion.div>
                         ) : (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-40 text-center space-y-6">
-                                <div className="size-24 rounded-[2.5rem] bg-slate-50 dark:bg-white/5 border-2 border-dashed border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto text-slate-300">
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-1.5 text-center space-y-6">
+                                <div className="size-10 rounded-lg bg-slate-50 dark:bg-white/5 border-2 border-dashed border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto text-slate-300">
                                     <Sparkles size={40} strokeWidth={1} />
                                 </div>
                                 <div className="space-y-2">
                                     <p className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight">Biblioteca en blanco</p>
-                                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Comienza a crear el currículo de tu iglesia hoy mismo.</p>
+                                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wide">Comienza a crear el currículo de tu iglesia hoy mismo.</p>
                                 </div>
                             </motion.div>
                         )}
@@ -319,7 +319,7 @@ function TabBtn({ label, active, onClick, icon: Icon }: any) {
         <button 
             onClick={onClick}
             className={clsx(
-                "px-8 py-6 text-[11px] font-black uppercase tracking-[0.3em] transition-all relative flex items-center gap-3 shrink-0 border-b-2",
+                "px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all relative flex items-center gap-3 shrink-0 border-b-2",
                 active ? "text-blue-600 border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600"
             )}
         >

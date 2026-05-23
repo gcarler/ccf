@@ -113,7 +113,7 @@ export function CommandCenter() {
     return (
         <AnimatePresence>
             {open && (
-                <div className="fixed inset-0 z-[10000] flex items-start justify-center pt-[10vh] p-4 sm:p-6 md:p-20">
+                <div className="fixed inset-0 z-[10000] flex items-start justify-center pt-[10vh] p-4 sm:p-3 md:p-4">
                     <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -126,10 +126,10 @@ export function CommandCenter() {
                         initial={{ opacity: 0, scale: 0.95, y: -20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -20 }}
-                        className="relative w-full max-w-2xl overflow-hidden rounded-[2rem] border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-[#1e1f21]/80 backdrop-blur-xl shadow-2xl shadow-black/50"
+                        className="relative w-full max-w-2xl overflow-hidden rounded-lg border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-[#1e1f21]/80 backdrop-blur-xl shadow-2xl shadow-black/50"
                     >
                         <Command label="Command Menu" className="flex h-full w-full flex-col" shouldFilter={false}>
-                            <div className="flex items-center border-b border-slate-100 dark:border-white/5 px-6 py-4">
+                            <div className="flex items-center border-b border-slate-100 dark:border-white/5 px-3 py-1.5">
                                 <Search className={clsx("mr-3 h-5 w-5 shrink-0 transition-colors", isSearching ? "text-blue-500 animate-pulse" : "text-slate-400")} />
                                 <Command.Input
                                     value={search}
@@ -137,26 +137,26 @@ export function CommandCenter() {
                                     placeholder="Buscar proyectos, miembros o tareas..."
                                     className="flex h-8 w-full bg-transparent text-lg font-bold outline-none placeholder:text-slate-400 placeholder:font-medium disabled:cursor-not-allowed disabled:opacity-50"
                                 />
-                                <div className="ml-auto hidden items-center gap-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/20 px-2 py-1 text-[9px] font-black text-slate-400 md:flex">
+                                <div className="ml-auto hidden items-center gap-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/20 px-2 py-1 font-semibold text-slate-400 md:flex">
                                     ESC
                                 </div>
                             </div>
                             
                             <Command.List className="max-h-[450px] overflow-y-auto overflow-x-hidden p-3 scrollbar-hide">
-                                {isSearching && <div className="p-10 text-center text-slate-400 text-xs font-bold uppercase tracking-widest animate-pulse">Consultando Optimus Brain...</div>}
+                                {isSearching && <div className="p-4 text-center text-slate-400 text-xs font-bold uppercase tracking-wide animate-pulse">Consultando Optimus Brain...</div>}
                                 
                                 {!isSearching && search.length > 0 && results.length === 0 && visibleCommands.length === 0 && (
                                     <Command.Empty className="py-14 text-center">
-                                        <div className="size-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center mx-auto mb-4">
+                                        <div className="size-7 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center mx-auto mb-4">
                                             <Search className="text-slate-300" />
                                         </div>
-                                        <p className="text-sm font-black text-slate-900 dark:text-white">Sin resultados para &quot;{search}&quot;</p>
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">Sin resultados para &quot;{search}&quot;</p>
                                         <p className="text-xs text-slate-400 mt-1">Intenta con otros términos o filtros.</p>
                                     </Command.Empty>
                                 )}
 
                                 {results.length > 0 && (
-                                    <Command.Group heading="Resultados de Inteligencia" className="px-3 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-blue-600">
+                                    <Command.Group heading="Resultados de Inteligencia" className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-blue-600">
                                         {results.map((item) => (
                                             <Item 
                                                 key={`${item.type}-${item.id}`} 
@@ -172,7 +172,7 @@ export function CommandCenter() {
                                 {groupedCommands.length > 0 && <Command.Separator className="my-4 h-[1px] bg-slate-100 dark:border-white/5" />}
 
                                 {groupedCommands.map(([groupName, commands]) => (
-                                    <Command.Group key={groupName} heading={groupName} className="px-3 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">
+                                    <Command.Group key={groupName} heading={groupName} className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                         {commands.map((cmd) => (
                                             <Item key={cmd.id} icon={cmd.icon} label={cmd.label} shortcut={cmd.shortcut} description={cmd.description} onSelect={() => runCommand(cmd.action)} />
                                         ))}
@@ -192,7 +192,7 @@ function Item({ icon: Icon, label, shortcut, description, onSelect }: { icon?: R
     return (
         <Command.Item
             onSelect={onSelect}
-            className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 transition-colors hover:bg-blue-500 hover:text-white data-[selected='true']:bg-blue-600 data-[selected='true']:text-white group"
+            className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 transition-colors hover:bg-blue-500 hover:text-white data-[selected='true']:bg-blue-600 data-[selected='true']:text-white group"
         >
             {Icon ? <Icon className="h-4 w-4 shrink-0 opacity-70 group-data-[selected='true']:opacity-100" /> : <span className="h-4 w-4" />}
             <div className="flex-1">
@@ -200,7 +200,7 @@ function Item({ icon: Icon, label, shortcut, description, onSelect }: { icon?: R
                 {description && <span className="text-[11px] font-normal text-slate-400 group-data-[selected='true']:text-white/80">{description}</span>}
             </div>
             {shortcut && (
-                <div className="flex items-center gap-1 rounded bg-slate-100 dark:bg-black/20 px-1.5 py-0.5 text-[10px] font-black text-slate-400 group-data-[selected='true']:bg-white/20 group-data-[selected='true']:text-white">
+                <div className="flex items-center gap-1 rounded bg-slate-100 dark:bg-black/20 px-1.5 py-0.5 font-semibold text-slate-400 group-data-[selected='true']:bg-white/20 group-data-[selected='true']:text-white">
                     {shortcut.split(' ').map((s, i) => (
                         <span key={i}>{s}</span>
                     ))}
@@ -226,10 +226,10 @@ function ShortcutSheet({ onClose }: { onClose: () => void }) {
                 initial={{ opacity: 0, y: 12, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 12, scale: 0.98 }}
-                className="relative w-full max-w-lg rounded-[2rem] border border-slate-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#1e1f21]"
+                className="relative w-full max-w-lg rounded-lg border border-slate-200 bg-white p-3 shadow-2xl dark:border-white/10 dark:bg-[#1e1f21]"
             >
                 <div className="mb-5">
-                    <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Atajos</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Atajos</p>
                     <h2 className="mt-1 text-xl font-black text-slate-900 dark:text-white">Productividad global</h2>
                 </div>
                 <div className="space-y-2">
@@ -238,9 +238,9 @@ function ShortcutSheet({ onClose }: { onClose: () => void }) {
                         ["Esc", "Cerrar panel o volver un nivel"],
                         ["Modo enfoque", "Disponible desde la barra superior o el centro de comandos"],
                     ].map(([shortcut, label]) => (
-                        <div key={shortcut} className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 px-4 py-3 dark:bg-white/5">
+                        <div key={shortcut} className="flex items-center justify-between gap-4 rounded-lg bg-slate-50 px-4 py-3 dark:bg-white/5">
                             <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">{label}</span>
-                            <span className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-black text-slate-500 dark:border-white/10 dark:bg-black/20 dark:text-slate-300">
+                            <span className="rounded-lg border border-slate-200 bg-white px-2 py-1 font-semibold text-slate-500 dark:border-white/10 dark:bg-black/20 dark:text-slate-300">
                                 {shortcut}
                             </span>
                         </div>
