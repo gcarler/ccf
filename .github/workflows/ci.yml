@@ -212,9 +212,9 @@ jobs:
           fi
           echo "✅ No default secrets in config.py"
       - name: Check security tests (production rejects insecure defaults)
+        working-directory: ${{ github.workspace }}
         run: |
-          PWD="$(pwd)"; echo "CWD=$PWD"
-          PYTHONPATH="$GITHUB_WORKSPACE" python -m pytest "$GITHUB_WORKSPACE/tests/test_security_config.py" -v
+          PYTHONPATH=. python -m pytest tests/test_security_config.py -v
       - name: Run pip-audit (check for known vulnerabilities)
         run: |
           pip install pip-audit
