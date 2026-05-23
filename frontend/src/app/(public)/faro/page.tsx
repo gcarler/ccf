@@ -21,6 +21,8 @@ export default function PublicHomePage() {
     const heroPrimaryCta = heroContent?.primary_cta || "Empezar mi viaje";
     const heroSecondaryCta = heroContent?.secondary_cta || "Ver Prédicas";
 
+    // v2.3 — despliegue automático verificado
+
     interface PublicEventItem {
         img?: string;
         tag?: string;
