@@ -1,6 +1,6 @@
 import sys
 
-with open('frontend/src/components/WorkspaceLayout.tsx', 'r', encoding='utf-8') as f:
+with open("frontend/src/components/WorkspaceLayout.tsx", "r", encoding="utf-8") as f:
     c = f.read()
 
 crm_old = """    crm: {
@@ -78,7 +78,7 @@ crm_new = """    crm: {
 
 c = c.replace(crm_old, crm_new)
 
-with open('frontend/src/components/WorkspaceLayout.tsx', 'w', encoding='utf-8') as f:
+with open("frontend/src/components/WorkspaceLayout.tsx", "w", encoding="utf-8") as f:
     f.write(c)
 
 print("Sidebar updated")

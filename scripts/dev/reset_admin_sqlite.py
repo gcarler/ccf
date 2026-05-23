@@ -4,8 +4,8 @@ Connects to ccf_final.db, ensures an admin user exists with email 'admin@ccf.la'
 and password 'admin' (hashed).
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -39,7 +39,9 @@ with Session(engine) as session:
             {"hash": hashed, "email": EMAIL},
         )
         session.commit()
-        print(f"✓ Usuario existente actualizado: id={user[0]}, username='{user[1]}', email='{user[2]}', role='{user[3]}'")
+        print(
+            f"✓ Usuario existente actualizado: id={user[0]}, username='{user[1]}', email='{user[2]}', role='{user[3]}'"
+        )
         print(f"  Contraseña actualizada a '{PASSWORD}' (hasheada correctamente).")
     else:
         hashed = get_password_hash(PASSWORD)
@@ -51,7 +53,9 @@ with Session(engine) as session:
             {"username": USERNAME, "email": EMAIL, "hash": hashed, "role": ROLE},
         )
         session.commit()
-        print(f"✓ Nuevo usuario creado: username='{USERNAME}', email='{EMAIL}', role='{ROLE}'")
+        print(
+            f"✓ Nuevo usuario creado: username='{USERNAME}', email='{EMAIL}', role='{ROLE}'"
+        )
         print(f"  Contraseña: '{PASSWORD}' (hasheada correctamente).")
 
     result = session.execute(
@@ -59,4 +63,6 @@ with Session(engine) as session:
         {"email": EMAIL},
     )
     user = result.fetchone()
-    print(f"\n✅ Operación completada exitosamente. Usuario final: id={user[0]}, username='{user[1]}', email='{user[2]}', role='{user[3]}'")
+    print(
+        f"\n✅ Operación completada exitosamente. Usuario final: id={user[0]}, username='{user[1]}', email='{user[2]}', role='{user[3]}'"
+    )

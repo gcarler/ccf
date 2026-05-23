@@ -1,6 +1,6 @@
 import codecs
 
-with codecs.open('frontend/src/app/crm/events/[id]/page.tsx', 'r', 'utf-8') as f:
+with codecs.open("frontend/src/app/crm/events/[id]/page.tsx", "r", "utf-8") as f:
     c = f.read()
 
 btn_old = """                            <button 
@@ -21,7 +21,7 @@ btn_new = """                            <button
 
 c = c.replace(btn_old, btn_new)
 
-with codecs.open('frontend/src/app/crm/events/[id]/page.tsx', 'w', 'utf-8') as f:
+with codecs.open("frontend/src/app/crm/events/[id]/page.tsx", "w", "utf-8") as f:
     f.write(c)
 
 print("Analitica tab button added")

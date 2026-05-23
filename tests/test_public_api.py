@@ -28,7 +28,11 @@ def test_public_registration_creates_member_and_attendance(client, db_session):
 
     assert response.status_code == 200
 
-    member = db_session.query(models.Member).filter(models.Member.email == "ana@example.com").first()
+    member = (
+        db_session.query(models.Member)
+        .filter(models.Member.email == "ana@example.com")
+        .first()
+    )
     assert member is not None
     assert member.first_name == "Ana"
     assert member.last_name == "Perez"
@@ -37,7 +41,10 @@ def test_public_registration_creates_member_and_attendance(client, db_session):
 
     attendance = (
         db_session.query(models.EventAttendance)
-        .filter(models.EventAttendance.event_id == event.id, models.EventAttendance.member_id == member.id)
+        .filter(
+            models.EventAttendance.event_id == event.id,
+            models.EventAttendance.member_id == member.id,
+        )
         .first()
     )
     assert attendance is not None
@@ -71,12 +78,19 @@ def test_public_registration_reuses_existing_member(client, db_session):
     assert first.status_code == 200
     assert second.status_code == 200
 
-    members = db_session.query(models.Member).filter(models.Member.email == "laura@example.com").all()
+    members = (
+        db_session.query(models.Member)
+        .filter(models.Member.email == "laura@example.com")
+        .all()
+    )
     assert len(members) == 1
 
     attendances = (
         db_session.query(models.EventAttendance)
-        .filter(models.EventAttendance.event_id == event.id, models.EventAttendance.member_id == members[0].id)
+        .filter(
+            models.EventAttendance.event_id == event.id,
+            models.EventAttendance.member_id == members[0].id,
+        )
         .all()
     )
     assert len(attendances) == 1

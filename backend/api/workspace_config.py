@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from backend import models
+from backend.api.workspace_shared import (_load_workspace_config,
+                                          _resolve_features,
+                                          _save_workspace_config)
 from backend.auth import require_active_user, require_admin
-from backend.api.workspace_shared import _load_workspace_config, _resolve_features, _save_workspace_config
-
 
 router = APIRouter(tags=["workspace"])
 

@@ -64,15 +64,15 @@ class TestTokenExpiry:
 
     def test_access_token_default_is_sane(self):
         s = Settings(_env_file=None)
-        assert s.access_token_expire_minutes <= 60, (
-            f"Access token expiry {s.access_token_expire_minutes}min excede el máximo de 60min"
-        )
+        assert (
+            s.access_token_expire_minutes <= 60
+        ), f"Access token expiry {s.access_token_expire_minutes}min excede el máximo de 60min"
 
     def test_refresh_token_default_is_sane(self):
         s = Settings(_env_file=None)
-        assert s.refresh_token_expire_days <= 180, (
-            f"Refresh token expiry {s.refresh_token_expire_days}d excede el máximo de 180d"
-        )
+        assert (
+            s.refresh_token_expire_days <= 180
+        ), f"Refresh token expiry {s.refresh_token_expire_days}d excede el máximo de 180d"
 
     def test_rejects_zero_access_token_expiry(self):
         with pytest.raises(ValueError):

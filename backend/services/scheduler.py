@@ -1,12 +1,15 @@
 from __future__ import annotations
+
+import asyncio
+import logging
 import threading
 import time
-import logging
-from backend.core.database import SessionLocal
+
 from backend.analytics.proactive_ia import run_proactive_analysis
-import asyncio
+from backend.core.database import SessionLocal
 
 log = logging.getLogger(__name__)
+
 
 def run_ai_analysis():
     """Wrapper to run AI analysis with its own DB session."""
@@ -21,10 +24,11 @@ def run_ai_analysis():
     finally:
         db.close()
 
+
 def start_background_scheduler():
     """Initializes and starts the background task loop using native threads."""
     log.info("Starting Native Background Scheduler...")
-    
+
     def run_loop():
         # Wait a bit for the system to stabilize
         time.sleep(10)
@@ -33,10 +37,12 @@ def start_background_scheduler():
                 run_ai_analysis()
             except Exception as e:
                 log.error(f"Scheduler loop error: {e}")
-            
+
             # Run every hour (3600 seconds)
             time.sleep(3600)
 
     thread = threading.Thread(target=run_loop, daemon=True)
     thread.start()
-    log.info("Background Scheduler is running in a native daemon thread (No external dependencies).")
+    log.info(
+        "Background Scheduler is running in a native daemon thread (No external dependencies)."
+    )

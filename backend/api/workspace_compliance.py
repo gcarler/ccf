@@ -6,36 +6,35 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 
 from backend import models
+from backend.api.workspace_shared import (DEFAULT_COMPLIANCE_POLICY,
+                                          _append_audit_event,
+                                          _append_snapshot_history,
+                                          _build_compliance_snapshot,
+                                          _cleanup_snapshot_history,
+                                          _compare_snapshot_payloads,
+                                          _find_snapshot_history_item,
+                                          _load_workspace_config,
+                                          _maybe_emit_snapshot_drift_alert,
+                                          _normalize_compliance_policy_update,
+                                          _normalize_suppression_payload,
+                                          _now_iso, _parse_timestamp,
+                                          _read_snapshot_history,
+                                          _resolve_compare_pair,
+                                          _resolve_compliance_policy,
+                                          _save_snapshot_history,
+                                          _save_workspace_config,
+                                          _verify_snapshot_history_item,
+                                          _weekly_snapshot_summary)
 from backend.auth import require_admin
 from backend.core.rate_limit import rate_limiter
-from backend.api.workspace_shared import (
-    DEFAULT_COMPLIANCE_POLICY,
-    _append_audit_event,
-    _append_snapshot_history,
-    _build_compliance_snapshot,
-    _cleanup_snapshot_history,
-    _compare_snapshot_payloads,
-    _find_snapshot_history_item,
-    _load_workspace_config,
-    _maybe_emit_snapshot_drift_alert,
-    _normalize_compliance_policy_update,
-    _normalize_suppression_payload,
-    _now_iso,
-    _parse_timestamp,
-    _read_snapshot_history,
-    _resolve_compliance_policy,
-    _resolve_compare_pair,
-    _save_snapshot_history,
-    _verify_snapshot_history_item,
-    _weekly_snapshot_summary,
-    _save_workspace_config,
-)
-
 
 router = APIRouter(tags=["workspace"])
 
 
-@router.get("/flags/compliance/snapshot", dependencies=[Depends(rate_limiter(limit=20, window_seconds=60))])
+@router.get(
+    "/flags/compliance/snapshot",
+    dependencies=[Depends(rate_limiter(limit=20, window_seconds=60))],
+)
 def get_flags_compliance_snapshot(
     download: bool = False,
     record: bool = True,
@@ -69,15 +68,24 @@ def get_flags_compliance_snapshot(
             "requested_by": snapshot.get("requested_by"),
             "signature": snapshot.get("signature"),
             "summary": {
-                "features_enabled": len((snapshot.get("config", {}).get("features_enabled") or {})),
+                "features_enabled": len(
+                    (snapshot.get("config", {}).get("features_enabled") or {})
+                ),
                 "audit_events": snapshot.get("audit", {}).get("count"),
                 "incidents": snapshot.get("incidents", {}).get("count"),
-                "has_anomaly": snapshot.get("audit", {}).get("anomalies", {}).get("has_anomaly"),
-                "critical_incidents": snapshot.get("incidents", {}).get("summary", {}).get("severity_counts", {}).get("critical", 0),
+                "has_anomaly": snapshot.get("audit", {})
+                .get("anomalies", {})
+                .get("has_anomaly"),
+                "critical_incidents": snapshot.get("incidents", {})
+                .get("summary", {})
+                .get("severity_counts", {})
+                .get("critical", 0),
             },
             "snapshot": snapshot,
         }
-        drift_from_previous = _maybe_emit_snapshot_drift_alert(previous_entry=previous_entry, current_entry=history_entry)
+        drift_from_previous = _maybe_emit_snapshot_drift_alert(
+            previous_entry=previous_entry, current_entry=history_entry
+        )
         if drift_from_previous is not None:
             history_entry["drift_from_previous"] = drift_from_previous
         _append_snapshot_history(history_entry)
@@ -86,7 +94,9 @@ def get_flags_compliance_snapshot(
         return Response(
             content=json.dumps(snapshot, ensure_ascii=True, indent=2),
             media_type="application/json",
-            headers={"Content-Disposition": "attachment; filename=flags_compliance_snapshot.json"},
+            headers={
+                "Content-Disposition": "attachment; filename=flags_compliance_snapshot.json"
+            },
         )
 
     return {
@@ -95,13 +105,20 @@ def get_flags_compliance_snapshot(
     }
 
 
-@router.get("/flags/compliance/policy", dependencies=[Depends(rate_limiter(limit=40, window_seconds=60))])
+@router.get(
+    "/flags/compliance/policy",
+    dependencies=[Depends(rate_limiter(limit=40, window_seconds=60))],
+)
 def get_flags_compliance_policy(
     environment: str | None = None,
     current_user: models.User = Depends(require_admin),
 ):
     config = _load_workspace_config()
-    raw_policy = config.get("compliance_policy") if isinstance(config.get("compliance_policy"), dict) else DEFAULT_COMPLIANCE_POLICY
+    raw_policy = (
+        config.get("compliance_policy")
+        if isinstance(config.get("compliance_policy"), dict)
+        else DEFAULT_COMPLIANCE_POLICY
+    )
     resolved = _resolve_compliance_policy(raw_policy, environment=environment)
     return {
         "status": "ok",
@@ -111,13 +128,20 @@ def get_flags_compliance_policy(
     }
 
 
-@router.put("/flags/compliance/policy", dependencies=[Depends(rate_limiter(limit=20, window_seconds=60))])
+@router.put(
+    "/flags/compliance/policy",
+    dependencies=[Depends(rate_limiter(limit=20, window_seconds=60))],
+)
 def update_flags_compliance_policy(
     payload: Dict[str, Any],
     current_user: models.User = Depends(require_admin),
 ):
     config = _load_workspace_config()
-    current_policy = config.get("compliance_policy") if isinstance(config.get("compliance_policy"), dict) else DEFAULT_COMPLIANCE_POLICY
+    current_policy = (
+        config.get("compliance_policy")
+        if isinstance(config.get("compliance_policy"), dict)
+        else DEFAULT_COMPLIANCE_POLICY
+    )
     next_policy = _normalize_compliance_policy_update(payload, current_policy)
     config["compliance_policy"] = next_policy
     _save_workspace_config(config)
@@ -137,13 +161,20 @@ def update_flags_compliance_policy(
     }
 
 
-@router.post("/flags/compliance/suppressions", dependencies=[Depends(rate_limiter(limit=20, window_seconds=60))])
+@router.post(
+    "/flags/compliance/suppressions",
+    dependencies=[Depends(rate_limiter(limit=20, window_seconds=60))],
+)
 def create_flags_compliance_suppression(
     payload: Dict[str, Any],
     current_user: models.User = Depends(require_admin),
 ):
     config = _load_workspace_config()
-    policy = config.get("compliance_policy") if isinstance(config.get("compliance_policy"), dict) else DEFAULT_COMPLIANCE_POLICY
+    policy = (
+        config.get("compliance_policy")
+        if isinstance(config.get("compliance_policy"), dict)
+        else DEFAULT_COMPLIANCE_POLICY
+    )
     suppressions = list(policy.get("suppressions") or [])
     actor_id = str(getattr(current_user, "id", ""))
     entry = _normalize_suppression_payload(payload, actor_id=actor_id)
@@ -165,16 +196,25 @@ def create_flags_compliance_suppression(
     }
 
 
-@router.delete("/flags/compliance/suppressions/{suppression_id}", dependencies=[Depends(rate_limiter(limit=20, window_seconds=60))])
+@router.delete(
+    "/flags/compliance/suppressions/{suppression_id}",
+    dependencies=[Depends(rate_limiter(limit=20, window_seconds=60))],
+)
 def delete_flags_compliance_suppression(
     suppression_id: str,
     current_user: models.User = Depends(require_admin),
 ):
     config = _load_workspace_config()
-    policy = config.get("compliance_policy") if isinstance(config.get("compliance_policy"), dict) else DEFAULT_COMPLIANCE_POLICY
+    policy = (
+        config.get("compliance_policy")
+        if isinstance(config.get("compliance_policy"), dict)
+        else DEFAULT_COMPLIANCE_POLICY
+    )
     suppressions = list(policy.get("suppressions") or [])
     previous_len = len(suppressions)
-    suppressions = [item for item in suppressions if str(item.get("id", "")) != suppression_id]
+    suppressions = [
+        item for item in suppressions if str(item.get("id", "")) != suppression_id
+    ]
     if len(suppressions) == previous_len:
         raise HTTPException(status_code=404, detail="suppression not found")
 
@@ -196,7 +236,10 @@ def delete_flags_compliance_suppression(
     }
 
 
-@router.get("/flags/compliance/history", dependencies=[Depends(rate_limiter(limit=40, window_seconds=60))])
+@router.get(
+    "/flags/compliance/history",
+    dependencies=[Depends(rate_limiter(limit=40, window_seconds=60))],
+)
 def get_flags_compliance_history(
     limit: int = 50,
     since: str | None = None,
@@ -207,7 +250,15 @@ def get_flags_compliance_history(
         since_dt = _parse_timestamp(since)
         if since_dt is None:
             raise HTTPException(status_code=422, detail="Invalid since datetime")
-        rows = [row for row in rows if (_parse_timestamp(row.get("recorded_at")) or datetime.fromtimestamp(0, tz=timezone.utc)) >= since_dt]
+        rows = [
+            row
+            for row in rows
+            if (
+                _parse_timestamp(row.get("recorded_at"))
+                or datetime.fromtimestamp(0, tz=timezone.utc)
+            )
+            >= since_dt
+        ]
 
     capped_limit = max(1, min(limit, 500))
     rows = rows[-capped_limit:]
@@ -231,7 +282,10 @@ def get_flags_compliance_history(
     }
 
 
-@router.get("/flags/compliance/history/weekly-summary", dependencies=[Depends(rate_limiter(limit=40, window_seconds=60))])
+@router.get(
+    "/flags/compliance/history/weekly-summary",
+    dependencies=[Depends(rate_limiter(limit=40, window_seconds=60))],
+)
 def get_flags_compliance_history_weekly_summary(
     weeks: int = 8,
     current_user: models.User = Depends(require_admin),
@@ -245,7 +299,10 @@ def get_flags_compliance_history_weekly_summary(
     }
 
 
-@router.get("/flags/compliance/history/{snapshot_id}", dependencies=[Depends(rate_limiter(limit=40, window_seconds=60))])
+@router.get(
+    "/flags/compliance/history/{snapshot_id}",
+    dependencies=[Depends(rate_limiter(limit=40, window_seconds=60))],
+)
 def get_flags_compliance_history_item(
     snapshot_id: str,
     download: bool = False,
@@ -261,7 +318,9 @@ def get_flags_compliance_history_item(
         return Response(
             content=json.dumps(item, ensure_ascii=True, indent=2),
             media_type="application/json",
-            headers={"Content-Disposition": f"attachment; filename=flags_compliance_snapshot_{snapshot_id}.json"},
+            headers={
+                "Content-Disposition": f"attachment; filename=flags_compliance_snapshot_{snapshot_id}.json"
+            },
         )
 
     return {
@@ -272,7 +331,10 @@ def get_flags_compliance_history_item(
     }
 
 
-@router.get("/flags/compliance/compare", dependencies=[Depends(rate_limiter(limit=40, window_seconds=60))])
+@router.get(
+    "/flags/compliance/compare",
+    dependencies=[Depends(rate_limiter(limit=40, window_seconds=60))],
+)
 def compare_flags_compliance_snapshots(
     from_snapshot_id: str | None = None,
     to_snapshot_id: str | None = None,
@@ -285,16 +347,34 @@ def compare_flags_compliance_snapshots(
     first_payload = first.get("snapshot") or {}
     second_payload = second.get("snapshot") or {}
     if not isinstance(first_payload, dict) or not isinstance(second_payload, dict):
-        raise HTTPException(status_code=422, detail="Invalid snapshot payload in history")
+        raise HTTPException(
+            status_code=422, detail="Invalid snapshot payload in history"
+        )
 
-    second_config = second_payload.get("config") if isinstance(second_payload.get("config"), dict) else {}
-    second_policy = second_config.get("compliance_policy") if isinstance(second_config.get("compliance_policy"), dict) else None
-    second_inputs = second_payload.get("inputs") if isinstance(second_payload.get("inputs"), dict) else {}
+    second_config = (
+        second_payload.get("config")
+        if isinstance(second_payload.get("config"), dict)
+        else {}
+    )
+    second_policy = (
+        second_config.get("compliance_policy")
+        if isinstance(second_config.get("compliance_policy"), dict)
+        else None
+    )
+    second_inputs = (
+        second_payload.get("inputs")
+        if isinstance(second_payload.get("inputs"), dict)
+        else {}
+    )
     diff = _compare_snapshot_payloads(
         first_payload,
         second_payload,
         policy=second_policy,
-        environment=(str(second_inputs.get("environment")) if second_inputs.get("environment") else None),
+        environment=(
+            str(second_inputs.get("environment"))
+            if second_inputs.get("environment")
+            else None
+        ),
     )
     return {
         "status": "ok",
@@ -315,7 +395,10 @@ def compare_flags_compliance_snapshots(
     }
 
 
-@router.get("/flags/compliance/drift", dependencies=[Depends(rate_limiter(limit=40, window_seconds=60))])
+@router.get(
+    "/flags/compliance/drift",
+    dependencies=[Depends(rate_limiter(limit=40, window_seconds=60))],
+)
 def get_flags_compliance_drift(
     from_snapshot_id: str | None = None,
     to_snapshot_id: str | None = None,
@@ -326,16 +409,34 @@ def get_flags_compliance_drift(
     first_payload = first.get("snapshot") or {}
     second_payload = second.get("snapshot") or {}
     if not isinstance(first_payload, dict) or not isinstance(second_payload, dict):
-        raise HTTPException(status_code=422, detail="Invalid snapshot payload in history")
+        raise HTTPException(
+            status_code=422, detail="Invalid snapshot payload in history"
+        )
 
-    second_config = second_payload.get("config") if isinstance(second_payload.get("config"), dict) else {}
-    second_policy = second_config.get("compliance_policy") if isinstance(second_config.get("compliance_policy"), dict) else None
-    second_inputs = second_payload.get("inputs") if isinstance(second_payload.get("inputs"), dict) else {}
+    second_config = (
+        second_payload.get("config")
+        if isinstance(second_payload.get("config"), dict)
+        else {}
+    )
+    second_policy = (
+        second_config.get("compliance_policy")
+        if isinstance(second_config.get("compliance_policy"), dict)
+        else None
+    )
+    second_inputs = (
+        second_payload.get("inputs")
+        if isinstance(second_payload.get("inputs"), dict)
+        else {}
+    )
     diff = _compare_snapshot_payloads(
         first_payload,
         second_payload,
         policy=second_policy,
-        environment=(str(second_inputs.get("environment")) if second_inputs.get("environment") else None),
+        environment=(
+            str(second_inputs.get("environment"))
+            if second_inputs.get("environment")
+            else None
+        ),
     )
     drift = diff.get("drift") or {}
     return {
@@ -357,7 +458,10 @@ def get_flags_compliance_drift(
     }
 
 
-@router.post("/flags/compliance/history/cleanup", dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))])
+@router.post(
+    "/flags/compliance/history/cleanup",
+    dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))],
+)
 def cleanup_flags_compliance_history(
     retain_days: int = 90,
     current_user: models.User = Depends(require_admin),

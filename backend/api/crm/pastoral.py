@@ -1,29 +1,23 @@
 import collections
 import logging
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
-from backend import crud, schemas, models
-from backend.core.database import get_db
-from backend.services.messaging import MessagingGateway
-from backend.auth import (
-    get_current_user,
-    normalize_role,
-    require_active_user,
-    require_pastor_or_admin,
-)
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
+from backend import crud, models, schemas
+from backend.api.crm._shared import (_member_full_name, _serialize_case,
+                                     _serialize_message_group, _serialize_task,
+                                     utc_now)
+from backend.auth import (get_current_user, normalize_role,
+                          require_active_user, require_pastor_or_admin)
 from backend.core.audit import record_admin_action
+from backend.core.database import get_db
 from backend.mesh_websockets import manager
-from backend.api.crm._shared import (
-    utc_now,
-    _serialize_case,
-    _serialize_task,
-    _serialize_message_group,
-    _member_full_name,
-)
+from backend.services.messaging import MessagingGateway
 
 router = APIRouter(tags=["CRM"])
 logger = logging.getLogger(__name__)
@@ -35,7 +29,11 @@ def get_consolidation_case(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    case = db.query(models.ConsolidationCase).filter(models.ConsolidationCase.id == case_id).first()
+    case = (
+        db.query(models.ConsolidationCase)
+        .filter(models.ConsolidationCase.id == case_id)
+        .first()
+    )
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
     return _serialize_case(case)
@@ -47,7 +45,9 @@ def create_consolidation_case(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    member = db.query(models.Member).filter(models.Member.id == payload.member_id).first()
+    member = (
+        db.query(models.Member).filter(models.Member.id == payload.member_id).first()
+    )
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
     row = models.ConsolidationCase(**payload.model_dump())
@@ -64,7 +64,11 @@ def update_consolidation_case(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    case = db.query(models.ConsolidationCase).filter(models.ConsolidationCase.id == case_id).first()
+    case = (
+        db.query(models.ConsolidationCase)
+        .filter(models.ConsolidationCase.id == case_id)
+        .first()
+    )
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -81,7 +85,11 @@ def create_consolidation_assignment(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    case = db.query(models.ConsolidationCase).filter(models.ConsolidationCase.id == case_id).first()
+    case = (
+        db.query(models.ConsolidationCase)
+        .filter(models.ConsolidationCase.id == case_id)
+        .first()
+    )
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
     assignment_data = payload.model_dump(exclude={"case_id"})
@@ -110,7 +118,11 @@ def create_consolidation_interaction(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    case = db.query(models.ConsolidationCase).filter(models.ConsolidationCase.id == case_id).first()
+    case = (
+        db.query(models.ConsolidationCase)
+        .filter(models.ConsolidationCase.id == case_id)
+        .first()
+    )
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
     interaction_data = payload.model_dump(exclude={"case_id"})
@@ -124,7 +136,9 @@ def create_consolidation_interaction(
         "case_id": row.case_id,
         "performed_by_member_id": row.performed_by_member_id,
         "interaction_type": row.interaction_type,
-        "interaction_date": row.interaction_date.isoformat() if row.interaction_date else None,
+        "interaction_date": (
+            row.interaction_date.isoformat() if row.interaction_date else None
+        ),
         "result": row.result,
         "created_at": row.created_at.isoformat() if row.created_at else None,
     }
@@ -137,7 +151,11 @@ def create_consolidation_task(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    case = db.query(models.ConsolidationCase).filter(models.ConsolidationCase.id == case_id).first()
+    case = (
+        db.query(models.ConsolidationCase)
+        .filter(models.ConsolidationCase.id == case_id)
+        .first()
+    )
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
     task_data = payload.model_dump(exclude={"case_id"})
@@ -158,26 +176,29 @@ def create_consolidation_task(
 
 # --- CONSOLIDATION & PIPELINE ---
 
+
 @router.get("/consolidation/pipeline", response_model=List[dict])
 def get_pipeline(
     stage: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin)
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     leads = crud.get_pipeline_leads(db, stage=stage)
     result = []
     for lead in leads:
-        result.append({
-            "id": lead.id,
-            "first_name": lead.first_name,
-            "last_name": lead.last_name,
-            "phone": lead.phone,
-            "source": lead.source,
-            "stage": schemas.normalize_pipeline_stage(lead.stage),
-            "notes": lead.notes,
-            "created_at": lead.created_at.isoformat(),
-            "assigned_pastor_id": lead.assigned_pastor_id
-        })
+        result.append(
+            {
+                "id": lead.id,
+                "first_name": lead.first_name,
+                "last_name": lead.last_name,
+                "phone": lead.phone,
+                "source": lead.source,
+                "stage": schemas.normalize_pipeline_stage(lead.stage),
+                "notes": lead.notes,
+                "created_at": lead.created_at.isoformat(),
+                "assigned_pastor_id": lead.assigned_pastor_id,
+            }
+        )
     return result
 
 
@@ -185,7 +206,7 @@ def get_pipeline(
 async def create_pipeline_lead(
     payload: schemas.ConsolidationPipelineCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin)
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     lead = crud.create_pipeline_lead(db, payload)
 
@@ -224,14 +245,19 @@ async def create_pipeline_lead(
         "assigned_pastor_id": lead.assigned_pastor_id,
     }
 
+
 @router.get("/consolidation/pipeline/{lead_id}", response_model=dict)
 def get_pipeline_lead(
     lead_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin)
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Obtiene el detalle de un prospecto especifico."""
-    lead = db.query(models.ConsolidationPipeline).filter(models.ConsolidationPipeline.id == lead_id).first()
+    lead = (
+        db.query(models.ConsolidationPipeline)
+        .filter(models.ConsolidationPipeline.id == lead_id)
+        .first()
+    )
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
     return {
@@ -243,15 +269,16 @@ def get_pipeline_lead(
         "stage": schemas.normalize_pipeline_stage(lead.stage),
         "notes": lead.notes,
         "created_at": lead.created_at.isoformat(),
-        "assigned_pastor_id": lead.assigned_pastor_id
+        "assigned_pastor_id": lead.assigned_pastor_id,
     }
+
 
 @router.patch("/consolidation/pipeline/{lead_id}", response_model=dict)
 async def update_pipeline_lead(
     lead_id: int,
     payload: schemas.ConsolidationPipelineUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin)
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     lead = crud.update_pipeline_lead(db, lead_id=lead_id, payload=payload)
     if not lead:
@@ -259,34 +286,44 @@ async def update_pipeline_lead(
 
     # Audit logging for pipeline movements
     record_admin_action(
-        db, current_user,
+        db,
+        current_user,
         action="update_pipeline_lead",
         resource_type="pipeline_lead",
         resource_id=str(lead.id),
-        metadata=payload.model_dump(exclude_unset=True)
+        metadata=payload.model_dump(exclude_unset=True),
     )
 
     # BROADCAST REAL-TIME UPDATE
-    await manager.broadcast_event({
-        "type": "PIPELINE_UPDATED",
-        "lead_id": lead.id,
-        "stage": lead.stage,
-        "actor": current_user.username
-    }, room="pastoral_ops")
+    await manager.broadcast_event(
+        {
+            "type": "PIPELINE_UPDATED",
+            "lead_id": lead.id,
+            "stage": lead.stage,
+            "actor": current_user.username,
+        },
+        room="pastoral_ops",
+    )
 
-    return {"status": "success", "lead_id": lead.id, "stage": schemas.normalize_pipeline_stage(lead.stage)}
+    return {
+        "status": "success",
+        "lead_id": lead.id,
+        "stage": schemas.normalize_pipeline_stage(lead.stage),
+    }
 
 
 @router.delete("/consolidation/pipeline/{lead_id}", status_code=204)
 def delete_pipeline_lead(
     lead_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin)
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Elimina un lead del pipeline de consolidacion."""
-    lead = db.query(models.ConsolidationPipeline).filter(
-        models.ConsolidationPipeline.id == lead_id
-    ).first()
+    lead = (
+        db.query(models.ConsolidationPipeline)
+        .filter(models.ConsolidationPipeline.id == lead_id)
+        .first()
+    )
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
     db.delete(lead)
@@ -294,24 +331,33 @@ def delete_pipeline_lead(
     return None
 
 
-@router.get("/consolidation/pipeline/{lead_id}/audit", response_model=List[schemas.AdminAuditLog])
+@router.get(
+    "/consolidation/pipeline/{lead_id}/audit",
+    response_model=List[schemas.AdminAuditLog],
+)
 def get_pipeline_lead_audit(
     lead_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin)
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Retrieve the audit trail for a specific pipeline lead."""
-    logs = db.query(models.AdminAuditLog).filter(
-        models.AdminAuditLog.resource_type == "pipeline_lead",
-        models.AdminAuditLog.resource_id == str(lead_id)
-    ).order_by(models.AdminAuditLog.created_at.desc()).all()
+    logs = (
+        db.query(models.AdminAuditLog)
+        .filter(
+            models.AdminAuditLog.resource_type == "pipeline_lead",
+            models.AdminAuditLog.resource_id == str(lead_id),
+        )
+        .order_by(models.AdminAuditLog.created_at.desc())
+        .all()
+    )
     return logs
+
 
 @router.get("/pipeline/leads/{lead_id}/calls", response_model=List[dict])
 def get_lead_calls(
     lead_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin)
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     logs = crud.get_pastoral_call_logs(db, lead_id)
     return [
@@ -331,9 +377,13 @@ def create_lead_call(
     lead_id: int,
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin)
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    lead = db.query(models.ConsolidationPipeline).filter(models.ConsolidationPipeline.id == lead_id).first()
+    lead = (
+        db.query(models.ConsolidationPipeline)
+        .filter(models.ConsolidationPipeline.id == lead_id)
+        .first()
+    )
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
 
@@ -394,9 +444,17 @@ async def send_crm_message(
         for segment in target_segments:
             normalized = str(segment).strip().lower()
             if normalized == "active":
-                rows = db.query(models.Member).filter(models.Member.church_role == "Miembro").all()
+                rows = (
+                    db.query(models.Member)
+                    .filter(models.Member.church_role == "Miembro")
+                    .all()
+                )
             elif normalized == "groups":
-                rows = db.query(models.Member).filter(models.Member.family_id.isnot(None)).all()
+                rows = (
+                    db.query(models.Member)
+                    .filter(models.Member.family_id.isnot(None))
+                    .all()
+                )
             else:
                 rows = []
             for member in rows:
@@ -416,15 +474,30 @@ async def send_crm_message(
         try:
             if channel == "whatsapp":
                 log = await MessagingGateway.send_whatsapp(
-                    db, member_id_value, content, current_user.id, campaign_name=campaign_name, external_id=external_id
+                    db,
+                    member_id_value,
+                    content,
+                    current_user.id,
+                    campaign_name=campaign_name,
+                    external_id=external_id,
                 )
             elif channel == "sms":
                 log = await MessagingGateway.send_sms(
-                    db, member_id_value, content, current_user.id, campaign_name=campaign_name, external_id=external_id
+                    db,
+                    member_id_value,
+                    content,
+                    current_user.id,
+                    campaign_name=campaign_name,
+                    external_id=external_id,
                 )
             elif channel == "email":
                 log = await MessagingGateway.send_email(
-                    db, member_id_value, content, current_user.id, campaign_name=campaign_name, external_id=external_id
+                    db,
+                    member_id_value,
+                    content,
+                    current_user.id,
+                    campaign_name=campaign_name,
+                    external_id=external_id,
                 )
             else:
                 raise HTTPException(status_code=400, detail="Unsupported channel")
@@ -438,7 +511,9 @@ async def send_crm_message(
             failed_count += 1
             if len(target_members) == 1:
                 logger.exception("Messaging gateway failure")
-                raise HTTPException(status_code=502, detail="No se pudo enviar el mensaje")
+                raise HTTPException(
+                    status_code=502, detail="No se pudo enviar el mensaje"
+                )
 
     return {
         "status": "success",
@@ -454,8 +529,14 @@ def list_messaging_history(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    logs = db.query(models.CommunicationLog).order_by(models.CommunicationLog.created_at.desc()).all()
-    grouped: "collections.OrderedDict[str, list[models.CommunicationLog]]" = collections.OrderedDict()
+    logs = (
+        db.query(models.CommunicationLog)
+        .order_by(models.CommunicationLog.created_at.desc())
+        .all()
+    )
+    grouped: "collections.OrderedDict[str, list[models.CommunicationLog]]" = (
+        collections.OrderedDict()
+    )
     for log in logs:
         key = log.external_id or f"log-{log.id}"
         grouped.setdefault(key, []).append(log)
@@ -468,7 +549,11 @@ def get_messaging_history_item(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    log = db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
+    log = (
+        db.query(models.CommunicationLog)
+        .filter(models.CommunicationLog.id == log_id)
+        .first()
+    )
     if not log:
         raise HTTPException(status_code=404, detail="Message not found")
     if log.external_id:
@@ -513,7 +598,9 @@ def create_crm_task(
         try:
             due_date = datetime.fromisoformat(str(raw_due_date).replace("Z", "+00:00"))
         except ValueError:
-            raise HTTPException(status_code=400, detail="Formato de fecha o identificador invalido")
+            raise HTTPException(
+                status_code=400, detail="Formato de fecha o identificador invalido"
+            )
 
     task = models.CrmTask(
         title=title,
@@ -554,7 +641,11 @@ def get_crm_task_detail(
     task = db.query(models.CrmTask).filter(models.CrmTask.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    is_staff = normalize_role(str(current_user.role)) in {"admin", "pastor", "coordinador"}
+    is_staff = normalize_role(str(current_user.role)) in {
+        "admin",
+        "pastor",
+        "coordinador",
+    }
     if not is_staff and task.assignee_id != current_user.id:
         raise HTTPException(status_code=403, detail="No autorizado para ver esta tarea")
     return _serialize_task(task)
@@ -570,14 +661,25 @@ def update_crm_task(
     task = db.query(models.CrmTask).filter(models.CrmTask.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    for field in ("title", "description", "category", "status", "priority", "due_date", "assignee_id", "member_id"):
+    for field in (
+        "title",
+        "description",
+        "category",
+        "status",
+        "priority",
+        "due_date",
+        "assignee_id",
+        "member_id",
+    ):
         if field in payload:
             val = payload[field]
             if field == "due_date" and isinstance(val, str):
                 try:
                     val = datetime.fromisoformat(val.replace("Z", "+00:00"))
                 except ValueError:
-                    raise HTTPException(status_code=400, detail="Formato de fecha inválido")
+                    raise HTTPException(
+                        status_code=400, detail="Formato de fecha inválido"
+                    )
             setattr(task, field, val)
     db.commit()
     db.refresh(task)
@@ -590,13 +692,19 @@ def get_counseling_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    ticket = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
+    ticket = (
+        db.query(models.CounselingTicket)
+        .filter(models.CounselingTicket.id == ticket_id)
+        .first()
+    )
     if not ticket:
         raise HTTPException(status_code=404, detail="Counseling ticket not found")
     history_rows = (
         db.query(models.CounselingTicket)
         .filter(models.CounselingTicket.member_id == ticket.member_id)
-        .order_by(models.CounselingTicket.created_at.desc(), models.CounselingTicket.id.desc())
+        .order_by(
+            models.CounselingTicket.created_at.desc(), models.CounselingTicket.id.desc()
+        )
         .all()
     )
     return {
@@ -709,7 +817,9 @@ def update_glory_house(
         if field in payload:
             setattr(house, field, payload[field])
 
-    if "base_attendee_ids" in payload and isinstance(payload["base_attendee_ids"], list):
+    if "base_attendee_ids" in payload and isinstance(
+        payload["base_attendee_ids"], list
+    ):
         normalized_ids = []
         for raw_id in payload["base_attendee_ids"]:
             try:
@@ -771,7 +881,11 @@ def get_prayer_request_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    prayer = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
+    prayer = (
+        db.query(models.PrayerRequest)
+        .filter(models.PrayerRequest.id == request_id)
+        .first()
+    )
     if not prayer:
         raise HTTPException(status_code=404, detail="Prayer request not found")
     return {
@@ -784,6 +898,7 @@ def get_prayer_request_detail(
 
 
 # ── Counseling (CRM prefix) ──────────────────────────────
+
 
 @router.get("/counseling/", response_model=List[dict])
 def list_counseling_tickets(
@@ -862,12 +977,20 @@ def update_counseling_ticket(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    ticket = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
+    ticket = (
+        db.query(models.CounselingTicket)
+        .filter(models.CounselingTicket.id == ticket_id)
+        .first()
+    )
     if not ticket:
         raise HTTPException(status_code=404, detail="Counseling ticket not found")
     for field in ("status", "notes", "priority_level"):
         if field in payload:
-            setattr(ticket, field if field != "priority_level" else "priority_level", payload[field])
+            setattr(
+                ticket,
+                field if field != "priority_level" else "priority_level",
+                payload[field],
+            )
     if "subject" in payload:
         ticket.subject = payload["subject"]
     db.commit()
@@ -885,6 +1008,7 @@ def update_counseling_ticket(
 
 # ── Settings ─────────────────────────────────────────────
 
+
 @router.get("/settings", response_model=dict)
 def get_crm_settings(
     db: Session = Depends(get_db),
@@ -892,6 +1016,7 @@ def get_crm_settings(
 ):
     row = crud.get_or_create_page_content(db, "crm_settings")
     import json
+
     try:
         return json.loads(row.content) if row.content else {}
     except (json.JSONDecodeError, TypeError):
@@ -905,10 +1030,13 @@ def save_crm_settings(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     import json
+
     crud.update_page_content(
         db,
         "crm_settings",
-        schemas.PageContentUpdate(title="CRM Settings", content=json.dumps(payload, ensure_ascii=False)),
+        schemas.PageContentUpdate(
+            title="CRM Settings", content=json.dumps(payload, ensure_ascii=False)
+        ),
     )
     return payload
 
@@ -920,7 +1048,9 @@ def list_crm_roles(
 ):
     rows = (
         db.query(models.RoleDefinition)
-        .order_by(models.RoleDefinition.is_leadership.desc(), models.RoleDefinition.name.asc())
+        .order_by(
+            models.RoleDefinition.is_leadership.desc(), models.RoleDefinition.name.asc()
+        )
         .all()
     )
     return [
@@ -944,7 +1074,11 @@ def create_crm_role(
     color = str(payload.get("color") or "").strip()
     if not name or not color:
         raise HTTPException(status_code=400, detail="name and color are required")
-    exists = db.query(models.RoleDefinition).filter(models.RoleDefinition.name == name).first()
+    exists = (
+        db.query(models.RoleDefinition)
+        .filter(models.RoleDefinition.name == name)
+        .first()
+    )
     if exists:
         raise HTTPException(status_code=400, detail="El rol ya existe")
     row = models.RoleDefinition(
@@ -955,7 +1089,12 @@ def create_crm_role(
     db.add(row)
     db.commit()
     db.refresh(row)
-    return {"id": row.id, "name": row.name, "color": row.color, "is_leadership": row.is_leadership}
+    return {
+        "id": row.id,
+        "name": row.name,
+        "color": row.color,
+        "is_leadership": row.is_leadership,
+    }
 
 
 @router.put("/roles/{role_id}", response_model=dict)
@@ -965,7 +1104,11 @@ def update_crm_role(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    row = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == role_id).first()
+    row = (
+        db.query(models.RoleDefinition)
+        .filter(models.RoleDefinition.id == role_id)
+        .first()
+    )
     if not row:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
 
@@ -976,12 +1119,19 @@ def update_crm_role(
             raise HTTPException(status_code=400, detail="name cannot be empty")
         exists = (
             db.query(models.RoleDefinition)
-            .filter(models.RoleDefinition.name == new_name, models.RoleDefinition.id != role_id)
+            .filter(
+                models.RoleDefinition.name == new_name,
+                models.RoleDefinition.id != role_id,
+            )
             .first()
         )
         if exists:
-            raise HTTPException(status_code=400, detail="Ya existe otro rol con ese nombre")
-        db.query(models.Member).filter(models.Member.church_role == row.name).update({"church_role": new_name})
+            raise HTTPException(
+                status_code=400, detail="Ya existe otro rol con ese nombre"
+            )
+        db.query(models.Member).filter(models.Member.church_role == row.name).update(
+            {"church_role": new_name}
+        )
         row.name = new_name
 
     if "color" in payload:
@@ -991,7 +1141,12 @@ def update_crm_role(
 
     db.commit()
     db.refresh(row)
-    return {"id": row.id, "name": row.name, "color": row.color, "is_leadership": row.is_leadership}
+    return {
+        "id": row.id,
+        "name": row.name,
+        "color": row.color,
+        "is_leadership": row.is_leadership,
+    }
 
 
 @router.delete("/roles/{role_id}", response_model=dict)
@@ -1002,17 +1157,33 @@ def delete_crm_role(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     if fallback_id == role_id:
-        raise HTTPException(status_code=400, detail="El rol de reemplazo no puede ser el mismo rol a eliminar")
-    role = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == role_id).first()
-    fallback = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == fallback_id).first()
+        raise HTTPException(
+            status_code=400,
+            detail="El rol de reemplazo no puede ser el mismo rol a eliminar",
+        )
+    role = (
+        db.query(models.RoleDefinition)
+        .filter(models.RoleDefinition.id == role_id)
+        .first()
+    )
+    fallback = (
+        db.query(models.RoleDefinition)
+        .filter(models.RoleDefinition.id == fallback_id)
+        .first()
+    )
     if not role:
         raise HTTPException(status_code=404, detail="Rol a eliminar no encontrado")
     if not fallback:
         raise HTTPException(status_code=400, detail="Rol de reemplazo no valido")
-    db.query(models.Member).filter(models.Member.church_role == role.name).update({"church_role": fallback.name})
+    db.query(models.Member).filter(models.Member.church_role == role.name).update(
+        {"church_role": fallback.name}
+    )
     db.delete(role)
     db.commit()
-    return {"success": True, "message": "Rol eliminado y miembros reasignados correctamente"}
+    return {
+        "success": True,
+        "message": "Rol eliminado y miembros reasignados correctamente",
+    }
 
 
 @router.get("/analytics", response_model=dict)
@@ -1021,22 +1192,43 @@ def get_crm_analytics_summary(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     total_members = db.query(models.Member).count()
-    active_members = db.query(models.Member).filter(
-        models.Member.spiritual_status.in_(["Activo", "active", "Miembro Activo"])
-    ).count()
+    active_members = (
+        db.query(models.Member)
+        .filter(
+            models.Member.spiritual_status.in_(["Activo", "active", "Miembro Activo"])
+        )
+        .count()
+    )
     pipeline_rows = (
-        db.query(models.ConsolidationPipeline.stage, func.count(models.ConsolidationPipeline.id))
+        db.query(
+            models.ConsolidationPipeline.stage,
+            func.count(models.ConsolidationPipeline.id),
+        )
         .group_by(models.ConsolidationPipeline.stage)
         .all()
     )
     pipeline_by_stage = {}
     for stage, count in pipeline_rows:
         normalized_stage = schemas.normalize_pipeline_stage(stage)
-        pipeline_by_stage[normalized_stage] = pipeline_by_stage.get(normalized_stage, 0) + count
+        pipeline_by_stage[normalized_stage] = (
+            pipeline_by_stage.get(normalized_stage, 0) + count
+        )
     total_leads = sum(pipeline_by_stage.values())
-    open_counseling = db.query(models.CounselingTicket).filter(models.CounselingTicket.status == "open").count()
-    month_start = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=None)
-    events_this_month = db.query(models.CrmEvent).filter(models.CrmEvent.event_date >= month_start).count()
+    open_counseling = (
+        db.query(models.CounselingTicket)
+        .filter(models.CounselingTicket.status == "open")
+        .count()
+    )
+    month_start = (
+        datetime.now(timezone.utc)
+        .replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        .replace(tzinfo=None)
+    )
+    events_this_month = (
+        db.query(models.CrmEvent)
+        .filter(models.CrmEvent.event_date >= month_start)
+        .count()
+    )
     total_groups = db.query(models.GloryHouse).count()
     total_families = db.query(models.Family).count()
     return {
@@ -1052,6 +1244,7 @@ def get_crm_analytics_summary(
 
 
 # ── Prayer Requests ──────────────────────────────────────
+
 
 @router.post("/prayer-requests/public", response_model=dict, status_code=201)
 def create_public_prayer_request(
@@ -1144,7 +1337,11 @@ def update_prayer_request(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    prayer = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
+    prayer = (
+        db.query(models.PrayerRequest)
+        .filter(models.PrayerRequest.id == request_id)
+        .first()
+    )
     if not prayer:
         raise HTTPException(status_code=404, detail="Prayer request not found")
     for field in ("status", "category", "request_text", "requester_name", "source"):
@@ -1194,12 +1391,16 @@ def create_volunteer(
     shift_end = None
     if payload.get("shift_start"):
         try:
-            shift_start = datetime.fromisoformat(str(payload["shift_start"]).replace("Z", "+00:00"))
+            shift_start = datetime.fromisoformat(
+                str(payload["shift_start"]).replace("Z", "+00:00")
+            )
         except ValueError:
             pass
     if payload.get("shift_end"):
         try:
-            shift_end = datetime.fromisoformat(str(payload["shift_end"]).replace("Z", "+00:00"))
+            shift_end = datetime.fromisoformat(
+                str(payload["shift_end"]).replace("Z", "+00:00")
+            )
         except ValueError:
             pass
 
@@ -1241,13 +1442,17 @@ def list_volunteers(
         total_hours = 0
         for shift in shifts:
             if shift.shift_start and shift.shift_end:
-                total_hours += int((shift.shift_end - shift.shift_start).total_seconds() // 3600)
-        result.append({
-            "id": member.id,
-            "name": f"{member.first_name} {member.last_name}",
-            "total_hours": total_hours,
-            "ministry_count": len(set(s.ministry for s in shifts if s.ministry)),
-        })
+                total_hours += int(
+                    (shift.shift_end - shift.shift_start).total_seconds() // 3600
+                )
+        result.append(
+            {
+                "id": member.id,
+                "name": f"{member.first_name} {member.last_name}",
+                "total_hours": total_hours,
+                "ministry_count": len(set(s.ministry for s in shifts if s.ministry)),
+            }
+        )
     return result
 
 
@@ -1270,12 +1475,17 @@ def get_volunteer_detail(
     total_hours = 0
     for shift in shifts:
         if shift.shift_start and shift.shift_end:
-            total_hours += int((shift.shift_end - shift.shift_start).total_seconds() // 3600)
+            total_hours += int(
+                (shift.shift_end - shift.shift_start).total_seconds() // 3600
+            )
     skills = sorted(
         row.name
         for row in (
             db.query(models.VolunteerSkill)
-            .join(models.member_volunteer_skills, models.member_volunteer_skills.c.skill_id == models.VolunteerSkill.id)
+            .join(
+                models.member_volunteer_skills,
+                models.member_volunteer_skills.c.skill_id == models.VolunteerSkill.id,
+            )
             .filter(models.member_volunteer_skills.c.member_id == member_id)
             .all()
         )
@@ -1287,7 +1497,11 @@ def get_volunteer_detail(
         "role": member.church_role,
         "team": latest_shift.team_name if latest_shift else None,
         "status": latest_shift.status if latest_shift else "inactive",
-        "joined_date": latest_shift.shift_start.isoformat() if latest_shift and latest_shift.shift_start else None,
+        "joined_date": (
+            latest_shift.shift_start.isoformat()
+            if latest_shift and latest_shift.shift_start
+            else None
+        ),
         "total_hours": total_hours,
         "skills": skills,
     }
@@ -1309,7 +1523,11 @@ def update_volunteer(
             setattr(member, k, v)
     db.commit()
     db.refresh(member)
-    return {"id": member.id, "name": _member_full_name(member), "role": member.church_role}
+    return {
+        "id": member.id,
+        "name": _member_full_name(member),
+        "role": member.church_role,
+    }
 
 
 @router.delete("/volunteers/{member_id}", status_code=204)
@@ -1321,7 +1539,9 @@ def delete_volunteer(
     member = db.query(models.Member).filter(models.Member.id == member_id).first()
     if not member:
         raise HTTPException(status_code=404, detail="Volunteer not found")
-    db.query(models.VolunteerShift).filter(models.VolunteerShift.member_id == member_id).delete()
+    db.query(models.VolunteerShift).filter(
+        models.VolunteerShift.member_id == member_id
+    ).delete()
     db.delete(member)
     db.commit()
 
@@ -1353,8 +1573,14 @@ def get_crm_radar(
     """Datos del radar ministerial para dashboard."""
     total_members = db.query(models.Member).count()
     total_ministries = db.query(models.Ministry).count()
-    active_cases = db.query(models.ConsolidationCase).filter(models.ConsolidationCase.status == "active").count()
-    pending_tasks = db.query(models.CrmTask).filter(models.CrmTask.status == "pending").count()
+    active_cases = (
+        db.query(models.ConsolidationCase)
+        .filter(models.ConsolidationCase.status == "active")
+        .count()
+    )
+    pending_tasks = (
+        db.query(models.CrmTask).filter(models.CrmTask.status == "pending").count()
+    )
     return {
         "total_members": total_members,
         "total_ministries": total_ministries,

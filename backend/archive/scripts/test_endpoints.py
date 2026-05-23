@@ -1,5 +1,6 @@
 import requests
 
+
 def test_api():
     base_url = "http://localhost:8001"
     endpoints = [

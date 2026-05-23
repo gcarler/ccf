@@ -1,6 +1,6 @@
 import codecs
 
-with codecs.open('frontend/src/app/crm/events/page.tsx', 'r', 'utf-8') as f:
+with codecs.open("frontend/src/app/crm/events/page.tsx", "r", "utf-8") as f:
     c = f.read()
 
 # 1. State update
@@ -106,7 +106,7 @@ form_new = form_old + """
 
 c = c.replace(form_old, form_new)
 
-with codecs.open('frontend/src/app/crm/events/page.tsx', 'w', 'utf-8') as f:
+with codecs.open("frontend/src/app/crm/events/page.tsx", "w", "utf-8") as f:
     f.write(c)
 
 print("Phase 1 completed: Event Creation Drawer updated.")

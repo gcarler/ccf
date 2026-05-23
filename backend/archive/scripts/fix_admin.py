@@ -9,6 +9,7 @@ Required env vars:
 
 import os
 import sys
+
 from backend import models
 from backend.core.database import SessionLocal
 from backend.core.security import get_password_hash

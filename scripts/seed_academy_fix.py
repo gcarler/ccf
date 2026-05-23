@@ -1,11 +1,12 @@
-import sys
 import os
+import sys
 
 # Add parent directory to sys.path to allow importing from backend
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend.core.database import SessionLocal
 from backend import models
+from backend.core.database import SessionLocal
+
 
 def seed_missing_data():
     db = SessionLocal()
@@ -20,33 +21,44 @@ def seed_missing_data():
             print("Admin user not found.")
 
         # 2. Seed Academy Content Blocks
-        academy_hero = db.query(models.PageContent).filter(models.PageContent.page_key == "academy_hero").first()
+        academy_hero = (
+            db.query(models.PageContent)
+            .filter(models.PageContent.page_key == "academy_hero")
+            .first()
+        )
         if not academy_hero:
             print("Creating academy_hero content...")
             academy_hero = models.PageContent(
                 page_key="academy_hero",
                 title="Continúa tu Formación",
-                content="Bienvenido al portal académico. Aquí podrás avanzar en tu crecimiento espiritual y ministerial con nuestros cursos diseñados para ti."
+                content="Bienvenido al portal académico. Aquí podrás avanzar en tu crecimiento espiritual y ministerial con nuestros cursos diseñados para ti.",
             )
             db.add(academy_hero)
-        
-        academy_welcome = db.query(models.PageContent).filter(models.PageContent.page_key == "academy_welcome_sub").first()
+
+        academy_welcome = (
+            db.query(models.PageContent)
+            .filter(models.PageContent.page_key == "academy_welcome_sub")
+            .first()
+        )
         if not academy_welcome:
             print("Creating academy_welcome_sub content...")
             academy_welcome = models.PageContent(
-                page_key="academy_welcome_sub",
-                title="Tu Ruta de Discipulado"
+                page_key="academy_welcome_sub", title="Tu Ruta de Discipulado"
             )
             db.add(academy_welcome)
 
         # 3. Seed Support Categories if they don't exist as content (already in support/page.tsx defaults, but good to have in DB)
-        support_page = db.query(models.PageContent).filter(models.PageContent.page_key == "support_page").first()
+        support_page = (
+            db.query(models.PageContent)
+            .filter(models.PageContent.page_key == "support_page")
+            .first()
+        )
         if not support_page:
             print("Creating support_page content...")
             support_page = models.PageContent(
                 page_key="support_page",
                 title="Centro de Ayuda",
-                content="Estamos aquí para asistirte en cada paso de tu formación."
+                content="Estamos aquí para asistirte en cada paso de tu formación.",
             )
             db.add(support_page)
 
@@ -58,6 +70,7 @@ def seed_missing_data():
         db.rollback()
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     seed_missing_data()

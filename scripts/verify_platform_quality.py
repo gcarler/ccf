@@ -12,7 +12,6 @@ from backend.app import app
 from backend.core.database import SessionLocal
 from backend.management.schema import reset_database_for_local_bootstrap
 
-
 client = TestClient(app)
 
 
@@ -47,7 +46,9 @@ def verify_quality():
 
         print("[2/4] Testing Gamification Motor...")
         initial_status = crud.get_user_xp_and_level(db, user.id)
-        print(f"  > Initial XP: {initial_status['xp']}, Level: {initial_status['level']}")
+        print(
+            f"  > Initial XP: {initial_status['xp']}, Level: {initial_status['level']}"
+        )
         crud.grant_xp(db, user.id, 50)
         updated_status = crud.get_user_xp_and_level(db, user.id)
         print(f"  > Updated XP: {updated_status['xp']} (Success)")

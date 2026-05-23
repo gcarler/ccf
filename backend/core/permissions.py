@@ -46,7 +46,12 @@ ROLE_ALIASES: Dict[str, str] = {
 }
 
 VALID_ROLES: set[str] = {
-    "aspirante", "estudiante", "docente", "coordinador", "pastor", "admin",
+    "aspirante",
+    "estudiante",
+    "docente",
+    "coordinador",
+    "pastor",
+    "admin",
 }
 
 # ── Permission taxonomy ────────────────────────────────────────────────
@@ -143,10 +148,23 @@ PERMISSION_LEVELS = {
 
 MODULE_PERMISSION_MAP: Dict[str, Dict[str, str]] = {
     "crm": {"read": "crm:read", "edit": "crm:edit", "manage": "crm:manage"},
-    "finance": {"read": "finance:read", "edit": "finance:edit", "manage": "finance:manage"},
-    "projects": {"read": "projects:read", "edit": "projects:edit", "manage": "projects:manage"},
+    "finance": {
+        "read": "finance:read",
+        "edit": "finance:edit",
+        "manage": "finance:manage",
+    },
+    "projects": {
+        "read": "projects:read",
+        "edit": "projects:edit",
+        "manage": "projects:manage",
+    },
     "cms": {"read": "cms:read", "edit": "cms:edit", "manage": "cms:manage"},
-    "academy": {"read": "academy:read", "study": "academy:study", "edit": "academy:edit", "manage": "academy:manage"},
+    "academy": {
+        "read": "academy:read",
+        "study": "academy:study",
+        "edit": "academy:edit",
+        "manage": "academy:manage",
+    },
     "messaging": {"read": "messaging:read", "edit": "messaging:edit"},
 }
 
@@ -376,11 +394,13 @@ def _has_permission(role: str, user_perms: set | dict, required: str) -> bool:
         return True
 
     # Hierarchy: higher levels imply lower ones within the same module
-    hierarchy = {"manage": {"manage", "edit", "read"},
-                 "edit": {"edit", "read"},
-                 "read": {"read"},
-                 "study": {"study", "read"},
-                 "config": {"config"}}
+    hierarchy = {
+        "manage": {"manage", "edit", "read"},
+        "edit": {"edit", "read"},
+        "read": {"read"},
+        "study": {"study", "read"},
+        "config": {"config"},
+    }
 
     if level not in hierarchy:
         return required in user_perms
@@ -435,7 +455,11 @@ def require_permission(permission: str):
             return current_user
         if permission.startswith("crm:") and role == "pastor":
             return current_user
-        if permission.startswith("academy:") and role in {"coordinador", "docente", "pastor"}:
+        if permission.startswith("academy:") and role in {
+            "coordinador",
+            "docente",
+            "pastor",
+        }:
             return current_user
         if permission.startswith("projects:") and role in {"coordinador", "pastor"}:
             return current_user

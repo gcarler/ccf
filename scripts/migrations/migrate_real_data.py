@@ -1,10 +1,12 @@
-
 import logging
+
 from sqlalchemy import text
+
 from backend.core.database import SessionLocal
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Migration-RealData")
+
 
 def column_exists(db, table_name, column_name):
     """Verifica si una columna existe en una tabla de SQLite."""
@@ -15,9 +17,10 @@ def column_exists(db, table_name, column_name):
     except Exception:
         return False
 
+
 def migrate():
     db = SessionLocal()
-    
+
     migrations = [
         ("donations", "status", "VARCHAR(20) DEFAULT 'completed'"),
         ("donations", "reference_code", "VARCHAR(100)"),
@@ -42,11 +45,12 @@ def migrate():
                     logger.error(f"❌ Error al añadir {table}.{col}: {e}")
             else:
                 logger.info(f"ℹ️ La columna {table}.{col} ya existe.")
-        
+
         db.commit()
         logger.info("✅ Proceso de migración finalizado.")
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     migrate()

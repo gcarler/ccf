@@ -1,6 +1,7 @@
 from backend.models_shared import *
 from backend.models_shared import _utcnow
 
+
 # 2. ACADEMY & FORUM
 class Course(Base):
     __tablename__ = "courses"
@@ -23,19 +24,29 @@ class Course(Base):
     prerequisites = relationship(
         "CoursePrerequisite",
         foreign_keys="CoursePrerequisite.course_id",
-        back_populates="course"
+        back_populates="course",
     )
+
 
 class CoursePrerequisite(Base):
     __tablename__ = "course_prerequisites"
     id = Column(Integer, primary_key=True, index=True)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
-    prerequisite_course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
+    prerequisite_course_id = Column(
+        Integer, ForeignKey("courses.id"), nullable=False, index=True
+    )
 
-    __table_args__ = (UniqueConstraint("course_id", "prerequisite_course_id", name="uq_course_prerequisite"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "course_id", "prerequisite_course_id", name="uq_course_prerequisite"
+        ),
+    )
 
-    course = relationship("Course", foreign_keys=[course_id], back_populates="prerequisites")
+    course = relationship(
+        "Course", foreign_keys=[course_id], back_populates="prerequisites"
+    )
     prerequisite_course = relationship("Course", foreign_keys=[prerequisite_course_id])
+
 
 class Lesson(Base):
     __tablename__ = "lessons"
@@ -43,13 +54,14 @@ class Lesson(Base):
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
     title = Column(String(200), nullable=False)
     content = Column(Text, nullable=False)
-    content_type = Column(String(50), default="video") # video, pdf, quiz
+    content_type = Column(String(50), default="video")  # video, pdf, quiz
     media_url = Column(String(255), nullable=True)
     order_index = Column(Integer, default=0)
     duration_minutes = Column(Integer, default=0)
     course = relationship("Course", back_populates="lessons")
     resources = relationship("Resource", back_populates="lesson")
     assessments = relationship("Assessment", back_populates="lesson")
+
 
 class LessonProgress(Base):
     __tablename__ = "lesson_progress"
@@ -61,26 +73,34 @@ class LessonProgress(Base):
     is_completed = Column(Boolean, default=False, index=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-    __table_args__ = (UniqueConstraint("user_id", "lesson_id", name="uq_user_lesson_progress"),)
+    __table_args__ = (
+        UniqueConstraint("user_id", "lesson_id", name="uq_user_lesson_progress"),
+    )
+
 
 class Assessment(Base):
     __tablename__ = "assessments"
     id = Column(Integer, primary_key=True, index=True)
     lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False, index=True)
-    course_id = Column(Integer, ForeignKey("courses.id"), nullable=True, index=True) # Direct course relation
+    course_id = Column(
+        Integer, ForeignKey("courses.id"), nullable=True, index=True
+    )  # Direct course relation
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     min_score = Column(Numeric(5, 2), default=70)
     weight = Column(Numeric(5, 2), default=1.0)
 
     lesson = relationship("Lesson", back_populates="assessments")
-    course = relationship("Course") # New relationship
+    course = relationship("Course")  # New relationship
     questions = relationship("AssessmentQuestion", back_populates="assessment")
+
 
 class AssessmentQuestion(Base):
     __tablename__ = "assessment_questions"
     id = Column(Integer, primary_key=True, index=True)
-    assessment_id = Column(Integer, ForeignKey("assessments.id"), nullable=False, index=True)
+    assessment_id = Column(
+        Integer, ForeignKey("assessments.id"), nullable=False, index=True
+    )
     question_text = Column(Text, nullable=False)
     question_type = Column(String(20), default="multiple_choice")
     points = Column(Integer, default=10)
@@ -88,32 +108,50 @@ class AssessmentQuestion(Base):
     assessment = relationship("Assessment", back_populates="questions")
     options = relationship("AssessmentOption", back_populates="question")
 
+
 class AssessmentOption(Base):
     __tablename__ = "assessment_options"
     id = Column(Integer, primary_key=True, index=True)
-    question_id = Column(Integer, ForeignKey("assessment_questions.id"), nullable=False, index=True)
+    question_id = Column(
+        Integer, ForeignKey("assessment_questions.id"), nullable=False, index=True
+    )
     option_text = Column(Text, nullable=False)
     is_correct = Column(Boolean, default=False)
 
     question = relationship("AssessmentQuestion", back_populates="options")
 
+
 class AssessmentAttempt(Base):
     __tablename__ = "assessment_attempts"
     id = Column(Integer, primary_key=True, index=True)
-    enrollment_id = Column(Integer, ForeignKey("enrollments.id"), nullable=False, index=True)
-    assessment_id = Column(Integer, ForeignKey("assessments.id"), nullable=False, index=True)
+    enrollment_id = Column(
+        Integer, ForeignKey("enrollments.id"), nullable=False, index=True
+    )
+    assessment_id = Column(
+        Integer, ForeignKey("assessments.id"), nullable=False, index=True
+    )
     score = Column(Numeric(5, 2), default=0)
     passed = Column(Boolean, default=False, index=True)
     created_at = Column(DateTime, default=_utcnow, index=True)
 
-    answers = relationship("AssessmentAnswer", back_populates="attempt", cascade="all, delete-orphan")
+    answers = relationship(
+        "AssessmentAnswer", back_populates="attempt", cascade="all, delete-orphan"
+    )
+
 
 class AssessmentAnswer(Base):
     __tablename__ = "assessment_answers"
     id = Column(Integer, primary_key=True, index=True)
-    attempt_id = Column(Integer, ForeignKey("assessment_attempts.id", ondelete="CASCADE"), nullable=False, index=True)
+    attempt_id = Column(
+        Integer,
+        ForeignKey("assessment_attempts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     question_id = Column(Integer, ForeignKey("assessment_questions.id"), nullable=False)
-    selected_option_id = Column(Integer, ForeignKey("assessment_options.id"), nullable=True)
+    selected_option_id = Column(
+        Integer, ForeignKey("assessment_options.id"), nullable=True
+    )
     text_response = Column(Text, nullable=True)
     is_correct = Column(Boolean, nullable=True)
     points_awarded = Column(Numeric(5, 2), default=0)
@@ -121,6 +159,7 @@ class AssessmentAnswer(Base):
     attempt = relationship("AssessmentAttempt", back_populates="answers")
     question = relationship("AssessmentQuestion")
     selected_option = relationship("AssessmentOption")
+
 
 class Resource(Base):
     __tablename__ = "resources"
@@ -132,10 +171,13 @@ class Resource(Base):
 
     lesson = relationship("Lesson", back_populates="resources")
 
+
 class AssignmentSubmission(Base):
     __tablename__ = "assignment_submissions"
     id = Column(Integer, primary_key=True, index=True)
-    enrollment_id = Column(Integer, ForeignKey("enrollments.id"), nullable=False, index=True)
+    enrollment_id = Column(
+        Integer, ForeignKey("enrollments.id"), nullable=False, index=True
+    )
     lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False, index=True)
     file_url = Column(String(500), nullable=False)
     comment = Column(Text, nullable=True)
@@ -143,15 +185,17 @@ class AssignmentSubmission(Base):
     teacher_feedback = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
 
+
 class FormalActa(Base):
     __tablename__ = "formal_actas"
     id = Column(Integer, primary_key=True, index=True)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
     closed_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    status = Column(String(20), default="closed") # closed, archived
+    status = Column(String(20), default="closed")  # closed, archived
     min_grade_required = Column(Numeric(5, 2), default=70)
     min_attendance_required = Column(Numeric(5, 2), default=75)
     created_at = Column(DateTime, default=_utcnow)
+
 
 class ForumComment(Base):
     __tablename__ = "forum_comments"
@@ -161,6 +205,7 @@ class ForumComment(Base):
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=_utcnow)
 
+
 class Family(Base):
     __tablename__ = "families"
     id = Column(Integer, primary_key=True, index=True)
@@ -168,6 +213,7 @@ class Family(Base):
     address = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     members = relationship("Member", back_populates="family")
+
 
 class GloryHouse(Base):
     __tablename__ = "glory_houses"
@@ -183,52 +229,88 @@ class GloryHouse(Base):
     capacity = Column(Integer, default=15)
     day_of_week = Column(String(20), nullable=True)  # e.g. "Lunes", "Jueves"
     start_time = Column(String(50), nullable=True)
-    end_time = Column(String(50), nullable=True)          # e.g. "19:00"
+    end_time = Column(String(50), nullable=True)  # e.g. "19:00"
     status = Column(String(20), default="Activo", index=True)
-    
-    leader_id = Column(Integer, ForeignKey("members.id", ondelete="SET NULL"), nullable=True)
-    assistant_id = Column(Integer, ForeignKey("members.id", ondelete="SET NULL"), nullable=True)
-    host_id = Column(Integer, ForeignKey("members.id", ondelete="SET NULL"), nullable=True)
-    
+
+    leader_id = Column(
+        Integer, ForeignKey("members.id", ondelete="SET NULL"), nullable=True
+    )
+    assistant_id = Column(
+        Integer, ForeignKey("members.id", ondelete="SET NULL"), nullable=True
+    )
+    host_id = Column(
+        Integer, ForeignKey("members.id", ondelete="SET NULL"), nullable=True
+    )
+
     created_at = Column(DateTime, default=_utcnow)
-    
+
     leader = relationship("Member", foreign_keys=[leader_id])
     assistant = relationship("Member", foreign_keys=[assistant_id])
     host = relationship("Member", foreign_keys=[host_id])
-    
-    base_attendees = relationship("GloryHouseMember", back_populates="glory_house", cascade="all, delete-orphan")
+
+    base_attendees = relationship(
+        "GloryHouseMember", back_populates="glory_house", cascade="all, delete-orphan"
+    )
+
 
 class GloryHouseMember(Base):
     __tablename__ = "glory_house_members"
     id = Column(Integer, primary_key=True, index=True)
-    glory_house_id = Column(Integer, ForeignKey("glory_houses.id", ondelete="CASCADE"), nullable=False, index=True)
-    member_id = Column(Integer, ForeignKey("members.id", ondelete="CASCADE"), nullable=False, index=True)
+    glory_house_id = Column(
+        Integer,
+        ForeignKey("glory_houses.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    member_id = Column(
+        Integer,
+        ForeignKey("members.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     role = Column(String(50), default="asistente")
-    
+
     glory_house = relationship("GloryHouse", back_populates="base_attendees")
     member = relationship("Member")
 
 
 class FaroSeason(Base):
     """Represents an evangelistic campaign season (e.g. 'Faro en Casa 2026')."""
+
     __tablename__ = "faro_seasons"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
-    periodicity = Column(String(20), default="SEMANAL", nullable=False)  # SEMANAL | MENSUAL
-    status = Column(String(20), default="Activa", index=True)            # Activa | Finalizada
+    periodicity = Column(
+        String(20), default="SEMANAL", nullable=False
+    )  # SEMANAL | MENSUAL
+    status = Column(String(20), default="Activa", index=True)  # Activa | Finalizada
     created_at = Column(DateTime, default=_utcnow)
+
 
 class GloryHouseSession(Base):
     """A single weekly/monthly reporting session for a Faro en Casa house."""
+
     __tablename__ = "glory_house_sessions"
     __table_args__ = (
-        UniqueConstraint("glory_house_id", "season_id", "session_date", name="uq_faro_session"),
+        UniqueConstraint(
+            "glory_house_id", "season_id", "session_date", name="uq_faro_session"
+        ),
     )
     id = Column(Integer, primary_key=True, index=True)
-    glory_house_id = Column(Integer, ForeignKey("glory_houses.id", ondelete="CASCADE"), nullable=False, index=True)
-    season_id = Column(Integer, ForeignKey("faro_seasons.id", ondelete="CASCADE"), nullable=False, index=True)
+    glory_house_id = Column(
+        Integer,
+        ForeignKey("glory_houses.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    season_id = Column(
+        Integer,
+        ForeignKey("faro_seasons.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     session_date = Column(Date, nullable=False, index=True)
     report_deadline = Column(DateTime, nullable=True)
     status = Column(String(20), default="Realizada")  # Realizada | Cancelada
@@ -238,7 +320,12 @@ class GloryHouseSession(Base):
     novelty_type = Column(String(50), nullable=True)
     novelty_detail = Column(Text, nullable=True)
     cancellation_reason = Column(Text, nullable=True)
-    reported_by_member_id = Column(Integer, ForeignKey("members.id", ondelete="SET NULL"), nullable=True, index=True)
+    reported_by_member_id = Column(
+        Integer,
+        ForeignKey("members.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     reported_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
 
@@ -246,15 +333,27 @@ class GloryHouseSession(Base):
     season = relationship("FaroSeason")
     reported_by_member = relationship("Member")
 
+
 class GloryHouseAttendance(Base):
     """Attendance record of a member at a Faro en Casa session."""
+
     __tablename__ = "glory_house_attendance"
     __table_args__ = (
         UniqueConstraint("session_id", "member_id", name="uq_faro_attendance"),
     )
     id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Integer, ForeignKey("glory_house_sessions.id", ondelete="CASCADE"), nullable=False, index=True)
-    member_id = Column(Integer, ForeignKey("members.id", ondelete="CASCADE"), nullable=False, index=True)
+    session_id = Column(
+        Integer,
+        ForeignKey("glory_house_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    member_id = Column(
+        Integer,
+        ForeignKey("members.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     attended = Column(Boolean, default=True)
     absence_reason = Column(String(50), nullable=True, index=True)
     absence_reason_detail = Column(Text, nullable=True)
@@ -263,32 +362,37 @@ class GloryHouseAttendance(Base):
     session = relationship("GloryHouseSession")
     member = relationship("Member")
 
+
 class Enrollment(Base):
     __tablename__ = "enrollments"
     __table_args__ = (UniqueConstraint("user_id", "course_id", name="uq_user_course"),)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
-    status = Column(String(20), default="active") # active, completed, dropped
+    status = Column(String(20), default="active")  # active, completed, dropped
     progress_percent = Column(Numeric(5, 2), default=0)
     lessons_completed = Column(JSON, default=[])
     approved = Column(Boolean, default=False)
     certificate_issued = Column(Boolean, default=False)
     certificate_code = Column(String(64), nullable=True)
-    access_window_end = Column(DateTime, nullable=True) # RN-NF-004
+    access_window_end = Column(DateTime, nullable=True)  # RN-NF-004
     created_at = Column(DateTime, default=_utcnow)
     student = relationship("User", back_populates="enrollments")
     course = relationship("Course", back_populates="enrollments")
 
+
 class AcademyActivityLog(Base):
     __tablename__ = "academy_activity_logs"
     id = Column(Integer, primary_key=True, index=True)
-    event_type = Column(String(50), nullable=False, index=True) # enrollment, completion, drop, certificate
+    event_type = Column(
+        String(50), nullable=False, index=True
+    )  # enrollment, completion, drop, certificate
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    modality = Column(String(20), nullable=True) # formal, no_formal
+    modality = Column(String(20), nullable=True)  # formal, no_formal
     value = Column(Numeric(10, 2), default=1.0)
     created_at = Column(DateTime, default=_utcnow, index=True)
+
 
 class ForumThread(Base):
     __tablename__ = "forum_threads"
@@ -304,7 +408,12 @@ class ForumThread(Base):
 class CourseAttendance(Base):
     __tablename__ = "course_attendance"
     id = Column(Integer, primary_key=True, index=True)
-    enrollment_id = Column(Integer, ForeignKey("enrollments.id", ondelete="CASCADE"), nullable=False, index=True)
+    enrollment_id = Column(
+        Integer,
+        ForeignKey("enrollments.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     session_date = Column(DateTime, default=_utcnow, index=True)
     status = Column(String(20), default="present")  # present, absent, justified
     recorded_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
@@ -315,7 +424,9 @@ class CourseAttendance(Base):
 class Certificate(Base):
     __tablename__ = "certificates"
     id = Column(Integer, primary_key=True, index=True)
-    enrollment_id = Column(Integer, ForeignKey("enrollments.id"), nullable=False, index=True)
+    enrollment_id = Column(
+        Integer, ForeignKey("enrollments.id"), nullable=False, index=True
+    )
     certificate_code = Column(String(64), unique=True, nullable=False, index=True)
     issued_at = Column(DateTime, default=_utcnow)
 

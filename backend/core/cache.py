@@ -10,7 +10,6 @@ import redis
 
 from backend.core.config import get_settings
 
-
 settings = get_settings()
 
 
@@ -113,6 +112,7 @@ def _stable_cache_key(func_name: str, args: tuple, kwargs: dict) -> str:
 
 def cached(ttl: int = 300):
     """Decorador simple para cachear resultados en Redis/Memoria."""
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -142,5 +142,7 @@ def cached(ttl: int = 300):
                 pass
 
             return result
+
         return wrapper
+
     return decorator

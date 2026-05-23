@@ -1,8 +1,9 @@
-import sqlite3
-import json
 import datetime as dt
-import duckdb
+import json
+import sqlite3
 from pathlib import Path
+
+import duckdb
 
 # Paths
 SQLITE_DB = 'd:/ccf/ccf_v2.db'

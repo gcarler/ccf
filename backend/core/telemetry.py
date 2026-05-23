@@ -5,7 +5,8 @@ from typing import Any
 
 try:  # pragma: no cover - optional instrumentation
     from opentelemetry import trace
-    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import \
+        OTLPSpanExporter
     from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
     from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
     from opentelemetry.sdk.resources import Resource
@@ -15,7 +16,6 @@ except ImportError:  # pragma: no cover
     trace = None  # type: ignore
 
 from backend.core.config import get_settings
-
 
 log = logging.getLogger(__name__)
 _configured = False

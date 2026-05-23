@@ -1,4 +1,4 @@
-f = open('backend/api/crm.py', encoding='utf-8')
+f = open("backend/api/crm.py", encoding="utf-8")
 c = f.read()
 f.close()
 
@@ -260,8 +260,12 @@ def get_faro_analytics(
 
 if "def list_faro_seasons" not in c:
     # Insert before the closing route aliases block
-    c = c.replace('# ─── ROUTE ALIASES ──────────────────────────────────────────────────────────', faro_endpoints + '\n# ─── ROUTE ALIASES ──────────────────────────────────────────────────────────')
-    open('backend/api/crm.py', 'w', encoding='utf-8').write(c)
+    c = c.replace(
+        "# ─── ROUTE ALIASES ──────────────────────────────────────────────────────────",
+        faro_endpoints
+        + "\n# ─── ROUTE ALIASES ──────────────────────────────────────────────────────────",
+    )
+    open("backend/api/crm.py", "w", encoding="utf-8").write(c)
     print("Faro endpoints injected")
 else:
     print("Already exists")

@@ -3,7 +3,8 @@ from __future__ import annotations
 import logging
 
 from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from .config import get_settings
@@ -104,7 +105,9 @@ async def get_db_async():
     engine = get_async_engine()
     if engine is None:
         # Fallback: arranca sync engine en executor si async no está disponible
-        log.warning("Async engine not available; use sync `get_db` instead of `get_db_async`")
+        log.warning(
+            "Async engine not available; use sync `get_db` instead of `get_db_async`"
+        )
         raise RuntimeError(
             "Async database engine not available. "
             "Install asyncpg (PostgreSQL) or aiosqlite (SQLite) and check DATABASE_URL."

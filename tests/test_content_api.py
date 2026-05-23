@@ -65,7 +65,10 @@ def test_rich_text_content_keys_accept_html_without_json(client, db_session):
 
     response = client.post(
         "/api/content/faro_about_body_html",
-        json={"title": "Cuerpo nosotros", "content": "<h2>Somos FARO</h2><p>Texto enriquecido.</p>"},
+        json={
+            "title": "Cuerpo nosotros",
+            "content": "<h2>Somos FARO</h2><p>Texto enriquecido.</p>",
+        },
         headers=headers,
     )
 

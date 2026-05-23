@@ -1,7 +1,7 @@
 import codecs
 import re
 
-with codecs.open('frontend/src/app/crm/events/[id]/page.tsx', 'r', 'utf-8') as f:
+with codecs.open("frontend/src/app/crm/events/[id]/page.tsx", "r", "utf-8") as f:
     c = f.read()
 
 # Add download/export function
@@ -49,7 +49,7 @@ ui_new = """                                    <button
                                     </button>"""
 c = c.replace(ui_old, ui_new)
 
-with codecs.open('frontend/src/app/crm/events/[id]/page.tsx', 'w', 'utf-8') as f:
+with codecs.open("frontend/src/app/crm/events/[id]/page.tsx", "w", "utf-8") as f:
     f.write(c)
 
 print("Export button added")

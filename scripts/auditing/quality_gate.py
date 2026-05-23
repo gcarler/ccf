@@ -1,10 +1,11 @@
-
-import os
-import sys
-import subprocess
 import logging
+import os
+import subprocess
+import sys
 from pathlib import Path
+
 from sqlalchemy import text
+
 from backend.core.database import SessionLocal
 
 REPORT_PATH = Path("test_artifacts") / "quality_report.log"
@@ -13,28 +14,25 @@ REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
 # Configuración de logging para reporte de calidad
 # Forzar UTF-8 en stdout si es posible
 stdout_encoding = getattr(sys.stdout, "encoding", None) or ""
-if stdout_encoding.lower() != 'utf-8':
-    sys.stdout.reconfigure(encoding='utf-8')
+if stdout_encoding.lower() != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8")
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
+    format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(REPORT_PATH, mode='w', encoding='utf-8')
-    ]
+        logging.FileHandler(REPORT_PATH, mode="w", encoding="utf-8"),
+    ],
 )
 logger = logging.getLogger("QualityGate")
+
 
 def run_step(name, command, cwd=None):
     logger.info(f"--- INICIANDO: {name} ---")
     try:
         result = subprocess.run(
-            command, 
-            shell=True, 
-            cwd=cwd, 
-            capture_output=True, 
-            text=True
+            command, shell=True, cwd=cwd, capture_output=True, text=True
         )
         if result.returncode == 0:
             logger.info(f"✅ {name} PASÓ.")
@@ -47,23 +45,34 @@ def run_step(name, command, cwd=None):
         logger.error(f"❌ Error crítico ejecutando {name}: {e}")
         return False
 
+
 def check_db_indices():
     logger.info("--- VERIFICANDO ÍNDICES DE BASE DE DATOS ---")
     db = SessionLocal()
     expected_indices = [
-        "idx_donations_status", "idx_donations_ref", 
-        "idx_audit_resource", "idx_tasks_status",
-        "idx_user_reminders_user_id"
+        "idx_donations_status",
+        "idx_donations_ref",
+        "idx_audit_resource",
+        "idx_tasks_status",
+        "idx_user_reminders_user_id",
     ]
     all_passed = True
     try:
         dialect_name = db.bind.dialect.name
         for idx in expected_indices:
             if dialect_name == "postgresql":
-                res = db.execute(text(f"SELECT indexname FROM pg_indexes WHERE indexname = :idx"), {"idx": idx})
+                res = db.execute(
+                    text(f"SELECT indexname FROM pg_indexes WHERE indexname = :idx"),
+                    {"idx": idx},
+                )
             else:
-                res = db.execute(text(f"SELECT name FROM sqlite_master WHERE type='index' AND name = :idx"), {"idx": idx})
-            
+                res = db.execute(
+                    text(
+                        f"SELECT name FROM sqlite_master WHERE type='index' AND name = :idx"
+                    ),
+                    {"idx": idx},
+                )
+
             if res.fetchone():
                 logger.info(f"✅ Índice {idx} verificado.")
             else:
@@ -73,6 +82,7 @@ def check_db_indices():
     finally:
         db.close()
 
+
 def check_new_views():
     logger.info("--- VERIFICANDO EXISTENCIA DE NUEVAS VISTAS ---")
     critical_paths = [
@@ -80,7 +90,7 @@ def check_new_views():
         "frontend/src/app/admin/donations/page.tsx",
         "frontend/src/app/crm/pipeline/[id]/page.tsx",
         "frontend/src/app/tasks/[id]/page.tsx",
-        "frontend/src/app/whiteboard/[id]/page.tsx"
+        "frontend/src/app/whiteboard/[id]/page.tsx",
     ]
     all_passed = True
     for path in critical_paths:
@@ -91,19 +101,26 @@ def check_new_views():
             all_passed = False
     return all_passed
 
+
 def main():
     logger.info("====================================================")
     logger.info("   CCF PLATFORM - QUALITY GATE v1.0")
     logger.info("====================================================")
-    
+
     steps = [
-        ("Backend Core Tests", "python -m pytest tests/test_smoke.py tests/test_auth.py"),
-        ("Backend Domain Tests", "python -m pytest tests/test_academy_domain.py tests/test_crm_domain.py"),
+        (
+            "Backend Core Tests",
+            "python -m pytest tests/test_smoke.py tests/test_auth.py",
+        ),
+        (
+            "Backend Domain Tests",
+            "python -m pytest tests/test_academy_domain.py tests/test_crm_domain.py",
+        ),
         ("Frontend Typecheck", "npm run typecheck", "frontend"),
     ]
-    
+
     overall_success = True
-    
+
     # 1. Pruebas Automatizadas
     for name, cmd, *cwd in steps:
         work_dir = cwd[0] if cwd else None
@@ -113,12 +130,15 @@ def main():
     # 2. Verificaciones Estructurales
     if not check_db_indices():
         overall_success = False
-        
+
     if not check_new_views():
         overall_success = False
 
     # 3. Verificación de Motor de Automatización
-    if not run_step("Automation Engine Load", 'set PYTHONPATH=. && python backend/services/automation_engine.py'):
+    if not run_step(
+        "Automation Engine Load",
+        "set PYTHONPATH=. && python backend/services/automation_engine.py",
+    ):
         overall_success = False
 
     logger.info("====================================================")
@@ -129,9 +149,10 @@ def main():
         logger.info("⚠️ RESULTADO FINAL: SE REQUIEREN CORRECCIONES")
         logger.info(f"Revisa los errores en {REPORT_PATH.as_posix()}")
     logger.info("====================================================")
-    
+
     if not overall_success:
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

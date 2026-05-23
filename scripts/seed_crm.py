@@ -1,7 +1,9 @@
 import asyncio
-from backend.core.database import SessionLocal
-from backend import crud, schemas, models
 from datetime import datetime
+
+from backend import crud, models, schemas
+from backend.core.database import SessionLocal
+
 
 def seed_crm():
     db = SessionLocal()
@@ -16,7 +18,7 @@ def seed_crm():
                     leader_name="Pedro Martínez",
                     schedule="Jueves 7:00 PM",
                     address="Calle 100 #45-12",
-                    is_active=True
+                    is_active=True,
                 ),
                 schemas.GloryHouseCreate(
                     name="Centro Vida Central",
@@ -24,7 +26,7 @@ def seed_crm():
                     leader_name="Marta Lucía",
                     schedule="Martes 6:30 PM",
                     address="Carrera 15 #32-10",
-                    is_active=True
+                    is_active=True,
                 ),
                 schemas.GloryHouseCreate(
                     name="Jóvenes CCF Sur",
@@ -32,8 +34,8 @@ def seed_crm():
                     leader_name="Andrés Felipe",
                     schedule="Sábado 4:00 PM",
                     address="Calle 45 Sur #12-34",
-                    is_active=True
-                )
+                    is_active=True,
+                ),
             ]
             for h in houses_data:
                 crud.create_glory_house(db, h)
@@ -49,7 +51,7 @@ def seed_crm():
                     email="juan.perez@email.com",
                     phone="+57 300 111 2233",
                     church_role="member",
-                    status="Activo"
+                    status="Activo",
                 ),
                 schemas.MemberCreate(
                     first_name="María",
@@ -57,7 +59,7 @@ def seed_crm():
                     email="maria.garcia@email.com",
                     phone="+57 300 222 3344",
                     church_role="member",
-                    status="Seguimiento"
+                    status="Seguimiento",
                 ),
                 schemas.MemberCreate(
                     first_name="Carlos",
@@ -65,7 +67,7 @@ def seed_crm():
                     email="carlos.rod@email.com",
                     phone="+57 300 333 4455",
                     church_role="member",
-                    status="Activo"
+                    status="Activo",
                 ),
                 schemas.MemberCreate(
                     first_name="Elena",
@@ -73,8 +75,8 @@ def seed_crm():
                     email="elena.gomez@email.com",
                     phone="+57 300 444 5566",
                     church_role="member",
-                    status="Inactivo"
-                )
+                    status="Inactivo",
+                ),
             ]
             for m in members_data:
                 crud.create_member(db, m)
@@ -84,6 +86,7 @@ def seed_crm():
         print(f"Error seeding CRM: {e}")
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     seed_crm()

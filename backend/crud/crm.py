@@ -1,24 +1,31 @@
 """CRM: Members, pipeline, events, tasks, counseling, prayer, glory houses, etc."""
+
 import datetime as dt
 import uuid
-from typing import Optional, List
+from typing import List, Optional
 
-from sqlalchemy import or_, func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
-from backend.core.security import encrypt_data, decrypt_data
+from backend.core.security import decrypt_data, encrypt_data
 from backend.crud._utils import _utcnow
 from backend.models_crm import EvangelismStrategy
-from backend.schemas.crm import EvangelismStrategyCreate, EvangelismStrategyUpdate, CrmEventUpdate
-from backend.schemas.notifications import CommunicationLogUpdate
+from backend.schemas.crm import (CrmEventUpdate, EvangelismStrategyCreate,
+                                 EvangelismStrategyUpdate)
 from backend.schemas.legacy import CommunityBoardCardUpdate
-
+from backend.schemas.notifications import CommunicationLogUpdate
 
 # ── Members ────────────────────────────────────────────
 
+
 def get_member_donations(db: Session, member_id: int):
-    return db.query(models.Donation).filter(models.Donation.member_id == member_id).order_by(models.Donation.created_at.desc()).all()
+    return (
+        db.query(models.Donation)
+        .filter(models.Donation.member_id == member_id)
+        .order_by(models.Donation.created_at.desc())
+        .all()
+    )
 
 
 def create_member(db: Session, payload: schemas.MemberCreate):
@@ -36,7 +43,7 @@ def search_members(
     spiritual_status: str | None = None,
     family_id: int | None = None,
     skip: int = 0,
-    limit: int = 1000
+    limit: int = 1000,
 ):
     query = db.query(models.Member)
     if search:
@@ -61,10 +68,14 @@ def search_members(
     user_ids = [m.user_id for m in members if m.user_id]
     progress_map = {}
     if user_ids:
-        progress_data = db.query(
-            models.Enrollment.user_id,
-            func.avg(models.Enrollment.progress_percent)
-        ).filter(models.Enrollment.user_id.in_(user_ids)).group_by(models.Enrollment.user_id).all()
+        progress_data = (
+            db.query(
+                models.Enrollment.user_id, func.avg(models.Enrollment.progress_percent)
+            )
+            .filter(models.Enrollment.user_id.in_(user_ids))
+            .group_by(models.Enrollment.user_id)
+            .all()
+        )
         progress_map = {uid: avg for uid, avg in progress_data}
 
     for m in members:
@@ -91,6 +102,7 @@ def update_member(db: Session, member_id: int, payload: schemas.MemberUpdate):
 
 # ── Pipeline ───────────────────────────────────────────
 
+
 def create_pipeline_lead(db: Session, payload: schemas.ConsolidationPipelineCreate):
     row = models.ConsolidationPipeline(**payload.model_dump())
     db.add(row)
@@ -99,8 +111,14 @@ def create_pipeline_lead(db: Session, payload: schemas.ConsolidationPipelineCrea
     return row
 
 
-def update_pipeline_lead(db: Session, lead_id: int, payload: schemas.ConsolidationPipelineUpdate):
-    row = db.query(models.ConsolidationPipeline).filter(models.ConsolidationPipeline.id == lead_id).first()
+def update_pipeline_lead(
+    db: Session, lead_id: int, payload: schemas.ConsolidationPipelineUpdate
+):
+    row = (
+        db.query(models.ConsolidationPipeline)
+        .filter(models.ConsolidationPipeline.id == lead_id)
+        .first()
+    )
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -120,7 +138,9 @@ def get_pipeline_leads(
     if stage:
         query = query.filter(models.ConsolidationPipeline.stage == stage)
     if assigned_pastor_id is not None:
-        query = query.filter(models.ConsolidationPipeline.assigned_pastor_id == assigned_pastor_id)
+        query = query.filter(
+            models.ConsolidationPipeline.assigned_pastor_id == assigned_pastor_id
+        )
     if search:
         like = f"%{search}%"
         query = query.filter(
@@ -132,8 +152,12 @@ def get_pipeline_leads(
     return query.all()
 
 
-def create_pastoral_call_log(db: Session, lead_id: int, call_log: schemas.PastoralCallLogCreate):
-    row = models.PastoralCallLog(lead_id=lead_id, pastor_id=call_log.pastor_id, outcome=call_log.outcome)
+def create_pastoral_call_log(
+    db: Session, lead_id: int, call_log: schemas.PastoralCallLogCreate
+):
+    row = models.PastoralCallLog(
+        lead_id=lead_id, pastor_id=call_log.pastor_id, outcome=call_log.outcome
+    )
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -141,13 +165,26 @@ def create_pastoral_call_log(db: Session, lead_id: int, call_log: schemas.Pastor
 
 
 def get_pastoral_call_logs(db: Session, lead_id: int):
-    return db.query(models.PastoralCallLog).filter(models.PastoralCallLog.lead_id == lead_id).all()
+    return (
+        db.query(models.PastoralCallLog)
+        .filter(models.PastoralCallLog.lead_id == lead_id)
+        .all()
+    )
 
 
 # ── CRM Events ─────────────────────────────────────────
 
-def get_crm_events(db: Session, skip: int = 0, limit: int = 100) -> List[models.CrmEvent]:
-    return db.query(models.CrmEvent).order_by(models.CrmEvent.event_date.desc()).offset(skip).limit(limit).all()
+
+def get_crm_events(
+    db: Session, skip: int = 0, limit: int = 100
+) -> List[models.CrmEvent]:
+    return (
+        db.query(models.CrmEvent)
+        .order_by(models.CrmEvent.event_date.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 def create_crm_event(db: Session, payload: schemas.CrmEventCreate) -> models.CrmEvent:
@@ -156,7 +193,9 @@ def create_crm_event(db: Session, payload: schemas.CrmEventCreate) -> models.Crm
         role_ids = payload_data.get("target_role_ids") or []
         payload_data["target_role_ids"] = role_ids or None
         if payload_data.get("target_audience") == "ROLE":
-            payload_data["target_role_id"] = role_ids[0] if role_ids else payload_data.get("target_role_id")
+            payload_data["target_role_id"] = (
+                role_ids[0] if role_ids else payload_data.get("target_role_id")
+            )
         else:
             payload_data["target_role_id"] = None
             payload_data["target_role_ids"] = None
@@ -172,7 +211,13 @@ def create_crm_event(db: Session, payload: schemas.CrmEventCreate) -> models.Crm
 
 # ── CRM Tasks ──────────────────────────────────────────
 
-def get_crm_tasks(db: Session, assignee_id: Optional[int] = None, member_id: Optional[int] = None, lead_id: Optional[int] = None) -> List[models.CrmTask]:
+
+def get_crm_tasks(
+    db: Session,
+    assignee_id: Optional[int] = None,
+    member_id: Optional[int] = None,
+    lead_id: Optional[int] = None,
+) -> List[models.CrmTask]:
     query = db.query(models.CrmTask)
     if assignee_id:
         query = query.filter(models.CrmTask.assignee_id == assignee_id)
@@ -191,7 +236,9 @@ def create_crm_task(db: Session, payload: schemas.CrmTaskCreate) -> models.CrmTa
     return row
 
 
-def update_crm_task(db: Session, task_id: int, payload: schemas.CrmTaskUpdate) -> models.CrmTask:
+def update_crm_task(
+    db: Session, task_id: int, payload: schemas.CrmTaskUpdate
+) -> models.CrmTask:
     row = db.query(models.CrmTask).filter(models.CrmTask.id == task_id).first()
     if not row:
         return None
@@ -213,14 +260,19 @@ def delete_crm_task(db: Session, task_id: int) -> bool:
 
 # ── Volunteers ─────────────────────────────────────────
 
-def get_volunteer_shifts(db: Session, member_id: Optional[int] = None) -> List[models.VolunteerShift]:
+
+def get_volunteer_shifts(
+    db: Session, member_id: Optional[int] = None
+) -> List[models.VolunteerShift]:
     query = db.query(models.VolunteerShift)
     if member_id:
         query = query.filter(models.VolunteerShift.member_id == member_id)
     return query.order_by(models.VolunteerShift.shift_start.asc()).all()
 
 
-def create_volunteer_shift(db: Session, payload: schemas.VolunteerShiftCreate) -> models.VolunteerShift:
+def create_volunteer_shift(
+    db: Session, payload: schemas.VolunteerShiftCreate
+) -> models.VolunteerShift:
     row = models.VolunteerShift(**payload.model_dump())
     db.add(row)
     db.commit()
@@ -230,7 +282,10 @@ def create_volunteer_shift(db: Session, payload: schemas.VolunteerShiftCreate) -
 
 # ── Event Attendance ───────────────────────────────────
 
-def create_event_attendance(db: Session, payload: schemas.EventAttendanceCreate) -> models.EventAttendance:
+
+def create_event_attendance(
+    db: Session, payload: schemas.EventAttendanceCreate
+) -> models.EventAttendance:
     try:
         row = models.EventAttendance(**payload.model_dump())
         db.add(row)
@@ -244,19 +299,25 @@ def create_event_attendance(db: Session, payload: schemas.EventAttendanceCreate)
 
 # ── Counseling ─────────────────────────────────────────
 
+
 def get_counseling_tickets(
     db: Session,
     status: str | None = None,
     member_id: int | None = None,
     skip: int = 0,
-    limit: int = 100
+    limit: int = 100,
 ) -> List[models.CounselingTicket]:
     query = db.query(models.CounselingTicket)
     if status:
         query = query.filter(models.CounselingTicket.status == status)
     if member_id:
         query = query.filter(models.CounselingTicket.member_id == member_id)
-    tickets = query.order_by(models.CounselingTicket.created_at.desc()).offset(skip).limit(limit).all()
+    tickets = (
+        query.order_by(models.CounselingTicket.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
     for t in tickets:
         if t.notes:
@@ -265,8 +326,11 @@ def get_counseling_tickets(
     return tickets
 
 
-def create_counseling_ticket(db: Session, payload: schemas.CounselingTicketCreate) -> models.CounselingTicket:
-    from backend.crud._utils import analyze_pastoral_priority, analyze_pastoral_sentiment
+def create_counseling_ticket(
+    db: Session, payload: schemas.CounselingTicketCreate
+) -> models.CounselingTicket:
+    from backend.crud._utils import (analyze_pastoral_priority,
+                                     analyze_pastoral_sentiment)
 
     try:
         data = payload.model_dump()
@@ -294,14 +358,24 @@ def create_counseling_ticket(db: Session, payload: schemas.CounselingTicketCreat
 
 # ── Prayer ─────────────────────────────────────────────
 
-def get_prayer_requests(db: Session, status: str | None = None, skip: int = 0, limit: int = 100) -> List[models.PrayerRequest]:
+
+def get_prayer_requests(
+    db: Session, status: str | None = None, skip: int = 0, limit: int = 100
+) -> List[models.PrayerRequest]:
     query = db.query(models.PrayerRequest)
     if status:
         query = query.filter(models.PrayerRequest.status == status)
-    return query.order_by(models.PrayerRequest.created_at.desc()).offset(skip).limit(limit).all()
+    return (
+        query.order_by(models.PrayerRequest.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
-def create_prayer_request(db: Session, payload: schemas.PrayerRequestCreate) -> models.PrayerRequest:
+def create_prayer_request(
+    db: Session, payload: schemas.PrayerRequestCreate
+) -> models.PrayerRequest:
     try:
         row = models.PrayerRequest(**payload.model_dump())
         db.add(row)
@@ -315,6 +389,7 @@ def create_prayer_request(db: Session, payload: schemas.PrayerRequestCreate) -> 
 
 # ── Glory Houses ───────────────────────────────────────
 
+
 def get_glory_houses(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.GloryHouse).offset(skip).limit(limit).all()
 
@@ -322,7 +397,12 @@ def get_glory_houses(db: Session, skip: int = 0, limit: int = 100):
 def create_glory_house(db: Session, payload: schemas.GloryHouseCreate):
     data = payload.model_dump(exclude={"base_attendee_ids"})
     if not str(data.get("code") or "").strip():
-        base = str(data.get("name") or data.get("address") or "FARO").strip().upper().replace(" ", "-")
+        base = (
+            str(data.get("name") or data.get("address") or "FARO")
+            .strip()
+            .upper()
+            .replace(" ", "-")
+        )
         data["code"] = f"{base}-{_utcnow().strftime('%Y%m%d%H%M%S')}"
     if not str(data.get("name") or "").strip():
         fallback_name = str(data.get("address") or data["code"]).strip()
@@ -333,7 +413,9 @@ def create_glory_house(db: Session, payload: schemas.GloryHouseCreate):
     if payload.base_attendee_ids:
         db.flush()  # Get the ID without committing
         for member_id in payload.base_attendee_ids:
-            attendee = models.GloryHouseMember(glory_house_id=db_obj.id, member_id=member_id, role="asistente")
+            attendee = models.GloryHouseMember(
+                glory_house_id=db_obj.id, member_id=member_id, role="asistente"
+            )
             db.add(attendee)
 
     db.commit()
@@ -353,9 +435,13 @@ def update_glory_house(db: Session, house_id: int, payload: schemas.GloryHouseUp
         setattr(house, key, value)
 
     if payload.base_attendee_ids is not None:
-        db.query(models.GloryHouseMember).filter(models.GloryHouseMember.glory_house_id == house_id).delete()
+        db.query(models.GloryHouseMember).filter(
+            models.GloryHouseMember.glory_house_id == house_id
+        ).delete()
         for member_id in payload.base_attendee_ids:
-            attendee = models.GloryHouseMember(glory_house_id=house_id, member_id=member_id, role="asistente")
+            attendee = models.GloryHouseMember(
+                glory_house_id=house_id, member_id=member_id, role="asistente"
+            )
             db.add(attendee)
 
     db.commit()
@@ -365,6 +451,7 @@ def update_glory_house(db: Session, house_id: int, payload: schemas.GloryHouseUp
 
 # ── Talents & Families ─────────────────────────────────
 
+
 def get_talents(db: Session, search: str | None = None):
     return search_members(db, search=search)
 
@@ -372,7 +459,9 @@ def get_talents(db: Session, search: str | None = None):
 def get_families(db: Session, skip: int = 0, limit: int = 100):
     families = db.query(models.Family).offset(skip).limit(limit).all()
     for f in families:
-        f.members_count = db.query(models.Member).filter(models.Member.family_id == f.id).count()
+        f.members_count = (
+            db.query(models.Member).filter(models.Member.family_id == f.id).count()
+        )
     return families
 
 
@@ -386,6 +475,7 @@ def create_family(db: Session, name: str):
 
 # ── Member Timeline ────────────────────────────────────
 
+
 def get_member_timeline(db: Session, member_id: int):
     member = db.query(models.Member).filter(models.Member.id == member_id).first()
     if not member:
@@ -393,73 +483,102 @@ def get_member_timeline(db: Session, member_id: int):
 
     timeline = []
 
-    timeline.append({
-        "type": "membership",
-        "title": "Ingreso a la Familia CCF",
-        "description": f"Registro formal como {member.church_role}.",
-        "date": member.created_at.isoformat(),
-        "icon": "Sparkles",
-        "color": "bg-purple-500"
-    })
+    timeline.append(
+        {
+            "type": "membership",
+            "title": "Ingreso a la Familia CCF",
+            "description": f"Registro formal como {member.church_role}.",
+            "date": member.created_at.isoformat(),
+            "icon": "Sparkles",
+            "color": "bg-purple-500",
+        }
+    )
 
     if member.user_id:
-        enrollments = db.query(models.Enrollment).filter(models.Enrollment.user_id == member.user_id).all()
+        enrollments = (
+            db.query(models.Enrollment)
+            .filter(models.Enrollment.user_id == member.user_id)
+            .all()
+        )
         for en in enrollments:
-            timeline.append({
-                "type": "academy",
-                "title": "Inscripción Academia",
-                "description": f"Inició el curso {en.course.title if en.course else 'de formación'}.",
-                "date": en.created_at.isoformat(),
-                "icon": "GraduationCap",
-                "color": "bg-emerald-500"
-            })
+            timeline.append(
+                {
+                    "type": "academy",
+                    "title": "Inscripción Academia",
+                    "description": f"Inició el curso {en.course.title if en.course else 'de formación'}.",
+                    "date": en.created_at.isoformat(),
+                    "icon": "GraduationCap",
+                    "color": "bg-emerald-500",
+                }
+            )
             if en.certificate_issued:
-                timeline.append({
-                    "type": "certificate",
-                    "title": "Certificación Obtenida",
-                    "description": f"Completó con éxito el curso: {en.course.title if en.course else 'de formación'}.",
-                    "date": (en.created_at + dt.timedelta(days=30)).isoformat(),
-                    "icon": "Award",
-                    "color": "bg-amber-500"
-                })
+                timeline.append(
+                    {
+                        "type": "certificate",
+                        "title": "Certificación Obtenida",
+                        "description": f"Completó con éxito el curso: {en.course.title if en.course else 'de formación'}.",
+                        "date": (en.created_at + dt.timedelta(days=30)).isoformat(),
+                        "icon": "Award",
+                        "color": "bg-amber-500",
+                    }
+                )
 
     for ministry in member.ministries:
-        timeline.append({
-            "type": "ministry",
-            "title": "Vinculación Ministerial",
-            "description": f"Se integró al ministerio de {ministry.name}.",
-            "date": ministry.created_at.isoformat() if ministry.created_at else member.created_at.isoformat(),
-            "icon": "ShieldCheck",
-            "color": "bg-indigo-600"
-        })
+        timeline.append(
+            {
+                "type": "ministry",
+                "title": "Vinculación Ministerial",
+                "description": f"Se integró al ministerio de {ministry.name}.",
+                "date": (
+                    ministry.created_at.isoformat()
+                    if ministry.created_at
+                    else member.created_at.isoformat()
+                ),
+                "icon": "ShieldCheck",
+                "color": "bg-indigo-600",
+            }
+        )
 
-    sessions = db.query(models.CounselingTicket).filter(models.CounselingTicket.member_id == member_id).all()
+    sessions = (
+        db.query(models.CounselingTicket)
+        .filter(models.CounselingTicket.member_id == member_id)
+        .all()
+    )
     for s in sessions:
-        timeline.append({
-            "type": "counseling",
-            "title": "Sesión Pastoral",
-            "description": f"Atención espiritual: {s.subject}.",
-            "date": s.created_at.isoformat(),
-            "icon": "Heart",
-            "color": "bg-rose-500"
-        })
+        timeline.append(
+            {
+                "type": "counseling",
+                "title": "Sesión Pastoral",
+                "description": f"Atención espiritual: {s.subject}.",
+                "date": s.created_at.isoformat(),
+                "icon": "Heart",
+                "color": "bg-rose-500",
+            }
+        )
 
-    calls = db.query(models.CommunicationLog).filter(models.CommunicationLog.member_id == member_id).all()
+    calls = (
+        db.query(models.CommunicationLog)
+        .filter(models.CommunicationLog.member_id == member_id)
+        .all()
+    )
     for c in calls:
-        timeline.append({
-            "type": "communication",
-            "title": "Seguimiento Pastoral",
-            "description": f"Contacto vía {c.channel}: {c.content[:50]}...",
-            "date": c.created_at.isoformat(),
-            "icon": "Phone",
-            "color": "bg-blue-500"
-        })
+        timeline.append(
+            {
+                "type": "communication",
+                "title": "Seguimiento Pastoral",
+                "description": f"Contacto vía {c.channel}: {c.content[:50]}...",
+                "date": c.created_at.isoformat(),
+                "icon": "Phone",
+                "color": "bg-blue-500",
+            }
+        )
 
     timeline.sort(key=lambda x: x["date"], reverse=True)
     return timeline
 
 
 # ── Communication Logs ─────────────────────────────────
+
 
 def create_communication_log(db: Session, payload: schemas.CommunicationLogCreate):
     row = models.CommunicationLog(**payload.model_dump())
@@ -470,12 +589,20 @@ def create_communication_log(db: Session, payload: schemas.CommunicationLogCreat
 
 
 def get_communication_logs(db: Session, limit: int = 50):
-    return db.query(models.CommunicationLog).order_by(models.CommunicationLog.created_at.desc()).limit(limit).all()
+    return (
+        db.query(models.CommunicationLog)
+        .order_by(models.CommunicationLog.created_at.desc())
+        .limit(limit)
+        .all()
+    )
 
 
 # ── Notifications ────────────────────────────────────────
 
-def get_user_notifications(db: Session, user_id: int, limit: int = 20) -> List[models.Notification]:
+
+def get_user_notifications(
+    db: Session, user_id: int, limit: int = 20
+) -> List[models.Notification]:
     return (
         db.query(models.Notification)
         .filter(models.Notification.user_id == user_id)
@@ -486,7 +613,11 @@ def get_user_notifications(db: Session, user_id: int, limit: int = 20) -> List[m
 
 
 def mark_notification_as_read(db: Session, notification_id: int):
-    notification = db.query(models.Notification).filter(models.Notification.id == notification_id).first()
+    notification = (
+        db.query(models.Notification)
+        .filter(models.Notification.id == notification_id)
+        .first()
+    )
     if not notification:
         return None
     notification.is_read = True
@@ -505,6 +636,7 @@ def mark_all_notifications_read(db: Session, user_id: int):
 
 # ── Donations ────────────────────────────────────────────
 
+
 def create_donation(db: Session, payload: schemas.DonationCreate) -> models.Donation:
     row = models.Donation(**payload.model_dump())
     db.add(row)
@@ -513,8 +645,16 @@ def create_donation(db: Session, payload: schemas.DonationCreate) -> models.Dona
     return row
 
 
-def get_donations(db: Session, skip: int = 0, limit: int = 100) -> List[models.Donation]:
-    return db.query(models.Donation).order_by(models.Donation.created_at.desc()).offset(skip).limit(limit).all()
+def get_donations(
+    db: Session, skip: int = 0, limit: int = 100
+) -> List[models.Donation]:
+    return (
+        db.query(models.Donation)
+        .order_by(models.Donation.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 def get_total_donations_amount(db: Session) -> float:
@@ -522,6 +662,7 @@ def get_total_donations_amount(db: Session) -> float:
 
 
 # ── Spiritual Milestones ─────────────────────────────────
+
 
 def get_milestones(db: Session, person_id: int) -> List[models.SpiritualMilestone]:
     return (
@@ -532,7 +673,13 @@ def get_milestones(db: Session, person_id: int) -> List[models.SpiritualMileston
     )
 
 
-def create_milestone(db: Session, person_id: int, type: str, event_date, minister_id: Optional[int] = None) -> models.SpiritualMilestone:
+def create_milestone(
+    db: Session,
+    person_id: int,
+    type: str,
+    event_date,
+    minister_id: Optional[int] = None,
+) -> models.SpiritualMilestone:
     row = models.SpiritualMilestone(
         person_id=person_id,
         type=type,
@@ -547,6 +694,7 @@ def create_milestone(db: Session, person_id: int, type: str, event_date, ministe
 
 # ── Family Members ──────────────────────────────────────
 
+
 def get_family_members(db: Session, family_id: int):
     return (
         db.query(models.Member)
@@ -558,7 +706,10 @@ def get_family_members(db: Session, family_id: int):
 
 # ── Support Tickets ─────────────────────────────────────
 
-def create_support_ticket(db: Session, ticket: schemas.SupportTicketCreate) -> models.SupportTicket:
+
+def create_support_ticket(
+    db: Session, ticket: schemas.SupportTicketCreate
+) -> models.SupportTicket:
     row = models.SupportTicket(**ticket.model_dump())
     db.add(row)
     db.commit()
@@ -566,7 +717,9 @@ def create_support_ticket(db: Session, ticket: schemas.SupportTicketCreate) -> m
     return row
 
 
-def get_support_tickets(db: Session, user_id: Optional[int] = None, skip: int = 0, limit: int = 100) -> List[models.SupportTicket]:
+def get_support_tickets(
+    db: Session, user_id: Optional[int] = None, skip: int = 0, limit: int = 100
+) -> List[models.SupportTicket]:
     q = db.query(models.SupportTicket).order_by(models.SupportTicket.created_at.desc())
     if user_id is not None:
         q = q.filter(models.SupportTicket.user_id == user_id)
@@ -574,7 +727,11 @@ def get_support_tickets(db: Session, user_id: Optional[int] = None, skip: int = 
 
 
 def update_support_ticket(db: Session, ticket_id: int, new_status: str):
-    ticket = db.query(models.SupportTicket).filter(models.SupportTicket.id == ticket_id).first()
+    ticket = (
+        db.query(models.SupportTicket)
+        .filter(models.SupportTicket.id == ticket_id)
+        .first()
+    )
     if not ticket:
         return None
     ticket.status = new_status
@@ -585,14 +742,21 @@ def update_support_ticket(db: Session, ticket_id: int, new_status: str):
 
 # ── Community Board ─────────────────────────────────────
 
-def get_community_cards(db: Session, column_id: Optional[str] = None) -> List[models.CommunityBoardCard]:
-    q = db.query(models.CommunityBoardCard).order_by(models.CommunityBoardCard.position.asc())
+
+def get_community_cards(
+    db: Session, column_id: Optional[str] = None
+) -> List[models.CommunityBoardCard]:
+    q = db.query(models.CommunityBoardCard).order_by(
+        models.CommunityBoardCard.position.asc()
+    )
     if column_id:
         q = q.filter(models.CommunityBoardCard.column_id == column_id)
     return q.all()
 
 
-def create_community_card(db: Session, card: schemas.CommunityBoardCardCreate) -> models.CommunityBoardCard:
+def create_community_card(
+    db: Session, card: schemas.CommunityBoardCardCreate
+) -> models.CommunityBoardCard:
     max_pos = db.query(func.max(models.CommunityBoardCard.position)).scalar() or 0
     row = models.CommunityBoardCard(**card.model_dump(), position=max_pos + 1)
     db.add(row)
@@ -600,10 +764,13 @@ def create_community_card(db: Session, card: schemas.CommunityBoardCardCreate) -
     db.refresh(row)
     return row
 
+
 # --- Evangelism Strategies ---
+
 
 def get_evangelism_strategies(db: Session, skip: int = 0, limit: int = 100):
     return db.query(EvangelismStrategy).offset(skip).limit(limit).all()
+
 
 def create_evangelism_strategy(db: Session, strategy: EvangelismStrategyCreate):
     db_obj = EvangelismStrategy(**strategy.model_dump())
@@ -612,8 +779,15 @@ def create_evangelism_strategy(db: Session, strategy: EvangelismStrategyCreate):
     db.refresh(db_obj)
     return db_obj
 
-def update_evangelism_strategy(db: Session, strategy_id: int, strategy: EvangelismStrategyUpdate):
-    db_obj = db.query(EvangelismStrategy).filter(EvangelismStrategy.id == strategy_id).first()
+
+def update_evangelism_strategy(
+    db: Session, strategy_id: int, strategy: EvangelismStrategyUpdate
+):
+    db_obj = (
+        db.query(EvangelismStrategy)
+        .filter(EvangelismStrategy.id == strategy_id)
+        .first()
+    )
     if not db_obj:
         return None
     update_data = strategy.model_dump(exclude_unset=True)
@@ -623,8 +797,13 @@ def update_evangelism_strategy(db: Session, strategy_id: int, strategy: Evangeli
     db.refresh(db_obj)
     return db_obj
 
+
 def delete_evangelism_strategy(db: Session, strategy_id: int) -> bool:
-    db_obj = db.query(EvangelismStrategy).filter(EvangelismStrategy.id == strategy_id).first()
+    db_obj = (
+        db.query(EvangelismStrategy)
+        .filter(EvangelismStrategy.id == strategy_id)
+        .first()
+    )
     if not db_obj:
         return False
     db.delete(db_obj)
@@ -635,6 +814,7 @@ def delete_evangelism_strategy(db: Session, strategy_id: int) -> bool:
 # ── Missing CRUDs ──────────────────────────────────────
 
 # ── Members ─────────────────────────────────────────────
+
 
 def get_member(db: Session, member_id: int) -> Optional[models.Member]:
     return db.query(models.Member).filter(models.Member.id == member_id).first()
@@ -651,12 +831,23 @@ def delete_member(db: Session, member_id: int) -> bool:
 
 # ── Pipeline ───────────────────────────────────────────
 
-def get_pipeline_lead(db: Session, lead_id: int) -> Optional[models.ConsolidationPipeline]:
-    return db.query(models.ConsolidationPipeline).filter(models.ConsolidationPipeline.id == lead_id).first()
+
+def get_pipeline_lead(
+    db: Session, lead_id: int
+) -> Optional[models.ConsolidationPipeline]:
+    return (
+        db.query(models.ConsolidationPipeline)
+        .filter(models.ConsolidationPipeline.id == lead_id)
+        .first()
+    )
 
 
 def delete_pipeline_lead(db: Session, lead_id: int) -> bool:
-    row = db.query(models.ConsolidationPipeline).filter(models.ConsolidationPipeline.id == lead_id).first()
+    row = (
+        db.query(models.ConsolidationPipeline)
+        .filter(models.ConsolidationPipeline.id == lead_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -665,11 +856,19 @@ def delete_pipeline_lead(db: Session, lead_id: int) -> bool:
 
 
 def get_pastoral_call_log(db: Session, log_id: int) -> Optional[models.PastoralCallLog]:
-    return db.query(models.PastoralCallLog).filter(models.PastoralCallLog.id == log_id).first()
+    return (
+        db.query(models.PastoralCallLog)
+        .filter(models.PastoralCallLog.id == log_id)
+        .first()
+    )
 
 
 def delete_pastoral_call_log(db: Session, log_id: int) -> bool:
-    row = db.query(models.PastoralCallLog).filter(models.PastoralCallLog.id == log_id).first()
+    row = (
+        db.query(models.PastoralCallLog)
+        .filter(models.PastoralCallLog.id == log_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -679,11 +878,14 @@ def delete_pastoral_call_log(db: Session, log_id: int) -> bool:
 
 # ── CRM Events ─────────────────────────────────────────
 
+
 def get_crm_event(db: Session, event_id: int) -> Optional[models.CrmEvent]:
     return db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
 
 
-def update_crm_event(db: Session, event_id: int, payload: CrmEventUpdate) -> Optional[models.CrmEvent]:
+def update_crm_event(
+    db: Session, event_id: int, payload: CrmEventUpdate
+) -> Optional[models.CrmEvent]:
     row = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not row:
         return None
@@ -704,11 +906,19 @@ def delete_crm_event(db: Session, event_id: int) -> bool:
 
 
 def get_event_attendance(db: Session, event_id: int) -> List[models.EventAttendance]:
-    return db.query(models.EventAttendance).filter(models.EventAttendance.event_id == event_id).all()
+    return (
+        db.query(models.EventAttendance)
+        .filter(models.EventAttendance.event_id == event_id)
+        .all()
+    )
 
 
 def delete_event_attendance(db: Session, attendance_id: int) -> bool:
-    row = db.query(models.EventAttendance).filter(models.EventAttendance.id == attendance_id).first()
+    row = (
+        db.query(models.EventAttendance)
+        .filter(models.EventAttendance.id == attendance_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -718,12 +928,23 @@ def delete_event_attendance(db: Session, attendance_id: int) -> bool:
 
 # ── Volunteers ─────────────────────────────────────────
 
+
 def get_volunteer_shift(db: Session, shift_id: int) -> Optional[models.VolunteerShift]:
-    return db.query(models.VolunteerShift).filter(models.VolunteerShift.id == shift_id).first()
+    return (
+        db.query(models.VolunteerShift)
+        .filter(models.VolunteerShift.id == shift_id)
+        .first()
+    )
 
 
-def update_volunteer_shift(db: Session, shift_id: int, payload: schemas.VolunteerShiftUpdate) -> Optional[models.VolunteerShift]:
-    row = db.query(models.VolunteerShift).filter(models.VolunteerShift.id == shift_id).first()
+def update_volunteer_shift(
+    db: Session, shift_id: int, payload: schemas.VolunteerShiftUpdate
+) -> Optional[models.VolunteerShift]:
+    row = (
+        db.query(models.VolunteerShift)
+        .filter(models.VolunteerShift.id == shift_id)
+        .first()
+    )
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -734,7 +955,11 @@ def update_volunteer_shift(db: Session, shift_id: int, payload: schemas.Voluntee
 
 
 def delete_volunteer_shift(db: Session, shift_id: int) -> bool:
-    row = db.query(models.VolunteerShift).filter(models.VolunteerShift.id == shift_id).first()
+    row = (
+        db.query(models.VolunteerShift)
+        .filter(models.VolunteerShift.id == shift_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -744,15 +969,28 @@ def delete_volunteer_shift(db: Session, shift_id: int) -> bool:
 
 # ── Counseling ─────────────────────────────────────────
 
-def get_counseling_ticket(db: Session, ticket_id: int) -> Optional[models.CounselingTicket]:
-    row = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
+
+def get_counseling_ticket(
+    db: Session, ticket_id: int
+) -> Optional[models.CounselingTicket]:
+    row = (
+        db.query(models.CounselingTicket)
+        .filter(models.CounselingTicket.id == ticket_id)
+        .first()
+    )
     if row and row.notes:
         row.notes = decrypt_data(row.notes)
     return row
 
 
-def update_counseling_ticket(db: Session, ticket_id: int, payload: schemas.CounselingTicketUpdate) -> Optional[models.CounselingTicket]:
-    row = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
+def update_counseling_ticket(
+    db: Session, ticket_id: int, payload: schemas.CounselingTicketUpdate
+) -> Optional[models.CounselingTicket]:
+    row = (
+        db.query(models.CounselingTicket)
+        .filter(models.CounselingTicket.id == ticket_id)
+        .first()
+    )
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -768,7 +1006,11 @@ def update_counseling_ticket(db: Session, ticket_id: int, payload: schemas.Couns
 
 
 def delete_counseling_ticket(db: Session, ticket_id: int) -> bool:
-    row = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
+    row = (
+        db.query(models.CounselingTicket)
+        .filter(models.CounselingTicket.id == ticket_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -778,12 +1020,23 @@ def delete_counseling_ticket(db: Session, ticket_id: int) -> bool:
 
 # ── Prayer ─────────────────────────────────────────────
 
+
 def get_prayer_request(db: Session, request_id: int) -> Optional[models.PrayerRequest]:
-    return db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
+    return (
+        db.query(models.PrayerRequest)
+        .filter(models.PrayerRequest.id == request_id)
+        .first()
+    )
 
 
-def update_prayer_request(db: Session, request_id: int, payload: schemas.PrayerRequestUpdate) -> Optional[models.PrayerRequest]:
-    row = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
+def update_prayer_request(
+    db: Session, request_id: int, payload: schemas.PrayerRequestUpdate
+) -> Optional[models.PrayerRequest]:
+    row = (
+        db.query(models.PrayerRequest)
+        .filter(models.PrayerRequest.id == request_id)
+        .first()
+    )
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -794,7 +1047,11 @@ def update_prayer_request(db: Session, request_id: int, payload: schemas.PrayerR
 
 
 def delete_prayer_request(db: Session, request_id: int) -> bool:
-    row = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
+    row = (
+        db.query(models.PrayerRequest)
+        .filter(models.PrayerRequest.id == request_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -803,6 +1060,7 @@ def delete_prayer_request(db: Session, request_id: int) -> bool:
 
 
 # ── Glory Houses ───────────────────────────────────────
+
 
 def get_glory_house(db: Session, house_id: int) -> Optional[models.GloryHouse]:
     return db.query(models.GloryHouse).filter(models.GloryHouse.id == house_id).first()
@@ -818,6 +1076,7 @@ def delete_glory_house(db: Session, house_id: int) -> bool:
 
 
 # ── Families ───────────────────────────────────────────
+
 
 def get_family(db: Session, family_id: int) -> Optional[models.Family]:
     return db.query(models.Family).filter(models.Family.id == family_id).first()
@@ -844,12 +1103,25 @@ def delete_family(db: Session, family_id: int) -> bool:
 
 # ── Communication Logs ─────────────────────────────────
 
-def get_communication_log(db: Session, log_id: int) -> Optional[models.CommunicationLog]:
-    return db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
+
+def get_communication_log(
+    db: Session, log_id: int
+) -> Optional[models.CommunicationLog]:
+    return (
+        db.query(models.CommunicationLog)
+        .filter(models.CommunicationLog.id == log_id)
+        .first()
+    )
 
 
-def update_communication_log(db: Session, log_id: int, payload: CommunicationLogUpdate) -> Optional[models.CommunicationLog]:
-    row = db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
+def update_communication_log(
+    db: Session, log_id: int, payload: CommunicationLogUpdate
+) -> Optional[models.CommunicationLog]:
+    row = (
+        db.query(models.CommunicationLog)
+        .filter(models.CommunicationLog.id == log_id)
+        .first()
+    )
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -860,7 +1132,11 @@ def update_communication_log(db: Session, log_id: int, payload: CommunicationLog
 
 
 def delete_communication_log(db: Session, log_id: int) -> bool:
-    row = db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
+    row = (
+        db.query(models.CommunicationLog)
+        .filter(models.CommunicationLog.id == log_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -870,11 +1146,14 @@ def delete_communication_log(db: Session, log_id: int) -> bool:
 
 # ── Donations ───────────────────────────────────────────
 
+
 def get_donation(db: Session, donation_id: int) -> Optional[models.Donation]:
     return db.query(models.Donation).filter(models.Donation.id == donation_id).first()
 
 
-def update_donation(db: Session, donation_id: int, payload: schemas.DonationUpdate) -> Optional[models.Donation]:
+def update_donation(
+    db: Session, donation_id: int, payload: schemas.DonationUpdate
+) -> Optional[models.Donation]:
     row = db.query(models.Donation).filter(models.Donation.id == donation_id).first()
     if not row:
         return None
@@ -896,8 +1175,15 @@ def delete_donation(db: Session, donation_id: int) -> bool:
 
 # ── Spiritual Milestones ─────────────────────────────────
 
-def update_milestone(db: Session, milestone_id: int, **kwargs) -> Optional[models.SpiritualMilestone]:
-    row = db.query(models.SpiritualMilestone).filter(models.SpiritualMilestone.id == milestone_id).first()
+
+def update_milestone(
+    db: Session, milestone_id: int, **kwargs
+) -> Optional[models.SpiritualMilestone]:
+    row = (
+        db.query(models.SpiritualMilestone)
+        .filter(models.SpiritualMilestone.id == milestone_id)
+        .first()
+    )
     if not row:
         return None
     for key, value in kwargs.items():
@@ -908,7 +1194,11 @@ def update_milestone(db: Session, milestone_id: int, **kwargs) -> Optional[model
 
 
 def delete_milestone(db: Session, milestone_id: int) -> bool:
-    row = db.query(models.SpiritualMilestone).filter(models.SpiritualMilestone.id == milestone_id).first()
+    row = (
+        db.query(models.SpiritualMilestone)
+        .filter(models.SpiritualMilestone.id == milestone_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -918,12 +1208,21 @@ def delete_milestone(db: Session, milestone_id: int) -> bool:
 
 # ── Support Tickets ─────────────────────────────────────
 
+
 def get_support_ticket(db: Session, ticket_id: int) -> Optional[models.SupportTicket]:
-    return db.query(models.SupportTicket).filter(models.SupportTicket.id == ticket_id).first()
+    return (
+        db.query(models.SupportTicket)
+        .filter(models.SupportTicket.id == ticket_id)
+        .first()
+    )
 
 
 def delete_support_ticket(db: Session, ticket_id: int) -> bool:
-    row = db.query(models.SupportTicket).filter(models.SupportTicket.id == ticket_id).first()
+    row = (
+        db.query(models.SupportTicket)
+        .filter(models.SupportTicket.id == ticket_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -933,12 +1232,25 @@ def delete_support_ticket(db: Session, ticket_id: int) -> bool:
 
 # ── Community Board ─────────────────────────────────────
 
-def get_community_card(db: Session, card_id: int) -> Optional[models.CommunityBoardCard]:
-    return db.query(models.CommunityBoardCard).filter(models.CommunityBoardCard.id == card_id).first()
+
+def get_community_card(
+    db: Session, card_id: int
+) -> Optional[models.CommunityBoardCard]:
+    return (
+        db.query(models.CommunityBoardCard)
+        .filter(models.CommunityBoardCard.id == card_id)
+        .first()
+    )
 
 
-def update_community_card(db: Session, card_id: int, payload: CommunityBoardCardUpdate) -> Optional[models.CommunityBoardCard]:
-    row = db.query(models.CommunityBoardCard).filter(models.CommunityBoardCard.id == card_id).first()
+def update_community_card(
+    db: Session, card_id: int, payload: CommunityBoardCardUpdate
+) -> Optional[models.CommunityBoardCard]:
+    row = (
+        db.query(models.CommunityBoardCard)
+        .filter(models.CommunityBoardCard.id == card_id)
+        .first()
+    )
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -949,7 +1261,11 @@ def update_community_card(db: Session, card_id: int, payload: CommunityBoardCard
 
 
 def delete_community_card(db: Session, card_id: int) -> bool:
-    row = db.query(models.CommunityBoardCard).filter(models.CommunityBoardCard.id == card_id).first()
+    row = (
+        db.query(models.CommunityBoardCard)
+        .filter(models.CommunityBoardCard.id == card_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -959,11 +1275,18 @@ def delete_community_card(db: Session, card_id: int) -> bool:
 
 # ── Consolidation Cases ─────────────────────────────────
 
+
 def get_consolidation_case(db: Session, case_id: int):
-    return db.query(models.ConsolidationCase).filter(models.ConsolidationCase.id == case_id).first()
+    return (
+        db.query(models.ConsolidationCase)
+        .filter(models.ConsolidationCase.id == case_id)
+        .first()
+    )
 
 
-def create_consolidation_case(db: Session, payload: schemas.ConsolidationCaseCreate) -> models.ConsolidationCase:
+def create_consolidation_case(
+    db: Session, payload: schemas.ConsolidationCaseCreate
+) -> models.ConsolidationCase:
     row = models.ConsolidationCase(**payload.model_dump())
     db.add(row)
     db.commit()
@@ -971,8 +1294,14 @@ def create_consolidation_case(db: Session, payload: schemas.ConsolidationCaseCre
     return row
 
 
-def update_consolidation_case(db: Session, case_id: int, payload: schemas.ConsolidationCaseUpdate) -> Optional[models.ConsolidationCase]:
-    row = db.query(models.ConsolidationCase).filter(models.ConsolidationCase.id == case_id).first()
+def update_consolidation_case(
+    db: Session, case_id: int, payload: schemas.ConsolidationCaseUpdate
+) -> Optional[models.ConsolidationCase]:
+    row = (
+        db.query(models.ConsolidationCase)
+        .filter(models.ConsolidationCase.id == case_id)
+        .first()
+    )
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -983,7 +1312,11 @@ def update_consolidation_case(db: Session, case_id: int, payload: schemas.Consol
 
 
 def delete_consolidation_case(db: Session, case_id: int) -> bool:
-    row = db.query(models.ConsolidationCase).filter(models.ConsolidationCase.id == case_id).first()
+    row = (
+        db.query(models.ConsolidationCase)
+        .filter(models.ConsolidationCase.id == case_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)

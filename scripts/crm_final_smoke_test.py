@@ -1,17 +1,19 @@
-import requests
 import json
 import uuid
 
+import requests
+
 BASE_URL = "http://localhost:8001/api"
+
 
 def run_crm_flow():
     # 1. Obtener Token (Simulamos credenciales de admin o usamos bypass si existe)
     # Para efectos del test en este entorno, asumo que tenemos acceso o probamos endpoints
     print("--- INICIANDO SMOKE TEST CRM MINISTERIAL ---")
-    
-    # Nota: En un entorno real necesitaría el token JWT. 
+
+    # Nota: En un entorno real necesitaría el token JWT.
     # Aquí validaremos la consistencia de las rutas y respuestas esperadas.
-    
+
     # 2. Prueba de Miembros y Búsqueda
     print("\n[1/5] Verificando Directorio y Búsqueda...")
     # (Simulación de llamada)
@@ -25,7 +27,7 @@ def run_crm_flow():
         "topic": "Crisis Familiar Profunda",
         "notes": "El miembro manifiesta una fuerte depresión y pensamientos de abandono, dice que no puede más con la soledad.",
         "scheduled_at": "2026-04-01T10:00:00",
-        "status": "open"
+        "status": "open",
     }
     # Verificamos lógica de análisis (Mock de lo que haría el backend)
     # Prioridad esperada: URGENTE/ALTA (por 'depresion')
@@ -39,7 +41,11 @@ def run_crm_flow():
 
     # 5. Prueba de Gateway de Mensajería
     print("\n[4/5] Testeando Gateway de WhatsApp/SMS...")
-    msg_payload = {"member_id": 1, "channel": "WhatsApp", "content": "Bendiciones, estamos orando por ti."}
+    msg_payload = {
+        "member_id": 1,
+        "channel": "WhatsApp",
+        "content": "Bendiciones, estamos orando por ti.",
+    }
     print(f"OK: Mensaje registrado con External_ID: WA-{uuid.uuid4().hex[:8]}")
 
     # 6. Prueba de Geografía
@@ -47,6 +53,7 @@ def run_crm_flow():
     print("OK: Modelos soportan Lat/Lng. Visualización de cobertura activa.")
 
     print("\n--- TEST FINALIZADO: MÓDULO CRM 100% OPERATIVO ---")
+
 
 if __name__ == "__main__":
     run_crm_flow()

@@ -6,21 +6,19 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 
 from backend import models
+from backend.api.workspace_shared import (_detect_anomalies,
+                                          _enrich_audit_rows,
+                                          _filter_audit_rows,
+                                          _read_audit_events, _summarize_audit)
 from backend.auth import require_admin
 from backend.core.rate_limit import rate_limiter
-from backend.api.workspace_shared import (
-    _detect_anomalies,
-    _enrich_audit_rows,
-    _filter_audit_rows,
-    _read_audit_events,
-    _summarize_audit,
-)
-
 
 router = APIRouter(tags=["workspace"])
 
 
-@router.get("/flags/audit", dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))])
+@router.get(
+    "/flags/audit", dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))]
+)
 def get_flags_audit(
     limit: int = 100,
     action: str | None = None,
@@ -28,7 +26,13 @@ def get_flags_audit(
     actor: str | None = None,
     current_user: models.User = Depends(require_admin),
 ):
-    rows = _filter_audit_rows(_read_audit_events(limit=1000), action=action, feature_id=feature_id, actor=actor, limit=limit)
+    rows = _filter_audit_rows(
+        _read_audit_events(limit=1000),
+        action=action,
+        feature_id=feature_id,
+        actor=actor,
+        limit=limit,
+    )
     rows = _enrich_audit_rows(rows)
     return {
         "status": "ok",
@@ -38,7 +42,10 @@ def get_flags_audit(
     }
 
 
-@router.get("/flags/audit/export", dependencies=[Depends(rate_limiter(limit=20, window_seconds=60))])
+@router.get(
+    "/flags/audit/export",
+    dependencies=[Depends(rate_limiter(limit=20, window_seconds=60))],
+)
 def export_flags_audit(
     format: str = "json",
     limit: int = 500,
@@ -47,7 +54,13 @@ def export_flags_audit(
     actor: str | None = None,
     current_user: models.User = Depends(require_admin),
 ):
-    rows = _filter_audit_rows(_read_audit_events(limit=1000), action=action, feature_id=feature_id, actor=actor, limit=limit)
+    rows = _filter_audit_rows(
+        _read_audit_events(limit=1000),
+        action=action,
+        feature_id=feature_id,
+        actor=actor,
+        limit=limit,
+    )
     rows = _enrich_audit_rows(rows)
 
     normalized_format = format.strip().lower()
@@ -61,14 +74,25 @@ def export_flags_audit(
         return Response(
             content=json.dumps(payload, ensure_ascii=True, indent=2),
             media_type="application/json",
-            headers={"Content-Disposition": "attachment; filename=feature_flags_audit.json"},
+            headers={
+                "Content-Disposition": "attachment; filename=feature_flags_audit.json"
+            },
         )
 
     if normalized_format == "csv":
         buffer = io.StringIO()
         writer = csv.DictWriter(
             buffer,
-            fieldnames=["timestamp", "action", "feature_id", "updated_by", "changes", "before", "after", "diff"],
+            fieldnames=[
+                "timestamp",
+                "action",
+                "feature_id",
+                "updated_by",
+                "changes",
+                "before",
+                "after",
+                "diff",
+            ],
         )
         writer.writeheader()
         for row in rows:
@@ -87,13 +111,18 @@ def export_flags_audit(
         return Response(
             content=buffer.getvalue(),
             media_type="text/csv",
-            headers={"Content-Disposition": "attachment; filename=feature_flags_audit.csv"},
+            headers={
+                "Content-Disposition": "attachment; filename=feature_flags_audit.csv"
+            },
         )
 
     raise HTTPException(status_code=400, detail="format must be 'json' or 'csv'")
 
 
-@router.get("/flags/audit/summary", dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))])
+@router.get(
+    "/flags/audit/summary",
+    dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))],
+)
 def get_flags_audit_summary(
     action: str | None = None,
     feature_id: str | None = None,
@@ -101,7 +130,13 @@ def get_flags_audit_summary(
     limit: int = 1000,
     current_user: models.User = Depends(require_admin),
 ):
-    rows = _filter_audit_rows(_read_audit_events(limit=1000), action=action, feature_id=feature_id, actor=actor, limit=limit)
+    rows = _filter_audit_rows(
+        _read_audit_events(limit=1000),
+        action=action,
+        feature_id=feature_id,
+        actor=actor,
+        limit=limit,
+    )
     return {
         "status": "ok",
         "requested_by": str(getattr(current_user, "id", "")),
@@ -109,7 +144,10 @@ def get_flags_audit_summary(
     }
 
 
-@router.get("/flags/audit/anomalies", dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))])
+@router.get(
+    "/flags/audit/anomalies",
+    dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))],
+)
 def get_flags_audit_anomalies(
     lookback_hours: int = 24,
     actor_threshold: int = 10,
@@ -119,7 +157,13 @@ def get_flags_audit_anomalies(
     actor: str | None = None,
     current_user: models.User = Depends(require_admin),
 ):
-    rows = _filter_audit_rows(_read_audit_events(limit=1000), action=action, feature_id=feature_id, actor=actor, limit=1000)
+    rows = _filter_audit_rows(
+        _read_audit_events(limit=1000),
+        action=action,
+        feature_id=feature_id,
+        actor=actor,
+        limit=1000,
+    )
     return {
         "status": "ok",
         "requested_by": str(getattr(current_user, "id", "")),

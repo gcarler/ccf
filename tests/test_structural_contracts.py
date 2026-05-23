@@ -7,7 +7,6 @@ from pydantic import ValidationError
 from backend.app import app
 from backend.core.config import Settings
 
-
 ALLOWED_NON_API_PATHS = {
     "/",
     "/healthz",
@@ -39,42 +38,55 @@ def test_all_application_routes_stay_under_api_tree_or_explicit_exceptions():
     forbidden_aliases = sorted(
         path
         for path in paths
-        if any(path == prefix or path.startswith(prefix + "/") for prefix in FORBIDDEN_ROOT_PREFIXES)
+        if any(
+            path == prefix or path.startswith(prefix + "/")
+            for prefix in FORBIDDEN_ROOT_PREFIXES
+        )
     )
 
     assert forbidden_aliases == []
-    forbidden_legacy_api_paths = sorted(path for path in paths if path in {"/api/announcements", "/api/testimonials", "/api/analytics/summary"})
+    forbidden_legacy_api_paths = sorted(
+        path
+        for path in paths
+        if path in {"/api/announcements", "/api/testimonials", "/api/analytics/summary"}
+    )
     assert forbidden_legacy_api_paths == []
 
 
 @pytest.mark.parametrize("environment", ["production", "prod", "staging"])
-def test_settings_rejects_trivial_secret_keys_in_restricted_environments(environment: str):
+def test_settings_rejects_trivial_secret_keys_in_restricted_environments(
+    environment: str,
+):
     for secret in ("", "change-me", "replace-me", "ci-test-only-key"):
         with pytest.raises(ValidationError):
             Settings(environment=environment, secret_key=secret)
 
 
 @pytest.mark.parametrize("environment", ["production", "prod", "staging"])
-def test_settings_force_secure_access_cookie_in_restricted_environments(environment: str):
+def test_settings_force_secure_access_cookie_in_restricted_environments(
+    environment: str,
+):
     settings = Settings(
         environment=environment,
         secret_key="strong-secret-value",
         encryption_key="dummy-key-for-test",
         database_url="postgresql://user:pass@remote-db:5432/db",
         redis_url="redis://remote-redis:6379/0",
-        access_token_cookie_secure=False
+        access_token_cookie_secure=False,
     )
     assert settings.access_token_cookie_secure is True
 
 
 def test_settings_accepts_env_alias_input():
-    settings = Settings.model_validate({
-        "ENV": "staging",
-        "secret_key": "strong-secret-value",
-        "encryption_key": "dummy-key-for-test",
-        "database_url": "postgresql://user:pass@remote-db:5432/db",
-        "redis_url": "redis://remote-redis:6379/0"
-    })
+    settings = Settings.model_validate(
+        {
+            "ENV": "staging",
+            "secret_key": "strong-secret-value",
+            "encryption_key": "dummy-key-for-test",
+            "database_url": "postgresql://user:pass@remote-db:5432/db",
+            "redis_url": "redis://remote-redis:6379/0",
+        }
+    )
     assert settings.environment == "staging"
 
 
@@ -84,7 +96,10 @@ def test_docker_compose_requires_mandatory_secrets_and_canonical_environment_key
 
     assert "SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY}" in content
     assert "POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}" in content
-    assert "MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD}" in content
+    assert (
+        "MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD}"
+        in content
+    )
     assert "environment: production" in content
     assert "ENV: production" not in content
 
@@ -101,7 +116,9 @@ def test_routes_do_not_collide_by_method_and_normalized_path():
 
         normalized_path = re.sub(r"\{[^}]+\}", "{}", path)
         key = (normalized_path, methods)
-        seen.setdefault(key, []).append(f"{path} -> {endpoint.__module__}.{endpoint.__name__}")
+        seen.setdefault(key, []).append(
+            f"{path} -> {endpoint.__module__}.{endpoint.__name__}"
+        )
 
     collisions = {
         f"{methods} {path}": owners
@@ -141,4 +158,3 @@ def test_domain_modules_expose_only_expected_canonical_prefixes():
             violations.setdefault(module, []).append(path)
 
     assert violations == {}
-

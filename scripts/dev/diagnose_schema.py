@@ -1,13 +1,14 @@
-import sys
-import os
-from pathlib import Path
 import json
+import os
+import sys
+from pathlib import Path
 
 # Add backend directory to python path
 current_dir = Path(__file__).resolve().parent
 sys.path.append(str(current_dir))
 
 from backend.app import app
+
 
 def diagnose():
     try:
@@ -20,7 +21,9 @@ def diagnose():
     except Exception as e:
         print("Error generating schema:")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     diagnose()

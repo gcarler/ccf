@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
-from typing import Any, Dict, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List
 
 try:
     import duckdb  # type: ignore[import]
@@ -91,7 +91,9 @@ def list_raw_events(limit: int = 50) -> List[Dict[str, Any]]:
         ).fetchall()
         return [
             {
-                "event_time": row[0].isoformat() if hasattr(row[0], "isoformat") else row[0],
+                "event_time": (
+                    row[0].isoformat() if hasattr(row[0], "isoformat") else row[0]
+                ),
                 "event_name": row[1],
                 "payload": json.loads(row[2]) if isinstance(row[2], str) else row[2],
             }

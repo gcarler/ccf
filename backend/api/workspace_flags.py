@@ -3,17 +3,14 @@ from typing import Any, Dict
 from fastapi import APIRouter, Depends
 
 from backend import models
+from backend.api.workspace_shared import (DEFAULT_WORKSPACE_CONFIG,
+                                          _append_audit_event,
+                                          _load_workspace_config,
+                                          _normalize_rule_payload,
+                                          _sanitize_feature_payload,
+                                          _save_workspace_config)
 from backend.auth import require_admin
 from backend.core.rate_limit import rate_limiter
-from backend.api.workspace_shared import (
-    DEFAULT_WORKSPACE_CONFIG,
-    _append_audit_event,
-    _load_workspace_config,
-    _normalize_rule_payload,
-    _sanitize_feature_payload,
-    _save_workspace_config,
-)
-
 
 router = APIRouter(tags=["workspace"])
 
@@ -25,7 +22,9 @@ def update_feature_flags(
 ):
     config = _load_workspace_config()
     current = config.get("features_enabled", {})
-    known_features = set((config.get("features_enabled") or {}).keys()) | set((DEFAULT_WORKSPACE_CONFIG.get("features_enabled") or {}).keys())
+    known_features = set((config.get("features_enabled") or {}).keys()) | set(
+        (DEFAULT_WORKSPACE_CONFIG.get("features_enabled") or {}).keys()
+    )
     changes = _sanitize_feature_payload(payload, known_features=known_features)
     merged = {**current, **changes}
     previous = current.copy()
@@ -47,7 +46,10 @@ def update_feature_flags(
     }
 
 
-@router.put("/flags/rules/{feature_id}", dependencies=[Depends(rate_limiter(limit=30, window_seconds=60))])
+@router.put(
+    "/flags/rules/{feature_id}",
+    dependencies=[Depends(rate_limiter(limit=30, window_seconds=60))],
+)
 def update_feature_rule(
     feature_id: str,
     payload: Dict[str, Any],

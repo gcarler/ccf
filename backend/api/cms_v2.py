@@ -11,15 +11,32 @@ from backend import crud, models, schemas
 from backend.auth import normalize_role, require_active_user
 from backend.core.database import get_db
 
-
 router = APIRouter(prefix="/cms/v2", tags=["cms_v2"])
 
-ALLOWED_SECTION_TYPES = {"hero", "video_hero", "rich_text", "rich_text_columns", "cards", "cta_banner", "gallery", "faq", "embed", "testimonials", "stats", "team", "countdown", "pricing", "popup_banner"}
+ALLOWED_SECTION_TYPES = {
+    "hero",
+    "video_hero",
+    "rich_text",
+    "rich_text_columns",
+    "cards",
+    "cta_banner",
+    "gallery",
+    "faq",
+    "embed",
+    "testimonials",
+    "stats",
+    "team",
+    "countdown",
+    "pricing",
+    "popup_banner",
+}
 CMS_EDITOR_ROLES = {"admin", "coordinador", "docente", "pastor"}
 CMS_PUBLISHER_ROLES = {"admin", "coordinador", "pastor"}
 
 
-def _assert_role(user: models.User, allowed_roles: set[str], detail: str = "Not enough permissions") -> None:
+def _assert_role(
+    user: models.User, allowed_roles: set[str], detail: str = "Not enough permissions"
+) -> None:
     role = normalize_role(getattr(user, "role", ""))
     if role not in allowed_roles:
         raise HTTPException(status_code=403, detail=detail)
@@ -153,7 +170,9 @@ def list_themes(
     return crud.list_cms_themes(db, site.id)
 
 
-@router.post("/sites/{site_key}/themes", response_model=schemas.CmsThemeRead, status_code=201)
+@router.post(
+    "/sites/{site_key}/themes", response_model=schemas.CmsThemeRead, status_code=201
+)
 def create_theme(
     site_key: str,
     payload: schemas.CmsThemeCreate,
@@ -162,12 +181,18 @@ def create_theme(
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     if payload.is_active:
-        _assert_role(current_user, CMS_PUBLISHER_ROLES, detail="Only publishers can activate a theme")
+        _assert_role(
+            current_user,
+            CMS_PUBLISHER_ROLES,
+            detail="Only publishers can activate a theme",
+        )
     site = _get_site_or_404(db, site_key)
     return crud.create_cms_theme(db, site.id, payload, created_by=current_user.id)
 
 
-@router.patch("/sites/{site_key}/themes/{theme_id}", response_model=schemas.CmsThemeRead)
+@router.patch(
+    "/sites/{site_key}/themes/{theme_id}", response_model=schemas.CmsThemeRead
+)
 def patch_theme(
     site_key: str,
     theme_id: int,
@@ -177,7 +202,11 @@ def patch_theme(
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     if payload.is_active:
-        _assert_role(current_user, CMS_PUBLISHER_ROLES, detail="Only publishers can activate a theme")
+        _assert_role(
+            current_user,
+            CMS_PUBLISHER_ROLES,
+            detail="Only publishers can activate a theme",
+        )
     site = _get_site_or_404(db, site_key)
     row = crud.get_cms_theme(db, site.id, theme_id)
     if not row:
@@ -185,7 +214,9 @@ def patch_theme(
     return crud.update_cms_theme(db, row, payload)
 
 
-@router.post("/sites/{site_key}/themes/{theme_id}/activate", response_model=schemas.CmsThemeRead)
+@router.post(
+    "/sites/{site_key}/themes/{theme_id}/activate", response_model=schemas.CmsThemeRead
+)
 def activate_theme(
     site_key: str,
     theme_id: int,
@@ -227,7 +258,9 @@ def list_menus(
     return crud.list_cms_menus(db, site.id)
 
 
-@router.post("/sites/{site_key}/menus", response_model=schemas.CmsMenuRead, status_code=201)
+@router.post(
+    "/sites/{site_key}/menus", response_model=schemas.CmsMenuRead, status_code=201
+)
 def create_menu(
     site_key: str,
     payload: schemas.CmsMenuCreate,
@@ -280,7 +313,10 @@ def delete_menu(
     crud.delete_cms_menu(db, row)
 
 
-@router.get("/sites/{site_key}/menus/{menu_key}/items", response_model=list[schemas.CmsMenuItemRead])
+@router.get(
+    "/sites/{site_key}/menus/{menu_key}/items",
+    response_model=list[schemas.CmsMenuItemRead],
+)
 def list_menu_items(
     site_key: str,
     menu_key: str,
@@ -292,7 +328,11 @@ def list_menu_items(
     return crud.list_cms_menu_items(db, menu.id)
 
 
-@router.post("/sites/{site_key}/menus/{menu_key}/items", response_model=schemas.CmsMenuItemRead, status_code=201)
+@router.post(
+    "/sites/{site_key}/menus/{menu_key}/items",
+    response_model=schemas.CmsMenuItemRead,
+    status_code=201,
+)
 def create_menu_item(
     site_key: str,
     menu_key: str,
@@ -306,7 +346,10 @@ def create_menu_item(
     return crud.create_cms_menu_item(db, menu.id, payload)
 
 
-@router.patch("/sites/{site_key}/menus/{menu_key}/items/{item_id}", response_model=schemas.CmsMenuItemRead)
+@router.patch(
+    "/sites/{site_key}/menus/{menu_key}/items/{item_id}",
+    response_model=schemas.CmsMenuItemRead,
+)
 def patch_menu_item(
     site_key: str,
     menu_key: str,
@@ -342,7 +385,10 @@ def delete_menu_item(
     crud.delete_cms_menu_item(db, item)
 
 
-@router.post("/sites/{site_key}/menus/{menu_key}/reorder", response_model=list[schemas.CmsMenuItemRead])
+@router.post(
+    "/sites/{site_key}/menus/{menu_key}/reorder",
+    response_model=list[schemas.CmsMenuItemRead],
+)
 def reorder_menu_items(
     site_key: str,
     menu_key: str,
@@ -366,7 +412,9 @@ def list_pages(
     return crud.list_cms_pages(db, site.id)
 
 
-@router.post("/sites/{site_key}/pages", response_model=schemas.CmsPageRead, status_code=201)
+@router.post(
+    "/sites/{site_key}/pages", response_model=schemas.CmsPageRead, status_code=201
+)
 def create_page(
     site_key: str,
     payload: schemas.CmsPageCreate,
@@ -406,7 +454,9 @@ def patch_page(
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     if payload.status is not None:
-        raise HTTPException(status_code=422, detail="use workflow endpoint to change status")
+        raise HTTPException(
+            status_code=422, detail="use workflow endpoint to change status"
+        )
     site = _get_site_or_404(db, site_key)
     row = _get_page_or_404(db, site.id, slug)
     return crud.update_cms_page(db, row, payload, current_user.id)
@@ -425,7 +475,10 @@ def delete_page(
     crud.delete_cms_page(db, row)
 
 
-@router.get("/sites/{site_key}/pages/{slug}/sections", response_model=list[schemas.CmsSectionRead])
+@router.get(
+    "/sites/{site_key}/pages/{slug}/sections",
+    response_model=list[schemas.CmsSectionRead],
+)
 def list_sections(
     site_key: str,
     slug: str,
@@ -437,7 +490,11 @@ def list_sections(
     return crud.list_cms_sections(db, page.id)
 
 
-@router.post("/sites/{site_key}/pages/{slug}/sections", response_model=schemas.CmsSectionRead, status_code=201)
+@router.post(
+    "/sites/{site_key}/pages/{slug}/sections",
+    response_model=schemas.CmsSectionRead,
+    status_code=201,
+)
 def create_section(
     site_key: str,
     slug: str,
@@ -456,7 +513,10 @@ def create_section(
     return crud.create_cms_section(db, page.id, payload)
 
 
-@router.patch("/sites/{site_key}/pages/{slug}/sections/{section_id}", response_model=schemas.CmsSectionRead)
+@router.patch(
+    "/sites/{site_key}/pages/{slug}/sections/{section_id}",
+    response_model=schemas.CmsSectionRead,
+)
 def patch_section(
     site_key: str,
     slug: str,
@@ -497,7 +557,10 @@ def delete_section(
     crud.archive_cms_section(db, row)
 
 
-@router.post("/sites/{site_key}/pages/{slug}/sections/reorder", response_model=list[schemas.CmsSectionRead])
+@router.post(
+    "/sites/{site_key}/pages/{slug}/sections/reorder",
+    response_model=list[schemas.CmsSectionRead],
+)
 def reorder_sections(
     site_key: str,
     slug: str,
@@ -511,7 +574,10 @@ def reorder_sections(
     return crud.reorder_cms_sections(db, page.id, payload.items)
 
 
-@router.get("/sites/{site_key}/pages/{slug}/versions", response_model=list[schemas.CmsPageVersionRead])
+@router.get(
+    "/sites/{site_key}/pages/{slug}/versions",
+    response_model=list[schemas.CmsPageVersionRead],
+)
 def list_versions(
     site_key: str,
     slug: str,
@@ -523,7 +589,10 @@ def list_versions(
     return crud.list_cms_page_versions(db, page.id)
 
 
-@router.get("/sites/{site_key}/pages/{slug}/publish-log", response_model=list[schemas.CmsPublishLogRead])
+@router.get(
+    "/sites/{site_key}/pages/{slug}/publish-log",
+    response_model=list[schemas.CmsPublishLogRead],
+)
 def list_publish_log(
     site_key: str,
     slug: str,
@@ -536,7 +605,9 @@ def list_publish_log(
     return crud.list_cms_publish_logs(db, site.id, page_id=page.id, limit=limit)
 
 
-@router.get("/sites/{site_key}/pages/{slug}/preview", response_model=schemas.CmsPublicPageRead)
+@router.get(
+    "/sites/{site_key}/pages/{slug}/preview", response_model=schemas.CmsPublicPageRead
+)
 def preview_page(
     site_key: str,
     slug: str,
@@ -556,11 +627,16 @@ def preview_page(
         slug=page.slug,
         title=page.title,
         seo_json=page.seo_json or {},
-        sections=[schemas.CmsSectionRead.model_validate(section) for section in sections],
+        sections=[
+            schemas.CmsSectionRead.model_validate(section) for section in sections
+        ],
     )
 
 
-@router.post("/sites/{site_key}/pages/{slug}/rollback/{version_id}", response_model=schemas.CmsPageRead)
+@router.post(
+    "/sites/{site_key}/pages/{slug}/rollback/{version_id}",
+    response_model=schemas.CmsPageRead,
+)
 def rollback_page(
     site_key: str,
     slug: str,
@@ -577,7 +653,9 @@ def rollback_page(
     return crud.restore_cms_page_version(db, page, version, user_id=current_user.id)
 
 
-@router.post("/sites/{site_key}/pages/{slug}/workflow", response_model=schemas.CmsPageRead)
+@router.post(
+    "/sites/{site_key}/pages/{slug}/workflow", response_model=schemas.CmsPageRead
+)
 def workflow_page(
     site_key: str,
     slug: str,
@@ -592,7 +670,9 @@ def workflow_page(
         _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
     page = _get_page_or_404(db, site.id, slug)
-    row = crud.transition_cms_page_status(db, page, payload.action, current_user.id, notes=payload.notes)
+    row = crud.transition_cms_page_status(
+        db, page, payload.action, current_user.id, notes=payload.notes
+    )
     if not row:
         raise HTTPException(status_code=422, detail="invalid workflow action")
     return row
@@ -614,7 +694,8 @@ def public_menu(site_key: str, menu_key: str, db: Session = Depends(get_db)):
     if not menu.is_active:
         raise HTTPException(status_code=404, detail="menu not found")
     items = [
-        item for item in crud.list_cms_menu_items(db, menu.id)
+        item
+        for item in crud.list_cms_menu_items(db, menu.id)
         if item.visibility == "public"
     ]
     visible_ids = {item.id for item in items}
@@ -639,7 +720,9 @@ def public_menu(site_key: str, menu_key: str, db: Session = Depends(get_db)):
     }
 
 
-@router.get("/public/sites/{site_key}/pages/{slug}", response_model=schemas.CmsPublicPageRead)
+@router.get(
+    "/public/sites/{site_key}/pages/{slug}", response_model=schemas.CmsPublicPageRead
+)
 def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
     site = _get_public_site_or_404(db, site_key)
     page = crud.get_public_cms_page(db, site.id, _slugify(slug))
@@ -647,25 +730,54 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="published page not found")
     published_version = None
     if page.published_version_id:
-        published_version = crud.get_cms_page_version(db, page.id, page.published_version_id)
+        published_version = crud.get_cms_page_version(
+            db, page.id, page.published_version_id
+        )
 
     if published_version:
         snapshot = published_version.snapshot_json or {}
         page_snapshot = snapshot.get("page") if isinstance(snapshot, dict) else {}
-        sections_snapshot = snapshot.get("sections") if isinstance(snapshot, dict) else []
+        sections_snapshot = (
+            snapshot.get("sections") if isinstance(snapshot, dict) else []
+        )
         section_rows = [
-            _snapshot_section_read(section_data, page_id=page.id, index=index, timestamp=published_version.created_at)
-            for index, section_data in enumerate(sorted(
-                [item for item in sections_snapshot if isinstance(item, dict)],
-                key=lambda item: item.get("sort_order") if isinstance(item.get("sort_order"), int) else 0,
-            ))
-            if section_data.get("is_visible", True) is not False and section_data.get("status", "active") != "archived"
+            _snapshot_section_read(
+                section_data,
+                page_id=page.id,
+                index=index,
+                timestamp=published_version.created_at,
+            )
+            for index, section_data in enumerate(
+                sorted(
+                    [item for item in sections_snapshot if isinstance(item, dict)],
+                    key=lambda item: (
+                        item.get("sort_order")
+                        if isinstance(item.get("sort_order"), int)
+                        else 0
+                    ),
+                )
+            )
+            if section_data.get("is_visible", True) is not False
+            and section_data.get("status", "active") != "archived"
         ]
         return schemas.CmsPublicPageRead(
             site_key=site.site_key,
-            slug=str(page_snapshot.get("slug") or page.slug) if isinstance(page_snapshot, dict) else page.slug,
-            title=str(page_snapshot.get("title") or page.title) if isinstance(page_snapshot, dict) else page.title,
-            seo_json=page_snapshot.get("seo_json") if isinstance(page_snapshot, dict) and isinstance(page_snapshot.get("seo_json"), dict) else {},
+            slug=(
+                str(page_snapshot.get("slug") or page.slug)
+                if isinstance(page_snapshot, dict)
+                else page.slug
+            ),
+            title=(
+                str(page_snapshot.get("title") or page.title)
+                if isinstance(page_snapshot, dict)
+                else page.title
+            ),
+            seo_json=(
+                page_snapshot.get("seo_json")
+                if isinstance(page_snapshot, dict)
+                and isinstance(page_snapshot.get("seo_json"), dict)
+                else {}
+            ),
             sections=section_rows,
         )
 
@@ -679,5 +791,7 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
         slug=page.slug,
         title=page.title,
         seo_json=page.seo_json or {},
-        sections=[schemas.CmsSectionRead.model_validate(section) for section in sections],
+        sections=[
+            schemas.CmsSectionRead.model_validate(section) for section in sections
+        ],
     )

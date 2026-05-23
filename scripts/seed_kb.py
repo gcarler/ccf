@@ -1,5 +1,6 @@
+from backend import crud, models, schemas
 from backend.core.database import SessionLocal
-from backend import crud, schemas, models
+
 
 def seed_kb():
     db = SessionLocal()
@@ -8,18 +9,18 @@ def seed_kb():
             {
                 "title": "Doctrina de la Biblia",
                 "content": "Creemos que la Biblia es la palabra de Dios, inspirada e infalible. Es nuestra única regla de fe y conducta.",
-                "category": "Doctrine"
+                "category": "Doctrine",
             },
             {
                 "title": "Manual de Líderes de Casa de Bendición",
                 "content": "Un líder de Casa de Bendición debe velar por el crecimiento espiritual de sus miembros, reportar asistencia semanalmente y fomentar la comunión.",
-                "category": "Manual"
+                "category": "Manual",
             },
             {
                 "title": "Política de Privacidad de Datos",
                 "content": "En CCF protegemos tus datos personales según la ley vigente. Nunca compartimos información sensible con terceros sin consentimiento.",
-                "category": "Policy"
-            }
+                "category": "Policy",
+            },
         ]
         for e in entries:
             crud.create_kb_entry(db, **e)
@@ -28,6 +29,7 @@ def seed_kb():
         print(f"Error seeding KB: {e}")
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     seed_kb()

@@ -4,11 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from backend import crud, models, schemas
-from backend.auth import require_admin, require_active_user
+from backend.agents.orchestrator import AgentOrchestrator
+from backend.auth import require_active_user, require_admin
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
-from backend.agents.orchestrator import AgentOrchestrator
-
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 analytics_router = APIRouter(prefix="/analytics", tags=["analytics"])
@@ -24,10 +23,18 @@ def analytics_summary(
     total_projects = db.query(models.Project).count()
     total_enrollments = db.query(models.Enrollment).count()
     total_certificates = db.query(models.Certificate).count()
-    pending_tasks = db.query(models.AgentTask).filter(models.AgentTask.status == "pending").count()
-    unread_insights = db.query(models.AgentInsight).filter(models.AgentInsight.acknowledged == False).count()
+    pending_tasks = (
+        db.query(models.AgentTask).filter(models.AgentTask.status == "pending").count()
+    )
+    unread_insights = (
+        db.query(models.AgentInsight)
+        .filter(models.AgentInsight.acknowledged == False)
+        .count()
+    )
 
-    pending_testimonials = sum(1 for row in crud.list_testimonials(db) if not row.is_approved)
+    pending_testimonials = sum(
+        1 for row in crud.list_testimonials(db) if not row.is_approved
+    )
 
     return {
         "total_members": total_members,
@@ -156,7 +163,11 @@ def delete_insight(
     current_user: models.User = Depends(require_admin),
 ):
     """Elimina un insight de agente."""
-    insight = db.query(models.AgentInsight).filter(models.AgentInsight.id == insight_id).first()
+    insight = (
+        db.query(models.AgentInsight)
+        .filter(models.AgentInsight.id == insight_id)
+        .first()
+    )
     if not insight:
         raise HTTPException(status_code=404, detail="Insight not found")
     db.delete(insight)
@@ -172,17 +183,17 @@ class AskRequest(BaseModel):
 def ask_optimus(
     payload: AskRequest,
     db=Depends(get_db),
-    current_user: models.User = Depends(require_active_user)
+    current_user: models.User = Depends(require_active_user),
 ):
     """
-    Query the Neural MESH engine. It searches the Knowledge Base and 
+    Query the Neural MESH engine. It searches the Knowledge Base and
     then uses AgentOrchestrator to generate a high-quality response.
     """
     # 1. Search in KB for context
     kb_results = crud.search_knowledge_base(db, payload.query)
     context = ""
     sources = []
-    
+
     if kb_results:
         context = "\n".join([f"Source [{r.title}]: {r.content}" for r in kb_results])
         sources = [r.title for r in kb_results]
@@ -191,17 +202,20 @@ def ask_optimus(
     try:
         orchestrator = AgentOrchestrator()
         # Create a custom prompt combining KB context and query
-        full_query = f"Context from Knowledge Base:\n{context}\n\nUser Question: {payload.query}"
-        
+        full_query = (
+            f"Context from Knowledge Base:\n{context}\n\nUser Question: {payload.query}"
+        )
+
         insight = orchestrator.run_diagnosis(
             summary=f"Consulta de usuario: {payload.query}",
-            metrics={"context_length": len(context), "user": current_user.username, "full_query": full_query}
+            metrics={
+                "context_length": len(context),
+                "user": current_user.username,
+                "full_query": full_query,
+            },
         )
-        
-        return {
-            "answer": insight.payload,
-            "sources": sources
-        }
+
+        return {"answer": insight.payload, "sources": sources}
     except MemoryError:
         raise
     except Exception as e:
@@ -209,10 +223,10 @@ def ask_optimus(
         if kb_results:
             return {
                 "answer": f"He encontrado informaci??n relevante en nuestra base de conocimientos: {kb_results[0].content[:500]}...",
-                "sources": sources
+                "sources": sources,
             }
-        
+
         return {
             "answer": "Lo siento, el motor neuronal MESH no est?? disponible en este momento y no encontr?? informaci??n en la base de datos local. ??Te gustar??a que notifique a un administrador?",
-            "sources": []
+            "sources": [],
         }

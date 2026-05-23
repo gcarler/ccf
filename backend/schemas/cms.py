@@ -377,6 +377,7 @@ class AnnouncementRead(BaseModel):
 
 # ── Testimonials ────────────────────────────────────────
 
+
 class TestimonialCreate(BaseModel):
     content: str
     emotion: str = "Gratitud"
@@ -427,8 +428,10 @@ class TestimonialRead(BaseModel):
     created_at: datetime
     model_config = orm_config
 
+
 class NewsletterSubscriptionCreate(BaseModel):
     email: str
+
 
 class NewsletterSubscriptionRead(BaseModel):
     id: int

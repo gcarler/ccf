@@ -9,7 +9,6 @@ from backend import models, schemas
 from backend.auth import require_active_user
 from backend.core.database import get_db
 
-
 router = APIRouter(prefix="/agenda", tags=["agenda"])
 
 
@@ -52,7 +51,9 @@ def get_agenda_event(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    agenda_event = db.query(models.AgendaEvent).filter(models.AgendaEvent.id == event_id).first()
+    agenda_event = (
+        db.query(models.AgendaEvent).filter(models.AgendaEvent.id == event_id).first()
+    )
     if not agenda_event:
         raise HTTPException(status_code=404, detail="Agenda event not found")
     return agenda_event
@@ -65,7 +66,9 @@ def update_agenda_event(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    agenda_event = db.query(models.AgendaEvent).filter(models.AgendaEvent.id == event_id).first()
+    agenda_event = (
+        db.query(models.AgendaEvent).filter(models.AgendaEvent.id == event_id).first()
+    )
     if not agenda_event:
         raise HTTPException(status_code=404, detail="Agenda event not found")
 
@@ -86,7 +89,9 @@ def delete_agenda_event(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    agenda_event = db.query(models.AgendaEvent).filter(models.AgendaEvent.id == event_id).first()
+    agenda_event = (
+        db.query(models.AgendaEvent).filter(models.AgendaEvent.id == event_id).first()
+    )
     if not agenda_event:
         raise HTTPException(status_code=404, detail="Agenda event not found")
 

@@ -3,18 +3,19 @@ positions, event_assignments, ministries, member_ministries,
 crm_automations, role_definitions, member_roles, funds,
 volunteer_skills, chat_messages.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional, List
+from typing import List, Optional
 
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend import models
 
-
 # ── Inline Schemas ────────────────────────────────────────────────────────
+
 
 class PositionCreate(BaseModel):
     name: str
@@ -153,6 +154,7 @@ class ChatMessageCreate(BaseModel):
 
 # ── Positions ─────────────────────────────────────────────────────────────
 
+
 def get_positions(
     db: Session,
     category: str | None = None,
@@ -167,9 +169,7 @@ def get_positions(
 
 
 def get_position(db: Session, position_id: int) -> Optional[models.Position]:
-    return db.query(models.Position).filter(
-        models.Position.id == position_id
-    ).first()
+    return db.query(models.Position).filter(models.Position.id == position_id).first()
 
 
 def create_position(db: Session, payload: PositionCreate) -> models.Position:
@@ -183,9 +183,7 @@ def create_position(db: Session, payload: PositionCreate) -> models.Position:
 def update_position(
     db: Session, position_id: int, payload: PositionUpdate
 ) -> Optional[models.Position]:
-    row = db.query(models.Position).filter(
-        models.Position.id == position_id
-    ).first()
+    row = db.query(models.Position).filter(models.Position.id == position_id).first()
     if not row:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -196,9 +194,7 @@ def update_position(
 
 
 def delete_position(db: Session, position_id: int) -> bool:
-    row = db.query(models.Position).filter(
-        models.Position.id == position_id
-    ).first()
+    row = db.query(models.Position).filter(models.Position.id == position_id).first()
     if not row:
         return False
     db.delete(row)
@@ -207,6 +203,7 @@ def delete_position(db: Session, position_id: int) -> bool:
 
 
 # ── Member Positions ─────────────────────────────────────────────────────
+
 
 def get_member_positions(
     db: Session,
@@ -221,12 +218,12 @@ def get_member_positions(
     return q.order_by(models.MemberPosition.created_at.desc()).all()
 
 
-def get_member_position(
-    db: Session, mp_id: int
-) -> Optional[models.MemberPosition]:
-    return db.query(models.MemberPosition).filter(
-        models.MemberPosition.id == mp_id
-    ).first()
+def get_member_position(db: Session, mp_id: int) -> Optional[models.MemberPosition]:
+    return (
+        db.query(models.MemberPosition)
+        .filter(models.MemberPosition.id == mp_id)
+        .first()
+    )
 
 
 def create_member_position(
@@ -242,9 +239,11 @@ def create_member_position(
 def update_member_position(
     db: Session, mp_id: int, payload: MemberPositionUpdate
 ) -> Optional[models.MemberPosition]:
-    row = db.query(models.MemberPosition).filter(
-        models.MemberPosition.id == mp_id
-    ).first()
+    row = (
+        db.query(models.MemberPosition)
+        .filter(models.MemberPosition.id == mp_id)
+        .first()
+    )
     if not row:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -255,9 +254,11 @@ def update_member_position(
 
 
 def delete_member_position(db: Session, mp_id: int) -> bool:
-    row = db.query(models.MemberPosition).filter(
-        models.MemberPosition.id == mp_id
-    ).first()
+    row = (
+        db.query(models.MemberPosition)
+        .filter(models.MemberPosition.id == mp_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -266,6 +267,7 @@ def delete_member_position(db: Session, mp_id: int) -> bool:
 
 
 # ── Event Assignments ────────────────────────────────────────────────────
+
 
 def get_event_assignments(
     db: Session,
@@ -283,12 +285,12 @@ def get_event_assignments(
     return q.order_by(models.EventAssignment.session_date.desc()).all()
 
 
-def get_event_assignment(
-    db: Session, ea_id: int
-) -> Optional[models.EventAssignment]:
-    return db.query(models.EventAssignment).filter(
-        models.EventAssignment.id == ea_id
-    ).first()
+def get_event_assignment(db: Session, ea_id: int) -> Optional[models.EventAssignment]:
+    return (
+        db.query(models.EventAssignment)
+        .filter(models.EventAssignment.id == ea_id)
+        .first()
+    )
 
 
 def create_event_assignment(
@@ -304,9 +306,11 @@ def create_event_assignment(
 def update_event_assignment(
     db: Session, ea_id: int, payload: EventAssignmentUpdate
 ) -> Optional[models.EventAssignment]:
-    row = db.query(models.EventAssignment).filter(
-        models.EventAssignment.id == ea_id
-    ).first()
+    row = (
+        db.query(models.EventAssignment)
+        .filter(models.EventAssignment.id == ea_id)
+        .first()
+    )
     if not row:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -317,9 +321,11 @@ def update_event_assignment(
 
 
 def delete_event_assignment(db: Session, ea_id: int) -> bool:
-    row = db.query(models.EventAssignment).filter(
-        models.EventAssignment.id == ea_id
-    ).first()
+    row = (
+        db.query(models.EventAssignment)
+        .filter(models.EventAssignment.id == ea_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -329,19 +335,16 @@ def delete_event_assignment(db: Session, ea_id: int) -> bool:
 
 # ── Ministries ───────────────────────────────────────────────────────────
 
+
 def get_ministries(db: Session) -> List[models.Ministry]:
     return db.query(models.Ministry).order_by(models.Ministry.name).all()
 
 
 def get_ministry(db: Session, ministry_id: int) -> Optional[models.Ministry]:
-    return db.query(models.Ministry).filter(
-        models.Ministry.id == ministry_id
-    ).first()
+    return db.query(models.Ministry).filter(models.Ministry.id == ministry_id).first()
 
 
-def create_ministry(
-    db: Session, payload: MinistryCreate
-) -> models.Ministry:
+def create_ministry(db: Session, payload: MinistryCreate) -> models.Ministry:
     row = models.Ministry(**payload.model_dump())
     db.add(row)
     db.commit()
@@ -352,9 +355,7 @@ def create_ministry(
 def update_ministry(
     db: Session, ministry_id: int, payload: MinistryUpdate
 ) -> Optional[models.Ministry]:
-    row = db.query(models.Ministry).filter(
-        models.Ministry.id == ministry_id
-    ).first()
+    row = db.query(models.Ministry).filter(models.Ministry.id == ministry_id).first()
     if not row:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -365,9 +366,7 @@ def update_ministry(
 
 
 def delete_ministry(db: Session, ministry_id: int) -> bool:
-    row = db.query(models.Ministry).filter(
-        models.Ministry.id == ministry_id
-    ).first()
+    row = db.query(models.Ministry).filter(models.Ministry.id == ministry_id).first()
     if not row:
         return False
     db.delete(row)
@@ -376,6 +375,7 @@ def delete_ministry(db: Session, ministry_id: int) -> bool:
 
 
 # ── Member Ministries ────────────────────────────────────────────────────
+
 
 def get_member_ministries(
     db: Session,
@@ -393,12 +393,12 @@ def get_member_ministries(
     return q.all()
 
 
-def get_member_ministry(
-    db: Session, mm_id: int
-) -> Optional[models.MemberMinistry]:
-    return db.query(models.MemberMinistry).filter(
-        models.MemberMinistry.id == mm_id
-    ).first()
+def get_member_ministry(db: Session, mm_id: int) -> Optional[models.MemberMinistry]:
+    return (
+        db.query(models.MemberMinistry)
+        .filter(models.MemberMinistry.id == mm_id)
+        .first()
+    )
 
 
 def create_member_ministry(
@@ -414,9 +414,11 @@ def create_member_ministry(
 def update_member_ministry(
     db: Session, mm_id: int, payload: MemberMinistryUpdate
 ) -> Optional[models.MemberMinistry]:
-    row = db.query(models.MemberMinistry).filter(
-        models.MemberMinistry.id == mm_id
-    ).first()
+    row = (
+        db.query(models.MemberMinistry)
+        .filter(models.MemberMinistry.id == mm_id)
+        .first()
+    )
     if not row:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -427,9 +429,11 @@ def update_member_ministry(
 
 
 def delete_member_ministry(db: Session, mm_id: int) -> bool:
-    row = db.query(models.MemberMinistry).filter(
-        models.MemberMinistry.id == mm_id
-    ).first()
+    row = (
+        db.query(models.MemberMinistry)
+        .filter(models.MemberMinistry.id == mm_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -438,6 +442,7 @@ def delete_member_ministry(db: Session, mm_id: int) -> bool:
 
 
 # ── CRM Automations ──────────────────────────────────────────────────────
+
 
 def get_crm_automations(
     db: Session,
@@ -455,9 +460,11 @@ def get_crm_automations(
 def get_crm_automation(
     db: Session, automation_id: int
 ) -> Optional[models.CrmAutomation]:
-    return db.query(models.CrmAutomation).filter(
-        models.CrmAutomation.id == automation_id
-    ).first()
+    return (
+        db.query(models.CrmAutomation)
+        .filter(models.CrmAutomation.id == automation_id)
+        .first()
+    )
 
 
 def create_crm_automation(
@@ -475,9 +482,11 @@ def update_crm_automation(
     automation_id: int,
     payload: CrmAutomationUpdate,
 ) -> Optional[models.CrmAutomation]:
-    row = db.query(models.CrmAutomation).filter(
-        models.CrmAutomation.id == automation_id
-    ).first()
+    row = (
+        db.query(models.CrmAutomation)
+        .filter(models.CrmAutomation.id == automation_id)
+        .first()
+    )
     if not row:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -488,9 +497,11 @@ def update_crm_automation(
 
 
 def delete_crm_automation(db: Session, automation_id: int) -> bool:
-    row = db.query(models.CrmAutomation).filter(
-        models.CrmAutomation.id == automation_id
-    ).first()
+    row = (
+        db.query(models.CrmAutomation)
+        .filter(models.CrmAutomation.id == automation_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -499,6 +510,7 @@ def delete_crm_automation(db: Session, automation_id: int) -> bool:
 
 
 # ── Role Definitions ─────────────────────────────────────────────────────
+
 
 def get_role_definitions(
     db: Session, only_leadership: bool = False
@@ -509,12 +521,12 @@ def get_role_definitions(
     return q.order_by(models.RoleDefinition.name).all()
 
 
-def get_role_definition(
-    db: Session, role_id: int
-) -> Optional[models.RoleDefinition]:
-    return db.query(models.RoleDefinition).filter(
-        models.RoleDefinition.id == role_id
-    ).first()
+def get_role_definition(db: Session, role_id: int) -> Optional[models.RoleDefinition]:
+    return (
+        db.query(models.RoleDefinition)
+        .filter(models.RoleDefinition.id == role_id)
+        .first()
+    )
 
 
 def create_role_definition(
@@ -530,9 +542,11 @@ def create_role_definition(
 def update_role_definition(
     db: Session, role_id: int, payload: RoleDefinitionUpdate
 ) -> Optional[models.RoleDefinition]:
-    row = db.query(models.RoleDefinition).filter(
-        models.RoleDefinition.id == role_id
-    ).first()
+    row = (
+        db.query(models.RoleDefinition)
+        .filter(models.RoleDefinition.id == role_id)
+        .first()
+    )
     if not row:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -543,9 +557,11 @@ def update_role_definition(
 
 
 def delete_role_definition(db: Session, role_id: int) -> bool:
-    row = db.query(models.RoleDefinition).filter(
-        models.RoleDefinition.id == role_id
-    ).first()
+    row = (
+        db.query(models.RoleDefinition)
+        .filter(models.RoleDefinition.id == role_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -554,6 +570,7 @@ def delete_role_definition(db: Session, role_id: int) -> bool:
 
 
 # ── Member Roles ─────────────────────────────────────────────────────────
+
 
 def get_member_roles(
     db: Session,
@@ -568,9 +585,7 @@ def get_member_roles(
     return q.order_by(models.MemberRole.created_at.desc()).all()
 
 
-def create_member_role(
-    db: Session, payload: MemberRoleCreate
-) -> models.MemberRole:
+def create_member_role(db: Session, payload: MemberRoleCreate) -> models.MemberRole:
     row = models.MemberRole(**payload.model_dump())
     db.add(row)
     db.commit()
@@ -579,9 +594,7 @@ def create_member_role(
 
 
 def delete_member_role(db: Session, mr_id: int) -> bool:
-    row = db.query(models.MemberRole).filter(
-        models.MemberRole.id == mr_id
-    ).first()
+    row = db.query(models.MemberRole).filter(models.MemberRole.id == mr_id).first()
     if not row:
         return False
     db.delete(row)
@@ -591,9 +604,8 @@ def delete_member_role(db: Session, mr_id: int) -> bool:
 
 # ── Funds ────────────────────────────────────────────────────────────────
 
-def get_funds(
-    db: Session, only_public: bool = False
-) -> List[models.Fund]:
+
+def get_funds(db: Session, only_public: bool = False) -> List[models.Fund]:
     q = db.query(models.Fund)
     if only_public:
         q = q.filter(models.Fund.is_public)
@@ -601,9 +613,7 @@ def get_funds(
 
 
 def get_fund(db: Session, fund_id: int) -> Optional[models.Fund]:
-    return db.query(models.Fund).filter(
-        models.Fund.fund_id == fund_id
-    ).first()
+    return db.query(models.Fund).filter(models.Fund.fund_id == fund_id).first()
 
 
 def create_fund(db: Session, payload: FundCreate) -> models.Fund:
@@ -617,9 +627,7 @@ def create_fund(db: Session, payload: FundCreate) -> models.Fund:
 def update_fund(
     db: Session, fund_id: int, payload: FundUpdate
 ) -> Optional[models.Fund]:
-    row = db.query(models.Fund).filter(
-        models.Fund.fund_id == fund_id
-    ).first()
+    row = db.query(models.Fund).filter(models.Fund.fund_id == fund_id).first()
     if not row:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -630,9 +638,7 @@ def update_fund(
 
 
 def delete_fund(db: Session, fund_id: int) -> bool:
-    row = db.query(models.Fund).filter(
-        models.Fund.fund_id == fund_id
-    ).first()
+    row = db.query(models.Fund).filter(models.Fund.fund_id == fund_id).first()
     if not row:
         return False
     db.delete(row)
@@ -641,6 +647,7 @@ def delete_fund(db: Session, fund_id: int) -> bool:
 
 
 # ── Volunteer Skills ─────────────────────────────────────────────────────
+
 
 def get_volunteer_skills(
     db: Session, category: str | None = None
@@ -651,12 +658,12 @@ def get_volunteer_skills(
     return q.order_by(models.VolunteerSkill.name).all()
 
 
-def get_volunteer_skill(
-    db: Session, skill_id: int
-) -> Optional[models.VolunteerSkill]:
-    return db.query(models.VolunteerSkill).filter(
-        models.VolunteerSkill.id == skill_id
-    ).first()
+def get_volunteer_skill(db: Session, skill_id: int) -> Optional[models.VolunteerSkill]:
+    return (
+        db.query(models.VolunteerSkill)
+        .filter(models.VolunteerSkill.id == skill_id)
+        .first()
+    )
 
 
 def create_volunteer_skill(
@@ -672,9 +679,11 @@ def create_volunteer_skill(
 def update_volunteer_skill(
     db: Session, skill_id: int, payload: VolunteerSkillUpdate
 ) -> Optional[models.VolunteerSkill]:
-    row = db.query(models.VolunteerSkill).filter(
-        models.VolunteerSkill.id == skill_id
-    ).first()
+    row = (
+        db.query(models.VolunteerSkill)
+        .filter(models.VolunteerSkill.id == skill_id)
+        .first()
+    )
     if not row:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -685,9 +694,11 @@ def update_volunteer_skill(
 
 
 def delete_volunteer_skill(db: Session, skill_id: int) -> bool:
-    row = db.query(models.VolunteerSkill).filter(
-        models.VolunteerSkill.id == skill_id
-    ).first()
+    row = (
+        db.query(models.VolunteerSkill)
+        .filter(models.VolunteerSkill.id == skill_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -696,6 +707,7 @@ def delete_volunteer_skill(db: Session, skill_id: int) -> bool:
 
 
 # ── Chat Messages ────────────────────────────────────────────────────────
+
 
 def get_chat_messages(
     db: Session,
@@ -708,22 +720,16 @@ def get_chat_messages(
         q = q.filter(models.ChatMessage.room_id == room_id)
     if sender_id is not None:
         q = q.filter(models.ChatMessage.sender_id == sender_id)
-    return q.order_by(
-        models.ChatMessage.created_at.desc()
-    ).limit(limit).all()
+    return q.order_by(models.ChatMessage.created_at.desc()).limit(limit).all()
 
 
-def get_chat_message(
-    db: Session, message_id: int
-) -> Optional[models.ChatMessage]:
-    return db.query(models.ChatMessage).filter(
-        models.ChatMessage.id == message_id
-    ).first()
+def get_chat_message(db: Session, message_id: int) -> Optional[models.ChatMessage]:
+    return (
+        db.query(models.ChatMessage).filter(models.ChatMessage.id == message_id).first()
+    )
 
 
-def create_chat_message(
-    db: Session, payload: ChatMessageCreate
-) -> models.ChatMessage:
+def create_chat_message(db: Session, payload: ChatMessageCreate) -> models.ChatMessage:
     row = models.ChatMessage(**payload.model_dump())
     db.add(row)
     db.commit()
@@ -732,9 +738,9 @@ def create_chat_message(
 
 
 def delete_chat_message(db: Session, message_id: int) -> bool:
-    row = db.query(models.ChatMessage).filter(
-        models.ChatMessage.id == message_id
-    ).first()
+    row = (
+        db.query(models.ChatMessage).filter(models.ChatMessage.id == message_id).first()
+    )
     if not row:
         return False
     db.delete(row)

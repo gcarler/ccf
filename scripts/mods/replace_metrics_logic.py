@@ -1,7 +1,7 @@
-import sys
 import re
+import sys
 
-with open('backend/api/crm.py', 'r', encoding='utf-8') as f:
+with open("backend/api/crm.py", "r", encoding="utf-8") as f:
     c = f.read()
 
 old_logic = """    liderazgo_roles = ["Apstol", "Profeta", "Evangelista", "Pastor", "Maestro", "Lder"]
@@ -50,7 +50,11 @@ old_logic = """    liderazgo_roles = ["Apstol", "Profeta", "Evangelista", "Pasto
         })"""
 
 # Handle encoding issues in string literal
-match = re.search(r'    liderazgo_roles = .*?        attendee_list\.append\(\{.*?\}\)', c, flags=re.DOTALL)
+match = re.search(
+    r"    liderazgo_roles = .*?        attendee_list\.append\(\{.*?\}\)",
+    c,
+    flags=re.DOTALL,
+)
 if not match:
     print("Could not find the block to replace!")
     sys.exit(1)
@@ -88,9 +92,9 @@ new_logic = """
             "scanned_at": att.scanned_at.isoformat() if att.scanned_at else None
         })"""
 
-c = c[:match.start()] + new_logic + c[match.end():]
+c = c[: match.start()] + new_logic + c[match.end() :]
 
-with open('backend/api/crm.py', 'w', encoding='utf-8') as f:
+with open("backend/api/crm.py", "w", encoding="utf-8") as f:
     f.write(c)
 
 print("Logic replaced successfully!")

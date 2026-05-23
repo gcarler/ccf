@@ -40,7 +40,9 @@ def send_email(to: str, subject: str, html: str, text: str = "") -> bool:
         return True
 
     if not settings.smtp_host or settings.smtp_host == "localhost":
-        log.warning("SMTP not configured; email to %s skipped (subject: %s)", to, subject)
+        log.warning(
+            "SMTP not configured; email to %s skipped (subject: %s)", to, subject
+        )
         return False
 
     msg = _build_message(to, subject, html, text)
@@ -181,7 +183,9 @@ def render_verify_email(code: str, frontend_url: str | None = None) -> tuple[str
     return subject, _brand_wrap(body)
 
 
-def render_reset_password(token: str, frontend_url: str | None = None) -> tuple[str, str]:
+def render_reset_password(
+    token: str, frontend_url: str | None = None
+) -> tuple[str, str]:
     """Renderiza el email de restablecimiento de contraseña con diseño corporativo."""
     base = (frontend_url or settings.frontend_url).rstrip("/")
     reset_link = f"{base}/reset-password?token={token}"

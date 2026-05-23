@@ -1,6 +1,6 @@
 import sys
 
-with open('frontend/src/app/crm/events/[id]/page.tsx', 'r', encoding='utf-8') as f:
+with open("frontend/src/app/crm/events/[id]/page.tsx", "r", encoding="utf-8") as f:
     c = f.read()
 
 # 1. State for Analytics
@@ -120,6 +120,6 @@ view_new = """                    {activeTab === 'analytics' && (
                     {activeTab === 'session' && ("""
 c = c.replace(view_old, view_new)
 
-with open('frontend/src/app/crm/events/[id]/page.tsx', 'w', encoding='utf-8') as f:
+with open("frontend/src/app/crm/events/[id]/page.tsx", "w", encoding="utf-8") as f:
     f.write(c)
 print("Updated event page!")

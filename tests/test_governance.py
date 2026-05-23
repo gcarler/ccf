@@ -6,7 +6,9 @@ from backend import crud, models
 from backend.core.security import get_password_hash
 
 
-def seed_admin(db_session, email: str = "admin@example.com", password: str = "secret123") -> tuple[models.User, str]:
+def seed_admin(
+    db_session, email: str = "admin@example.com", password: str = "secret123"
+) -> tuple[models.User, str]:
     admin = models.User(
         username="admin",
         email=email,

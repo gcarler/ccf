@@ -1,6 +1,6 @@
 import codecs
 
-with codecs.open('frontend/src/app/crm/events/[id]/page.tsx', 'r', 'utf-8') as f:
+with codecs.open("frontend/src/app/crm/events/[id]/page.tsx", "r", "utf-8") as f:
     c = f.read()
 
 bad_export = """            const res = await apiFetch<Blob>(`/crm/events/${event.id}/sessions/${sessionDate}/export`, {
@@ -15,7 +15,7 @@ good_export = """            const res = await apiFetch<string>(`/crm/events/${e
 
 c = c.replace(bad_export, good_export)
 
-with codecs.open('frontend/src/app/crm/events/[id]/page.tsx', 'w', 'utf-8') as f:
+with codecs.open("frontend/src/app/crm/events/[id]/page.tsx", "w", "utf-8") as f:
     f.write(c)
 
 print("Export blob logic fixed")

@@ -1,7 +1,7 @@
-import sqlite3
 import random
+import sqlite3
 
-db_path = 'd:/ccf/ccf_v2.db'
+db_path = "d:/ccf/ccf_v2.db"
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 
@@ -22,7 +22,7 @@ contents = [
     "Participar en los grupos pequeños me ha dado amigos genuinos y un sentido de pertenencia.",
     "Llegué con depresión y ansiedad, pero el amor de Dios que se refleja en esta casa me sanó.",
     "Servir en el ministerio ha sido la mejor decisión. Siento que mi vida tiene propósito.",
-    "Las misiones y el trabajo social de la iglesia me inspiran a ser mejor cristiano cada día."
+    "Las misiones y el trabajo social de la iglesia me inspiran a ser mejor cristiano cada día.",
 ]
 
 testimonials_to_insert = []
@@ -31,7 +31,10 @@ for i in range(10):
     emotion = random.choice(emotions)
     testimonials_to_insert.append((1, content, emotion, 1))
 
-cursor.executemany("INSERT INTO testimonials (author_id, content, emotion, is_approved) VALUES (?, ?, ?, ?)", testimonials_to_insert)
+cursor.executemany(
+    "INSERT INTO testimonials (author_id, content, emotion, is_approved) VALUES (?, ?, ?, ?)",
+    testimonials_to_insert,
+)
 conn.commit()
 
 cursor.execute("SELECT COUNT(*) FROM testimonials")

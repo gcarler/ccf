@@ -3,13 +3,14 @@ Script de reparación de base de datos — Crea tablas faltantes y añade column
 
 Ejecución: python fix_db_schema.py
 """
+
 import logging
 import sys
 
 from sqlalchemy import inspect, text
 
-from backend.core.database import Base, engine
 from backend import models  # noqa: F401 — ensures all models are registered
+from backend.core.database import Base, engine
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 log = logging.getLogger("fix_db")

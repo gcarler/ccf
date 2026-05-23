@@ -1,23 +1,23 @@
-
-import sys
 import os
 import random
+import sys
 from datetime import datetime, timedelta
 
 # Añadir el directorio raíz al path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend import models, schemas, crud
+from backend import crud, models, schemas
 from backend.core.database import SessionLocal
 from backend.management.schema import upgrade_with_optional_bootstrap
 
+
 def seed_ministries_and_courses():
     print("🎭 Iniciando Semilla de Ministerios y Cursos Reales...")
-    
+
     # Aplicar migraciones y bootstrap explícito si es necesario.
     upgrade_with_optional_bootstrap()
     db = SessionLocal()
-    
+
     try:
         # Limpieza previa para evitar duplicados
         print("🧹 Limpiando datos previos de ministerios y cursos...")
@@ -32,9 +32,11 @@ def seed_ministries_and_courses():
         # Obtener miembros existentes
         miembros = db.query(models.Member).all()
         usuarios = db.query(models.User).filter(models.User.role == "estudiante").all()
-        
+
         if not miembros:
-            print("❌ No hay miembros en la base de datos. Ejecuta seed_mass_data_v2.py primero.")
+            print(
+                "❌ No hay miembros en la base de datos. Ejecuta seed_mass_data_v2.py primero."
+            )
             return
 
         # 1. CREAR MINISTERIOS
@@ -46,13 +48,19 @@ def seed_ministries_and_courses():
             ("Ujieres y Protocolo", "Servicio de bienvenida y orden."),
             ("Intercesión", "Equipo dedicado a la oración constante."),
             ("Medios y Tecnología", "Sonido, video y redes sociales."),
-            ("Misiones y Evangelismo", "Impacto social y alcance exterior.")
+            ("Misiones y Evangelismo", "Impacto social y alcance exterior."),
         ]
-        
+
         ministerios_db = []
         for nombre, desc in nombres_ministerios:
             # Asignar un líder aleatorio que sea "Líder" o "Pastor"
-            lider = random.choice([m for m in miembros if m.church_role in ["Líder", "Pastor de Zona", "Servidor"]])
+            lider = random.choice(
+                [
+                    m
+                    for m in miembros
+                    if m.church_role in ["Líder", "Pastor de Zona", "Servidor"]
+                ]
+            )
             minis = models.Ministry(name=nombre, description=desc, leader_id=lider.id)
             db.add(minis)
             ministerios_db.append(minis)
@@ -68,19 +76,42 @@ def seed_ministries_and_courses():
         # 2. CREAR CURSOS REALES
         print("📚 Creando Cursos Académicos...")
         cursos_data = [
-            ("LIDER-100", "Escuela de Líderes Nivel 1", "Formación básica para el servicio ministerial."),
-            ("BIBLIA-200", "Panorama del Antiguo Testamento", "Estudio profundo de los libros históricos y proféticos."),
-            ("VIDA-050", "Vida Nueva en Cristo", "Curso de discipulado para recién convertidos."),
-            ("TEOL-300", "Doctrina de la Salvación", "Estudio teológico sistemático sobre la Soteriología.")
+            (
+                "LIDER-100",
+                "Escuela de Líderes Nivel 1",
+                "Formación básica para el servicio ministerial.",
+            ),
+            (
+                "BIBLIA-200",
+                "Panorama del Antiguo Testamento",
+                "Estudio profundo de los libros históricos y proféticos.",
+            ),
+            (
+                "VIDA-050",
+                "Vida Nueva en Cristo",
+                "Curso de discipulado para recién convertidos.",
+            ),
+            (
+                "TEOL-300",
+                "Doctrina de la Salvación",
+                "Estudio teológico sistemático sobre la Soteriología.",
+            ),
         ]
-        
+
         cursos_db = []
         for code, title, desc in cursos_data:
-            c = models.Course(code=code, title=title, description=desc, modality="formal", is_published=True)
+            c = models.Course(
+                code=code,
+                title=title,
+                description=desc,
+                modality="formal",
+                is_published=True,
+            )
             db.add(c)
             cursos_db.append(c)
         db.commit()
-        for c in cursos_db: db.refresh(c)
+        for c in cursos_db:
+            db.refresh(c)
 
         # 3. CREAR LECCIONES PARA LOS CURSOS
         print("📖 Añadiendo lecciones...")
@@ -91,16 +122,18 @@ def seed_ministries_and_courses():
                     title=f"Lección {i}: {curso.title} - Parte {i}",
                     content=f"Contenido educativo detallado para la lección {i} del curso {curso.title}.",
                     order_index=i,
-                    duration_minutes=45
+                    duration_minutes=45,
                 )
                 db.add(lesson)
         db.commit()
 
         # 4. INSCRIBIR ESTUDIANTES Y GENERAR PROGRESO
-        print(f"🎓 Inscribiendo estudiantes con progreso real (Población: {len(usuarios)})...")
+        print(
+            f"🎓 Inscribiendo estudiantes con progreso real (Población: {len(usuarios)})..."
+        )
         sample_size = min(len(usuarios), 150)
         estudiantes_seleccionados = random.sample(usuarios, sample_size)
-        
+
         for user in estudiantes_seleccionados:
             # Inscribir en 1 o 2 cursos aleatorios
             cursos_inscritos = random.sample(cursos_db, random.randint(1, 2))
@@ -109,12 +142,12 @@ def seed_ministries_and_courses():
                     user_id=user.id,
                     course_id=curso.id,
                     status=random.choice(["active", "completed"]),
-                    progress_percent=random.randint(10, 100)
+                    progress_percent=random.randint(10, 100),
                 )
                 if enrollment.progress_percent == 100:
                     enrollment.status = "completed"
                     enrollment.approved = True
-                
+
                 db.add(enrollment)
         db.commit()
 
@@ -129,10 +162,12 @@ def seed_ministries_and_courses():
     except Exception as e:
         print(f"❌ Error en semilla avanzada: {str(e)}")
         import traceback
+
         traceback.print_exc()
         db.rollback()
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     seed_ministries_and_courses()

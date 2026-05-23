@@ -1,6 +1,6 @@
-from fastapi.testclient import TestClient
-
 from datetime import datetime
+
+from fastapi.testclient import TestClient
 
 from backend import models
 from backend.core.security import get_password_hash
@@ -63,7 +63,9 @@ def test_agenda_events_feed_into_system_calendar(client: TestClient, db_session)
     calendar_response = client.get("/api/system/calendar", headers=headers)
     assert calendar_response.status_code == 200
     payload = calendar_response.json()
-    agenda_entry = next(item for item in payload if item["id"] == f"agenda-{created_event['id']}")
+    agenda_entry = next(
+        item for item in payload if item["id"] == f"agenda-{created_event['id']}"
+    )
     assert agenda_entry["title"] == "Reunion de liderazgo"
     assert agenda_entry["type"] == "agenda_event"
     assert agenda_entry["location"] == "Salon principal"
@@ -129,6 +131,8 @@ def test_system_calendar_includes_evangelism_event_link(client: TestClient, db_s
     calendar_response = client.get("/api/system/calendar", headers=headers)
     assert calendar_response.status_code == 200
     payload = calendar_response.json()
-    entry = next(item for item in payload if item["id"] == f"evangelism-{evangelism_event.id}")
+    entry = next(
+        item for item in payload if item["id"] == f"evangelism-{evangelism_event.id}"
+    )
     assert entry["type"] == "evangelism_event"
     assert entry["href"] == f"/evangelism/events/{evangelism_event.id}"

@@ -11,7 +11,6 @@ from backend import crud, models, schemas
 from backend.auth import require_active_user
 from backend.core.database import get_db
 
-
 router = APIRouter(prefix="/content", tags=["content"])
 
 
@@ -21,7 +20,13 @@ BLOCK_REQUIRED_FIELDS: dict[str, list[str]] = {
     "faro_testimonios_hero": ["eyebrow", "title_lead", "title_accent", "description"],
     "faro_sermons_hero": ["eyebrow", "title_lead", "title_accent", "description"],
     "faro_courses_hero": ["eyebrow", "title_lead", "title_accent", "description"],
-    "faro_discover_hero": ["eyebrow", "title_lead", "title_accent", "description", "cta"],
+    "faro_discover_hero": [
+        "eyebrow",
+        "title_lead",
+        "title_accent",
+        "description",
+        "cta",
+    ],
     "faro_about_hero": ["eyebrow", "title_lead", "title_accent", "description"],
     "faro_locations_hero": ["eyebrow", "title", "search_placeholder"],
 }
@@ -68,29 +73,48 @@ def _parse_content_payload(page_key: str, payload: schemas.PageContentUpdate) ->
     try:
         return json.loads(payload.content)
     except json.JSONDecodeError as exc:
-        raise HTTPException(status_code=422, detail=f"JSON invalido: {exc.msg}") from exc
+        raise HTTPException(
+            status_code=422, detail=f"JSON invalido: {exc.msg}"
+        ) from exc
 
 
 def _validate_content_shape(page_key: str, parsed: Any) -> None:
     if parsed is None:
         return
-    if page_key in {"faro_public_events", "faro_media_gallery", "faro_testimonials_feed", "faro_announcements_feed"}:
+    if page_key in {
+        "faro_public_events",
+        "faro_media_gallery",
+        "faro_testimonials_feed",
+        "faro_announcements_feed",
+    }:
         if not isinstance(parsed, list):
-            raise HTTPException(status_code=422, detail=f"{page_key} debe ser una lista JSON")
+            raise HTTPException(
+                status_code=422, detail=f"{page_key} debe ser una lista JSON"
+            )
         return
 
     if page_key == "faro_nav_items":
         if not isinstance(parsed, dict) or not isinstance(parsed.get("items"), list):
-            raise HTTPException(status_code=422, detail="faro_nav_items requiere objeto con lista 'items'")
+            raise HTTPException(
+                status_code=422,
+                detail="faro_nav_items requiere objeto con lista 'items'",
+            )
         return
 
     required = BLOCK_REQUIRED_FIELDS.get(page_key)
     if required:
         if not isinstance(parsed, dict):
-            raise HTTPException(status_code=422, detail=f"{page_key} debe ser un objeto JSON")
-        missing = [field for field in required if str(parsed.get(field, "")).strip() == ""]
+            raise HTTPException(
+                status_code=422, detail=f"{page_key} debe ser un objeto JSON"
+            )
+        missing = [
+            field for field in required if str(parsed.get(field, "")).strip() == ""
+        ]
         if missing:
-            raise HTTPException(status_code=422, detail=f"Campos obligatorios faltantes: {', '.join(missing)}")
+            raise HTTPException(
+                status_code=422,
+                detail=f"Campos obligatorios faltantes: {', '.join(missing)}",
+            )
 
 
 def _workflow_to_schema(item: models.ContentPublication) -> schemas.ContentWorkflowRead:
@@ -132,7 +156,9 @@ def put_content_block(
     parsed = _parse_content_payload(page_key, payload)
     _validate_content_shape(page_key, parsed)
     row = crud.update_page_content(db, page_key, payload)
-    crud.update_content_publication(db, page_key, status="draft", updated_by=current_user.id)
+    crud.update_content_publication(
+        db, page_key, status="draft", updated_by=current_user.id
+    )
     crud.create_admin_audit_log(
         db,
         actor_user_id=current_user.id,
@@ -154,7 +180,9 @@ def patch_content_block(
     parsed = _parse_content_payload(page_key, payload)
     _validate_content_shape(page_key, parsed)
     row = crud.update_page_content(db, page_key, payload)
-    crud.update_content_publication(db, page_key, status="draft", updated_by=current_user.id)
+    crud.update_content_publication(
+        db, page_key, status="draft", updated_by=current_user.id
+    )
     crud.create_admin_audit_log(
         db,
         actor_user_id=current_user.id,
@@ -176,7 +204,9 @@ def post_content_block(
     parsed = _parse_content_payload(page_key, payload)
     _validate_content_shape(page_key, parsed)
     row = crud.update_page_content(db, page_key, payload)
-    crud.update_content_publication(db, page_key, status="draft", updated_by=current_user.id)
+    crud.update_content_publication(
+        db, page_key, status="draft", updated_by=current_user.id
+    )
     crud.create_admin_audit_log(
         db,
         actor_user_id=current_user.id,
@@ -197,7 +227,9 @@ def get_content_versions(
     return crud.get_page_content_versions(db, page_key)
 
 
-@router.post("/{page_key}/rollback/{version_id}", response_model=schemas.PageContentRead)
+@router.post(
+    "/{page_key}/rollback/{version_id}", response_model=schemas.PageContentRead
+)
 def rollback_content_version(
     page_key: str,
     version_id: int,
@@ -207,7 +239,9 @@ def rollback_content_version(
     row = crud.restore_page_content_version(db, page_key, version_id)
     if not row:
         raise HTTPException(status_code=404, detail="version not found")
-    crud.update_content_publication(db, page_key, status="draft", updated_by=current_user.id)
+    crud.update_content_publication(
+        db, page_key, status="draft", updated_by=current_user.id
+    )
     crud.create_admin_audit_log(
         db,
         actor_user_id=current_user.id,
@@ -253,7 +287,10 @@ def patch_content_workflow(
     next_status = action_to_status[action]
     allowed = ALLOWED_TRANSITIONS.get(previous_status, set())
     if next_status not in allowed and next_status != previous_status:
-        raise HTTPException(status_code=409, detail=f"No se puede pasar de {previous_status} a {next_status}")
+        raise HTTPException(
+            status_code=409,
+            detail=f"No se puede pasar de {previous_status} a {next_status}",
+        )
 
     updated = crud.update_content_publication(
         db,
@@ -281,7 +318,13 @@ def get_content_metrics(
     _: models.User = Depends(require_active_user),
 ):
     publications = crud.list_content_publications(db)
-    status_counter = {"draft": 0, "in_review": 0, "approved": 0, "published": 0, "archived": 0}
+    status_counter = {
+        "draft": 0,
+        "in_review": 0,
+        "approved": 0,
+        "published": 0,
+        "archived": 0,
+    }
     for item in publications:
         status_counter[item.status] = status_counter.get(item.status, 0) + 1
 
@@ -299,9 +342,17 @@ def get_content_metrics(
         testimonials_total=len(testimonials),
         testimonials_approved=sum(1 for row in testimonials if row.is_approved),
         announcements_total=len(announcements),
-        announcements_active=sum(1 for row in announcements if row.status == "published"),
+        announcements_active=sum(
+            1 for row in announcements if row.status == "published"
+        ),
         media_total=len(media),
-        media_images=sum(1 for row in media if (row.mime_type or "").startswith("image/")),
-        media_videos=sum(1 for row in media if (row.mime_type or "").startswith("video/")),
-        media_audio=sum(1 for row in media if (row.mime_type or "").startswith("audio/")),
+        media_images=sum(
+            1 for row in media if (row.mime_type or "").startswith("image/")
+        ),
+        media_videos=sum(
+            1 for row in media if (row.mime_type or "").startswith("video/")
+        ),
+        media_audio=sum(
+            1 for row in media if (row.mime_type or "").startswith("audio/")
+        ),
     )

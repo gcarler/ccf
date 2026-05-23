@@ -1,7 +1,7 @@
 import re
 import sys
 
-with open('backend/api/crm.py', 'r', encoding='utf-8') as f:
+with open("backend/api/crm.py", "r", encoding="utf-8") as f:
     c = f.read()
 
 # We need to find the `attendee_list` logic in `get_event_session_detail`
@@ -127,6 +127,6 @@ def get_events_dashboard_stats(db: Session = Depends(get_db)):
 # Append
 c += new_endpoint
 
-with open('backend/api/crm.py', 'w', encoding='utf-8') as f:
+with open("backend/api/crm.py", "w", encoding="utf-8") as f:
     f.write(c)
 print("Logic updated")

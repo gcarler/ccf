@@ -240,7 +240,7 @@ export default function DonationsManagementPage() {
                                                             </button>
                                                             {deleteId === d.id ? (
                                                                 <div className="flex items-center gap-1">
-                                                                    <button onClick={() => handleDelete(d.id)}
+                                                                    <button onClick={() => handleDelete()}
                                                                         className="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-[9px] font-black uppercase">
                                                                         Confirmar
                                                                     </button>

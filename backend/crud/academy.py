@@ -1,18 +1,19 @@
 """Courses, enrollments, assessments, certificates, forum, assignments, and formal acta CRUD."""
+
 import datetime as dt
 import json
 import uuid
 from typing import Optional
 
 from sqlalchemy import func
-from sqlalchemy.orm import Session, joinedload, contains_eager
+from sqlalchemy.orm import Session, contains_eager, joinedload
 
 from backend import models, schemas
 from backend.content_defaults import PAGE_CONTENT_DEFAULTS
 from backend.crud._utils import _utcnow
 
-
 # ── Courses ────────────────────────────────────────────
+
 
 def get_courses(
     db: Session,
@@ -32,11 +33,16 @@ def get_courses(
     course_ids = [c.id for c in courses]
     stats_map = {}
     if course_ids:
-        stats_data = db.query(
-            models.Lesson.course_id,
-            func.count(models.Lesson.id),
-            func.sum(models.Lesson.duration_minutes)
-        ).filter(models.Lesson.course_id.in_(course_ids)).group_by(models.Lesson.course_id).all()
+        stats_data = (
+            db.query(
+                models.Lesson.course_id,
+                func.count(models.Lesson.id),
+                func.sum(models.Lesson.duration_minutes),
+            )
+            .filter(models.Lesson.course_id.in_(course_ids))
+            .group_by(models.Lesson.course_id)
+            .all()
+        )
         stats_map = {cid: (count, minutes) for cid, count, minutes in stats_data}
 
     for course in courses:
@@ -50,17 +56,25 @@ def get_courses(
 def get_course(db: Session, course_id: int):
     course = db.query(models.Course).filter(models.Course.id == course_id).first()
     if course:
-        stats = db.query(
-            func.count(models.Lesson.id),
-            func.sum(models.Lesson.duration_minutes),
-        ).filter(models.Lesson.course_id == course_id).first()
+        stats = (
+            db.query(
+                func.count(models.Lesson.id),
+                func.sum(models.Lesson.duration_minutes),
+            )
+            .filter(models.Lesson.course_id == course_id)
+            .first()
+        )
         course.lesson_count = stats[0] or 0
         course.total_minutes = stats[1] or 0
     return course
 
 
 def check_user_meets_prerequisites(db: Session, user_id: int, course_id: int) -> bool:
-    prereqs = db.query(models.CoursePrerequisite).filter(models.CoursePrerequisite.course_id == course_id).all()
+    prereqs = (
+        db.query(models.CoursePrerequisite)
+        .filter(models.CoursePrerequisite.course_id == course_id)
+        .all()
+    )
     if not prereqs:
         return True
 
@@ -70,7 +84,7 @@ def check_user_meets_prerequisites(db: Session, user_id: int, course_id: int) ->
             .filter(
                 models.Enrollment.user_id == user_id,
                 models.Enrollment.course_id == prereq.prerequisite_course_id,
-                models.Enrollment.status == "completed"
+                models.Enrollment.status == "completed",
             )
             .first()
         )
@@ -82,27 +96,46 @@ def check_user_meets_prerequisites(db: Session, user_id: int, course_id: int) ->
 
 # ── Enrollments ────────────────────────────────────────
 
+
 def get_enrollment(db: Session, enrollment_id: int):
-    return db.query(models.Enrollment).filter(models.Enrollment.id == enrollment_id).first()
+    return (
+        db.query(models.Enrollment)
+        .filter(models.Enrollment.id == enrollment_id)
+        .first()
+    )
 
 
 def get_enrollments_by_user(db: Session, user_id: int):
-    return db.query(models.Enrollment).options(joinedload(models.Enrollment.course)).filter(models.Enrollment.user_id == user_id).all()
+    return (
+        db.query(models.Enrollment)
+        .options(joinedload(models.Enrollment.course))
+        .filter(models.Enrollment.user_id == user_id)
+        .all()
+    )
 
 
-def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate) -> models.Enrollment:
+def create_enrollment(
+    db: Session, enrollment: schemas.EnrollmentCreate
+) -> models.Enrollment:
     existing = (
         db.query(models.Enrollment)
-        .filter(models.Enrollment.user_id == enrollment.user_id, models.Enrollment.course_id == enrollment.course_id)
+        .filter(
+            models.Enrollment.user_id == enrollment.user_id,
+            models.Enrollment.course_id == enrollment.course_id,
+        )
         .first()
     )
     if existing:
         raise ValueError("El estudiante ya se encuentra inscrito en este curso")
 
     if not check_user_meets_prerequisites(db, enrollment.user_id, enrollment.course_id):
-        raise ValueError("No se cumplen los prerrequisitos académicos para acceder a este nivel")
+        raise ValueError(
+            "No se cumplen los prerrequisitos académicos para acceder a este nivel"
+        )
 
-    db_course = db.query(models.Course).filter(models.Course.id == enrollment.course_id).first()
+    db_course = (
+        db.query(models.Course).filter(models.Course.id == enrollment.course_id).first()
+    )
     access_end = None
     if db_course and db_course.modality == "no_formal":
         access_end = _utcnow() + dt.timedelta(days=365)
@@ -111,7 +144,7 @@ def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate) -> mode
         row = models.Enrollment(
             user_id=enrollment.user_id,
             course_id=enrollment.course_id,
-            access_window_end=access_end
+            access_window_end=access_end,
         )
         db.add(row)
 
@@ -119,7 +152,7 @@ def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate) -> mode
             event_type="enrollment",
             course_id=enrollment.course_id,
             user_id=enrollment.user_id,
-            modality=db_course.modality if db_course else None
+            modality=db_course.modality if db_course else None,
         )
         db.add(log)
 
@@ -130,8 +163,13 @@ def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate) -> mode
         db.rollback()
         raise ValueError(f"Error al procesar la inscripción: {str(e)}")
 
+
 def get_assessment(db: Session, assessment_id: int):
-    return db.query(models.Assessment).filter(models.Assessment.id == assessment_id).first()
+    return (
+        db.query(models.Assessment)
+        .filter(models.Assessment.id == assessment_id)
+        .first()
+    )
 
 
 def get_assessment_with_questions(db: Session, assessment_id: int):
@@ -144,20 +182,22 @@ def get_assessment_with_questions(db: Session, assessment_id: int):
 
 
 def create_or_update_assessment_attempt(
-    db: Session, enrollment: models.Enrollment, assessment: models.Assessment, submitted_score: float
+    db: Session,
+    enrollment: models.Enrollment,
+    assessment: models.Assessment,
+    submitted_score: float,
 ):
     attempt = (
         db.query(models.AssessmentAttempt)
         .filter(
             models.AssessmentAttempt.enrollment_id == enrollment.id,
-            models.AssessmentAttempt.assessment_id == assessment.id
+            models.AssessmentAttempt.assessment_id == assessment.id,
         )
         .first()
     )
     if not attempt:
         attempt = models.AssessmentAttempt(
-            enrollment_id=enrollment.id,
-            assessment_id=assessment.id
+            enrollment_id=enrollment.id, assessment_id=assessment.id
         )
         db.add(attempt)
 
@@ -186,7 +226,7 @@ def submit_assessment_attempt(
         db.query(models.AssessmentAttempt)
         .filter(
             models.AssessmentAttempt.enrollment_id == enrollment.id,
-            models.AssessmentAttempt.assessment_id == assessment.id
+            models.AssessmentAttempt.assessment_id == assessment.id,
         )
         .first()
     )
@@ -195,23 +235,26 @@ def submit_assessment_attempt(
         db.flush()
 
     attempt = models.AssessmentAttempt(
-        enrollment_id=enrollment.id,
-        assessment_id=assessment.id,
-        score=0,
-        passed=False
+        enrollment_id=enrollment.id, assessment_id=assessment.id, score=0, passed=False
     )
     db.add(attempt)
     db.flush()
 
     total_points_awarded = 0
-    max_score = sum(q.points for q in assessment.questions) if assessment.questions else 100
+    max_score = (
+        sum(q.points for q in assessment.questions) if assessment.questions else 100
+    )
 
     for answer_data in answers:
         question_id = answer_data.get("question_id")
         selected_option_id = answer_data.get("selected_option_id")
         text_response = answer_data.get("text_response")
 
-        question = db.query(models.AssessmentQuestion).filter(models.AssessmentQuestion.id == question_id).first()
+        question = (
+            db.query(models.AssessmentQuestion)
+            .filter(models.AssessmentQuestion.id == question_id)
+            .first()
+        )
         if not question:
             continue
 
@@ -221,7 +264,10 @@ def submit_assessment_attempt(
         if question.question_type in ["multiple_choice", "true_false"]:
             correct_option = (
                 db.query(models.AssessmentOption)
-                .filter(models.AssessmentOption.question_id == question_id, models.AssessmentOption.is_correct)
+                .filter(
+                    models.AssessmentOption.question_id == question_id,
+                    models.AssessmentOption.is_correct,
+                )
                 .first()
             )
             if correct_option and correct_option.id == selected_option_id:
@@ -229,8 +275,8 @@ def submit_assessment_attempt(
                 points_awarded = question.points
             else:
                 is_correct = False
-        
-        # Text responses stay is_correct=None (pending manual grade) 
+
+        # Text responses stay is_correct=None (pending manual grade)
         # unless we implement keyword matching here.
 
         db_answer = models.AssessmentAnswer(
@@ -239,7 +285,7 @@ def submit_assessment_attempt(
             selected_option_id=selected_option_id,
             text_response=text_response,
             is_correct=is_correct,
-            points_awarded=points_awarded
+            points_awarded=points_awarded,
         )
         db.add(db_answer)
         total_points_awarded += points_awarded
@@ -259,20 +305,31 @@ def submit_assessment_attempt(
 
 # ── Lesson Progress ────────────────────────────────────
 
+
 def get_lesson_progress(db: Session, user_id: int, lesson_id: int):
     return (
         db.query(models.LessonProgress)
-        .filter(models.LessonProgress.user_id == user_id, models.LessonProgress.lesson_id == lesson_id)
+        .filter(
+            models.LessonProgress.user_id == user_id,
+            models.LessonProgress.lesson_id == lesson_id,
+        )
         .first()
     )
 
 
 def update_lesson_progress(
-    db: Session, user_id: int, lesson_id: int, progress_percent: float, last_position: int
+    db: Session,
+    user_id: int,
+    lesson_id: int,
+    progress_percent: float,
+    last_position: int,
 ):
     row = (
         db.query(models.LessonProgress)
-        .filter(models.LessonProgress.user_id == user_id, models.LessonProgress.lesson_id == lesson_id)
+        .filter(
+            models.LessonProgress.user_id == user_id,
+            models.LessonProgress.lesson_id == lesson_id,
+        )
         .first()
     )
     if not row:
@@ -289,22 +346,39 @@ def update_lesson_progress(
 
     lesson = db.query(models.Lesson).filter(models.Lesson.id == lesson_id).first()
     if lesson:
-        enrollment = db.query(models.Enrollment).filter(
-            models.Enrollment.user_id == user_id,
-            models.Enrollment.course_id == lesson.course_id
-        ).first()
+        enrollment = (
+            db.query(models.Enrollment)
+            .filter(
+                models.Enrollment.user_id == user_id,
+                models.Enrollment.course_id == lesson.course_id,
+            )
+            .first()
+        )
         if enrollment:
-            total_lessons = db.query(models.Lesson).filter(models.Lesson.course_id == lesson.course_id).count()
-            completed_count = db.query(models.LessonProgress).join(models.Lesson).filter(
-                models.Lesson.course_id == lesson.course_id,
-                models.LessonProgress.user_id == user_id,
-                models.LessonProgress.is_completed
-            ).count()
+            total_lessons = (
+                db.query(models.Lesson)
+                .filter(models.Lesson.course_id == lesson.course_id)
+                .count()
+            )
+            completed_count = (
+                db.query(models.LessonProgress)
+                .join(models.Lesson)
+                .filter(
+                    models.Lesson.course_id == lesson.course_id,
+                    models.LessonProgress.user_id == user_id,
+                    models.LessonProgress.is_completed,
+                )
+                .count()
+            )
 
             if total_lessons > 0:
                 enrollment.progress_percent = (completed_count / total_lessons) * 100
                 if enrollment.progress_percent >= 100:
-                    course = db.query(models.Course).filter(models.Course.id == lesson.course_id).first()
+                    course = (
+                        db.query(models.Course)
+                        .filter(models.Course.id == lesson.course_id)
+                        .first()
+                    )
                     if course and course.modality == "no_formal":
                         enrollment.status = "completed"
                 db.commit()
@@ -312,6 +386,7 @@ def update_lesson_progress(
 
 
 # ── Certificates ───────────────────────────────────────
+
 
 def get_certificates_by_user(db: Session, user_id: int):
     return (
@@ -323,12 +398,20 @@ def get_certificates_by_user(db: Session, user_id: int):
 
 
 def get_certificate_by_code(db: Session, code: str):
-    return db.query(models.Certificate).filter(models.Certificate.certificate_code == code).first()
+    return (
+        db.query(models.Certificate)
+        .filter(models.Certificate.certificate_code == code)
+        .first()
+    )
 
 
 def issue_certificate_for_enrollment(db: Session, enrollment: models.Enrollment):
     if enrollment.certificate_issued:
-        return db.query(models.Certificate).filter(models.Certificate.enrollment_id == enrollment.id).first()
+        return (
+            db.query(models.Certificate)
+            .filter(models.Certificate.enrollment_id == enrollment.id)
+            .first()
+        )
 
     code = f"CCF-{uuid.uuid4().hex[:8].upper()}"
     enrollment.certificate_issued = True
@@ -375,49 +458,79 @@ def issue_pending_certificates(db: Session):
 
 # ── Formal Acta ────────────────────────────────────────
 
+
 def close_formal_acta(
-    db: Session, course_id: int, closed_by_user_id: int, min_grade: float, min_attendance: float
+    db: Session,
+    course_id: int,
+    closed_by_user_id: int,
+    min_grade: float,
+    min_attendance: float,
 ):
     course = db.query(models.Course).filter(models.Course.id == course_id).first()
     if not course:
         return None
 
-    assessments = db.query(models.Assessment).join(models.Lesson).filter(
-        models.Lesson.course_id == course_id
-    ).all()
+    assessments = (
+        db.query(models.Assessment)
+        .join(models.Lesson)
+        .filter(models.Lesson.course_id == course_id)
+        .all()
+    )
 
     weights = {a.id: float(a.weight) for a in assessments}
     total_weight = sum(weights.values())
 
-    enrollments = db.query(models.Enrollment).filter(models.Enrollment.course_id == course_id).all()
+    enrollments = (
+        db.query(models.Enrollment)
+        .filter(models.Enrollment.course_id == course_id)
+        .all()
+    )
     for e in enrollments:
-        attempts = db.query(models.AssessmentAttempt).filter(
-            models.AssessmentAttempt.enrollment_id == e.id
-        ).all()
+        attempts = (
+            db.query(models.AssessmentAttempt)
+            .filter(models.AssessmentAttempt.enrollment_id == e.id)
+            .all()
+        )
 
         best_scores = {}
         for att in attempts:
-            if att.assessment_id not in best_scores or att.score > best_scores[att.assessment_id]:
+            if (
+                att.assessment_id not in best_scores
+                or att.score > best_scores[att.assessment_id]
+            ):
                 best_scores[att.assessment_id] = float(att.score)
 
         if total_weight > 0:
-            weighted_sum = sum(best_scores.get(aid, 0) * w for aid, w in weights.items())
+            weighted_sum = sum(
+                best_scores.get(aid, 0) * w for aid, w in weights.items()
+            )
             final_grade = weighted_sum / total_weight
         else:
-            final_grade = db.query(func.avg(models.AssessmentAttempt.score)).filter(
-                models.AssessmentAttempt.enrollment_id == e.id
-            ).scalar() or 0
+            final_grade = (
+                db.query(func.avg(models.AssessmentAttempt.score))
+                .filter(models.AssessmentAttempt.enrollment_id == e.id)
+                .scalar()
+                or 0
+            )
 
-        total_sessions = db.query(func.count(func.distinct(models.CourseAttendance.session_date))).join(models.Enrollment).filter(
-            models.Enrollment.course_id == course_id
-        ).scalar() or 1
+        total_sessions = (
+            db.query(func.count(func.distinct(models.CourseAttendance.session_date)))
+            .join(models.Enrollment)
+            .filter(models.Enrollment.course_id == course_id)
+            .scalar()
+            or 1
+        )
 
-        present_count = db.query(models.CourseAttendance).filter(
-            models.CourseAttendance.enrollment_id == e.id,
-            models.CourseAttendance.status.in_(["present", "justified"])
-        ).count()
+        present_count = (
+            db.query(models.CourseAttendance)
+            .filter(
+                models.CourseAttendance.enrollment_id == e.id,
+                models.CourseAttendance.status.in_(["present", "justified"]),
+            )
+            .count()
+        )
 
-        attendance_rate = (present_count / total_sessions * 100)
+        attendance_rate = present_count / total_sessions * 100
 
         if final_grade >= min_grade and attendance_rate >= min_attendance:
             e.approved = True
@@ -428,7 +541,7 @@ def close_formal_acta(
                 course_id=course_id,
                 user_id=e.user_id,
                 modality="formal",
-                value=float(final_grade)
+                value=float(final_grade),
             )
             db.add(log)
 
@@ -436,7 +549,7 @@ def close_formal_acta(
         course_id=course_id,
         closed_by_user_id=closed_by_user_id,
         min_grade_required=min_grade,
-        min_attendance_required=min_attendance
+        min_attendance_required=min_attendance,
     )
     db.add(acta)
     db.commit()
@@ -455,8 +568,13 @@ def get_latest_acta_by_course(db: Session, course_id: int):
 
 # ── Attendance ─────────────────────────────────────────
 
+
 def record_activity_attendance(db: Session, enrollment_id: int):
-    enrollment = db.query(models.Enrollment).filter(models.Enrollment.id == enrollment_id).first()
+    enrollment = (
+        db.query(models.Enrollment)
+        .filter(models.Enrollment.id == enrollment_id)
+        .first()
+    )
     if not enrollment:
         raise ValueError("Enrollment not found")
     row = models.CourseAttendance(
@@ -472,14 +590,19 @@ def record_activity_attendance(db: Session, enrollment_id: int):
 
 # ── Assignments ────────────────────────────────────────
 
+
 def create_assignment_submission(
-    db: Session, enrollment_id: int, lesson_id: int, file_url: str, comment: str | None = None
+    db: Session,
+    enrollment_id: int,
+    lesson_id: int,
+    file_url: str,
+    comment: str | None = None,
 ):
     submission = models.AssignmentSubmission(
         enrollment_id=enrollment_id,
         lesson_id=lesson_id,
         file_url=file_url,
-        comment=comment
+        comment=comment,
     )
     db.add(submission)
     db.commit()
@@ -492,10 +615,13 @@ def list_assignment_submissions_with_meta(db: Session, limit: int = 100):
         db.query(
             models.AssignmentSubmission,
             models.Lesson.title.label("lesson_title"),
-            models.User.username.label("student_name")
+            models.User.username.label("student_name"),
         )
         .join(models.Lesson, models.AssignmentSubmission.lesson_id == models.Lesson.id)
-        .join(models.Enrollment, models.AssignmentSubmission.enrollment_id == models.Enrollment.id)
+        .join(
+            models.Enrollment,
+            models.AssignmentSubmission.enrollment_id == models.Enrollment.id,
+        )
         .join(models.User, models.Enrollment.user_id == models.User.id)
         .limit(limit)
         .all()
@@ -507,20 +633,30 @@ def get_assignment_submission_with_meta(db: Session, submission_id: int):
         db.query(
             models.AssignmentSubmission,
             models.Lesson.title.label("lesson_title"),
-            models.User.username.label("student_name")
+            models.User.username.label("student_name"),
         )
         .filter(models.AssignmentSubmission.id == submission_id)
         .join(models.Lesson, models.AssignmentSubmission.lesson_id == models.Lesson.id)
-        .join(models.Enrollment, models.AssignmentSubmission.enrollment_id == models.Enrollment.id)
+        .join(
+            models.Enrollment,
+            models.AssignmentSubmission.enrollment_id == models.Enrollment.id,
+        )
         .join(models.User, models.Enrollment.user_id == models.User.id)
         .first()
     )
 
 
 def grade_assignment_submission(
-    db: Session, submission_id: int, grade: float | None = None, feedback: str | None = None
+    db: Session,
+    submission_id: int,
+    grade: float | None = None,
+    feedback: str | None = None,
 ):
-    submission = db.query(models.AssignmentSubmission).filter(models.AssignmentSubmission.id == submission_id).first()
+    submission = (
+        db.query(models.AssignmentSubmission)
+        .filter(models.AssignmentSubmission.id == submission_id)
+        .first()
+    )
     if not submission:
         return None
     if grade is not None:
@@ -534,13 +670,18 @@ def grade_assignment_submission(
 
 # ── Forum ──────────────────────────────────────────────
 
+
 def get_academy_candidates(db: Session):
     enrolled_user_ids = db.query(models.Enrollment.user_id).distinct()
     return db.query(models.User).filter(models.User.id.notin_(enrolled_user_ids)).all()
 
 
 def get_forum_threads(db: Session):
-    return db.query(models.ForumThread).order_by(models.ForumThread.created_at.desc()).all()
+    return (
+        db.query(models.ForumThread)
+        .order_by(models.ForumThread.created_at.desc())
+        .all()
+    )
 
 
 def create_forum_thread(db: Session, thread_data: schemas.ForumThreadCreate):
@@ -553,6 +694,7 @@ def create_forum_thread(db: Session, thread_data: schemas.ForumThreadCreate):
 
 # ── Courses (admin CRUD) ────────────────────────────────
 
+
 def create_course(db: Session, course_data: dict) -> models.Course:
     row = models.Course(**course_data)
     db.add(row)
@@ -561,7 +703,9 @@ def create_course(db: Session, course_data: dict) -> models.Course:
     return row
 
 
-def update_course(db: Session, course_id: int, course_data: dict) -> Optional[models.Course]:
+def update_course(
+    db: Session, course_id: int, course_data: dict
+) -> Optional[models.Course]:
     row = db.query(models.Course).filter(models.Course.id == course_id).first()
     if not row:
         return None
@@ -592,6 +736,7 @@ def get_course_students(db: Session, course_id: int):
 
 # ── Lessons ─────────────────────────────────────────────
 
+
 def get_lessons_by_course(db: Session, course_id: int):
     return (
         db.query(models.Lesson)
@@ -613,7 +758,9 @@ def create_lesson(db: Session, lesson_data: dict) -> models.Lesson:
     return row
 
 
-def update_lesson(db: Session, lesson_id: int, lesson_data: dict) -> Optional[models.Lesson]:
+def update_lesson(
+    db: Session, lesson_id: int, lesson_data: dict
+) -> Optional[models.Lesson]:
     row = db.query(models.Lesson).filter(models.Lesson.id == lesson_id).first()
     if not row:
         return None
@@ -635,6 +782,7 @@ def delete_lesson(db: Session, lesson_id: int) -> bool:
 
 # ── Assessments ─────────────────────────────────────────
 
+
 def get_assessments_by_course(db: Session, course_id: int):
     return (
         db.query(models.Assessment)
@@ -645,7 +793,11 @@ def get_assessments_by_course(db: Session, course_id: int):
 
 
 def get_assessment_by_id(db: Session, assessment_id: int):
-    return db.query(models.Assessment).filter(models.Assessment.id == assessment_id).first()
+    return (
+        db.query(models.Assessment)
+        .filter(models.Assessment.id == assessment_id)
+        .first()
+    )
 
 
 def create_assessment(db: Session, assessment_data: dict) -> models.Assessment:
@@ -656,8 +808,14 @@ def create_assessment(db: Session, assessment_data: dict) -> models.Assessment:
     return row
 
 
-def update_assessment(db: Session, assessment_id: int, assessment_data: dict) -> Optional[models.Assessment]:
-    row = db.query(models.Assessment).filter(models.Assessment.id == assessment_id).first()
+def update_assessment(
+    db: Session, assessment_id: int, assessment_data: dict
+) -> Optional[models.Assessment]:
+    row = (
+        db.query(models.Assessment)
+        .filter(models.Assessment.id == assessment_id)
+        .first()
+    )
     if not row:
         return None
     for key, value in assessment_data.items():
@@ -668,7 +826,11 @@ def update_assessment(db: Session, assessment_id: int, assessment_data: dict) ->
 
 
 def delete_assessment(db: Session, assessment_id: int) -> bool:
-    row = db.query(models.Assessment).filter(models.Assessment.id == assessment_id).first()
+    row = (
+        db.query(models.Assessment)
+        .filter(models.Assessment.id == assessment_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -677,6 +839,7 @@ def delete_assessment(db: Session, assessment_id: int) -> bool:
 
 
 # ── Assessment Questions ────────────────────────────────
+
 
 def get_assessment_questions(db: Session, assessment_id: int):
     return (
@@ -688,10 +851,16 @@ def get_assessment_questions(db: Session, assessment_id: int):
 
 
 def get_assessment_question(db: Session, question_id: int):
-    return db.query(models.AssessmentQuestion).filter(models.AssessmentQuestion.id == question_id).first()
+    return (
+        db.query(models.AssessmentQuestion)
+        .filter(models.AssessmentQuestion.id == question_id)
+        .first()
+    )
 
 
-def create_assessment_question(db: Session, question_data: dict) -> models.AssessmentQuestion:
+def create_assessment_question(
+    db: Session, question_data: dict
+) -> models.AssessmentQuestion:
     row = models.AssessmentQuestion(**question_data)
     db.add(row)
     db.commit()
@@ -699,8 +868,14 @@ def create_assessment_question(db: Session, question_data: dict) -> models.Asses
     return row
 
 
-def update_assessment_question(db: Session, question_id: int, question_data: dict) -> Optional[models.AssessmentQuestion]:
-    row = db.query(models.AssessmentQuestion).filter(models.AssessmentQuestion.id == question_id).first()
+def update_assessment_question(
+    db: Session, question_id: int, question_data: dict
+) -> Optional[models.AssessmentQuestion]:
+    row = (
+        db.query(models.AssessmentQuestion)
+        .filter(models.AssessmentQuestion.id == question_id)
+        .first()
+    )
     if not row:
         return None
     for key, value in question_data.items():
@@ -711,7 +886,11 @@ def update_assessment_question(db: Session, question_id: int, question_data: dic
 
 
 def delete_assessment_question(db: Session, question_id: int) -> bool:
-    row = db.query(models.AssessmentQuestion).filter(models.AssessmentQuestion.id == question_id).first()
+    row = (
+        db.query(models.AssessmentQuestion)
+        .filter(models.AssessmentQuestion.id == question_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -720,6 +899,7 @@ def delete_assessment_question(db: Session, question_id: int) -> bool:
 
 
 # ── Assessment Options ──────────────────────────────────
+
 
 def get_assessment_options(db: Session, question_id: int):
     return (
@@ -738,8 +918,14 @@ def create_assessment_option(db: Session, option_data: dict) -> models.Assessmen
     return row
 
 
-def update_assessment_option(db: Session, option_id: int, option_data: dict) -> Optional[models.AssessmentOption]:
-    row = db.query(models.AssessmentOption).filter(models.AssessmentOption.id == option_id).first()
+def update_assessment_option(
+    db: Session, option_id: int, option_data: dict
+) -> Optional[models.AssessmentOption]:
+    row = (
+        db.query(models.AssessmentOption)
+        .filter(models.AssessmentOption.id == option_id)
+        .first()
+    )
     if not row:
         return None
     for key, value in option_data.items():
@@ -750,7 +936,11 @@ def update_assessment_option(db: Session, option_id: int, option_data: dict) -> 
 
 
 def delete_assessment_option(db: Session, option_id: int) -> bool:
-    row = db.query(models.AssessmentOption).filter(models.AssessmentOption.id == option_id).first()
+    row = (
+        db.query(models.AssessmentOption)
+        .filter(models.AssessmentOption.id == option_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -760,8 +950,15 @@ def delete_assessment_option(db: Session, option_id: int) -> bool:
 
 # ── Enrollments (additional CRUD) ───────────────────────
 
-def update_enrollment(db: Session, enrollment_id: int, enrollment_data: dict) -> Optional[models.Enrollment]:
-    row = db.query(models.Enrollment).filter(models.Enrollment.id == enrollment_id).first()
+
+def update_enrollment(
+    db: Session, enrollment_id: int, enrollment_data: dict
+) -> Optional[models.Enrollment]:
+    row = (
+        db.query(models.Enrollment)
+        .filter(models.Enrollment.id == enrollment_id)
+        .first()
+    )
     if not row:
         return None
     for key, value in enrollment_data.items():
@@ -772,7 +969,11 @@ def update_enrollment(db: Session, enrollment_id: int, enrollment_data: dict) ->
 
 
 def delete_enrollment(db: Session, enrollment_id: int) -> bool:
-    row = db.query(models.Enrollment).filter(models.Enrollment.id == enrollment_id).first()
+    row = (
+        db.query(models.Enrollment)
+        .filter(models.Enrollment.id == enrollment_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -785,7 +986,7 @@ def get_enrollment_by_user_course(db: Session, user_id: int, course_id: int):
         db.query(models.Enrollment)
         .filter(
             models.Enrollment.user_id == user_id,
-            models.Enrollment.course_id == course_id
+            models.Enrollment.course_id == course_id,
         )
         .first()
     )
@@ -793,12 +994,21 @@ def get_enrollment_by_user_course(db: Session, user_id: int, course_id: int):
 
 # ── Certificates (additional CRUD) ──────────────────────
 
+
 def get_certificate(db: Session, certificate_id: int):
-    return db.query(models.Certificate).filter(models.Certificate.id == certificate_id).first()
+    return (
+        db.query(models.Certificate)
+        .filter(models.Certificate.id == certificate_id)
+        .first()
+    )
 
 
 def delete_certificate(db: Session, certificate_id: int) -> bool:
-    row = db.query(models.Certificate).filter(models.Certificate.id == certificate_id).first()
+    row = (
+        db.query(models.Certificate)
+        .filter(models.Certificate.id == certificate_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -807,6 +1017,7 @@ def delete_certificate(db: Session, certificate_id: int) -> bool:
 
 
 # ── Course Attendance ───────────────────────────────────
+
 
 def get_course_attendance(db: Session, course_id: int):
     return (
@@ -818,7 +1029,9 @@ def get_course_attendance(db: Session, course_id: int):
     )
 
 
-def create_course_attendance(db: Session, attendance_data: dict) -> models.CourseAttendance:
+def create_course_attendance(
+    db: Session, attendance_data: dict
+) -> models.CourseAttendance:
     row = models.CourseAttendance(**attendance_data)
     db.add(row)
     db.commit()
@@ -827,7 +1040,11 @@ def create_course_attendance(db: Session, attendance_data: dict) -> models.Cours
 
 
 def delete_course_attendance(db: Session, attendance_id: int) -> bool:
-    row = db.query(models.CourseAttendance).filter(models.CourseAttendance.id == attendance_id).first()
+    row = (
+        db.query(models.CourseAttendance)
+        .filter(models.CourseAttendance.id == attendance_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -836,6 +1053,7 @@ def delete_course_attendance(db: Session, attendance_id: int) -> bool:
 
 
 # ── Resources ───────────────────────────────────────────
+
 
 def get_lesson_resources(db: Session, lesson_id: int):
     return (
@@ -865,12 +1083,17 @@ def delete_resource(db: Session, resource_id: int) -> bool:
 
 # ── Forum ───────────────────────────────────────────────
 
+
 def get_forum_thread(db: Session, thread_id: int):
-    return db.query(models.ForumThread).filter(models.ForumThread.id == thread_id).first()
+    return (
+        db.query(models.ForumThread).filter(models.ForumThread.id == thread_id).first()
+    )
 
 
 def delete_forum_thread(db: Session, thread_id: int) -> bool:
-    row = db.query(models.ForumThread).filter(models.ForumThread.id == thread_id).first()
+    row = (
+        db.query(models.ForumThread).filter(models.ForumThread.id == thread_id).first()
+    )
     if not row:
         return False
     db.delete(row)

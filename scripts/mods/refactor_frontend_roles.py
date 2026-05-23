@@ -1,12 +1,14 @@
 import re
 
-with open('frontend/src/app/crm/members/page.tsx', 'r', encoding='utf-8') as f:
+with open("frontend/src/app/crm/members/page.tsx", "r", encoding="utf-8") as f:
     c = f.read()
 
 # 1. Remove hardcoded ROLES and ROLE_COLORS and getRoleColor
-c = re.sub(r'const ROLES = \[.*?\];', '', c, flags=re.DOTALL)
-c = re.sub(r'const ROLE_COLORS: Record<string, string> = \{.*?\};', '', c, flags=re.DOTALL)
-c = re.sub(r'function getRoleColor\(role: string\) \{.*?\}', '', c, flags=re.DOTALL)
+c = re.sub(r"const ROLES = \[.*?\];", "", c, flags=re.DOTALL)
+c = re.sub(
+    r"const ROLE_COLORS: Record<string, string> = \{.*?\};", "", c, flags=re.DOTALL
+)
+c = re.sub(r"function getRoleColor\(role: string\) \{.*?\}", "", c, flags=re.DOTALL)
 
 # 2. Add dynamic states
 state_addition = """
@@ -28,7 +30,12 @@ api_addition = """
                 setMembers(membersData);
                 setRoles(rolesData);
 """
-c = re.sub(r'        const loadMembers = async \(\) => \{.*?setMembers\(data\);', api_addition, c, flags=re.DOTALL)
+c = re.sub(
+    r"        const loadMembers = async \(\) => \{.*?setMembers\(data\);",
+    api_addition,
+    c,
+    flags=re.DOTALL,
+)
 
 # 4. Modify getRoleColor usage
 # In the return statement, it uses `getRoleColor(member.church_role || '')`
@@ -69,9 +76,14 @@ filter_mapping = """
                             ))}
                         </div>
 """
-c = re.sub(r'<div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none snap-x">.*?</div>', filter_mapping, c, flags=re.DOTALL)
+c = re.sub(
+    r'<div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none snap-x">.*?</div>',
+    filter_mapping,
+    c,
+    flags=re.DOTALL,
+)
 
-with open('frontend/src/app/crm/members/page.tsx', 'w', encoding='utf-8') as f:
+with open("frontend/src/app/crm/members/page.tsx", "w", encoding="utf-8") as f:
     f.write(c)
 
 print("Dynamic roles injected into frontend!")

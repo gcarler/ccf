@@ -8,7 +8,9 @@ from backend.analytics import event_sink, queries
 
 @pytest.fixture(autouse=True)
 def temp_analytics_db(monkeypatch):
-    db_path = Path("D:/ccf/test_artifacts") / f"analytics-test-{uuid.uuid4().hex}.duckdb"
+    db_path = (
+        Path("D:/ccf/test_artifacts") / f"analytics-test-{uuid.uuid4().hex}.duckdb"
+    )
     monkeypatch.setattr(event_sink, "WAREHOUSE_PATH", db_path)
     monkeypatch.setattr(queries, "WAREHOUSE_PATH", db_path)
     yield
@@ -21,7 +23,9 @@ def test_event_persistence_and_summary():
 
     summary = queries.get_event_summary(days=30)
     assert summary["total_events"] == 3
-    assert any(item["event_name"] == "EnrollmentCreated" for item in summary["by_event"])
+    assert any(
+        item["event_name"] == "EnrollmentCreated" for item in summary["by_event"]
+    )
 
     course_stats = queries.get_course_performance()
     assert course_stats[0]["course_id"] == 1

@@ -1,13 +1,13 @@
-import sys
 import re
+import sys
 
-with open('frontend/src/app/crm/events/[id]/page.tsx', 'r', encoding='utf-8') as f:
+with open("frontend/src/app/crm/events/[id]/page.tsx", "r", encoding="utf-8") as f:
     c = f.read()
 
 # Add absentees state and expected state
 c = c.replace(
     "    const [attendees, setAttendees] = useState<any[]>([]);\n    const [metrics, setMetrics] = useState<Record<string, number>>({});",
-    "    const [attendees, setAttendees] = useState<any[]>([]);\n    const [absentees, setAbsentees] = useState<any[]>([]);\n    const [metrics, setMetrics] = useState<Record<string, number>>({});\n    const [totalExpected, setTotalExpected] = useState<number>(0);\n    const [roles, setRoles] = useState<any[]>([]);"
+    "    const [attendees, setAttendees] = useState<any[]>([]);\n    const [absentees, setAbsentees] = useState<any[]>([]);\n    const [metrics, setMetrics] = useState<Record<string, number>>({});\n    const [totalExpected, setTotalExpected] = useState<number>(0);\n    const [roles, setRoles] = useState<any[]>([]);",
 )
 
 # Modify loadSessionData
@@ -132,7 +132,7 @@ metrics_new = """                                    <div className="mb-8 p-6 bg
 c = c.replace("Calendar, Users", "Calendar, Users, MessageCircle")
 c = c.replace(metrics_old, metrics_new)
 
-with open('frontend/src/app/crm/events/[id]/page.tsx', 'w', encoding='utf-8') as f:
+with open("frontend/src/app/crm/events/[id]/page.tsx", "w", encoding="utf-8") as f:
     f.write(c)
 
 print("Updated Event Detail page!")

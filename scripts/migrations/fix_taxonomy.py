@@ -1,10 +1,10 @@
 import codecs
 import re
 
-with codecs.open('frontend/src/components/WorkspaceLayout.tsx', 'r', 'utf-8') as f:
+with codecs.open("frontend/src/components/WorkspaceLayout.tsx", "r", "utf-8") as f:
     c = f.read()
 
-replacement = '''    crm: {
+replacement = """    crm: {
         title: "Sistema Pastoral",
         sections: [
             {
@@ -36,11 +36,11 @@ replacement = '''    crm: {
             }
         ]
     },
-    cms: {'''
+    cms: {"""
 
-c = re.sub(r'crm: \{.*?^\s*cms: \{', replacement, c, flags=re.DOTALL | re.MULTILINE)
+c = re.sub(r"crm: \{.*?^\s*cms: \{", replacement, c, flags=re.DOTALL | re.MULTILINE)
 
-with codecs.open('frontend/src/components/WorkspaceLayout.tsx', 'w', 'utf-8') as f:
+with codecs.open("frontend/src/components/WorkspaceLayout.tsx", "w", "utf-8") as f:
     f.write(c)
 
-print('Done')
+print("Done")

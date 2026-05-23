@@ -1,48 +1,26 @@
 import asyncio
-from contextlib import asynccontextmanager
 import logging
 import os
 import time
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from backend.api import (
-    academy,
-    agenda,
-    admin,
-    agents,
-    analytics,
-    assets,
-    auth,
-    cms,
-    cms_v2,
-    community,
-    content,
-    crm,
-    dashboard,
-    donations,
-    evangelism,
-    finance,
-    governance,
-    graph,
-    messaging,
-    prayer,
-    projects,
-    public,
-    spiritual_life,
-    support,
-    system,
-    workspace,
-)
+from backend.api import (academy, admin, agenda, agents, analytics, assets,
+                         auth, cms, cms_v2, community, content, crm, dashboard,
+                         donations, evangelism, finance, governance, graph,
+                         messaging, prayer, projects, public, spiritual_life,
+                         support, system, workspace)
 from backend.core.config import get_settings
 from backend.core.logging import request_id_middleware
 from backend.core.security_headers import mount_security_headers
 
-
-logging.basicConfig(level=logging.INFO)  # Fallback; configure_logging() in core/logging overrides
+logging.basicConfig(
+    level=logging.INFO
+)  # Fallback; configure_logging() in core/logging overrides
 logger = logging.getLogger("CCF-Core")
 
 settings = get_settings()
@@ -83,31 +61,38 @@ async def lifespan(_: FastAPI):
     try:
         os.makedirs(settings.uploads_dir, exist_ok=True)
     except PermissionError:
-        logger.warning("Unable to create uploads directory %s; continuing without it", settings.uploads_dir)
+        logger.warning(
+            "Unable to create uploads directory %s; continuing without it",
+            settings.uploads_dir,
+        )
 
     # Ensure all ORM-managed tables exist (safe idempotent operation, retries for DB readiness)
     for attempt in range(1, 6):
         try:
+            from backend import models, models_cms, models_crm, models_projects
             from backend.core.database import Base, engine
-            from backend import models
-            from backend import models_crm
-            from backend import models_projects
-            from backend import models_cms
+
             Base.metadata.create_all(bind=engine)
             logger.info("ORM tables verified/created.")
             break
         except Exception as exc:
             if attempt < 5:
-                logger.warning("create_all attempt %d/5 failed: %s — retrying...", attempt, exc)
+                logger.warning(
+                    "create_all attempt %d/5 failed: %s — retrying...", attempt, exc
+                )
                 await asyncio.sleep(3)
             else:
-                logger.warning("Could not verify/create ORM tables after 5 attempts: %s", exc)
+                logger.warning(
+                    "Could not verify/create ORM tables after 5 attempts: %s", exc
+                )
 
     # Run outstanding Alembic migrations (idempotent, fast when up-to-date)
     # FAIL HARD: if migrations cannot run, the app must not start
     from pathlib import Path
-    from alembic.config import Config
+
     from alembic import command
+    from alembic.config import Config
+
     alembic_ini = Path(__file__).resolve().parent.parent / "alembic.ini"
     if alembic_ini.exists():
         alembic_cfg = Config(str(alembic_ini))
@@ -115,7 +100,9 @@ async def lifespan(_: FastAPI):
         command.upgrade(alembic_cfg, "head")
         logger.info("Alembic migrations verified/applied.")
     else:
-        logger.error("alembic.ini not found — cannot verify schema. App will not start.")
+        logger.error(
+            "alembic.ini not found — cannot verify schema. App will not start."
+        )
         raise RuntimeError("alembic.ini not found; database migrations cannot run")
 
     yield
@@ -147,12 +134,15 @@ async def quality_assurance_middleware(request: Request, call_next):
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
     if isinstance(exc, (StarletteHTTPException, RequestValidationError)):
         raise exc
-    
-    logger.exception("Unhandled request error on %s %s", request.method, request.url.path)
+
+    logger.exception(
+        "Unhandled request error on %s %s", request.method, request.url.path
+    )
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "Error interno en el servidor ministerial"},
@@ -167,7 +157,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/api/static", StaticFiles(directory=settings.uploads_dir, check_dir=False), name="static")
+app.mount(
+    "/api/static",
+    StaticFiles(directory=settings.uploads_dir, check_dir=False),
+    name="static",
+)
 
 for router, prefix, tags in ROUTER_REGISTRY:
     include_kwargs = {"prefix": prefix}

@@ -1,14 +1,14 @@
 import sys
 
-content = open('backend/api/evangelism.py', 'r', encoding='utf-8').read()
+content = open("backend/api/evangelism.py", "r", encoding="utf-8").read()
 
 # Replace the broken part
-broken_str = '''        "id": house.id,
+broken_str = """        "id": house.id,
         "name": house.name,
         "zone": house.zone,
-    if value == "whatsapp":'''
+    if value == "whatsapp":"""
 
-fixed_str = '''        "id": house.id,
+fixed_str = """        "id": house.id,
         "name": house.name,
         "zone": house.zone,
         "address": house.address,
@@ -54,11 +54,11 @@ def update_glory_house(
 
 def _channel_label(channel: str) -> str:
     value = str(channel or "").strip().lower()
-    if value == "whatsapp":'''
+    if value == "whatsapp":"""
 
 if broken_str in content:
     content = content.replace(broken_str, fixed_str)
-    open('backend/api/evangelism.py', 'w', encoding='utf-8').write(content)
-    print('Fixed evangelism.py')
+    open("backend/api/evangelism.py", "w", encoding="utf-8").write(content)
+    print("Fixed evangelism.py")
 else:
-    print('Broken string not found')
+    print("Broken string not found")

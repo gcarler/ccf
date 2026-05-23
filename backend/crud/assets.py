@@ -1,4 +1,5 @@
 """Assets and maintenance logs CRUD."""
+
 import datetime as dt
 import uuid
 from typing import List, Optional
@@ -7,8 +8,8 @@ from sqlalchemy.orm import Session
 
 from backend import models
 
-
 # ── Assets ──────────────────────────────────────────────
+
 
 def get_assets(db: Session) -> List[models.AssetItem]:
     return db.query(models.AssetItem).order_by(models.AssetItem.name.asc()).all()
@@ -83,7 +84,10 @@ def delete_asset(db: Session, item_id: uuid.UUID) -> bool:
 
 # ── Maintenance Logs ────────────────────────────────────
 
-def get_maintenance_logs(db: Session, item_id: Optional[uuid.UUID] = None) -> List[models.MaintenanceLog]:
+
+def get_maintenance_logs(
+    db: Session, item_id: Optional[uuid.UUID] = None
+) -> List[models.MaintenanceLog]:
     query = db.query(models.MaintenanceLog)
     if item_id:
         query = query.filter(models.MaintenanceLog.item_id == item_id)
@@ -91,7 +95,11 @@ def get_maintenance_logs(db: Session, item_id: Optional[uuid.UUID] = None) -> Li
 
 
 def create_maintenance_log(
-    db: Session, item_id: uuid.UUID, description: str, service_date: dt.date, cost: float = 0.0
+    db: Session,
+    item_id: uuid.UUID,
+    description: str,
+    service_date: dt.date,
+    cost: float = 0.0,
 ) -> models.MaintenanceLog:
     row = models.MaintenanceLog(
         item_id=item_id,

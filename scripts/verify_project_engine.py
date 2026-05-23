@@ -21,7 +21,9 @@ def verify_project_engine():
 
     try:
         print("[1/4] Creating Test Project...")
-        project = models.Project(title="Gran Vigilia 2026", description="Evento masivo de oracion")
+        project = models.Project(
+            title="Gran Vigilia 2026", description="Evento masivo de oracion"
+        )
         db.add(project)
         db.commit()
         db.refresh(project)
@@ -40,7 +42,9 @@ def verify_project_engine():
         db.add(task)
         db.commit()
         db.refresh(task)
-        print(f"  > Task created: {task.title} | Priority: {task.priority} | Due: {task.due_date}")
+        print(
+            f"  > Task created: {task.title} | Priority: {task.priority} | Due: {task.due_date}"
+        )
 
         print("[3/4] Assigning Supplies to Task...")
         supply = models.TaskSupply(
@@ -55,7 +59,11 @@ def verify_project_engine():
         print(f"  > Supply assigned: {supply.item_name} ({supply.quantity})")
 
         print("[4/4] Verifying Relational Integrity...")
-        db_task = db.query(models.ProjectTask).filter(models.ProjectTask.id == task.id).first()
+        db_task = (
+            db.query(models.ProjectTask)
+            .filter(models.ProjectTask.id == task.id)
+            .first()
+        )
         assert db_task.project.title == "Gran Vigilia 2026"
         assert len(db_task.supplies) > 0
         assert db_task.supplies[0].item_name == "Consola Digital"

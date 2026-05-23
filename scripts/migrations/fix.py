@@ -1,8 +1,8 @@
 import sys
 
-path = 'frontend/src/app/evangelism/events/page.tsx'
-text = open(path, encoding='utf-8').read()
-idx = text.rfind('}')
+path = "frontend/src/app/evangelism/events/page.tsx"
+text = open(path, encoding="utf-8").read()
+idx = text.rfind("}")
 
 tail = """                                </select>
                             </div>
@@ -91,4 +91,4 @@ tail = """                                </select>
 }
 """
 
-open(path, 'w', encoding='utf-8').write(text[:idx] + tail)
+open(path, "w", encoding="utf-8").write(text[:idx] + tail)

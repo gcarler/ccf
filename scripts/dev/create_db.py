@@ -3,6 +3,7 @@
 create_db.py
 Creates ccf_final.db by executing master_schema.sql.
 """
+
 import sqlite3
 
 SCHEMA_FILE = "/root/ccf/master_schema.sql"

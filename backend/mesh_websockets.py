@@ -10,7 +10,6 @@ from fastapi import WebSocket
 from backend.core.cache import get_redis
 from backend.core.config import get_settings
 
-
 settings = get_settings()
 
 
@@ -72,13 +71,21 @@ class RedisPubSubManager:
             if client_id:
                 self._remove_client(client_id)
 
-    async def connect(self, client_id: str, websocket: WebSocket, rooms: Optional[List[str]] = None) -> None:
+    async def connect(
+        self, client_id: str, websocket: WebSocket, rooms: Optional[List[str]] = None
+    ) -> None:
         await websocket.accept()
         self.active_connections[client_id] = websocket
         for room in rooms or ["global"]:
             self.rooms[room].add(client_id)
         await self._ensure_listener()
-        await self._publish({"type": "presence_join", "client_id": client_id, "rooms": rooms or ["global"]})
+        await self._publish(
+            {
+                "type": "presence_join",
+                "client_id": client_id,
+                "rooms": rooms or ["global"],
+            }
+        )
 
     async def disconnect(self, client_id: str) -> None:
         self._remove_client(client_id)
@@ -110,9 +117,7 @@ class RedisPubSubManager:
     async def _send_local(self, data, room: Optional[str] = None) -> None:
         message = data if isinstance(data, str) else json.dumps(data)
         targets = (
-            self.rooms.get(room, set())
-            if room
-            else set(self.active_connections.keys())
+            self.rooms.get(room, set()) if room else set(self.active_connections.keys())
         )
         for client_id in targets:
             connection = self.active_connections.get(client_id)

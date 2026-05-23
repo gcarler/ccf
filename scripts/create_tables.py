@@ -1,4 +1,6 @@
-from backend.management.schema import print_schema_drift_report, upgrade_with_optional_bootstrap
+from backend.management.schema import (print_schema_drift_report,
+                                       upgrade_with_optional_bootstrap)
+
 
 def create_notifications_table():
     try:
@@ -11,6 +13,7 @@ def create_notifications_table():
         print("Schema sync completed.")
     except Exception as e:
         print(f"Error creating tables: {e}")
+
 
 if __name__ == "__main__":
     create_notifications_table()

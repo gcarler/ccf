@@ -56,8 +56,13 @@ def _request(
 
 
 def _login(base_url: str, username: str, password: str) -> str:
-    data = urllib.parse.urlencode({"username": username, "password": password}).encode("utf-8")
-    headers = {"Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json"}
+    data = urllib.parse.urlencode({"username": username, "password": password}).encode(
+        "utf-8"
+    )
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json",
+    }
     candidates = [
         f"{base_url}/api/auth/login",
         f"{base_url}/api/auth/auth/login",
@@ -65,7 +70,9 @@ def _login(base_url: str, username: str, password: str) -> str:
 
     last_error: Exception | None = None
     for login_url in candidates:
-        req = urllib.request.Request(url=login_url, data=data, headers=headers, method="POST")
+        req = urllib.request.Request(
+            url=login_url, data=data, headers=headers, method="POST"
+        )
         try:
             with urllib.request.urlopen(req, timeout=20) as response:
                 payload = json.loads(response.read().decode("utf-8"))
@@ -143,8 +150,12 @@ def run_smoke(ctx: SmokeContext) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Smoke test for Web FARO + CMS endpoints")
-    parser.add_argument("--base-url", default=os.getenv("CCF_BASE_URL", "http://localhost:8000"))
+    parser = argparse.ArgumentParser(
+        description="Smoke test for Web FARO + CMS endpoints"
+    )
+    parser.add_argument(
+        "--base-url", default=os.getenv("CCF_BASE_URL", "http://localhost:8000")
+    )
     parser.add_argument("--username", default=os.getenv("CCF_SMOKE_USER"))
     parser.add_argument("--password", default=os.getenv("CCF_SMOKE_PASS"))
     args = parser.parse_args()

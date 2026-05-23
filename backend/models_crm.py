@@ -1,6 +1,7 @@
 from backend.models_shared import *
 from backend.models_shared import _utcnow
 
+
 # 3. CRM & CHAT
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
@@ -9,6 +10,7 @@ class ChatMessage(Base):
     room_id = Column(String(100), nullable=True, index=True)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=_utcnow, index=True)
+
 
 class ConsolidationPipeline(Base):
     __tablename__ = "consolidation_pipeline"
@@ -26,6 +28,7 @@ class ConsolidationPipeline(Base):
 
     pastor = relationship("User", back_populates="assigned_leads")
 
+
 class AgendaEvent(Base):
     __tablename__ = "agenda_events"
     id = Column(Integer, primary_key=True, index=True)
@@ -35,9 +38,12 @@ class AgendaEvent(Base):
     end_at = Column(DateTime, nullable=True, index=True)
     location = Column(String(200), nullable=True)
     is_all_day = Column(Boolean, default=True, index=True)
-    created_by_user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_by_user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     created_at = Column(DateTime, default=_utcnow, index=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
 
 class CrmEvent(Base):
     __tablename__ = "crm_events"
@@ -63,27 +69,53 @@ class CrmEvent(Base):
     attendances = relationship("EventAttendance", back_populates="event")
     assignments = relationship("EventAssignment", back_populates="event")
 
+
 class EventAssignment(Base):
     __tablename__ = "event_assignments"
     id = Column(Integer, primary_key=True, index=True)
-    event_id = Column(Integer, ForeignKey("crm_events.id", ondelete="CASCADE"), nullable=False, index=True)
+    event_id = Column(
+        Integer,
+        ForeignKey("crm_events.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     session_date = Column(Date, nullable=False, index=True)
-    member_id = Column(Integer, ForeignKey("members.id", ondelete="CASCADE"), nullable=False, index=True)
-    role = Column(String(50), nullable=False, index=True) # e.g. MC, PREACHER, OFFERING
+    member_id = Column(
+        Integer,
+        ForeignKey("members.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    role = Column(String(50), nullable=False, index=True)  # e.g. MC, PREACHER, OFFERING
     created_at = Column(DateTime, default=_utcnow)
 
     event = relationship("CrmEvent", back_populates="assignments")
     member = relationship("Member")
 
+
 class EventAttendance(Base):
     __tablename__ = "event_attendances"
     __table_args__ = (
-        UniqueConstraint("event_id", "session_date", "member_id", name="uq_event_attendance"),
+        UniqueConstraint(
+            "event_id", "session_date", "member_id", name="uq_event_attendance"
+        ),
     )
     id = Column(Integer, primary_key=True, index=True)
-    event_id = Column(Integer, ForeignKey("crm_events.id", ondelete="CASCADE"), nullable=False, index=True)
-    session_date = Column(Date, nullable=False, index=True, default=lambda: _utcnow().date())
-    member_id = Column(Integer, ForeignKey("members.id", ondelete="CASCADE"), nullable=False, index=True)
+    event_id = Column(
+        Integer,
+        ForeignKey("crm_events.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    session_date = Column(
+        Date, nullable=False, index=True, default=lambda: _utcnow().date()
+    )
+    member_id = Column(
+        Integer,
+        ForeignKey("members.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     status = Column(String(30), default="present", index=True)
     role_at_event = Column(String(30), default="attendee", index=True)
     source = Column(String(30), default="manual", index=True)
@@ -96,6 +128,7 @@ class EventAttendance(Base):
     event = relationship("CrmEvent", back_populates="attendances")
     member = relationship("Member")
 
+
 class CounselingTicket(Base):
     __tablename__ = "counseling_tickets"
     id = Column(Integer, primary_key=True, index=True)
@@ -103,14 +136,19 @@ class CounselingTicket(Base):
     pastor_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     subject = Column(String(200), nullable=False)
     notes = Column(Text, nullable=True)
-    status = Column(String(50), default="open", index=True) # open, in_progress, resolved
-    priority_level = Column(String(20), default="NORMAL", index=True) # URGENT, HIGH, NORMAL
-    sentiment_score = Column(Float, nullable=True) # -1.0 to 1.0
-    sentiment_label = Column(String(20), nullable=True) # POSITIVE, NEUTRAL, NEGATIVE
+    status = Column(
+        String(50), default="open", index=True
+    )  # open, in_progress, resolved
+    priority_level = Column(
+        String(20), default="NORMAL", index=True
+    )  # URGENT, HIGH, NORMAL
+    sentiment_score = Column(Float, nullable=True)  # -1.0 to 1.0
+    sentiment_label = Column(String(20), nullable=True)  # POSITIVE, NEUTRAL, NEGATIVE
     created_at = Column(DateTime, default=_utcnow, index=True)
 
     member = relationship("Member")
     pastor = relationship("User")
+
 
 class PrayerRequest(Base):
     __tablename__ = "prayer_requests"
@@ -120,7 +158,9 @@ class PrayerRequest(Base):
     category = Column(String(50), default="General")
     is_public = Column(Boolean, default=False, index=True)
     source = Column(String(50), default="crm", index=True)  # web, crm, evangelism
-    status = Column(String(50), default="pending", index=True)  # pending, praying, answered
+    status = Column(
+        String(50), default="pending", index=True
+    )  # pending, praying, answered
     created_at = Column(DateTime, default=_utcnow, index=True)
 
 
@@ -139,24 +179,40 @@ class Ministry(Base):
         overlaps="member,members,ministries,ministry",
     )
 
+
 class Member(Base):
     __tablename__ = "members"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, unique=True, index=True)
-    family_id = Column(Integer, ForeignKey("families.id", ondelete="SET NULL"), nullable=True, index=True)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        unique=True,
+        index=True,
+    )
+    family_id = Column(
+        Integer,
+        ForeignKey("families.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     first_name = Column(String(100), nullable=False, index=True)
     last_name = Column(String(100), nullable=False, index=True)
     email = Column(String(100), nullable=True, index=True)
     phone = Column(String(20), nullable=True, index=True)
     church_role = Column(String(50), default="Miembro", index=True)
     is_baptized = Column(Boolean, default=False, index=True)
-    spiritual_status = Column(String(50), default="Nuevo", index=True) # Nuevo, Creyente, DiscÃ­pulo, Servidor
-    
+    spiritual_status = Column(
+        String(50), default="Nuevo", index=True
+    )  # Nuevo, Creyente, DiscÃ­pulo, Servidor
+
     # --- New Management Fields ---
-    talents = Column(Text, nullable=True) # Habilidades (MÃºsica, Tech, Cocina, etc)
-    spiritual_gifts = Column(Text, nullable=True) # Dones (Liderazgo, Misericordia, etc)
-    pastoral_notes = Column(Text, nullable=True) # Notas internas para el pastor
-    
+    talents = Column(Text, nullable=True)  # Habilidades (MÃºsica, Tech, Cocina, etc)
+    spiritual_gifts = Column(
+        Text, nullable=True
+    )  # Dones (Liderazgo, Misericordia, etc)
+    pastoral_notes = Column(Text, nullable=True)  # Notas internas para el pastor
+
     created_at = Column(DateTime, default=_utcnow, index=True)
 
     user = relationship("User", backref=backref("member_profile", uselist=False))
@@ -169,10 +225,18 @@ class Member(Base):
     )
     donations = relationship("Donation", back_populates="member")
     tasks = relationship("CrmTask", back_populates="member")
-    event_attendances = relationship("EventAttendance", back_populates="member", cascade="all, delete-orphan")
-    volunteer_shifts = relationship("VolunteerShift", back_populates="member", cascade="all, delete-orphan")
-    communication_logs = relationship("CommunicationLog", back_populates="member", cascade="all, delete-orphan")
-    positions = relationship("MemberPosition", back_populates="member", cascade="all, delete-orphan")
+    event_attendances = relationship(
+        "EventAttendance", back_populates="member", cascade="all, delete-orphan"
+    )
+    volunteer_shifts = relationship(
+        "VolunteerShift", back_populates="member", cascade="all, delete-orphan"
+    )
+    communication_logs = relationship(
+        "CommunicationLog", back_populates="member", cascade="all, delete-orphan"
+    )
+    positions = relationship(
+        "MemberPosition", back_populates="member", cascade="all, delete-orphan"
+    )
     consolidation_cases = relationship(
         "ConsolidationCase",
         foreign_keys="ConsolidationCase.member_id",
@@ -215,17 +279,31 @@ class Position(Base):
     is_active = Column(Boolean, default=True, index=True)
     created_at = Column(DateTime, default=_utcnow, index=True)
 
-    member_positions = relationship("MemberPosition", back_populates="position", cascade="all, delete-orphan")
+    member_positions = relationship(
+        "MemberPosition", back_populates="position", cascade="all, delete-orphan"
+    )
 
 
 class MemberPosition(Base):
     __tablename__ = "member_positions"
     __table_args__ = (
-        UniqueConstraint("member_id", "position_id", "start_date", name="uq_member_position_history"),
+        UniqueConstraint(
+            "member_id", "position_id", "start_date", name="uq_member_position_history"
+        ),
     )
     id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(Integer, ForeignKey("members.id", ondelete="CASCADE"), nullable=False, index=True)
-    position_id = Column(Integer, ForeignKey("positions.id", ondelete="CASCADE"), nullable=False, index=True)
+    member_id = Column(
+        Integer,
+        ForeignKey("members.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    position_id = Column(
+        Integer,
+        ForeignKey("positions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     start_date = Column(DateTime, nullable=True, index=True)
     end_date = Column(DateTime, nullable=True, index=True)
     is_active = Column(Boolean, default=True, index=True)
@@ -239,32 +317,78 @@ class MemberPosition(Base):
 class ConsolidationCase(Base):
     __tablename__ = "consolidation_cases"
     id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(Integer, ForeignKey("members.id", ondelete="CASCADE"), nullable=False, index=True)
+    member_id = Column(
+        Integer,
+        ForeignKey("members.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     stage = Column(String(20), default="new", index=True)
     status = Column(String(20), default="active", index=True)
     source = Column(String(100), nullable=True)
     last_contact_at = Column(DateTime, nullable=True, index=True)
     next_contact_at = Column(DateTime, nullable=True, index=True)
-    assigned_pastor_id = Column(Integer, ForeignKey("members.id", ondelete="SET NULL"), nullable=True, index=True)
-    assigned_leader_id = Column(Integer, ForeignKey("members.id", ondelete="SET NULL"), nullable=True, index=True)
+    assigned_pastor_id = Column(
+        Integer,
+        ForeignKey("members.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    assigned_leader_id = Column(
+        Integer,
+        ForeignKey("members.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow, index=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, index=True)
 
-    member = relationship("Member", foreign_keys=[member_id], back_populates="consolidation_cases")
-    assigned_pastor = relationship("Member", foreign_keys=[assigned_pastor_id], back_populates="consolidated_cases_as_pastor")
-    assigned_leader = relationship("Member", foreign_keys=[assigned_leader_id], back_populates="consolidated_cases_as_leader")
-    assignments = relationship("ConsolidationAssignment", back_populates="case", cascade="all, delete-orphan")
-    interactions = relationship("ConsolidationInteraction", back_populates="case", cascade="all, delete-orphan")
-    follow_up_tasks = relationship("ConsolidationFollowUpTask", back_populates="case", cascade="all, delete-orphan")
+    member = relationship(
+        "Member", foreign_keys=[member_id], back_populates="consolidation_cases"
+    )
+    assigned_pastor = relationship(
+        "Member",
+        foreign_keys=[assigned_pastor_id],
+        back_populates="consolidated_cases_as_pastor",
+    )
+    assigned_leader = relationship(
+        "Member",
+        foreign_keys=[assigned_leader_id],
+        back_populates="consolidated_cases_as_leader",
+    )
+    assignments = relationship(
+        "ConsolidationAssignment", back_populates="case", cascade="all, delete-orphan"
+    )
+    interactions = relationship(
+        "ConsolidationInteraction", back_populates="case", cascade="all, delete-orphan"
+    )
+    follow_up_tasks = relationship(
+        "ConsolidationFollowUpTask", back_populates="case", cascade="all, delete-orphan"
+    )
 
 
 class ConsolidationAssignment(Base):
     __tablename__ = "consolidation_assignments"
     id = Column(Integer, primary_key=True, index=True)
-    case_id = Column(Integer, ForeignKey("consolidation_cases.id", ondelete="CASCADE"), nullable=False, index=True)
-    assigned_by_member_id = Column(Integer, ForeignKey("members.id", ondelete="CASCADE"), nullable=False, index=True)
-    assigned_to_member_id = Column(Integer, ForeignKey("members.id", ondelete="CASCADE"), nullable=False, index=True)
+    case_id = Column(
+        Integer,
+        ForeignKey("consolidation_cases.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    assigned_by_member_id = Column(
+        Integer,
+        ForeignKey("members.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    assigned_to_member_id = Column(
+        Integer,
+        ForeignKey("members.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     reason = Column(Text, nullable=True)
     priority = Column(String(20), default="normal", index=True)
     start_date = Column(DateTime, default=_utcnow, index=True)
@@ -273,16 +397,38 @@ class ConsolidationAssignment(Base):
     created_at = Column(DateTime, default=_utcnow, index=True)
 
     case = relationship("ConsolidationCase", back_populates="assignments")
-    assigned_by_member = relationship("Member", foreign_keys=[assigned_by_member_id], back_populates="consolidation_assignments_sent")
-    assigned_to_member = relationship("Member", foreign_keys=[assigned_to_member_id], back_populates="consolidation_assignments_received")
-    follow_up_tasks = relationship("ConsolidationFollowUpTask", back_populates="assignment", cascade="all, delete-orphan")
+    assigned_by_member = relationship(
+        "Member",
+        foreign_keys=[assigned_by_member_id],
+        back_populates="consolidation_assignments_sent",
+    )
+    assigned_to_member = relationship(
+        "Member",
+        foreign_keys=[assigned_to_member_id],
+        back_populates="consolidation_assignments_received",
+    )
+    follow_up_tasks = relationship(
+        "ConsolidationFollowUpTask",
+        back_populates="assignment",
+        cascade="all, delete-orphan",
+    )
 
 
 class ConsolidationInteraction(Base):
     __tablename__ = "consolidation_interactions"
     id = Column(Integer, primary_key=True, index=True)
-    case_id = Column(Integer, ForeignKey("consolidation_cases.id", ondelete="CASCADE"), nullable=False, index=True)
-    performed_by_member_id = Column(Integer, ForeignKey("members.id", ondelete="CASCADE"), nullable=False, index=True)
+    case_id = Column(
+        Integer,
+        ForeignKey("consolidation_cases.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    performed_by_member_id = Column(
+        Integer,
+        ForeignKey("members.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     interaction_type = Column(String(50), nullable=False, index=True)
     interaction_date = Column(DateTime, default=_utcnow, index=True)
     result = Column(String(100), nullable=True)
@@ -291,14 +437,28 @@ class ConsolidationInteraction(Base):
     created_at = Column(DateTime, default=_utcnow, index=True)
 
     case = relationship("ConsolidationCase", back_populates="interactions")
-    performed_by_member = relationship("Member", foreign_keys=[performed_by_member_id], back_populates="consolidation_interactions")
+    performed_by_member = relationship(
+        "Member",
+        foreign_keys=[performed_by_member_id],
+        back_populates="consolidation_interactions",
+    )
 
 
 class ConsolidationFollowUpTask(Base):
     __tablename__ = "consolidation_follow_up_tasks"
     id = Column(Integer, primary_key=True, index=True)
-    case_id = Column(Integer, ForeignKey("consolidation_cases.id", ondelete="CASCADE"), nullable=False, index=True)
-    assignment_id = Column(Integer, ForeignKey("consolidation_assignments.id", ondelete="SET NULL"), nullable=True, index=True)
+    case_id = Column(
+        Integer,
+        ForeignKey("consolidation_cases.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    assignment_id = Column(
+        Integer,
+        ForeignKey("consolidation_assignments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     due_date = Column(DateTime, nullable=True, index=True)
@@ -307,7 +467,10 @@ class ConsolidationFollowUpTask(Base):
     created_at = Column(DateTime, default=_utcnow, index=True)
 
     case = relationship("ConsolidationCase", back_populates="follow_up_tasks")
-    assignment = relationship("ConsolidationAssignment", back_populates="follow_up_tasks")
+    assignment = relationship(
+        "ConsolidationAssignment", back_populates="follow_up_tasks"
+    )
+
 
 class Donation(Base):
     __tablename__ = "donations"
@@ -342,7 +505,9 @@ class CrmTask(Base):
     description = Column(Text, nullable=True)
     category = Column(String(100), default="Pastoral", nullable=True, index=True)
     member_id = Column(Integer, ForeignKey("members.id"), nullable=True, index=True)
-    lead_id = Column(Integer, ForeignKey("consolidation_pipeline.id"), nullable=True, index=True)
+    lead_id = Column(
+        Integer, ForeignKey("consolidation_pipeline.id"), nullable=True, index=True
+    )
     assignee_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     due_date = Column(DateTime, nullable=True)
     status = Column(String(20), default="pending")
@@ -379,15 +544,30 @@ class VolunteerSkill(Base):
 member_volunteer_skills = Table(
     "member_volunteer_skills",
     Base.metadata,
-    Column("member_id", Integer, ForeignKey("members.id", ondelete="CASCADE"), primary_key=True),
-    Column("skill_id", Integer, ForeignKey("volunteer_skills.id", ondelete="CASCADE"), primary_key=True),
+    Column(
+        "member_id",
+        Integer,
+        ForeignKey("members.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "skill_id",
+        Integer,
+        ForeignKey("volunteer_skills.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
 )
 
 
 class CommunicationLog(Base):
     __tablename__ = "communication_logs"
     id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(Integer, ForeignKey("members.id", ondelete="CASCADE"), nullable=False, index=True)
+    member_id = Column(
+        Integer,
+        ForeignKey("members.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     channel = Column(String(50), nullable=False, index=True)
     recipient_phone = Column(String(30), nullable=True)
     campaign_name = Column(String(120), nullable=True, index=True)
@@ -406,7 +586,9 @@ class SpiritualMilestone(Base):
     __tablename__ = "spiritual_milestones"
     id = Column(Integer, primary_key=True, index=True)
     person_id = Column(Integer, nullable=False, index=True)
-    type = Column(String(100), nullable=False, index=True)  # bautismo, membresia, ministerio, etc.
+    type = Column(
+        String(100), nullable=False, index=True
+    )  # bautismo, membresia, ministerio, etc.
     event_date = Column(Date, nullable=False)
     minister_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     notes = Column(Text, nullable=True)
@@ -439,17 +621,30 @@ class RoleDefinition(Base):
 class MemberRole(Base):
     __tablename__ = "member_roles"
     id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(Integer, ForeignKey("members.id", ondelete="CASCADE"), nullable=False, index=True)
-    role_id = Column(Integer, ForeignKey("role_definitions.id", ondelete="CASCADE"), nullable=False, index=True)
+    member_id = Column(
+        Integer,
+        ForeignKey("members.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    role_id = Column(
+        Integer,
+        ForeignKey("role_definitions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     created_at = Column(DateTime, default=_utcnow)
 
     member = relationship("Member")
     role = relationship("RoleDefinition")
 
+
 class PastoralCallLog(Base):
     __tablename__ = "pastoral_call_logs"
     id = Column(Integer, primary_key=True, index=True)
-    lead_id = Column(Integer, ForeignKey("consolidation_pipeline.id"), nullable=False, index=True)
+    lead_id = Column(
+        Integer, ForeignKey("consolidation_pipeline.id"), nullable=False, index=True
+    )
     pastor_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     outcome = Column(String(120), nullable=False)
     notes = Column(Text, nullable=True)
@@ -459,13 +654,24 @@ class PastoralCallLog(Base):
 
 class MemberMinistry(Base):
     """Rich association between Member and Ministry with role and dates."""
+
     __tablename__ = "member_ministries"
     __table_args__ = (
         UniqueConstraint("member_id", "ministry_id", name="uq_member_ministry"),
     )
     id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(Integer, ForeignKey("members.id", ondelete="CASCADE"), nullable=False, index=True)
-    ministry_id = Column(Integer, ForeignKey("ministries.id", ondelete="CASCADE"), nullable=False, index=True)
+    member_id = Column(
+        Integer,
+        ForeignKey("members.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    ministry_id = Column(
+        Integer,
+        ForeignKey("ministries.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     role = Column(String(50), nullable=True)  # e.g. Líder, Asistente, Coordinador
     start_date = Column(Date, nullable=True)
     end_date = Column(Date, nullable=True)
@@ -494,7 +700,9 @@ class SupportTicket(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     subject = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
-    status = Column(String(20), default="open", index=True)  # open, in_progress, resolved, closed
+    status = Column(
+        String(20), default="open", index=True
+    )  # open, in_progress, resolved, closed
     created_at = Column(DateTime, default=_utcnow, index=True)
     updated_at = Column(DateTime, onupdate=_utcnow)
 
@@ -509,6 +717,7 @@ class CommunityBoardCard(Base):
     body = Column(Text, nullable=True)
     position = Column(Integer, default=0)
     created_at = Column(DateTime, default=_utcnow, index=True)
+
 
 class EvangelismStrategy(Base):
     __tablename__ = "evangelism_strategies"

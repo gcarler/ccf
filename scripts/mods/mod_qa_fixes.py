@@ -3,7 +3,7 @@ import codecs
 # ==========================================
 # FIX 1: Limitar Absentees + total_absentees
 # ==========================================
-with codecs.open('backend/api/crm.py', 'r', 'utf-8') as f:
+with codecs.open("backend/api/crm.py", "r", "utf-8") as f:
     c = f.read()
 
 absentees_old = """    attended_ids = {a["member_id"] for a in attendee_list}
@@ -166,8 +166,11 @@ def delete_event(
 
 """
 
-if 'def update_event' not in c:
-    c = c.replace('@router.get("/events/{event_id}", response_model=dict)', edit_delete_block + '@router.get("/events/{event_id}", response_model=dict)')
+if "def update_event" not in c:
+    c = c.replace(
+        '@router.get("/events/{event_id}", response_model=dict)',
+        edit_delete_block + '@router.get("/events/{event_id}", response_model=dict)',
+    )
     print("[3] PUT/DELETE routes added")
 else:
     print("[3] PUT/DELETE already exist")
@@ -216,7 +219,7 @@ series_build_new = """    # Format result: fill missing periods with 0
 c = c.replace(series_build_old, series_build_new)
 print("[4] Gap filling applied")
 
-with codecs.open('backend/api/crm.py', 'w', 'utf-8') as f:
+with codecs.open("backend/api/crm.py", "w", "utf-8") as f:
     f.write(c)
 
 print("\nAll 4 backend fixes applied.")

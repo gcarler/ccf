@@ -2,11 +2,15 @@ from backend import crud, schemas
 
 
 def test_agent_task_crud(db_session):
-    create = schemas.AgentTaskCreate(title="Investigar", description="Revisar métricas", source="agent")
+    create = schemas.AgentTaskCreate(
+        title="Investigar", description="Revisar métricas", source="agent"
+    )
     task = crud.create_agent_task(db_session, create)
     assert task.status == "pending"
 
-    updated = crud.update_agent_task(db_session, task.id, schemas.AgentTaskUpdate(status="in_progress"))
+    updated = crud.update_agent_task(
+        db_session, task.id, schemas.AgentTaskUpdate(status="in_progress")
+    )
     assert updated.status == "in_progress"
 
     tasks = crud.list_agent_tasks(db_session, status="in_progress")

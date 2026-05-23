@@ -1,7 +1,7 @@
 import codecs
 import re
 
-with codecs.open('backend/models.py', 'r', 'utf-8') as f:
+with codecs.open("backend/models.py", "r", "utf-8") as f:
     c = f.read()
 
 # 1. Update GloryHouse model
@@ -50,12 +50,15 @@ class GloryHouseAttendance(Base):
 
 if "class FaroSeason" not in c:
     c = c.replace(gh_old, gh_new)
-    
+
     # We might also need Date if not imported
     if " Date," not in c and " Date " not in c:
-        c = c.replace('from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Numeric, UniqueConstraint, Table', 'from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Numeric, UniqueConstraint, Table, Date')
+        c = c.replace(
+            "from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Numeric, UniqueConstraint, Table",
+            "from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Numeric, UniqueConstraint, Table, Date",
+        )
 
-    with codecs.open('backend/models.py', 'w', 'utf-8') as f:
+    with codecs.open("backend/models.py", "w", "utf-8") as f:
         f.write(c)
     print("Models injected")
 else:

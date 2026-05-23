@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """Script para probar los templates HTML de correo CCF."""
 
-import smtplib
 import os
+import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 # ── COLORES CORPORATIVOS ──
-CCF_DARK = "#001B48"     # Azul profundo
-CCF_MEDIUM = "#004581"   # Azul medio
-CCF_BLUE = "#018ABD"     # Azul vibrante
-CCF_PALE = "#DDE8F0"     # Azul pálido
+CCF_DARK = "#001B48"  # Azul profundo
+CCF_MEDIUM = "#004581"  # Azul medio
+CCF_BLUE = "#018ABD"  # Azul vibrante
+CCF_PALE = "#DDE8F0"  # Azul pálido
+
 
 def build_welcome_html(code: str, frontend_url: str = "https://elfarocc.tech") -> str:
     """Template de bienvenida / verificación de cuenta."""
@@ -282,12 +283,16 @@ if __name__ == "__main__":
     # ── 1. Template de Bienvenida ──
     print("\n📧 Enviando: BIENVENIDA / VERIFICACIÓN...")
     welcome_html = build_welcome_html(code="ccf_demo_verify_code_123")
-    send_test_email(destino, "🔵 Bienvenido a El Faro — Verifica tu correo", welcome_html)
+    send_test_email(
+        destino, "🔵 Bienvenido a El Faro — Verifica tu correo", welcome_html
+    )
 
     # ── 2. Template de Recuperación ──
     print("\n📧 Enviando: RECUPERACIÓN DE CONTRASEÑA...")
     recovery_html = build_recovery_html(token="ccf_demo_reset_token_456")
-    send_test_email(destino, "🔐 Recuperación de contraseña — CCF Ministerio", recovery_html)
+    send_test_email(
+        destino, "🔐 Recuperación de contraseña — CCF Ministerio", recovery_html
+    )
 
     print("\n" + "═" * 60)
     print("  ✅ Listo! Revisa la bandeja de entrada de:")

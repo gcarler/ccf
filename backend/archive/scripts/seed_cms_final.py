@@ -1,6 +1,6 @@
-import sqlite3
-import json
 import datetime as dt
+import json
+import sqlite3
 
 # Path
 SQLITE_DB = 'd:/ccf/ccf_v2.db'

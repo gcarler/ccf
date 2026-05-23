@@ -5,18 +5,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict
 
+from backend.api.workspace_shared import (AUDIT_FILE, DATA_DIR,
+                                          DEFAULT_COMPLIANCE_POLICY,
+                                          DEFAULT_WORKSPACE_CONFIG, FLAGS_FILE,
+                                          INCIDENTS_FILE, NOTIFICATIONS_FILE,
+                                          SNAPSHOT_HISTORY_FILE)
 from backend.core.file_lock import file_lock
-
-from backend.api.workspace_shared import (
-    AUDIT_FILE,
-    DATA_DIR,
-    DEFAULT_WORKSPACE_CONFIG,
-    DEFAULT_COMPLIANCE_POLICY,
-    FLAGS_FILE,
-    INCIDENTS_FILE,
-    NOTIFICATIONS_FILE,
-    SNAPSHOT_HISTORY_FILE,
-)
 
 
 def _now_iso() -> str:
@@ -51,7 +45,11 @@ def _load_workspace_config() -> Dict[str, Any]:
             default_policy = DEFAULT_COMPLIANCE_POLICY
             data_policy = data.get("compliance_policy") or {}
             default_envs = default_policy.get("environments", {}) or {}
-            data_envs = data_policy.get("environments", {}) if isinstance(data_policy, dict) else {}
+            data_envs = (
+                data_policy.get("environments", {})
+                if isinstance(data_policy, dict)
+                else {}
+            )
             merged_envs: Dict[str, Any] = {**default_envs}
             for env_name, env_value in data_envs.items():
                 base_env = dict(default_envs.get(env_name) or {})
@@ -65,10 +63,24 @@ def _load_workspace_config() -> Dict[str, Any]:
                 "critical_feature_flags": sorted(
                     {
                         *list(default_policy.get("critical_feature_flags", [])),
-                        *list((data_policy.get("critical_feature_flags") if isinstance(data_policy, dict) else []) or []),
+                        *list(
+                            (
+                                data_policy.get("critical_feature_flags")
+                                if isinstance(data_policy, dict)
+                                else []
+                            )
+                            or []
+                        ),
                     }
                 ),
-                "suppressions": list((data_policy.get("suppressions") if isinstance(data_policy, dict) else []) or []),
+                "suppressions": list(
+                    (
+                        data_policy.get("suppressions")
+                        if isinstance(data_policy, dict)
+                        else []
+                    )
+                    or []
+                ),
             }
 
             merged = {
@@ -92,7 +104,9 @@ def _load_workspace_config() -> Dict[str, Any]:
 def _save_workspace_config(config: Dict[str, Any]) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     with file_lock(FLAGS_FILE):
-        FLAGS_FILE.write_text(json.dumps(config, ensure_ascii=True, indent=2), encoding="utf-8")
+        FLAGS_FILE.write_text(
+            json.dumps(config, ensure_ascii=True, indent=2), encoding="utf-8"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -135,7 +149,9 @@ def _load_incidents() -> list[Dict[str, Any]]:
                 "closed_at": item.get("closed_at"),
                 "silenced_until": item.get("silenced_until"),
                 "note": item.get("note") or "",
-                "history": item.get("history") if isinstance(item.get("history"), list) else [],
+                "history": (
+                    item.get("history") if isinstance(item.get("history"), list) else []
+                ),
             }
         )
     return normalized
@@ -144,7 +160,9 @@ def _load_incidents() -> list[Dict[str, Any]]:
 def _save_incidents(incidents: list[Dict[str, Any]]) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     with file_lock(INCIDENTS_FILE):
-        INCIDENTS_FILE.write_text(json.dumps(incidents, ensure_ascii=True, indent=2), encoding="utf-8")
+        INCIDENTS_FILE.write_text(
+            json.dumps(incidents, ensure_ascii=True, indent=2), encoding="utf-8"
+        )
 
 
 # ---------------------------------------------------------------------------

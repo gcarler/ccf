@@ -79,7 +79,9 @@ def test_academy_progress_for_current_user(client, db_session):
     )
     db_session.commit()
 
-    response = client.get(f"/api/academy/users/{user.id}/progress", headers=auth_headers(client))
+    response = client.get(
+        f"/api/academy/users/{user.id}/progress", headers=auth_headers(client)
+    )
 
     assert response.status_code == 200
     data = response.json()

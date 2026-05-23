@@ -8,33 +8,30 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 
 from backend import models
+from backend.api.workspace_shared import (_append_audit_event,
+                                          _append_incident_history,
+                                          _cleanup_incidents,
+                                          _detect_anomalies,
+                                          _filter_audit_rows,
+                                          _incident_daily_trends,
+                                          _load_incidents, _now_iso,
+                                          _pct_delta, _period_bounds,
+                                          _period_incident_stats,
+                                          _read_audit_events,
+                                          _read_notifications, _save_incidents,
+                                          _scan_incidents_from_anomalies,
+                                          _set_incident_severity,
+                                          _summarize_incidents)
 from backend.auth import require_admin
 from backend.core.rate_limit import rate_limiter
-from backend.api.workspace_shared import (
-    _append_audit_event,
-    _append_incident_history,
-    _cleanup_incidents,
-    _detect_anomalies,
-    _filter_audit_rows,
-    _incident_daily_trends,
-    _load_incidents,
-    _now_iso,
-    _pct_delta,
-    _period_bounds,
-    _period_incident_stats,
-    _read_audit_events,
-    _read_notifications,
-    _save_incidents,
-    _scan_incidents_from_anomalies,
-    _set_incident_severity,
-    _summarize_incidents,
-)
-
 
 router = APIRouter(tags=["workspace"])
 
 
-@router.get("/flags/incidents", dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))])
+@router.get(
+    "/flags/incidents",
+    dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))],
+)
 def get_flags_incidents(
     status: str | None = None,
     limit: int = 200,
@@ -45,7 +42,11 @@ def get_flags_incidents(
     incidents = _load_incidents()
     if status:
         status_norm = status.strip().lower()
-        incidents = [item for item in incidents if str(item.get("status", "")).lower() == status_norm]
+        incidents = [
+            item
+            for item in incidents
+            if str(item.get("status", "")).lower() == status_norm
+        ]
 
     capped_limit = max(1, min(limit, 1000))
     incidents = incidents[-capped_limit:]
@@ -62,7 +63,10 @@ def get_flags_incidents(
     }
 
 
-@router.get("/flags/incidents/summary", dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))])
+@router.get(
+    "/flags/incidents/summary",
+    dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))],
+)
 def get_flags_incidents_summary(
     status: str | None = None,
     mtta_target_minutes: int = 60,
@@ -72,7 +76,11 @@ def get_flags_incidents_summary(
     incidents = _load_incidents()
     if status:
         status_norm = status.strip().lower()
-        incidents = [item for item in incidents if str(item.get("status", "")).lower() == status_norm]
+        incidents = [
+            item
+            for item in incidents
+            if str(item.get("status", "")).lower() == status_norm
+        ]
     return {
         "status": "ok",
         "requested_by": str(getattr(current_user, "id", "")),
@@ -84,7 +92,10 @@ def get_flags_incidents_summary(
     }
 
 
-@router.get("/flags/incidents/trends", dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))])
+@router.get(
+    "/flags/incidents/trends",
+    dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))],
+)
 def get_flags_incidents_trends(
     days: int = 14,
     current_user: models.User = Depends(require_admin),
@@ -98,7 +109,10 @@ def get_flags_incidents_trends(
     }
 
 
-@router.get("/flags/incidents/notifications", dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))])
+@router.get(
+    "/flags/incidents/notifications",
+    dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))],
+)
 def get_flags_incident_notifications(
     limit: int = 100,
     current_user: models.User = Depends(require_admin),
@@ -112,22 +126,39 @@ def get_flags_incident_notifications(
     }
 
 
-@router.get("/flags/incidents/stats", dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))])
+@router.get(
+    "/flags/incidents/stats",
+    dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))],
+)
 def get_flags_incidents_stats(
     window: str = "weekly",
     current_user: models.User = Depends(require_admin),
 ):
     incidents = _load_incidents()
-    current_start, current_end, previous_start, previous_end, days = _period_bounds(window)
+    current_start, current_end, previous_start, previous_end, days = _period_bounds(
+        window
+    )
     current_stats = _period_incident_stats(incidents, current_start, current_end)
     previous_stats = _period_incident_stats(incidents, previous_start, previous_end)
     deltas = {
-        "created_pct": _pct_delta(current_stats.get("created"), previous_stats.get("created")),
-        "closed_pct": _pct_delta(current_stats.get("closed"), previous_stats.get("closed")),
-        "closure_rate_pct": _pct_delta(current_stats.get("closure_rate"), previous_stats.get("closure_rate")),
-        "mtta_pct": _pct_delta(current_stats.get("mtta_minutes"), previous_stats.get("mtta_minutes")),
-        "mttr_pct": _pct_delta(current_stats.get("mttr_minutes"), previous_stats.get("mttr_minutes")),
-        "active_end_pct": _pct_delta(current_stats.get("active_end"), previous_stats.get("active_end")),
+        "created_pct": _pct_delta(
+            current_stats.get("created"), previous_stats.get("created")
+        ),
+        "closed_pct": _pct_delta(
+            current_stats.get("closed"), previous_stats.get("closed")
+        ),
+        "closure_rate_pct": _pct_delta(
+            current_stats.get("closure_rate"), previous_stats.get("closure_rate")
+        ),
+        "mtta_pct": _pct_delta(
+            current_stats.get("mtta_minutes"), previous_stats.get("mtta_minutes")
+        ),
+        "mttr_pct": _pct_delta(
+            current_stats.get("mttr_minutes"), previous_stats.get("mttr_minutes")
+        ),
+        "active_end_pct": _pct_delta(
+            current_stats.get("active_end"), previous_stats.get("active_end")
+        ),
     }
     trends = _incident_daily_trends(incidents, days=days)
     return {
@@ -142,7 +173,10 @@ def get_flags_incidents_stats(
     }
 
 
-@router.get("/flags/incidents/export", dependencies=[Depends(rate_limiter(limit=30, window_seconds=60))])
+@router.get(
+    "/flags/incidents/export",
+    dependencies=[Depends(rate_limiter(limit=30, window_seconds=60))],
+)
 def export_flags_incidents(
     format: str = "json",
     status: str | None = None,
@@ -153,10 +187,18 @@ def export_flags_incidents(
     incidents = _load_incidents()
     if status:
         status_norm = status.strip().lower()
-        incidents = [item for item in incidents if str(item.get("status", "")).lower() == status_norm]
+        incidents = [
+            item
+            for item in incidents
+            if str(item.get("status", "")).lower() == status_norm
+        ]
     if severity:
         severity_norm = severity.strip().lower()
-        incidents = [item for item in incidents if str(item.get("severity", "")).lower() == severity_norm]
+        incidents = [
+            item
+            for item in incidents
+            if str(item.get("severity", "")).lower() == severity_norm
+        ]
 
     capped_limit = max(1, min(limit, 1000))
     incidents = incidents[-capped_limit:]
@@ -171,7 +213,9 @@ def export_flags_incidents(
         return Response(
             content=json.dumps(payload, ensure_ascii=True, indent=2),
             media_type="application/json",
-            headers={"Content-Disposition": "attachment; filename=feature_flags_incidents.json"},
+            headers={
+                "Content-Disposition": "attachment; filename=feature_flags_incidents.json"
+            },
         )
 
     if normalized_format == "csv":
@@ -218,13 +262,18 @@ def export_flags_incidents(
         return Response(
             content=buffer.getvalue(),
             media_type="text/csv",
-            headers={"Content-Disposition": "attachment; filename=feature_flags_incidents.csv"},
+            headers={
+                "Content-Disposition": "attachment; filename=feature_flags_incidents.csv"
+            },
         )
 
     raise HTTPException(status_code=400, detail="format must be 'json' or 'csv'")
 
 
-@router.post("/flags/incidents/scan", dependencies=[Depends(rate_limiter(limit=30, window_seconds=60))])
+@router.post(
+    "/flags/incidents/scan",
+    dependencies=[Depends(rate_limiter(limit=30, window_seconds=60))],
+)
 def scan_flags_incidents(
     lookback_hours: int = 24,
     actor_threshold: int = 10,
@@ -234,7 +283,13 @@ def scan_flags_incidents(
     actor: str | None = None,
     current_user: models.User = Depends(require_admin),
 ):
-    rows = _filter_audit_rows(_read_audit_events(limit=1000), action=action, feature_id=feature_id, actor=actor, limit=1000)
+    rows = _filter_audit_rows(
+        _read_audit_events(limit=1000),
+        action=action,
+        feature_id=feature_id,
+        actor=actor,
+        limit=1000,
+    )
     anomalies = _detect_anomalies(
         rows,
         lookback_hours=lookback_hours,
@@ -269,7 +324,10 @@ def scan_flags_incidents(
     }
 
 
-@router.patch("/flags/incidents/{incident_id}", dependencies=[Depends(rate_limiter(limit=40, window_seconds=60))])
+@router.patch(
+    "/flags/incidents/{incident_id}",
+    dependencies=[Depends(rate_limiter(limit=40, window_seconds=60))],
+)
 def update_flags_incident(
     incident_id: str,
     payload: Dict[str, Any],
@@ -279,10 +337,15 @@ def update_flags_incident(
     note = str(payload.get("note") or "").strip()
     silence_minutes = payload.get("silence_minutes", 60)
     if action not in {"acknowledge", "close", "reopen", "silence", "note"}:
-        raise HTTPException(status_code=400, detail="action must be acknowledge|close|reopen|silence|note")
+        raise HTTPException(
+            status_code=400,
+            detail="action must be acknowledge|close|reopen|silence|note",
+        )
 
     incidents = _load_incidents()
-    incident = next((item for item in incidents if str(item.get("id", "")) == incident_id), None)
+    incident = next(
+        (item for item in incidents if str(item.get("id", "")) == incident_id), None
+    )
     if not incident:
         raise HTTPException(status_code=404, detail="incident not found")
 
@@ -293,7 +356,9 @@ def update_flags_incident(
         incident["status"] = "acknowledged"
         incident["ack_by"] = actor_id
         incident["ack_at"] = now
-        _append_incident_history(incident, event="acknowledged", actor_id=actor_id, note=note)
+        _append_incident_history(
+            incident, event="acknowledged", actor_id=actor_id, note=note
+        )
     elif action == "close":
         incident["status"] = "closed"
         incident["closed_by"] = actor_id
@@ -302,15 +367,21 @@ def update_flags_incident(
     elif action == "reopen":
         incident["status"] = "open"
         incident["silenced_until"] = None
-        _append_incident_history(incident, event="reopened", actor_id=actor_id, note=note)
+        _append_incident_history(
+            incident, event="reopened", actor_id=actor_id, note=note
+        )
     elif action == "silence":
         try:
             minutes = max(1, min(int(silence_minutes), 60 * 24 * 7))
         except (TypeError, ValueError):
-            raise HTTPException(status_code=422, detail="silence_minutes must be an integer")
+            raise HTTPException(
+                status_code=422, detail="silence_minutes must be an integer"
+            )
         until_dt = datetime.now(tz=timezone.utc).timestamp() + (minutes * 60)
         incident["status"] = "silenced"
-        incident["silenced_until"] = datetime.fromtimestamp(until_dt, tz=timezone.utc).isoformat()
+        incident["silenced_until"] = datetime.fromtimestamp(
+            until_dt, tz=timezone.utc
+        ).isoformat()
         _append_incident_history(
             incident,
             event="silenced",
@@ -320,12 +391,16 @@ def update_flags_incident(
         )
     elif action == "note":
         if not note:
-            raise HTTPException(status_code=422, detail="note is required when action=note")
+            raise HTTPException(
+                status_code=422, detail="note is required when action=note"
+            )
         _append_incident_history(incident, event="note", actor_id=actor_id, note=note)
 
     if note:
         incident["note"] = note
-    _set_incident_severity(incident, actor_id=actor_id, reason=f"incident_action:{action}")
+    _set_incident_severity(
+        incident, actor_id=actor_id, reason=f"incident_action:{action}"
+    )
     incident["updated_at"] = now
     _save_incidents(incidents)
     _append_audit_event(
@@ -347,7 +422,10 @@ def update_flags_incident(
     }
 
 
-@router.post("/flags/incidents/cleanup", dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))])
+@router.post(
+    "/flags/incidents/cleanup",
+    dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))],
+)
 def cleanup_flags_incidents(
     retain_closed_days: int = 30,
     retain_resolved_days: int = 14,

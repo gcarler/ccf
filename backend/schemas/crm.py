@@ -9,16 +9,15 @@ from pydantic import BaseModel, Field, model_validator
 from backend.core.context import user_role_context
 from backend.schemas._common import orm_config
 
-
 # Catálogo oficial de tipos de evento CCF
 EVENT_TYPES = [
-    "PERMANENT",   # Semanal / rutinario (ej: culto dominical)
-    "MONTHLY",     # Mensual (ej: ayuno, retiro primer domingo)
-    "ANNUAL",      # Anual (ej: Navidad, aniversario de la iglesia)
-    "ONCE",        # Única vez / fecha fija especial
-    "SPECIAL",     # Campaña, conferencia invitada, evento especial
-    "FARO",        # Servicio de Faro en Casa / célula
-    "ONLINE",      # Transmisión en vivo / servicio virtual
+    "PERMANENT",  # Semanal / rutinario (ej: culto dominical)
+    "MONTHLY",  # Mensual (ej: ayuno, retiro primer domingo)
+    "ANNUAL",  # Anual (ej: Navidad, aniversario de la iglesia)
+    "ONCE",  # Única vez / fecha fija especial
+    "SPECIAL",  # Campaña, conferencia invitada, evento especial
+    "FARO",  # Servicio de Faro en Casa / célula
+    "ONLINE",  # Transmisión en vivo / servicio virtual
 ]
 
 
@@ -155,9 +154,10 @@ class CounselingTicket(CounselingTicketBase):
     created_at: datetime
     model_config = orm_config
 
-    @model_validator(mode='after')
-    def restrict_counseling_notes(self) -> 'CounselingTicket':
+    @model_validator(mode="after")
+    def restrict_counseling_notes(self) -> "CounselingTicket":
         from backend.auth import is_crm_privileged
+
         role = user_role_context.get()
         if role and not is_crm_privileged(role):
             self.notes = "[RESTRINGIDO - SOLO PASTORES/ADMIN]"
@@ -187,6 +187,7 @@ class PrayerRequestUpdate(BaseModel):
 
 class PrayerRequestPublicCreate(BaseModel):
     """Schema for public web prayer requests — minimal fields, no auth."""
+
     requester_name: str
     request_text: str
     category: str = "General"
@@ -320,9 +321,10 @@ class Member(BaseModel):
     created_at: datetime
     model_config = orm_config
 
-    @model_validator(mode='after')
-    def restrict_crm_fields(self) -> 'Member':
+    @model_validator(mode="after")
+    def restrict_crm_fields(self) -> "Member":
         from backend.auth import is_crm_privileged
+
         role = user_role_context.get()
         if role and not is_crm_privileged(role):
             self.pastoral_notes = "[RESTRINGIDO]"
@@ -384,9 +386,19 @@ class Position(PositionBase):
 # --- Ministry Membership (Persona <-> Ministerio con Rol) ---
 
 MINISTRY_ROLES = [
-    "Apóstol", "Profeta", "Evangelista", "Pastor", "Maestro",
-    "Ministro de Culto", "Líder", "Servidor", "Miembro Bautizado",
-    "Asistente", "Visitante Servicios", "Visitante Faro en Casa", "Visitante Online"
+    "Apóstol",
+    "Profeta",
+    "Evangelista",
+    "Pastor",
+    "Maestro",
+    "Ministro de Culto",
+    "Líder",
+    "Servidor",
+    "Miembro Bautizado",
+    "Asistente",
+    "Visitante Servicios",
+    "Visitante Faro en Casa",
+    "Visitante Online",
 ]
 
 

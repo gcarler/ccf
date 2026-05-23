@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 """Audit: every apiFetch call vs every resolved backend route — robust edition."""
 
-import re, sys
-from pathlib import Path
+import re
+import sys
 from collections import defaultdict
+from pathlib import Path
 
 FRONTEND = Path(r"D:\ccf\frontend\src")
-BACKEND  = Path(r"D:\ccf\backend")
+BACKEND = Path(r"D:\ccf\backend")
 
 
 # ── 1. Extract all apiFetch calls ──────────────────────────────────────
@@ -23,16 +24,18 @@ def extract_apifetch_calls(root: Path):
         pattern = r"apiFetch(?:<[^>]*>)?\s*\(\s*([`'\"]/[^`'\"]+[`'\"])\s*,"
         for m in re.finditer(pattern, text, re.DOTALL):
             url_raw = m.group(1).strip("`'\"").replace("${", "{").replace("}", "}")
-            url_raw = re.sub(r'\$\{[^}]+\}', '{param}', url_raw)
-            rest = text[m.end():]
+            url_raw = re.sub(r"\$\{[^}]+\}", "{param}", url_raw)
+            rest = text[m.end() :]
             method_m = re.search(r"""method\s*:\s*['\"]([A-Z]+)['\"]""", rest[:300])
             method = method_m.group(1) if method_m else "GET"
-            calls.append({
-                "file": str(f.relative_to(FRONTEND.parent)),
-                "line": text[:m.start()].count("\n") + 1,
-                "method": method,
-                "url": url_raw,
-            })
+            calls.append(
+                {
+                    "file": str(f.relative_to(FRONTEND.parent)),
+                    "line": text[: m.start()].count("\n") + 1,
+                    "method": method,
+                    "url": url_raw,
+                }
+            )
     return calls
 
 
@@ -47,11 +50,8 @@ def resolve_backend_routes():
     if app_py.exists():
         text = app_py.read_text(encoding="utf-8")
         # Pattern: (module.router, "/api/prefix", ["tags"]) or (module.router, "/api", None)
-        for m in re.finditer(
-            r'\(\s*(\w+(?:\.\w+)*)\s*,\s*"([^"]+)"\s*,',
-            text
-        ):
-            module_path = m.group(1)   # e.g. "auth", "crm", "agents.analytics_router"
+        for m in re.finditer(r'\(\s*(\w+(?:\.\w+)*)\s*,\s*"([^"]+)"\s*,', text):
+            module_path = m.group(1)  # e.g. "auth", "crm", "agents.analytics_router"
             prefix = m.group(2)
             # Get just the module name (first part before dot)
             mod_base = module_path.split(".")[0]
@@ -67,17 +67,17 @@ def resolve_backend_routes():
             continue
         parent = str(init_file.parent.relative_to(api_dir)).replace("\\", "/")
         includes = []
-        for m in re.finditer(r'from\s+backend\.api\.(\w+)\s+import\s+(\w+)', text):
+        for m in re.finditer(r"from\s+backend\.api\.(\w+)\s+import\s+(\w+)", text):
             sub_pkg = m.group(1)
             sub_mod = m.group(2)
             includes.append(sub_pkg)
         # Also look for: from backend.api.crm import members, pastoral
-        for m in re.finditer(r'from\s+backend\.api\.([\w.]+)\s+import\s+(\w+)', text):
+        for m in re.finditer(r"from\s+backend\.api\.([\w.]+)\s+import\s+(\w+)", text):
             sub_pkg = m.group(1).split(".")[0]
             if sub_pkg not in includes:
                 includes.append(sub_pkg)
         # And: router.include_router(x.router)
-        for m in re.finditer(r'include_router\((\w+)\.router\)', text):
+        for m in re.finditer(r"include_router\((\w+)\.router\)", text):
             mod_name = m.group(1)
             if mod_name not in includes:
                 includes.append(mod_name)
@@ -104,7 +104,7 @@ def resolve_backend_routes():
             continue
 
         # Check if this file defines a router
-        if 'APIRouter' not in text and '@router.' not in text:
+        if "APIRouter" not in text and "@router." not in text:
             continue
 
         rel = str(f.relative_to(api_dir)).replace("\\", "/")
@@ -136,22 +136,26 @@ def resolve_backend_routes():
             inner_prefix = prefix_m.group(1)
 
         # Extract route decorators
-        for rm in re.finditer(r'@router\.(get|post|put|patch|delete)\s*\(\s*"([^"]*)"', text):
+        for rm in re.finditer(
+            r'@router\.(get|post|put|patch|delete)\s*\(\s*"([^"]*)"', text
+        ):
             http_method = rm.group(1).upper()
             route_path = rm.group(2)
             full_path = mount_prefix + inner_prefix + route_path
-            routes.append({
-                "method": http_method,
-                "path": full_path,
-                "file": str(f.relative_to(BACKEND)),
-            })
+            routes.append(
+                {
+                    "method": http_method,
+                    "path": full_path,
+                    "file": str(f.relative_to(BACKEND)),
+                }
+            )
 
     return routes
 
 
 # ── 3. Normalize and match ───────────────────────────────────────────
 def normalize_path(p):
-    p = re.sub(r'\{[^}]+\}', '{param}', p)
+    p = re.sub(r"\{[^}]+\}", "{param}", p)
     p = p.split("?")[0]
     p = p.rstrip("/")
     if not p.startswith("/"):
@@ -207,11 +211,15 @@ def main():
                     if len(common) >= 3:
                         candidates.append((bp, files[:2]))
 
-            mismatches.append({
-                "call": call,
-                "actual_path": actual_path,
-                "candidates": sorted(candidates, key=lambda x: -len(x[0].split("/")))[:3],
-            })
+            mismatches.append(
+                {
+                    "call": call,
+                    "actual_path": actual_path,
+                    "candidates": sorted(
+                        candidates, key=lambda x: -len(x[0].split("/"))
+                    )[:3],
+                }
+            )
 
     print(f"\n  MATCHED:  {matches}/{len(fe_calls)}")
     print(f"  (of which {no_api_count} matched via direct prefix)")

@@ -1,7 +1,7 @@
 import os
 import sys
-import requests
 
+import requests
 
 BASE_URL = os.getenv("CCF_BASE_URL", "http://localhost:8001")
 

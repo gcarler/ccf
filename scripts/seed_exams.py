@@ -1,5 +1,6 @@
+from backend import crud, models, schemas
 from backend.core.database import SessionLocal
-from backend import crud, schemas, models
+
 
 def seed_exams():
     db = SessionLocal()
@@ -12,7 +13,7 @@ def seed_exams():
                 title="Fundamentos de la Fe I",
                 description="Curso introductorio a la doctrina cristiana.",
                 modality="non-formal",
-                is_published=True
+                is_published=True,
             )
             db.add(course)
             db.commit()
@@ -25,7 +26,7 @@ def seed_exams():
             title="Examen Final - Fundamentos I",
             description="Demuestra lo aprendido en este primer nivel.",
             max_score=100,
-            passing_score=70
+            passing_score=70,
         )
         db_assessment = models.Assessment(**assessment.model_dump())
         db.add(db_assessment)
@@ -34,25 +35,55 @@ def seed_exams():
         print(f"Created assessment: {db_assessment.title}")
 
         # 3. Add Questions
-        q1 = crud.create_assessment_question(db, schemas.AssessmentQuestionCreate(
-            assessment_id=db_assessment.id,
-            question_text="¿Quién es el autor de la Biblia?",
-            question_type="multiple_choice",
-            points=50,
-            order_index=1
-        ))
-        crud.create_question_option(db, schemas.QuestionOptionCreate(question_id=q1.id, option_text="Dios a través de hombres inspirados", is_correct=True))
-        crud.create_question_option(db, schemas.QuestionOptionCreate(question_id=q1.id, option_text="Un grupo de historiadores griegos", is_correct=False))
-        
-        q2 = crud.create_assessment_question(db, schemas.AssessmentQuestionCreate(
-            assessment_id=db_assessment.id,
-            question_text="La salvación es por obras.",
-            question_type="true_false",
-            points=50,
-            order_index=2
-        ))
-        crud.create_question_option(db, schemas.QuestionOptionCreate(question_id=q2.id, option_text="Verdadero", is_correct=False))
-        crud.create_question_option(db, schemas.QuestionOptionCreate(question_id=q2.id, option_text="Falso", is_correct=True))
+        q1 = crud.create_assessment_question(
+            db,
+            schemas.AssessmentQuestionCreate(
+                assessment_id=db_assessment.id,
+                question_text="¿Quién es el autor de la Biblia?",
+                question_type="multiple_choice",
+                points=50,
+                order_index=1,
+            ),
+        )
+        crud.create_question_option(
+            db,
+            schemas.QuestionOptionCreate(
+                question_id=q1.id,
+                option_text="Dios a través de hombres inspirados",
+                is_correct=True,
+            ),
+        )
+        crud.create_question_option(
+            db,
+            schemas.QuestionOptionCreate(
+                question_id=q1.id,
+                option_text="Un grupo de historiadores griegos",
+                is_correct=False,
+            ),
+        )
+
+        q2 = crud.create_assessment_question(
+            db,
+            schemas.AssessmentQuestionCreate(
+                assessment_id=db_assessment.id,
+                question_text="La salvación es por obras.",
+                question_type="true_false",
+                points=50,
+                order_index=2,
+            ),
+        )
+        crud.create_question_option(
+            db,
+            schemas.QuestionOptionCreate(
+                question_id=q2.id, option_text="Verdadero", is_correct=False
+            ),
+        )
+        crud.create_question_option(
+            db,
+            schemas.QuestionOptionCreate(
+                question_id=q2.id, option_text="Falso", is_correct=True
+            ),
+        )
 
         print("Exams and questions seeded successfully!")
 
@@ -60,6 +91,7 @@ def seed_exams():
         print(f"Error seeding exams: {e}")
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     seed_exams()

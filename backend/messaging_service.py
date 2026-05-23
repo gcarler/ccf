@@ -3,6 +3,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class MessagingService:
     @staticmethod
     def send_sms(phone: str, message: str):
@@ -21,5 +22,6 @@ class MessagingService:
         # Mock Email sending (e.g., would use Resend or SendGrid API here)
         logger.info(f"MOCK EMAIL SENT to {email} - Subject: {subject}")
         return True
+
 
 messaging_service = MessagingService()

@@ -1,20 +1,23 @@
 from __future__ import annotations
+
 import sys
 import time
 import uuid
 from pathlib import Path
+
 from sqlalchemy.orm import Session
 
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from backend.core.database import SessionLocal, engine, Base
-from backend import models, crud, schemas
+from backend import crud, models, schemas
+from backend.core.database import Base, SessionLocal, engine
+
 
 def run_stress_test():
     print("=== CCF PLATFORM STRESS & PERFORMANCE TEST ===")
     db = SessionLocal()
-    
+
     try:
         # 1. User Injection
         print("[1/3] Injecting 100 virtual users...")
@@ -25,7 +28,7 @@ def run_stress_test():
                 username=u_id,
                 email=f"{u_id}@test.la",
                 password_hash="stress_test_hash",
-                role="estudiante"
+                role="estudiante",
             )
             db.add(user)
         db.commit()
@@ -39,10 +42,10 @@ def run_stress_test():
             msg = models.ChatMessage(
                 sender_id=test_user.id,
                 room_id="general_room",
-                content=f"Stress test message volume #{i}"
+                content=f"Stress test message volume #{i}",
             )
             db.add(msg)
-            if i % 500 == 0: # Batch commit for efficiency
+            if i % 500 == 0:  # Batch commit for efficiency
                 db.commit()
         db.commit()
         print(f"  > Done in {time.time() - start_time:.2f}s")
@@ -57,11 +60,12 @@ def run_stress_test():
         print(f"  > Done in {time.time() - start_time:.2f}s")
 
         print("\n=== STRESS TEST COMPLETE: SYSTEM IS SCALABLE ===")
-        
+
     except Exception as e:
         print(f"\n!!! STRESS TEST FAILED: {e}")
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     run_stress_test()

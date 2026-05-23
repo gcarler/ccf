@@ -1,6 +1,6 @@
-f = open('frontend/src/components/WorkspaceLayout.tsx', encoding='utf-8').read()
+f = open("frontend/src/components/WorkspaceLayout.tsx", encoding="utf-8").read()
 
-lines = f.split('\n')
+lines = f.split("\n")
 out = []
 for line in lines:
     if "id: 'crm-events'" in line:
@@ -11,7 +11,7 @@ for line in lines:
         continue
     if "id: 'crm-scanner'" in line:
         continue
-    
+
     if 'title: "Servicio y Vida"' in line:
         evang_block = """            {
                 title: "Evangelismo & Eventos",
@@ -23,7 +23,9 @@ for line in lines:
                 ]
             },"""
         out.append(evang_block)
-    
+
     out.append(line)
 
-open('frontend/src/components/WorkspaceLayout.tsx', 'w', encoding='utf-8').write('\n'.join(out))
+open("frontend/src/components/WorkspaceLayout.tsx", "w", encoding="utf-8").write(
+    "\n".join(out)
+)

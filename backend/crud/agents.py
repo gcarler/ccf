@@ -1,4 +1,5 @@
 """Agent tasks and insights CRUD."""
+
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
@@ -57,7 +58,11 @@ def list_agent_insights(db: Session, acknowledged: bool | None = None):
 
 
 def acknowledge_insight(db: Session, insight_id: int):
-    row = db.query(models.AgentInsight).filter(models.AgentInsight.id == insight_id).first()
+    row = (
+        db.query(models.AgentInsight)
+        .filter(models.AgentInsight.id == insight_id)
+        .first()
+    )
     if not row:
         return None
     row.acknowledged = True
@@ -76,7 +81,11 @@ def delete_agent_task(db: Session, task_id: int) -> bool:
 
 
 def delete_agent_insight(db: Session, insight_id: int) -> bool:
-    row = db.query(models.AgentInsight).filter(models.AgentInsight.id == insight_id).first()
+    row = (
+        db.query(models.AgentInsight)
+        .filter(models.AgentInsight.id == insight_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)

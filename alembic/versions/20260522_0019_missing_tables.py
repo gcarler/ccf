@@ -14,8 +14,10 @@ _run_startup_migrations() / Base.metadata.create_all():
 - funds
 - member_roles
 """
-from alembic import op
+
 import sqlalchemy as sa
+
+from alembic import op
 
 revision = "20260522_0019"
 down_revision = "20260519_0018"
@@ -80,7 +82,9 @@ def upgrade() -> None:
         )
         op.create_index("ix_support_tickets_user_id", "support_tickets", ["user_id"])
         op.create_index("ix_support_tickets_status", "support_tickets", ["status"])
-        op.create_index("ix_support_tickets_created_at", "support_tickets", ["created_at"])
+        op.create_index(
+            "ix_support_tickets_created_at", "support_tickets", ["created_at"]
+        )
 
     if "spiritual_milestones" not in existing_tables:
         op.create_table(
@@ -94,9 +98,17 @@ def upgrade() -> None:
             sa.Column("created_at", sa.DateTime, nullable=True),
             sa.ForeignKeyConstraint(["minister_id"], ["users.id"]),
         )
-        op.create_index("ix_spiritual_milestones_person_id", "spiritual_milestones", ["person_id"])
-        op.create_index("ix_spiritual_milestones_type", "spiritual_milestones", ["type"])
-        op.create_index("ix_spiritual_milestones_minister_id", "spiritual_milestones", ["minister_id"])
+        op.create_index(
+            "ix_spiritual_milestones_person_id", "spiritual_milestones", ["person_id"]
+        )
+        op.create_index(
+            "ix_spiritual_milestones_type", "spiritual_milestones", ["type"]
+        )
+        op.create_index(
+            "ix_spiritual_milestones_minister_id",
+            "spiritual_milestones",
+            ["minister_id"],
+        )
 
     if "community_board_cards" not in existing_tables:
         op.create_table(
@@ -108,7 +120,9 @@ def upgrade() -> None:
             sa.Column("position", sa.Integer, server_default="0"),
             sa.Column("created_at", sa.DateTime, nullable=True),
         )
-        op.create_index("ix_community_board_cards_column_id", "community_board_cards", ["column_id"])
+        op.create_index(
+            "ix_community_board_cards_column_id", "community_board_cards", ["column_id"]
+        )
 
     if "funds" not in existing_tables:
         op.create_table(
@@ -130,7 +144,9 @@ def upgrade() -> None:
             sa.Column("role_id", sa.Integer, nullable=False),
             sa.Column("created_at", sa.DateTime, nullable=True),
             sa.ForeignKeyConstraint(["member_id"], ["members.id"], ondelete="CASCADE"),
-            sa.ForeignKeyConstraint(["role_id"], ["role_definitions.id"], ondelete="CASCADE"),
+            sa.ForeignKeyConstraint(
+                ["role_id"], ["role_definitions.id"], ondelete="CASCADE"
+            ),
         )
         op.create_index("ix_member_roles_member_id", "member_roles", ["member_id"])
         op.create_index("ix_member_roles_role_id", "member_roles", ["role_id"])

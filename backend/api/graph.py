@@ -4,10 +4,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.core.database import get_db
 from backend.auth import get_current_user
+from backend.core.database import get_db
 from backend.services.knowledge_graph import build_graph_snapshot
-
 
 router = APIRouter(prefix="/graph", tags=["graph"])
 
@@ -46,7 +45,11 @@ def graph_snapshot(
         "total_nodes": total_nodes,
         "returned_nodes": len(paginated_nodes),
     }
-    snapshot["meta"]["requested_by"] = str(getattr(current_user, "id", None) or getattr(current_user, "user_id", None)) if current_user else None
+    snapshot["meta"]["requested_by"] = (
+        str(getattr(current_user, "id", None) or getattr(current_user, "user_id", None))
+        if current_user
+        else None
+    )
     return snapshot
 
 
@@ -66,7 +69,9 @@ def graph_connections(
     outgoing = [edge for edge in edges if edge.get("from") == node_id][:safe_limit]
     incoming = [edge for edge in edges if edge.get("to") == node_id][:safe_limit]
 
-    related_ids = {edge.get("to") for edge in outgoing} | {edge.get("from") for edge in incoming}
+    related_ids = {edge.get("to") for edge in outgoing} | {
+        edge.get("from") for edge in incoming
+    }
     related_nodes = [item for item in nodes if item.get("id") in related_ids]
 
     return {
@@ -75,7 +80,14 @@ def graph_connections(
         "outgoing": outgoing,
         "related_nodes": related_nodes,
         "meta": {
-            "requested_by": str(getattr(current_user, "id", None) or getattr(current_user, "user_id", None)) if current_user else None,
+            "requested_by": (
+                str(
+                    getattr(current_user, "id", None)
+                    or getattr(current_user, "user_id", None)
+                )
+                if current_user
+                else None
+            ),
             "limit": safe_limit,
         },
     }

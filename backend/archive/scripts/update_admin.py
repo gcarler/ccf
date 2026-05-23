@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine, text
+
 # The actual DB path from .env is sqlite:///../ccf_v2.db
 engine = create_engine('sqlite:///d:/ccf/ccf_v2.db')
 with engine.connect() as conn:

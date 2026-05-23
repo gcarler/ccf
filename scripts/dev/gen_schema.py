@@ -2,6 +2,7 @@
 """Generate master_schema.sql from model definitions."""
 import os
 
+
 def write_schema():
     path = "/root/ccf/master_schema.sql"
     parts = []

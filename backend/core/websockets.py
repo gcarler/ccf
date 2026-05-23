@@ -1,10 +1,13 @@
 from __future__ import annotations
-from typing import Dict, List
-from fastapi import WebSocket
+
 import json
 import logging
+from typing import Dict, List
+
+from fastapi import WebSocket
 
 log = logging.getLogger(__name__)
+
 
 class ConnectionManager:
     def __init__(self):
@@ -16,7 +19,9 @@ class ConnectionManager:
         if user_id not in self.active_connections:
             self.active_connections[user_id] = []
         self.active_connections[user_id].append(websocket)
-        log.info(f"User {user_id} connected to WebSocket. Total: {len(self.active_connections[user_id])}")
+        log.info(
+            f"User {user_id} connected to WebSocket. Total: {len(self.active_connections[user_id])}"
+        )
 
     def disconnect(self, websocket: WebSocket, user_id: str):
         if user_id in self.active_connections:
@@ -43,5 +48,6 @@ class ConnectionManager:
                     await connection.send_text(payload)
                 except Exception:
                     pass
+
 
 ws_manager = ConnectionManager()

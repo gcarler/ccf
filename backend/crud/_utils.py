@@ -1,4 +1,5 @@
 """Shared utilities for crud modules."""
+
 import datetime as dt
 
 
@@ -14,15 +15,27 @@ def analyze_pastoral_priority(notes: str) -> str:
     notes_lower = notes.lower()
 
     critical_keywords = [
-        "suicidio", "atentado", "abuso", "depresion profunda",
-        "violencia", "riesgo", "emergencia", "auxilio", "ayuda ya"
+        "suicidio",
+        "atentado",
+        "abuso",
+        "depresion profunda",
+        "violencia",
+        "riesgo",
+        "emergencia",
+        "auxilio",
+        "ayuda ya",
     ]
     if any(k in notes_lower for k in critical_keywords):
         return "URGENTE"
 
     high_keywords = [
-        "conflicto familiar", "separacion", "crisis", "enfermedad grave",
-        "perdida de fe", "soledad", "problemas economicos"
+        "conflicto familiar",
+        "separacion",
+        "crisis",
+        "enfermedad grave",
+        "perdida de fe",
+        "soledad",
+        "problemas economicos",
     ]
     if any(k in notes_lower for k in high_keywords):
         return "ALTA"
@@ -37,8 +50,28 @@ def analyze_pastoral_sentiment(content: str):
 
     text = content.lower()
 
-    positive_words = ["aliento", "bendecido", "paz", "gozo", "agradecido", "crecimiento", "victoria", "fe", "esperanza"]
-    negative_words = ["triste", "derrota", "angustia", "problema", "pelea", "dolor", "soledad", "duda", "miedo"]
+    positive_words = [
+        "aliento",
+        "bendecido",
+        "paz",
+        "gozo",
+        "agradecido",
+        "crecimiento",
+        "victoria",
+        "fe",
+        "esperanza",
+    ]
+    negative_words = [
+        "triste",
+        "derrota",
+        "angustia",
+        "problema",
+        "pelea",
+        "dolor",
+        "soledad",
+        "duda",
+        "miedo",
+    ]
 
     pos_count = sum(1 for w in positive_words if w in text)
     neg_count = sum(1 for w in negative_words if w in text)

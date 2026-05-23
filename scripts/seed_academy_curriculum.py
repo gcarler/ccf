@@ -1,8 +1,11 @@
 import os
 import sys
+
 from sqlalchemy.orm import Session
-from backend.core.database import SessionLocal
+
 from backend import models
+from backend.core.database import SessionLocal
+
 
 def seed_curriculum():
     db: Session = SessionLocal()
@@ -19,17 +22,25 @@ def seed_curriculum():
                 modality="formal",
                 certificate_type="Diplomado",
                 xp_per_lesson=50,
-                is_published=True
+                is_published=True,
             )
             db.add(el1)
             db.flush()
 
             # Lecciones EL-N1
             lessons = [
-                ("La Visión del Faro", "Entendiendo nuestro propósito como comunidad.", 1),
+                (
+                    "La Visión del Faro",
+                    "Entendiendo nuestro propósito como comunidad.",
+                    1,
+                ),
                 ("Carácter Cristiano", "La base interna del liderazgo.", 2),
-                ("Intercesión y Guerra Espiritual", "Nuestras armas no son carnales.", 3),
-                ("El Poder del Servicio", "Siguiendo el ejemplo de Cristo.", 4)
+                (
+                    "Intercesión y Guerra Espiritual",
+                    "Nuestras armas no son carnales.",
+                    3,
+                ),
+                ("El Poder del Servicio", "Siguiendo el ejemplo de Cristo.", 4),
             ]
             for title, desc, idx in lessons:
                 lesson = models.Lesson(
@@ -38,7 +49,7 @@ def seed_curriculum():
                     content=desc,
                     content_type="video",
                     order_index=idx,
-                    duration_minutes=45
+                    duration_minutes=45,
                 )
                 db.add(lesson)
 
@@ -52,7 +63,7 @@ def seed_curriculum():
                 modality="no_formal",
                 certificate_type="Microcertificado",
                 xp_per_lesson=30,
-                is_published=True
+                is_published=True,
             )
             db.add(vd)
             db.flush()
@@ -61,17 +72,19 @@ def seed_curriculum():
             lessons_vd = [
                 ("El Altar Familiar", "Cómo levantar oración en casa.", 1),
                 ("Métodos de Estudio Bíblico", "Herramientas para profundizar.", 2),
-                ("La Voz de Dios", "Aprendiendo a escuchar al Espíritu Santo.", 3)
+                ("La Voz de Dios", "Aprendiendo a escuchar al Espíritu Santo.", 3),
             ]
             for title, desc, idx in lessons_vd:
-                db.add(models.Lesson(
-                    course_id=vd.id,
-                    title=title,
-                    content=desc,
-                    content_type="pdf",
-                    order_index=idx,
-                    duration_minutes=30
-                ))
+                db.add(
+                    models.Lesson(
+                        course_id=vd.id,
+                        title=title,
+                        content=desc,
+                        content_type="pdf",
+                        order_index=idx,
+                        duration_minutes=30,
+                    )
+                )
 
         # 3. CURSO NO FORMAL: Finanzas del Reino
         fr = db.query(models.Course).filter(models.Course.code == "NF-FR").first()
@@ -83,19 +96,21 @@ def seed_curriculum():
                 modality="no_formal",
                 certificate_type="Microcertificado",
                 xp_per_lesson=30,
-                is_published=True
+                is_published=True,
             )
             db.add(fr)
             db.flush()
 
-            db.add(models.Lesson(
-                course_id=fr.id,
-                title="Diezmos y Ofrendas",
-                content="La generosidad como llave de bendición.",
-                content_type="video",
-                order_index=1,
-                duration_minutes=60
-            ))
+            db.add(
+                models.Lesson(
+                    course_id=fr.id,
+                    title="Diezmos y Ofrendas",
+                    content="La generosidad como llave de bendición.",
+                    content_type="video",
+                    order_index=1,
+                    duration_minutes=60,
+                )
+            )
 
         db.commit()
         print("✅ Currículo cargado exitosamente.")
@@ -104,6 +119,7 @@ def seed_curriculum():
         print(f"❌ Error durante la carga: {e}")
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     # Ensure backend is in path

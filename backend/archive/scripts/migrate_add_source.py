@@ -1,10 +1,13 @@
 """Add source column to prayer_requests table."""
-import sys, os
+import os
+import sys
+
 # Ensure D:\ccf is in the path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend.core.database import engine
 from sqlalchemy import text
+
+from backend.core.database import engine
 
 
 def migrate():

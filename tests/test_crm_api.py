@@ -1,10 +1,13 @@
+import uuid
+from datetime import datetime
+
 from backend import models
 from backend.core.security import get_password_hash
-from datetime import datetime
-import uuid
 
 
-def seed_admin(db_session, email="admin@example.com", password="secret123", role="admin"):
+def seed_admin(
+    db_session, email="admin@example.com", password="secret123", role="admin"
+):
     user = models.User(
         username="admin",
         email=email,
@@ -173,7 +176,9 @@ def test_crm_campaign_send_groups_history(client, db_session):
     assert payload["failed_count"] == 0
     assert len(payload["log_ids"]) == 2
 
-    history_response = client.get("/api/crm/messaging/history", headers=auth_headers(client))
+    history_response = client.get(
+        "/api/crm/messaging/history", headers=auth_headers(client)
+    )
     assert history_response.status_code == 200
     history = history_response.json()
     assert len(history) == 1
@@ -194,7 +199,9 @@ def test_crm_campaign_send_groups_history(client, db_session):
 
 def test_member_donations_for_admin_dashboard(client, db_session):
     seed_admin(db_session)
-    member = models.Member(first_name="Carlos", last_name="Ruiz", email="carlos@example.com")
+    member = models.Member(
+        first_name="Carlos", last_name="Ruiz", email="carlos@example.com"
+    )
     db_session.add(member)
     db_session.flush()
     donation = models.Donation(
@@ -240,7 +247,9 @@ def test_crm_tasks_mine_and_detail_routes(client, db_session):
     assert mine_data[0]["title"] == "Seguimiento pastoral"
     assert mine_data[0]["assigned_to"] == "admin"
 
-    detail_response = client.get(f"/api/crm/tasks/{task.id}", headers=auth_headers(client))
+    detail_response = client.get(
+        f"/api/crm/tasks/{task.id}", headers=auth_headers(client)
+    )
     assert detail_response.status_code == 200
     detail = detail_response.json()
     assert detail["id"] == task.id
@@ -250,7 +259,9 @@ def test_crm_tasks_mine_and_detail_routes(client, db_session):
 
 def test_crm_task_detail_denies_non_staff_non_owner(client, db_session):
     admin = seed_admin(db_session)
-    outsider = seed_user_with_role(db_session, role="estudiante", email="outsider@example.com")
+    outsider = seed_user_with_role(
+        db_session, role="estudiante", email="outsider@example.com"
+    )
     task = models.CrmTask(
         title="Tarea sensible",
         description="Solo para staff",
@@ -263,14 +274,18 @@ def test_crm_task_detail_denies_non_staff_non_owner(client, db_session):
     db_session.commit()
     db_session.refresh(task)
 
-    response = client.get(f"/api/crm/tasks/{task.id}", headers=auth_headers(client, email=outsider.email))
+    response = client.get(
+        f"/api/crm/tasks/{task.id}", headers=auth_headers(client, email=outsider.email)
+    )
 
     assert response.status_code == 403
     assert response.json()["detail"] == "No autorizado para ver esta tarea"
 
 
 def test_crm_task_detail_allows_owner_non_staff(client, db_session):
-    owner = seed_user_with_role(db_session, role="estudiante", email="owner@example.com")
+    owner = seed_user_with_role(
+        db_session, role="estudiante", email="owner@example.com"
+    )
     task = models.CrmTask(
         title="Tarea propia",
         description="Detalle permitido al dueño",
@@ -283,7 +298,9 @@ def test_crm_task_detail_allows_owner_non_staff(client, db_session):
     db_session.commit()
     db_session.refresh(task)
 
-    response = client.get(f"/api/crm/tasks/{task.id}", headers=auth_headers(client, email=owner.email))
+    response = client.get(
+        f"/api/crm/tasks/{task.id}", headers=auth_headers(client, email=owner.email)
+    )
 
     assert response.status_code == 200
     assert response.json()["id"] == task.id
@@ -342,6 +359,8 @@ def test_crm_counseling_detail_route(client, db_session):
         "Acompañamiento familiar",
         "Oración por salud",
     }
+
+
 def test_crm_glory_house_detail_route(client, db_session):
     seed_admin(db_session)
     house = models.GloryHouse(
@@ -358,7 +377,9 @@ def test_crm_glory_house_detail_route(client, db_session):
     db_session.commit()
     db_session.refresh(house)
 
-    response = client.get(f"/api/evangelism/glory-houses/{house.id}", headers=auth_headers(client))
+    response = client.get(
+        f"/api/evangelism/glory-houses/{house.id}", headers=auth_headers(client)
+    )
 
     assert response.status_code == 200
     data = response.json()
@@ -373,12 +394,27 @@ def test_crm_glory_house_detail_route(client, db_session):
 
 def test_faro_weekly_report_records_attendance_absence_and_offering(client, db_session):
     admin = seed_admin(db_session)
-    leader = models.Member(first_name="David", last_name="Leader", email="leader@example.com", user_id=admin.id)
-    assistant = models.Member(first_name="Laura", last_name="Coleader", email="assistant@example.com")
+    leader = models.Member(
+        first_name="David",
+        last_name="Leader",
+        email="leader@example.com",
+        user_id=admin.id,
+    )
+    assistant = models.Member(
+        first_name="Laura", last_name="Coleader", email="assistant@example.com"
+    )
     host = models.Member(first_name="Marta", last_name="Host", email="host@example.com")
-    attendee = models.Member(first_name="Ana", last_name="Asiste", email="ana@example.com")
-    absent = models.Member(first_name="Pedro", last_name="Falta", email="pedro@example.com")
-    season = models.FaroSeason(name="Temporada Faro", start_date=datetime(2026, 5, 1).date(), end_date=datetime(2026, 6, 30).date())
+    attendee = models.Member(
+        first_name="Ana", last_name="Asiste", email="ana@example.com"
+    )
+    absent = models.Member(
+        first_name="Pedro", last_name="Falta", email="pedro@example.com"
+    )
+    season = models.FaroSeason(
+        name="Temporada Faro",
+        start_date=datetime(2026, 5, 1).date(),
+        end_date=datetime(2026, 6, 30).date(),
+    )
     house = models.GloryHouse(
         code="FARO-010",
         name="Faro Norte",
@@ -404,17 +440,31 @@ def test_faro_weekly_report_records_attendance_absence_and_offering(client, db_s
     db_session.commit()
     db_session.refresh(house)
 
-    db_session.add(models.GloryHouseMember(glory_house_id=house.id, member_id=attendee.id, role="asistente"))
-    db_session.add(models.GloryHouseMember(glory_house_id=house.id, member_id=absent.id, role="asistente"))
-    db_session.add(models.GloryHouseSession(
-        glory_house_id=house.id,
-        season_id=season.id,
-        session_date=datetime(2026, 5, 8).date(),
-        status="Realizada",
-    ))
+    db_session.add(
+        models.GloryHouseMember(
+            glory_house_id=house.id, member_id=attendee.id, role="asistente"
+        )
+    )
+    db_session.add(
+        models.GloryHouseMember(
+            glory_house_id=house.id, member_id=absent.id, role="asistente"
+        )
+    )
+    db_session.add(
+        models.GloryHouseSession(
+            glory_house_id=house.id,
+            season_id=season.id,
+            session_date=datetime(2026, 5, 8).date(),
+            status="Realizada",
+        )
+    )
     db_session.commit()
 
-    session = db_session.query(models.GloryHouseSession).filter(models.GloryHouseSession.glory_house_id == house.id).first()
+    session = (
+        db_session.query(models.GloryHouseSession)
+        .filter(models.GloryHouseSession.glory_house_id == house.id)
+        .first()
+    )
     assert session is not None
 
     response = client.post(
@@ -451,21 +501,40 @@ def test_faro_weekly_report_records_attendance_absence_and_offering(client, db_s
 
 def test_faro_leader_can_manage_own_house_attendance(client, db_session):
     seed_admin(db_session)
-    leader_user = seed_user_with_role(db_session, role="coordinador", email="leaderfaro@example.com")
-    leader_member = models.Member(first_name="Lider", last_name="Faro", email="leaderfaro@example.com", user_id=leader_user.id)
-    attendee = models.Member(first_name="Asistente", last_name="Uno", email="asistente1@example.com")
-    season = models.FaroSeason(name="Temporada Lider", start_date=datetime(2026, 5, 1).date(), end_date=datetime(2026, 6, 30).date())
+    leader_user = seed_user_with_role(
+        db_session, role="coordinador", email="leaderfaro@example.com"
+    )
+    leader_member = models.Member(
+        first_name="Lider",
+        last_name="Faro",
+        email="leaderfaro@example.com",
+        user_id=leader_user.id,
+    )
+    attendee = models.Member(
+        first_name="Asistente", last_name="Uno", email="asistente1@example.com"
+    )
+    season = models.FaroSeason(
+        name="Temporada Lider",
+        start_date=datetime(2026, 5, 1).date(),
+        end_date=datetime(2026, 6, 30).date(),
+    )
     db_session.add_all([leader_member, attendee, season])
     db_session.commit()
     db_session.refresh(leader_member)
     db_session.refresh(attendee)
     db_session.refresh(season)
 
-    house = models.GloryHouse(code="FARO-LDR", name="Faro Lider", leader_id=leader_member.id, status="Activo")
+    house = models.GloryHouse(
+        code="FARO-LDR", name="Faro Lider", leader_id=leader_member.id, status="Activo"
+    )
     db_session.add(house)
     db_session.commit()
     db_session.refresh(house)
-    db_session.add(models.GloryHouseMember(glory_house_id=house.id, member_id=attendee.id, role="asistente"))
+    db_session.add(
+        models.GloryHouseMember(
+            glory_house_id=house.id, member_id=attendee.id, role="asistente"
+        )
+    )
     db_session.add(
         models.GloryHouseSession(
             glory_house_id=house.id,
@@ -475,11 +544,18 @@ def test_faro_leader_can_manage_own_house_attendance(client, db_session):
         )
     )
     db_session.commit()
-    session = db_session.query(models.GloryHouseSession).filter(models.GloryHouseSession.glory_house_id == house.id).first()
+    session = (
+        db_session.query(models.GloryHouseSession)
+        .filter(models.GloryHouseSession.glory_house_id == house.id)
+        .first()
+    )
 
     response = client.post(
         f"/api/evangelism/faro/sessions/{session.id}/attendance",
-        json={"attendees": [{"member_id": attendee.id, "attended": True}], "status": "Realizada"},
+        json={
+            "attendees": [{"member_id": attendee.id, "attended": True}],
+            "status": "Realizada",
+        },
         headers=auth_headers(client, email="leaderfaro@example.com"),
     )
     assert response.status_code == 200
@@ -494,22 +570,41 @@ def test_faro_leader_can_manage_own_house_attendance(client, db_session):
 
 def test_faro_leader_cannot_manage_other_house_attendance(client, db_session):
     seed_admin(db_session)
-    leader_user = seed_user_with_role(db_session, role="coordinador", email="leaderx@example.com")
-    leader_member = models.Member(first_name="Lider", last_name="X", email="leaderx@example.com", user_id=leader_user.id)
-    attendee = models.Member(first_name="Asistente", last_name="Dos", email="asistente2@example.com")
-    season = models.FaroSeason(name="Temporada X", start_date=datetime(2026, 5, 1).date(), end_date=datetime(2026, 6, 30).date())
+    leader_user = seed_user_with_role(
+        db_session, role="coordinador", email="leaderx@example.com"
+    )
+    leader_member = models.Member(
+        first_name="Lider",
+        last_name="X",
+        email="leaderx@example.com",
+        user_id=leader_user.id,
+    )
+    attendee = models.Member(
+        first_name="Asistente", last_name="Dos", email="asistente2@example.com"
+    )
+    season = models.FaroSeason(
+        name="Temporada X",
+        start_date=datetime(2026, 5, 1).date(),
+        end_date=datetime(2026, 6, 30).date(),
+    )
     db_session.add_all([leader_member, attendee, season])
     db_session.commit()
     db_session.refresh(leader_member)
     db_session.refresh(attendee)
     db_session.refresh(season)
 
-    my_house = models.GloryHouse(code="FARO-MIO", name="Faro Mio", leader_id=leader_member.id, status="Activo")
+    my_house = models.GloryHouse(
+        code="FARO-MIO", name="Faro Mio", leader_id=leader_member.id, status="Activo"
+    )
     other_house = models.GloryHouse(code="FARO-OTRO", name="Faro Otro", status="Activo")
     db_session.add_all([my_house, other_house])
     db_session.commit()
     db_session.refresh(other_house)
-    db_session.add(models.GloryHouseMember(glory_house_id=other_house.id, member_id=attendee.id, role="asistente"))
+    db_session.add(
+        models.GloryHouseMember(
+            glory_house_id=other_house.id, member_id=attendee.id, role="asistente"
+        )
+    )
     db_session.add(
         models.GloryHouseSession(
             glory_house_id=other_house.id,
@@ -519,7 +614,11 @@ def test_faro_leader_cannot_manage_other_house_attendance(client, db_session):
         )
     )
     db_session.commit()
-    session = db_session.query(models.GloryHouseSession).filter(models.GloryHouseSession.glory_house_id == other_house.id).first()
+    session = (
+        db_session.query(models.GloryHouseSession)
+        .filter(models.GloryHouseSession.glory_house_id == other_house.id)
+        .first()
+    )
 
     response = client.post(
         f"/api/evangelism/faro/sessions/{session.id}/attendance",
@@ -531,15 +630,29 @@ def test_faro_leader_cannot_manage_other_house_attendance(client, db_session):
 
 def test_faro_assistant_can_update_own_house_attendees_only(client, db_session):
     seed_admin(db_session)
-    assistant_user = seed_user_with_role(db_session, role="coordinador", email="assistantfaro@example.com")
-    assistant_member = models.Member(first_name="Co", last_name="Lider", email="assistantfaro@example.com", user_id=assistant_user.id)
-    attendee = models.Member(first_name="Nueva", last_name="Persona", email="nueva@example.com")
+    assistant_user = seed_user_with_role(
+        db_session, role="coordinador", email="assistantfaro@example.com"
+    )
+    assistant_member = models.Member(
+        first_name="Co",
+        last_name="Lider",
+        email="assistantfaro@example.com",
+        user_id=assistant_user.id,
+    )
+    attendee = models.Member(
+        first_name="Nueva", last_name="Persona", email="nueva@example.com"
+    )
     db_session.add_all([assistant_member, attendee])
     db_session.commit()
     db_session.refresh(assistant_member)
     db_session.refresh(attendee)
 
-    house = models.GloryHouse(code="FARO-AST", name="Faro Assistant", assistant_id=assistant_member.id, status="Activo")
+    house = models.GloryHouse(
+        code="FARO-AST",
+        name="Faro Assistant",
+        assistant_id=assistant_member.id,
+        status="Activo",
+    )
     db_session.add(house)
     db_session.commit()
     db_session.refresh(house)
@@ -569,7 +682,9 @@ def test_evangelism_event_detail_route(client, db_session):
     )
     db_session.add(event)
     db_session.flush()
-    member = models.Member(first_name="Laura", last_name="Perez", email="laura@example.com")
+    member = models.Member(
+        first_name="Laura", last_name="Perez", email="laura@example.com"
+    )
     db_session.add(member)
     db_session.flush()
     db_session.add(
@@ -583,7 +698,9 @@ def test_evangelism_event_detail_route(client, db_session):
     db_session.commit()
     db_session.refresh(event)
 
-    response = client.get(f"/api/evangelism/events/{event.id}", headers=auth_headers(client))
+    response = client.get(
+        f"/api/evangelism/events/{event.id}", headers=auth_headers(client)
+    )
 
     assert response.status_code == 200
     data = response.json()
@@ -595,7 +712,9 @@ def test_evangelism_event_detail_route(client, db_session):
     assert data["status"] == "SCHEDULED"
 
 
-def test_evangelism_bulk_attendance_syncs_present_and_absent_members(client, db_session):
+def test_evangelism_bulk_attendance_syncs_present_and_absent_members(
+    client, db_session
+):
     seed_admin(db_session)
     event = models.CrmEvent(
         name="Culto de Jueves",
@@ -606,27 +725,33 @@ def test_evangelism_bulk_attendance_syncs_present_and_absent_members(client, db_
     db_session.add(event)
     db_session.flush()
 
-    member_one = models.Member(first_name="Sara", last_name="Lopez", email="sara@example.com")
-    member_two = models.Member(first_name="David", last_name="Ruiz", email="david@example.com")
+    member_one = models.Member(
+        first_name="Sara", last_name="Lopez", email="sara@example.com"
+    )
+    member_two = models.Member(
+        first_name="David", last_name="Ruiz", email="david@example.com"
+    )
     db_session.add_all([member_one, member_two])
     db_session.flush()
 
-    db_session.add_all([
-        models.EventAttendance(
-            event_id=event.id,
-            session_date=event.event_date.date(),
-            member_id=member_one.id,
-            attended=True,
-            status="present",
-        ),
-        models.EventAttendance(
-            event_id=event.id,
-            session_date=event.event_date.date(),
-            member_id=member_two.id,
-            attended=True,
-            status="present",
-        ),
-    ])
+    db_session.add_all(
+        [
+            models.EventAttendance(
+                event_id=event.id,
+                session_date=event.event_date.date(),
+                member_id=member_one.id,
+                attended=True,
+                status="present",
+            ),
+            models.EventAttendance(
+                event_id=event.id,
+                session_date=event.event_date.date(),
+                member_id=member_two.id,
+                attended=True,
+                status="present",
+            ),
+        ]
+    )
     db_session.commit()
 
     response = client.post(
@@ -671,7 +796,9 @@ def test_evangelism_bulk_attendance_rejects_cancelled_event(client, db_session):
         location="Templo principal",
         status="CANCELLED",
     )
-    member = models.Member(first_name="Rocio", last_name="Marin", email="rocio@example.com")
+    member = models.Member(
+        first_name="Rocio", last_name="Marin", email="rocio@example.com"
+    )
     db_session.add_all([event, member])
     db_session.commit()
     db_session.refresh(event)
@@ -688,7 +815,10 @@ def test_evangelism_bulk_attendance_rejects_cancelled_event(client, db_session):
     )
 
     assert response.status_code == 409
-    assert response.json()["detail"] == "No se puede registrar asistencia en eventos cancelados"
+    assert (
+        response.json()["detail"]
+        == "No se puede registrar asistencia en eventos cancelados"
+    )
 
 
 def test_evangelism_bulk_attendance_rejects_invalid_session_date(client, db_session):
@@ -699,7 +829,9 @@ def test_evangelism_bulk_attendance_rejects_invalid_session_date(client, db_sess
         event_date=datetime(2026, 6, 14, 19, 0, 0),
         location="Templo principal",
     )
-    member = models.Member(first_name="Luis", last_name="Marin", email="luis.marin@example.com")
+    member = models.Member(
+        first_name="Luis", last_name="Marin", email="luis.marin@example.com"
+    )
     db_session.add_all([event, member])
     db_session.commit()
     db_session.refresh(event)
@@ -747,8 +879,12 @@ def test_evangelism_bulk_attendance_rejects_member_ids_not_list(client, db_sessi
 
 def test_evangelism_event_session_supports_multiple_expected_roles(client, db_session):
     seed_admin(db_session)
-    leader_role = models.RoleDefinition(name="Lider", color="#111111", is_leadership=True)
-    usher_role = models.RoleDefinition(name="Ujier", color="#222222", is_leadership=False)
+    leader_role = models.RoleDefinition(
+        name="Lider", color="#111111", is_leadership=True
+    )
+    usher_role = models.RoleDefinition(
+        name="Ujier", color="#222222", is_leadership=False
+    )
     db_session.add_all([leader_role, usher_role])
     db_session.flush()
 
@@ -763,9 +899,24 @@ def test_evangelism_event_session_supports_multiple_expected_roles(client, db_se
     db_session.add(event)
     db_session.flush()
 
-    leader = models.Member(first_name="Paula", last_name="Rios", email="paula@example.com", church_role="Lider")
-    usher = models.Member(first_name="Mario", last_name="Diaz", email="mario@example.com", church_role="Ujier")
-    outsider = models.Member(first_name="Luisa", last_name="Vega", email="luisa@example.com", church_role="Visitante")
+    leader = models.Member(
+        first_name="Paula",
+        last_name="Rios",
+        email="paula@example.com",
+        church_role="Lider",
+    )
+    usher = models.Member(
+        first_name="Mario",
+        last_name="Diaz",
+        email="mario@example.com",
+        church_role="Ujier",
+    )
+    outsider = models.Member(
+        first_name="Luisa",
+        last_name="Vega",
+        email="luisa@example.com",
+        church_role="Visitante",
+    )
     db_session.add_all([leader, usher, outsider])
     db_session.flush()
 
@@ -805,9 +956,24 @@ def test_evangelism_event_session_supports_manual_expected_members(client, db_se
     db_session.add(event)
     db_session.flush()
 
-    expected_one = models.Member(first_name="Elena", last_name="Mora", email="elena@example.com", church_role="Lider")
-    expected_two = models.Member(first_name="Carlos", last_name="Paz", email="carlos@example.com", church_role="Ujier")
-    outsider = models.Member(first_name="Andrea", last_name="Sol", email="andrea@example.com", church_role="Maestra")
+    expected_one = models.Member(
+        first_name="Elena",
+        last_name="Mora",
+        email="elena@example.com",
+        church_role="Lider",
+    )
+    expected_two = models.Member(
+        first_name="Carlos",
+        last_name="Paz",
+        email="carlos@example.com",
+        church_role="Ujier",
+    )
+    outsider = models.Member(
+        first_name="Andrea",
+        last_name="Sol",
+        email="andrea@example.com",
+        church_role="Maestra",
+    )
     db_session.add_all([expected_one, expected_two, outsider])
     db_session.flush()
 
@@ -849,7 +1015,9 @@ def test_crm_prayer_request_detail_route(client, db_session):
     db_session.commit()
     db_session.refresh(prayer)
 
-    response = client.get(f"/api/evangelism/prayer-requests/{prayer.id}", headers=auth_headers(client))
+    response = client.get(
+        f"/api/evangelism/prayer-requests/{prayer.id}", headers=auth_headers(client)
+    )
 
     assert response.status_code == 200
     data = response.json()
@@ -879,7 +1047,9 @@ def test_crm_volunteer_detail_route(client, db_session):
     db_session.add(skill)
     db_session.flush()
     db_session.execute(
-        models.member_volunteer_skills.insert().values(member_id=member.id, skill_id=skill.id)
+        models.member_volunteer_skills.insert().values(
+            member_id=member.id, skill_id=skill.id
+        )
     )
 
     first_shift = models.VolunteerShift(
@@ -901,7 +1071,9 @@ def test_crm_volunteer_detail_route(client, db_session):
     db_session.add_all([first_shift, second_shift])
     db_session.commit()
 
-    response = client.get(f"/api/evangelism/volunteers/{member.id}", headers=auth_headers(client))
+    response = client.get(
+        f"/api/evangelism/volunteers/{member.id}", headers=auth_headers(client)
+    )
 
     assert response.status_code == 200
     data = response.json()
@@ -916,8 +1088,12 @@ def test_crm_volunteer_detail_route(client, db_session):
 
 def test_crm_roles_route_returns_role_definitions(client, db_session):
     seed_admin(db_session)
-    db_session.add(models.RoleDefinition(name="Ujier", color="#123456", is_leadership=False))
-    db_session.add(models.RoleDefinition(name="Lider", color="#654321", is_leadership=True))
+    db_session.add(
+        models.RoleDefinition(name="Ujier", color="#123456", is_leadership=False)
+    )
+    db_session.add(
+        models.RoleDefinition(name="Lider", color="#654321", is_leadership=True)
+    )
     db_session.commit()
 
     response = client.get("/api/crm/roles", headers=auth_headers(client))
@@ -953,7 +1129,9 @@ def test_evangelism_events_requires_pastor_or_admin(client, db_session):
     email = f"student-{uuid.uuid4().hex[:8]}@example.com"
     seed_user_with_role(db_session, role="estudiante", email=email)
 
-    response = client.get("/api/evangelism/events/", headers=auth_headers(client, email=email))
+    response = client.get(
+        "/api/evangelism/events/", headers=auth_headers(client, email=email)
+    )
 
     assert response.status_code == 403
 
@@ -973,7 +1151,10 @@ def test_evangelism_scanner_requires_pastor_or_admin(client, db_session):
 def test_evangelism_events_allows_pastor_role(client, db_session):
     seed_user_with_role(db_session, role="pastor", email="pastor@example.com")
 
-    response = client.get("/api/evangelism/events/", headers=auth_headers(client, email="pastor@example.com"))
+    response = client.get(
+        "/api/evangelism/events/",
+        headers=auth_headers(client, email="pastor@example.com"),
+    )
 
     assert response.status_code == 200
     assert isinstance(response.json(), list)

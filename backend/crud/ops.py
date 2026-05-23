@@ -1,11 +1,12 @@
 """Operations CRUD: church_locations, social_channels, system_variables."""
+
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend import models
-from pydantic import BaseModel
-
 
 # ── Schemas (inline — lightweight) ─────────────────────────────────────────
+
 
 class ChurchLocationCreate(BaseModel):
     name: str
@@ -47,6 +48,7 @@ class SystemVariableUpdate(BaseModel):
 
 # ── Church Locations ────────────────────────────────────────────────────────
 
+
 def get_church_locations(db: Session, only_active: bool = False):
     query = db.query(models.ChurchLocation)
     if only_active:
@@ -55,7 +57,11 @@ def get_church_locations(db: Session, only_active: bool = False):
 
 
 def get_church_location(db: Session, location_id: int):
-    return db.query(models.ChurchLocation).filter(models.ChurchLocation.id == location_id).first()
+    return (
+        db.query(models.ChurchLocation)
+        .filter(models.ChurchLocation.id == location_id)
+        .first()
+    )
 
 
 def create_church_location(db: Session, payload: ChurchLocationCreate):
@@ -66,8 +72,14 @@ def create_church_location(db: Session, payload: ChurchLocationCreate):
     return row
 
 
-def update_church_location(db: Session, location_id: int, payload: ChurchLocationUpdate):
-    row = db.query(models.ChurchLocation).filter(models.ChurchLocation.id == location_id).first()
+def update_church_location(
+    db: Session, location_id: int, payload: ChurchLocationUpdate
+):
+    row = (
+        db.query(models.ChurchLocation)
+        .filter(models.ChurchLocation.id == location_id)
+        .first()
+    )
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -78,7 +90,11 @@ def update_church_location(db: Session, location_id: int, payload: ChurchLocatio
 
 
 def delete_church_location(db: Session, location_id: int) -> bool:
-    row = db.query(models.ChurchLocation).filter(models.ChurchLocation.id == location_id).first()
+    row = (
+        db.query(models.ChurchLocation)
+        .filter(models.ChurchLocation.id == location_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -88,6 +104,7 @@ def delete_church_location(db: Session, location_id: int) -> bool:
 
 # ── Social Channels ─────────────────────────────────────────────────────────
 
+
 def get_social_channels(db: Session, only_visible: bool = False):
     query = db.query(models.SocialChannel)
     if only_visible:
@@ -96,7 +113,11 @@ def get_social_channels(db: Session, only_visible: bool = False):
 
 
 def get_social_channel(db: Session, channel_id: int):
-    return db.query(models.SocialChannel).filter(models.SocialChannel.id == channel_id).first()
+    return (
+        db.query(models.SocialChannel)
+        .filter(models.SocialChannel.id == channel_id)
+        .first()
+    )
 
 
 def create_social_channel(db: Session, payload: SocialChannelCreate):
@@ -108,7 +129,11 @@ def create_social_channel(db: Session, payload: SocialChannelCreate):
 
 
 def update_social_channel(db: Session, channel_id: int, payload: SocialChannelUpdate):
-    row = db.query(models.SocialChannel).filter(models.SocialChannel.id == channel_id).first()
+    row = (
+        db.query(models.SocialChannel)
+        .filter(models.SocialChannel.id == channel_id)
+        .first()
+    )
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -119,7 +144,11 @@ def update_social_channel(db: Session, channel_id: int, payload: SocialChannelUp
 
 
 def delete_social_channel(db: Session, channel_id: int) -> bool:
-    row = db.query(models.SocialChannel).filter(models.SocialChannel.id == channel_id).first()
+    row = (
+        db.query(models.SocialChannel)
+        .filter(models.SocialChannel.id == channel_id)
+        .first()
+    )
     if not row:
         return False
     db.delete(row)
@@ -129,15 +158,20 @@ def delete_social_channel(db: Session, channel_id: int) -> bool:
 
 # ── System Variables ────────────────────────────────────────────────────────
 
+
 def get_system_variables(db: Session):
     return db.query(models.SystemVariable).all()
 
 
 def get_system_variable(db: Session, key: str):
-    return db.query(models.SystemVariable).filter(models.SystemVariable.key == key).first()
+    return (
+        db.query(models.SystemVariable).filter(models.SystemVariable.key == key).first()
+    )
 
 
-def get_system_variable_value(db: Session, key: str, default: str | None = None) -> str | None:
+def get_system_variable_value(
+    db: Session, key: str, default: str | None = None
+) -> str | None:
     row = get_system_variable(db, key)
     return row.value if row else default
 
@@ -151,7 +185,9 @@ def create_system_variable(db: Session, payload: SystemVariableCreate):
 
 
 def update_system_variable(db: Session, key: str, payload: SystemVariableUpdate):
-    row = db.query(models.SystemVariable).filter(models.SystemVariable.key == key).first()
+    row = (
+        db.query(models.SystemVariable).filter(models.SystemVariable.key == key).first()
+    )
     if not row:
         return None
     for field, value in payload.model_dump(exclude_unset=True).items():
@@ -161,7 +197,9 @@ def update_system_variable(db: Session, key: str, payload: SystemVariableUpdate)
     return row
 
 
-def upsert_system_variable(db: Session, key: str, value: str, description: str | None = None):
+def upsert_system_variable(
+    db: Session, key: str, value: str, description: str | None = None
+):
     row = get_system_variable(db, key)
     if row:
         row.value = value
@@ -176,7 +214,9 @@ def upsert_system_variable(db: Session, key: str, value: str, description: str |
 
 
 def delete_system_variable(db: Session, key: str) -> bool:
-    row = db.query(models.SystemVariable).filter(models.SystemVariable.key == key).first()
+    row = (
+        db.query(models.SystemVariable).filter(models.SystemVariable.key == key).first()
+    )
     if not row:
         return False
     db.delete(row)

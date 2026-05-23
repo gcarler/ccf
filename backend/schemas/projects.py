@@ -186,12 +186,12 @@ class Project(ProjectBase):
     @classmethod
     def model_validate(cls, obj, **kwargs):
         # Map ORM activity_logs relationship -> activities field
-        if hasattr(obj, 'activity_logs') and not isinstance(obj, dict):
-            obj.__dict__.setdefault('activities', list(obj.activity_logs or []))
+        if hasattr(obj, "activity_logs") and not isinstance(obj, dict):
+            obj.__dict__.setdefault("activities", list(obj.activity_logs or []))
         instance = super().model_validate(obj, **kwargs)
         # Calculate progress from tasks if not set on model
-        if hasattr(obj, 'tasks') and obj.tasks:
-            done = sum(1 for t in obj.tasks if getattr(t, 'status', '') == 'done')
+        if hasattr(obj, "tasks") and obj.tasks:
+            done = sum(1 for t in obj.tasks if getattr(t, "status", "") == "done")
             instance.progress_percent = round((done / len(obj.tasks)) * 100)
         return instance
 

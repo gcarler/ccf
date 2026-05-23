@@ -6,7 +6,9 @@ ports = [5432, 5433]
 for port in ports:
     for pwd in passwords:
         try:
-            con = pg8000.native.Connection(user="postgres", password=pwd, host="localhost", port=port)
+            con = pg8000.native.Connection(
+                user="postgres", password=pwd, host="localhost", port=port
+            )
             print(f"SUCCESS on port {port} with password '{pwd}'")
             con.close()
             break

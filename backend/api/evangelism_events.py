@@ -14,16 +14,14 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import normalize_role, require_active_user, require_pastor_or_admin
+from backend.api.evangelism_shared import (ABSENTEES_PREVIEW_LIMIT,
+                                           get_expected_members_for_event,
+                                           normalize_role_scope_payload,
+                                           parse_session_date, utc_now)
+from backend.auth import (normalize_role, require_active_user,
+                          require_pastor_or_admin)
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
-from backend.api.evangelism_shared import (
-    ABSENTEES_PREVIEW_LIMIT,
-    get_expected_members_for_event,
-    normalize_role_scope_payload,
-    parse_session_date,
-    utc_now,
-)
 
 router = APIRouter()
 
@@ -36,7 +34,9 @@ def list_events(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     if normalize_role(str(current_user.role)) not in {"admin", "pastor"}:
-        raise HTTPException(status_code=403, detail="Permisos insuficientes. Se requiere: crm:manage")
+        raise HTTPException(
+            status_code=403, detail="Permisos insuficientes. Se requiere: crm:manage"
+        )
     return crud.get_crm_events(db, skip=skip, limit=limit)
 
 
@@ -46,9 +46,17 @@ def create_event(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    payload = schemas.CrmEventCreate(**normalize_role_scope_payload(payload.model_dump()))
+    payload = schemas.CrmEventCreate(
+        **normalize_role_scope_payload(payload.model_dump())
+    )
     event = crud.create_crm_event(db, payload)
-    record_admin_action(db, current_user, action="create_event", resource_type="event", resource_id=str(event.id))
+    record_admin_action(
+        db,
+        current_user,
+        action="create_event",
+        resource_type="event",
+        resource_id=str(event.id),
+    )
     return event
 
 
@@ -88,7 +96,13 @@ def update_event(
             setattr(event, field, val)
     db.commit()
     db.refresh(event)
-    record_admin_action(db, current_user, action="update_event", resource_type="event", resource_id=str(event.id))
+    record_admin_action(
+        db,
+        current_user,
+        action="update_event",
+        resource_type="event",
+        resource_id=str(event.id),
+    )
     return {"id": event.id, "name": event.name, "status": "updated"}
 
 
@@ -103,7 +117,13 @@ def delete_event(
         raise HTTPException(status_code=404, detail="Event not found")
     db.delete(event)
     db.commit()
-    record_admin_action(db, current_user, action="delete_event", resource_type="event", resource_id=str(event_id))
+    record_admin_action(
+        db,
+        current_user,
+        action="delete_event",
+        resource_type="event",
+        resource_id=str(event_id),
+    )
     return {"status": "deleted", "id": event_id}
 
 
@@ -117,9 +137,17 @@ def get_event_detail(
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
-    attendees_count = db.query(models.EventAttendance).filter(models.EventAttendance.event_id == event_id).count()
+    attendees_count = (
+        db.query(models.EventAttendance)
+        .filter(models.EventAttendance.event_id == event_id)
+        .count()
+    )
     event_status = event.status or "SCHEDULED"
-    if event_status == "SCHEDULED" and event.event_date and event.event_date < utc_now():
+    if (
+        event_status == "SCHEDULED"
+        and event.event_date
+        and event.event_date < utc_now()
+    ):
         event_status = "COMPLETED"
 
     return {
@@ -162,7 +190,11 @@ def get_event_attendance_report(
         counts[status_label] = counts.get(status_label, 0) + 1
         payload = {
             "member_id": row.member_id,
-            "member_name": f"{row.member.first_name} {row.member.last_name}" if row.member else "Miembro",
+            "member_name": (
+                f"{row.member.first_name} {row.member.last_name}"
+                if row.member
+                else "Miembro"
+            ),
             "status": status_label,
             "session_date": row.session_date.isoformat() if row.session_date else None,
             "check_in_at": row.scanned_at.isoformat() if row.scanned_at else None,
@@ -196,15 +228,24 @@ def get_member_attendance_history(
         raise HTTPException(status_code=404, detail="Member not found")
 
     is_self = member.user_id == current_user.id
-    is_staff = normalize_role(str(current_user.role)) in ["admin", "pastor", "coordinador"]
+    is_staff = normalize_role(str(current_user.role)) in [
+        "admin",
+        "pastor",
+        "coordinador",
+    ]
     if not is_self and not is_staff:
-        raise HTTPException(status_code=403, detail="No autorizado para ver este historial")
+        raise HTTPException(
+            status_code=403, detail="No autorizado para ver este historial"
+        )
 
     rows = (
         db.query(models.EventAttendance)
         .filter(models.EventAttendance.member_id == member_id)
         .join(models.CrmEvent)
-        .order_by(models.CrmEvent.event_date.desc().nullslast(), models.CrmEvent.created_at.desc())
+        .order_by(
+            models.CrmEvent.event_date.desc().nullslast(),
+            models.CrmEvent.created_at.desc(),
+        )
         .all()
     )
 
@@ -214,8 +255,14 @@ def get_member_attendance_history(
             {
                 "event_id": row.event_id,
                 "event_name": row.event.name if row.event else None,
-                "event_date": row.event.event_date.isoformat() if row.event and row.event.event_date else None,
-                "session_date": row.session_date.isoformat() if row.session_date else None,
+                "event_date": (
+                    row.event.event_date.isoformat()
+                    if row.event and row.event.event_date
+                    else None
+                ),
+                "session_date": (
+                    row.session_date.isoformat() if row.session_date else None
+                ),
                 "status": "present" if row.attended else "absent",
                 "check_in_at": row.scanned_at.isoformat() if row.scanned_at else None,
             }
@@ -247,7 +294,9 @@ def register_bulk_attendance(
     event_id = payload.get("event_id")
     member_ids = payload.get("member_ids", [])
     try:
-        session_date = parse_session_date(payload.get("attendance_date") or payload.get("session_date"))
+        session_date = parse_session_date(
+            payload.get("attendance_date") or payload.get("session_date")
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     if not event_id:
@@ -259,7 +308,10 @@ def register_bulk_attendance(
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     if str(event.status or "").upper() == "CANCELLED":
-        raise HTTPException(status_code=409, detail="No se puede registrar asistencia en eventos cancelados")
+        raise HTTPException(
+            status_code=409,
+            detail="No se puede registrar asistencia en eventos cancelados",
+        )
 
     normalized_member_ids: list[int] = []
     invalid_member_ids: list[object] = []
@@ -271,7 +323,12 @@ def register_bulk_attendance(
 
     normalized_member_ids = list(dict.fromkeys(normalized_member_ids))
     valid_member_ids = (
-        {row[0] for row in db.query(models.Member.id).filter(models.Member.id.in_(normalized_member_ids)).all()}
+        {
+            row[0]
+            for row in db.query(models.Member.id)
+            .filter(models.Member.id.in_(normalized_member_ids))
+            .all()
+        }
         if normalized_member_ids
         else set()
     )
@@ -280,7 +337,10 @@ def register_bulk_attendance(
 
     existing_rows = (
         db.query(models.EventAttendance)
-        .filter(models.EventAttendance.event_id == event_id, models.EventAttendance.session_date == session_date)
+        .filter(
+            models.EventAttendance.event_id == event_id,
+            models.EventAttendance.session_date == session_date,
+        )
         .all()
     )
     existing_by_member_id = {row.member_id: row for row in existing_rows}
@@ -384,24 +444,34 @@ def get_event_session_detail(
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
-    assignments_db = db.query(models.EventAssignment).filter(
-        models.EventAssignment.event_id == event_id,
-        models.EventAssignment.session_date == session_date,
-    ).all()
+    assignments_db = (
+        db.query(models.EventAssignment)
+        .filter(
+            models.EventAssignment.event_id == event_id,
+            models.EventAssignment.session_date == session_date,
+        )
+        .all()
+    )
     assignments = [
         {
             "id": a.id,
             "member_id": a.member_id,
             "role": a.role,
-            "member_name": f"{a.member.first_name} {a.member.last_name}" if a.member else "Unknown",
+            "member_name": (
+                f"{a.member.first_name} {a.member.last_name}" if a.member else "Unknown"
+            ),
         }
         for a in assignments_db
     ]
 
-    attendances_db = db.query(models.EventAttendance).filter(
-        models.EventAttendance.event_id == event_id,
-        models.EventAttendance.session_date == session_date,
-    ).all()
+    attendances_db = (
+        db.query(models.EventAttendance)
+        .filter(
+            models.EventAttendance.event_id == event_id,
+            models.EventAttendance.session_date == session_date,
+        )
+        .all()
+    )
 
     roles_db = db.query(models.RoleDefinition).all()
     roles_map = {r.name: r for r in roles_db}
@@ -461,7 +531,11 @@ def get_event_session_detail(
         "absentees_truncated": total_absentees > ABSENTEES_PREVIEW_LIMIT,
         "total_attendance": len(attendee_list),
         "total_expected": len(expected_members),
-        "attendance_rate": round(len(attendee_list) / len(expected_members) * 100, 1) if expected_members else 0,
+        "attendance_rate": (
+            round(len(attendee_list) / len(expected_members) * 100, 1)
+            if expected_members
+            else 0
+        ),
     }
 
 
@@ -496,7 +570,13 @@ def sync_event_assignments(
 
 @router.get("/roles")
 def get_roles(db: Session = Depends(get_db)):
-    return db.query(models.RoleDefinition).order_by(models.RoleDefinition.is_leadership.desc(), models.RoleDefinition.name.asc()).all()
+    return (
+        db.query(models.RoleDefinition)
+        .order_by(
+            models.RoleDefinition.is_leadership.desc(), models.RoleDefinition.name.asc()
+        )
+        .all()
+    )
 
 
 @router.post("/roles")
@@ -505,7 +585,11 @@ def create_role(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    exists = db.query(models.RoleDefinition).filter(models.RoleDefinition.name == payload.name).first()
+    exists = (
+        db.query(models.RoleDefinition)
+        .filter(models.RoleDefinition.name == payload.name)
+        .first()
+    )
     if exists:
         raise HTTPException(status_code=400, detail="El rol ya existe")
     role = models.RoleDefinition(**payload.model_dump())
@@ -522,19 +606,30 @@ def update_role(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    role = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == role_id).first()
+    role = (
+        db.query(models.RoleDefinition)
+        .filter(models.RoleDefinition.id == role_id)
+        .first()
+    )
     if not role:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
 
     if payload.name is not None:
         exists = (
             db.query(models.RoleDefinition)
-            .filter(models.RoleDefinition.name == payload.name, models.RoleDefinition.id != role_id)
+            .filter(
+                models.RoleDefinition.name == payload.name,
+                models.RoleDefinition.id != role_id,
+            )
             .first()
         )
         if exists:
-            raise HTTPException(status_code=400, detail="Ya existe otro rol con ese nombre")
-        db.query(models.Member).filter(models.Member.church_role == role.name).update({"church_role": payload.name})
+            raise HTTPException(
+                status_code=400, detail="Ya existe otro rol con ese nombre"
+            )
+        db.query(models.Member).filter(models.Member.church_role == role.name).update(
+            {"church_role": payload.name}
+        )
         role.name = payload.name
 
     if payload.color is not None:
@@ -555,23 +650,41 @@ def delete_role(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     if fallback_id == role_id:
-        raise HTTPException(status_code=400, detail="El rol de reemplazo no puede ser el mismo rol a eliminar")
+        raise HTTPException(
+            status_code=400,
+            detail="El rol de reemplazo no puede ser el mismo rol a eliminar",
+        )
 
-    role = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == role_id).first()
-    fallback = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == fallback_id).first()
+    role = (
+        db.query(models.RoleDefinition)
+        .filter(models.RoleDefinition.id == role_id)
+        .first()
+    )
+    fallback = (
+        db.query(models.RoleDefinition)
+        .filter(models.RoleDefinition.id == fallback_id)
+        .first()
+    )
     if not role:
         raise HTTPException(status_code=404, detail="Rol a eliminar no encontrado")
     if not fallback:
         raise HTTPException(status_code=400, detail="Rol de reemplazo no valido")
 
-    db.query(models.Member).filter(models.Member.church_role == role.name).update({"church_role": fallback.name})
+    db.query(models.Member).filter(models.Member.church_role == role.name).update(
+        {"church_role": fallback.name}
+    )
     db.delete(role)
     db.commit()
-    return {"success": True, "message": "Rol eliminado y miembros reasignados correctamente"}
+    return {
+        "success": True,
+        "message": "Rol eliminado y miembros reasignados correctamente",
+    }
 
 
 @router.put("/events/{event_id}/audience")
-def update_event_audience(event_id: int, payload: EventAudienceUpdate, db: Session = Depends(get_db)):
+def update_event_audience(
+    event_id: int, payload: EventAudienceUpdate, db: Session = Depends(get_db)
+):
     event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
@@ -646,13 +759,21 @@ def get_global_event_analytics(
     series = []
     for key in sorted(bucket_map.keys()):
         bucket = bucket_map[key]
-        bucket["avg"] = round(bucket["total"] / bucket["sessions"]) if bucket["sessions"] > 0 else 0
+        bucket["avg"] = (
+            round(bucket["total"] / bucket["sessions"]) if bucket["sessions"] > 0 else 0
+        )
         series.append(bucket)
 
     total_attendance = sum(bucket["total"] for bucket in bucket_map.values())
     total_sessions = sum(bucket["sessions"] for bucket in bucket_map.values())
-    avg_per_session = round(total_attendance / total_sessions) if total_sessions > 0 else 0
-    peak_period = max(series, key=lambda item: item["total"]) if series else {"label": "N/A", "total": 0}
+    avg_per_session = (
+        round(total_attendance / total_sessions) if total_sessions > 0 else 0
+    )
+    peak_period = (
+        max(series, key=lambda item: item["total"])
+        if series
+        else {"label": "N/A", "total": 0}
+    )
 
     trend = 0
     if len(series) >= 2:
@@ -686,10 +807,14 @@ def get_events_dashboard_stats(db: Session = Depends(get_db)):
         )
         if latest_attendance:
             day = latest_attendance.session_date
-            attendances = db.query(models.EventAttendance).filter(
-                models.EventAttendance.event_id == event.id,
-                models.EventAttendance.session_date == day,
-            ).all()
+            attendances = (
+                db.query(models.EventAttendance)
+                .filter(
+                    models.EventAttendance.event_id == event.id,
+                    models.EventAttendance.session_date == day,
+                )
+                .all()
+            )
             attended = len(attendances)
             expected = len(get_expected_members_for_event(db, event))
             rate = round((attended / expected) * 100, 1) if expected > 0 else 0
@@ -704,7 +829,13 @@ def get_events_dashboard_stats(db: Session = Depends(get_db)):
             )
         else:
             stats.append(
-                {"event_id": event.id, "latest_session": None, "attended": 0, "expected": 0, "rate": 0}
+                {
+                    "event_id": event.id,
+                    "latest_session": None,
+                    "attended": 0,
+                    "expected": 0,
+                    "rate": 0,
+                }
             )
 
     return stats
@@ -716,7 +847,11 @@ def get_event_analytics(event_id: int, db: Session = Depends(get_db)):
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
-    attendances = db.query(models.EventAttendance).filter(models.EventAttendance.event_id == event_id).all()
+    attendances = (
+        db.query(models.EventAttendance)
+        .filter(models.EventAttendance.event_id == event_id)
+        .all()
+    )
     sessions_by_month = collections.defaultdict(set)
     attendees_by_session = collections.defaultdict(int)
 
@@ -735,13 +870,17 @@ def get_event_analytics(event_id: int, db: Session = Depends(get_db)):
         sessions = sessions_by_month[month]
         total_att_month = sum(attendees_by_session[session] for session in sessions)
         avg_att = round(total_att_month / len(sessions)) if sessions else 0
-        monthly_data.append({"month": month, "avg_attendance": avg_att, "total_sessions": len(sessions)})
+        monthly_data.append(
+            {"month": month, "avg_attendance": avg_att, "total_sessions": len(sessions)}
+        )
         total_sessions += len(sessions)
         total_attendance_all += total_att_month
         if avg_att > peak_month["avg"]:
             peak_month = {"month": month, "avg": avg_att}
 
-    historical_avg = round(total_attendance_all / total_sessions) if total_sessions > 0 else 0
+    historical_avg = (
+        round(total_attendance_all / total_sessions) if total_sessions > 0 else 0
+    )
     trend = 0
     if len(monthly_data) >= 2:
         last = monthly_data[-1]["avg_attendance"]
@@ -760,7 +899,12 @@ def get_event_analytics(event_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/events/{event_id}/sessions/{session_date}/visitors")
-def fast_checkin_visitor(event_id: int, session_date: str, visitor: VisitorCreate, db: Session = Depends(get_db)):
+def fast_checkin_visitor(
+    event_id: int,
+    session_date: str,
+    visitor: VisitorCreate,
+    db: Session = Depends(get_db),
+):
     event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
@@ -768,10 +912,16 @@ def fast_checkin_visitor(event_id: int, session_date: str, visitor: VisitorCreat
     try:
         session_day = datetime.datetime.strptime(session_date, "%Y-%m-%d").date()
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date format, expected YYYY-MM-DD")
+        raise HTTPException(
+            status_code=400, detail="Invalid date format, expected YYYY-MM-DD"
+        )
 
     role_name = "Visitante Servicios"
-    role = db.query(models.RoleDefinition).filter(models.RoleDefinition.name == role_name).first()
+    role = (
+        db.query(models.RoleDefinition)
+        .filter(models.RoleDefinition.name == role_name)
+        .first()
+    )
     if not role:
         role = models.RoleDefinition(name=role_name, is_system_locked=True)
         db.add(role)
@@ -780,9 +930,13 @@ def fast_checkin_visitor(event_id: int, session_date: str, visitor: VisitorCreat
 
     existing_member = None
     if visitor.email:
-        existing_member = db.query(models.Member).filter(models.Member.email == visitor.email).first()
+        existing_member = (
+            db.query(models.Member).filter(models.Member.email == visitor.email).first()
+        )
     if not existing_member and visitor.phone:
-        existing_member = db.query(models.Member).filter(models.Member.phone == visitor.phone).first()
+        existing_member = (
+            db.query(models.Member).filter(models.Member.phone == visitor.phone).first()
+        )
 
     if existing_member:
         new_visitor = existing_member
@@ -813,8 +967,17 @@ def fast_checkin_visitor(event_id: int, session_date: str, visitor: VisitorCreat
     )
     db.commit()
 
-    message = "Visitante ya registrado. Asistencia actualizada." if already_exists else "Visitante registrado y marcado como presente"
-    return {"status": "success", "visitor_id": new_visitor.id, "message": message, "is_duplicate": already_exists}
+    message = (
+        "Visitante ya registrado. Asistencia actualizada."
+        if already_exists
+        else "Visitante registrado y marcado como presente"
+    )
+    return {
+        "status": "success",
+        "visitor_id": new_visitor.id,
+        "message": message,
+        "is_duplicate": already_exists,
+    }
 
 
 @router.get("/events/{event_id}/sessions/{session_date}/export")
@@ -828,16 +991,22 @@ def export_event_session_report(
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
-    attendances_db = db.query(models.EventAttendance).filter(
-        models.EventAttendance.event_id == event_id,
-        models.EventAttendance.session_date == session_date,
-    ).all()
+    attendances_db = (
+        db.query(models.EventAttendance)
+        .filter(
+            models.EventAttendance.event_id == event_id,
+            models.EventAttendance.session_date == session_date,
+        )
+        .all()
+    )
     attended_ids = {row.member_id for row in attendances_db}
     expected_members = get_expected_members_for_event(db, event)
 
     output = io.StringIO()
     writer = csv.writer(output, delimiter=",", quoting=csv.QUOTE_MINIMAL)
-    writer.writerow(["Nombre", "Apellido", "Telefono", "Email", "Rol", "Estado Asistencia"])
+    writer.writerow(
+        ["Nombre", "Apellido", "Telefono", "Email", "Rol", "Estado Asistencia"]
+    )
 
     for member in expected_members:
         status = "Presente" if member.id in attended_ids else "Ausente"
@@ -871,5 +1040,7 @@ def export_event_session_report(
     return StreamingResponse(
         iter([output.getvalue()]),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename=reporte_asistencia_{event.name}_{session_date}.csv"},
+        headers={
+            "Content-Disposition": f"attachment; filename=reporte_asistencia_{event.name}_{session_date}.csv"
+        },
     )

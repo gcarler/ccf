@@ -1,8 +1,8 @@
-import sys
 import collections
+import sys
 from datetime import datetime
 
-with open('backend/api/crm.py', 'r', encoding='utf-8') as f:
+with open("backend/api/crm.py", "r", encoding="utf-8") as f:
     c = f.read()
 
 analytics_endpoint = """
@@ -69,7 +69,7 @@ def get_event_analytics(event_id: int, db: Session = Depends(get_db)):
 
 if "def get_event_analytics" not in c:
     c += analytics_endpoint
-    with open('backend/api/crm.py', 'w', encoding='utf-8') as f:
+    with open("backend/api/crm.py", "w", encoding="utf-8") as f:
         f.write(c)
     print("Endpoint added!")
 else:

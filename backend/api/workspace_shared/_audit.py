@@ -30,12 +30,18 @@ def _filter_audit_rows(
     filtered = rows
     if action:
         action_norm = action.strip().lower()
-        filtered = [row for row in filtered if str(row.get("action", "")).lower() == action_norm]
+        filtered = [
+            row for row in filtered if str(row.get("action", "")).lower() == action_norm
+        ]
     if feature_id:
-        filtered = [row for row in filtered if str(row.get("feature_id", "")) == feature_id]
+        filtered = [
+            row for row in filtered if str(row.get("feature_id", "")) == feature_id
+        ]
     if actor:
         actor_norm = actor.strip()
-        filtered = [row for row in filtered if str(row.get("updated_by", "")) == actor_norm]
+        filtered = [
+            row for row in filtered if str(row.get("updated_by", "")) == actor_norm
+        ]
     return filtered[-max(1, min(limit, 1000)) :]
 
 
@@ -85,11 +91,15 @@ def _summarize_audit(rows: list[Dict[str, Any]]) -> Dict[str, Any]:
         by_feature[feature_value] = by_feature.get(feature_value, 0) + 1
 
     top_actors = sorted(by_actor.items(), key=lambda item: item[1], reverse=True)[:5]
-    top_features = sorted(by_feature.items(), key=lambda item: item[1], reverse=True)[:5]
+    top_features = sorted(by_feature.items(), key=lambda item: item[1], reverse=True)[
+        :5
+    ]
 
     return {
         "total_events": len(rows),
         "by_action": by_action,
         "top_actors": [{"actor": actor, "count": count} for actor, count in top_actors],
-        "top_features": [{"feature": feature, "count": count} for feature, count in top_features],
+        "top_features": [
+            {"feature": feature, "count": count} for feature, count in top_features
+        ],
     }

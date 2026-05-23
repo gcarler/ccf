@@ -1,15 +1,18 @@
 import codecs
 import re
 
-with codecs.open('backend/api/crm.py', 'r', 'utf-8') as f:
+with codecs.open("backend/api/crm.py", "r", "utf-8") as f:
     c = f.read()
 
 # I need to add an import for fastapi.responses.StreamingResponse if it doesn't exist.
-if 'from fastapi.responses import StreamingResponse' not in c:
-    c = c.replace('from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File', 'from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File\nfrom fastapi.responses import StreamingResponse')
-    
-if 'import io' not in c:
-    c = c.replace('import uuid', 'import uuid\nimport io\nimport csv')
+if "from fastapi.responses import StreamingResponse" not in c:
+    c = c.replace(
+        "from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File",
+        "from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File\nfrom fastapi.responses import StreamingResponse",
+    )
+
+if "import io" not in c:
+    c = c.replace("import uuid", "import uuid\nimport io\nimport csv")
 
 export_endpoint = """
 @router.get("/events/{event_id}/sessions/{session_date}/export")
@@ -80,7 +83,7 @@ def export_event_session_report(
 
 if "def export_event_session_report" not in c:
     c += export_endpoint
-    with codecs.open('backend/api/crm.py', 'w', 'utf-8') as f:
+    with codecs.open("backend/api/crm.py", "w", "utf-8") as f:
         f.write(c)
     print("Export endpoint added")
 else:

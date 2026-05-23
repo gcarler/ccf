@@ -1,7 +1,8 @@
-import sqlite3
 import os
+import sqlite3
 
-db_path = 'd:/ccf/ccf_v2.db'
+db_path = "d:/ccf/ccf_v2.db"
+
 
 def repair_db():
     if not os.path.exists(db_path):
@@ -11,16 +12,16 @@ def repair_db():
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        
+
         print("Añadiendo columnas de gestión ministerial a la tabla 'members'...")
-        
+
         # Añadir columnas si no existen
         columns_to_add = [
             ("talents", "TEXT"),
             ("spiritual_gifts", "TEXT"),
-            ("pastoral_notes", "TEXT")
+            ("pastoral_notes", "TEXT"),
         ]
-        
+
         for col_name, col_type in columns_to_add:
             try:
                 cursor.execute(f"ALTER TABLE members ADD COLUMN {col_name} {col_type}")
@@ -48,9 +49,10 @@ def repair_db():
         conn.commit()
         conn.close()
         print("Reparación completada con éxito.")
-        
+
     except Exception as e:
         print(f"Error durante la reparación: {e}")
+
 
 if __name__ == "__main__":
     repair_db()

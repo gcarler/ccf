@@ -2,13 +2,13 @@ import os
 import sys
 
 try:
-    from backend.core.security import get_password_hash
-    from backend.core.database import SessionLocal
     from backend import models
+    from backend.core.database import SessionLocal
+    from backend.core.security import get_password_hash
 except ImportError:
-    from core.security import get_password_hash
-    from core.database import SessionLocal
     import models
+    from core.database import SessionLocal
+    from core.security import get_password_hash
 
 def create_admin():
     admin_email = os.getenv("CCF_ADMIN_EMAIL", "admin@ccf.com")

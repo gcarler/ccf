@@ -1,4 +1,4 @@
-f = open('backend/api/crm.py', encoding='utf-8')
+f = open("backend/api/crm.py", encoding="utf-8")
 c = f.read()
 f.close()
 
@@ -47,27 +47,27 @@ if n1_old in c:
     # Also fix lat/lon serialization
     c = c.replace(
         '        "latitude": house.latitude,\n        "longitude": house.longitude,',
-        '        "latitude": float(house.latitude) if house.latitude else None,\n        "longitude": float(house.longitude) if house.longitude else None,'
+        '        "latitude": float(house.latitude) if house.latitude else None,\n        "longitude": float(house.longitude) if house.longitude else None,',
     )
     c = c.replace(
         '        "day_of_week": getattr(house, "day_of_week", None),\n        "time": getattr(house, "time", None),',
-        '        "day_of_week": house.day_of_week,\n        "time": house.time,'
+        '        "day_of_week": house.day_of_week,\n        "time": house.time,',
     )
-    open('backend/api/crm.py', 'w', encoding='utf-8').write(c)
+    open("backend/api/crm.py", "w", encoding="utf-8").write(c)
     print("N+1 fix applied")
 else:
     # Try with CRLF
-    n1_old_crlf = n1_old.replace('\n', '\r\n')
+    n1_old_crlf = n1_old.replace("\n", "\r\n")
     if n1_old_crlf in c:
         c = c.replace(n1_old_crlf, n1_new)
-        open('backend/api/crm.py', 'w', encoding='utf-8').write(c)
+        open("backend/api/crm.py", "w", encoding="utf-8").write(c)
         print("N+1 fix applied (CRLF)")
     else:
         print("WARN: pattern not found, check manually")
         # Find and print context
-        idx = c.find('sessions_data = []\n    for s in sessions:')
+        idx = c.find("sessions_data = []\n    for s in sessions:")
         if idx < 0:
-            idx = c.find('sessions_data = []\r\n    for s in sessions:')
+            idx = c.find("sessions_data = []\r\n    for s in sessions:")
         print(f"Found at idx: {idx}")
         if idx > 0:
-            print(repr(c[idx:idx+300]))
+            print(repr(c[idx : idx + 300]))

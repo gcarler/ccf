@@ -1,6 +1,7 @@
 import datetime
-from pydantic import BaseModel
 from typing import List, Optional
+
+from pydantic import BaseModel
 
 new_routes = """
 # --- EVENT SESSIONS & ASSIGNMENTS ---
@@ -130,5 +131,5 @@ def sync_event_assignments(
     return {"success": True, "message": "Agenda configurada correctamente"}
 """
 
-with open('backend/api/crm.py', 'a', encoding='utf-8') as f:
+with open("backend/api/crm.py", "a", encoding="utf-8") as f:
     f.write(new_routes)

@@ -1,6 +1,6 @@
 import sys
 
-with open('frontend/src/app/crm/events/page.tsx', 'r', encoding='utf-8') as f:
+with open("frontend/src/app/crm/events/page.tsx", "r", encoding="utf-8") as f:
     c = f.read()
 
 # 1. State
@@ -27,7 +27,7 @@ fetch_real_new = """    const fetchData = async () => {
                 apiFetch<any[]>('/crm/events/dashboard-stats', { token, cache: 'no-store' })
             ]);"""
 c = c.replace(fetch_real_old, fetch_real_new)
-    
+
 set_old = """            setEvents(Array.isArray(eventsRes) ? eventsRes : []);
             setMembers(Array.isArray(membersRes) ? membersRes : []);"""
 set_new = """            setEvents(Array.isArray(eventsRes) ? eventsRes : []);
@@ -66,6 +66,6 @@ grid_card_new = """                                    <div className="flex item
                                     })()}"""
 c = c.replace(grid_card_old, grid_card_new)
 
-with open('frontend/src/app/crm/events/page.tsx', 'w', encoding='utf-8') as f:
+with open("frontend/src/app/crm/events/page.tsx", "w", encoding="utf-8") as f:
     f.write(c)
 print("Updated Dashboard!")

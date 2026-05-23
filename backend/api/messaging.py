@@ -1,11 +1,12 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import (APIRouter, Depends, HTTPException, WebSocket,
+                     WebSocketDisconnect)
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from backend.auth import require_active_user, require_staff_or_admin
 from backend import crud, models, schemas
+from backend.auth import require_active_user, require_staff_or_admin
 from backend.core.database import get_db
 from backend.mesh_websockets import manager
 
@@ -33,13 +34,18 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     try:
         while True:
             data = await websocket.receive_text()
-            await manager.broadcast_event({"event": "message", "client": client_id, "data": data}, room=rooms[0] if rooms else None)
+            await manager.broadcast_event(
+                {"event": "message", "client": client_id, "data": data},
+                room=rooms[0] if rooms else None,
+            )
     except WebSocketDisconnect:
         await manager.disconnect(client_id)
 
 
 @router.get("/messaging/presence/{room}")
-async def get_room_presence(room: str, current_user: models.User = Depends(require_active_user)):
+async def get_room_presence(
+    room: str, current_user: models.User = Depends(require_active_user)
+):
     return {"room": room, "clients": manager.list_room(room)}
 
 
@@ -48,7 +54,9 @@ async def send_notification(
     payload: NotificationPayload,
     current_user: models.User = Depends(require_active_user),
 ):
-    await manager.broadcast_event({"event": payload.event, "body": payload.body}, room=payload.room)
+    await manager.broadcast_event(
+        {"event": payload.event, "body": payload.body}, room=payload.room
+    )
     return {"status": "queued"}
 
 
@@ -58,10 +66,14 @@ def get_notifications(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    return crud.get_user_notifications(db, user_id=int(getattr(current_user, "id", 0)), limit=limit)
+    return crud.get_user_notifications(
+        db, user_id=int(getattr(current_user, "id", 0)), limit=limit
+    )
 
 
-@router.patch("/messaging/notifications/{notification_id}", response_model=schemas.Notification)
+@router.patch(
+    "/messaging/notifications/{notification_id}", response_model=schemas.Notification
+)
 def update_notification(
     notification_id: int,
     db: Session = Depends(get_db),
@@ -98,11 +110,14 @@ def messaging_send(
     current_user: models.User = Depends(require_staff_or_admin),
 ):
     # This now calls the updated CRUD which triggers the MessagingService
-    entry = crud.create_communication_log(db, schemas.CommunicationLogCreate(
-        member_id=payload.member_id,
-        channel=payload.channel,
-        content=payload.content,
-        leader_id=current_user.id,
-        outcome="sent"
-    ))
+    entry = crud.create_communication_log(
+        db,
+        schemas.CommunicationLogCreate(
+            member_id=payload.member_id,
+            channel=payload.channel,
+            content=payload.content,
+            leader_id=current_user.id,
+            outcome="sent",
+        ),
+    )
     return entry

@@ -69,7 +69,9 @@ def normalize_role_scope_payload(payload: dict) -> dict:
             except (TypeError, ValueError):
                 normalized_role_id = None
             normalized["target_role_id"] = normalized_role_id
-            normalized["target_role_ids"] = [normalized_role_id] if normalized_role_id is not None else None
+            normalized["target_role_ids"] = (
+                [normalized_role_id] if normalized_role_id is not None else None
+            )
         else:
             normalized["target_role_ids"] = None
             normalized["target_role_id"] = None
@@ -99,14 +101,18 @@ def resolve_target_role_ids(event: models.CrmEvent) -> list[int]:
     return list(dict.fromkeys(role_ids))
 
 
-def get_expected_members_for_event(db: Session, event: models.CrmEvent) -> list[models.Member]:
+def get_expected_members_for_event(
+    db: Session, event: models.CrmEvent
+) -> list[models.Member]:
     if event.target_audience == "ROLE":
         role_ids = resolve_target_role_ids(event)
         if not role_ids:
             return []
         role_names = [
             row[0]
-            for row in db.query(models.RoleDefinition.name).filter(models.RoleDefinition.id.in_(role_ids)).all()
+            for row in db.query(models.RoleDefinition.name)
+            .filter(models.RoleDefinition.id.in_(role_ids))
+            .all()
         ]
         if not role_names:
             return []
@@ -144,13 +150,21 @@ def faro_expected_member_rows(db: Session, glory_house_id: int):
         .order_by(models.Member.last_name.asc(), models.Member.first_name.asc())
         .all()
     )
-    house = db.query(models.GloryHouse).filter(models.GloryHouse.id == glory_house_id).first()
+    house = (
+        db.query(models.GloryHouse)
+        .filter(models.GloryHouse.id == glory_house_id)
+        .first()
+    )
     seen_ids = {member.id for _, member in rows}
     extra_members = []
     if house:
         for member_id in [house.leader_id, house.assistant_id, house.host_id]:
             if member_id and member_id not in seen_ids:
-                member = db.query(models.Member).filter(models.Member.id == member_id).first()
+                member = (
+                    db.query(models.Member)
+                    .filter(models.Member.id == member_id)
+                    .first()
+                )
                 if member:
                     extra_members.append((None, member))
                     seen_ids.add(member.id)
@@ -167,29 +181,45 @@ def _channel_label(channel: str) -> str:
     return "SMS"
 
 
-def _member_matches_segment(member: models.Member, segment: str, donation_member_ids: set[int]) -> bool:
+def _member_matches_segment(
+    member: models.Member, segment: str, donation_member_ids: set[int]
+) -> bool:
     value = str(segment or "").strip().lower()
     if value == "active":
         return str(member.church_role or "").strip().lower() in {
-            "miembro", "servidor", "lider", "líder", "pastor", "coordinador",
+            "miembro",
+            "servidor",
+            "lider",
+            "líder",
+            "pastor",
+            "coordinador",
         }
     if value == "new":
         return str(member.spiritual_status or "").strip().lower() == "nuevo"
     if value == "staff":
         return str(member.church_role or "").strip().lower() in {
-            "pastor", "coordinador", "staff", "administrador", "admin",
+            "pastor",
+            "coordinador",
+            "staff",
+            "administrador",
+            "admin",
         }
     if value == "groups":
         return member.family_id is not None
     if value == "low":
-        return str(member.spiritual_status or "").strip().lower() in {"nuevo", "creyente"}
+        return str(member.spiritual_status or "").strip().lower() in {
+            "nuevo",
+            "creyente",
+        }
     if value == "vip":
         return member.id in donation_member_ids
     return False
 
 
 def _resolve_campaign_members(db: Session, segments: list[str]) -> list[models.Member]:
-    normalized_segments = [segment for segment in (s.strip().lower() for s in segments) if segment]
+    normalized_segments = [
+        segment for segment in (s.strip().lower() for s in segments) if segment
+    ]
     if not normalized_segments:
         return []
 
@@ -206,7 +236,10 @@ def _resolve_campaign_members(db: Session, segments: list[str]) -> list[models.M
     for member in members:
         if member.id in seen_ids:
             continue
-        if any(_member_matches_segment(member, segment, donation_member_ids) for segment in normalized_segments):
+        if any(
+            _member_matches_segment(member, segment, donation_member_ids)
+            for segment in normalized_segments
+        ):
             selected.append(member)
             seen_ids.add(member.id)
     return selected
@@ -214,13 +247,20 @@ def _resolve_campaign_members(db: Session, segments: list[str]) -> list[models.M
 
 def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     import datetime as _dt
-    ordered = sorted(logs, key=lambda log: log.created_at or _dt.datetime.min, reverse=True)
+
+    ordered = sorted(
+        logs, key=lambda log: log.created_at or _dt.datetime.min, reverse=True
+    )
     representative = ordered[0]
     member = getattr(representative, "member", None)
     member_name = f"{member.first_name} {member.last_name}" if member else "Desconocido"
-    campaign_name = next((log.campaign_name for log in ordered if log.campaign_name), None)
+    campaign_name = next(
+        (log.campaign_name for log in ordered if log.campaign_name), None
+    )
     sent_at_dt = ordered[0].created_at
-    delivered_count = sum(1 for log in ordered if str(log.outcome).lower() in {"sent", "delivered"})
+    delivered_count = sum(
+        1 for log in ordered if str(log.outcome).lower() in {"sent", "delivered"}
+    )
     failed_count = sum(1 for log in ordered if str(log.outcome).lower() == "failed")
     if failed_count and not delivered_count:
         status = "failed"
@@ -228,7 +268,11 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
         status = "partial"
     else:
         status = str(representative.outcome or "sent").lower()
-    display_name = campaign_name or (f"Mensaje a {member_name}" if len(ordered) == 1 else f"Campaña a {len(ordered)} contactos")
+    display_name = campaign_name or (
+        f"Mensaje a {member_name}"
+        if len(ordered) == 1
+        else f"Campaña a {len(ordered)} contactos"
+    )
     return {
         "id": representative.id,
         "name": display_name,
@@ -246,9 +290,15 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     }
 
 
-def _serialize_crm_task(task: models.CrmTask, contact_name: Optional[str] = None, assignee_name: Optional[str] = None) -> dict:
+def _serialize_crm_task(
+    task: models.CrmTask,
+    contact_name: Optional[str] = None,
+    assignee_name: Optional[str] = None,
+) -> dict:
     member = getattr(task, "member", None)
-    member_name = contact_name or (f"{member.first_name} {member.last_name}" if member else None)
+    member_name = contact_name or (
+        f"{member.first_name} {member.last_name}" if member else None
+    )
     assignee = getattr(task, "assignee", None)
     assigned_to = assignee_name or (assignee.username if assignee else None)
     return {

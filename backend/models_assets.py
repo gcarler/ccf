@@ -19,8 +19,8 @@ class AssetItem(Base):
     brand = Column(String(100))
     serial_number = Column(String(100), unique=True)
     purchase_price = Column(Float)
-    current_status = Column(String(50), default='Disponible')
-    category = Column(String(100), default='Mobiliario')
+    current_status = Column(String(50), default="Disponible")
+    category = Column(String(100), default="Mobiliario")
     created_at = Column(DateTime, default=_utcnow)
 
 

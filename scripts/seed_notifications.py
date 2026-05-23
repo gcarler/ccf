@@ -1,5 +1,6 @@
+from backend import crud, models, schemas
 from backend.core.database import SessionLocal
-from backend import crud, schemas, models
+
 
 def seed_notifications():
     db = SessionLocal()
@@ -13,21 +14,21 @@ def seed_notifications():
                     title="Nueva mención",
                     content="Juan te mencionó en 'Diseño UI Proyectos'",
                     notif_type="mention",
-                    link_url="/projects"
+                    link_url="/projects",
                 ),
                 schemas.NotificationCreate(
                     user_id=user.id,
                     title="Tarea completada",
                     content="La tarea 'Migración DB' ha sido finalizada por Alex.",
                     notif_type="task",
-                    link_url="/projects"
+                    link_url="/projects",
                 ),
                 schemas.NotificationCreate(
                     user_id=user.id,
                     title="Actualización de Sistema",
                     content="Nueva versión 4.2 disponible con mejoras en CRM.",
-                    notif_type="system"
-                )
+                    notif_type="system",
+                ),
             ]
             for n in notifications:
                 crud.create_notification(db, n)
@@ -38,6 +39,7 @@ def seed_notifications():
         print(f"Error seeding notifications: {e}")
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     seed_notifications()

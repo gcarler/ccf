@@ -7,13 +7,10 @@ from typing import Any, Dict
 from fastapi import HTTPException
 
 from backend.api.workspace_shared import SEVERITY_ORDER
-
 from backend.api.workspace_shared._audit import _parse_timestamp
-from backend.api.workspace_shared._storage import (
-    _append_incident_history,
-    _append_notification,
-    _now_iso,
-)
+from backend.api.workspace_shared._storage import (_append_incident_history,
+                                                   _append_notification,
+                                                   _now_iso)
 
 
 def _incident_fingerprint(kind: str, key: str) -> str:
@@ -217,7 +214,9 @@ def _cleanup_incidents(
     }
 
 
-def _incident_daily_trends(incidents: list[Dict[str, Any]], days: int = 14) -> list[Dict[str, Any]]:
+def _incident_daily_trends(
+    incidents: list[Dict[str, Any]], days: int = 14
+) -> list[Dict[str, Any]]:
     safe_days = max(1, min(days, 180))
     now = datetime.now(tz=timezone.utc)
 
@@ -247,14 +246,18 @@ def _incident_daily_trends(incidents: list[Dict[str, Any]], days: int = 14) -> l
         closed_key = _day_key(incident.get("closed_at"))
         if closed_key in buckets:
             buckets[closed_key]["closed"] += 1
-            mttr_seconds = _seconds_between(incident.get("created_at"), incident.get("closed_at"))
+            mttr_seconds = _seconds_between(
+                incident.get("created_at"), incident.get("closed_at")
+            )
             if mttr_seconds is not None:
                 buckets[closed_key]["mttr_values"].append(mttr_seconds / 60.0)
 
         ack_key = _day_key(incident.get("ack_at"))
         if ack_key in buckets:
             buckets[ack_key]["acknowledged"] += 1
-            mtta_seconds = _seconds_between(incident.get("created_at"), incident.get("ack_at"))
+            mtta_seconds = _seconds_between(
+                incident.get("created_at"), incident.get("ack_at")
+            )
             if mtta_seconds is not None:
                 buckets[ack_key]["mtta_values"].append(mtta_seconds / 60.0)
 
@@ -263,14 +266,20 @@ def _incident_daily_trends(incidents: list[Dict[str, Any]], days: int = 14) -> l
         row = buckets[day]
         mtta_values = row.pop("mtta_values")
         mttr_values = row.pop("mttr_values")
-        row["mtta_avg_minutes"] = round(sum(mtta_values) / len(mtta_values), 2) if mtta_values else None
-        row["mttr_avg_minutes"] = round(sum(mttr_values) / len(mttr_values), 2) if mttr_values else None
+        row["mtta_avg_minutes"] = (
+            round(sum(mtta_values) / len(mtta_values), 2) if mtta_values else None
+        )
+        row["mttr_avg_minutes"] = (
+            round(sum(mttr_values) / len(mttr_values), 2) if mttr_values else None
+        )
         rows.append(row)
 
     return rows
 
 
-def _period_bounds(window: str = "weekly") -> tuple[datetime, datetime, datetime, datetime, int]:
+def _period_bounds(
+    window: str = "weekly",
+) -> tuple[datetime, datetime, datetime, datetime, int]:
     normalized = (window or "weekly").strip().lower()
     if normalized == "monthly":
         days = 30
@@ -293,7 +302,9 @@ def _in_range(ts: datetime | None, start: datetime, end: datetime) -> bool:
     return start <= ts < end
 
 
-def _period_incident_stats(incidents: list[Dict[str, Any]], start: datetime, end: datetime) -> Dict[str, Any]:
+def _period_incident_stats(
+    incidents: list[Dict[str, Any]], start: datetime, end: datetime
+) -> Dict[str, Any]:
     created = 0
     acknowledged = 0
     closed = 0
@@ -320,11 +331,17 @@ def _period_incident_stats(incidents: list[Dict[str, Any]], start: datetime, end
 
         if _in_range(closed_at, start, end):
             closed += 1
-            close_seconds = _seconds_between(item.get("created_at"), item.get("closed_at"))
+            close_seconds = _seconds_between(
+                item.get("created_at"), item.get("closed_at")
+            )
             if close_seconds is not None:
                 mttr_values.append(close_seconds / 60.0)
 
-        is_active_at_end = created_at is not None and created_at < end and (closed_at is None or closed_at >= end)
+        is_active_at_end = (
+            created_at is not None
+            and created_at < end
+            and (closed_at is None or closed_at >= end)
+        )
         if is_active_at_end:
             active_end += 1
 
@@ -345,7 +362,9 @@ def _period_incident_stats(incidents: list[Dict[str, Any]], start: datetime, end
     }
 
 
-def _pct_delta(current: float | int | None, previous: float | int | None) -> float | None:
+def _pct_delta(
+    current: float | int | None, previous: float | int | None
+) -> float | None:
     if current is None or previous is None:
         return None
     if previous == 0:
@@ -387,7 +406,15 @@ def _scan_incidents_from_anomalies(
     updated = 0
     for candidate in candidates:
         fingerprint = _incident_fingerprint(candidate["kind"], candidate["key"])
-        existing = next((item for item in incidents if item.get("fingerprint") == fingerprint and item.get("status") != "closed"), None)
+        existing = next(
+            (
+                item
+                for item in incidents
+                if item.get("fingerprint") == fingerprint
+                and item.get("status") != "closed"
+            ),
+            None,
+        )
 
         if existing:
             previous_count = int(existing.get("count") or 0)
@@ -395,7 +422,9 @@ def _scan_incidents_from_anomalies(
             existing["threshold"] = candidate["threshold"]
             existing["updated_at"] = now
             existing["last_seen_at"] = now
-            if existing.get("status") == "silenced" and not _is_silenced_active(existing):
+            if existing.get("status") == "silenced" and not _is_silenced_active(
+                existing
+            ):
                 existing["status"] = "open"
                 existing["silenced_until"] = None
                 _append_incident_history(
@@ -421,7 +450,9 @@ def _scan_incidents_from_anomalies(
 
         incidents.append(
             {
-                "id": hashlib.md5(f"{fingerprint}:{now}".encode("utf-8")).hexdigest()[:12],
+                "id": hashlib.md5(f"{fingerprint}:{now}".encode("utf-8")).hexdigest()[
+                    :12
+                ],
                 "fingerprint": fingerprint,
                 "kind": candidate["kind"],
                 "key": candidate["key"],
@@ -451,7 +482,9 @@ def _scan_incidents_from_anomalies(
                 ],
             }
         )
-        _set_incident_severity(incidents[-1], actor_id="system", reason="created_by_scan")
+        _set_incident_severity(
+            incidents[-1], actor_id="system", reason="created_by_scan"
+        )
         created += 1
 
     return {
@@ -490,12 +523,16 @@ def _detect_anomalies(
 
     actor_spikes = [
         {"actor": actor, "count": count, "threshold": safe_actor_threshold}
-        for actor, count in sorted(by_actor.items(), key=lambda item: item[1], reverse=True)
+        for actor, count in sorted(
+            by_actor.items(), key=lambda item: item[1], reverse=True
+        )
         if count >= safe_actor_threshold
     ]
     action_spikes = [
         {"action": action, "count": count, "threshold": safe_action_threshold}
-        for action, count in sorted(by_action.items(), key=lambda item: item[1], reverse=True)
+        for action, count in sorted(
+            by_action.items(), key=lambda item: item[1], reverse=True
+        )
         if count >= safe_action_threshold
     ]
 

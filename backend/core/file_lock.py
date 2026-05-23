@@ -3,11 +3,11 @@
 Uses ``fcntl.flock`` on Unix and ``msvcrt.locking`` on Windows.
 Falls back to a directory-based mutex when neither is available.
 """
+
 import os
 import time
 from contextlib import contextmanager
 from pathlib import Path
-
 
 _LOCK_POLL_INTERVAL = 0.05  # seconds
 _LOCK_TIMEOUT = 10.0  # seconds
@@ -50,7 +50,9 @@ def file_lock(file_path: str | Path) -> None:
     lock_path = target.with_suffix(target.suffix + ".lock")
 
     if not _acquire_file_lock(lock_path):
-        raise TimeoutError(f"Could not acquire lock on {target} within {_LOCK_TIMEOUT}s")
+        raise TimeoutError(
+            f"Could not acquire lock on {target} within {_LOCK_TIMEOUT}s"
+        )
 
     try:
         yield

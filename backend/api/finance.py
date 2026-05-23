@@ -2,12 +2,12 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
 from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 from backend import crud, models
+from backend.auth import require_active_user, require_admin
 from backend.core.database import get_db
-from backend.auth import require_admin, require_active_user
 
 router = APIRouter(prefix="/finance", tags=["Finance"])
 
@@ -21,9 +21,12 @@ def get_finance_summary(
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    total_income = db.query(func.sum(models.Donation.amount)).filter(
-        models.Donation.created_at >= month_start
-    ).scalar() or 0
+    total_income = (
+        db.query(func.sum(models.Donation.amount))
+        .filter(models.Donation.created_at >= month_start)
+        .scalar()
+        or 0
+    )
 
     # Gastos estimados como 66% de ingresos (hasta que haya una tabla de expenses real)
     total_expense = round(total_income * 0.66)
@@ -49,16 +52,22 @@ def get_ministerial_funds(
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    total_ingresos = db.query(func.sum(models.Donation.amount)).filter(
-        models.Donation.created_at >= month_start
-    ).scalar() or 0
+    total_ingresos = (
+        db.query(func.sum(models.Donation.amount))
+        .filter(models.Donation.created_at >= month_start)
+        .scalar()
+        or 0
+    )
 
-    by_type = db.query(
-        models.Donation.donation_type,
-        func.sum(models.Donation.amount).label("total"),
-    ).filter(
-        models.Donation.created_at >= month_start
-    ).group_by(models.Donation.donation_type).all()
+    by_type = (
+        db.query(
+            models.Donation.donation_type,
+            func.sum(models.Donation.amount).label("total"),
+        )
+        .filter(models.Donation.created_at >= month_start)
+        .group_by(models.Donation.donation_type)
+        .all()
+    )
 
     total_all_time = db.query(func.sum(models.Donation.amount)).scalar() or 0
 
@@ -68,7 +77,9 @@ def get_ministerial_funds(
         "balance": round(total_ingresos * 0.34),
         "reserva": round(total_all_time * 0.10),
         "total_historico": round(total_all_time),
-        "por_tipo": [{"tipo": r[0] or "Ofrenda", "total": round(r[1])} for r in by_type],
+        "por_tipo": [
+            {"tipo": r[0] or "Ofrenda", "total": round(r[1])} for r in by_type
+        ],
     }
 
 
@@ -85,15 +96,17 @@ def get_transactions(
 
     result = []
     for d in rows:
-        result.append({
-            "id": d.id,
-            "type": "ingreso",
-            "category": d.donation_type or "Ofrenda",
-            "description": d.donor_name or f"Donación #{d.id}",
-            "amount": d.amount,
-            "date": d.created_at.isoformat() if d.created_at else None,
-            "member_id": d.member_id,
-        })
+        result.append(
+            {
+                "id": d.id,
+                "type": "ingreso",
+                "category": d.donation_type or "Ofrenda",
+                "description": d.donor_name or f"Donación #{d.id}",
+                "amount": d.amount,
+                "date": d.created_at.isoformat() if d.created_at else None,
+                "member_id": d.member_id,
+            }
+        )
     return result
 
 
@@ -163,9 +176,14 @@ def create_fund(
     db.add(fund)
     db.commit()
     db.refresh(fund)
-    return {"id": fund.fund_id, "name": fund.name, "description": fund.description,
-            "is_public": fund.is_public, "current_balance": fund.current_balance,
-            "target_amount": fund.target_amount}
+    return {
+        "id": fund.fund_id,
+        "name": fund.name,
+        "description": fund.description,
+        "is_public": fund.is_public,
+        "current_balance": fund.current_balance,
+        "target_amount": fund.target_amount,
+    }
 
 
 @router.patch("/admin/funds/{fund_id}")
@@ -178,15 +196,21 @@ def update_fund(
     fund = db.query(models.Fund).filter(models.Fund.fund_id == fund_id).first()
     if not fund:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=404, detail="Fund not found")
     for k, v in payload.items():
         if hasattr(fund, k):
             setattr(fund, k, v)
     db.commit()
     db.refresh(fund)
-    return {"id": fund.fund_id, "name": fund.name, "description": fund.description,
-            "is_public": fund.is_public, "current_balance": fund.current_balance,
-            "target_amount": fund.target_amount}
+    return {
+        "id": fund.fund_id,
+        "name": fund.name,
+        "description": fund.description,
+        "is_public": fund.is_public,
+        "current_balance": fund.current_balance,
+        "target_amount": fund.target_amount,
+    }
 
 
 @router.delete("/admin/funds/{fund_id}", status_code=204)
@@ -198,6 +222,7 @@ def delete_fund(
     fund = db.query(models.Fund).filter(models.Fund.fund_id == fund_id).first()
     if not fund:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=404, detail="Fund not found")
     db.delete(fund)
     db.commit()
@@ -212,15 +237,24 @@ def get_mission_impact(db: Session = Depends(get_db)):
     total_enrollments = db.query(func.count(models.Enrollment.id)).scalar() or 0
 
     # Distribucion basada en categorias de donacion reales
-    by_category = db.query(
-        models.Donation.donation_type,
-        func.sum(models.Donation.amount).label("total"),
-    ).group_by(models.Donation.donation_type).all()
+    by_category = (
+        db.query(
+            models.Donation.donation_type,
+            func.sum(models.Donation.amount).label("total"),
+        )
+        .group_by(models.Donation.donation_type)
+        .all()
+    )
 
     total_cat = sum(r[1] for r in by_category) or 1
-    distribucion = [{"label": r[0] or "Ofrenda", "pct": round(r[1] / total_cat * 100), "desc": ""} for r in by_category]
+    distribucion = [
+        {"label": r[0] or "Ofrenda", "pct": round(r[1] / total_cat * 100), "desc": ""}
+        for r in by_category
+    ]
     if not distribucion:
-        distribucion = [{"label": "Ofrendas Generales", "pct": 100, "desc": "Donaciones recibidas."}]
+        distribucion = [
+            {"label": "Ofrendas Generales", "pct": 100, "desc": "Donaciones recibidas."}
+        ]
 
     return {
         "total_miembros": total_members,

@@ -21,7 +21,7 @@ PAGE_CONTENT_DEFAULTS = {
         "content": {
             "subtitle": "Somos una comunidad digital y presencial que discipula, sirve y ama a la ciudad.",
             "cta_primary": "Explorar la Academia",
-            "cta_secondary": "Ver Pr??dicas Recientes"
+            "cta_secondary": "Ver Pr??dicas Recientes",
         },
     },
     "home_academy_card": {
@@ -41,9 +41,7 @@ PAGE_CONTENT_DEFAULTS = {
         "content": "Nuestro equipo responde cada d??a. Cu??ntanos c??mo podemos orar contigo.",
     },
     "home_impact_stats": {
-        "content": {
-            "courses": "42", "impact": "+3.2K", "volunteers": "780"
-        }
+        "content": {"courses": "42", "impact": "+3.2K", "volunteers": "780"}
     },
     "academy_hero": {
         "title": "Tu pr??xima clase empieza hoy",
@@ -59,19 +57,19 @@ PAGE_CONTENT_DEFAULTS = {
                     "id": "Diezmo",
                     "label": "Diezmo",
                     "icon": "Building",
-                    "description": "Honra a Dios con el 10% de tus ingresos y s?? parte del avance de la iglesia."
+                    "description": "Honra a Dios con el 10% de tus ingresos y s?? parte del avance de la iglesia.",
                 },
                 {
                     "id": "Ofrenda General",
                     "label": "Ofrenda General",
                     "icon": "Heart",
-                    "description": "Sost??n proyectos pastorales, ayuda humanitaria y nuevas plantaciones."
+                    "description": "Sost??n proyectos pastorales, ayuda humanitaria y nuevas plantaciones.",
                 },
                 {
                     "id": "Misi??n Global",
                     "label": "Misi??n Global",
                     "icon": "Globe",
-                    "description": "Impulsa la obra misionera y el entrenamiento de l??deres en otras ciudades."
+                    "description": "Impulsa la obra misionera y el entrenamiento de l??deres en otras ciudades.",
                 },
             ]
         }
@@ -84,20 +82,20 @@ PAGE_CONTENT_DEFAULTS = {
                 {
                     "title": "Soporte T??cnico",
                     "desc": "Acceso, contrase??as, problemas de video o sonido.",
-                    "type": "tech"
+                    "type": "tech",
                 },
                 {
                     "title": "Academia",
                     "desc": "Pagos, certificados, inscripciones y tareas.",
-                    "type": "academic"
+                    "type": "academic",
                 },
                 {
                     "title": "Pastoral",
                     "desc": "Consejer??a, visitas y acompa??amiento espiritual.",
-                    "type": "pastoral"
-                }
-            ]
-        }
+                    "type": "pastoral",
+                },
+            ],
+        },
     },
     "sermons_hero": {
         "title": "Biblioteca de Pr??dicas",
@@ -131,15 +129,15 @@ PAGE_CONTENT_DEFAULTS = {
         "title": "Pol??tica de Privacidad",
         "content": {
             "subtitle": "Cuidamos tus datos personales con transparencia y responsabilidad.",
-            "content": "Recopilamos la informaci??n necesaria para gestionar tu experiencia acad??mica y pastoral. Nunca vendemos ni compartimos tus datos con terceros no autorizados. Puedes solicitar la eliminaci??n de tu cuenta escribiendo a soporte@ccf.la."
-        }
+            "content": "Recopilamos la informaci??n necesaria para gestionar tu experiencia acad??mica y pastoral. Nunca vendemos ni compartimos tus datos con terceros no autorizados. Puedes solicitar la eliminaci??n de tu cuenta escribiendo a soporte@ccf.la.",
+        },
     },
     "terms_of_service": {
         "title": "T??rminos de Servicio",
         "content": {
             "subtitle": "El uso de la plataforma implica aceptar estas condiciones.",
-            "content": "Usa los materiales ??nicamente para tu crecimiento espiritual, respeta a otros estudiantes y evita compartir accesos. Las evaluaciones son personales y sujetas al reglamento acad??mico vigente."
-        }
+            "content": "Usa los materiales ??nicamente para tu crecimiento espiritual, respeta a otros estudiantes y evita compartir accesos. Las evaluaciones son personales y sujetas al reglamento acad??mico vigente.",
+        },
     },
     "onboarding_page": {
         "content": {
@@ -149,17 +147,29 @@ PAGE_CONTENT_DEFAULTS = {
                     "title": "Herramientas para tu fe",
                     "description": "Sigue tus cursos, grupos y devocionales desde cualquier dispositivo.",
                     "features": [
-                        {"title": "Crecimiento", "desc": "Planifica lecturas y tareas cada semana.", "icon": "BookOpen"},
-                        {"title": "Comunidad", "desc": "Con??ctate a chats y reuniones h??bridas.", "icon": "Users"},
-                        {"title": "Prop??sito", "desc": "Descubre nuevas ??reas de servicio.", "icon": "Heart"},
-                    ]
+                        {
+                            "title": "Crecimiento",
+                            "desc": "Planifica lecturas y tareas cada semana.",
+                            "icon": "BookOpen",
+                        },
+                        {
+                            "title": "Comunidad",
+                            "desc": "Con??ctate a chats y reuniones h??bridas.",
+                            "icon": "Users",
+                        },
+                        {
+                            "title": "Prop??sito",
+                            "desc": "Descubre nuevas ??reas de servicio.",
+                            "icon": "Heart",
+                        },
+                    ],
                 },
                 {
                     "id": 2,
                     "title": "Personaliza tu experiencia",
                     "description": "Elige tu campus, activa notificaciones y recibe recordatorios.",
-                    "features": []
-                }
+                    "features": [],
+                },
             ]
         }
     },
@@ -172,9 +182,9 @@ PAGE_CONTENT_DEFAULTS = {
                 {"label": "Eventos", "href": "/faro/eventos"},
                 {"label": "Predicas", "href": "/faro/predicas"},
                 {"label": "Cursos", "href": "/faro/cursos"},
-                {"label": "Sedes", "href": "/faro/sedes"}
+                {"label": "Sedes", "href": "/faro/sedes"},
             ]
-        }
+        },
     },
     "faro_home_hero": {
         "title": "Inicio FARO",
@@ -184,16 +194,16 @@ PAGE_CONTENT_DEFAULTS = {
             "title_accent": "Camino",
             "description": "Una comunidad vibrante donde la fe encuentra propósito.",
             "primary_cta": "Únete a nosotros",
-            "secondary_cta": "Ver Predicaciones"
-        }
+            "secondary_cta": "Ver Predicaciones",
+        },
     },
     "faro_events_hero": {
         "title": "Eventos FARO",
         "content": {
             "eyebrow": "Calendario de Comunidad",
             "title": "Nuestra Agenda",
-            "description": "Espacios diseñados para el crecimiento, la conexión y la guía espiritual."
-        }
+            "description": "Espacios diseñados para el crecimiento, la conexión y la guía espiritual.",
+        },
     },
     "faro_public_events": {
         "title": "Agenda Publica FARO",
@@ -204,7 +214,7 @@ PAGE_CONTENT_DEFAULTS = {
                 "location": "Auditorio Central",
                 "excerpt": "Encuentro especial de adoración y enseñanza.",
                 "category": "Destacado",
-                "featured": True
+                "featured": True,
             },
             {
                 "title": "Cena de Jóvenes",
@@ -212,9 +222,9 @@ PAGE_CONTENT_DEFAULTS = {
                 "location": "Sede Norte • 19:30 hrs",
                 "excerpt": "Espacio de comunidad y conexión.",
                 "category": "Jóvenes",
-                "featured": False
-            }
-        ]
+                "featured": False,
+            },
+        ],
     },
     "faro_testimonios_hero": {
         "title": "Testimonios FARO",
@@ -222,8 +232,8 @@ PAGE_CONTENT_DEFAULTS = {
             "eyebrow": "Impacto Real",
             "title_lead": "Historias de",
             "title_accent": "Transformación",
-            "description": "Descubre cómo la fe y la comunidad han iluminado vidas reales."
-        }
+            "description": "Descubre cómo la fe y la comunidad han iluminado vidas reales.",
+        },
     },
     "faro_sermons_hero": {
         "title": "Predicas FARO",
@@ -231,8 +241,8 @@ PAGE_CONTENT_DEFAULTS = {
             "eyebrow": "Mensaje Destacado",
             "title_lead": "Alimento para el",
             "title_accent": "Alma",
-            "description": "Explora nuestra biblioteca de mensajes que iluminan el camino."
-        }
+            "description": "Explora nuestra biblioteca de mensajes que iluminan el camino.",
+        },
     },
     "faro_courses_hero": {
         "title": "Cursos FARO",
@@ -240,8 +250,8 @@ PAGE_CONTENT_DEFAULTS = {
             "eyebrow": "Formación y Sabiduría",
             "title_lead": "El Camino",
             "title_accent": "del Faro",
-            "description": "Explora cursos y recursos para profundizar tu fe."
-        }
+            "description": "Explora cursos y recursos para profundizar tu fe.",
+        },
     },
     "faro_discover_hero": {
         "title": "Conocer a Jesus FARO",
@@ -251,8 +261,8 @@ PAGE_CONTENT_DEFAULTS = {
             "title_accent": "Guía",
             "title_tail": "Tu Vida.",
             "description": "El comienzo de una relación que transforma tu historia.",
-            "cta": "Quiero conocer a Jesús"
-        }
+            "cta": "Quiero conocer a Jesús",
+        },
     },
     "faro_about_hero": {
         "title": "Nosotros FARO",
@@ -260,16 +270,16 @@ PAGE_CONTENT_DEFAULTS = {
             "eyebrow": "Nuestra Identidad",
             "title_lead": "Iluminando el",
             "title_accent": "camino juntos",
-            "description": "Somos una comunidad vibrante dedicada a guiar personas hacia una vida con propósito."
-        }
+            "description": "Somos una comunidad vibrante dedicada a guiar personas hacia una vida con propósito.",
+        },
     },
     "faro_locations_hero": {
         "title": "Sedes FARO",
         "content": {
             "eyebrow": "Nuestra Presencia",
             "title": "Nuestras Sedes",
-            "search_placeholder": "Buscar ciudad o dirección..."
-        }
+            "search_placeholder": "Buscar ciudad o dirección...",
+        },
     },
     "faro_testimonials_feed": {
         "title": "Testimonios FARO",
@@ -282,9 +292,9 @@ PAGE_CONTENT_DEFAULTS = {
                 "show_on_home": True,
                 "author_id": 1,
                 "author": {"id": 1, "username": "Comunidad FARO"},
-                "created_at": "2026-01-10T10:00:00Z"
+                "created_at": "2026-01-10T10:00:00Z",
             }
-        ]
+        ],
     },
     "faro_announcements_feed": {
         "title": "Anuncios FARO",
@@ -295,8 +305,8 @@ PAGE_CONTENT_DEFAULTS = {
                 "content": "Inscripciones abiertas en recepción y web.",
                 "category": "Eventos",
                 "is_active": True,
-                "created_at": "2026-01-10T10:00:00Z"
+                "created_at": "2026-01-10T10:00:00Z",
             }
-        ]
+        ],
     },
 }

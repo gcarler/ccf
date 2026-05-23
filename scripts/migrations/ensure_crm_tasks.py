@@ -1,7 +1,8 @@
-import sqlite3
 import os
+import sqlite3
 
-db_path = 'd:/ccf/ccf_v2.db'
+db_path = "d:/ccf/ccf_v2.db"
+
 
 def ensure_tasks_table():
     if not os.path.exists(db_path):
@@ -11,7 +12,7 @@ def ensure_tasks_table():
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        
+
         print("Verificando tabla 'crm_tasks'...")
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS crm_tasks (
@@ -35,9 +36,10 @@ def ensure_tasks_table():
         conn.commit()
         conn.close()
         print("Sincronización de tablas completada.")
-        
+
     except Exception as e:
         print(f"Error: {e}")
+
 
 if __name__ == "__main__":
     ensure_tasks_table()

@@ -15,7 +15,6 @@ from sqlalchemy.orm import Session
 from backend import crud, schemas
 from backend.core.database import SessionLocal
 
-
 SYSTEM_PROMPT = """You are Optimus Brain, the Neural MESH engine for CCF. 
 Your goal is to assist users with ministerial management, data analysis, and theological foundations.
 Always be professional, concise, and helpful. 
@@ -27,24 +26,28 @@ class AgentOrchestrator:
     def __init__(self, api_key: str | None = None):
         if OpenAI is None:
             raise RuntimeError("openai package not installed")
-        
+
         key = api_key or os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
         if not key:
-            raise RuntimeError("API key not configured. Set OPENROUTER_API_KEY or OPENAI_API_KEY.")
-            
+            raise RuntimeError(
+                "API key not configured. Set OPENROUTER_API_KEY or OPENAI_API_KEY."
+            )
+
         is_openrouter = key.startswith("sk-or-")
         base_url = "https://openrouter.ai/api/v1" if is_openrouter else None
-        
+
         self.client = OpenAI(base_url=base_url, api_key=key)
         self.default_model = "moonshotai/kimi-k2.6" if is_openrouter else "gpt-4o-mini"
 
-    def run_diagnosis(self, summary: str, metrics: Dict[str, Any]) -> schemas.AgentInsightCreate:
+    def run_diagnosis(
+        self, summary: str, metrics: Dict[str, Any]
+    ) -> schemas.AgentInsightCreate:
         if OpenAI is None:
             raise RuntimeError("openai package not installed")
-        
+
         # Build context from metrics if available
         full_context = metrics.get("full_query", summary)
-        
+
         response = self.client.chat.completions.create(
             model=self.default_model,
             messages=[
@@ -60,9 +63,9 @@ class AgentOrchestrator:
             temperature=0.7,
             max_tokens=2048,
         )
-        
+
         content = response.choices[0].message.content
-        
+
         return schemas.AgentInsightCreate(
             title="Respuesta de Optimus",
             insight_type="assistant_response",
@@ -77,8 +80,12 @@ def bootstrap_diagnostic_task(summary: str, metrics: Dict[str, Any]) -> None:
     try:
         # Solo persistir si el contenido es relevante (evitar ruido)
         content = insight.payload.strip()
-        is_relevant = len(content) > 20 and "no lo sé" not in content.lower() and "desconozco" not in content.lower()
-        
+        is_relevant = (
+            len(content) > 20
+            and "no lo sé" not in content.lower()
+            and "desconozco" not in content.lower()
+        )
+
         if is_relevant:
             crud.create_agent_insight(db, insight)
             crud.create_agent_task(
@@ -92,6 +99,8 @@ def bootstrap_diagnostic_task(summary: str, metrics: Dict[str, Any]) -> None:
                 status="pending_review",
             )
         else:
-            print(f"Skipping task persistence: Content not relevant enough ({len(content)} chars)")
+            print(
+                f"Skipping task persistence: Content not relevant enough ({len(content)} chars)"
+            )
     finally:
         db.close()

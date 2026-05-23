@@ -1,16 +1,17 @@
 """User, auth, badges, XP, and UI preferences CRUD."""
-from typing import Optional
-from datetime import datetime, timezone
+
 import secrets
+from datetime import datetime, timezone
+from typing import Optional
 
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
-from backend.core.security import get_password_hash, encrypt_data, decrypt_data
+from backend.core.security import decrypt_data, encrypt_data, get_password_hash
 from backend.crud._utils import _utcnow
 
-
 # ── Users ──────────────────────────────────────────────
+
 
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
@@ -69,14 +70,22 @@ def delete_user(db: Session, user_id: int) -> bool:
 
 # ── Refresh Tokens ─────────────────────────────────────
 
-def create_refresh_token(db: Session, user_id: int, token: str, expires_at, ip_address: str = None, user_agent: str = None):
+
+def create_refresh_token(
+    db: Session,
+    user_id: int,
+    token: str,
+    expires_at,
+    ip_address: str = None,
+    user_agent: str = None,
+):
     row = models.RefreshToken(
         user_id=user_id,
         token=token,
         expires_at=expires_at,
         ip_address=ip_address,
         user_agent=user_agent,
-        revoked=False
+        revoked=False,
     )
     db.add(row)
     db.commit()
@@ -85,7 +94,9 @@ def create_refresh_token(db: Session, user_id: int, token: str, expires_at, ip_a
 
 
 def get_valid_refresh_token(db: Session, token: str):
-    row = db.query(models.RefreshToken).filter(models.RefreshToken.token == token).first()
+    row = (
+        db.query(models.RefreshToken).filter(models.RefreshToken.token == token).first()
+    )
     if not row:
         return None
     if row.revoked:
@@ -96,7 +107,9 @@ def get_valid_refresh_token(db: Session, token: str):
 
 
 def revoke_refresh_token(db: Session, token: str):
-    row = db.query(models.RefreshToken).filter(models.RefreshToken.token == token).first()
+    row = (
+        db.query(models.RefreshToken).filter(models.RefreshToken.token == token).first()
+    )
     if not row:
         return None
     row.revoked = True
@@ -107,17 +120,21 @@ def revoke_refresh_token(db: Session, token: str):
 
 # ── Verification & Reset Tokens ───────────────────────────────────
 
+
 def _generate_token() -> str:
     return secrets.token_urlsafe(48)
 
 
 def create_verification_token(db: Session, user_id: int) -> models.VerificationToken:
     """Crea un token de verificación de email con expiración."""
-    from backend.models_identity import VerificationToken
     from datetime import timedelta
 
+    from backend.models_identity import VerificationToken
+
     expires_at = _utcnow() + timedelta(hours=48)
-    row = VerificationToken(user_id=user_id, token=_generate_token(), expires_at=expires_at, used=False)
+    row = VerificationToken(
+        user_id=user_id, token=_generate_token(), expires_at=expires_at, used=False
+    )
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -126,7 +143,7 @@ def create_verification_token(db: Session, user_id: int) -> models.VerificationT
 
 def use_verification_token(db: Session, token: str) -> Optional[int]:
     """Usa un token de verificación. Retorna user_id si es válido, None si no."""
-    from backend.models_identity import VerificationToken, User
+    from backend.models_identity import User, VerificationToken
 
     row = db.query(VerificationToken).filter(VerificationToken.token == token).first()
     if not row or row.used or row.expires_at <= _utcnow():
@@ -142,11 +159,14 @@ def use_verification_token(db: Session, token: str) -> Optional[int]:
 
 def create_reset_token(db: Session, user_id: int) -> models.ResetToken:
     """Crea un token de restablecimiento de contraseña."""
-    from backend.models_identity import ResetToken
     from datetime import timedelta
 
+    from backend.models_identity import ResetToken
+
     expires_at = _utcnow() + timedelta(minutes=60)
-    row = ResetToken(user_id=user_id, token=_generate_token(), expires_at=expires_at, used=False)
+    row = ResetToken(
+        user_id=user_id, token=_generate_token(), expires_at=expires_at, used=False
+    )
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -174,6 +194,7 @@ def use_reset_token(db: Session, token: str, new_password: str) -> bool:
 
 # ── XP & Badges ────────────────────────────────────────
 
+
 def grant_xp(db: Session, user_id: int, amount: int) -> Optional[models.User]:
     user = get_user(db, user_id)
     if not user:
@@ -198,7 +219,9 @@ def award_badge(db: Session, user_id: int, badge_name: str):
         return None
     existing = (
         db.query(models.UserBadge)
-        .filter(models.UserBadge.user_id == user_id, models.UserBadge.badge_id == badge.id)
+        .filter(
+            models.UserBadge.user_id == user_id, models.UserBadge.badge_id == badge.id
+        )
         .first()
     )
     if existing:
@@ -212,8 +235,13 @@ def award_badge(db: Session, user_id: int, badge_name: str):
 
 # ── UI Preferences ─────────────────────────────────────
 
+
 def update_ui_preferences(db: Session, user_id: int, settings: dict):
-    prefs = db.query(models.UserUIPreference).filter(models.UserUIPreference.user_id == user_id).first()
+    prefs = (
+        db.query(models.UserUIPreference)
+        .filter(models.UserUIPreference.user_id == user_id)
+        .first()
+    )
     if not prefs:
         prefs = models.UserUIPreference(user_id=user_id, settings=settings)
         db.add(prefs)
@@ -225,7 +253,11 @@ def update_ui_preferences(db: Session, user_id: int, settings: dict):
 
 
 def get_ui_preferences(db: Session, user_id: int):
-    prefs = db.query(models.UserUIPreference).filter(models.UserUIPreference.user_id == user_id).first()
+    prefs = (
+        db.query(models.UserUIPreference)
+        .filter(models.UserUIPreference.user_id == user_id)
+        .first()
+    )
     if not prefs:
         prefs = models.UserUIPreference(user_id=user_id, settings={})
         db.add(prefs)

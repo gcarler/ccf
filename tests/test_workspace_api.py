@@ -20,6 +20,7 @@ def isolated_workspace_storage(monkeypatch):
     notifications_file = data_dir / f"feature_flags_notifications_{run_id}.ndjson"
     snapshot_history_file = data_dir / f"feature_flags_snapshot_history_{run_id}.ndjson"
     from backend.api.workspace_shared import _storage
+
     monkeypatch.setattr(workspace_shared, "DATA_DIR", data_dir)
     monkeypatch.setattr(workspace_shared, "FLAGS_FILE", flags_file)
     monkeypatch.setattr(_storage, "DATA_DIR", data_dir)
@@ -31,11 +32,19 @@ def isolated_workspace_storage(monkeypatch):
     try:
         yield
     finally:
-        for path in [flags_file, audit_file, incidents_file, notifications_file, snapshot_history_file]:
+        for path in [
+            flags_file,
+            audit_file,
+            incidents_file,
+            notifications_file,
+            snapshot_history_file,
+        ]:
             path.unlink(missing_ok=True)
 
 
-def seed_admin(db_session, email: str = "admin@example.com", password: str = "secret123") -> models.User:
+def seed_admin(
+    db_session, email: str = "admin@example.com", password: str = "secret123"
+) -> models.User:
     user = models.User(
         username="admin",
         email=email,
@@ -49,7 +58,9 @@ def seed_admin(db_session, email: str = "admin@example.com", password: str = "se
     return user
 
 
-def auth_headers(client: TestClient, email: str = "admin@example.com", password: str = "secret123") -> dict[str, str]:
+def auth_headers(
+    client: TestClient, email: str = "admin@example.com", password: str = "secret123"
+) -> dict[str, str]:
     response = client.post(
         "/api/auth/login",
         data={"username": email, "password": password, "grant_type": "password"},
@@ -72,7 +83,9 @@ def test_workspace_config_returns_resolved_features(client: TestClient, db_sessi
     assert "feature_rules" in payload
 
 
-def test_workspace_flags_update_persists_and_surfaces_in_audit(client: TestClient, db_session):
+def test_workspace_flags_update_persists_and_surfaces_in_audit(
+    client: TestClient, db_session
+):
     seed_admin(db_session)
     headers = auth_headers(client)
 
@@ -101,8 +114,12 @@ def test_workspace_incident_scan_and_acknowledge_flow(client: TestClient, db_ses
     seed_admin(db_session)
     headers = auth_headers(client)
 
-    first = client.put("/api/workspace/flags", headers=headers, json={"automation_builder": True})
-    second = client.put("/api/workspace/flags", headers=headers, json={"automation_builder": False})
+    first = client.put(
+        "/api/workspace/flags", headers=headers, json={"automation_builder": True}
+    )
+    second = client.put(
+        "/api/workspace/flags", headers=headers, json={"automation_builder": False}
+    )
     assert first.status_code == 200
     assert second.status_code == 200
 
@@ -139,19 +156,31 @@ def test_workspace_compliance_history_and_drift_compare(client: TestClient, db_s
     seed_admin(db_session)
     headers = auth_headers(client)
 
-    first_update = client.put("/api/workspace/flags", headers=headers, json={"automation_builder": True})
+    first_update = client.put(
+        "/api/workspace/flags", headers=headers, json={"automation_builder": True}
+    )
     assert first_update.status_code == 200
-    first_snapshot = client.get("/api/workspace/flags/compliance/snapshot", headers=headers)
+    first_snapshot = client.get(
+        "/api/workspace/flags/compliance/snapshot", headers=headers
+    )
     assert first_snapshot.status_code == 200
     first_snapshot_id = first_snapshot.json()["signature"]["snapshot_id"]
 
-    second_update = client.put("/api/workspace/flags", headers=headers, json={"automation_builder": False, "presence_live": True})
+    second_update = client.put(
+        "/api/workspace/flags",
+        headers=headers,
+        json={"automation_builder": False, "presence_live": True},
+    )
     assert second_update.status_code == 200
-    second_snapshot = client.get("/api/workspace/flags/compliance/snapshot", headers=headers)
+    second_snapshot = client.get(
+        "/api/workspace/flags/compliance/snapshot", headers=headers
+    )
     assert second_snapshot.status_code == 200
     second_snapshot_id = second_snapshot.json()["signature"]["snapshot_id"]
 
-    history_response = client.get("/api/workspace/flags/compliance/history", headers=headers)
+    history_response = client.get(
+        "/api/workspace/flags/compliance/history", headers=headers
+    )
     assert history_response.status_code == 200
     history_payload = history_response.json()
     assert history_payload["count"] == 2
@@ -159,12 +188,15 @@ def test_workspace_compliance_history_and_drift_compare(client: TestClient, db_s
     drift_response = client.get(
         "/api/workspace/flags/compliance/drift",
         headers=headers,
-        params={"from_snapshot_id": first_snapshot_id, "to_snapshot_id": second_snapshot_id},
+        params={
+            "from_snapshot_id": first_snapshot_id,
+            "to_snapshot_id": second_snapshot_id,
+        },
     )
     assert drift_response.status_code == 200
     drift_payload = drift_response.json()["drift"]
     assert drift_payload["has_drift"] is True
-    changed_features = {item["feature"] for item in drift_payload["active"]["feature_changes"]}
+    changed_features = {
+        item["feature"] for item in drift_payload["active"]["feature_changes"]
+    }
     assert "automation_builder" in changed_features
-
-

@@ -31,7 +31,13 @@ def seed_ultimate():
         pwd = get_password_hash("admin123")
 
         def create_ministerial_user(first, last, email, role_name, username):
-            user = models.User(username=username, email=email, password_hash=pwd, role="admin", xp=10000)
+            user = models.User(
+                username=username,
+                email=email,
+                password_hash=pwd,
+                role="admin",
+                xp=10000,
+            )
             db.add(user)
             db.commit()
             db.refresh(user)
@@ -49,10 +55,18 @@ def seed_ultimate():
             return member
 
         pastor_luis = create_ministerial_user(
-            "LUIS RICARDO", "MEZA GUTIERREZ", "luis.meza@ccf.la", "Pastor Principal", "luis_meza"
+            "LUIS RICARDO",
+            "MEZA GUTIERREZ",
+            "luis.meza@ccf.la",
+            "Pastor Principal",
+            "luis_meza",
         )
         pastora_histar = create_ministerial_user(
-            "HISTAR", "ARIZA HERRERA", "histar.ariza@ccf.la", "Pastora Principal", "histar_ariza"
+            "HISTAR",
+            "ARIZA HERRERA",
+            "histar.ariza@ccf.la",
+            "Pastora Principal",
+            "histar_ariza",
         )
         pastor_alex = create_ministerial_user(
             "ALEX", "CABARCAS", "alex.cabarcas@ccf.la", "Pastor", "alex_cabarcas"
@@ -74,9 +88,38 @@ def seed_ultimate():
         )
 
         print("Generando familias y miembros...")
-        apellidos = ["Rodriguez", "Garcia", "Martinez", "Lopez", "Gonzalez", "Perez", "Sanchez", "Castro", "Mendoza", "Vargas"]
-        nombres = ["Juan", "Elena", "Carlos", "Sofia", "Ricardo", "Maria", "Mateo", "Lucia", "Andres", "Valeria"]
-        oficios = ["Profeta", "Maestro", "Evangelista", "Servidor", "Miembro", "Diacono"]
+        apellidos = [
+            "Rodriguez",
+            "Garcia",
+            "Martinez",
+            "Lopez",
+            "Gonzalez",
+            "Perez",
+            "Sanchez",
+            "Castro",
+            "Mendoza",
+            "Vargas",
+        ]
+        nombres = [
+            "Juan",
+            "Elena",
+            "Carlos",
+            "Sofia",
+            "Ricardo",
+            "Maria",
+            "Mateo",
+            "Lucia",
+            "Andres",
+            "Valeria",
+        ]
+        oficios = [
+            "Profeta",
+            "Maestro",
+            "Evangelista",
+            "Servidor",
+            "Miembro",
+            "Diacono",
+        ]
         pesos_oficios = [2, 5, 3, 20, 60, 10]
         estados_espirituales = ["Nuevo", "Creyente", "Discipulo", "Servidor"]
 
@@ -133,18 +176,29 @@ def seed_ultimate():
         db.commit()
 
         print("Creando cursos y distribuyendo estudiantes...")
-        course_one = models.Course(code="FUND-1", title="Fundamentos de la Fe", modality="formal")
-        course_two = models.Course(code="MAESTRIA-1", title="Formacion de Maestros", modality="formal")
+        course_one = models.Course(
+            code="FUND-1", title="Fundamentos de la Fe", modality="formal"
+        )
+        course_two = models.Course(
+            code="MAESTRIA-1", title="Formacion de Maestros", modality="formal"
+        )
         db.add_all([course_one, course_two])
         db.commit()
         db.refresh(course_one)
         db.refresh(course_two)
 
-        lesson = models.Lesson(course_id=course_one.id, title="La Gracia", content="Contenido...", order_index=1)
+        lesson = models.Lesson(
+            course_id=course_one.id,
+            title="La Gracia",
+            content="Contenido...",
+            order_index=1,
+        )
         db.add(lesson)
         db.commit()
 
-        usuarios_est = db.query(models.User).filter(models.User.role == "estudiante").all()
+        usuarios_est = (
+            db.query(models.User).filter(models.User.role == "estudiante").all()
+        )
         for idx, user in enumerate(usuarios_est):
             if idx < 40:
                 db.add(
@@ -167,9 +221,27 @@ def seed_ultimate():
                 )
         db.commit()
 
-        db.add(models.Ministry(name="Ensenanza", description="Cuerpo de Maestros", leader_id=miembros_lista[0].id))
-        db.add(models.Ministry(name="Profetico", description="Cuerpo de Profetas", leader_id=miembros_lista[1].id))
-        db.add(models.CrmEvent(title="Gran Bautismo", event_date=datetime.now() + timedelta(days=15), location="Sede Central"))
+        db.add(
+            models.Ministry(
+                name="Ensenanza",
+                description="Cuerpo de Maestros",
+                leader_id=miembros_lista[0].id,
+            )
+        )
+        db.add(
+            models.Ministry(
+                name="Profetico",
+                description="Cuerpo de Profetas",
+                leader_id=miembros_lista[1].id,
+            )
+        )
+        db.add(
+            models.CrmEvent(
+                title="Gran Bautismo",
+                event_date=datetime.now() + timedelta(days=15),
+                location="Sede Central",
+            )
+        )
         db.commit()
 
         print("Operacion completada.")

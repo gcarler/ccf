@@ -1,5 +1,6 @@
+from backend import crud, models, schemas
 from backend.core.database import SessionLocal
-from backend import crud, schemas, models
+
 
 def seed_workflows():
     db = SessionLocal()
@@ -11,13 +12,14 @@ def seed_workflows():
             trigger="attendance_created",
             condition={"count": 3},
             action="create_agent_task",
-            payload={"title": "Intervención Pastoral: Nuevo Miembro Comprometido"}
+            payload={"title": "Intervención Pastoral: Nuevo Miembro Comprometido"},
         )
         print(f"Workflow rule created: {rule.name}")
     except Exception as e:
         print(f"Error seeding workflows: {e}")
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     seed_workflows()

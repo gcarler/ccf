@@ -4,14 +4,13 @@ import os
 from pathlib import Path
 from typing import Any
 
-from alembic import command
-from alembic.config import Config
 from sqlalchemy import inspect
 
+from alembic import command
+from alembic.config import Config
 from backend import models  # noqa: F401
 from backend.core.config import get_settings
 from backend.core.database import Base, engine
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 ALEMBIC_INI = PROJECT_ROOT / "alembic.ini"
@@ -82,7 +81,11 @@ def bootstrap_missing_tables() -> list[str]:
 
 def upgrade_with_optional_bootstrap() -> list[str]:
     upgrade_to_head()
-    if os.getenv("CCF_ALLOW_CREATE_ALL_BOOTSTRAP", "").lower() not in {"1", "true", "yes"}:
+    if os.getenv("CCF_ALLOW_CREATE_ALL_BOOTSTRAP", "").lower() not in {
+        "1",
+        "true",
+        "yes",
+    }:
         return []
     return bootstrap_missing_tables()
 

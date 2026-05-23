@@ -1,9 +1,9 @@
 import os
 
-crm_path = 'backend/api/crm.py'
-evang_path = 'backend/api/evangelism.py'
+crm_path = "backend/api/crm.py"
+evang_path = "backend/api/evangelism.py"
 
-f = open(crm_path, encoding='utf-8').read()
+f = open(crm_path, encoding="utf-8").read()
 
 # Define the start and end of the events section in crm.py
 start_marker = "# --- EVENTS & ATTENDANCE ---"
@@ -56,16 +56,16 @@ ABSENTEES_PREVIEW_LIMIT = 50
 
 """
 
-with open(evang_path, 'w', encoding='utf-8') as out:
+with open(evang_path, "w", encoding="utf-8") as out:
     out.write(imports + events_code)
 
 # Remove the events code from crm.py
 new_crm_code = f[:idx_start] + f[idx_end:]
 
-# Wait, there might be other things depending on utc_now or record_admin_action in crm.py, 
+# Wait, there might be other things depending on utc_now or record_admin_action in crm.py,
 # so we don't delete them from crm.py, we just duplicated them for evangelism.py which is fine.
 
-with open(crm_path, 'w', encoding='utf-8') as out:
+with open(crm_path, "w", encoding="utf-8") as out:
     out.write(new_crm_code)
 
 print("Split completed")

@@ -65,12 +65,16 @@ def _request(
 
 def _login(base_url: str, username: str, password: str) -> str:
     login_url = f"{base_url}/api/auth/login"
-    data = urllib.parse.urlencode({"username": username, "password": password}).encode("utf-8")
+    data = urllib.parse.urlencode({"username": username, "password": password}).encode(
+        "utf-8"
+    )
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
         "Accept": "application/json",
     }
-    req = urllib.request.Request(url=login_url, data=data, headers=headers, method="POST")
+    req = urllib.request.Request(
+        url=login_url, data=data, headers=headers, method="POST"
+    )
     with urllib.request.urlopen(req, timeout=20) as response:
         raw = response.read().decode("utf-8")
         payload = json.loads(raw)
@@ -110,11 +114,19 @@ def run_smoke(ctx: SmokeContext, keep_data: bool = False) -> None:
         expect_status=200,
     )
     _assert(isinstance(projects, list), "Projects list must be an array")
-    _assert(any(int(row.get("id", -1)) == ctx.project_id for row in projects), "Created project not found in list")
+    _assert(
+        any(int(row.get("id", -1)) == ctx.project_id for row in projects),
+        "Created project not found in list",
+    )
 
     print("[3/13] Reading project detail...")
-    _, project_detail = _request(ctx, "GET", f"/api/projects/{ctx.project_id}", expect_status=200)
-    _assert(project_detail.get("title") == "QA Proyecto Integral (Smoke)", "Project detail title mismatch")
+    _, project_detail = _request(
+        ctx, "GET", f"/api/projects/{ctx.project_id}", expect_status=200
+    )
+    _assert(
+        project_detail.get("title") == "QA Proyecto Integral (Smoke)",
+        "Project detail title mismatch",
+    )
 
     print("[4/13] Updating project status...")
     _, updated_project = _request(
@@ -143,9 +155,14 @@ def run_smoke(ctx: SmokeContext, keep_data: bool = False) -> None:
     ctx.task_id = int(task["id"])
 
     print("[6/13] Listing tasks by project...")
-    _, project_tasks = _request(ctx, "GET", f"/api/projects/{ctx.project_id}/tasks", expect_status=200)
+    _, project_tasks = _request(
+        ctx, "GET", f"/api/projects/{ctx.project_id}/tasks", expect_status=200
+    )
     _assert(isinstance(project_tasks, list), "Project tasks list must be an array")
-    _assert(any(int(row.get("id", -1)) == ctx.task_id for row in project_tasks), "Created task not found in project tasks")
+    _assert(
+        any(int(row.get("id", -1)) == ctx.task_id for row in project_tasks),
+        "Created task not found in project tasks",
+    )
 
     print("[7/13] Updating task state...")
     _, updated_task = _request(
@@ -195,7 +212,10 @@ def run_smoke(ctx: SmokeContext, keep_data: bool = False) -> None:
         expect_status=200,
     )
     _assert(isinstance(comments, list), "Comments list must be an array")
-    _assert(any(int(row.get("id", -1)) == ctx.comment_id for row in comments), "Created comment not found")
+    _assert(
+        any(int(row.get("id", -1)) == ctx.comment_id for row in comments),
+        "Created comment not found",
+    )
 
     _, resolved_comment = _request(
         ctx,
@@ -208,10 +228,15 @@ def run_smoke(ctx: SmokeContext, keep_data: bool = False) -> None:
 
     print("[10/13] Checking inbox read toggle and activities...")
     _, inbox = _request(ctx, "GET", "/api/projects/inbox?limit=10", expect_status=200)
-    _, activities = _request(ctx, "GET", "/api/projects/activities?limit=10", expect_status=200)
+    _, activities = _request(
+        ctx, "GET", "/api/projects/activities?limit=10", expect_status=200
+    )
     _assert(isinstance(inbox, list), "Inbox must return an array")
     _assert(isinstance(activities, list), "Activities must return an array")
-    _assert(any(row.get("id") == f"comment-{ctx.comment_id}" for row in inbox), "Comment not reflected in inbox")
+    _assert(
+        any(row.get("id") == f"comment-{ctx.comment_id}" for row in inbox),
+        "Comment not reflected in inbox",
+    )
 
     _request(
         ctx,
@@ -221,7 +246,9 @@ def run_smoke(ctx: SmokeContext, keep_data: bool = False) -> None:
         expect_status=204,
     )
 
-    _, inbox_after_read = _request(ctx, "GET", "/api/projects/inbox?limit=20", expect_status=200)
+    _, inbox_after_read = _request(
+        ctx, "GET", "/api/projects/inbox?limit=20", expect_status=200
+    )
     for item in inbox_after_read:
         if item.get("id") == f"comment-{ctx.comment_id}":
             _assert(bool(item.get("is_read")), "Inbox read toggle not persisted")
@@ -235,12 +262,16 @@ def run_smoke(ctx: SmokeContext, keep_data: bool = False) -> None:
 
     if keep_data:
         print("[12/13] Skipping cleanup (--keep-data enabled)")
-        print(f"Done. project_id={ctx.project_id} task_id={ctx.task_id} supply_id={ctx.supply_id} comment_id={ctx.comment_id}")
+        print(
+            f"Done. project_id={ctx.project_id} task_id={ctx.task_id} supply_id={ctx.supply_id} comment_id={ctx.comment_id}"
+        )
         return
 
     print("[12/13] Cleaning up created records...")
     if ctx.comment_id is not None:
-        _request(ctx, "DELETE", f"/api/projects/comments/{ctx.comment_id}", expect_status=204)
+        _request(
+            ctx, "DELETE", f"/api/projects/comments/{ctx.comment_id}", expect_status=204
+        )
     if ctx.supply_id is not None and ctx.task_id is not None:
         _request(
             ctx,
@@ -258,12 +289,18 @@ def run_smoke(ctx: SmokeContext, keep_data: bool = False) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Runs automated smoke tests for /api/projects endpoints")
-    parser.add_argument("--base-url", default=os.getenv("BASE_URL", "http://localhost:8000"))
+    parser = argparse.ArgumentParser(
+        description="Runs automated smoke tests for /api/projects endpoints"
+    )
+    parser.add_argument(
+        "--base-url", default=os.getenv("BASE_URL", "http://localhost:8000")
+    )
     parser.add_argument("--token", default=os.getenv("TOKEN"))
     parser.add_argument("--username", default=os.getenv("QA_USERNAME"))
     parser.add_argument("--password", default=os.getenv("QA_PASSWORD"))
-    parser.add_argument("--keep-data", action="store_true", help="Do not delete created records")
+    parser.add_argument(
+        "--keep-data", action="store_true", help="Do not delete created records"
+    )
     return parser.parse_args()
 
 
@@ -277,7 +314,9 @@ def main() -> int:
             token = _login(base_url, args.username, args.password)
             print("Authenticated via /api/auth/login")
         else:
-            print("Missing credentials. Provide --token or both --username and --password.")
+            print(
+                "Missing credentials. Provide --token or both --username and --password."
+            )
             return 2
 
     ctx = SmokeContext(base_url=base_url, token=token)

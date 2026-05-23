@@ -29,8 +29,15 @@ def auth_headers(client, email="admin@example.com", password="secret123"):
 
 def test_consolidation_flow_creates_case_assignment_and_follow_up(client, db_session):
     admin = seed_admin(db_session)
-    pastor = models.Member(first_name="Pedro", last_name="Pastor", email="pedro@example.com", user_id=admin.id)
-    leader = models.Member(first_name="Laura", last_name="Leader", email="laura@example.com")
+    pastor = models.Member(
+        first_name="Pedro",
+        last_name="Pastor",
+        email="pedro@example.com",
+        user_id=admin.id,
+    )
+    leader = models.Member(
+        first_name="Laura", last_name="Leader", email="laura@example.com"
+    )
     member = models.Member(first_name="Ana", last_name="Nueva", email="ana@example.com")
     db_session.add_all([pastor, leader, member])
     db_session.commit()
@@ -67,7 +74,12 @@ def test_consolidation_flow_creates_case_assignment_and_follow_up(client, db_ses
 
     case_response = client.post(
         "/api/crm/consolidation/cases",
-        json={"member_id": member.id, "stage": "new", "status": "active", "source": "public register"},
+        json={
+            "member_id": member.id,
+            "stage": "new",
+            "status": "active",
+            "source": "public register",
+        },
         headers=headers,
     )
     assert case_response.status_code == 200
@@ -113,7 +125,9 @@ def test_consolidation_flow_creates_case_assignment_and_follow_up(client, db_ses
     )
     assert task_response.status_code == 200
 
-    profile_response = client.get(f"/api/crm/members/{member.id}/consolidation", headers=headers)
+    profile_response = client.get(
+        f"/api/crm/members/{member.id}/consolidation", headers=headers
+    )
     assert profile_response.status_code == 200
     profile = profile_response.json()
     assert profile["member"]["id"] == member.id

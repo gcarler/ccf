@@ -53,7 +53,9 @@ def test_public_testimonials_only_returns_approved_items(client, db_session):
     contents = [row["content"] for row in public_rows.json()]
     assert "Historia aprobada" in contents
     assert "Historia pendiente" not in contents
-    public_approved = next(row for row in public_rows.json() if row["content"] == "Historia aprobada")
+    public_approved = next(
+        row for row in public_rows.json() if row["content"] == "Historia aprobada"
+    )
     assert public_approved["media_type"] == "video"
     assert public_approved["video_url"] == "https://cdn.example.org/testimonio.mp4"
 
@@ -82,11 +84,17 @@ def test_public_testimonials_only_returns_approved_items(client, db_session):
     assert updated.json()["show_on_home"] is True
     assert updated.json()["status"] == "approved"
 
-    archived = client.delete(f"/api/admin/testimonials/{approved.json()['id']}", headers=headers)
+    archived = client.delete(
+        f"/api/admin/testimonials/{approved.json()['id']}", headers=headers
+    )
     assert archived.status_code == 204
-    assert client.get(f"/api/cms/testimonials/{approved.json()['id']}").status_code == 404
+    assert (
+        client.get(f"/api/cms/testimonials/{approved.json()['id']}").status_code == 404
+    )
 
-    archived_admin = client.get(f"/api/admin/testimonials/{approved.json()['id']}", headers=headers)
+    archived_admin = client.get(
+        f"/api/admin/testimonials/{approved.json()['id']}", headers=headers
+    )
     assert archived_admin.status_code == 200
     assert archived_admin.json()["status"] == "archived"
     assert archived_admin.json()["is_approved"] is False
@@ -107,17 +115,32 @@ def test_public_announcements_only_returns_published_items(client, db_session):
 
     published = client.post(
         "/api/cms/announcements",
-        json={"title": "Aviso publicado", "content": "Visible", "category": "General", "status": "published"},
+        json={
+            "title": "Aviso publicado",
+            "content": "Visible",
+            "category": "General",
+            "status": "published",
+        },
         headers=headers,
     )
     draft = client.post(
         "/api/cms/announcements",
-        json={"title": "Aviso borrador", "content": "Oculto", "category": "General", "status": "draft"},
+        json={
+            "title": "Aviso borrador",
+            "content": "Oculto",
+            "category": "General",
+            "status": "draft",
+        },
         headers=headers,
     )
     archived = client.post(
         "/api/cms/announcements",
-        json={"title": "Aviso archivado", "content": "Oculto", "category": "General", "status": "archived"},
+        json={
+            "title": "Aviso archivado",
+            "content": "Oculto",
+            "category": "General",
+            "status": "archived",
+        },
         headers=headers,
     )
     assert published.status_code == 201
@@ -133,17 +156,28 @@ def test_public_announcements_only_returns_published_items(client, db_session):
 
     admin_rows = client.get("/api/admin/announcements", headers=headers)
     assert admin_rows.status_code == 200
-    assert {row["status"] for row in admin_rows.json()} == {"published", "draft", "archived"}
+    assert {row["status"] for row in admin_rows.json()} == {
+        "published",
+        "draft",
+        "archived",
+    }
 
     metrics = client.get("/api/cms/metrics", headers=headers)
     assert metrics.status_code == 200
     assert metrics.json()["announcements_total"] == 3
     assert metrics.json()["announcements_active"] == 1
 
-    archived_delete = client.delete(f"/api/admin/announcements/{published.json()['id']}", headers=headers)
+    archived_delete = client.delete(
+        f"/api/admin/announcements/{published.json()['id']}", headers=headers
+    )
     assert archived_delete.status_code == 204
-    assert client.get(f"/api/cms/announcements/{published.json()['id']}").status_code == 404
-    deleted_admin = client.get(f"/api/admin/announcements/{published.json()['id']}", headers=headers)
+    assert (
+        client.get(f"/api/cms/announcements/{published.json()['id']}").status_code
+        == 404
+    )
+    deleted_admin = client.get(
+        f"/api/admin/announcements/{published.json()['id']}", headers=headers
+    )
     assert deleted_admin.status_code == 200
     assert deleted_admin.json()["status"] == "archived"
 
@@ -176,7 +210,11 @@ def test_cms_media_metadata_can_be_created_searched_and_updated(client, db_sessi
 
     updated = client.patch(
         f"/api/cms/media/{media_id}",
-        json={"alt_text": "Hero actualizado", "section": "landing", "tags": ["hero", "landing"]},
+        json={
+            "alt_text": "Hero actualizado",
+            "section": "landing",
+            "tags": ["hero", "landing"],
+        },
         headers=headers,
     )
     assert updated.status_code == 200
@@ -188,11 +226,15 @@ def test_cms_media_metadata_can_be_created_searched_and_updated(client, db_sessi
     assert archived.status_code == 204
     assert client.get("/api/cms/media?query=hero-faro", headers=headers).json() == []
 
-    with_archived = client.get("/api/cms/media?query=hero-faro&include_archived=true", headers=headers)
+    with_archived = client.get(
+        "/api/cms/media?query=hero-faro&include_archived=true", headers=headers
+    )
     assert with_archived.status_code == 200
     assert with_archived.json()[0]["status"] == "archived"
 
-    restored = client.patch(f"/api/cms/media/{media_id}", json={"status": "active"}, headers=headers)
+    restored = client.patch(
+        f"/api/cms/media/{media_id}", json={"status": "active"}, headers=headers
+    )
     assert restored.status_code == 200
     assert restored.json()["status"] == "active"
 
@@ -219,7 +261,11 @@ def test_cms_media_upload_preserves_form_metadata(client, db_session, monkeypatc
     response = client.post(
         "/api/cms/media/upload",
         files={"file": ("podcast.mp3", b"audio-bytes", "audio/mpeg")},
-        data={"alt_text": "Podcast testimonial", "section": "testimonios", "tags": "podcast, testimonio"},
+        data={
+            "alt_text": "Podcast testimonial",
+            "section": "testimonios",
+            "tags": "podcast, testimonio",
+        },
         headers=headers,
     )
 
@@ -244,7 +290,12 @@ def test_public_cms_page_uses_published_snapshot_not_live_draft(client, db_sessi
 
     site = client.post(
         "/api/cms/v2/sites",
-        json={"site_key": "snapshot", "name": "Snapshot", "base_path": "/snapshot", "is_active": True},
+        json={
+            "site_key": "snapshot",
+            "name": "Snapshot",
+            "base_path": "/snapshot",
+            "is_active": True,
+        },
         headers=headers,
     )
     assert site.status_code == 201
@@ -295,7 +346,9 @@ def test_public_cms_page_uses_published_snapshot_not_live_draft(client, db_sessi
     assert published.status_code == 200
     assert published.json()["published_version_id"] is not None
 
-    publish_log = client.get("/api/cms/v2/sites/snapshot/pages/inicio/publish-log", headers=headers)
+    publish_log = client.get(
+        "/api/cms/v2/sites/snapshot/pages/inicio/publish-log", headers=headers
+    )
     assert publish_log.status_code == 200
     assert publish_log.json()[0]["action"] == "publish"
     assert publish_log.json()[0]["metadata_json"]["notes"] == "Publicacion inicial"
@@ -321,18 +374,24 @@ def test_public_cms_page_uses_published_snapshot_not_live_draft(client, db_sessi
     )
     assert edited.status_code == 200
 
-    preview_page = client.get("/api/cms/v2/sites/snapshot/pages/inicio/preview", headers=headers)
+    preview_page = client.get(
+        "/api/cms/v2/sites/snapshot/pages/inicio/preview", headers=headers
+    )
     assert preview_page.status_code == 200
     assert preview_page.json()["title"] == "Inicio borrador"
     assert preview_page.json()["seo_json"]["meta_title"] == "SEO borrador"
-    preview_titles = [row["props_json"].get("title") for row in preview_page.json()["sections"]]
+    preview_titles = [
+        row["props_json"].get("title") for row in preview_page.json()["sections"]
+    ]
     assert preview_titles == ["Borrador sin publicar"]
 
     public_page = client.get("/api/cms/v2/public/sites/snapshot/pages/inicio")
     assert public_page.status_code == 200
     assert public_page.json()["title"] == "Inicio publicado"
     assert public_page.json()["seo_json"]["meta_title"] == "SEO publicado"
-    section_titles = [row["props_json"].get("title") for row in public_page.json()["sections"]]
+    section_titles = [
+        row["props_json"].get("title") for row in public_page.json()["sections"]
+    ]
     assert section_titles == ["Titulo publicado"]
 
     archived_page = client.post(
@@ -342,7 +401,9 @@ def test_public_cms_page_uses_published_snapshot_not_live_draft(client, db_sessi
     )
     assert archived_page.status_code == 200
     assert archived_page.json()["status"] == "archived"
-    assert client.get("/api/cms/v2/public/sites/snapshot/pages/inicio").status_code == 404
+    assert (
+        client.get("/api/cms/v2/public/sites/snapshot/pages/inicio").status_code == 404
+    )
 
     restored_page = client.post(
         "/api/cms/v2/sites/snapshot/pages/inicio/workflow",
@@ -351,13 +412,19 @@ def test_public_cms_page_uses_published_snapshot_not_live_draft(client, db_sessi
     )
     assert restored_page.status_code == 200
     assert restored_page.json()["status"] == "draft"
-    restored_preview = client.get("/api/cms/v2/sites/snapshot/pages/inicio/preview", headers=headers)
+    restored_preview = client.get(
+        "/api/cms/v2/sites/snapshot/pages/inicio/preview", headers=headers
+    )
     assert restored_preview.status_code == 200
     assert restored_preview.json()["title"] == "Inicio borrador"
 
-    deleted_page = client.delete("/api/cms/v2/sites/snapshot/pages/inicio", headers=headers)
+    deleted_page = client.delete(
+        "/api/cms/v2/sites/snapshot/pages/inicio", headers=headers
+    )
     assert deleted_page.status_code == 204
-    deleted_admin = client.get("/api/cms/v2/sites/snapshot/pages/inicio", headers=headers)
+    deleted_admin = client.get(
+        "/api/cms/v2/sites/snapshot/pages/inicio", headers=headers
+    )
     assert deleted_admin.status_code == 200
     assert deleted_admin.json()["status"] == "archived"
 
@@ -368,7 +435,11 @@ def test_legacy_cms_page_delete_archives_workflow(client, db_session):
 
     created = client.post(
         "/api/cms/pages",
-        json={"page_key": "legacy-page", "title": "Legacy", "content": "Contenido recuperable"},
+        json={
+            "page_key": "legacy-page",
+            "title": "Legacy",
+            "content": "Contenido recuperable",
+        },
         headers=headers,
     )
     assert created.status_code == 201
@@ -391,7 +462,12 @@ def test_cms_site_delete_deactivates_without_removing(client, db_session):
 
     created = client.post(
         "/api/cms/v2/sites",
-        json={"site_key": "recoverable", "name": "Recoverable", "base_path": "/recoverable", "is_active": True},
+        json={
+            "site_key": "recoverable",
+            "name": "Recoverable",
+            "base_path": "/recoverable",
+            "is_active": True,
+        },
         headers=headers,
     )
     assert created.status_code == 201
@@ -455,7 +531,9 @@ def test_public_cms_menu_filters_non_public_items(client, db_session):
     assert archived_item.status_code == 204
     admin_items = client.get("/api/cms/v2/sites/web/menus/main/items", headers=headers)
     assert admin_items.status_code == 200
-    visible_admin = next(item for item in admin_items.json() if item["id"] == visible.json()["id"])
+    visible_admin = next(
+        item for item in admin_items.json() if item["id"] == visible.json()["id"]
+    )
     assert visible_admin["visibility"] == "hidden"
     assert client.get("/api/cms/v2/public/sites/web/menus/main").json()["items"] == []
 
@@ -490,24 +568,37 @@ def test_cms_theme_delete_archives_and_can_restore(client, db_session):
 
     site_response = client.post(
         "/api/cms/v2/sites",
-        json={"site_key": "themes", "name": "Themes", "base_path": "/themes", "is_active": True},
+        json={
+            "site_key": "themes",
+            "name": "Themes",
+            "base_path": "/themes",
+            "is_active": True,
+        },
         headers=headers,
     )
     assert site_response.status_code == 201
 
     theme = client.post(
         "/api/cms/v2/sites/themes/themes",
-        json={"name": "Tema recuperable", "tokens_json": {"--faro-primary": "#111111"}, "is_active": False},
+        json={
+            "name": "Tema recuperable",
+            "tokens_json": {"--faro-primary": "#111111"},
+            "is_active": False,
+        },
         headers=headers,
     )
     assert theme.status_code == 201
     assert theme.json()["status"] == "active"
 
-    archived = client.delete(f"/api/cms/v2/sites/themes/themes/{theme.json()['id']}", headers=headers)
+    archived = client.delete(
+        f"/api/cms/v2/sites/themes/themes/{theme.json()['id']}", headers=headers
+    )
     assert archived.status_code == 204
     themes = client.get("/api/cms/v2/sites/themes/themes", headers=headers)
     assert themes.status_code == 200
-    archived_theme = next(row for row in themes.json() if row["id"] == theme.json()["id"])
+    archived_theme = next(
+        row for row in themes.json() if row["id"] == theme.json()["id"]
+    )
     assert archived_theme["status"] == "archived"
     assert archived_theme["is_active"] is False
 
@@ -520,7 +611,10 @@ def test_cms_theme_delete_archives_and_can_restore(client, db_session):
     assert restored.json()["status"] == "active"
     assert restored.json()["is_active"] is False
 
-    activated = client.post(f"/api/cms/v2/sites/themes/themes/{theme.json()['id']}/activate", headers=headers)
+    activated = client.post(
+        f"/api/cms/v2/sites/themes/themes/{theme.json()['id']}/activate",
+        headers=headers,
+    )
     assert activated.status_code == 200
     assert activated.json()["is_active"] is True
     assert activated.json()["status"] == "active"
@@ -535,7 +629,12 @@ def test_cms_section_delete_archives_and_can_restore(client, db_session):
 
     site = client.post(
         "/api/cms/v2/sites",
-        json={"site_key": "sections", "name": "Sections", "base_path": "/sections", "is_active": True},
+        json={
+            "site_key": "sections",
+            "name": "Sections",
+            "base_path": "/sections",
+            "is_active": True,
+        },
         headers=headers,
     )
     assert site.status_code == 201
@@ -558,11 +657,15 @@ def test_cms_section_delete_archives_and_can_restore(client, db_session):
     )
     assert archived.status_code == 204
 
-    section_list = client.get("/api/cms/v2/sites/sections/pages/inicio/sections", headers=headers)
+    section_list = client.get(
+        "/api/cms/v2/sites/sections/pages/inicio/sections", headers=headers
+    )
     assert section_list.status_code == 200
     assert section_list.json()[0]["status"] == "archived"
 
-    preview = client.get("/api/cms/v2/sites/sections/pages/inicio/preview", headers=headers)
+    preview = client.get(
+        "/api/cms/v2/sites/sections/pages/inicio/preview", headers=headers
+    )
     assert preview.status_code == 200
     assert preview.json()["sections"] == []
 
@@ -574,6 +677,10 @@ def test_cms_section_delete_archives_and_can_restore(client, db_session):
     assert restored.status_code == 200
     assert restored.json()["status"] == "active"
 
-    restored_preview = client.get("/api/cms/v2/sites/sections/pages/inicio/preview", headers=headers)
+    restored_preview = client.get(
+        "/api/cms/v2/sites/sections/pages/inicio/preview", headers=headers
+    )
     assert restored_preview.status_code == 200
-    assert restored_preview.json()["sections"][0]["props_json"]["title"] == "Recuperable"
+    assert (
+        restored_preview.json()["sections"][0]["props_json"]["title"] == "Recuperable"
+    )

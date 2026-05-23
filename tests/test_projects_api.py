@@ -41,7 +41,7 @@ def test_project_whiteboard_roundtrip(client, db_session):
         f"/api/projects/{project_id}/whiteboard",
         json={
             "title": "Pizarra Estrategica",
-            "elements_json": "[{\"id\":1}]",
+            "elements_json": '[{"id":1}]',
             "thumbnail_url": "/static/thumb.png",
         },
         headers=headers,
@@ -50,10 +50,12 @@ def test_project_whiteboard_roundtrip(client, db_session):
     whiteboard = whiteboard_response.json()
     assert whiteboard["project_id"] == project_id
     assert whiteboard["title"] == "Pizarra Estrategica"
-    assert whiteboard["elements_json"] == "[{\"id\":1}]"
+    assert whiteboard["elements_json"] == '[{"id":1}]'
     assert whiteboard["thumbnail_url"] == "/static/thumb.png"
 
-    fetch_response = client.get(f"/api/projects/{project_id}/whiteboard", headers=headers)
+    fetch_response = client.get(
+        f"/api/projects/{project_id}/whiteboard", headers=headers
+    )
     assert fetch_response.status_code == 200
     fetched = fetch_response.json()
     assert fetched["title"] == "Pizarra Estrategica"
@@ -74,7 +76,12 @@ def test_project_comments_and_task_filter(client, db_session):
 
     task_response = client.post(
         f"/api/projects/{project_id}/tasks",
-        json={"title": "Tarea 1", "status": "todo", "priority": "normal", "category": "General"},
+        json={
+            "title": "Tarea 1",
+            "status": "todo",
+            "priority": "normal",
+            "category": "General",
+        },
         headers=headers,
     )
     assert task_response.status_code == 201
@@ -82,7 +89,11 @@ def test_project_comments_and_task_filter(client, db_session):
 
     comment_response = client.post(
         "/api/projects/comments",
-        json={"project_id": project_id, "task_id": task_id, "content": "Comentario desde proyecto"},
+        json={
+            "project_id": project_id,
+            "task_id": task_id,
+            "content": "Comentario desde proyecto",
+        },
         headers=headers,
     )
     assert comment_response.status_code == 200
@@ -107,7 +118,8 @@ def test_project_comments_and_task_filter(client, db_session):
     assert activities_response.status_code == 200
     activities = activities_response.json()
     assert any(
-        row["kind"] == "comment_added" and row["description"] == "Comentario desde proyecto"
+        row["kind"] == "comment_added"
+        and row["description"] == "Comentario desde proyecto"
         for row in activities
     )
 
@@ -140,7 +152,11 @@ def test_projects_list_coerces_legacy_string_labels(client, db_session):
     projects = list_response.json()
     target = next((p for p in projects if p["id"] == project_id), None)
     assert target is not None
-    labels = [t.get("labels") for t in target.get("tasks", []) if t.get("title") == "Tarea Legacy"]
+    labels = [
+        t.get("labels")
+        for t in target.get("tasks", [])
+        if t.get("title") == "Tarea Legacy"
+    ]
     assert labels
     assert labels[0] == ["Fase"]
 

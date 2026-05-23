@@ -1,12 +1,13 @@
-import sys
-import os
 import datetime
+import os
+import sys
 
 # Add root directory to path to import backend modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from backend.core.database import SessionLocal
 from backend import models
+from backend.core.database import SessionLocal
+
 
 def get_or_create_user(db):
     user = db.query(models.User).filter_by(username="admin").first()

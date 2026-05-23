@@ -1,26 +1,37 @@
-
 import logging
+
 from sqlalchemy import text
+
 from backend.core.database import SessionLocal
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Migration-Indices")
+
 
 def index_exists(db, index_name):
     """Verifica si un índice existe en SQLite o PostgreSQL."""
     try:
         dialect_name = db.bind.dialect.name
         if dialect_name == "postgresql":
-            cursor = db.execute(text("SELECT indexname FROM pg_indexes WHERE indexname = :idx"), {"idx": index_name})
+            cursor = db.execute(
+                text("SELECT indexname FROM pg_indexes WHERE indexname = :idx"),
+                {"idx": index_name},
+            )
         else:
-            cursor = db.execute(text("SELECT name FROM sqlite_master WHERE type='index' AND name = :idx"), {"idx": index_name})
+            cursor = db.execute(
+                text(
+                    "SELECT name FROM sqlite_master WHERE type='index' AND name = :idx"
+                ),
+                {"idx": index_name},
+            )
         return cursor.fetchone() is not None
     except Exception:
         return False
 
+
 def migrate():
     db = SessionLocal()
-    
+
     # Índices estratégicos para búsqueda rápida y rendimiento de JOINs
     indices = [
         ("idx_donations_status", "donations", "status"),
@@ -50,10 +61,11 @@ def migrate():
                     logger.error(f"❌ Error al crear {idx_name}: {e}")
             else:
                 logger.info(f"ℹ️ El índice {idx_name} ya existe.")
-        
+
         logger.info("✅ Optimización de índices finalizada.")
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     migrate()

@@ -3,10 +3,9 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from backend import crud, schemas, models
+from backend import crud, models, schemas
 from backend.auth import require_active_user
 from backend.core.database import get_db
-
 
 router = APIRouter(prefix="/community", tags=["community"])
 
@@ -33,9 +32,11 @@ def delete_community_card(
     db: Session = Depends(get_db),
 ):
     """Elimina una tarjeta del tablero comunitario."""
-    card = db.query(models.CommunityBoardCard).filter(
-        models.CommunityBoardCard.id == card_id
-    ).first()
+    card = (
+        db.query(models.CommunityBoardCard)
+        .filter(models.CommunityBoardCard.id == card_id)
+        .first()
+    )
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
     db.delete(card)
@@ -74,4 +75,9 @@ def create_community_glory_house(
     db.add(house)
     db.commit()
     db.refresh(house)
-    return {"id": house.id, "name": house.name, "leader_name": house.leader_name, "address": house.address}
+    return {
+        "id": house.id,
+        "name": house.name,
+        "leader_name": house.leader_name,
+        "address": house.address,
+    }

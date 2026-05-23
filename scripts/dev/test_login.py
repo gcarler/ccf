@@ -1,9 +1,11 @@
-import sys
 import logging
-from backend.core.database import SessionLocal
+import sys
+
 from backend import crud
-from backend.auth import verify_password, create_refresh_token, create_access_token
+from backend.auth import (create_access_token, create_refresh_token,
+                          verify_password)
 from backend.core.config import get_settings
+from backend.core.database import SessionLocal
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -12,7 +14,7 @@ settings = get_settings()
 try:
     db = SessionLocal()
     print("DB connection established.")
-    
+
     user = crud.get_user_by_username(db, "test")
     if not user:
         user = crud.get_user_by_email(db, "test")
@@ -25,10 +27,11 @@ try:
 
         print("Creating access token...")
         from datetime import timedelta
+
         payload = {"sub": str(user.id), "role": str(user.role)}
         access_token = create_access_token(
             data=payload,
-            expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
+            expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
         )
         print("Access token created.")
 
@@ -38,4 +41,5 @@ try:
 
 except Exception as e:
     import traceback
+
     traceback.print_exc()

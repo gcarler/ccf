@@ -1,6 +1,6 @@
 import codecs
 
-with codecs.open('frontend/src/components/WorkspaceLayout.tsx', 'r', 'utf-8') as f:
+with codecs.open("frontend/src/components/WorkspaceLayout.tsx", "r", "utf-8") as f:
     c = f.read()
 
 import_old = "import { LayoutDashboard, Users, UserSquare2, PhoneCall, ListTodo, Calendar, Home, Scan, ShieldCheck, MessageCircle, Mail, Contact } from 'lucide-react';"
@@ -18,7 +18,7 @@ nav_new = """                    { id: 'crm-events',    label: 'Eventos',       
                 ]"""
 c = c.replace(nav_old, nav_new)
 
-with codecs.open('frontend/src/components/WorkspaceLayout.tsx', 'w', 'utf-8') as f:
+with codecs.open("frontend/src/components/WorkspaceLayout.tsx", "w", "utf-8") as f:
     f.write(c)
 
 print("Sidebar updated")

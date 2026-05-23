@@ -6,8 +6,8 @@ Handles schema differences detected during audit:
   - projects.name -> projects.title
   - Extra/missing columns are handled per-table with explicit column mapping.
 """
-import sqlite3
 import json
+import sqlite3
 
 SOURCE_DB = "/root/ccf/ccf_v2.db.bak"
 TARGET_DB = "/root/ccf/ccf_final.db"

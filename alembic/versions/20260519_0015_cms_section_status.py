@@ -7,9 +7,9 @@ Create Date: 2026-05-19 00:00:00
 
 from __future__ import annotations
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 revision = "20260519_0015"
 down_revision = "20260519_0014"
@@ -18,7 +18,10 @@ depends_on = None
 
 
 def _has_column(inspector: sa.Inspector, table_name: str, column_name: str) -> bool:
-    return any(column.get("name") == column_name for column in inspector.get_columns(table_name))
+    return any(
+        column.get("name") == column_name
+        for column in inspector.get_columns(table_name)
+    )
 
 
 def upgrade() -> None:
@@ -30,7 +33,14 @@ def upgrade() -> None:
 
     with op.batch_alter_table("cms_sections") as batch_op:
         if not _has_column(inspector, "cms_sections", "status"):
-            batch_op.add_column(sa.Column("status", sa.String(length=20), nullable=False, server_default="active"))
+            batch_op.add_column(
+                sa.Column(
+                    "status",
+                    sa.String(length=20),
+                    nullable=False,
+                    server_default="active",
+                )
+            )
             batch_op.create_index("ix_cms_sections_status", ["status"])
 
 

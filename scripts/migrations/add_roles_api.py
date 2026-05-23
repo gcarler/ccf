@@ -1,4 +1,5 @@
 import json
+
 from pydantic import BaseModel
 
 new_endpoints = """
@@ -77,5 +78,5 @@ def delete_role(role_id: int, fallback_id: int, db: Session = Depends(get_db), c
     return {"success": True, "message": "Rol eliminado y miembros reasignados correctamente"}
 """
 
-with open('backend/api/crm.py', 'a', encoding='utf-8') as f:
+with open("backend/api/crm.py", "a", encoding="utf-8") as f:
     f.write(new_endpoints)

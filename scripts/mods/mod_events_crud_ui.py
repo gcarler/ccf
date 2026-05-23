@@ -1,17 +1,17 @@
-f = open('frontend/src/app/crm/events/page.tsx', encoding='utf-8')
+f = open("frontend/src/app/crm/events/page.tsx", encoding="utf-8")
 c = f.read()
 f.close()
 
 # 1. Add Edit/Pencil import
 c = c.replace(
     "import {\n    Calendar,\n    Plus,\n    QrCode,\n    List,\n    LayoutGrid,\n    ArrowRight,\n    Download,\n    Scan,\n    Users,\n    Search,\n    ChevronRight\n} from 'lucide-react';",
-    "import {\n    Calendar,\n    Plus,\n    QrCode,\n    List,\n    LayoutGrid,\n    ArrowRight,\n    Download,\n    Scan,\n    Users,\n    Search,\n    ChevronRight,\n    Pencil,\n    Trash2,\n    MoreVertical\n} from 'lucide-react';"
+    "import {\n    Calendar,\n    Plus,\n    QrCode,\n    List,\n    LayoutGrid,\n    ArrowRight,\n    Download,\n    Scan,\n    Users,\n    Search,\n    ChevronRight,\n    Pencil,\n    Trash2,\n    MoreVertical\n} from 'lucide-react';",
 )
 
 # 2. Add edit/delete state
 c = c.replace(
     "    const [roles, setRoles] = useState<any[]>([]);",
-    "    const [roles, setRoles] = useState<any[]>([]);\n    const [editingEvent, setEditingEvent] = useState<any>(null);\n    const [deletingEventId, setDeletingEventId] = useState<number | null>(null);\n    const [menuOpenId, setMenuOpenId] = useState<number | null>(null);"
+    "    const [roles, setRoles] = useState<any[]>([]);\n    const [editingEvent, setEditingEvent] = useState<any>(null);\n    const [deletingEventId, setDeletingEventId] = useState<number | null>(null);\n    const [menuOpenId, setMenuOpenId] = useState<number | null>(null);",
 )
 
 # 3. Add edit/delete handlers before the return statement
@@ -49,7 +49,7 @@ c = c.replace(handler_old, handler_new)
 # 4. Add three-dot menu to the card footer
 card_footer_old = '                            <div className="mt-6 flex items-center justify-between">\n                                <button onClick={(e) => { e.stopPropagation(); openQr(ev); }} className="size-11 flex items-center justify-center bg-slate-50 dark:bg-white/5 hover:bg-violet-600 text-slate-400 hover:text-white rounded-xl transition-all mr-2 shrink-0" title="Generar QR">\n                                    <QrCode size={18} />\n                                </button>\n                                <button onClick={(e) => { e.stopPropagation(); openAttendance(ev); }} className="flex-1 py-3 bg-slate-50 dark:bg-white/5 group-hover:bg-blue-600 text-slate-500 group-hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">\n                                    Panel de Asistencia\n                                </button>\n                                <ArrowRight size={16} className="ml-3 text-slate-300 group-hover:text-blue-500 transition-all opacity-0 group-hover:opacity-100" />\n                            </div>'
 
-card_footer_new = '''                            <div className="mt-6 flex items-center justify-between gap-2">
+card_footer_new = """                            <div className="mt-6 flex items-center justify-between gap-2">
                                 <button onClick={(e) => { e.stopPropagation(); openQr(ev); }} className="size-10 flex items-center justify-center bg-slate-50 dark:bg-white/5 hover:bg-violet-600 text-slate-400 hover:text-white rounded-xl transition-all shrink-0" title="Generar QR">
                                     <QrCode size={16} />
                                 </button>
@@ -80,7 +80,7 @@ card_footer_new = '''                            <div className="mt-6 flex items
                                         </div>
                                     )}
                                 </div>
-                            </div>'''
+                            </div>"""
 
 c = c.replace(card_footer_old, card_footer_new)
 
@@ -135,5 +135,5 @@ modal_new = """            {/* DELETE CONFIRM MODAL */}
 
 c = c.replace("        </CrmShell>\n    );\n}", modal_new)
 
-open('frontend/src/app/crm/events/page.tsx', 'w', encoding='utf-8').write(c)
+open("frontend/src/app/crm/events/page.tsx", "w", encoding="utf-8").write(c)
 print("Frontend fixes applied: menu 3-dots + edit modal + delete confirm")

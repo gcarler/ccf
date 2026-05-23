@@ -12,11 +12,8 @@ from sqlalchemy.pool import StaticPool
 from backend.app import app
 from backend.core.database import Base, get_db
 
-
 SQLALCHEMY_DATABASE_URL = (
-    os.getenv("TEST_DATABASE_URL")
-    or os.getenv("DATABASE_URL")
-    or "sqlite://"
+    os.getenv("TEST_DATABASE_URL") or os.getenv("DATABASE_URL") or "sqlite://"
 )
 database_url = make_url(SQLALCHEMY_DATABASE_URL)
 

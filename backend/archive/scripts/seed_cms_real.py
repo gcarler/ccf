@@ -1,5 +1,5 @@
-import sqlite3
 import json
+import sqlite3
 
 db_path = 'd:/ccf/ccf_v2.db'
 conn = sqlite3.connect(db_path)

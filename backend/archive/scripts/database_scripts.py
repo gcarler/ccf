@@ -1,6 +1,7 @@
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+
 def create_stored_procedures(db: Session):
     """
     Creates the required Stored Procedures for CCF Platform.

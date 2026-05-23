@@ -1,4 +1,5 @@
 """Admin audit log CRUD."""
+
 from sqlalchemy.orm import Session
 
 from backend import models
@@ -18,7 +19,10 @@ def create_admin_audit_log(
         action=action,
         resource_type=resource_type,
         resource_id=resource_id,
-        metadata_json={**(metadata or {}), **({"ip_address": ip_address} if ip_address else {})},
+        metadata_json={
+            **(metadata or {}),
+            **({"ip_address": ip_address} if ip_address else {}),
+        },
     )
     db.add(row)
     db.commit()

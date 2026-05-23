@@ -1,7 +1,7 @@
 import codecs
 import re
 
-with codecs.open('frontend/src/app/crm/scanner/page.tsx', 'r', 'utf-8') as f:
+with codecs.open("frontend/src/app/crm/scanner/page.tsx", "r", "utf-8") as f:
     c = f.read()
 
 # 1. Update states and imports
@@ -70,7 +70,7 @@ ui_new = """                                    <p className="text-white font-bo
                                 {/* Manual Input Toggle (Simulation) */}"""
 c = c.replace(ui_old, ui_new)
 
-with codecs.open('frontend/src/app/crm/scanner/page.tsx', 'w', 'utf-8') as f:
+with codecs.open("frontend/src/app/crm/scanner/page.tsx", "w", "utf-8") as f:
     f.write(c)
 
 print("Frontend scanner updated")

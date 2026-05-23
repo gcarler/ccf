@@ -1,6 +1,7 @@
 from backend.models_shared import *
 from backend.models_shared import _utcnow
 
+
 # 1. IDENTITY, GAMIFICATION & UI
 class Role(Base):
     __tablename__ = "roles"
@@ -9,12 +10,14 @@ class Role(Base):
     permissions = Column(JSON)
     role_users = relationship("User", back_populates="user_role_obj")
 
+
 class Level(Base):
     __tablename__ = "levels"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(50), unique=True, nullable=False)
     min_xp = Column(Integer, default=0)
     icon_key = Column(String(50), nullable=True)
+
 
 class User(Base):
     __tablename__ = "users"
@@ -45,6 +48,7 @@ class User(Base):
     # Relationships for Projects
     assigned_tasks = relationship("ProjectTask", back_populates="assignee")
 
+
 class Badge(Base):
     __tablename__ = "badges"
     id = Column(Integer, primary_key=True, index=True)
@@ -52,6 +56,7 @@ class Badge(Base):
     description = Column(Text, nullable=True)
     icon_key = Column(String(50), nullable=False)
     xp_reward = Column(Integer, default=50)
+
 
 class UserBadge(Base):
     __tablename__ = "user_badges"
@@ -63,6 +68,7 @@ class UserBadge(Base):
     user = relationship("User", back_populates="badges")
     badge_obj = relationship("Badge")
 
+
 class UserUIPreference(Base):
     __tablename__ = "user_ui_preferences"
     id = Column(Integer, primary_key=True, index=True)
@@ -70,6 +76,7 @@ class UserUIPreference(Base):
     settings = Column(JSON, default={})
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     user = relationship("User", back_populates="ui_prefs")
+
 
 class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
@@ -106,9 +113,16 @@ class ResetToken(Base):
 
 class UserPermission(Base):
     """Permisos individuales por usuario (sobrescribe/amplía los del rol)."""
+
     __tablename__ = "user_permissions"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
     permissions = Column(JSON, default={})
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
@@ -118,7 +132,9 @@ class UserPermission(Base):
 class Notification(Base):
     __tablename__ = "notifications"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     title = Column(String(200), nullable=False)
     content = Column(Text, nullable=True)
     is_read = Column(Boolean, default=False, index=True)
@@ -130,7 +146,9 @@ class Notification(Base):
 class UserReminder(Base):
     __tablename__ = "user_reminders"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     remind_at = Column(DateTime, nullable=False, index=True)

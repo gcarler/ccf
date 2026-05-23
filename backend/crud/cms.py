@@ -1,27 +1,36 @@
 """CMS: Page content, media, CMS v2 (sites, themes, menus, pages, sections, versions)."""
+
 import datetime as dt
 import json
 import uuid
 
-from sqlalchemy import or_, func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
 from backend.content_defaults import PAGE_CONTENT_DEFAULTS
 from backend.crud._utils import _utcnow
 
-
 # ── Page Content ───────────────────────────────────────
 
+
 def update_page_content(db: Session, page_key: str, payload: schemas.PageContentUpdate):
-    page = db.query(models.PageContent).filter(models.PageContent.page_key == page_key).first()
+    page = (
+        db.query(models.PageContent)
+        .filter(models.PageContent.page_key == page_key)
+        .first()
+    )
     if not page:
-        page = models.PageContent(page_key=page_key, title=payload.title or "", content=payload.content or "")
+        page = models.PageContent(
+            page_key=page_key, title=payload.title or "", content=payload.content or ""
+        )
         db.add(page)
         db.commit()
         db.refresh(page)
         return page
-    version = models.PageContentVersion(page_key=page.page_key, title=page.title, content=page.content)
+    version = models.PageContentVersion(
+        page_key=page.page_key, title=page.title, content=page.content
+    )
     db.add(version)
     if payload.title is not None:
         page.title = payload.title
@@ -33,7 +42,11 @@ def update_page_content(db: Session, page_key: str, payload: schemas.PageContent
 
 
 def get_page_content(db: Session, page_key: str):
-    return db.query(models.PageContent).filter(models.PageContent.page_key == page_key).first()
+    return (
+        db.query(models.PageContent)
+        .filter(models.PageContent.page_key == page_key)
+        .first()
+    )
 
 
 def list_page_contents(db: Session, limit: int = 200):
@@ -88,7 +101,9 @@ def restore_page_content_version(db: Session, page_key: str, version_id: int):
         return None
 
     row = get_or_create_page_content(db, page_key)
-    snapshot = models.PageContentVersion(page_key=row.page_key, title=row.title, content=row.content)
+    snapshot = models.PageContentVersion(
+        page_key=row.page_key, title=row.title, content=row.content
+    )
     db.add(snapshot)
     row.title = version.title
     row.content = version.content
@@ -98,6 +113,7 @@ def restore_page_content_version(db: Session, page_key: str, version_id: int):
 
 
 # ── Content Publications ───────────────────────────────
+
 
 def get_or_create_content_publication(db: Session, page_key: str):
     row = (
@@ -147,6 +163,7 @@ def list_content_publications(db: Session):
 
 
 # ── CMS Media ──────────────────────────────────────────
+
 
 def create_cms_media_item(
     db: Session,
@@ -204,7 +221,9 @@ def list_cms_media_items(
 
 
 def get_cms_media_item(db: Session, item_id: int):
-    return db.query(models.CmsMediaItem).filter(models.CmsMediaItem.id == item_id).first()
+    return (
+        db.query(models.CmsMediaItem).filter(models.CmsMediaItem.id == item_id).first()
+    )
 
 
 def update_cms_media_item(
@@ -255,8 +274,13 @@ def delete_cms_media_item(db: Session, item_id: int) -> bool:
 
 # ── CMS Media Assets ───────────────────────────────────
 
-def create_media_asset(db: Session, filename: str, url: str, mime_type: str | None, size_bytes: int):
-    row = models.MediaAsset(filename=filename, url=url, mime_type=mime_type, size_bytes=size_bytes)
+
+def create_media_asset(
+    db: Session, filename: str, url: str, mime_type: str | None, size_bytes: int
+):
+    row = models.MediaAsset(
+        filename=filename, url=url, mime_type=mime_type, size_bytes=size_bytes
+    )
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -274,10 +298,16 @@ def delete_media_asset(db: Session, asset_id: int) -> bool:
 
 # ── CMS Content Metrics ────────────────────────────────
 
-def increment_content_metric(db: Session, metric_key: str, ref_id: int, amount: int = 1):
+
+def increment_content_metric(
+    db: Session, metric_key: str, ref_id: int, amount: int = 1
+):
     row = (
         db.query(models.ContentMetric)
-        .filter(models.ContentMetric.metric_key == metric_key, models.ContentMetric.ref_id == ref_id)
+        .filter(
+            models.ContentMetric.metric_key == metric_key,
+            models.ContentMetric.ref_id == ref_id,
+        )
         .first()
     )
     if not row:
@@ -290,6 +320,7 @@ def increment_content_metric(db: Session, metric_key: str, ref_id: int, amount: 
 
 
 # ── CMS v2 Sites ───────────────────────────────────────
+
 
 def list_cms_sites(db: Session, *, only_active: bool = False):
     q = db.query(models.CmsSite)
@@ -330,6 +361,7 @@ def update_cms_site(db: Session, row: models.CmsSite, payload: schemas.CmsSiteUp
 
 # ── CMS v2 Themes ──────────────────────────────────────
 
+
 def archive_cms_site(db: Session, row: models.CmsSite) -> models.CmsSite:
     row.is_active = False
     db.commit()
@@ -346,7 +378,9 @@ def list_cms_themes(db: Session, site_id: int):
     )
 
 
-def create_cms_theme(db: Session, site_id: int, payload: schemas.CmsThemeCreate, created_by: int | None):
+def create_cms_theme(
+    db: Session, site_id: int, payload: schemas.CmsThemeCreate, created_by: int | None
+):
     version = (
         db.query(func.max(models.CmsTheme.version))
         .filter(models.CmsTheme.site_id == site_id)
@@ -382,7 +416,9 @@ def get_cms_theme(db: Session, site_id: int, theme_id: int):
     )
 
 
-def update_cms_theme(db: Session, row: models.CmsTheme, payload: schemas.CmsThemeUpdate):
+def update_cms_theme(
+    db: Session, row: models.CmsTheme, payload: schemas.CmsThemeUpdate
+):
     data = payload.model_dump(exclude_unset=True)
     if "name" in data and data["name"] is not None:
         row.name = str(data["name"]).strip()
@@ -409,7 +445,9 @@ def activate_cms_theme(db: Session, site_id: int, theme_id: int):
     row = get_cms_theme(db, site_id, theme_id)
     if not row:
         return None
-    db.query(models.CmsTheme).filter(models.CmsTheme.site_id == site_id).update({"is_active": False})
+    db.query(models.CmsTheme).filter(models.CmsTheme.site_id == site_id).update(
+        {"is_active": False}
+    )
     row.is_active = True
     row.status = "active"
     db.commit()
@@ -439,6 +477,7 @@ def get_active_cms_theme(db: Session, site_id: int):
 
 
 # ── CMS v2 Menus ───────────────────────────────────────
+
 
 def list_cms_menus(db: Session, site_id: int):
     return (
@@ -489,6 +528,7 @@ def delete_cms_menu(db: Session, row: models.CmsMenu) -> bool:
 
 # ── CMS v2 Menu Items ──────────────────────────────────
 
+
 def list_cms_menu_items(db: Session, menu_id: int):
     return (
         db.query(models.CmsMenuItem)
@@ -524,7 +564,9 @@ def get_cms_menu_item(db: Session, menu_id: int, item_id: int):
     )
 
 
-def update_cms_menu_item(db: Session, row: models.CmsMenuItem, payload: schemas.CmsMenuItemUpdate):
+def update_cms_menu_item(
+    db: Session, row: models.CmsMenuItem, payload: schemas.CmsMenuItemUpdate
+):
     data = payload.model_dump(exclude_unset=True)
     for field in ["parent_id", "target", "is_external", "visibility", "sort_order"]:
         if field in data:
@@ -546,10 +588,14 @@ def delete_cms_menu_item(db: Session, row: models.CmsMenuItem) -> bool:
     return True
 
 
-def reorder_cms_menu_items(db: Session, menu_id: int, items: list[schemas.CmsMenuItemReorderItem]):
+def reorder_cms_menu_items(
+    db: Session, menu_id: int, items: list[schemas.CmsMenuItemReorderItem]
+):
     rows_by_id = {
         row.id: row
-        for row in db.query(models.CmsMenuItem).filter(models.CmsMenuItem.menu_id == menu_id).all()
+        for row in db.query(models.CmsMenuItem)
+        .filter(models.CmsMenuItem.menu_id == menu_id)
+        .all()
     }
     for item in items:
         row = rows_by_id.get(item.id)
@@ -562,6 +608,7 @@ def reorder_cms_menu_items(db: Session, menu_id: int, items: list[schemas.CmsMen
 
 
 # ── CMS v2 Pages ───────────────────────────────────────
+
 
 def list_cms_pages(db: Session, site_id: int):
     return (
@@ -580,7 +627,9 @@ def get_cms_page(db: Session, site_id: int, slug: str):
     )
 
 
-def create_cms_page(db: Session, site_id: int, payload: schemas.CmsPageCreate, user_id: int | None):
+def create_cms_page(
+    db: Session, site_id: int, payload: schemas.CmsPageCreate, user_id: int | None
+):
     row = models.CmsPage(
         site_id=site_id,
         slug=payload.slug.strip().lower(),
@@ -596,7 +645,12 @@ def create_cms_page(db: Session, site_id: int, payload: schemas.CmsPageCreate, u
     return row
 
 
-def update_cms_page(db: Session, row: models.CmsPage, payload: schemas.CmsPageUpdate, user_id: int | None):
+def update_cms_page(
+    db: Session,
+    row: models.CmsPage,
+    payload: schemas.CmsPageUpdate,
+    user_id: int | None,
+):
     data = payload.model_dump(exclude_unset=True)
     if "slug" in data and data["slug"] is not None:
         row.slug = str(data["slug"]).strip().lower()
@@ -620,6 +674,7 @@ def delete_cms_page(db: Session, row: models.CmsPage) -> bool:
 
 
 # ── CMS v2 Sections ────────────────────────────────────
+
 
 def list_cms_sections(db: Session, page_id: int):
     return (
@@ -649,12 +704,16 @@ def create_cms_section(db: Session, page_id: int, payload: schemas.CmsSectionCre
 def get_cms_section(db: Session, page_id: int, section_id: int):
     return (
         db.query(models.CmsSection)
-        .filter(models.CmsSection.page_id == page_id, models.CmsSection.id == section_id)
+        .filter(
+            models.CmsSection.page_id == page_id, models.CmsSection.id == section_id
+        )
         .first()
     )
 
 
-def update_cms_section(db: Session, row: models.CmsSection, payload: schemas.CmsSectionUpdate):
+def update_cms_section(
+    db: Session, row: models.CmsSection, payload: schemas.CmsSectionUpdate
+):
     data = payload.model_dump(exclude_unset=True)
     for field in ["type", "sort_order", "is_visible", "status"]:
         if field in data and data[field] is not None:
@@ -677,10 +736,14 @@ def archive_cms_section(db: Session, row: models.CmsSection) -> models.CmsSectio
     return row
 
 
-def reorder_cms_sections(db: Session, page_id: int, items: list[schemas.CmsSectionReorderItem]):
+def reorder_cms_sections(
+    db: Session, page_id: int, items: list[schemas.CmsSectionReorderItem]
+):
     rows_by_id = {
         row.id: row
-        for row in db.query(models.CmsSection).filter(models.CmsSection.page_id == page_id).all()
+        for row in db.query(models.CmsSection)
+        .filter(models.CmsSection.page_id == page_id)
+        .all()
     }
     for item in items:
         row = rows_by_id.get(item.id)
@@ -692,6 +755,7 @@ def reorder_cms_sections(db: Session, page_id: int, items: list[schemas.CmsSecti
 
 
 # ── CMS v2 Page Versions ───────────────────────────────
+
 
 def _build_page_snapshot(db: Session, page: models.CmsPage):
     sections = list_cms_sections(db, page.id)
@@ -718,7 +782,9 @@ def _build_page_snapshot(db: Session, page: models.CmsPage):
     }
 
 
-def create_cms_page_version(db: Session, page: models.CmsPage, user_id: int | None, notes: str | None = None):
+def create_cms_page_version(
+    db: Session, page: models.CmsPage, user_id: int | None, notes: str | None = None
+):
     max_version = (
         db.query(func.max(models.CmsPageVersion.version_number))
         .filter(models.CmsPageVersion.page_id == page.id)
@@ -751,19 +817,31 @@ def list_cms_page_versions(db: Session, page_id: int):
 def get_cms_page_version(db: Session, page_id: int, version_id: int):
     return (
         db.query(models.CmsPageVersion)
-        .filter(models.CmsPageVersion.page_id == page_id, models.CmsPageVersion.id == version_id)
+        .filter(
+            models.CmsPageVersion.page_id == page_id,
+            models.CmsPageVersion.id == version_id,
+        )
         .first()
     )
 
 
-def list_cms_publish_logs(db: Session, site_id: int, *, page_id: int | None = None, limit: int = 50):
-    query = db.query(models.CmsPublishLog).filter(models.CmsPublishLog.site_id == site_id)
+def list_cms_publish_logs(
+    db: Session, site_id: int, *, page_id: int | None = None, limit: int = 50
+):
+    query = db.query(models.CmsPublishLog).filter(
+        models.CmsPublishLog.site_id == site_id
+    )
     if page_id is not None:
         query = query.filter(models.CmsPublishLog.page_id == page_id)
     return query.order_by(models.CmsPublishLog.created_at.desc()).limit(limit).all()
 
 
-def restore_cms_page_version(db: Session, page: models.CmsPage, version: models.CmsPageVersion, user_id: int | None):
+def restore_cms_page_version(
+    db: Session,
+    page: models.CmsPage,
+    version: models.CmsPageVersion,
+    user_id: int | None,
+):
     snapshot = version.snapshot_json or {}
     page_data = snapshot.get("page") or {}
     sections_data = snapshot.get("sections") or []
@@ -773,7 +851,9 @@ def restore_cms_page_version(db: Session, page: models.CmsPage, version: models.
         page.seo_json = page_data.get("seo_json") or {}
     page.status = "draft"
     page.updated_by = user_id
-    db.query(models.CmsSection).filter(models.CmsSection.page_id == page.id).delete(synchronize_session=False)
+    db.query(models.CmsSection).filter(models.CmsSection.page_id == page.id).delete(
+        synchronize_session=False
+    )
     for idx, section_data in enumerate(sections_data):
         if not isinstance(section_data, dict):
             continue
@@ -793,7 +873,13 @@ def restore_cms_page_version(db: Session, page: models.CmsPage, version: models.
     return page
 
 
-def transition_cms_page_status(db: Session, page: models.CmsPage, action: str, user_id: int | None, notes: str | None = None):
+def transition_cms_page_status(
+    db: Session,
+    page: models.CmsPage,
+    action: str,
+    user_id: int | None,
+    notes: str | None = None,
+):
     action = action.strip().lower()
     action_map = {
         "submit_review": "in_review",
@@ -832,14 +918,21 @@ def transition_cms_page_status(db: Session, page: models.CmsPage, action: str, u
 def get_public_cms_page(db: Session, site_id: int, slug: str):
     return (
         db.query(models.CmsPage)
-        .filter(models.CmsPage.site_id == site_id, models.CmsPage.slug == slug, models.CmsPage.status == "published")
+        .filter(
+            models.CmsPage.site_id == site_id,
+            models.CmsPage.slug == slug,
+            models.CmsPage.status == "published",
+        )
         .first()
     )
 
 
 # ── Announcements ───────────────────────────────────────
 
-def create_announcement(db: Session, payload: schemas.AnnouncementCreate) -> models.Announcement:
+
+def create_announcement(
+    db: Session, payload: schemas.AnnouncementCreate
+) -> models.Announcement:
     status = payload.status or "published"
     row = models.Announcement(
         title=payload.title.strip(),
@@ -856,7 +949,9 @@ def create_announcement(db: Session, payload: schemas.AnnouncementCreate) -> mod
     return row
 
 
-def list_announcements(db: Session, *, public_only: bool = False) -> list[models.Announcement]:
+def list_announcements(
+    db: Session, *, public_only: bool = False
+) -> list[models.Announcement]:
     query = db.query(models.Announcement)
     if public_only:
         query = query.filter(
@@ -867,10 +962,16 @@ def list_announcements(db: Session, *, public_only: bool = False) -> list[models
 
 
 def get_announcement(db: Session, announcement_id: int) -> models.Announcement | None:
-    return db.query(models.Announcement).filter(models.Announcement.id == announcement_id).first()
+    return (
+        db.query(models.Announcement)
+        .filter(models.Announcement.id == announcement_id)
+        .first()
+    )
 
 
-def update_announcement(db: Session, row: models.Announcement, payload: schemas.AnnouncementUpdate) -> models.Announcement:
+def update_announcement(
+    db: Session, row: models.Announcement, payload: schemas.AnnouncementUpdate
+) -> models.Announcement:
     data = payload.model_dump(exclude_unset=True)
     previous_status = row.status
     for field in ("title", "content", "category", "image_url", "is_featured", "status"):
@@ -891,7 +992,10 @@ def delete_announcement(db: Session, row: models.Announcement) -> bool:
 
 # ── Testimonials ────────────────────────────────────────
 
-def create_testimonial(db: Session, payload: schemas.TestimonialCreate) -> models.Testimonial:
+
+def create_testimonial(
+    db: Session, payload: schemas.TestimonialCreate
+) -> models.Testimonial:
     status = payload.status or ("approved" if payload.is_approved else "pending")
     row = models.Testimonial(
         content=payload.content.strip(),
@@ -912,18 +1016,29 @@ def create_testimonial(db: Session, payload: schemas.TestimonialCreate) -> model
     return row
 
 
-def list_testimonials(db: Session, *, approved_only: bool = False) -> list[models.Testimonial]:
+def list_testimonials(
+    db: Session, *, approved_only: bool = False
+) -> list[models.Testimonial]:
     query = db.query(models.Testimonial)
     if approved_only:
-        query = query.filter(models.Testimonial.is_approved.is_(True), models.Testimonial.status != "archived")
+        query = query.filter(
+            models.Testimonial.is_approved.is_(True),
+            models.Testimonial.status != "archived",
+        )
     return query.order_by(models.Testimonial.created_at.desc()).all()
 
 
 def get_testimonial(db: Session, testimonial_id: int) -> models.Testimonial | None:
-    return db.query(models.Testimonial).filter(models.Testimonial.id == testimonial_id).first()
+    return (
+        db.query(models.Testimonial)
+        .filter(models.Testimonial.id == testimonial_id)
+        .first()
+    )
 
 
-def update_testimonial(db: Session, row: models.Testimonial, payload: schemas.TestimonialUpdate) -> models.Testimonial:
+def update_testimonial(
+    db: Session, row: models.Testimonial, payload: schemas.TestimonialUpdate
+) -> models.Testimonial:
     data = payload.model_dump(exclude_unset=True)
     for field in (
         "content",
@@ -939,7 +1054,11 @@ def update_testimonial(db: Session, row: models.Testimonial, payload: schemas.Te
     ):
         if field in data and data[field] is not None:
             setattr(row, field, data[field])
-    if "status" not in data and "is_approved" in data and data["is_approved"] is not None:
+    if (
+        "status" not in data
+        and "is_approved" in data
+        and data["is_approved"] is not None
+    ):
         row.status = "approved" if data["is_approved"] else "pending"
     if "status" in data and data["status"] == "approved":
         row.is_approved = True

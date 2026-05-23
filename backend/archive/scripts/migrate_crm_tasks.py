@@ -4,6 +4,7 @@ Reads database connection from environment variables.
 """
 import os
 import sys
+
 import pg8000
 
 

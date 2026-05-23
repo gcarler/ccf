@@ -22,7 +22,11 @@ def test_login_and_refresh_flow(client: TestClient, db_session):
     seed_user(db_session)
     response = client.post(
         "/api/auth/login",
-        data={"username": "admin@example.com", "password": "secret123", "grant_type": "password"},
+        data={
+            "username": "admin@example.com",
+            "password": "secret123",
+            "grant_type": "password",
+        },
     )
     assert response.status_code == 200
     data = response.json()
@@ -44,7 +48,11 @@ def test_login_rejects_invalid_credentials(client: TestClient, db_session):
     seed_user(db_session)
     response = client.post(
         "/api/auth/login",
-        data={"username": "admin@example.com", "password": "wrong", "grant_type": "password"},
+        data={
+            "username": "admin@example.com",
+            "password": "wrong",
+            "grant_type": "password",
+        },
     )
     assert response.status_code == 401
 
@@ -59,7 +67,11 @@ def test_refresh_token_rotation_invalidates_old_token(client: TestClient, db_ses
     seed_user(db_session)
     login_resp = client.post(
         "/api/auth/login",
-        data={"username": "admin@example.com", "password": "secret123", "grant_type": "password"},
+        data={
+            "username": "admin@example.com",
+            "password": "secret123",
+            "grant_type": "password",
+        },
     )
     assert login_resp.status_code == 200
     tokens = login_resp.json()
@@ -77,6 +89,6 @@ def test_refresh_token_rotation_invalidates_old_token(client: TestClient, db_ses
         "/api/auth/refresh",
         json={"refresh_token": original_refresh},
     )
-    assert refresh2_resp.status_code == 401, (
-        "El refresh token original debe estar revocado después de usarlo"
-    )
+    assert (
+        refresh2_resp.status_code == 401
+    ), "El refresh token original debe estar revocado después de usarlo"

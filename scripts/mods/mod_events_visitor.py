@@ -1,7 +1,7 @@
 import codecs
 import re
 
-with codecs.open('frontend/src/app/crm/events/[id]/page.tsx', 'r', 'utf-8') as f:
+with codecs.open("frontend/src/app/crm/events/[id]/page.tsx", "r", "utf-8") as f:
     c = f.read()
 
 # Add states for visitor form
@@ -99,7 +99,7 @@ modal_html = """
 
 c = c.replace("        </CrmShell>", modal_html + "\n        </CrmShell>")
 
-with codecs.open('frontend/src/app/crm/events/[id]/page.tsx', 'w', 'utf-8') as f:
+with codecs.open("frontend/src/app/crm/events/[id]/page.tsx", "w", "utf-8") as f:
     f.write(c)
 
 print("Fast checkin modal added")

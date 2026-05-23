@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-# pyright: reportMissingImports=false
-
 import datetime as dt
 import json
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict
+
+# pyright: reportMissingImports=false
+
 
 try:  # pragma: no cover - import guard for optional dep
     import duckdb  # type: ignore[import]
@@ -17,7 +18,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from duckdb import DuckDBPyConnection
 
 from backend.core.config import get_settings
-
 
 settings = get_settings()
 WAREHOUSE_PATH = Path(settings.analytics_db_path)

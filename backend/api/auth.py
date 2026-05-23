@@ -7,19 +7,15 @@ import logging
 from datetime import timedelta
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
+from fastapi import (APIRouter, Depends, HTTPException, Request, Response,
+                     status)
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from backend import crud, schemas, models
-from backend.auth import (
-    create_access_token,
-    create_refresh_token,
-    normalize_role,
-    require_active_user,
-    require_admin,
-)
+from backend import crud, models, schemas
+from backend.auth import (create_access_token, create_refresh_token,
+                          normalize_role, require_active_user, require_admin)
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.rate_limit import rate_limiter
@@ -30,7 +26,11 @@ log = logging.getLogger(__name__)
 router = APIRouter(tags=["Autenticacion"])
 
 
-@router.post("/login", response_model=schemas.Token, dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))])
+@router.post(
+    "/login",
+    response_model=schemas.Token,
+    dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))],
+)
 def login(
     request: Request,
     response: Response,
@@ -38,7 +38,8 @@ def login(
     db: Session = Depends(get_db),
 ):
     """Inicio de sesion ministerial. Soporta Email o Username."""
-    from backend.core.security import verify_password  # Import local para evitar circularidad
+    from backend.core.security import \
+        verify_password  # Import local para evitar circularidad
 
     user = None
     if "@" in form_data.username:
@@ -49,13 +50,13 @@ def login(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales ministeriales incorrectas"
+            detail="Credenciales ministeriales incorrectas",
         )
 
     if not verify_password(form_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales ministeriales incorrectas"
+            detail="Credenciales ministeriales incorrectas",
         )
 
     ip_address = request.client.host if request.client else None
@@ -64,13 +65,10 @@ def login(
     payload = {"sub": str(user.id), "role": normalize_role(str(user.role))}
     access_token = create_access_token(
         data=payload,
-        expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
+        expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
     )
     refresh_token = create_refresh_token(
-        db,
-        int(user.id),
-        ip_address=ip_address,
-        user_agent=user_agent
+        db, int(user.id), ip_address=ip_address, user_agent=user_agent
     )
 
     # Access Token Cookie
@@ -105,7 +103,7 @@ def refresh_access_token(
     request: Request,
     response: Response,
     payload: schemas.RefreshTokenRequest = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Refresca el access token usando rotación de tokens y cookies seguras."""
     # Intentar obtener el refresh token de la cookie, fallback al payload
@@ -114,15 +112,22 @@ def refresh_access_token(
         refresh_token = payload.refresh_token
 
     if not refresh_token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token"
+        )
 
     token_row = crud.get_valid_refresh_token(db, refresh_token)
     if not token_row:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+        )
 
     user = crud.get_user(db, int(token_row.user_id))
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
+        )
 
     # Rotación: Invalidar el anterior
     crud.revoke_refresh_token(db, refresh_token)
@@ -133,10 +138,7 @@ def refresh_access_token(
 
     # Crear nuevos tokens
     new_refresh_token = create_refresh_token(
-        db,
-        int(user.id),
-        ip_address=ip_address,
-        user_agent=user_agent
+        db, int(user.id), ip_address=ip_address, user_agent=user_agent
     )
     new_access_token = create_access_token(
         data={"sub": str(user.id), "role": normalize_role(str(user.role))},
@@ -183,19 +185,27 @@ def logout(response: Response):
     )
 
 
-@router.post("/register", response_model=schemas.User, dependencies=[Depends(rate_limiter(limit=5, window_seconds=60))])
+@router.post(
+    "/register",
+    response_model=schemas.User,
+    dependencies=[Depends(rate_limiter(limit=5, window_seconds=60))],
+)
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     """Registro de nuevos miembros."""
     db_user = crud.get_user_by_email(db, email=user.email)
     if db_user:
-        raise HTTPException(status_code=400, detail="El correo ya esta registrado en el ministerio")
+        raise HTTPException(
+            status_code=400, detail="El correo ya esta registrado en el ministerio"
+        )
 
     user.role = "estudiante"
     return crud.create_user(db=db, user=user)
 
 
 @router.get("/me", response_model=schemas.User)
-def get_current_ministerial_user(current_user: models.User = Depends(require_active_user)):
+def get_current_ministerial_user(
+    current_user: models.User = Depends(require_active_user),
+):
     """Obtiene el perfil del usuario autenticado."""
     return current_user
 
@@ -258,7 +268,7 @@ def verify_email(token: str, db: Session = Depends(get_db)):
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Token de verificación inválido o expirado"
+            detail="Token de verificación inválido o expirado",
         )
     return {"status": "success", "message": "Correo verificado exitosamente"}
 
@@ -270,7 +280,7 @@ def send_verification_email(
     current_user: models.User = Depends(require_active_user),
 ):
     """Envía el email de verificación al usuario."""
-    from backend.services.email import send_email, render_verify_email
+    from backend.services.email import render_verify_email, send_email
 
     user = crud.get_user_by_email(db, email)
     if not user:
@@ -287,17 +297,23 @@ def send_verification_email(
 @router.post("/forgot-password")
 def forgot_password(email: str, db: Session = Depends(get_db)):
     """Solicita restablecimiento de contraseña. Envía email con token si el correo existe."""
-    from backend.services.email import send_email, render_reset_password
+    from backend.services.email import render_reset_password, send_email
 
     user = crud.get_user_by_email(db, email)
     # No revelar si el email existe o no (seguridad)
     if not user:
-        return {"status": "success", "message": "Si el correo existe, recibirás instrucciones"}
+        return {
+            "status": "success",
+            "message": "Si el correo existe, recibirás instrucciones",
+        }
 
     token_row = crud.create_reset_token(db, user.id)
     subject, html = render_reset_password(token_row.token)
     send_email(to=user.email, subject=subject, html=html)
-    return {"status": "success", "message": "Si el correo existe, recibirás instrucciones"}
+    return {
+        "status": "success",
+        "message": "Si el correo existe, recibirás instrucciones",
+    }
 
 
 @router.post("/reset-password")
@@ -305,15 +321,14 @@ def reset_password(token: str, new_password: str, db: Session = Depends(get_db))
     """Restablece la contraseña usando un token enviado por email."""
     if len(new_password) < 8:
         raise HTTPException(
-            status_code=400,
-            detail="La contraseña debe tener al menos 8 caracteres"
+            status_code=400, detail="La contraseña debe tener al menos 8 caracteres"
         )
 
     success = crud.use_reset_token(db, token, new_password)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Token de restablecimiento inválido, expirado o ya utilizado"
+            detail="Token de restablecimiento inválido, expirado o ya utilizado",
         )
     return {"status": "success", "message": "Contraseña restablecida exitosamente"}
 
@@ -337,12 +352,18 @@ def google_login(request: Request):
         "prompt": "consent",
     }
     from urllib.parse import urlencode
+
     google_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
     return RedirectResponse(url=google_url)
 
 
 @router.get("/google/callback")
-def google_callback(code: str, error: str | None = None, request: Request = None, db: Session = Depends(get_db)):
+def google_callback(
+    code: str,
+    error: str | None = None,
+    request: Request = None,
+    db: Session = Depends(get_db),
+):
     """Callback de Google OAuth. Intercambia el code por tokens, crea/logea al usuario."""
     import httpx
 
@@ -369,7 +390,9 @@ def google_callback(code: str, error: str | None = None, request: Request = None
         token_resp.raise_for_status()
         token_data = token_resp.json()
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Error exchanging Google code: {exc}")
+        raise HTTPException(
+            status_code=400, detail=f"Error exchanging Google code: {exc}"
+        )
 
     id_token = token_data.get("id_token")
     access_token_google = token_data.get("access_token")
@@ -386,7 +409,9 @@ def google_callback(code: str, error: str | None = None, request: Request = None
         userinfo_resp.raise_for_status()
         google_user = userinfo_resp.json()
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Error getting Google user info: {exc}")
+        raise HTTPException(
+            status_code=400, detail=f"Error getting Google user info: {exc}"
+        )
 
     google_email = google_user.get("email", "")
     google_name = google_user.get("name", "")
@@ -400,8 +425,9 @@ def google_callback(code: str, error: str | None = None, request: Request = None
     user = crud.get_user_by_email(db, google_email)
     if not user:
         # Create new user from Google data
-        from backend.core.security import get_password_hash
         import secrets
+
+        from backend.core.security import get_password_hash
 
         user = models.User(
             username=google_email.split("@")[0],
@@ -419,8 +445,16 @@ def google_callback(code: str, error: str | None = None, request: Request = None
         try:
             member = models.Member(
                 user_id=user.id,
-                first_name=google_name.split(" ")[0] if google_name else google_email.split("@")[0],
-                last_name=" ".join(google_name.split(" ")[1:]) if google_name and len(google_name.split(" ")) > 1 else "",
+                first_name=(
+                    google_name.split(" ")[0]
+                    if google_name
+                    else google_email.split("@")[0]
+                ),
+                last_name=(
+                    " ".join(google_name.split(" ")[1:])
+                    if google_name and len(google_name.split(" ")) > 1
+                    else ""
+                ),
                 email=google_email,
                 church_role="Miembro",
                 spiritual_status="Nuevo",
@@ -462,8 +496,14 @@ def auth_stats_summary(
     """Resumen estadistico de autenticacion para el dashboard."""
     total = db.query(models.User).count()
     active = db.query(models.User).filter(models.User.is_active == True).count()
-    verified = db.query(models.User).filter(models.User.is_email_verified == True).count()
-    roles = db.query(models.User.role, func.count(models.User.id)).group_by(models.User.role).all()
+    verified = (
+        db.query(models.User).filter(models.User.is_email_verified == True).count()
+    )
+    roles = (
+        db.query(models.User.role, func.count(models.User.id))
+        .group_by(models.User.role)
+        .all()
+    )
     return {
         "total_users": total,
         "active_users": active,

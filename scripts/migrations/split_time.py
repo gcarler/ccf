@@ -1,12 +1,21 @@
 import re
-f = open('frontend/src/app/evangelism/events/page.tsx', encoding='utf-8').read()
+
+f = open("frontend/src/app/evangelism/events/page.tsx", encoding="utf-8").read()
 
 # 1. State
-f = f.replace("fixed_date: '',\n        time: ''\n    });", "fixed_date: '',\n        start_time: '',\n        end_time: ''\n    });")
-f = f.replace("fixed_date: '', time: '' });", "fixed_date: '', start_time: '', end_time: '' });")
+f = f.replace(
+    "fixed_date: '',\n        time: ''\n    });",
+    "fixed_date: '',\n        start_time: '',\n        end_time: ''\n    });",
+)
+f = f.replace(
+    "fixed_date: '', time: '' });", "fixed_date: '', start_time: '', end_time: '' });"
+)
 
 # 2. handleCreateEvent
-f = f.replace("time: newEvent.time,", "start_time: newEvent.start_time,\n            end_time: newEvent.end_time,")
+f = f.replace(
+    "time: newEvent.time,",
+    "start_time: newEvent.start_time,\n            end_time: newEvent.end_time,",
+)
 
 # 3. Create Form JSX
 old_create_time = """<div className="space-y-1.5">
@@ -65,7 +74,10 @@ new_edit_time = """<div className="grid grid-cols-2 gap-4">
 f = f.replace(old_edit_time, new_edit_time)
 
 # 5. handleUpdateEvent
-f = f.replace('time: editingEvent.time', 'start_time: editingEvent.start_time, end_time: editingEvent.end_time')
+f = f.replace(
+    "time: editingEvent.time",
+    "start_time: editingEvent.start_time, end_time: editingEvent.end_time",
+)
 
-open('frontend/src/app/evangelism/events/page.tsx', 'w', encoding='utf-8').write(f)
-print('Updated frontend page.tsx successfully')
+open("frontend/src/app/evangelism/events/page.tsx", "w", encoding="utf-8").write(f)
+print("Updated frontend page.tsx successfully")

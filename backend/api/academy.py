@@ -5,35 +5,29 @@ import pathlib
 import uuid
 from typing import List, Optional, cast
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status, Query
+from fastapi import (APIRouter, Depends, File, Form, HTTPException, Query,
+                     UploadFile, status)
+from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
 
-from backend import crud
-from backend import models
-from backend import schemas
-from backend.auth import (
-    normalize_role,
-    require_active_user,
-    require_admin,
-    require_staff_or_admin,
-    require_teacher_or_admin,
-    require_coordinator_or_admin,
-    role_in
-)
+from backend import crud, models, schemas
+from backend.auth import (normalize_role, require_active_user, require_admin,
+                          require_coordinator_or_admin, require_staff_or_admin,
+                          require_teacher_or_admin, role_in)
 from backend.core.audit import record_admin_action
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.uploads import sanitize_filename, save_upload
-
 
 router = APIRouter()
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
 
-def _serialize_submission_review(row: tuple[models.AssignmentSubmission, str, str]) -> schemas.AssignmentSubmissionReview:
+def _serialize_submission_review(
+    row: tuple[models.AssignmentSubmission, str, str],
+) -> schemas.AssignmentSubmissionReview:
     submission, lesson_title, student_name = row
     return schemas.AssignmentSubmissionReview(
         id=submission.id,
@@ -57,7 +51,9 @@ def read_courses(
     published_only: bool = True,
     db: Session = Depends(get_db),
 ):
-    return crud.get_courses(db, skip=skip, limit=limit, modality=modality, published_only=published_only)
+    return crud.get_courses(
+        db, skip=skip, limit=limit, modality=modality, published_only=published_only
+    )
 
 
 @router.get("/courses/{course_id}", response_model=schemas.Course)
@@ -97,12 +93,14 @@ def read_assessment(assessment_id: int, db: Session = Depends(get_db)):
     return db_assessment
 
 
-@router.post("/assessments/{assessment_id}/submit", response_model=schemas.AssessmentAttempt)
+@router.post(
+    "/assessments/{assessment_id}/submit", response_model=schemas.AssessmentAttempt
+)
 def submit_assessment_direct(
     assessment_id: int,
     payload: schemas.AssessmentAttemptSubmit,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user)
+    current_user: models.User = Depends(require_active_user),
 ):
     """Envia una evaluación directamente con respuestas detalladas o puntaje."""
     # Encontrar la inscripción del usuario para este curso/evaluación
@@ -110,10 +108,14 @@ def submit_assessment_direct(
     if not assessment:
         raise HTTPException(status_code=404, detail="Evaluación no encontrada")
 
-    enrollment = db.query(models.Enrollment).filter(
-        models.Enrollment.user_id == current_user.id,
-        models.Enrollment.course_id == assessment.course_id
-    ).first()
+    enrollment = (
+        db.query(models.Enrollment)
+        .filter(
+            models.Enrollment.user_id == current_user.id,
+            models.Enrollment.course_id == assessment.course_id,
+        )
+        .first()
+    )
 
     if not enrollment:
         raise HTTPException(status_code=403, detail="No estás inscrito en este curso")
@@ -125,29 +127,39 @@ def submit_assessment_direct(
                 db,
                 assessment_id=assessment_id,
                 enrollment_id=enrollment.id,
-                answers=[a.model_dump() for a in payload.answers]
+                answers=[a.model_dump() for a in payload.answers],
             )
         except ValueError as e:
             raise HTTPException(status_code=422, detail=str(e))
     elif payload.submitted_score is not None:
         # Legacy/Shortcut submission with just score
         return crud.create_or_update_assessment_attempt(
-            db, enrollment=enrollment, assessment=assessment, submitted_score=payload.submitted_score
+            db,
+            enrollment=enrollment,
+            assessment=assessment,
+            submitted_score=payload.submitted_score,
         )
     else:
-        raise HTTPException(status_code=400, detail="Debe proporcionar respuestas o un puntaje")
+        raise HTTPException(
+            status_code=400, detail="Debe proporcionar respuestas o un puntaje"
+        )
 
 
 @router.get("/lessons/{lesson_id}/progress")
-
 def read_lesson_progress(
     lesson_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user)
+    current_user: models.User = Depends(require_active_user),
 ):
-    progress = crud.get_lesson_progress(db, user_id=current_user.id, lesson_id=lesson_id)
+    progress = crud.get_lesson_progress(
+        db, user_id=current_user.id, lesson_id=lesson_id
+    )
     if not progress:
-        return {"progress_percent": 0.0, "last_position_seconds": 0, "is_completed": False}
+        return {
+            "progress_percent": 0.0,
+            "last_position_seconds": 0,
+            "is_completed": False,
+        }
     return progress
 
 
@@ -161,25 +173,32 @@ def update_lesson_progress(
     lesson_id: int,
     payload: ProgressUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user)
+    current_user: models.User = Depends(require_active_user),
 ):
     return crud.update_lesson_progress(
         db,
         user_id=current_user.id,
         lesson_id=lesson_id,
         progress_percent=payload.progress_percent,
-        last_position=payload.last_position_seconds
+        last_position=payload.last_position_seconds,
     )
 
 
-@router.get("/courses/{course_id}/attendance", response_model=List[schemas.CourseAttendance])
+@router.get(
+    "/courses/{course_id}/attendance", response_model=List[schemas.CourseAttendance]
+)
 def list_course_attendance(course_id: int, db: Session = Depends(get_db)):
-    return db.query(models.CourseAttendance).join(models.Enrollment).filter(
-        models.Enrollment.course_id == course_id
-    ).all()
+    return (
+        db.query(models.CourseAttendance)
+        .join(models.Enrollment)
+        .filter(models.Enrollment.course_id == course_id)
+        .all()
+    )
 
 
-@router.post("/courses/{course_id}/attendance/bulk", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/courses/{course_id}/attendance/bulk", status_code=status.HTTP_201_CREATED
+)
 def record_bulk_attendance(
     course_id: int,
     payload: schemas.BulkAttendanceCreate,
@@ -194,17 +213,21 @@ def record_bulk_attendance(
     recorded_count = 0
     for record in payload.records:
         # Verify enrollment belongs to course
-        enrollment = db.query(models.Enrollment).filter(
-            models.Enrollment.id == record.enrollment_id,
-            models.Enrollment.course_id == course_id
-        ).first()
+        enrollment = (
+            db.query(models.Enrollment)
+            .filter(
+                models.Enrollment.id == record.enrollment_id,
+                models.Enrollment.course_id == course_id,
+            )
+            .first()
+        )
 
         if enrollment:
             db_attendance = models.CourseAttendance(
                 enrollment_id=record.enrollment_id,
                 status=record.status,
                 session_date=payload.session_date,
-                recorded_by_id=current_user.id
+                recorded_by_id=current_user.id,
             )
             db.add(db_attendance)
             recorded_count += 1
@@ -213,12 +236,14 @@ def record_bulk_attendance(
     return {"message": f"Se registraron {recorded_count} asistencias con éxito"}
 
 
-@router.post("/enrollments/{enrollment_id}/request-certificate", response_model=schemas.Certificate)
-
+@router.post(
+    "/enrollments/{enrollment_id}/request-certificate",
+    response_model=schemas.Certificate,
+)
 def request_certificate(
     enrollment_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user)
+    current_user: models.User = Depends(require_active_user),
 ):
     try:
         return crud.issue_certificate(db, enrollment_id=enrollment_id)
@@ -250,7 +275,9 @@ def get_pilot_readiness(
     return crud.get_pilot_readiness(db)
 
 
-@router.post("/courses/{course_id}/formal/close-acta", response_model=schemas.FormalActa)
+@router.post(
+    "/courses/{course_id}/formal/close-acta", response_model=schemas.FormalActa
+)
 def close_formal_acta(
     course_id: int,
     payload: schemas.FormalActaCloseRequest,
@@ -279,7 +306,9 @@ def close_formal_acta(
     return acta
 
 
-@router.get("/courses/{course_id}/formal/last-acta", response_model=Optional[schemas.FormalActa])
+@router.get(
+    "/courses/{course_id}/formal/last-acta", response_model=Optional[schemas.FormalActa]
+)
 def read_last_formal_acta(course_id: int, db: Session = Depends(get_db)):
     return crud.get_latest_acta_by_course(db, course_id)
 
@@ -291,14 +320,22 @@ def create_enrollment(
     current_user: models.User = Depends(require_active_user),
 ):
     user_id = int(getattr(current_user, "id", 0))
-    if normalize_role(str(current_user.role)) != "admin" and user_id != enrollment.user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only create your own enrollment")
+    if (
+        normalize_role(str(current_user.role)) != "admin"
+        and user_id != enrollment.user_id
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only create your own enrollment",
+        )
     try:
         return crud.create_enrollment(db, enrollment)
     except MemoryError:
         raise
     except Exception as exc:  # pragma: no cover
-        logger.exception("Failed to create academy enrollment", extra={"user_id": user_id})
+        logger.exception(
+            "Failed to create academy enrollment", extra={"user_id": user_id}
+        )
         raise HTTPException(status_code=400, detail="No se pudo crear la inscripcion")
 
 
@@ -309,7 +346,9 @@ def check_in_attendance(
     current_user: models.User = Depends(require_active_user),
 ):
     enrollment = crud.get_enrollment(db, enrollment_id)
-    if not enrollment or int(getattr(enrollment, "user_id", 0)) != int(getattr(current_user, "id", 0)):
+    if not enrollment or int(getattr(enrollment, "user_id", 0)) != int(
+        getattr(current_user, "id", 0)
+    ):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     return crud.record_activity_attendance(db, enrollment_id)
 
@@ -335,12 +374,17 @@ def submit_assessment(
 
     if payload.answers:
         return crud.submit_assessment_attempt(
-            db, assessment_id=assessment_id, enrollment_id=enrollment_id, 
-            answers=[a.model_dump() for a in payload.answers]
+            db,
+            assessment_id=assessment_id,
+            enrollment_id=enrollment_id,
+            answers=[a.model_dump() for a in payload.answers],
         )
-    
+
     return crud.create_or_update_assessment_attempt(
-        db, enrollment=enrollment, assessment=assessment, submitted_score=payload.submitted_score or 0
+        db,
+        enrollment=enrollment,
+        assessment=assessment,
+        submitted_score=payload.submitted_score or 0,
     )
 
 
@@ -371,13 +415,15 @@ def list_all_enrollments(
     enrollments = db.query(models.Enrollment).all()
     result = []
     for e in enrollments:
-        result.append({
-            "id": e.id,
-            "user_id": e.user_id,
-            "course_id": e.course_id,
-            "progress_percent": e.progress_percent,
-            "enrolled_at": str(e.enrolled_at) if e.enrolled_at else None,
-        })
+        result.append(
+            {
+                "id": e.id,
+                "user_id": e.user_id,
+                "course_id": e.course_id,
+                "progress_percent": e.progress_percent,
+                "enrolled_at": str(e.enrolled_at) if e.enrolled_at else None,
+            }
+        )
     return result
 
 
@@ -388,16 +434,20 @@ def get_user_enrollments(
     current_user: models.User = Depends(require_active_user),
 ):
     """Obtiene las inscripciones de un usuario especifico."""
-    enrollments = db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
+    enrollments = (
+        db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
+    )
     result = []
     for e in enrollments:
-        result.append({
-            "id": e.id,
-            "user_id": e.user_id,
-            "course_id": e.course_id,
-            "progress_percent": e.progress_percent,
-            "enrolled_at": str(e.enrolled_at) if e.enrolled_at else None,
-        })
+        result.append(
+            {
+                "id": e.id,
+                "user_id": e.user_id,
+                "course_id": e.course_id,
+                "progress_percent": e.progress_percent,
+                "enrolled_at": str(e.enrolled_at) if e.enrolled_at else None,
+            }
+        )
     return result
 
 
@@ -412,7 +462,16 @@ def list_academy_users(
     if role:
         q = q.filter(models.User.role == role)
     users = q.all()
-    return [{"id": u.id, "username": u.username, "email": u.email, "role": u.role, "is_active": u.is_active} for u in users]
+    return [
+        {
+            "id": u.id,
+            "username": u.username,
+            "email": u.email,
+            "role": u.role,
+            "is_active": u.is_active,
+        }
+        for u in users
+    ]
 
 
 @router.post("/lessons/{lesson_id}/resources", response_model=schemas.Resource)
@@ -452,7 +511,10 @@ async def upload_resource(
     return db_resource
 
 
-@router.post("/lessons/{lesson_id}/submit-assignment", response_model=schemas.AssignmentSubmission)
+@router.post(
+    "/lessons/{lesson_id}/submit-assignment",
+    response_model=schemas.AssignmentSubmission,
+)
 async def submit_assignment_file(
     lesson_id: int,
     enrollment_id: int = Form(...),
@@ -465,18 +527,26 @@ async def submit_assignment_file(
     if not enrollment:
         raise HTTPException(status_code=404, detail="Enrollment not found")
     current_id = int(getattr(current_user, "id", 0))
-    if int(getattr(enrollment, "user_id", 0)) != current_id and normalize_role(str(current_user.role)) != "admin":
+    if (
+        int(getattr(enrollment, "user_id", 0)) != current_id
+        and normalize_role(str(current_user.role)) != "admin"
+    ):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     lesson = db.query(models.Lesson).filter(models.Lesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
     if int(getattr(lesson, "course_id", 0)) != int(getattr(enrollment, "course_id", 0)):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Lesson does not belong to enrollment")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Lesson does not belong to enrollment",
+        )
 
     original_name = file.filename or "assignment"
     sanitized = sanitize_filename(cast(str, original_name))
-    unique_name = f"assignment_{lesson_id}_{enrollment_id}_{uuid.uuid4().hex}_{sanitized}"
+    unique_name = (
+        f"assignment_{lesson_id}_{enrollment_id}_{uuid.uuid4().hex}_{sanitized}"
+    )
     try:
         contents = await file.read()
         save_upload(contents, unique_name, settings.uploads_dir)
@@ -493,7 +563,9 @@ async def submit_assignment_file(
     return submission
 
 
-@router.get("/admin/submissions", response_model=List[schemas.AssignmentSubmissionReview])
+@router.get(
+    "/admin/submissions", response_model=List[schemas.AssignmentSubmissionReview]
+)
 def admin_list_submissions(
     limit: int = 100,
     db: Session = Depends(get_db),
@@ -503,7 +575,10 @@ def admin_list_submissions(
     return [_serialize_submission_review(row) for row in rows]
 
 
-@router.patch("/admin/submissions/{submission_id}/grade", response_model=schemas.AssignmentSubmissionReview)
+@router.patch(
+    "/admin/submissions/{submission_id}/grade",
+    response_model=schemas.AssignmentSubmissionReview,
+)
 def admin_grade_submission(
     submission_id: int,
     grade: Optional[float] = Query(None),
@@ -515,7 +590,9 @@ def admin_grade_submission(
         raise HTTPException(status_code=400, detail="grade or feedback required")
     if grade is not None and (grade < 0 or grade > 100):
         raise HTTPException(status_code=400, detail="grade must be between 0 and 100")
-    updated = crud.grade_assignment_submission(db, submission_id, grade=grade, feedback=feedback)
+    updated = crud.grade_assignment_submission(
+        db, submission_id, grade=grade, feedback=feedback
+    )
     if not updated:
         raise HTTPException(status_code=404, detail="Submission not found")
     row = crud.get_assignment_submission_with_meta(db, submission_id)
@@ -547,19 +624,31 @@ def get_my_academy_profile(
 ):
     user_id = int(current_user.id)
     db_user = crud.get_user(db, user_id) or current_user
-    enrollments = db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
-    certificates = db.query(models.Certificate).join(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
+    enrollments = (
+        db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
+    )
+    certificates = (
+        db.query(models.Certificate)
+        .join(models.Enrollment)
+        .filter(models.Enrollment.user_id == user_id)
+        .all()
+    )
 
-    total_progress = sum(float(e.progress_percent or 0) for e in enrollments) / len(enrollments) if enrollments else 0.0
+    total_progress = (
+        sum(float(e.progress_percent or 0) for e in enrollments) / len(enrollments)
+        if enrollments
+        else 0.0
+    )
 
     return {
         "user_id": user_id,
-        "username": getattr(db_user, "username", None) or getattr(db_user, "email", "").split("@")[0],
+        "username": getattr(db_user, "username", None)
+        or getattr(db_user, "email", "").split("@")[0],
         "total_progress": round(total_progress, 1),
         "enrollments_count": len(enrollments),
         "certificates_count": len(certificates),
         "active_courses": enrollments,
-        "recent_certificates": certificates[-3:] if certificates else []
+        "recent_certificates": certificates[-3:] if certificates else [],
     }
 
 
@@ -571,34 +660,51 @@ def get_user_course_progress(
 ):
     """Devuelve el progreso agregado por curso para un usuario."""
     current_id = int(getattr(current_user, "id", 0))
-    if current_id != user_id and normalize_role(str(current_user.role)) not in {"admin", "coordinador"}:
+    if current_id != user_id and normalize_role(str(current_user.role)) not in {
+        "admin",
+        "coordinador",
+    }:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
-    enrollments = db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
+    enrollments = (
+        db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
+    )
     if not enrollments:
         return []
 
     course_ids = [enrollment.course_id for enrollment in enrollments]
     lesson_counts = {
         course_id: total
-        for course_id, total in db.query(models.Lesson.course_id, func.count(models.Lesson.id))
+        for course_id, total in db.query(
+            models.Lesson.course_id, func.count(models.Lesson.id)
+        )
         .filter(models.Lesson.course_id.in_(course_ids))
         .group_by(models.Lesson.course_id)
         .all()
     }
     completed_counts = {
         course_id: completed
-        for course_id, completed in db.query(models.Lesson.course_id, func.count(models.LessonProgress.id))
+        for course_id, completed in db.query(
+            models.Lesson.course_id, func.count(models.LessonProgress.id)
+        )
         .join(models.Lesson, models.Lesson.id == models.LessonProgress.lesson_id)
-        .filter(models.LessonProgress.user_id == user_id, models.Lesson.course_id.in_(course_ids))
+        .filter(
+            models.LessonProgress.user_id == user_id,
+            models.Lesson.course_id.in_(course_ids),
+        )
         .group_by(models.Lesson.course_id)
         .all()
     }
     latest_updates = {
         course_id: updated_at
-        for course_id, updated_at in db.query(models.Lesson.course_id, func.max(models.LessonProgress.updated_at))
+        for course_id, updated_at in db.query(
+            models.Lesson.course_id, func.max(models.LessonProgress.updated_at)
+        )
         .join(models.Lesson, models.Lesson.id == models.LessonProgress.lesson_id)
-        .filter(models.LessonProgress.user_id == user_id, models.Lesson.course_id.in_(course_ids))
+        .filter(
+            models.LessonProgress.user_id == user_id,
+            models.Lesson.course_id.in_(course_ids),
+        )
         .group_by(models.Lesson.course_id)
         .all()
     }
@@ -609,28 +715,36 @@ def get_user_course_progress(
         total_lessons = int(lesson_counts.get(enrollment.course_id, 0))
         lessons_completed = int(completed_counts.get(enrollment.course_id, 0))
         progress_percent = float(enrollment.progress_percent or 0)
-        result.append({
-            "id": enrollment.course_id,
-            "title": getattr(course, "name", None) or getattr(course, "title", None) or f"Curso #{enrollment.course_id}",
-            "progress_percent": round(progress_percent, 2),
-            "status": enrollment.status,
-            "average_grade": round(progress_percent, 2),
-            "lessons_completed": lessons_completed,
-            "total_lessons": total_lessons,
-            "last_activity": (
-                latest_updates.get(enrollment.course_id).isoformat()
-                if latest_updates.get(enrollment.course_id)
-                else enrollment.created_at.isoformat() if enrollment.created_at else None
-            ),
-            "certificate_issued": bool(enrollment.certificate_issued),
-        })
+        result.append(
+            {
+                "id": enrollment.course_id,
+                "title": getattr(course, "name", None)
+                or getattr(course, "title", None)
+                or f"Curso #{enrollment.course_id}",
+                "progress_percent": round(progress_percent, 2),
+                "status": enrollment.status,
+                "average_grade": round(progress_percent, 2),
+                "lessons_completed": lessons_completed,
+                "total_lessons": total_lessons,
+                "last_activity": (
+                    latest_updates.get(enrollment.course_id).isoformat()
+                    if latest_updates.get(enrollment.course_id)
+                    else (
+                        enrollment.created_at.isoformat()
+                        if enrollment.created_at
+                        else None
+                    )
+                ),
+                "certificate_issued": bool(enrollment.certificate_issued),
+            }
+        )
     return result
 
 
 @router.get("/analytics/candidates", response_model=List[schemas.User])
 def get_academy_candidates(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_coordinator_or_admin)
+    current_user: models.User = Depends(require_coordinator_or_admin),
 ):
     return crud.get_academy_candidates(db)
 
@@ -642,80 +756,100 @@ def get_academy_candidates(
 def get_member_academy_profile(
     member_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_coordinator_or_admin)
+    current_user: models.User = Depends(require_coordinator_or_admin),
 ):
     """Obtiene el perfil académico de un miembro del CRM."""
     member = db.query(models.Member).filter(models.Member.id == member_id).first()
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
-    
+
     if not member.user_id:
         return {"is_linked": False, "message": "No tiene cuenta de academia vinculada"}
-    
+
     user_id = member.user_id
-    enrollments = db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
-    certificates = db.query(models.Certificate).join(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
-    
+    enrollments = (
+        db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
+    )
+    certificates = (
+        db.query(models.Certificate)
+        .join(models.Enrollment)
+        .filter(models.Enrollment.user_id == user_id)
+        .all()
+    )
+
     user = db.query(models.User).filter(models.User.id == user_id).first()
-    
+
     return {
         "is_linked": True,
         "user_id": user_id,
         "username": user.username if user else "Unknown",
         "enrollments": enrollments,
         "certificates": certificates,
-        "total_progress": sum(float(e.progress_percent or 0) for e in enrollments) / len(enrollments) if enrollments else 0.0
+        "total_progress": (
+            sum(float(e.progress_percent or 0) for e in enrollments) / len(enrollments)
+            if enrollments
+            else 0.0
+        ),
     }
+
 
 class CreateAcademyAccountRequest(BaseModel):
     password: str
+
 
 @router.post("/members/{member_id}/create-account")
 def create_academy_account(
     member_id: int,
     payload: CreateAcademyAccountRequest,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_coordinator_or_admin)
+    current_user: models.User = Depends(require_coordinator_or_admin),
 ):
     """Crea una cuenta de usuario (Academia) para un miembro del CRM."""
     member = db.query(models.Member).filter(models.Member.id == member_id).first()
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
-    
+
     if member.user_id:
-        raise HTTPException(status_code=400, detail="El miembro ya tiene una cuenta vinculada")
-    
+        raise HTTPException(
+            status_code=400, detail="El miembro ya tiene una cuenta vinculada"
+        )
+
     if not member.email:
-        raise HTTPException(status_code=400, detail="El miembro debe tener un email para crear cuenta")
-    
+        raise HTTPException(
+            status_code=400, detail="El miembro debe tener un email para crear cuenta"
+        )
+
     # Crear Usuario
     from backend.core.security import get_password_hash
+
     new_user = models.User(
-        username=member.email.split('@')[0],
+        username=member.email.split("@")[0],
         email=member.email,
         password_hash=get_password_hash(payload.password),
-        role="estudiante"
+        role="estudiante",
     )
     db.add(new_user)
-    db.flush() # Para obtener el ID
-    
+    db.flush()  # Para obtener el ID
+
     member.user_id = new_user.id
     db.commit()
-    
+
     record_admin_action(
-        db, current_user, 
-        action="create_member_academy_account", 
-        resource_type="user", 
+        db,
+        current_user,
+        action="create_member_academy_account",
+        resource_type="user",
         resource_id=str(new_user.id),
-        metadata={"member_id": member_id}
+        metadata={"member_id": member_id},
     )
-    
+
     return {"status": "success", "user_id": new_user.id, "username": new_user.username}
+
 
 @router.get("/forum/threads", response_model=List[schemas.ForumThread])
 def get_forum_threads(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user)
+    current_user: models.User = Depends(require_active_user),
 ):
     return crud.get_forum_threads(db)
 
@@ -724,13 +858,16 @@ def get_forum_threads(
 def create_thread(
     thread: schemas.ForumThreadBase,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user)
+    current_user: models.User = Depends(require_active_user),
 ):
-    thread_data = schemas.ForumThreadCreate(**thread.model_dump(), author_id=current_user.id)
+    thread_data = schemas.ForumThreadCreate(
+        **thread.model_dump(), author_id=current_user.id
+    )
     return crud.create_forum_thread(db, thread_data)
 
 
 # ─── SCHEDULE ────────────────────────────────────────────────────────────────
+
 
 @router.get("/schedule", response_model=list)
 def get_academy_schedule(
@@ -744,21 +881,29 @@ def get_academy_schedule(
     courses = crud.get_courses(db, skip=0, limit=100, published_only=True)
     schedule = []
     for course in courses:
-        enrollments = db.query(models.Enrollment).filter(
-            models.Enrollment.course_id == course.id,
-            models.Enrollment.status == "active",
-        ).count()
-        schedule.append({
-            "id": course.id,
-            "code": course.code,
-            "title": course.title,
-            "description": course.description,
-            "modality": course.modality,
-            "enrolled": enrollments,
-            "lesson_count": course.lesson_count,
-            "total_minutes": course.total_minutes,
-            "created_at": course.created_at.isoformat() if course.created_at else None,
-        })
+        enrollments = (
+            db.query(models.Enrollment)
+            .filter(
+                models.Enrollment.course_id == course.id,
+                models.Enrollment.status == "active",
+            )
+            .count()
+        )
+        schedule.append(
+            {
+                "id": course.id,
+                "code": course.code,
+                "title": course.title,
+                "description": course.description,
+                "modality": course.modality,
+                "enrolled": enrollments,
+                "lesson_count": course.lesson_count,
+                "total_minutes": course.total_minutes,
+                "created_at": (
+                    course.created_at.isoformat() if course.created_at else None
+                ),
+            }
+        )
     return schedule
 
 
@@ -792,20 +937,26 @@ def get_course_students_admin(
     current_user: models.User = Depends(require_admin),
 ):
     """Lista los estudiantes inscritos en un curso."""
-    enrollments = db.query(models.Enrollment).filter(
-        models.Enrollment.course_id == course_id
-    ).all()
+    enrollments = (
+        db.query(models.Enrollment)
+        .filter(models.Enrollment.course_id == course_id)
+        .all()
+    )
     result = []
     for enrollment in enrollments:
-        user = db.query(models.User).filter(models.User.id == enrollment.user_id).first()
-        result.append({
-            "id": enrollment.id,
-            "user_id": enrollment.user_id,
-            "username": user.username if user else "N/A",
-            "status": enrollment.status,
-            "progress_percent": enrollment.progress_percent,
-            "approved": enrollment.approved,
-        })
+        user = (
+            db.query(models.User).filter(models.User.id == enrollment.user_id).first()
+        )
+        result.append(
+            {
+                "id": enrollment.id,
+                "user_id": enrollment.user_id,
+                "username": user.username if user else "N/A",
+                "status": enrollment.status,
+                "progress_percent": enrollment.progress_percent,
+                "approved": enrollment.approved,
+            }
+        )
     return result
 
 
@@ -822,16 +973,20 @@ def create_assessment_admin(
     # Need at least one anchor
     if not lesson_id and not course_id:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=422, detail="course_id or lesson_id required")
 
     # If only course_id provided, find or create a placeholder lesson
     if not lesson_id:
-        lesson = db.query(models.Lesson).filter(
-            models.Lesson.course_id == course_id
-        ).first()
+        lesson = (
+            db.query(models.Lesson).filter(models.Lesson.course_id == course_id).first()
+        )
         if not lesson:
             from fastapi import HTTPException
-            raise HTTPException(status_code=422, detail="No lessons found for this course")
+
+            raise HTTPException(
+                status_code=422, detail="No lessons found for this course"
+            )
         lesson_id = lesson.id
 
     assessment = models.Assessment(
@@ -853,15 +1008,21 @@ def create_assessment_admin(
         db.add(question)
         db.flush()
         for i, opt_text in enumerate(q.get("options", [])):
-            db.add(models.AssessmentOption(
-                question_id=question.id,
-                option_text=opt_text,
-                is_correct=(i == q.get("correct_option", 0)),
-            ))
+            db.add(
+                models.AssessmentOption(
+                    question_id=question.id,
+                    option_text=opt_text,
+                    is_correct=(i == q.get("correct_option", 0)),
+                )
+            )
 
     db.commit()
     db.refresh(assessment)
-    return {"id": assessment.id, "title": assessment.title, "min_score": float(assessment.min_score)}
+    return {
+        "id": assessment.id,
+        "title": assessment.title,
+        "min_score": float(assessment.min_score),
+    }
 
 
 @router.patch("/admin/assessments/{assessment_id}")
@@ -871,9 +1032,14 @@ def update_assessment_admin(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_teacher_or_admin),
 ):
-    assessment = db.query(models.Assessment).filter(models.Assessment.id == assessment_id).first()
+    assessment = (
+        db.query(models.Assessment)
+        .filter(models.Assessment.id == assessment_id)
+        .first()
+    )
     if not assessment:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=404, detail="Assessment not found")
     if "title" in payload:
         assessment.title = payload["title"]
@@ -881,5 +1047,8 @@ def update_assessment_admin(
         assessment.min_score = payload["passing_score"]
     db.commit()
     db.refresh(assessment)
-    return {"id": assessment.id, "title": assessment.title, "min_score": float(assessment.min_score)}
-
+    return {
+        "id": assessment.id,
+        "title": assessment.title,
+        "min_score": float(assessment.min_score),
+    }

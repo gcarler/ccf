@@ -5,7 +5,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi import (APIRouter, Depends, File, Form, HTTPException, Query,
+                     UploadFile)
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -13,7 +14,6 @@ from backend.auth import require_active_user
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.uploads import sanitize_filename, save_upload
-
 
 router = APIRouter(tags=["cms"])
 
@@ -28,12 +28,15 @@ def _now_iso() -> str:
 
 # ── Testimonials (SQLAlchemy models) ────────────────────
 
+
 @router.get("/cms/testimonials", response_model=list[schemas.TestimonialRead])
 def list_cms_testimonials(db: Session = Depends(get_db)):
     return crud.list_testimonials(db, approved_only=True)
 
 
-@router.post("/cms/testimonials", response_model=schemas.TestimonialRead, status_code=201)
+@router.post(
+    "/cms/testimonials", response_model=schemas.TestimonialRead, status_code=201
+)
 def create_cms_testimonial(
     payload: schemas.TestimonialCreate,
     db: Session = Depends(get_db),
@@ -52,7 +55,9 @@ def list_admin_testimonials(
     return crud.list_testimonials(db)
 
 
-@router.get("/cms/testimonials/{testimonial_id}", response_model=schemas.TestimonialRead)
+@router.get(
+    "/cms/testimonials/{testimonial_id}", response_model=schemas.TestimonialRead
+)
 def get_cms_testimonial(
     testimonial_id: int,
     db: Session = Depends(get_db),
@@ -63,7 +68,9 @@ def get_cms_testimonial(
     return row
 
 
-@router.get("/admin/testimonials/{testimonial_id}", response_model=schemas.TestimonialRead)
+@router.get(
+    "/admin/testimonials/{testimonial_id}", response_model=schemas.TestimonialRead
+)
 def get_admin_testimonial(
     testimonial_id: int,
     db: Session = Depends(get_db),
@@ -75,7 +82,9 @@ def get_admin_testimonial(
     return row
 
 
-@router.patch("/admin/testimonials/{testimonial_id}", response_model=schemas.TestimonialRead)
+@router.patch(
+    "/admin/testimonials/{testimonial_id}", response_model=schemas.TestimonialRead
+)
 def patch_admin_testimonial(
     testimonial_id: int,
     payload: schemas.TestimonialUpdate,
@@ -102,12 +111,15 @@ def delete_admin_testimonial(
 
 # ── Announcements (SQLAlchemy models) ───────────────────
 
+
 @router.get("/cms/announcements", response_model=list[schemas.AnnouncementRead])
 def list_cms_announcements(db: Session = Depends(get_db)):
     return crud.list_announcements(db, public_only=True)
 
 
-@router.post("/cms/announcements", response_model=schemas.AnnouncementRead, status_code=201)
+@router.post(
+    "/cms/announcements", response_model=schemas.AnnouncementRead, status_code=201
+)
 def create_cms_announcement(
     payload: schemas.AnnouncementCreate,
     db: Session = Depends(get_db),
@@ -124,19 +136,27 @@ def list_admin_announcements(
     return crud.list_announcements(db)
 
 
-@router.get("/cms/announcements/{announcement_id}", response_model=schemas.AnnouncementRead)
+@router.get(
+    "/cms/announcements/{announcement_id}", response_model=schemas.AnnouncementRead
+)
 def get_cms_announcement(
     announcement_id: int,
     db: Session = Depends(get_db),
 ):
     row = crud.get_announcement(db, announcement_id)
     now = datetime.now(timezone.utc).replace(tzinfo=None)
-    if not row or row.status != "published" or (row.published_at and row.published_at > now):
+    if (
+        not row
+        or row.status != "published"
+        or (row.published_at and row.published_at > now)
+    ):
         raise HTTPException(status_code=404, detail="announcement not found")
     return row
 
 
-@router.get("/admin/announcements/{announcement_id}", response_model=schemas.AnnouncementRead)
+@router.get(
+    "/admin/announcements/{announcement_id}", response_model=schemas.AnnouncementRead
+)
 def get_admin_announcement(
     announcement_id: int,
     db: Session = Depends(get_db),
@@ -148,7 +168,9 @@ def get_admin_announcement(
     return row
 
 
-@router.patch("/admin/announcements/{announcement_id}", response_model=schemas.AnnouncementRead)
+@router.patch(
+    "/admin/announcements/{announcement_id}", response_model=schemas.AnnouncementRead
+)
 def patch_admin_announcement(
     announcement_id: int,
     payload: schemas.AnnouncementUpdate,
@@ -175,6 +197,7 @@ def delete_admin_announcement(
 
 # ── CMS Media ───────────────────────────────────────────
 
+
 @router.get("/cms/media", response_model=list[schemas.CmsMediaRead])
 def list_cms_media(
     query: str | None = Query(default=None),
@@ -184,7 +207,9 @@ def list_cms_media(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_active_user),
 ):
-    return crud.list_cms_media_items(db, query=query, section=section, limit=limit, include_archived=include_archived)
+    return crud.list_cms_media_items(
+        db, query=query, section=section, limit=limit, include_archived=include_archived
+    )
 
 
 @router.post("/cms/media", response_model=schemas.CmsMediaRead, status_code=201)
@@ -213,7 +238,9 @@ def get_cms_media(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_active_user),
 ):
-    row = db.query(models.CmsMediaItem).filter(models.CmsMediaItem.id == item_id).first()
+    row = (
+        db.query(models.CmsMediaItem).filter(models.CmsMediaItem.id == item_id).first()
+    )
     if not row:
         raise HTTPException(status_code=404, detail="media item not found")
     return row
@@ -288,13 +315,20 @@ async def upload_cms_media(
 
 # ── CMS Metrics ─────────────────────────────────────────
 
+
 @router.get("/cms/metrics", response_model=schemas.CmsMetrics)
 def get_cms_metrics(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_active_user),
 ):
     publications = crud.list_content_publications(db)
-    status_counter = {"draft": 0, "in_review": 0, "approved": 0, "published": 0, "archived": 0}
+    status_counter = {
+        "draft": 0,
+        "in_review": 0,
+        "approved": 0,
+        "published": 0,
+        "archived": 0,
+    }
     for item in publications:
         status_counter[item.status] = status_counter.get(item.status, 0) + 1
 
@@ -312,15 +346,24 @@ def get_cms_metrics(
         testimonials_total=len(testimonials),
         testimonials_approved=sum(1 for row in testimonials if row.is_approved),
         announcements_total=len(announcements),
-        announcements_active=sum(1 for row in announcements if row.status == "published"),
+        announcements_active=sum(
+            1 for row in announcements if row.status == "published"
+        ),
         media_total=len(media),
-        media_images=sum(1 for row in media if (row.mime_type or "").startswith("image/")),
-        media_videos=sum(1 for row in media if (row.mime_type or "").startswith("video/")),
-        media_audio=sum(1 for row in media if (row.mime_type or "").startswith("audio/")),
+        media_images=sum(
+            1 for row in media if (row.mime_type or "").startswith("image/")
+        ),
+        media_videos=sum(
+            1 for row in media if (row.mime_type or "").startswith("video/")
+        ),
+        media_audio=sum(
+            1 for row in media if (row.mime_type or "").startswith("audio/")
+        ),
     )
 
 
 # ── CMS Pages (PageContent CRUD) ────────────────────────
+
 
 @router.get("/cms/pages", response_model=list[schemas.PageContentRead])
 def list_cms_pages(
@@ -352,6 +395,7 @@ def create_cms_page(
     page_key = str(payload.get("page_key") or "").strip()
     if not page_key:
         import re
+
         page_key = re.sub(r"[^\w-]", "", title.lower().replace(" ", "-"))
     content = str(payload.get("content") or f"# {title}\n\nNueva pagina creada.")
     row = crud.get_or_create_page_content(db, page_key)

@@ -1,7 +1,8 @@
-from backend.database import SessionLocal
-from backend import crud
-from backend import models
 import os
+
+from backend import crud, models
+from backend.database import SessionLocal
+
 
 def diagnose():
     db = SessionLocal()

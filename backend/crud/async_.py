@@ -32,25 +32,33 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend import models, schemas
 from backend.core.security import get_password_hash
 
-
 # ── Identity / Auth ───────────────────────────────────────────────────
+
 
 async def get_user_async(db: AsyncSession, user_id: int) -> Optional[models.User]:
     result = await db.execute(select(models.User).where(models.User.id == user_id))
     return result.scalar_one_or_none()
 
 
-async def get_user_by_email_async(db: AsyncSession, email: str) -> Optional[models.User]:
+async def get_user_by_email_async(
+    db: AsyncSession, email: str
+) -> Optional[models.User]:
     result = await db.execute(select(models.User).where(models.User.email == email))
     return result.scalar_one_or_none()
 
 
-async def get_user_by_username_async(db: AsyncSession, username: str) -> Optional[models.User]:
-    result = await db.execute(select(models.User).where(models.User.username == username))
+async def get_user_by_username_async(
+    db: AsyncSession, username: str
+) -> Optional[models.User]:
+    result = await db.execute(
+        select(models.User).where(models.User.username == username)
+    )
     return result.scalar_one_or_none()
 
 
-async def get_users_async(db: AsyncSession, skip: int = 0, limit: int = 100) -> list[models.User]:
+async def get_users_async(
+    db: AsyncSession, skip: int = 0, limit: int = 100
+) -> list[models.User]:
     result = await db.execute(select(models.User).offset(skip).limit(limit))
     return list(result.scalars().all())
 
@@ -70,10 +78,15 @@ async def create_user_async(db: AsyncSession, user: schemas.UserCreate) -> model
 
 # ── Refresh Tokens ────────────────────────────────────────────────────
 
-async def create_refresh_token_async(db: AsyncSession, user_id: int, token: str, expires_at):
+
+async def create_refresh_token_async(
+    db: AsyncSession, user_id: int, token: str, expires_at
+):
     from backend.models_identity import RefreshToken
 
-    row = RefreshToken(user_id=user_id, token=token, expires_at=expires_at, revoked=False)
+    row = RefreshToken(
+        user_id=user_id, token=token, expires_at=expires_at, revoked=False
+    )
     db.add(row)
     await db.commit()
     await db.refresh(row)
@@ -84,9 +97,7 @@ async def get_valid_refresh_token_async(db: AsyncSession, token: str):
     from backend.crud._utils import _utcnow
     from backend.models_identity import RefreshToken
 
-    result = await db.execute(
-        select(RefreshToken).where(RefreshToken.token == token)
-    )
+    result = await db.execute(select(RefreshToken).where(RefreshToken.token == token))
     row = result.scalar_one_or_none()
     if not row:
         return None
@@ -100,9 +111,7 @@ async def get_valid_refresh_token_async(db: AsyncSession, token: str):
 async def revoke_refresh_token_async(db: AsyncSession, token: str):
     from backend.models_identity import RefreshToken
 
-    result = await db.execute(
-        select(RefreshToken).where(RefreshToken.token == token)
-    )
+    result = await db.execute(select(RefreshToken).where(RefreshToken.token == token))
     row = result.scalar_one_or_none()
     if not row:
         return None
@@ -114,10 +123,15 @@ async def revoke_refresh_token_async(db: AsyncSession, token: str):
 
 # ── Verification & Reset Tokens ────────────────────────────────────────
 
-async def create_verification_token_async(db: AsyncSession, user_id: int, token: str, expires_at):
+
+async def create_verification_token_async(
+    db: AsyncSession, user_id: int, token: str, expires_at
+):
     from backend.models_identity import VerificationToken
 
-    row = VerificationToken(user_id=user_id, token=token, expires_at=expires_at, used=False)
+    row = VerificationToken(
+        user_id=user_id, token=token, expires_at=expires_at, used=False
+    )
     db.add(row)
     await db.commit()
     await db.refresh(row)
@@ -144,6 +158,7 @@ async def use_verification_token_async(db: AsyncSession, token: str) -> Optional
 
     # Marcar usuario como verificado
     from backend.models_identity import User
+
     user_result = await db.execute(select(User).where(User.id == row.user_id))
     user = user_result.scalar_one_or_none()
     if user:
@@ -152,7 +167,9 @@ async def use_verification_token_async(db: AsyncSession, token: str) -> Optional
     return row.user_id
 
 
-async def create_reset_token_async(db: AsyncSession, user_id: int, token: str, expires_at):
+async def create_reset_token_async(
+    db: AsyncSession, user_id: int, token: str, expires_at
+):
     from backend.models_identity import ResetToken
 
     row = ResetToken(user_id=user_id, token=token, expires_at=expires_at, used=False)
@@ -162,20 +179,19 @@ async def create_reset_token_async(db: AsyncSession, user_id: int, token: str, e
     return row
 
 
-async def use_reset_token_async(db: AsyncSession, token: str, new_password: str) -> bool:
+async def use_reset_token_async(
+    db: AsyncSession, token: str, new_password: str
+) -> bool:
     """Usa un token de reset para cambiar la contraseña.
 
     Returns:
         True si se cambió, False si el token es inválido/expirado.
     """
+    from backend.core.security import get_password_hash
     from backend.crud._utils import _utcnow
     from backend.models_identity import ResetToken, User
 
-    from backend.core.security import get_password_hash
-
-    result = await db.execute(
-        select(ResetToken).where(ResetToken.token == token)
-    )
+    result = await db.execute(select(ResetToken).where(ResetToken.token == token))
     row = result.scalar_one_or_none()
     if not row or row.used or row.expires_at <= _utcnow():
         return False

@@ -1,9 +1,12 @@
 import sys
-content = open('frontend/src/components/WorkspaceLayout.tsx', 'r', encoding='utf-8').read()
+
+content = open(
+    "frontend/src/components/WorkspaceLayout.tsx", "r", encoding="utf-8"
+).read()
 
 target = '    finances: {\n        title: "Finanzas",\n'
 
-insertion = '''    evangelism: {
+insertion = """    evangelism: {
         title: "Evangelismo & Eventos",
         sections: [
             {
@@ -31,11 +34,13 @@ insertion = '''    evangelism: {
             }
         ]
     },
-'''
+"""
 
 if target in content:
     content = content.replace(target, insertion + target)
-    open('frontend/src/components/WorkspaceLayout.tsx', 'w', encoding='utf-8').write(content)
-    print('Inserted evangelism & academy back')
+    open("frontend/src/components/WorkspaceLayout.tsx", "w", encoding="utf-8").write(
+        content
+    )
+    print("Inserted evangelism & academy back")
 else:
-    print('Target not found')
+    print("Target not found")

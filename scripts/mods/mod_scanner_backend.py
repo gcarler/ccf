@@ -1,7 +1,7 @@
 import codecs
 import re
 
-with codecs.open('backend/api/crm.py', 'r', 'utf-8') as f:
+with codecs.open("backend/api/crm.py", "r", "utf-8") as f:
     c = f.read()
 
 # 1. Update validation endpoint to accept event_id
@@ -61,7 +61,7 @@ ret_new = """        if event_id:
 c = c.replace(ret_old, ret_new)
 # Fix member_name mismatch (it was 'name' instead of 'member_name' in the old endpoint but frontend used `result.member_name`)
 
-with codecs.open('backend/api/crm.py', 'w', 'utf-8') as f:
+with codecs.open("backend/api/crm.py", "w", "utf-8") as f:
     f.write(c)
 
 print("Backend scanner endpoint updated")

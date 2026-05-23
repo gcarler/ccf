@@ -1,4 +1,4 @@
-f = open('frontend/src/app/crm/events/[id]/page.tsx', encoding='utf-8')
+f = open("frontend/src/app/crm/events/[id]/page.tsx", encoding="utf-8")
 c = f.read()
 f.close()
 
@@ -50,19 +50,19 @@ new = """                                            </div>
 if old in c:
     c = c.replace(old, new)
     # Make sure Download is imported
-    if 'Download' not in c:
+    if "Download" not in c:
         c = c.replace("import {", "import { Download,\n")
-    open('frontend/src/app/crm/events/[id]/page.tsx', 'w', encoding='utf-8').write(c)
+    open("frontend/src/app/crm/events/[id]/page.tsx", "w", encoding="utf-8").write(c)
     print("Absentees banner added to session page")
 else:
     print("Target block not found - might have different whitespace")
     # Try finding and adding it differently
-    idx = c.find('{/* Modal Visitante */}')
+    idx = c.find("{/* Modal Visitante */}")
     if idx > 0:
         # Find the closest </main> before it
-        main_idx = c.rfind('</main>', 0, idx)
+        main_idx = c.rfind("</main>", 0, idx)
         if main_idx > 0:
-            insert_point = c.rfind('</div>', 0, main_idx) 
+            insert_point = c.rfind("</div>", 0, main_idx)
             # Let's just try to inject the banner near the metrics section
             metrics_pattern = "{sessionData?.metrics && Object.entries(sessionData.metrics).map(([key, val]) => ("
             if metrics_pattern in c:
@@ -71,7 +71,7 @@ else:
                 close_idx = c.find("</div>", metrics_idx + 500)
                 close_idx2 = c.find("</div>", close_idx + 1)  # closing the space-y-4
                 close_idx3 = c.find("</div>", close_idx2 + 1)  # closing the block
-                
+
                 banner = """
 
                                             {/* Absentees Banner */}
@@ -88,5 +88,7 @@ else:
                                                 </div>
                                             )}"""
                 c = c[:close_idx3] + banner + c[close_idx3:]
-                open('frontend/src/app/crm/events/[id]/page.tsx', 'w', encoding='utf-8').write(c)
+                open(
+                    "frontend/src/app/crm/events/[id]/page.tsx", "w", encoding="utf-8"
+                ).write(c)
                 print("Absentees banner injected via position search")

@@ -1,6 +1,7 @@
+from backend.core.permissions import get_default_roles
 from backend.database import SessionLocal
 from backend.models import Role
-from backend.core.permissions import get_default_roles
+
 
 def seed_roles():
     db = SessionLocal()
@@ -11,8 +12,7 @@ def seed_roles():
             existing = db.query(Role).filter(Role.name == role_data["name"]).first()
             if not existing:
                 new_role = Role(
-                    name=role_data["name"],
-                    permissions=role_data["permissions"]
+                    name=role_data["name"], permissions=role_data["permissions"]
                 )
                 db.add(new_role)
                 print(f"[OK] Rol creado: {role_data['name']}")
@@ -23,6 +23,7 @@ def seed_roles():
         db.commit()
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     print("Iniciando seed de roles...")
