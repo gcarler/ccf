@@ -106,6 +106,22 @@ class AssessmentAttempt(Base):
     passed = Column(Boolean, default=False, index=True)
     created_at = Column(DateTime, default=_utcnow, index=True)
 
+    answers = relationship("AssessmentAnswer", back_populates="attempt", cascade="all, delete-orphan")
+
+class AssessmentAnswer(Base):
+    __tablename__ = "assessment_answers"
+    id = Column(Integer, primary_key=True, index=True)
+    attempt_id = Column(Integer, ForeignKey("assessment_attempts.id", ondelete="CASCADE"), nullable=False, index=True)
+    question_id = Column(Integer, ForeignKey("assessment_questions.id"), nullable=False)
+    selected_option_id = Column(Integer, ForeignKey("assessment_options.id"), nullable=True)
+    text_response = Column(Text, nullable=True)
+    is_correct = Column(Boolean, nullable=True)
+    points_awarded = Column(Numeric(5, 2), default=0)
+
+    attempt = relationship("AssessmentAttempt", back_populates="answers")
+    question = relationship("AssessmentQuestion")
+    selected_option = relationship("AssessmentOption")
+
 class Resource(Base):
     __tablename__ = "resources"
     id = Column(Integer, primary_key=True, index=True)

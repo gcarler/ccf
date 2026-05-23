@@ -22,7 +22,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { parseAndValidateTime } from '@/lib/time';
 
 

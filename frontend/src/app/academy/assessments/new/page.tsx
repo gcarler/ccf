@@ -12,6 +12,7 @@ import {
     Save, 
     CheckCircle2,
     ListChecks,
+    AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DSCard } from '@/design/components/DSCard';
@@ -28,10 +29,11 @@ interface Question {
 
 export default function NewAssessmentPage() {
     const router = useRouter();
-    useAuth();
-    
+    const { token } = useAuth();
+
     const [title, setTitle] = useState('');
     const [passingScore, setPassingScore] = useState(70);
+    const [courseId, setCourseId] = useState('');
     const [questions, setQuestions] = useState<Question[]>([]);
 
     const addQuestion = () => {
@@ -59,8 +61,28 @@ export default function NewAssessmentPage() {
             toast.error('Completa el título y agrega al menos una pregunta');
             return;
         }
+        if (!courseId) {
+            toast.error('Ingresa el ID del curso al que pertenece esta evaluación');
+            return;
+        }
 
         try {
+            await (await import('@/lib/http')).apiFetch('/academy/admin/assessments', {
+                method: 'POST',
+                token,
+                body: JSON.stringify({
+                    title,
+                    passing_score: passingScore,
+                    course_id: Number(courseId),
+                    questions: questions.map(q => ({
+                        text: q.text,
+                        type: q.type,
+                        options: q.options,
+                        correct_option: q.correct_option ?? 0,
+                        points: q.points,
+                    })),
+                }),
+            });
             toast.success('Evaluación creada correctamente');
             router.back();
         } catch {
@@ -100,7 +122,7 @@ export default function NewAssessmentPage() {
                         <div className="space-y-3">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Título de la Evaluación</label>
-                                <input 
+                                <input
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     placeholder="Ej: Examen Final de Teología Básica"
@@ -110,10 +132,20 @@ export default function NewAssessmentPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nota Mínima de Aprobación (%)</label>
-                                    <input 
+                                    <input
                                         type="number"
                                         value={passingScore}
                                         onChange={(e) => setPassingScore(Number(e.target.value))}
+                                        className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-1.5 px-4 text-sm outline-none focus:ring-4 focus:ring-blue-500/10"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">ID del Curso *</label>
+                                    <input
+                                        type="number"
+                                        value={courseId}
+                                        onChange={(e) => setCourseId(e.target.value)}
+                                        placeholder="Ej: 1"
                                         className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-1.5 px-4 text-sm outline-none focus:ring-4 focus:ring-blue-500/10"
                                     />
                                 </div>
@@ -135,62 +167,135 @@ export default function NewAssessmentPage() {
                         {questions.map((q, index) => (
                             <DSCard key={q.id}>
                                 <div className="space-y-3">
-                                    <div className="flex items-start justify-between">
-                                        <span className="size-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-xs">
-                                            {index + 1}
-                                        </span>
-                                        <button 
-                                            onClick={() => removeQuestion(q.id)}
-                                            className="text-slate-300 hover:text-rose-500 transition-colors"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className="size-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-xs">
+                                                {index + 1}
+                                            </span>
+                                            <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/10">
+                                                {(['multiple_choice', 'true_false', 'text'] as const).map((t) => (
+                                                    <button
+                                                        key={t}
+                                                        onClick={() => {
+                                                            const updates: Partial<Question> = { type: t };
+                                                            if (t === 'true_false') {
+                                                                updates.options = ['Verdadero', 'Falso'];
+                                                                updates.correct_option = 0;
+                                                            } else if (t === 'text') {
+                                                                updates.options = [];
+                                                            } else if (q.type !== 'multiple_choice') {
+                                                                updates.options = ['', ''];
+                                                            }
+                                                            updateQuestion(q.id, updates);
+                                                        }}
+                                                        className={clsx(
+                                                            "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                                                            q.type === t 
+                                                                ? "bg-white dark:bg-white/10 text-blue-600 shadow-sm" 
+                                                                : "text-slate-400 hover:text-slate-600"
+                                                        )}
+                                                    >
+                                                        {t.replace('_', ' ')}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10">
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Puntos</span>
+                                                <input 
+                                                    type="number" 
+                                                    value={q.points} 
+                                                    onChange={(e) => updateQuestion(q.id, { points: Number(e.target.value) })}
+                                                    className="w-10 bg-transparent text-xs font-black text-blue-600 outline-none"
+                                                />
+                                            </div>
+                                            <button 
+                                                onClick={() => removeQuestion(q.id)}
+                                                className="text-slate-300 hover:text-rose-500 transition-colors"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-4">
-                                        <textarea 
-                                            value={q.text}
-                                            onChange={(e) => updateQuestion(q.id, { text: e.target.value })}
-                                            placeholder="Escribe la pregunta aquí..."
-                                            className="w-full bg-transparent border-none text-sm font-bold outline-none resize-none placeholder:text-slate-300"
-                                            rows={2}
-                                        />
-
-                                        <div className="grid grid-cols-1 gap-3">
-                                            {q.options.map((opt, optIndex) => (
-                                                <div key={optIndex} className="flex items-center gap-3 group">
-                                                    <button 
-                                                        onClick={() => updateQuestion(q.id, { correct_option: optIndex })}
-                                                        className={clsx(
-                                                            'size-6 rounded-lg flex items-center justify-center border-2 transition-all',
-                                                            q.correct_option === optIndex 
-                                                                ? 'bg-emerald-500 border-emerald-500 text-white' 
-                                                                : 'border-slate-200 dark:border-white/10 text-transparent'
-                                                        )}
-                                                    >
-                                                        <CheckCircle2 size={14} />
-                                                    </button>
-                                                    <input 
-                                                        value={opt}
-                                                        onChange={(e) => {
-                                                            const newOpts = [...q.options];
-                                                            newOpts[optIndex] = e.target.value;
-                                                            updateQuestion(q.id, { options: newOpts });
-                                                        }}
-                                                        placeholder={`Opción ${optIndex + 1}`}
-                                                        className="flex-1 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-2 px-4 text-sm outline-none focus:border-blue-500 transition-all"
-                                                    />
-                                                </div>
-                                            ))}
-                                            <button 
-                                                onClick={() => {
-                                                    updateQuestion(q.id, { options: [...q.options, ''] });
-                                                }}
-                                                className="text-[10px] font-black uppercase tracking-widest text-blue-500 mt-2 hover:underline text-left"
-                                            >
-                                                + Agregar opción
-                                            </button>
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Pregunta</label>
+                                            <textarea 
+                                                value={q.text}
+                                                onChange={(e) => updateQuestion(q.id, { text: e.target.value })}
+                                                placeholder="Escribe la pregunta aquí..."
+                                                className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-3 px-4 text-sm font-bold outline-none focus:border-blue-500 transition-all resize-none"
+                                                rows={2}
+                                            />
                                         </div>
+
+                                        {q.type !== 'text' && (
+                                            <div className="grid grid-cols-1 gap-3">
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Opciones (Marca la correcta)</label>
+                                                {q.options.map((opt, optIndex) => (
+                                                    <div key={optIndex} className="flex items-center gap-3 group">
+                                                        <button 
+                                                            onClick={() => updateQuestion(q.id, { correct_option: optIndex })}
+                                                            className={clsx(
+                                                                'size-8 rounded-xl flex items-center justify-center border-2 transition-all shrink-0',
+                                                                q.correct_option === optIndex 
+                                                                    ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' 
+                                                                    : 'border-slate-200 dark:border-white/10 text-transparent bg-white dark:bg-white/5'
+                                                            )}
+                                                        >
+                                                            <CheckCircle2 size={16} />
+                                                        </button>
+                                                        <input 
+                                                            value={opt}
+                                                            readOnly={q.type === 'true_false'}
+                                                            onChange={(e) => {
+                                                                const newOpts = [...q.options];
+                                                                newOpts[optIndex] = e.target.value;
+                                                                updateQuestion(q.id, { options: newOpts });
+                                                            }}
+                                                            placeholder={`Opción ${optIndex + 1}`}
+                                                            className={clsx(
+                                                                "flex-1 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-2 px-4 text-sm outline-none focus:border-blue-500 transition-all font-medium",
+                                                                q.type === 'true_false' && "cursor-default"
+                                                            )}
+                                                        />
+                                                        {q.type === 'multiple_choice' && q.options.length > 2 && (
+                                                            <button 
+                                                                onClick={() => {
+                                                                    const newOpts = q.options.filter((_, i) => i !== optIndex);
+                                                                    const newCorrect = q.correct_option === optIndex ? 0 : (q.correct_option! > optIndex ? q.correct_option! - 1 : q.correct_option);
+                                                                    updateQuestion(q.id, { options: newOpts, correct_option: newCorrect });
+                                                                }}
+                                                                className="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                                {q.type === 'multiple_choice' && (
+                                                    <button 
+                                                        onClick={() => {
+                                                            updateQuestion(q.id, { options: [...q.options, ''] });
+                                                        }}
+                                                        className="text-[10px] font-black uppercase tracking-widest text-blue-500 mt-2 hover:underline text-left flex items-center gap-2"
+                                                    >
+                                                        <Plus size={12} /> Agregar opción
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {q.type === 'text' && (
+                                            <div className="p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 rounded-xl">
+                                                <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest flex items-center gap-2">
+                                                    <AlertCircle size={14} /> Pregunta Abierta
+                                                </p>
+                                                <p className="text-[11px] text-amber-600 dark:text-amber-400/70 mt-1">Estas preguntas requieren calificación manual por parte del docente en el panel de entregas.</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </DSCard>

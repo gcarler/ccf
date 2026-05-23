@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RUN_DIR="$ROOT_DIR/.run"
+DEV_PID_FILE="$RUN_DIR/frontend-dev.pid"
+DEV_LOG="$RUN_DIR/frontend-dev-3001.log"
+
+mkdir -p "$RUN_DIR"
+
+is_running() {
+  local pid="$1"
+  kill -0 "$pid" >/dev/null 2>&1
+}
+
+if [[ -f "$DEV_PID_FILE" ]]; then
+  pid="$(cat "$DEV_PID_FILE")"
+  if is_running "$pid"; then
+    echo "Frontend DEV already running (PID $pid) on http://localhost:3001"
+    exit 0
+  fi
+fi
+
+(
+  cd "$ROOT_DIR/frontend"
+  npm run dev -- --hostname 0.0.0.0 --port 3001 >"$DEV_LOG" 2>&1 &
+  echo $! >"$DEV_PID_FILE"
+)
+
+echo
+echo "CCF DEV running:"
+echo "- Frontend DEV: http://localhost:3001  (hot reload activo)"
+echo "- Backend:      http://localhost:8000  (usa backend/.env)"
+echo
+echo "Log: $DEV_LOG"
+echo "Stop con: ./stopccf-dev"

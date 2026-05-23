@@ -16,6 +16,43 @@ export interface ApiFetchOptions {
   silent?: boolean;
 }
 
+// Deduplicate concurrent refresh calls — all callers share the same promise.
+let _refreshPromise: Promise<string | null> | null = null;
+
+async function _refreshSession(): Promise<string | null> {
+  if (_refreshPromise) return _refreshPromise;
+
+  _refreshPromise = (async () => {
+    if (typeof window === "undefined") return null;
+    const refreshToken = localStorage.getItem("ccf_refresh_token");
+    if (!refreshToken) return null;
+
+    try {
+      const nativeFetch: typeof fetch =
+        (typeof globalThis !== "undefined" && (globalThis as any).__ccfOriginalFetch) || fetch;
+      const res = await nativeFetch(apiUrl("/auth/refresh"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (data.access_token) {
+        localStorage.setItem("ccf_token", data.access_token);
+        if (data.refresh_token) localStorage.setItem("ccf_refresh_token", data.refresh_token);
+        return data.access_token as string;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  })().finally(() => {
+    _refreshPromise = null;
+  });
+
+  return _refreshPromise;
+}
+
 export class ApiError extends Error {
   status: number;
   detail?: unknown;
@@ -50,7 +87,7 @@ function buildHeaders(base?: HeadersInit) {
   return new Headers({ Accept: "application/json", ...(base || {}) });
 }
 
-export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
+export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}, _isRetry = false): Promise<T> {
   const { method = "GET", body, token, headers, query, cache, credentials, timeout, silent } = options;
   const url = buildUrl(path, query);
   const finalHeaders = buildHeaders(headers);
@@ -111,13 +148,24 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   const parsed = raw ? safeJsonParse(raw) : undefined;
 
   if (response.status === 401) {
-    console.warn(`[API_UNAUTHORIZED] ${path}`);
-    const isLoginPath = path.includes('/auth/login') || (typeof window !== 'undefined' && window.location.pathname.includes('/login'));
-    if (typeof window !== 'undefined' && !isLoginPath) {
-       localStorage.removeItem('ccf_token');
-       window.location.href = '/login?expired=true';
+    const isAuthPath =
+      path.includes("/auth/login") ||
+      path.includes("/auth/refresh") ||
+      path.includes("/auth/logout");
+
+    // Auto-refresh: if this is not an auth endpoint and not already a retry, try to renew the session.
+    if (!isAuthPath && !_isRetry && typeof window !== "undefined") {
+      const newToken = await _refreshSession();
+      if (newToken) {
+        return apiFetch<T>(path, { ...options, token: newToken }, true);
+      }
+      // Refresh failed — session is truly expired.
+      localStorage.removeItem("ccf_token");
+      localStorage.removeItem("ccf_refresh_token");
+      window.location.href = "/login?expired=true";
     }
-    const defaultMsg = isLoginPath ? "Credenciales incorrectas" : "Session expired";
+
+    const defaultMsg = isAuthPath ? "Credenciales incorrectas" : "Sesión expirada";
     throw new ApiError(parsed?.detail || parsed?.message || defaultMsg, 401, parsed);
   }
 

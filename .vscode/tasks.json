@@ -1,0 +1,47 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "▶ Iniciar Producción",
+      "type": "shell",
+      "command": "bash startccf",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "⏹ Detener Producción",
+      "type": "shell",
+      "command": "bash stopccf",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "🧪 Iniciar Desarrollo (puerto 3001)",
+      "type": "shell",
+      "command": "bash startccf-dev",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "⏹ Detener Desarrollo",
+      "type": "shell",
+      "command": "bash stopccf-dev",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "📦 Build Frontend (para producción)",
+      "type": "shell",
+      "command": "cd frontend && npm run build",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "🚀 Deploy: Build + Reiniciar Producción",
+      "type": "shell",
+      "command": "bash stopccf && cd frontend && npm run build && cd .. && bash startccf",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "new" }
+    }
+  ]
+}

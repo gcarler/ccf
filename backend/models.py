@@ -9,6 +9,8 @@ from backend.models_identity import (  # noqa: F401
     Notification,
     UserReminder,
     RefreshToken,
+    VerificationToken,
+    ResetToken,
 )
 
 # Academy / LMS
@@ -81,6 +83,7 @@ from backend.models_projects import (  # noqa: F401
     ProjectActivityLog,
     ProjectWhiteboard,
     ProjectTask,
+    ProjectPhase,
     ProjectAttachment,
     TaskSupply,
     ProjectComment,

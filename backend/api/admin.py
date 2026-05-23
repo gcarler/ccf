@@ -3,7 +3,12 @@ from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.core.database import get_db
-from backend.core.permissions import get_all_permissions
+from backend.core.permissions import (
+    get_all_permissions,
+    expand_module_permissions,
+    MODULE_PERMISSION_MAP,
+    PERMISSION_LEVELS,
+)
 from backend.auth import require_admin
 from backend import models, schemas, crud
 
@@ -86,9 +91,127 @@ def delete_role(
     db.commit()
 
 
-@router.get("/permissions", response_model=List[str])
+@router.get("/permissions")
 def read_all_permissions(current_user: models.User = Depends(require_admin)):
-    return get_all_permissions()
+    """Lista todos los permisos disponibles con sus niveles jerárquicos."""
+    perms = get_all_permissions()
+    return {
+        "permissions": perms,
+        "modules": {
+            module: list(levels.keys())
+            for module, levels in MODULE_PERMISSION_MAP.items()
+        },
+        "levels": {k: list(v) for k, v in PERMISSION_LEVELS.items()},
+    }
+
+
+# ── User Permission Management ───────────────────────────────────
+
+@router.get("/users/{user_id}/permissions")
+def get_user_permissions(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    """Obtiene los permisos actuales de un usuario (rol + override)."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Role-based permissions
+    role_perms = {}
+    if user.user_role_obj:
+        perms = user.user_role_obj.permissions or {}
+        role_perms = dict(perms) if isinstance(perms, dict) else {}
+
+    # Per-user overrides
+    override_perms = {}
+    if user.permissions_override:
+        perms = user.permissions_override.permissions or {}
+        override_perms = dict(perms) if isinstance(perms, dict) else {}
+
+    # Effective permissions (merged)
+    effective = dict(role_perms)
+    effective.update(override_perms)
+
+    return {
+        "user_id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role,
+        "role_permissions": role_perms,
+        "override_permissions": override_perms,
+        "effective_permissions": effective,
+    }
+
+
+@router.put("/users/{user_id}/permissions")
+def set_user_permissions(
+    user_id: int,
+    payload: Dict[str, str],
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    """Asigna permisos modulares a un usuario (nivel lector/editor/gestor).
+
+    Ejemplo del payload:
+    ```json
+    {
+        "crm": "read",
+        "projects": "manage",
+        "academy": "study",
+        "finance": "read"
+    }
+    ```
+    Usar ``null`` o omitir un módulo para quitar el permiso.
+    Los módulos válidos son: crm, finance, projects, cms, academy, messaging.
+    Los niveles válidos son: read, edit, manage (y study para academy).
+    """
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    valid_modules = set(MODULE_PERMISSION_MAP.keys())
+    resolved_perms: Dict[str, str] = {}
+
+    for module, level in payload.items():
+        module = module.strip().lower()
+
+        if level is None:
+            continue  # skip null levels (remove override for this module)
+
+        level = str(level).strip().lower()
+
+        if module not in valid_modules:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Módulo inválido: '{module}'. Válidos: {', '.join(sorted(valid_modules))}",
+            )
+
+        module_config = MODULE_PERMISSION_MAP[module]
+        valid_levels = set(module_config.keys())
+        if level not in valid_levels:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Nivel inválido '{level}' para módulo '{module}'. Válidos: {', '.join(sorted(valid_levels))}",
+            )
+
+        for perm_key in expand_module_permissions(module, level):
+            resolved_perms[perm_key] = level
+
+    # Upsert UserPermission row
+    override = db.query(models.UserPermission).filter(
+        models.UserPermission.user_id == user_id
+    ).first()
+
+    if override:
+        override.permissions = resolved_perms
+    else:
+        override = models.UserPermission(user_id=user_id, permissions=resolved_perms)
+        db.add(override)
+
+    db.commit()
+    return {"status": "success", "user_id": user_id, "permissions": resolved_perms}
 
 # --- CHURCH LOCATIONS ---
 
@@ -190,7 +313,7 @@ def create_admin_user(
     current_user: models.User = Depends(require_admin),
 ):
     """Crea un nuevo usuario desde el panel de administracion."""
-    from backend.auth import hash_password
+    from backend.core.permissions import hash_password
     username = str(payload.get("username", "")).strip()
     email = str(payload.get("email", "")).strip()
     password = str(payload.get("password", ""))

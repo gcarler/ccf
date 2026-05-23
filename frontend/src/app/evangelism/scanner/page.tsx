@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { QrCode, ShieldCheck, Zap, RefreshCcw, UserCheck, Users } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch, ApiError } from '@/lib/http';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import AdminHero from '@/components/admin/AdminHero';
 import type { ScanValidationResult } from '@/app/evangelism/types';

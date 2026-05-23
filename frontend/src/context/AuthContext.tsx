@@ -41,7 +41,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const logout = useCallback(() => {
         void apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
-        if (typeof window !== 'undefined') localStorage.removeItem('ccf_token');
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('ccf_token');
+            localStorage.removeItem('ccf_refresh_token');
+        }
         setToken(null);
         setUser(null);
         router.push('/login');
@@ -94,11 +97,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         fetchUser();
     }, [fetchUser]);
 
-    const login = useCallback(async (accessToken?: string) => {
+    const login = useCallback(async (accessToken?: string, refreshToken?: string) => {
         setLoading(true);
         if (accessToken && typeof window !== 'undefined') {
             localStorage.setItem('ccf_token', accessToken);
             setToken(accessToken);
+        }
+        if (refreshToken && typeof window !== 'undefined') {
+            localStorage.setItem('ccf_refresh_token', refreshToken);
         }
         const userData = await fetchUser(accessToken);
         if (userData?.role) {

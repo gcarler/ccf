@@ -1,77 +1,493 @@
-from typing import List, Dict
+"""
+Centralized role & permission logic for CCF Mesh.
 
-# Taxonoma de permisos granulares disponibles en el sistema
-PERMISSIONS = {
-    # System / General
-    "system:config": "Acceso total para configurar el sistema (Super Admin)",
-    "profile:manage": "Permite al usuario gestionar su propia informacin personal",
-    
-    # CRM
-    "crm:manage": "Permite gestionar informacin, eventos y miembros en el CRM",
-    "crm:read": "Permite solo lectura de la informacin del CRM",
-    
-    # Finanzas
-    "finance:manage": "Permite gestionar transacciones, donaciones y presupuestos",
-    "finance:read": "Permite solo lectura del mdulo de finanzas",
-    
-    # Proyectos
-    "projects:manage": "Permite gestionar proyectos, tareas y tableros",
-    "projects:read": "Permite solo lectura de los proyectos",
-    
-    # CMS / Contenido Web
-    "cms:manage": "Permite gestionar el contenido web, pginas y multimedia",
-    "cms:read": "Permite ver borradores y contenido interno del CMS",
-    
-    # Academia (LMS)
-    "academy:manage": "Permite crear y gestionar cursos, lecciones y calificaciones",
-    "academy:study": "Permite inscribirse en cursos, consumir contenido y desarrollar evaluaciones",
+All modules should import from here for:
+  - Permission constants & role matrix
+  - Role normalization & checks
+  - FastAPI dependency guards (require_*)
+  - JWT token creation / user resolution
+"""
+
+from __future__ import annotations
+
+import logging
+import secrets
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
+from sqlalchemy.orm import Session
+
+from backend.core.cache import get_redis
+from backend.core.config import get_settings
+from backend.core.context import user_role_context
+from backend.core.database import get_db
+from backend.core.security import verify_password
+
+log = logging.getLogger(__name__)
+settings = get_settings()
+
+# ── JWT ────────────────────────────────────────────────────────────────
+SECRET_KEY = settings.secret_key
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+
+# ── Role aliases & valid set ──────────────────────────────────────────
+ROLE_ALIASES: Dict[str, str] = {
+    "student": "estudiante",
+    "leader": "coordinador",
+    "lider": "coordinador",
+    "staff": "docente",
+    "pastor": "pastor",
 }
 
-# Matriz de roles por defecto (Seed inicial basado en requerimientos)
-DEFAULT_ROLES = [
+VALID_ROLES: set[str] = {
+    "aspirante", "estudiante", "docente", "coordinador", "pastor", "admin",
+}
+
+# ── Permission taxonomy ────────────────────────────────────────────────
+PERMISSIONS: Dict[str, Dict[str, str]] = {
+    "system:config": {
+        "label": "Configurar sistema",
+        "description": "Acceso total para configurar el sistema (Super Admin)",
+    },
+    "profile:manage": {
+        "label": "Gestionar perfil",
+        "description": "Permite al usuario gestionar su propia información personal",
+    },
+    "messaging:read": {
+        "label": "Mensajes: lector",
+        "description": "Ver mensajes y notificaciones",
+    },
+    "messaging:edit": {
+        "label": "Mensajes: editor",
+        "description": "Enviar y gestionar mensajes",
+    },
+    "crm:read": {
+        "label": "CRM: lector",
+        "description": "Solo lectura de contactos e historial",
+    },
+    "crm:edit": {
+        "label": "CRM: editor",
+        "description": "Editar contactos, registrar interacciones",
+    },
+    "crm:manage": {
+        "label": "CRM: gestor",
+        "description": "Gestionar CRM, eventos y miembros",
+    },
+    "finance:read": {
+        "label": "Finanzas: lector",
+        "description": "Solo lectura del módulo de finanzas",
+    },
+    "finance:edit": {
+        "label": "Finanzas: editor",
+        "description": "Registrar transacciones y donaciones",
+    },
+    "finance:manage": {
+        "label": "Finanzas: gestor",
+        "description": "Gestionar transacciones, donaciones y presupuestos",
+    },
+    "projects:read": {
+        "label": "Proyectos: lector",
+        "description": "Solo lectura de proyectos y tareas",
+    },
+    "projects:edit": {
+        "label": "Proyectos: editor",
+        "description": "Crear y editar tareas",
+    },
+    "projects:manage": {
+        "label": "Proyectos: gestor",
+        "description": "Gestionar proyectos, tareas y tableros",
+    },
+    "cms:read": {
+        "label": "CMS: lector",
+        "description": "Ver borradores y contenido interno del CMS",
+    },
+    "cms:edit": {
+        "label": "CMS: editor",
+        "description": "Editar contenido y páginas",
+    },
+    "cms:manage": {
+        "label": "CMS: gestor",
+        "description": "Gestionar el contenido web, páginas y multimedia",
+    },
+    "academy:read": {
+        "label": "Academia: lector",
+        "description": "Ver cursos y contenido académico",
+    },
+    "academy:study": {
+        "label": "Academia: estudiante",
+        "description": "Inscribirse en cursos y desarrollar evaluaciones",
+    },
+    "academy:edit": {
+        "label": "Academia: editor",
+        "description": "Crear y editar contenido de cursos",
+    },
+    "academy:manage": {
+        "label": "Academia: gestor",
+        "description": "Gestionar cursos, lecciones y calificaciones",
+    },
+}
+
+# ── Permission expansion helpers (must be before DEFAULT_ROLES) ────────
+
+PERMISSION_LEVELS = {
+    "read": {"read"},
+    "edit": {"read", "edit"},
+    "manage": {"read", "edit", "manage"},
+}
+
+MODULE_PERMISSION_MAP: Dict[str, Dict[str, str]] = {
+    "crm": {"read": "crm:read", "edit": "crm:edit", "manage": "crm:manage"},
+    "finance": {"read": "finance:read", "edit": "finance:edit", "manage": "finance:manage"},
+    "projects": {"read": "projects:read", "edit": "projects:edit", "manage": "projects:manage"},
+    "cms": {"read": "cms:read", "edit": "cms:edit", "manage": "cms:manage"},
+    "academy": {"read": "academy:read", "study": "academy:study", "edit": "academy:edit", "manage": "academy:manage"},
+    "messaging": {"read": "messaging:read", "edit": "messaging:edit"},
+}
+
+
+def expand_module_permissions(module: str, level: str) -> List[str]:
+    """Retorna los permisos concretos para un módulo dado un nivel (read/edit/manage)."""
+    module_perms = MODULE_PERMISSION_MAP.get(module, {})
+    levels = PERMISSION_LEVELS.get(level, {level})
+    return [module_perms[lvl] for lvl in levels if lvl in module_perms]
+
+
+# ── Default role matrix ────────────────────────────────────────────────
+DEFAULT_ROLES: List[Dict[str, Any]] = [
     {
         "name": "Super administrador",
         "label": "Super administrador",
         "permissions": [
-            "system:config", "crm:manage", "finance:manage", 
-            "projects:manage", "cms:manage", "academy:manage",
-            "academy:study", "profile:manage"
-        ]
+            "system:config",
+            *expand_module_permissions("crm", "manage"),
+            *expand_module_permissions("finance", "manage"),
+            *expand_module_permissions("projects", "manage"),
+            *expand_module_permissions("cms", "manage"),
+            *expand_module_permissions("academy", "manage"),
+            *expand_module_permissions("messaging", "edit"),
+            "profile:manage",
+        ],
     },
     {
         "name": "Administrador",
         "label": "Administrador",
         "permissions": [
-            "crm:manage", "finance:manage", "projects:manage", 
-            "cms:manage", "academy:manage", "academy:study", "profile:manage"
-        ]
+            *expand_module_permissions("crm", "manage"),
+            *expand_module_permissions("finance", "manage"),
+            *expand_module_permissions("projects", "manage"),
+            *expand_module_permissions("cms", "manage"),
+            *expand_module_permissions("academy", "manage"),
+            *expand_module_permissions("messaging", "edit"),
+            "profile:manage",
+        ],
     },
     {
         "name": "Gestor",
         "label": "Gestor",
         "permissions": [
-            "crm:manage", "projects:manage", "academy:manage", 
-            "academy:study", "profile:manage"
-        ]
+            *expand_module_permissions("crm", "manage"),
+            *expand_module_permissions("projects", "manage"),
+            *expand_module_permissions("academy", "manage"),
+            *expand_module_permissions("messaging", "edit"),
+            "profile:manage",
+        ],
     },
     {
-        "name": "Usuario_t1",
-        "label": "miembro_1",
+        "name": "Editor",
+        "label": "Editor",
         "permissions": [
-            "profile:manage", "academy:study"
-        ]
+            *expand_module_permissions("crm", "edit"),
+            *expand_module_permissions("projects", "edit"),
+            *expand_module_permissions("academy", "edit"),
+            *expand_module_permissions("messaging", "edit"),
+            "profile:manage",
+        ],
     },
     {
-        "name": "Usuario_t2",
-        "label": "miembro_2",
+        "name": "Lector",
+        "label": "Lector",
         "permissions": [
-            "academy:study"
-        ]
-    }
+            *expand_module_permissions("crm", "read"),
+            *expand_module_permissions("projects", "read"),
+            *expand_module_permissions("academy", "read"),
+            *expand_module_permissions("messaging", "read"),
+            "profile:manage",
+        ],
+    },
+    {
+        "name": "Miembro",
+        "label": "Miembro",
+        "permissions": [
+            *expand_module_permissions("academy", "study"),
+            *expand_module_permissions("messaging", "read"),
+            "profile:manage",
+        ],
+    },
+    {
+        "name": "Aspirante",
+        "label": "Aspirante",
+        "permissions": [
+            *expand_module_permissions("academy", "read"),
+            "profile:manage",
+        ],
+    },
 ]
 
-def get_all_permissions() -> Dict[str, str]:
-    return PERMISSIONS
+# ── Helpers ────────────────────────────────────────────────────────────
 
-def get_default_roles() -> List[Dict]:
-    return DEFAULT_ROLES
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def normalize_role(role: str) -> str:
+    """Normalize a role string (handle aliases, case, whitespace)."""
+    role_value = str(role or "").strip().lower()
+    return ROLE_ALIASES.get(role_value, role_value)
+
+
+def role_in(user_role: str, allowed_roles: set[str]) -> bool:
+    """Check if a normalized role is in the allowed set."""
+    return normalize_role(user_role) in allowed_roles
+
+
+def is_crm_privileged(role: str) -> bool:
+    """Verifica si un rol tiene acceso total al CRM (Administradores y Pastores)."""
+    return normalize_role(role) in {"admin", "pastor"}
+
+
+# ── Public helpers ─────────────────────────────────────────────────────
+
+
+def get_all_permissions() -> Dict[str, Dict[str, str]]:
+    return {k: dict(v) for k, v in PERMISSIONS.items()}
+
+
+def get_default_roles() -> List[Dict[str, Any]]:
+    return list(DEFAULT_ROLES)
+
+
+# ── JWT token creation ─────────────────────────────────────────────────
+
+
+def create_access_token(
+    data: dict,
+    expires_delta: Optional[timedelta] = None,
+) -> str:
+    """Create a signed JWT access token."""
+    to_encode = data.copy()
+    now = _utcnow()
+    expire = now + (expires_delta or timedelta(minutes=15))
+    to_encode.update({"exp": expire, "iat": now.timestamp()})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def create_refresh_token(db: Session, user_id: int) -> str:
+    """Create a cryptographically random refresh token and persist it."""
+    from backend import crud  # avoid circular import
+
+    token = secrets.token_urlsafe(48)
+    expires_at = _utcnow() + timedelta(days=settings.refresh_token_expire_days)
+    crud.create_refresh_token(db, user_id=user_id, token=token, expires_at=expires_at)
+    return token
+
+
+def record_session(user_id: int, token: str) -> None:
+    """Record an active session in Redis."""
+    redis_client = get_redis()
+    ttl = settings.access_token_expire_minutes * 60
+    redis_client.setex(f"session:{user_id}:{token}", ttl, "active")
+
+
+# ── User resolution dependencies ───────────────────────────────────────
+
+
+async def get_current_user(
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme),
+):
+    """Resolve the current user from a JWT bearer token."""
+    from backend import crud  # avoid circular import
+
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        subject = str(payload.get("sub") or "")
+        if not subject:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+
+    user = None
+    if subject.isdigit():
+        user = crud.get_user(db, int(subject))
+    else:
+        user = crud.get_user_by_email(db, email=subject)
+
+    if user is None:
+        raise credentials_exception
+
+    # Set context for RBAC in schemas
+    user_role_context.set(user.role)
+    return user
+
+
+async def get_current_active_user(
+    current_user=Depends(get_current_user),
+):
+    """Require an active (non-disabled) user."""
+    if not current_user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+
+# ── Permission guard factory ───────────────────────────────────────────
+
+
+def _has_permission(role: str, user_perms: set | dict, required: str) -> bool:
+    """Check if a user has a permission, considering hierarchy.
+
+    Higher-level permissions imply lower-level ones (manage > edit > read).
+    """
+    if role == "admin":
+        return True
+
+    module = required.split(":")[0]
+    level = required.split(":")[1]
+
+    # Build set of effective permissions from user_perms
+    if isinstance(user_perms, dict):
+        user_perms = set(user_perms.keys()) if user_perms else set()
+    elif not isinstance(user_perms, set):
+        user_perms = set(user_perms or [])
+
+    # Direct match
+    if required in user_perms:
+        return True
+
+    # Hierarchy: higher levels imply lower ones within the same module
+    hierarchy = {"manage": {"manage", "edit", "read"},
+                 "edit": {"edit", "read"},
+                 "read": {"read"},
+                 "study": {"study", "read"},
+                 "config": {"config"}}
+
+    if level not in hierarchy:
+        return required in user_perms
+
+    implied = hierarchy[level]
+    for user_perm in user_perms:
+        user_module = user_perm.split(":")[0] if ":" in user_perm else ""
+        user_level = user_perm.split(":")[1] if ":" in user_perm else ""
+        if user_module == module and user_level in hierarchy:
+            if level in hierarchy.get(user_level, set()):
+                return True
+
+    return False
+
+
+def require_permission(permission: str):
+    """Factory: return a FastAPI dependency that checks a specific permission."""
+
+    async def _check(
+        current_user=Depends(get_current_active_user),
+        db: Session = Depends(get_db),
+    ):
+        from backend import crud  # avoid circular import
+
+        role = normalize_role(current_user.role)
+
+        # Check row-level permissions from the Role model
+        db_user = crud.get_user(db, current_user.id)
+        user_perms: set[str] = set()
+
+        # 1. Role-based permissions
+        if db_user and getattr(db_user, "user_role_obj", None):
+            perms = getattr(db_user.user_role_obj, "permissions", None) or {}
+            if isinstance(perms, dict):
+                user_perms.update(perms.keys() if perms else [])
+            elif isinstance(perms, (list, set)):
+                user_perms.update(perms)
+
+        # 2. Per-user permission overrides (granular)
+        if db_user and getattr(db_user, "permissions_override", None):
+            override = getattr(db_user.permissions_override, "permissions", None) or {}
+            if isinstance(override, dict):
+                user_perms.update(override.keys() if override else [])
+            elif isinstance(override, (list, set)):
+                user_perms.update(override)
+
+        if _has_permission(role, user_perms, permission):
+            return current_user
+
+        # Role-based fallback for backwards compatibility
+        if role == "admin":
+            return current_user
+        if permission.startswith("crm:") and role == "pastor":
+            return current_user
+        if permission.startswith("academy:") and role in {"coordinador", "docente", "pastor"}:
+            return current_user
+        if permission.startswith("projects:") and role in {"coordinador", "pastor"}:
+            return current_user
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Permisos insuficientes. Se requiere: {permission}",
+        )
+
+    return _check
+
+
+# ── Named guards (convenience aliases) ─────────────────────────────────
+
+require_active_user = get_current_active_user
+require_admin = require_permission("system:config")
+require_staff_or_admin = require_permission("academy:manage")
+require_teacher_or_admin = require_permission("academy:manage")
+require_coordinator_or_admin = require_permission("projects:manage")
+
+
+async def require_pastor_or_admin(
+    current_user=Depends(get_current_active_user),
+):
+    """Require pastor or admin role (CRM-level access)."""
+    role = normalize_role(str(getattr(current_user, "role", "")))
+    if role not in {"admin", "pastor"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Permisos insuficientes. Se requiere: crm:manage",
+        )
+    return current_user
+
+
+# ── Legacy auth helpers ────────────────────────────────────────────────
+
+
+def authenticate_user(db: Session, email: str, password: str):
+    """Authenticate a user by email + password. Returns user or False."""
+    from backend import crud  # avoid circular import
+
+    user = crud.get_user_by_email(db, email=email)
+    if not user:
+        return False
+    hashed_password = str(getattr(user, "password_hash", ""))
+    if not verify_password(password, hashed_password):
+        return False
+    return user
+
+
+def hash_password(password: str) -> str:
+    """Alias for get_password_hash kept for backward compatibility."""
+    from backend.core.security import get_password_hash
+
+    return get_password_hash(password)

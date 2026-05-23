@@ -77,12 +77,31 @@ class AssessmentAttempt(BaseModel):
     enrollment_id: int
     assessment_id: int
     score: float = 0.0
-    submitted_at: datetime | None = None
+    passed: bool = False
+    created_at: datetime | None = None
+    answers: List[AssessmentAnswer] = Field(default_factory=list)
     model_config = orm_config
 
 
+class AssessmentAnswer(BaseModel):
+    id: int
+    question_id: int
+    selected_option_id: Optional[int] = None
+    text_response: Optional[str] = None
+    is_correct: Optional[bool] = None
+    points_awarded: float = 0
+    model_config = orm_config
+
+
+class AssessmentAnswerSubmit(BaseModel):
+    question_id: int
+    selected_option_id: Optional[int] = None
+    text_response: Optional[str] = None
+
+
 class AssessmentAttemptSubmit(BaseModel):
-    submitted_score: float
+    submitted_score: Optional[float] = None
+    answers: Optional[List[AssessmentAnswerSubmit]] = None
 
 
 class EnrollmentCreate(BaseModel):

@@ -10,8 +10,8 @@ from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import text, func
 import uuid
 
-from backend import models, schemas
-from backend.auth import require_active_user, require_staff_or_admin
+from backend import models, schemas, crud
+from backend.auth import require_active_user, require_staff_or_admin, normalize_role
 from backend.core.database import get_db
 from backend.core.audit import record_admin_action
 from backend.core.uploads import save_upload, sanitize_filename
@@ -196,12 +196,69 @@ def create_project(
     db.add(db_project)
     db.commit()
     db.refresh(db_project)
-    
+
+    # Auto-create default kanban phases
+    crud.create_default_phases(db, db_project.id)
+
     # Auditoria real
     record_admin_action(db, current_user, action="create_project", resource_type="project", resource_id=str(db_project.id))
-    
+
     _normalize_dates(db_project)
     return db_project
+
+
+# ── Phases / Kanban Columns ─────────────────────────────
+
+
+@router.get("/{project_id}/phases", response_model=List[schemas.ProjectPhaseSchema])
+def list_project_phases(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Lista las fases (columnas del kanban) de un proyecto."""
+    _ensure_project(db, project_id)
+    return crud.get_project_phases(db, project_id)
+
+
+@router.put("/{project_id}/phases", response_model=List[schemas.ProjectPhaseSchema])
+def set_project_phases(
+    project_id: int,
+    phases: List[schemas.ProjectPhaseInput],
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Reemplaza todas las fases del proyecto (reordenar / renombrar / agregar / eliminar).
+    El orden en el array define el order_index de cada fase.
+    Solo administradores y gestores pueden modificar fases.
+    """
+    project = _ensure_project(db, project_id)
+    # Only admins/staff can modify phases
+    user_role = normalize_role(getattr(current_user, "role", ""))
+    if user_role not in ("admin", "gestor", "coordinador", "docente", "pastor"):
+        raise HTTPException(status_code=403, detail="Solo administradores y gestores pueden modificar las fases")
+
+    # Check no phase with tasks is being deleted
+    existing = {p.slug for p in crud.get_project_phases(db, project_id)}
+    incoming = {p.slug for p in phases}
+    removed = existing - incoming
+    if removed:
+        has_tasks = db.query(models.ProjectTask).filter(
+            models.ProjectTask.project_id == project_id,
+            models.ProjectTask.status.in_(removed),
+        ).count()
+        if has_tasks:
+            raise HTTPException(
+                status_code=409,
+                detail=f"No se puede eliminar la fase '{next(iter(removed))}': tiene {has_tasks} tarea(s) asignada(s). Mueve las tareas primero.",
+            )
+
+    phase_dicts = [
+        {"name": p.name, "slug": p.slug, "color": p.color, "order_index": i}
+        for i, p in enumerate(phases)
+    ]
+    created = crud.set_project_phases(db, project_id, phase_dicts)
+    return created
 
 
 # --- COMMENTS ---

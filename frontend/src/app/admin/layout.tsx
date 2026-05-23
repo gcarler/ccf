@@ -3,17 +3,19 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
-import { 
-    LayoutDashboard, 
-    Users, 
-    TrendingUp, 
+import {
+    LayoutDashboard,
+    Users,
+    TrendingUp,
     CheckSquare,
     FileText,
     Globe,
     Megaphone,
     Heart,
     BarChart3,
-    Shield
+    Shield,
+    Church,
+    Home,
 } from 'lucide-react';
 
 const SIDEBAR_SECTIONS = [
@@ -29,6 +31,8 @@ const SIDEBAR_SECTIONS = [
     {
         title: 'Ministerial',
         items: [
+            { id: 'ministerios', label: 'Ministerios', href: '/admin/ministerios', icon: Church },
+            { id: 'familias', label: 'Familias', href: '/admin/familias', icon: Home },
             { id: 'milestones', label: 'Hitos Espirituales', href: '/admin/spiritual-life/milestones', icon: Heart },
             { id: 'candidates', label: 'Candidatos Bautismo', href: '/admin/analytics/candidates', icon: Users },
             { id: 'finanzas', label: 'Finanzas', href: '/admin/finance', icon: TrendingUp },

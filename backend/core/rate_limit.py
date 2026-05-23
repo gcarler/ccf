@@ -1,8 +1,12 @@
-from fastapi import HTTPException, Request, status
+import logging
 import os
 
-from backend.core.cache import get_redis
+from fastapi import HTTPException, Request, status
+
+from backend.core.cache import MemoryRedis, get_redis
 from backend.core.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 def rate_limiter(limit: int = 5, window_seconds: int = 60):
@@ -12,6 +16,17 @@ def rate_limiter(limit: int = 5, window_seconds: int = 60):
         if get_settings().environment.strip().lower() in {"test", "testing"}:
             return
         redis_client = get_redis()
+
+        # MemoryRedis no es seguro con múltiples workers — el límite
+        # se reinicia por worker y no hay estado compartido.
+        if isinstance(redis_client, MemoryRedis):
+            logger.warning(
+                "Rate limiter usando MemoryRedis: el límite no se aplica "
+                "correctamente con múltiples workers. Configura Redis real "
+                "para rate limiting en producción."
+            )
+            return
+
         identifier = request.client.host if request.client else "anonymous"
         key = f"rate:{identifier}:{request.url.path}"
         current = redis_client.incr(key)

@@ -11,9 +11,17 @@ on:
         description: "Force deploy even without deploy-relevant file changes"
         required: false
         default: "false"
+      target:
+        description: "Deploy target"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
 
 concurrency:
-  group: deploy-${{ github.event.workflow_run.head_branch || github.ref }}
+  group: deploy-${{ github.event.workflow_run.head_branch || github.ref }}-${{ github.event.inputs.target || 'staging' }}
   cancel-in-progress: true
 
 env:
@@ -101,11 +109,12 @@ jobs:
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
 
-  deploy:
+  deploy-staging:
     needs: [changes, docker]
     if: ${{ (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && needs.changes.outputs.should_deploy == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    environment: staging
     outputs:
       smoke_passed: ${{ steps.smoke.outputs.smoke_passed }}
       deploy_result: ${{ job.status }}
@@ -367,3 +376,66 @@ jobs:
             -d '${{ steps.notify.outputs.payload }}' \
             "${SLACK_WEBHOOK_URL}"
           echo "::notice::Notification sent to Slack."
+
+  deploy-production:
+    needs: [changes, docker, deploy-staging]
+    if: ${{ needs.deploy-staging.outputs.smoke_passed == 'true' && (github.event.inputs.target == 'production' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: production  # manual approval gate
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.COMMIT_SHA }}
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.29.3
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.15.4
+
+      - name: Load kubeconfig
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          test -s ~/.kube/config
+
+      - name: Pre-deploy database backup
+        run: |
+          set -euo pipefail
+          PG_POD=$(kubectl get pods -n ccf -o name 2>/dev/null | grep -m 1 'pod/.*postgres' || echo "")
+          if [ -n "$PG_POD" ]; then
+            PG_POD_NAME="${PG_POD#pod/}"
+            PG_USER=$(kubectl exec "$PG_POD_NAME" -n ccf -- printenv POSTGRES_USER 2>/dev/null || echo "postgres")
+            PG_DB=$(kubectl exec "$PG_POD_NAME" -n ccf -- printenv POSTGRES_DB 2>/dev/null || echo "ccf_db")
+            kubectl exec "$PG_POD_NAME" -n ccf -- pg_dump -U "$PG_USER" -d "$PG_DB" --clean --if-exists > "/tmp/ccf_prod_backup_$(date +%Y%m%d_%H%M%S).sql" || echo "::warning::pg_dump failed"
+          fi
+
+      - name: Helm upgrade (production namespace)
+        run: |
+          set -euo pipefail
+          helm upgrade --install ccf ./deploy/helm/ccf \
+            --namespace ccf-production --create-namespace \
+            --atomic --wait --timeout 10m \
+            --set backend.image=${{ env.IMAGE_BACKEND }}:${{ env.COMMIT_SHA }} \
+            --set frontend.image=${{ env.IMAGE_FRONTEND }}:${{ env.COMMIT_SHA }} \
+            --set environment=production
+
+      - name: Verify rollout status
+        run: |
+          kubectl rollout status deployment/ccf-ccf-backend -n ccf-production --timeout=300s
+          kubectl rollout status deployment/ccf-ccf-frontend -n ccf-production --timeout=300s
+
+      - name: Post-deploy smoke test
+        run: |
+          set -euo pipefail
+          kubectl port-forward svc/ccf-ccf-backend 8090:8000 -n ccf-production &
+          PF_BACKEND=$!
+          sleep 5
+          trap "kill $PF_BACKEND 2>/dev/null" EXIT
+          curl -fsS --max-time 10 http://localhost:8090/healthz || exit 1

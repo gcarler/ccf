@@ -121,6 +121,18 @@ class ProjectComment(Base):
     created_at = Column(DateTime, default=_utcnow, index=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
+class ProjectPhase(Base):
+    __tablename__ = "project_phases"
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(50), nullable=False)
+    slug = Column(String(20), nullable=False)
+    color = Column(String(20), default="#94a3b8")
+    order_index = Column(Integer, default=0)
+
+    project = relationship("Project", backref=backref("phases", order_by="ProjectPhase.order_index", cascade="all, delete-orphan"))
+
+
 class ProjectInboxState(Base):
     __tablename__ = "project_inbox_state"
     id = Column(Integer, primary_key=True, index=True)

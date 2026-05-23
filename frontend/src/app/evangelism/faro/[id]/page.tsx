@@ -12,7 +12,7 @@ import {
     ArrowLeft, Search, UserPlus, Loader2, ChevronRight, Plus,
     BarChart3, Activity
 } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 interface HouseDetail {
     id: number; name: string; zone?: string; address?: string;

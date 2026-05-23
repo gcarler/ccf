@@ -127,6 +127,82 @@ def register_donation(
     }
 
 
+@router.get("/admin/funds")
+def list_funds(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    funds = db.query(models.Fund).order_by(models.Fund.fund_id).all()
+    return [
+        {
+            "id": f.fund_id,
+            "name": f.name,
+            "description": f.description,
+            "is_public": f.is_public,
+            "current_balance": f.current_balance,
+            "target_amount": f.target_amount,
+            "created_at": f.created_at.isoformat() if f.created_at else None,
+        }
+        for f in funds
+    ]
+
+
+@router.post("/admin/funds", status_code=201)
+def create_fund(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    fund = models.Fund(
+        name=payload["name"],
+        description=payload.get("description"),
+        is_public=payload.get("is_public", False),
+        target_amount=payload.get("target_amount"),
+        current_balance=0.0,
+    )
+    db.add(fund)
+    db.commit()
+    db.refresh(fund)
+    return {"id": fund.fund_id, "name": fund.name, "description": fund.description,
+            "is_public": fund.is_public, "current_balance": fund.current_balance,
+            "target_amount": fund.target_amount}
+
+
+@router.patch("/admin/funds/{fund_id}")
+def update_fund(
+    fund_id: int,
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    fund = db.query(models.Fund).filter(models.Fund.fund_id == fund_id).first()
+    if not fund:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Fund not found")
+    for k, v in payload.items():
+        if hasattr(fund, k):
+            setattr(fund, k, v)
+    db.commit()
+    db.refresh(fund)
+    return {"id": fund.fund_id, "name": fund.name, "description": fund.description,
+            "is_public": fund.is_public, "current_balance": fund.current_balance,
+            "target_amount": fund.target_amount}
+
+
+@router.delete("/admin/funds/{fund_id}", status_code=204)
+def delete_fund(
+    fund_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    fund = db.query(models.Fund).filter(models.Fund.fund_id == fund_id).first()
+    if not fund:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Fund not found")
+    db.delete(fund)
+    db.commit()
+
+
 @router.get("/impact")
 def get_mission_impact(db: Session = Depends(get_db)):
     """Impacto social calculado en tiempo real. Público."""

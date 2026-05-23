@@ -40,8 +40,89 @@ const MODULES = [
     { id: 'crm', label: 'CRM Pastoral', icon: Users, color: 'text-blue-500' },
     { id: 'academy', label: 'Academia Faro', icon: BookOpen, color: 'text-emerald-500' },
     { id: 'projects', label: 'Proyectos', icon: ClipboardList, color: 'text-indigo-500' },
-    { id: 'admin', label: 'Panel Administrativo', icon: Shield, color: 'text-rose-500' },
+    { id: 'finance', label: 'Finanzas', icon: Lock, color: 'text-amber-500' },
+    { id: 'cms', label: 'Sitio Web', icon: Layout, color: 'text-purple-500' },
+    { id: 'messaging', label: 'Mensajería', icon: Edit3, color: 'text-cyan-500' },
 ];
+
+// Maps UI level names → backend level names and vice versa
+const UI_LEVEL_MAP: Record<string, string> = {
+    admin: 'manage',
+    write: 'edit',
+    read: 'read',
+    study: 'study',
+    manage: 'admin',
+    edit: 'write',
+};
+const BACKEND_LEVELS: Record<string, number> = {
+    manage: 3, edit: 2, study: 2, read: 1,
+};
+
+// Module → backend levels → expanded permission keys
+const PERMISSION_SCOPE: Record<string, Record<string, string[]>> = {
+    crm:      { read: ['crm:read'], edit: ['crm:read', 'crm:edit'], manage: ['crm:read', 'crm:edit', 'crm:manage'] },
+    finance:  { read: ['finance:read'], edit: ['finance:read', 'finance:edit'], manage: ['finance:read', 'finance:edit', 'finance:manage'] },
+    projects: { read: ['projects:read'], edit: ['projects:read', 'projects:edit'], manage: ['projects:read', 'projects:edit', 'projects:manage'] },
+    cms:      { read: ['cms:read'], edit: ['cms:read', 'cms:edit'], manage: ['cms:read', 'cms:edit', 'cms:manage'] },
+    academy:  { read: ['academy:read'], study: ['academy:read', 'academy:study'], edit: ['academy:read', 'academy:study', 'academy:edit'], manage: ['academy:read', 'academy:study', 'academy:edit', 'academy:manage'] },
+    messaging: { read: ['messaging:read'], edit: ['messaging:read', 'messaging:edit'] },
+};
+
+/** Convert any permission format (array of strings, flat dict, module dict) to module→UI-level map */
+function toModuleLevelMap(perms: unknown): Record<string, string> {
+    if (!perms || typeof perms !== 'object') return {};
+    const result: Record<string, string> = {};
+    if (Array.isArray(perms)) {
+        for (const p of perms) {
+            if (typeof p !== 'string') continue;
+            const [mod, lvl] = p.split(':');
+            if (!mod || !lvl) continue;
+            const weight = BACKEND_LEVELS[lvl] ?? 0;
+            const current = BACKEND_LEVELS[result[mod] as keyof typeof BACKEND_LEVELS] ?? -1;
+            if (weight > current) {
+                result[mod] = UI_LEVEL_MAP[lvl] || lvl;
+            }
+        }
+    } else {
+        const dict = perms as Record<string, unknown>;
+        for (const [key, val] of Object.entries(dict)) {
+            if (key.includes(':')) {
+                // "crm:read" → "manage"  or  "crm:read" → true
+                const [mod, lvl] = key.split(':');
+                if (!mod || !lvl) continue;
+                const backendLevel = typeof val === 'string' ? val : lvl;
+                const weight = BACKEND_LEVELS[backendLevel as keyof typeof BACKEND_LEVELS] ?? 0;
+                const current = BACKEND_LEVELS[result[mod] as keyof typeof BACKEND_LEVELS] ?? -1;
+                if (weight > current) {
+                    result[mod] = UI_LEVEL_MAP[backendLevel] || backendLevel;
+                }
+            } else {
+                // Module-level: "crm" → "manage" (backend format) or "crm" → "admin" (UI format)
+                const backendLevel = typeof val === 'string' ? val : '';
+                if (!backendLevel) continue;
+                result[key] = UI_LEVEL_MAP[backendLevel] || backendLevel;
+            }
+        }
+    }
+    return result;
+}
+
+/** Convert UI module-level map to flat permission keys for role storage */
+function flattenModuleMap(moduleMap: Record<string, string>): Record<string, string> {
+    const flat: Record<string, string> = {};
+    for (const [mod, uiLevel] of Object.entries(moduleMap)) {
+        if (!uiLevel || uiLevel === 'none') continue;
+        const backendLevel = UI_LEVEL_MAP[uiLevel] || uiLevel;
+        const scope = PERMISSION_SCOPE[mod];
+        if (!scope) continue;
+        const perms = scope[backendLevel];
+        if (!perms) continue;
+        for (const p of perms) {
+            flat[p] = backendLevel;
+        }
+    }
+    return flat;
+}
 
 export default function AccessManagementPage() {
     const { token, isAuthenticated } = useAuth();
@@ -81,9 +162,22 @@ export default function AccessManagementPage() {
         if (isAuthenticated) fetchData();
     }, [isAuthenticated, fetchData]);
 
-    const handleOpenEntity = (entity: any) => {
+    const handleOpenEntity = async (entity: any) => {
         setSelectedEntity(entity);
-        setLocalPermissions(entity.permissions || {});
+
+        if (activeTab === 'users' && token) {
+            try {
+                const permData = await apiFetch<any>(`/admin/users/${entity.id}/permissions`, { token });
+                const overrides = permData?.override_permissions || {};
+                setLocalPermissions(toModuleLevelMap(overrides));
+            } catch {
+                addToast("Error al cargar permisos del usuario", "error");
+                setLocalPermissions(toModuleLevelMap(entity.permissions));
+            }
+        } else {
+            setLocalPermissions(toModuleLevelMap(entity.permissions));
+        }
+
         setIsDrawerOpen(true);
     };
 
@@ -92,15 +186,27 @@ export default function AccessManagementPage() {
         setIsAssigning(true);
         try {
             if (activeTab === 'roles') {
+                const flatPerms = flattenModuleMap(localPermissions);
                 await apiFetch(`/admin/roles/${selectedEntity.id}`, {
                     method: 'PATCH',
                     token,
-                    body: { permissions: localPermissions }
+                    body: { permissions: flatPerms },
                 });
                 addToast("Permisos del rol actualizados", "success");
             } else {
-                // User logic can be added here if we want per-user overrides
-                addToast("Función en desarrollo para usuarios", "info");
+                // Map UI levels (admin→manage, write→edit) to backend module permissions
+                const levelMap: Record<string, string> = {};
+                for (const [module, level] of Object.entries(localPermissions)) {
+                    if (level === 'none' || !level) continue;
+                    const mappedLevel = level === 'admin' ? 'manage' : level === 'write' ? 'edit' : level;
+                    levelMap[module] = mappedLevel;
+                }
+                await apiFetch(`/admin/users/${selectedEntity.id}/permissions`, {
+                    method: 'PUT',
+                    token,
+                    body: levelMap,
+                });
+                addToast("Permisos de usuario actualizados", "success");
             }
             setIsDrawerOpen(false);
             fetchData();
@@ -183,7 +289,24 @@ export default function AccessManagementPage() {
         }
     ], []);
 
-    if (!isAuthenticated) return null;
+    const handleCreateEntity = useCallback(() => {
+        if (activeTab === 'roles') {
+            const name = prompt('Nombre del nuevo rol ministerial:');
+            if (!name?.trim()) return;
+            setIsAssigning(true);
+            apiFetch('/admin/roles', {
+                method: 'POST',
+                token,
+                body: { name: name.trim(), permissions: {} },
+            }).then(() => {
+                addToast(`Rol "${name.trim()}" creado`, 'success');
+                fetchData();
+            }).catch(() => addToast('Error al crear rol', 'error'))
+            .finally(() => setIsAssigning(false));
+        } else {
+            addToast('Usa el panel de administración de usuarios', 'info');
+        }
+    }, [activeTab, token, addToast, fetchData]);
 
     const currentRows = (activeTab === 'roles' ? roles : users).filter((row) => {
         const term = search.trim().toLowerCase();
@@ -292,7 +415,7 @@ export default function AccessManagementPage() {
                 availableViews={ACCESS_VIEWS}
                 onSearch={setSearch}
                 rightActions={
-                    <button className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all hover:bg-blue-700">
+                    <button onClick={handleCreateEntity} className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all hover:bg-blue-700">
                         <Plus size={14} /> Crear Nuevo
                     </button>
                 }
@@ -310,6 +433,20 @@ export default function AccessManagementPage() {
                     {loading ? (
                         <div className="space-y-6">
                             {[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-16 w-full rounded-2xl" />)}
+                        </div>
+                    ) : currentRows.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-24 text-center">
+                            <div className="size-20 rounded-[2rem] bg-slate-50 dark:bg-white/5 flex items-center justify-center mb-6 border border-slate-200 dark:border-white/10">
+                                <Shield size={32} className="text-slate-300" />
+                            </div>
+                            <h3 className="text-lg font-black text-slate-400 uppercase tracking-widest mb-2">
+                                {activeTab === 'roles' ? 'Sin roles ministeriales' : 'Sin usuarios'}
+                            </h3>
+                            <p className="text-xs text-slate-400 font-medium max-w-md">
+                                {activeTab === 'roles'
+                                    ? 'Crea un nuevo rol ministerial para comenzar a gestionar permisos.'
+                                    : 'No hay usuarios registrados en la plataforma.'}
+                            </p>
                         </div>
                     ) : viewType === 'grid' ? (
                         renderAccessCards('grid')
@@ -385,9 +522,12 @@ export default function AccessManagementPage() {
                         
                         <div className="grid grid-cols-1 gap-4">
                             {MODULES.map((mod) => (
-                                <PermissionRow 
-                                    key={mod.id} 
-                                    {...mod} 
+                                <PermissionRow
+                                    key={mod.id}
+                                    moduleId={mod.id}
+                                    label={mod.label}
+                                    icon={mod.icon}
+                                    color={mod.color}
                                     level={localPermissions[mod.id] || 'none'}
                                     onChange={(newLevel: string) => setLocalPermissions({ ...localPermissions, [mod.id]: newLevel })}
                                 />
@@ -403,7 +543,10 @@ export default function AccessManagementPage() {
                                 <AlertCircle size={14} /> Protocolo de Seguridad
                             </div>
                             <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                                Los cambios realizados en esta matriz afectarán inmediatamente el acceso de todos los usuarios vinculados a este rol. Asegúrese de validar el impacto antes de confirmar la misión.
+                                {activeTab === 'roles'
+                                    ? 'Los cambios realizados en esta matriz afectarán inmediatamente el acceso de todos los usuarios vinculados a este rol. Asegúrese de validar el impacto antes de confirmar la misión.'
+                                    : 'Los permisos asignados aquí sobrescriben los del rol del usuario. Los niveles jerárquicos implican permisos inferiores (gestor incluye editor y lector).'
+                                }
                             </p>
                         </div>
                     </section>
@@ -413,7 +556,11 @@ export default function AccessManagementPage() {
     );
 }
 
-function PermissionRow({ label, icon: Icon, color, level, onChange }: any) {
+const LEVEL_LABELS: Record<string, string> = {
+    none: 'Bloqueado', read: 'Lector', study: 'Estudiante', write: 'Editor', admin: 'Gestor',
+};
+
+function PermissionRow({ moduleId, label, icon: Icon, color, level, onChange }: any) {
     return (
         <div className="permission-card p-5 bg-slate-50 dark:bg-white/5 rounded-3xl border border-slate-100 dark:border-white/10 flex items-center justify-between group">
             <div className="flex items-center gap-5">
@@ -422,12 +569,13 @@ function PermissionRow({ label, icon: Icon, color, level, onChange }: any) {
                 </div>
                 <div>
                     <p className="text-[14px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight leading-none mb-1">{label}</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Estado: <span className="text-blue-500">{level === 'none' ? 'Bloqueado' : level}</span></p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Estado: <span className="text-blue-500">{LEVEL_LABELS[level] || level}</span></p>
                 </div>
             </div>
             <div className="flex bg-white dark:bg-black/40 p-1.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-inner">
                 <LevelBtn active={level === 'none'} icon={XCircle} tooltip="Sin Acceso" onClick={() => onChange('none')} />
                 <LevelBtn active={level === 'read'} icon={Eye} tooltip="Solo Lectura" onClick={() => onChange('read')} />
+                {moduleId === 'academy' && <LevelBtn active={level === 'study'} icon={BookOpen} tooltip="Estudiante" onClick={() => onChange('study')} />}
                 <LevelBtn active={level === 'write'} icon={Edit3} tooltip="Escritura" onClick={() => onChange('write')} />
                 <LevelBtn active={level === 'admin'} icon={Shield} tooltip="Administrador" onClick={() => onChange('admin')} />
             </div>

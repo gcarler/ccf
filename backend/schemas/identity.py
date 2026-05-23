@@ -22,7 +22,9 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
+    password: Optional[str] = None
     role: Optional[str] = None
+    role_id: Optional[int] = None
     is_active: Optional[bool] = None
     xp: Optional[int] = None
 
@@ -31,6 +33,7 @@ class User(UserBase):
     id: int
     xp: int = 0
     is_active: bool = True
+    is_email_verified: bool = False
     created_at: datetime
     model_config = orm_config
 

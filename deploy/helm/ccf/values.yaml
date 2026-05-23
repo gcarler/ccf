@@ -6,14 +6,16 @@ backend:
   replicaCount: 2
   env:
     ENVIRONMENT: "production"
+    # TODO: Reemplazar con valores reales del entorno de producción
     DATABASE_URL: "postgresql+psycopg2://postgres:postgres@postgres:5432/ccf_db"
     REDIS_URL: "redis://redis:6379/0"
-    KAFKA_BOOTSTRAP_SERVERS: "redpanda:9092"
     ACCESS_TOKEN_COOKIE_SECURE: "true"
-    CORS_ORIGINS: "[\"https://app.example.com\"]"
+    # TODO: Reemplazar con el dominio real de producción
+    CORS_ORIGINS: '["https://elfarocc.tech"]'
     RUN_STARTUP_SCHEMA_FIXES: "false"
     ENABLE_OTEL: "false"
   secrets:
+    # Usar External Secrets Operator o valores cifrados — NUNCA valores en texto plano
     existingSecret: "ccf-backend-secrets"
     create: false
     secretKeyKey: "SECRET_KEY"
@@ -30,12 +32,26 @@ backend:
   service:
     type: ClusterIP
     port: 8000
+  # Health check: el backend expone /healthz
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: 8000
+    initialDelaySeconds: 10
+    periodSeconds: 15
+  readinessProbe:
+    httpGet:
+      path: /healthz
+      port: 8000
+    initialDelaySeconds: 5
+    periodSeconds: 10
 
 frontend:
   image: "ghcr.io/ccf/frontend:latest"
   replicaCount: 2
   env:
-    NEXT_PUBLIC_GRAPHQL_URL: "https://api.example.com/graphql"
+    # TODO: Reemplazar con la URL real de la API en producción
+    NEXT_PUBLIC_GRAPHQL_URL: "https://elfarocc.tech/graphql"
   service:
     type: ClusterIP
     port: 3000
@@ -46,6 +62,18 @@ frontend:
     limits:
       cpu: 300m
       memory: 256Mi
+  livenessProbe:
+    httpGet:
+      path: /
+      port: 3000
+    initialDelaySeconds: 10
+    periodSeconds: 15
+  readinessProbe:
+    httpGet:
+      path: /
+      port: 3000
+    initialDelaySeconds: 5
+    periodSeconds: 10
 
 ingress:
   enabled: true
@@ -53,11 +81,12 @@ ingress:
   tls:
     enabled: true
     hosts:
-      - host: app.example.com
+      # TODO: Reemplazar con el dominio real
+      - host: elfarocc.tech
         secretName: ccf-tls
   hosts:
-    backend: app.example.com
-    frontend: app.example.com
+    backend: elfarocc.tech
+    frontend: elfarocc.tech
   paths:
     backend: /api
     frontend: /

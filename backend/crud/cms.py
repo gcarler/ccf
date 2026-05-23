@@ -244,7 +244,7 @@ def update_cms_media_item(
     return row
 
 
-def delete_cms_media_item(db: Session, item_id: int):
+def delete_cms_media_item(db: Session, item_id: int) -> bool:
     row = get_cms_media_item(db, item_id)
     if not row:
         return False
@@ -261,6 +261,15 @@ def create_media_asset(db: Session, filename: str, url: str, mime_type: str | No
     db.commit()
     db.refresh(row)
     return row
+
+
+def delete_media_asset(db: Session, asset_id: int) -> bool:
+    row = db.query(models.MediaAsset).filter(models.MediaAsset.id == asset_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
 
 
 # ── CMS Content Metrics ────────────────────────────────
@@ -321,7 +330,7 @@ def update_cms_site(db: Session, row: models.CmsSite, payload: schemas.CmsSiteUp
 
 # ── CMS v2 Themes ──────────────────────────────────────
 
-def archive_cms_site(db: Session, row: models.CmsSite):
+def archive_cms_site(db: Session, row: models.CmsSite) -> models.CmsSite:
     row.is_active = False
     db.commit()
     db.refresh(row)
@@ -408,7 +417,7 @@ def activate_cms_theme(db: Session, site_id: int, theme_id: int):
     return row
 
 
-def archive_cms_theme(db: Session, row: models.CmsTheme):
+def archive_cms_theme(db: Session, row: models.CmsTheme) -> models.CmsTheme:
     row.is_active = False
     row.status = "archived"
     db.commit()
@@ -472,11 +481,10 @@ def update_cms_menu(db: Session, row: models.CmsMenu, payload: schemas.CmsMenuUp
     return row
 
 
-def delete_cms_menu(db: Session, row: models.CmsMenu):
+def delete_cms_menu(db: Session, row: models.CmsMenu) -> bool:
     row.is_active = False
     db.commit()
-    db.refresh(row)
-    return row
+    return True
 
 
 # ── CMS v2 Menu Items ──────────────────────────────────
@@ -532,11 +540,10 @@ def update_cms_menu_item(db: Session, row: models.CmsMenuItem, payload: schemas.
     return row
 
 
-def delete_cms_menu_item(db: Session, row: models.CmsMenuItem):
+def delete_cms_menu_item(db: Session, row: models.CmsMenuItem) -> bool:
     row.visibility = "hidden"
     db.commit()
-    db.refresh(row)
-    return row
+    return True
 
 
 def reorder_cms_menu_items(db: Session, menu_id: int, items: list[schemas.CmsMenuItemReorderItem]):
@@ -606,11 +613,10 @@ def update_cms_page(db: Session, row: models.CmsPage, payload: schemas.CmsPageUp
     return row
 
 
-def delete_cms_page(db: Session, row: models.CmsPage):
+def delete_cms_page(db: Session, row: models.CmsPage) -> bool:
     row.status = "archived"
     db.commit()
-    db.refresh(row)
-    return row
+    return True
 
 
 # ── CMS v2 Sections ────────────────────────────────────
@@ -660,11 +666,11 @@ def update_cms_section(db: Session, row: models.CmsSection, payload: schemas.Cms
     return row
 
 
-def delete_cms_section(db: Session, row: models.CmsSection):
-    return archive_cms_section(db, row)
+def delete_cms_section(db: Session, row: models.CmsSection) -> bool:
+    return archive_cms_section(db, row) is not None
 
 
-def archive_cms_section(db: Session, row: models.CmsSection):
+def archive_cms_section(db: Session, row: models.CmsSection) -> models.CmsSection:
     row.status = "archived"
     db.commit()
     db.refresh(row)
@@ -877,9 +883,10 @@ def update_announcement(db: Session, row: models.Announcement, payload: schemas.
     return row
 
 
-def delete_announcement(db: Session, row: models.Announcement) -> None:
+def delete_announcement(db: Session, row: models.Announcement) -> bool:
     row.status = "archived"
     db.commit()
+    return True
 
 
 # ── Testimonials ────────────────────────────────────────
@@ -943,8 +950,9 @@ def update_testimonial(db: Session, row: models.Testimonial, payload: schemas.Te
     return row
 
 
-def delete_testimonial(db: Session, row: models.Testimonial) -> None:
+def delete_testimonial(db: Session, row: models.Testimonial) -> bool:
     row.status = "archived"
     row.is_approved = False
     row.show_on_home = False
     db.commit()
+    return True

@@ -53,10 +53,10 @@ export default function AssessmentPage() {
         fetchAssessment();
     }, [id, token]);
 
-    const handleSelectOption = (questionId: number, optionId: number) => {
+    const handleAnswer = (questionId: number, update: any) => {
         setAnswers(prev => {
             const filtered = prev.filter(a => a.question_id !== questionId);
-            return [...filtered, { question_id: questionId, selected_option_id: optionId }];
+            return [...filtered, { question_id: questionId, ...update }];
         });
     };
 
@@ -238,13 +238,13 @@ export default function AssessmentPage() {
                         <div className="flex justify-between items-end">
                             <div>
                                 <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Pregunta {currentStep + 1} de {assessment.questions.length}</p>
-                                <h3 className="text-lg font-black text-slate-800 dark:text-white tracking-tight leading-tight">
+                                <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight leading-tight">
                                     {currentQuestion.question_text}
                                 </h3>
                             </div>
                             <span className="text-[12px] font-black text-slate-400 shrink-0">{Math.round(((currentStep + 1) / assessment.questions.length) * 100)}%</span>
                         </div>
-                        <div className="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                             <motion.div 
                                 className="h-full bg-blue-600"
                                 initial={{ width: 0 }}
@@ -263,30 +263,39 @@ export default function AssessmentPage() {
                                 exit={{ x: -20, opacity: 0 }}
                                 className="space-y-4"
                             >
-                                {currentQuestion.options.map((option: any) => (
-                                    <button
-                                        key={option.id}
-                                        onClick={() => handleSelectOption(currentQuestion.id, option.id)}
-                                        className={clsx(
-                                            "w-full p-4 text-left rounded-xl border-2 transition-all group relative overflow-hidden",
-                                            answers.find(a => a.selected_option_id === option.id)
-                                                ? "border-blue-600 bg-blue-50/50 dark:bg-blue-500/10 shadow-lg shadow-blue-500/5"
-                                                : "border-slate-100 dark:border-white/5 hover:border-blue-200 dark:hover:border-white/10 bg-white dark:bg-[#1e1f21]"
-                                        )}
-                                    >
-                                        <div className="flex items-center gap-4 relative z-10">
-                                            <div className={clsx(
-                                                "size-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
+                                {currentQuestion.question_type !== 'text' ? (
+                                    currentQuestion.options.map((option: any) => (
+                                        <button
+                                            key={option.id}
+                                            onClick={() => handleAnswer(currentQuestion.id, { selected_option_id: option.id })}
+                                            className={clsx(
+                                                "w-full p-5 text-left rounded-2xl border-2 transition-all group relative overflow-hidden",
                                                 answers.find(a => a.selected_option_id === option.id)
-                                                    ? "border-blue-600 bg-blue-600 text-white"
-                                                    : "border-slate-200 dark:border-white/10"
-                                            )}>
-                                                {answers.find(a => a.selected_option_id === option.id) && <CheckCircle2 size={14} />}
+                                                    ? "border-blue-600 bg-blue-600 text-white shadow-xl shadow-blue-500/20"
+                                                    : "border-slate-100 dark:border-white/5 hover:border-blue-200 dark:hover:border-white/10 bg-white dark:bg-white/5"
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-4 relative z-10">
+                                                <div className={clsx(
+                                                    "size-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
+                                                    answers.find(a => a.selected_option_id === option.id)
+                                                        ? "border-white bg-white text-blue-600"
+                                                        : "border-slate-200 dark:border-white/10"
+                                                )}>
+                                                    {answers.find(a => a.selected_option_id === option.id) && <CheckCircle2 size={16} />}
+                                                </div>
+                                                <span className="text-base font-bold">{option.option_text}</span>
                                             </div>
-                                            <span className="text-[15px] font-bold text-slate-700 dark:text-slate-200">{option.option_text}</span>
-                                        </div>
-                                    </button>
-                                ))}
+                                        </button>
+                                    ))
+                                ) : (
+                                    <textarea 
+                                        value={answers.find(a => a.question_id === currentQuestion.id)?.text_response || ''}
+                                        onChange={(e) => handleAnswer(currentQuestion.id, { text_response: e.target.value })}
+                                        placeholder="Escribe tu respuesta aquí..."
+                                        className="w-full bg-white dark:bg-white/5 border-2 border-slate-100 dark:border-white/5 rounded-2xl p-6 text-base font-medium outline-none focus:border-blue-500 transition-all min-h-[200px]"
+                                    />
+                                )}
                             </motion.div>
                         </AnimatePresence>
                     </div>
@@ -296,7 +305,7 @@ export default function AssessmentPage() {
                         <button 
                             disabled={currentStep === 0}
                             onClick={() => setCurrentStep(prev => prev - 1)}
-                            className="flex items-center gap-2 text-[12px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 disabled:opacity-0 transition-all"
+                            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 disabled:opacity-0 transition-all"
                         >
                             <ArrowLeft size={16} /> Anterior
                         </button>
@@ -305,7 +314,7 @@ export default function AssessmentPage() {
                             <button 
                                 onClick={handleSubmit}
                                 disabled={isSubmitting || answers.length < assessment.questions.length}
-                                className="px-6 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50"
+                                className="px-8 py-3 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50"
                             >
                                 {isSubmitting ? 'Enviando...' : 'Finalizar Evaluación'}
                             </button>
@@ -313,7 +322,7 @@ export default function AssessmentPage() {
                             <button 
                                 onClick={() => setCurrentStep(prev => prev + 1)}
                                 disabled={!answers.find(a => a.question_id === currentQuestion.id)}
-                                className="px-6 py-2 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
+                                className="px-8 py-3 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
                             >
                                 Siguiente <ArrowRight size={16} />
                             </button>

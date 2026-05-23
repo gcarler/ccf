@@ -26,6 +26,12 @@ class CommunicationLogCreate(BaseModel):
     outcome: str = "sent"
 
 
+class CommunicationLogUpdate(BaseModel):
+    channel: Optional[str] = None
+    content: Optional[str] = None
+    outcome: Optional[str] = None
+
+
 class CommunicationLog(BaseModel):
     id: int
     member_id: int

@@ -32,24 +32,11 @@ import { DSMetric } from '@/design/components/DSMetric';
 import TaskTableView from '@/components/projects/TaskTableView';
 import type { ViewType } from '@/components/ViewSwitcher';
 import type { ProjectActivityItem, ProjectMilestoneRecord, ProjectTaskRecord } from '@/types/projects';
+import type { PhaseDef } from '@/components/projects/ProjectKanbanBoard';
+import { PhaseManagerModal } from '@/components/projects/PhaseManagerModal';
 import { toast } from 'sonner';
 
-const STATUS_FLOW = ['todo', 'in_progress', 'review', 'done'];
 const PROJECT_DETAIL_VIEWS: ViewType[] = ['dashboard', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
-
-const STATUS_LABELS: Record<string, string> = {
-    todo: 'Por Hacer',
-    in_progress: 'En Curso',
-    review: 'Seguimiento',
-    done: 'Logrado',
-};
-
-const STATUS_COLORS: Record<string, string> = {
-    todo: 'border-slate-300 bg-slate-50 text-slate-600',
-    in_progress: 'border-blue-400 bg-blue-50 text-blue-700',
-    review: 'border-amber-400 bg-amber-50 text-amber-700',
-    done: 'border-emerald-400 bg-emerald-50 text-emerald-700',
-};
 
 export default function ProjectDetailPage() {
     const params = useParams();
@@ -77,19 +64,23 @@ export default function ProjectDetailPage() {
     const [editingMilestoneId, setEditingMilestoneId] = useState<number | null>(null);
     const [milestoneDraftTitle, setMilestoneDraftTitle] = useState('');
     const [milestoneDraftDate, setMilestoneDraftDate] = useState('');
+    const [phases, setPhases] = useState<PhaseDef[]>([]);
+    const [showPhaseManager, setShowPhaseManager] = useState(false);
 
     const loadProject = useCallback(async () => {
         if (!token || !id) return;
         try {
             setLoading(true);
-            const [projData, tasksData, activityRows] = await Promise.all([
+            const [projData, tasksData, activityRows, phasesData] = await Promise.all([
                 apiFetch<any>(`/projects/${id}`, { token }),
                 apiFetch<ProjectTaskRecord[]>(`/projects/${id}/tasks`, { token }).catch(() => []),
                 apiFetch<ProjectActivityItem[]>(`/projects/activities?project_id=${id}&limit=20`, { token }).catch(() => []),
+                apiFetch<PhaseDef[]>(`/projects/${id}/phases`, { token }).catch(() => []),
             ]);
             setProject(projData);
             setTasks(Array.isArray(tasksData) ? tasksData : []);
             setActivities(Array.isArray(activityRows) ? activityRows : []);
+            if (Array.isArray(phasesData) && phasesData.length > 0) setPhases(phasesData);
             window.dispatchEvent(new CustomEvent('project-updated', { detail: { projectId: id } }));
         } catch (err) {
             toast.error('Error al cargar detalle del proyecto');
@@ -126,8 +117,8 @@ export default function ProjectDetailPage() {
     };
 
     const handleMoveTask = async (task: any) => {
-        const index = STATUS_FLOW.indexOf(task.status || 'todo');
-        const nextStatus = STATUS_FLOW[Math.min(index + 1, STATUS_FLOW.length - 1)];
+        const currentIndex = phases.findIndex(p => p.slug === (task.status || 'todo'));
+        const nextStatus = phases[Math.min(currentIndex + 1, phases.length - 1)]?.slug;
         if (!nextStatus || nextStatus === task.status) return;
         try {
             await apiFetch(`/projects/tasks/${task.id}`, {
@@ -135,7 +126,8 @@ export default function ProjectDetailPage() {
                 token,
                 body: { status: nextStatus },
             });
-            toast.success(`Tarea → ${STATUS_LABELS[nextStatus]}`);
+            const nextPhase = phases.find(p => p.slug === nextStatus);
+            toast.success(`Tarea → ${nextPhase?.name || nextStatus}`);
             loadProject();
         } catch (err) {
             toast.error('Error al actualizar tarea');
@@ -286,7 +278,7 @@ export default function ProjectDetailPage() {
     const taskGanttItems = tasks.map((task) => ({
         id: task.id,
         title: task.title,
-        subtitle: STATUS_LABELS[task.status] || task.status,
+        subtitle: phases.find(p => p.slug === task.status)?.name || task.status,
         start_date: (task.start_date || task.created_at || new Date().toISOString()).slice(0, 10),
         end_date: (task.due_date || task.start_date || task.created_at || new Date().toISOString()).slice(0, 10),
         color: task.status === 'done' ? 'emerald' as const : task.priority === 'urgent' ? 'rose' as const : 'blue' as const,
@@ -311,6 +303,11 @@ export default function ProjectDetailPage() {
                         <button onClick={() => setWhiteboardOpen(true)} className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-2 dark:bg-white dark:text-slate-900">
                             <PencilRuler size={14} /> Pizarra
                         </button>
+                        {phases.length > 0 && (
+                            <button onClick={() => setShowPhaseManager(true)} className="px-4 py-2 bg-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-2">
+                                <Edit3 size={14} /> Fases
+                            </button>
+                        )}
                         <button onClick={startEditing} className="px-4 py-2 bg-amber-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-2">
                             <Edit3 size={14} /> Editar
                         </button>
@@ -360,8 +357,8 @@ export default function ProjectDetailPage() {
                                 <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                     <DSMetric label="Actividades" value={String(tasks.length)} trend="Total" tone="blue" />
                                     <DSMetric label="Logradas" value={String(doneCount)} trend={`${progressPercent}%`} tone="emerald" />
-                                    <DSMetric label="En Seguimiento" value={String(tasks.filter(t => t.status === 'review').length)} trend="Consolidación" tone="amber" />
-                                    <DSMetric label="Por Hacer" value={String(tasks.filter(t => t.status === 'todo' || t.status === 'in_progress').length)} trend="Pendientes" tone="violet" />
+                                    <DSMetric label={phases.find(p => p.slug === 'review')?.name || 'En Seguimiento'} value={String(tasks.filter(t => t.status === 'review').length)} trend="Consolidación" tone="amber" />
+                                    <DSMetric label="Por Hacer" value={String(tasks.filter(t => t.status !== 'done').length)} trend="Pendientes" tone="violet" />
                                 </section>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -502,7 +499,6 @@ export default function ProjectDetailPage() {
                                                             handleMoveTask(task);
                                                         }}
                                                         className="size-8 rounded-full border-2 flex items-center justify-center hover:scale-110 transition-all"
-                                                        title={`Mover a ${STATUS_LABELS[STATUS_FLOW[Math.min(STATUS_FLOW.indexOf(task.status || 'todo') + 1, STATUS_FLOW.length - 1)]]}`}
                                                     >
                                                         {task.status === 'done' ? (
                                                             <CheckCircle2 size={18} className="text-emerald-500" />
@@ -517,8 +513,8 @@ export default function ProjectDetailPage() {
                                                     <div className="flex-1">
                                                         <p className="text-sm font-bold text-slate-800 dark:text-white">{task.title}</p>
                                                         <div className="flex items-center gap-2 mt-1">
-                                                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${STATUS_COLORS[task.status] || 'border-slate-200'}`}>
-                                                                {STATUS_LABELS[task.status] || task.status}
+                                                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-slate-200 bg-slate-50 text-slate-600 dark:border-white/10">
+                                                                {phases.find(p => p.slug === task.status)?.name || task.status}
                                                             </span>
                                                             <span className="text-[10px] text-slate-400 uppercase font-black">{task.priority}</span>
                                                             {task.due_date && <span className="text-[10px] text-slate-400">{new Date(task.due_date).toLocaleDateString()}</span>}
@@ -541,12 +537,15 @@ export default function ProjectDetailPage() {
 
                         {(viewType === 'board' || viewType === 'kanban') && (
                             <div className="flex gap-4 overflow-x-auto pb-6">
-                                {STATUS_FLOW.map((status) => {
-                                    const columnTasks = tasks.filter((task) => (task.status || 'todo') === status);
+                                {phases.map((phase) => {
+                                    const columnTasks = tasks.filter((task) => (task.status || 'todo') === phase.slug);
                                     return (
-                                        <section key={status} className="w-80 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-[#252528]">
+                                        <section key={phase.slug} className="w-80 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-[#252528]">
                                             <div className="mb-3 flex items-center justify-between px-1">
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{STATUS_LABELS[status]}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="size-2 rounded-full" style={{ backgroundColor: phase.color }} />
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{phase.name}</p>
+                                                </div>
                                                 <span className="text-[10px] font-black text-slate-400">{columnTasks.length}</span>
                                             </div>
                                             <div className="space-y-2">
@@ -554,7 +553,9 @@ export default function ProjectDetailPage() {
                                                     <article key={task.id} onClick={() => handleOpenTask(task)} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#1E1F21] cursor-pointer transition-all duration-300 hover:border-blue-300 active:scale-[0.99]">
                                                         <p className="text-sm font-black text-slate-900 dark:text-white">{task.title}</p>
                                                         <div className="mt-3 flex items-center justify-between gap-2">
-                                                            <span className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${STATUS_COLORS[task.status] || 'bg-slate-100 text-slate-500'}`}>{STATUS_LABELS[task.status] || task.status}</span>
+                                                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-slate-200 bg-slate-100 text-slate-600 dark:border-white/10">
+                                                                {phase.name}
+                                                            </span>
                                                             <button onClick={(event) => { event.stopPropagation(); handleMoveTask(task); }} className="rounded-lg border border-slate-200 px-2 py-1 text-[10px] font-black uppercase text-slate-500 dark:border-white/10">Avanzar</button>
                                                         </div>
                                                     </article>
@@ -609,6 +610,17 @@ export default function ProjectDetailPage() {
                 isOpen={whiteboardOpen}
                 onClose={() => setWhiteboardOpen(false)}
             />
+            {showPhaseManager && (
+                <PhaseManagerModal
+                    projectId={Number(project?.id || id)}
+                    phases={phases}
+                    onClose={() => setShowPhaseManager(false)}
+                    onSaved={(newPhases) => {
+                        setPhases(newPhases);
+                        loadProject();
+                    }}
+                />
+            )}
         </div>
     );
 }

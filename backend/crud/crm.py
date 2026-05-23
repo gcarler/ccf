@@ -9,6 +9,10 @@ from sqlalchemy.orm import Session
 from backend import models, schemas
 from backend.core.security import encrypt_data, decrypt_data
 from backend.crud._utils import _utcnow
+from backend.models_crm import EvangelismStrategy
+from backend.schemas.crm import EvangelismStrategyCreate, EvangelismStrategyUpdate, CrmEventUpdate
+from backend.schemas.notifications import CommunicationLogUpdate
+from backend.schemas.legacy import CommunityBoardCardUpdate
 
 
 # ── Members ────────────────────────────────────────────
@@ -161,8 +165,6 @@ def create_crm_event(db: Session, payload: schemas.CrmEventCreate) -> models.Crm
         db.commit()
         db.refresh(row)
         return row
-    except MemoryError:
-        raise
     except Exception as e:
         db.rollback()
         raise ValueError(f"Error al crear evento: {str(e)}")
@@ -200,6 +202,15 @@ def update_crm_task(db: Session, task_id: int, payload: schemas.CrmTaskUpdate) -
     return row
 
 
+def delete_crm_task(db: Session, task_id: int) -> bool:
+    row = db.query(models.CrmTask).filter(models.CrmTask.id == task_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
 # ── Volunteers ─────────────────────────────────────────
 
 def get_volunteer_shifts(db: Session, member_id: Optional[int] = None) -> List[models.VolunteerShift]:
@@ -226,8 +237,6 @@ def create_event_attendance(db: Session, payload: schemas.EventAttendanceCreate)
         db.commit()
         db.refresh(row)
         return row
-    except MemoryError:
-        raise
     except Exception as e:
         db.rollback()
         raise ValueError(f"Error al registrar asistencia: {str(e)}")
@@ -278,8 +287,6 @@ def create_counseling_ticket(db: Session, payload: schemas.CounselingTicketCreat
 
         row.notes = decrypt_data(row.notes)
         return row
-    except MemoryError:
-        raise
     except Exception as e:
         db.rollback()
         raise ValueError(f"Error al crear ticket de consejería: {str(e)}")
@@ -301,8 +308,6 @@ def create_prayer_request(db: Session, payload: schemas.PrayerRequestCreate) -> 
         db.commit()
         db.refresh(row)
         return row
-    except MemoryError:
-        raise
     except Exception as e:
         db.rollback()
         raise ValueError(f"Error al registrar petición de oración: {str(e)}")
@@ -324,16 +329,15 @@ def create_glory_house(db: Session, payload: schemas.GloryHouseCreate):
         data["name"] = f"Faro pendiente - {fallback_name}"
     db_obj = models.GloryHouse(**data)
     db.add(db_obj)
-    db.commit()
-    db.refresh(db_obj)
 
     if payload.base_attendee_ids:
+        db.flush()  # Get the ID without committing
         for member_id in payload.base_attendee_ids:
             attendee = models.GloryHouseMember(glory_house_id=db_obj.id, member_id=member_id, role="asistente")
             db.add(attendee)
-        db.commit()
-        db.refresh(db_obj)
 
+    db.commit()
+    db.refresh(db_obj)
     return db_obj
 
 
@@ -404,7 +408,7 @@ def get_member_timeline(db: Session, member_id: int):
             timeline.append({
                 "type": "academy",
                 "title": "Inscripción Academia",
-                "description": f"Inició el curso {en.course.name if en.course else 'de formación'}.",
+                "description": f"Inició el curso {en.course.title if en.course else 'de formación'}.",
                 "date": en.created_at.isoformat(),
                 "icon": "GraduationCap",
                 "color": "bg-emerald-500"
@@ -413,7 +417,7 @@ def get_member_timeline(db: Session, member_id: int):
                 timeline.append({
                     "type": "certificate",
                     "title": "Certificación Obtenida",
-                    "description": f"Completó con éxito el curso: {en.course.name if en.course else 'de formación'}.",
+                    "description": f"Completó con éxito el curso: {en.course.title if en.course else 'de formación'}.",
                     "date": (en.created_at + dt.timedelta(days=30)).isoformat(),
                     "icon": "Award",
                     "color": "bg-amber-500"
@@ -597,8 +601,6 @@ def create_community_card(db: Session, card: schemas.CommunityBoardCardCreate) -
     return row
 
 # --- Evangelism Strategies ---
-from backend.models_crm import EvangelismStrategy
-from backend.schemas.crm import EvangelismStrategyCreate, EvangelismStrategyUpdate
 
 def get_evangelism_strategies(db: Session, skip: int = 0, limit: int = 100):
     return db.query(EvangelismStrategy).offset(skip).limit(limit).all()
@@ -621,9 +623,369 @@ def update_evangelism_strategy(db: Session, strategy_id: int, strategy: Evangeli
     db.refresh(db_obj)
     return db_obj
 
-def delete_evangelism_strategy(db: Session, strategy_id: int):
+def delete_evangelism_strategy(db: Session, strategy_id: int) -> bool:
     db_obj = db.query(EvangelismStrategy).filter(EvangelismStrategy.id == strategy_id).first()
-    if db_obj:
-        db.delete(db_obj)
-        db.commit()
-    return db_obj
+    if not db_obj:
+        return False
+    db.delete(db_obj)
+    db.commit()
+    return True
+
+
+# ── Missing CRUDs ──────────────────────────────────────
+
+# ── Members ─────────────────────────────────────────────
+
+def get_member(db: Session, member_id: int) -> Optional[models.Member]:
+    return db.query(models.Member).filter(models.Member.id == member_id).first()
+
+
+def delete_member(db: Session, member_id: int) -> bool:
+    row = db.query(models.Member).filter(models.Member.id == member_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Pipeline ───────────────────────────────────────────
+
+def get_pipeline_lead(db: Session, lead_id: int) -> Optional[models.ConsolidationPipeline]:
+    return db.query(models.ConsolidationPipeline).filter(models.ConsolidationPipeline.id == lead_id).first()
+
+
+def delete_pipeline_lead(db: Session, lead_id: int) -> bool:
+    row = db.query(models.ConsolidationPipeline).filter(models.ConsolidationPipeline.id == lead_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+def get_pastoral_call_log(db: Session, log_id: int) -> Optional[models.PastoralCallLog]:
+    return db.query(models.PastoralCallLog).filter(models.PastoralCallLog.id == log_id).first()
+
+
+def delete_pastoral_call_log(db: Session, log_id: int) -> bool:
+    row = db.query(models.PastoralCallLog).filter(models.PastoralCallLog.id == log_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── CRM Events ─────────────────────────────────────────
+
+def get_crm_event(db: Session, event_id: int) -> Optional[models.CrmEvent]:
+    return db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
+
+
+def update_crm_event(db: Session, event_id: int, payload: CrmEventUpdate) -> Optional[models.CrmEvent]:
+    row = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
+    if not row:
+        return None
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_crm_event(db: Session, event_id: int) -> bool:
+    row = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+def get_event_attendance(db: Session, event_id: int) -> List[models.EventAttendance]:
+    return db.query(models.EventAttendance).filter(models.EventAttendance.event_id == event_id).all()
+
+
+def delete_event_attendance(db: Session, attendance_id: int) -> bool:
+    row = db.query(models.EventAttendance).filter(models.EventAttendance.id == attendance_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Volunteers ─────────────────────────────────────────
+
+def get_volunteer_shift(db: Session, shift_id: int) -> Optional[models.VolunteerShift]:
+    return db.query(models.VolunteerShift).filter(models.VolunteerShift.id == shift_id).first()
+
+
+def update_volunteer_shift(db: Session, shift_id: int, payload: schemas.VolunteerShiftUpdate) -> Optional[models.VolunteerShift]:
+    row = db.query(models.VolunteerShift).filter(models.VolunteerShift.id == shift_id).first()
+    if not row:
+        return None
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_volunteer_shift(db: Session, shift_id: int) -> bool:
+    row = db.query(models.VolunteerShift).filter(models.VolunteerShift.id == shift_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Counseling ─────────────────────────────────────────
+
+def get_counseling_ticket(db: Session, ticket_id: int) -> Optional[models.CounselingTicket]:
+    row = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
+    if row and row.notes:
+        row.notes = decrypt_data(row.notes)
+    return row
+
+
+def update_counseling_ticket(db: Session, ticket_id: int, payload: schemas.CounselingTicketUpdate) -> Optional[models.CounselingTicket]:
+    row = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
+    if not row:
+        return None
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        if key == "notes" and value:
+            setattr(row, key, encrypt_data(value))
+        else:
+            setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    if row.notes:
+        row.notes = decrypt_data(row.notes)
+    return row
+
+
+def delete_counseling_ticket(db: Session, ticket_id: int) -> bool:
+    row = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Prayer ─────────────────────────────────────────────
+
+def get_prayer_request(db: Session, request_id: int) -> Optional[models.PrayerRequest]:
+    return db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
+
+
+def update_prayer_request(db: Session, request_id: int, payload: schemas.PrayerRequestUpdate) -> Optional[models.PrayerRequest]:
+    row = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
+    if not row:
+        return None
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_prayer_request(db: Session, request_id: int) -> bool:
+    row = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == request_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Glory Houses ───────────────────────────────────────
+
+def get_glory_house(db: Session, house_id: int) -> Optional[models.GloryHouse]:
+    return db.query(models.GloryHouse).filter(models.GloryHouse.id == house_id).first()
+
+
+def delete_glory_house(db: Session, house_id: int) -> bool:
+    row = db.query(models.GloryHouse).filter(models.GloryHouse.id == house_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Families ───────────────────────────────────────────
+
+def get_family(db: Session, family_id: int) -> Optional[models.Family]:
+    return db.query(models.Family).filter(models.Family.id == family_id).first()
+
+
+def update_family(db: Session, family_id: int, name: str) -> Optional[models.Family]:
+    row = db.query(models.Family).filter(models.Family.id == family_id).first()
+    if not row:
+        return None
+    row.name = name
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_family(db: Session, family_id: int) -> bool:
+    row = db.query(models.Family).filter(models.Family.id == family_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Communication Logs ─────────────────────────────────
+
+def get_communication_log(db: Session, log_id: int) -> Optional[models.CommunicationLog]:
+    return db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
+
+
+def update_communication_log(db: Session, log_id: int, payload: CommunicationLogUpdate) -> Optional[models.CommunicationLog]:
+    row = db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
+    if not row:
+        return None
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_communication_log(db: Session, log_id: int) -> bool:
+    row = db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Donations ───────────────────────────────────────────
+
+def get_donation(db: Session, donation_id: int) -> Optional[models.Donation]:
+    return db.query(models.Donation).filter(models.Donation.id == donation_id).first()
+
+
+def update_donation(db: Session, donation_id: int, payload: schemas.DonationUpdate) -> Optional[models.Donation]:
+    row = db.query(models.Donation).filter(models.Donation.id == donation_id).first()
+    if not row:
+        return None
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_donation(db: Session, donation_id: int) -> bool:
+    row = db.query(models.Donation).filter(models.Donation.id == donation_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Spiritual Milestones ─────────────────────────────────
+
+def update_milestone(db: Session, milestone_id: int, **kwargs) -> Optional[models.SpiritualMilestone]:
+    row = db.query(models.SpiritualMilestone).filter(models.SpiritualMilestone.id == milestone_id).first()
+    if not row:
+        return None
+    for key, value in kwargs.items():
+        setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_milestone(db: Session, milestone_id: int) -> bool:
+    row = db.query(models.SpiritualMilestone).filter(models.SpiritualMilestone.id == milestone_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Support Tickets ─────────────────────────────────────
+
+def get_support_ticket(db: Session, ticket_id: int) -> Optional[models.SupportTicket]:
+    return db.query(models.SupportTicket).filter(models.SupportTicket.id == ticket_id).first()
+
+
+def delete_support_ticket(db: Session, ticket_id: int) -> bool:
+    row = db.query(models.SupportTicket).filter(models.SupportTicket.id == ticket_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Community Board ─────────────────────────────────────
+
+def get_community_card(db: Session, card_id: int) -> Optional[models.CommunityBoardCard]:
+    return db.query(models.CommunityBoardCard).filter(models.CommunityBoardCard.id == card_id).first()
+
+
+def update_community_card(db: Session, card_id: int, payload: CommunityBoardCardUpdate) -> Optional[models.CommunityBoardCard]:
+    row = db.query(models.CommunityBoardCard).filter(models.CommunityBoardCard.id == card_id).first()
+    if not row:
+        return None
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_community_card(db: Session, card_id: int) -> bool:
+    row = db.query(models.CommunityBoardCard).filter(models.CommunityBoardCard.id == card_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Consolidation Cases ─────────────────────────────────
+
+def get_consolidation_case(db: Session, case_id: int):
+    return db.query(models.ConsolidationCase).filter(models.ConsolidationCase.id == case_id).first()
+
+
+def create_consolidation_case(db: Session, payload: schemas.ConsolidationCaseCreate) -> models.ConsolidationCase:
+    row = models.ConsolidationCase(**payload.model_dump())
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def update_consolidation_case(db: Session, case_id: int, payload: schemas.ConsolidationCaseUpdate) -> Optional[models.ConsolidationCase]:
+    row = db.query(models.ConsolidationCase).filter(models.ConsolidationCase.id == case_id).first()
+    if not row:
+        return None
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_consolidation_case(db: Session, case_id: int) -> bool:
+    row = db.query(models.ConsolidationCase).filter(models.ConsolidationCase.id == case_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True

@@ -56,12 +56,25 @@ def test_settings_rejects_trivial_secret_keys_in_restricted_environments(environ
 
 @pytest.mark.parametrize("environment", ["production", "prod", "staging"])
 def test_settings_force_secure_access_cookie_in_restricted_environments(environment: str):
-    settings = Settings(environment=environment, secret_key="strong-secret-value", access_token_cookie_secure=False)
+    settings = Settings(
+        environment=environment,
+        secret_key="strong-secret-value",
+        encryption_key="dummy-key-for-test",
+        database_url="postgresql://user:pass@remote-db:5432/db",
+        redis_url="redis://remote-redis:6379/0",
+        access_token_cookie_secure=False
+    )
     assert settings.access_token_cookie_secure is True
 
 
 def test_settings_accepts_env_alias_input():
-    settings = Settings.model_validate({"ENV": "staging", "secret_key": "strong-secret-value"})
+    settings = Settings.model_validate({
+        "ENV": "staging",
+        "secret_key": "strong-secret-value",
+        "encryption_key": "dummy-key-for-test",
+        "database_url": "postgresql://user:pass@remote-db:5432/db",
+        "redis_url": "redis://remote-redis:6379/0"
+    })
     assert settings.environment == "staging"
 
 
@@ -105,7 +118,7 @@ def test_domain_modules_expose_only_expected_canonical_prefixes():
         "backend.api.cms_v2": ("/api/cms/v2/",),
         "backend.api.content": ("/api/content",),
         "backend.api.agents": ("/api/agents/",),
-        "backend.api.assets": ("/api/assets/",),
+        "backend.api.assets": ("/api/assets",),
         "backend.api.spiritual_life": ("/api/spiritual-life/",),
         "backend.api.community": ("/api/community/",),
         "backend.api.dashboard": ("/api/dashboard/",),

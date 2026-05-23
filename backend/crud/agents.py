@@ -64,3 +64,21 @@ def acknowledge_insight(db: Session, insight_id: int):
     db.commit()
     db.refresh(row)
     return row
+
+
+def delete_agent_task(db: Session, task_id: int) -> bool:
+    row = db.query(models.AgentTask).filter(models.AgentTask.id == task_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+def delete_agent_insight(db: Session, insight_id: int) -> bool:
+    row = db.query(models.AgentInsight).filter(models.AgentInsight.id == insight_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True

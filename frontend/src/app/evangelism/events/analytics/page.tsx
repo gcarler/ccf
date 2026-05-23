@@ -5,7 +5,7 @@ import { BarChart3, Calendar, Filter, Users, TrendingUp, Award } from 'lucide-re
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import AdminHero from '@/components/admin/AdminHero';
 import { apiFetch } from '@/lib/http';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import type { GlobalEventAnalyticsData } from '@/app/evangelism/types';
 

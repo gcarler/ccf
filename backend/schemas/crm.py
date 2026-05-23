@@ -61,6 +61,19 @@ class CrmEventCreate(CrmEventBase):
     pass
 
 
+class CrmEventUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    event_type: Optional[EventType] = None
+    target_audience: Optional[EventAudienceType] = None
+    target_role_ids: Optional[list[int]] = None
+    target_member_ids: Optional[list[int]] = None
+    event_date: Optional[datetime] = None
+    location: Optional[str] = None
+    status: Optional[str] = None
+    cancellation_reason: Optional[str] = None
+
+
 class CrmEvent(CrmEventBase):
     id: int
     created_at: datetime
@@ -123,6 +136,16 @@ class CounselingTicketCreate(CounselingTicketBase):
     pastor_id: Optional[int] = None
 
 
+class CounselingTicketUpdate(BaseModel):
+    subject: Optional[str] = None
+    notes: Optional[str] = None
+    status: Optional[str] = None
+    priority_level: Optional[str] = None
+    sentiment_score: Optional[float] = None
+    sentiment_label: Optional[str] = None
+    pastor_id: Optional[int] = None
+
+
 class CounselingTicket(CounselingTicketBase):
     id: int
     pastor_id: Optional[int] = None
@@ -154,6 +177,14 @@ class PrayerRequestCreate(PrayerRequestBase):
     pass
 
 
+class PrayerRequestUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None
+    is_public: Optional[bool] = None
+    answered: Optional[bool] = None
+
+
 class PrayerRequestPublicCreate(BaseModel):
     """Schema for public web prayer requests — minimal fields, no auth."""
     requester_name: str
@@ -177,6 +208,16 @@ class DonationBase(BaseModel):
 
 class DonationCreate(DonationBase):
     pass
+
+
+class DonationUpdate(BaseModel):
+    amount: Optional[float] = None
+    donation_type: Optional[str] = None
+    fund_name: Optional[str] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+    anonymous: Optional[bool] = None
+    method: Optional[str] = None
 
 
 class Donation(DonationBase):
@@ -229,6 +270,16 @@ class VolunteerShiftBase(BaseModel):
 
 class VolunteerShiftCreate(VolunteerShiftBase):
     pass
+
+
+class VolunteerShiftUpdate(BaseModel):
+    member_id: Optional[int] = None
+    shift_start: Optional[datetime] = None
+    shift_end: Optional[datetime] = None
+    location: Optional[str] = None
+    role: Optional[str] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
 
 
 class VolunteerShift(VolunteerShiftBase):

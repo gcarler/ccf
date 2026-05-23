@@ -30,6 +30,22 @@ class TaskSupply(TaskSupplyBase):
     model_config = orm_config
 
 
+class ProjectPhaseSchema(BaseModel):
+    id: int
+    project_id: int
+    name: str
+    slug: str
+    color: str = "#94a3b8"
+    order_index: int = 0
+    model_config = orm_config
+
+
+class ProjectPhaseInput(BaseModel):
+    name: str = Field(..., min_length=1, max_length=50)
+    slug: str = Field(..., min_length=1, max_length=20)
+    color: str = "#94a3b8"
+
+
 class ProjectAttachment(BaseModel):
     id: int
     task_id: int

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
-import { 
-    DndContext, 
+import {
+    DndContext,
     closestCenter,
     KeyboardSensor,
     PointerSensor,
@@ -12,7 +12,7 @@ import {
     DragOverlay,
     DragStartEvent
 } from '@dnd-kit/core';
-import { 
+import {
     SortableContext,
     horizontalListSortingStrategy
 } from '@dnd-kit/sortable';
@@ -23,31 +23,23 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import type { ProjectRecord, ProjectTaskRecord } from '@/types/projects';
 
+export interface PhaseDef {
+    slug: string;
+    name: string;
+    color: string;
+    order_index: number;
+}
+
 interface Props {
     project: ProjectRecord;
     tasks: ProjectTaskRecord[];
+    phases: PhaseDef[];
     onTasksChange: (tasks: ProjectTaskRecord[]) => void;
     onOpenTask: (task: ProjectTaskRecord) => void;
     onAddTask: (status: string) => void;
 }
 
-const KANBAN_STAGES = [
-    { id: 'todo',        name: 'Por Hacer',   color: '#94a3b8' },
-    { id: 'in_progress', name: 'En Curso',    color: '#3b82f6' },
-    { id: 'review',      name: 'Revisión',    color: '#f59e0b' },
-    { id: 'done',        name: 'Completado',  color: '#10b981' },
-];
-
-// Map the status values that come from API to Kanban stages
-function normalizeStatus(status: string): string {
-    const map: Record<string, string> = {
-        pending: 'todo',
-        blocked: 'todo',
-    };
-    return map[status] ?? status ?? 'todo';
-}
-
-export function ProjectKanbanBoard({ project, tasks, onTasksChange, onOpenTask, onAddTask }: Props) {
+export function ProjectKanbanBoard({ project, tasks, phases, onTasksChange, onOpenTask, onAddTask }: Props) {
     const { token } = useAuth();
     const { addToast } = useToast();
     const [activeTask, setActiveTask] = useState<ProjectTaskRecord | null>(null);
@@ -70,16 +62,16 @@ export function ProjectKanbanBoard({ project, tasks, onTasksChange, onOpenTask, 
         const taskId = parseInt(active.id as string, 10);
         const overId = over.id as string;
 
-        const isOverColumn = KANBAN_STAGES.some(s => s.id === overId);
+        const isOverColumn = phases.some(s => s.slug === overId);
         let newStatus = overId;
         if (!isOverColumn) {
             const overTask = tasks.find(t => t.id === parseInt(overId, 10));
-            if (overTask) newStatus = normalizeStatus(overTask.status || 'todo');
+            if (overTask) newStatus = overTask.status || phases[0]?.slug || 'todo';
             else return;
         }
 
         const taskToMove = tasks.find(t => t.id === taskId);
-        if (!taskToMove || normalizeStatus(taskToMove.status || 'todo') === newStatus) return;
+        if (!taskToMove || (taskToMove.status || 'todo') === newStatus) return;
 
         const updatedTasks = tasks.map(t =>
             t.id === taskId ? { ...t, status: newStatus } : t
@@ -113,18 +105,18 @@ export function ProjectKanbanBoard({ project, tasks, onTasksChange, onOpenTask, 
         >
             <div className="flex h-full overflow-x-auto gap-5 p-6 pb-8 scrollbar-thin bg-slate-50/50 dark:bg-[#1a1b1d]">
                 <SortableContext
-                    items={KANBAN_STAGES.map(s => s.id)}
+                    items={phases.map(s => s.slug)}
                     strategy={horizontalListSortingStrategy}
                 >
-                    {KANBAN_STAGES.map(stage => (
+                    {phases.map(phase => (
                         <KanbanColumn
-                            key={stage.id}
-                            id={stage.id}
-                            name={stage.name}
-                            color={stage.color}
-                            tasks={tasks.filter(t => normalizeStatus(t.status || 'todo') === stage.id)}
+                            key={phase.slug}
+                            id={phase.slug}
+                            name={phase.name}
+                            color={phase.color}
+                            tasks={tasks.filter(t => (t.status || 'todo') === phase.slug)}
                             onOpenTask={onOpenTask}
-                            onAddTask={() => onAddTask(stage.id)}
+                            onAddTask={() => onAddTask(phase.slug)}
                             projectId={project.id}
                             onTaskCreated={handleTaskCreated}
                         />

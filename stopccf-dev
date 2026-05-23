@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEV_PID_FILE="$ROOT_DIR/.run/frontend-dev.pid"
+
+if [[ ! -f "$DEV_PID_FILE" ]]; then
+  echo "Frontend DEV not running (no PID file)"
+  exit 0
+fi
+
+pid="$(cat "$DEV_PID_FILE")"
+if kill -0 "$pid" >/dev/null 2>&1; then
+  kill "$pid"
+  echo "Stopped frontend DEV (PID $pid)"
+else
+  echo "Frontend DEV not running (stale PID $pid)"
+fi
+
+rm -f "$DEV_PID_FILE"

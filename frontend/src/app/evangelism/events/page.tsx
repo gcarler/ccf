@@ -3,14 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/http';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { parseAndValidateTime } from '@/lib/time';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { Plus, Calendar, Check, Users, Link2, QrCode, Download, Pencil, Trash2, MoreVertical } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import ViewSwitcher, { ViewType, getStoredView } from '@/components/ViewSwitcher';
-import EvangelismShell from '@/components/evangelism/EvangelismShell';
+import { ViewType, getStoredView } from '@/components/ViewSwitcher';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
+import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import Skeleton from '@/components/ui/Skeleton';
 import AdminHero from '@/components/admin/AdminHero';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
@@ -743,52 +745,54 @@ export default function EventsPage() {
         }
     };
 
-    return (
-        <EvangelismShell
-            breadcrumbs={[{ label: 'CCF', icon: Calendar }, { label: 'Evangelismo', icon: Users }, { label: 'Eventos', icon: Calendar }]}
-            viewOptions={ALL_VIEWS}
-            viewType={viewType}
-            onViewChange={(view) => setViewType(view as ViewType)}
-            rightActions={
-                <SplitDropdownButton
-                    mainLabel="Nuevo"
-                    icon={Plus}
-                    onMainClick={() => setIsCreateDrawerOpen(true)}
-                    options={[
-                        { id: 'event', label: 'Evento', icon: Calendar, onClick: () => setIsCreateDrawerOpen(true) },
-                        { id: 'attendance', label: 'Pasar Asistencia', icon: Check, onClick: () => setViewType('table') }
-                    ]}
-                />
-            }
-        >
-        <AdminHero
-            eyebrow="Eventos"
-            title="Eventos y asistencia"
-            description="Programa encuentros recurrentes y registra la participación en tiempo real con paneles estilo ClickUp."
-            tags={['Agenda', 'Asistencia', 'IA']}
-            watchers={heroWatchers}
-            primaryAction={{ label: 'Crear evento', icon: Plus, onClick: () => setIsCreateDrawerOpen(true) }}
-            secondaryAction={{ label: 'Ver calendario', icon: Link2, onClick: () => setViewType('calendar') }}
-        />
-        <div className="space-y-3">
-            {/* View switcher */}
-            <div className="flex items-center justify-end">
-                <ViewSwitcher
-                    viewType={viewType}
-                    setViewType={setViewType}
-                    availableViews={ALL_VIEWS}
-                    storageKey="evangelism_events_view"
-                />
-            </div>
-
-            {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="animate-pulse h-48 rounded-xl bg-slate-100 dark:bg-white/5" />
-                    ))}
+    if (loading) {
+        return (
+            <WorkspaceLayout sidebarTitle="Evangelismo">
+                <div className="p-8 space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-48 rounded-[2rem]" />)}
+                    </div>
                 </div>
-            ) : (
-            <>
+            </WorkspaceLayout>
+        );
+    }
+
+    return (
+        <WorkspaceLayout sidebarTitle="Evangelismo">
+            <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0f1114]">
+                <WorkspaceToolbar
+                    breadcrumbs={[
+                        { label: 'Evangelismo', icon: Users },
+                        { label: 'Eventos', icon: Calendar }
+                    ]}
+                    viewType={viewType}
+                    setViewType={(view) => setViewType(view as ViewType)}
+                    availableViews={ALL_VIEWS}
+                    rightActions={
+                        <SplitDropdownButton
+                            mainLabel="Nuevo"
+                            icon={Plus}
+                            onMainClick={() => setIsCreateDrawerOpen(true)}
+                            options={[
+                                { id: 'event', label: 'Evento', icon: Calendar, onClick: () => setIsCreateDrawerOpen(true) },
+                                { id: 'attendance', label: 'Pasar Asistencia', icon: Check, onClick: () => setViewType('table') }
+                            ]}
+                        />
+                    }
+                />
+                
+                <main className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-8">
+                    <AdminHero
+                        eyebrow="Eventos"
+                        title="Eventos y asistencia"
+                        description="Programa encuentros recurrentes y registra la participación en tiempo real con paneles estilo ClickUp."
+                        tags={['Agenda', 'Asistencia', 'IA']}
+                        watchers={heroWatchers}
+                        primaryAction={{ label: 'Crear evento', icon: Plus, onClick: () => setIsCreateDrawerOpen(true) }}
+                        secondaryAction={{ label: 'Ver calendario', icon: Link2, onClick: () => setViewType('calendar') }}
+                    />
+                    
+                    <div className="space-y-6">
             {/* GRID VIEW */}
             {viewType === 'grid' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1020,9 +1024,9 @@ export default function EventsPage() {
                     />
                 </section>
             )}
-            </>
-            )}
-        </div>
+            </div>
+            </main>
+            </div>
 
         {/* â”€â”€â”€ Drawer: Crear Evento â”€â”€â”€ */}
         <WorkspaceDrawer
@@ -1682,6 +1686,6 @@ export default function EventsPage() {
                     </div>
                 )}
             </WorkspaceDrawer>
-        </EvangelismShell>
+        </WorkspaceLayout>
     );
 }

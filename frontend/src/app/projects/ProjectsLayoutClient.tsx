@@ -74,7 +74,7 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
             {
                 id: 'tasks',
                 title: 'Plan de Acción',
-                items: tasks.length > 0 ? tasks.map(t => ({
+                items: tasks.length > 0 ? tasks.map((t: any) => ({
                     id: `task-${t.id}`,
                     label: t.title,
                     icon: t.status === 'done' ? CheckCircle2 : Circle,

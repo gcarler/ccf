@@ -47,6 +47,11 @@ class CommunityBoardCardCreate(BaseModel):
     body: Optional[str] = None
 
 
+class CommunityBoardCardUpdate(BaseModel):
+    title: Optional[str] = None
+    body: Optional[str] = None
+
+
 class CommunityBoardCard(BaseModel):
     id: int
     title: str

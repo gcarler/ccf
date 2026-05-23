@@ -2,9 +2,10 @@
 import datetime as dt
 import json
 import uuid
+from typing import Optional
 
 from sqlalchemy import func
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, contains_eager
 
 from backend import models, schemas
 from backend.content_defaults import PAGE_CONTENT_DEFAULTS
@@ -47,7 +48,15 @@ def get_courses(
 
 
 def get_course(db: Session, course_id: int):
-    return db.query(models.Course).filter(models.Course.id == course_id).first()
+    course = db.query(models.Course).filter(models.Course.id == course_id).first()
+    if course:
+        stats = db.query(
+            func.count(models.Lesson.id),
+            func.sum(models.Lesson.duration_minutes),
+        ).filter(models.Lesson.course_id == course_id).first()
+        course.lesson_count = stats[0] or 0
+        course.total_minutes = stats[1] or 0
+    return course
 
 
 def check_user_meets_prerequisites(db: Session, user_id: int, course_id: int) -> bool:
@@ -117,14 +126,9 @@ def create_enrollment(db: Session, enrollment: schemas.EnrollmentCreate) -> mode
         db.commit()
         db.refresh(row)
         return row
-    except MemoryError:
-        raise
     except Exception as e:
         db.rollback()
         raise ValueError(f"Error al procesar la inscripción: {str(e)}")
-
-
-# ── Assessments ────────────────────────────────────────
 
 def get_assessment(db: Session, assessment_id: int):
     return db.query(models.Assessment).filter(models.Assessment.id == assessment_id).first()
@@ -133,6 +137,7 @@ def get_assessment(db: Session, assessment_id: int):
 def get_assessment_with_questions(db: Session, assessment_id: int):
     return (
         db.query(models.Assessment)
+        .options(joinedload(models.Assessment.questions))
         .filter(models.Assessment.id == assessment_id)
         .first()
     )
@@ -176,25 +181,80 @@ def submit_assessment_attempt(
     if not assessment or not enrollment:
         raise ValueError("Assessment or Enrollment not found")
 
-    total_score = 0
+    # Clear previous attempt for this assessment/enrollment if it exists
+    existing_attempt = (
+        db.query(models.AssessmentAttempt)
+        .filter(
+            models.AssessmentAttempt.enrollment_id == enrollment.id,
+            models.AssessmentAttempt.assessment_id == assessment.id
+        )
+        .first()
+    )
+    if existing_attempt:
+        db.delete(existing_attempt)
+        db.flush()
+
+    attempt = models.AssessmentAttempt(
+        enrollment_id=enrollment.id,
+        assessment_id=assessment.id,
+        score=0,
+        passed=False
+    )
+    db.add(attempt)
+    db.flush()
+
+    total_points_awarded = 0
     max_score = sum(q.points for q in assessment.questions) if assessment.questions else 100
 
-    for answer in answers:
-        question_id = answer.get("question_id")
-        selected_option_id = answer.get("selected_option_id")
+    for answer_data in answers:
+        question_id = answer_data.get("question_id")
+        selected_option_id = answer_data.get("selected_option_id")
+        text_response = answer_data.get("text_response")
 
         question = db.query(models.AssessmentQuestion).filter(models.AssessmentQuestion.id == question_id).first()
-        if question:
+        if not question:
+            continue
+
+        is_correct = None
+        points_awarded = 0
+
+        if question.question_type in ["multiple_choice", "true_false"]:
             correct_option = (
                 db.query(models.AssessmentOption)
                 .filter(models.AssessmentOption.question_id == question_id, models.AssessmentOption.is_correct)
                 .first()
             )
             if correct_option and correct_option.id == selected_option_id:
-                total_score += question.points
+                is_correct = True
+                points_awarded = question.points
+            else:
+                is_correct = False
+        
+        # Text responses stay is_correct=None (pending manual grade) 
+        # unless we implement keyword matching here.
 
-    percentage = (total_score / max_score * 100) if max_score > 0 else 0
-    return create_or_update_assessment_attempt(db, enrollment, assessment, percentage)
+        db_answer = models.AssessmentAnswer(
+            attempt_id=attempt.id,
+            question_id=question_id,
+            selected_option_id=selected_option_id,
+            text_response=text_response,
+            is_correct=is_correct,
+            points_awarded=points_awarded
+        )
+        db.add(db_answer)
+        total_points_awarded += points_awarded
+
+    percentage = (total_points_awarded / max_score * 100) if max_score > 0 else 0
+    attempt.score = percentage
+    attempt.passed = percentage >= float(assessment.min_score or 70)
+
+    if attempt.passed:
+        enrollment.approved = True
+        issue_certificate_for_enrollment(db, enrollment)
+
+    db.commit()
+    db.refresh(attempt)
+    return attempt
 
 
 # ── Lesson Progress ────────────────────────────────────
@@ -318,7 +378,7 @@ def issue_pending_certificates(db: Session):
 def close_formal_acta(
     db: Session, course_id: int, closed_by_user_id: int, min_grade: float, min_attendance: float
 ):
-    course = db.query(models.Course).get(course_id)
+    course = db.query(models.Course).filter(models.Course.id == course_id).first()
     if not course:
         return None
 
@@ -396,7 +456,18 @@ def get_latest_acta_by_course(db: Session, course_id: int):
 # ── Attendance ─────────────────────────────────────────
 
 def record_activity_attendance(db: Session, enrollment_id: int):
-    return {"status": "success", "enrollment_id": enrollment_id, "timestamp": _utcnow()}
+    enrollment = db.query(models.Enrollment).filter(models.Enrollment.id == enrollment_id).first()
+    if not enrollment:
+        raise ValueError("Enrollment not found")
+    row = models.CourseAttendance(
+        enrollment_id=enrollment_id,
+        session_date=_utcnow().date(),
+        status="present",
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
 
 
 # ── Assignments ────────────────────────────────────────
@@ -478,3 +549,330 @@ def create_forum_thread(db: Session, thread_data: schemas.ForumThreadCreate):
     db.commit()
     db.refresh(row)
     return row
+
+
+# ── Courses (admin CRUD) ────────────────────────────────
+
+def create_course(db: Session, course_data: dict) -> models.Course:
+    row = models.Course(**course_data)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def update_course(db: Session, course_id: int, course_data: dict) -> Optional[models.Course]:
+    row = db.query(models.Course).filter(models.Course.id == course_id).first()
+    if not row:
+        return None
+    for key, value in course_data.items():
+        setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_course(db: Session, course_id: int) -> bool:
+    row = db.query(models.Course).filter(models.Course.id == course_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+def get_course_students(db: Session, course_id: int):
+    return (
+        db.query(models.Enrollment)
+        .join(models.User)
+        .filter(models.Enrollment.course_id == course_id)
+        .all()
+    )
+
+
+# ── Lessons ─────────────────────────────────────────────
+
+def get_lessons_by_course(db: Session, course_id: int):
+    return (
+        db.query(models.Lesson)
+        .filter(models.Lesson.course_id == course_id)
+        .order_by(models.Lesson.order_index.asc())
+        .all()
+    )
+
+
+def get_lesson(db: Session, lesson_id: int):
+    return db.query(models.Lesson).filter(models.Lesson.id == lesson_id).first()
+
+
+def create_lesson(db: Session, lesson_data: dict) -> models.Lesson:
+    row = models.Lesson(**lesson_data)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def update_lesson(db: Session, lesson_id: int, lesson_data: dict) -> Optional[models.Lesson]:
+    row = db.query(models.Lesson).filter(models.Lesson.id == lesson_id).first()
+    if not row:
+        return None
+    for key, value in lesson_data.items():
+        setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_lesson(db: Session, lesson_id: int) -> bool:
+    row = db.query(models.Lesson).filter(models.Lesson.id == lesson_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Assessments ─────────────────────────────────────────
+
+def get_assessments_by_course(db: Session, course_id: int):
+    return (
+        db.query(models.Assessment)
+        .join(models.Lesson)
+        .filter(models.Lesson.course_id == course_id)
+        .all()
+    )
+
+
+def get_assessment_by_id(db: Session, assessment_id: int):
+    return db.query(models.Assessment).filter(models.Assessment.id == assessment_id).first()
+
+
+def create_assessment(db: Session, assessment_data: dict) -> models.Assessment:
+    row = models.Assessment(**assessment_data)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def update_assessment(db: Session, assessment_id: int, assessment_data: dict) -> Optional[models.Assessment]:
+    row = db.query(models.Assessment).filter(models.Assessment.id == assessment_id).first()
+    if not row:
+        return None
+    for key, value in assessment_data.items():
+        setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_assessment(db: Session, assessment_id: int) -> bool:
+    row = db.query(models.Assessment).filter(models.Assessment.id == assessment_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Assessment Questions ────────────────────────────────
+
+def get_assessment_questions(db: Session, assessment_id: int):
+    return (
+        db.query(models.AssessmentQuestion)
+        .filter(models.AssessmentQuestion.assessment_id == assessment_id)
+        .order_by(models.AssessmentQuestion.order_index.asc())
+        .all()
+    )
+
+
+def get_assessment_question(db: Session, question_id: int):
+    return db.query(models.AssessmentQuestion).filter(models.AssessmentQuestion.id == question_id).first()
+
+
+def create_assessment_question(db: Session, question_data: dict) -> models.AssessmentQuestion:
+    row = models.AssessmentQuestion(**question_data)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def update_assessment_question(db: Session, question_id: int, question_data: dict) -> Optional[models.AssessmentQuestion]:
+    row = db.query(models.AssessmentQuestion).filter(models.AssessmentQuestion.id == question_id).first()
+    if not row:
+        return None
+    for key, value in question_data.items():
+        setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_assessment_question(db: Session, question_id: int) -> bool:
+    row = db.query(models.AssessmentQuestion).filter(models.AssessmentQuestion.id == question_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Assessment Options ──────────────────────────────────
+
+def get_assessment_options(db: Session, question_id: int):
+    return (
+        db.query(models.AssessmentOption)
+        .filter(models.AssessmentOption.question_id == question_id)
+        .order_by(models.AssessmentOption.id.asc())
+        .all()
+    )
+
+
+def create_assessment_option(db: Session, option_data: dict) -> models.AssessmentOption:
+    row = models.AssessmentOption(**option_data)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def update_assessment_option(db: Session, option_id: int, option_data: dict) -> Optional[models.AssessmentOption]:
+    row = db.query(models.AssessmentOption).filter(models.AssessmentOption.id == option_id).first()
+    if not row:
+        return None
+    for key, value in option_data.items():
+        setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_assessment_option(db: Session, option_id: int) -> bool:
+    row = db.query(models.AssessmentOption).filter(models.AssessmentOption.id == option_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Enrollments (additional CRUD) ───────────────────────
+
+def update_enrollment(db: Session, enrollment_id: int, enrollment_data: dict) -> Optional[models.Enrollment]:
+    row = db.query(models.Enrollment).filter(models.Enrollment.id == enrollment_id).first()
+    if not row:
+        return None
+    for key, value in enrollment_data.items():
+        setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_enrollment(db: Session, enrollment_id: int) -> bool:
+    row = db.query(models.Enrollment).filter(models.Enrollment.id == enrollment_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+def get_enrollment_by_user_course(db: Session, user_id: int, course_id: int):
+    return (
+        db.query(models.Enrollment)
+        .filter(
+            models.Enrollment.user_id == user_id,
+            models.Enrollment.course_id == course_id
+        )
+        .first()
+    )
+
+
+# ── Certificates (additional CRUD) ──────────────────────
+
+def get_certificate(db: Session, certificate_id: int):
+    return db.query(models.Certificate).filter(models.Certificate.id == certificate_id).first()
+
+
+def delete_certificate(db: Session, certificate_id: int) -> bool:
+    row = db.query(models.Certificate).filter(models.Certificate.id == certificate_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Course Attendance ───────────────────────────────────
+
+def get_course_attendance(db: Session, course_id: int):
+    return (
+        db.query(models.CourseAttendance)
+        .join(models.Enrollment)
+        .filter(models.Enrollment.course_id == course_id)
+        .order_by(models.CourseAttendance.session_date.desc())
+        .all()
+    )
+
+
+def create_course_attendance(db: Session, attendance_data: dict) -> models.CourseAttendance:
+    row = models.CourseAttendance(**attendance_data)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_course_attendance(db: Session, attendance_id: int) -> bool:
+    row = db.query(models.CourseAttendance).filter(models.CourseAttendance.id == attendance_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Resources ───────────────────────────────────────────
+
+def get_lesson_resources(db: Session, lesson_id: int):
+    return (
+        db.query(models.Resource)
+        .filter(models.Resource.lesson_id == lesson_id)
+        .order_by(models.Resource.created_at.desc())
+        .all()
+    )
+
+
+def create_resource(db: Session, resource_data: dict) -> models.Resource:
+    row = models.Resource(**resource_data)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_resource(db: Session, resource_id: int) -> bool:
+    row = db.query(models.Resource).filter(models.Resource.id == resource_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
+
+
+# ── Forum ───────────────────────────────────────────────
+
+def get_forum_thread(db: Session, thread_id: int):
+    return db.query(models.ForumThread).filter(models.ForumThread.id == thread_id).first()
+
+
+def delete_forum_thread(db: Session, thread_id: int) -> bool:
+    row = db.query(models.ForumThread).filter(models.ForumThread.id == thread_id).first()
+    if not row:
+        return False
+    db.delete(row)
+    db.commit()
+    return True

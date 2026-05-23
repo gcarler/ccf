@@ -1,5 +1,6 @@
 fastapi
 uvicorn[standard]
+gunicorn
 sqlalchemy
 psycopg2-binary
 pydantic
@@ -15,15 +16,18 @@ passlib[bcrypt]
 bcrypt==4.0.1
 python-multipart>=0.0.26
 websockets
-kafka-python
+# Kafka (opcional) — instalar solo si se usa KafkaEventBus
+# kafka-python
 alembic
 redis
 httpx
 pytest>=9.0.3
 requests>=2.33.1
 pygments>=2.20.0
-pg8000
 duckdb
+# Async SQLAlchemy (opcional) — instalar para endpoints async con get_db_async
+# asyncpg
+# aiosqlite
 # Optional agent orchestrator
 openai
 opentelemetry-sdk

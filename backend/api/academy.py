@@ -97,35 +97,49 @@ def read_assessment(assessment_id: int, db: Session = Depends(get_db)):
     return db_assessment
 
 
-class AssessmentSubmission(BaseModel):
-    enrollment_id: int
-    answers: List[dict] # [{"question_id": 1, "selected_option_id": 2}]
-
-
 @router.post("/assessments/{assessment_id}/submit", response_model=schemas.AssessmentAttempt)
 def submit_assessment_direct(
     assessment_id: int,
-    payload: AssessmentSubmission,
+    payload: schemas.AssessmentAttemptSubmit,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user)
 ):
-    # IDOR Check: Ensure enrollment belongs to the current user
-    enrollment = crud.get_enrollment(db, payload.enrollment_id)
-    if not enrollment or enrollment.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="No autorizado para enviar esta evaluación")
-        
-    try:
-        return crud.submit_assessment_attempt(
-            db,
-            assessment_id=assessment_id,
-            enrollment_id=payload.enrollment_id,
-            answers=payload.answers
+    """Envia una evaluación directamente con respuestas detalladas o puntaje."""
+    # Encontrar la inscripción del usuario para este curso/evaluación
+    assessment = crud.get_assessment(db, assessment_id)
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Evaluación no encontrada")
+
+    enrollment = db.query(models.Enrollment).filter(
+        models.Enrollment.user_id == current_user.id,
+        models.Enrollment.course_id == assessment.course_id
+    ).first()
+
+    if not enrollment:
+        raise HTTPException(status_code=403, detail="No estás inscrito en este curso")
+
+    if payload.answers:
+        # Submission with detailed answers
+        try:
+            return crud.submit_assessment_attempt(
+                db,
+                assessment_id=assessment_id,
+                enrollment_id=enrollment.id,
+                answers=[a.model_dump() for a in payload.answers]
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=str(e))
+    elif payload.submitted_score is not None:
+        # Legacy/Shortcut submission with just score
+        return crud.create_or_update_assessment_attempt(
+            db, enrollment=enrollment, assessment=assessment, submitted_score=payload.submitted_score
         )
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    else:
+        raise HTTPException(status_code=400, detail="Debe proporcionar respuestas o un puntaje")
 
 
 @router.get("/lessons/{lesson_id}/progress")
+
 def read_lesson_progress(
     lesson_id: int,
     db: Session = Depends(get_db),
@@ -319,12 +333,15 @@ def submit_assessment(
     if int(getattr(enrollment, "user_id", 0)) != current_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
-    attempt = crud.create_or_update_assessment_attempt(
-        db, enrollment=enrollment, assessment=assessment, submitted_score=payload.submitted_score
+    if payload.answers:
+        return crud.submit_assessment_attempt(
+            db, assessment_id=assessment_id, enrollment_id=enrollment_id, 
+            answers=[a.model_dump() for a in payload.answers]
+        )
+    
+    return crud.create_or_update_assessment_attempt(
+        db, enrollment=enrollment, assessment=assessment, submitted_score=payload.submitted_score or 0
     )
-    if getattr(enrollment, "approved", False):
-        crud.issue_certificate_for_enrollment(db, enrollment)
-    return attempt
 
 
 @router.get("/me/certificates", response_model=List[schemas.Certificate])
@@ -790,4 +807,79 @@ def get_course_students_admin(
             "approved": enrollment.approved,
         })
     return result
+
+
+@router.post("/admin/assessments", status_code=201)
+def create_assessment_admin(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_teacher_or_admin),
+):
+    """Create a standalone course-level assessment with questions."""
+    course_id = payload.get("course_id")
+    lesson_id = payload.get("lesson_id")
+
+    # Need at least one anchor
+    if not lesson_id and not course_id:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=422, detail="course_id or lesson_id required")
+
+    # If only course_id provided, find or create a placeholder lesson
+    if not lesson_id:
+        lesson = db.query(models.Lesson).filter(
+            models.Lesson.course_id == course_id
+        ).first()
+        if not lesson:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=422, detail="No lessons found for this course")
+        lesson_id = lesson.id
+
+    assessment = models.Assessment(
+        lesson_id=lesson_id,
+        course_id=course_id,
+        title=payload["title"],
+        min_score=payload.get("passing_score", 70),
+    )
+    db.add(assessment)
+    db.flush()
+
+    for q in payload.get("questions", []):
+        question = models.AssessmentQuestion(
+            assessment_id=assessment.id,
+            question_text=q.get("text", ""),
+            question_type=q.get("type", "multiple_choice"),
+            points=q.get("points", 10),
+        )
+        db.add(question)
+        db.flush()
+        for i, opt_text in enumerate(q.get("options", [])):
+            db.add(models.AssessmentOption(
+                question_id=question.id,
+                option_text=opt_text,
+                is_correct=(i == q.get("correct_option", 0)),
+            ))
+
+    db.commit()
+    db.refresh(assessment)
+    return {"id": assessment.id, "title": assessment.title, "min_score": float(assessment.min_score)}
+
+
+@router.patch("/admin/assessments/{assessment_id}")
+def update_assessment_admin(
+    assessment_id: int,
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_teacher_or_admin),
+):
+    assessment = db.query(models.Assessment).filter(models.Assessment.id == assessment_id).first()
+    if not assessment:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Assessment not found")
+    if "title" in payload:
+        assessment.title = payload["title"]
+    if "passing_score" in payload:
+        assessment.min_score = payload["passing_score"]
+    db.commit()
+    db.refresh(assessment)
+    return {"id": assessment.id, "title": assessment.title, "min_score": float(assessment.min_score)}
 

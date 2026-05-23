@@ -1,6 +1,4 @@
 """Dashboard metrics, pilot readiness, and knowledge base."""
-from types import SimpleNamespace
-
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
@@ -147,4 +145,4 @@ def search_knowledge_base(db: Session, query: str):
     results = [doc for doc in mock_docs if query.lower() in doc["title"].lower() or query.lower() in doc["content"].lower()]
     if not results:
         results = mock_docs[:3]
-    return [SimpleNamespace(**doc) for doc in results]
+    return results

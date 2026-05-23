@@ -1,76 +1,179 @@
 version: '3.8'
 
+# Docker networks — separate internal services from the host
+networks:
+  ccf_frontend:
+    driver: bridge
+  ccf_internal:
+    driver: bridge
+    internal: true  # no host access
+
 services:
   db:
     image: postgres:15
+    restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-ccf_db}
-    ports:
-      - "5435:5432"
+    # Internal-only — no host port exposure in production
+    expose:
+      - "5432"
+    networks:
+      - ccf_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB:-ccf_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
 
   redis:
     image: redis:7
-    ports:
-      - "6379:6379"
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:?set REDIS_PASSWORD}
+    # Internal-only — no host port exposure in production
+    expose:
+      - "6379"
+    networks:
+      - ccf_internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
 
-  redpanda:
-    image: redpandadata/redpanda:latest
-    command:
-      - redpanda start --smp 1 --reserve-memory 0M --overprovisioned --node-id 0 --check=false
-    ports:
-      - "19092:19092"
-    environment:
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://redpanda:9092,PLAINTEXT_HOST://localhost:19092
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:19092
-      KAFKA_ADVERTISED_LISTENER_NAMES: PLAINTEXT,PLAINTEXT_HOST
+  # redpanda:  # Opcional — solo si se usa KafkaEventBus. RedisEventBus no lo requiere.
+  #   image: redpandadata/redpanda:latest
+  #   command:
+  #     - redpanda start --smp 1 --reserve-memory 0M --overprovisioned --node-id 0 --check=false
+  #   ports:
+  #     - "19092:19092"
+  #   environment:
+  #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://redpanda:9092,PLAINTEXT_HOST://localhost:19092
+  #     KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:19092
+  #     KAFKA_ADVERTISED_LISTENER_NAMES: PLAINTEXT,PLAINHOST
 
   minio:
     image: minio/minio:latest
+    restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-ccf}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD}
-    ports:
-      - "9000:9000"
-      - "9001:9001"
+    # Internal API + console accessible via frontend network only
+    expose:
+      - "9000"
+      - "9001"
     volumes:
       - minio_data:/data
+    networks:
+      - ccf_internal
+      - ccf_frontend
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
 
   backend:
     build:
       context: .
       dockerfile: backend.Dockerfile
+    restart: unless-stopped
+    # Only backend port exposed to host
     ports:
       - "8000:8000"
     environment:
       environment: production
-      DATABASE_URL: postgresql+pg8000://postgres:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ccf_db}
-      REDIS_URL: redis://redis:6379/0
-      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      DATABASE_URL: postgresql+psycopg2://postgres:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ccf_db}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       UPLOADS_DIR: ${UPLOADS_DIR:-uploads}
-      SECRET_KEY: ${SECRET_KEY}
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY}
+    networks:
+      - ccf_frontend
+      - ccf_internal
     depends_on:
-      - db
-      - redis
-      - redpanda
-      - minio
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 256M
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
       NEXT_PUBLIC_API_URL: /api
       API_PROXY_TARGET: http://backend:8000
       API_BASE_URL: http://backend:8000/api
+    networks:
+      - ccf_frontend
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
 
 volumes:
   postgres_data:

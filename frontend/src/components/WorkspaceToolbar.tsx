@@ -34,7 +34,7 @@ interface WorkspaceToolbarProps {
     onGroup?: () => void;
     onMore?: () => void;
     onAdd?: () => void;
-    onAddOption?: (type: 'task' | 'document' | 'reminder' | 'whiteboard' | 'panel') => void;
+    onAddOption?: (type: string) => void;
 }
 
 export default function WorkspaceToolbar({

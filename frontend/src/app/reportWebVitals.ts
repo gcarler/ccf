@@ -1,4 +1,12 @@
-import type { ReportCallback } from 'next/dist/compiled/web-vitals'
+interface WebVitalMetric {
+  id: string;
+  name: string;
+  value: number;
+  label: 'custom' | 'web-vital';
+}
+
+type ReportCallback = (metric: WebVitalMetric) => void;
+
 import { reportWebVital } from '@/lib/vitals'
 
 const TRACKED_METRICS = new Set(['TTFB', 'LCP', 'FCP'])

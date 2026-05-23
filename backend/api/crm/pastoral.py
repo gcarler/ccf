@@ -1293,6 +1293,39 @@ def get_volunteer_detail(
     }
 
 
+@router.patch("/volunteers/{member_id}", response_model=dict)
+def update_volunteer(
+    member_id: int,
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    member = db.query(models.Member).filter(models.Member.id == member_id).first()
+    if not member:
+        raise HTTPException(status_code=404, detail="Volunteer not found")
+    allowed = {"church_role", "first_name", "last_name", "phone", "email"}
+    for k, v in payload.items():
+        if k in allowed:
+            setattr(member, k, v)
+    db.commit()
+    db.refresh(member)
+    return {"id": member.id, "name": _member_full_name(member), "role": member.church_role}
+
+
+@router.delete("/volunteers/{member_id}", status_code=204)
+def delete_volunteer(
+    member_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    member = db.query(models.Member).filter(models.Member.id == member_id).first()
+    if not member:
+        raise HTTPException(status_code=404, detail="Volunteer not found")
+    db.query(models.VolunteerShift).filter(models.VolunteerShift.member_id == member_id).delete()
+    db.delete(member)
+    db.commit()
+
+
 @router.get("/groups", response_model=List[dict])
 def list_crm_groups(
     db: Session = Depends(get_db),

@@ -37,7 +37,4 @@ def get_admin_audit_logs(
         query = query.filter(models.AdminAuditLog.actor_user_id == actor_user_id)
     if resource_type is not None:
         query = query.filter(models.AdminAuditLog.resource_type == resource_type)
-    rows = query.order_by(models.AdminAuditLog.created_at.desc()).limit(limit).all()
-    for row in rows:
-        row.metadata = row.metadata_json or {}
-    return rows
+    return query.order_by(models.AdminAuditLog.created_at.desc()).limit(limit).all()
