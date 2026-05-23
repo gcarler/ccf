@@ -200,7 +200,7 @@ jobs:
       - name: Check security tests (production rejects insecure defaults)
         run: |
           pip install pydantic pydantic-settings
-          python -m pytest ../tests/test_security_config.py -v --noconftest
+          PYTHONPATH=.. python -m pytest ../tests/test_security_config.py -v --noconftest
       - name: Run pip-audit (check for known vulnerabilities)
         run: |
           pip install pip-audit
