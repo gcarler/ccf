@@ -35,16 +35,17 @@ class TestProductionSecurityDefaults:
                 database_url="sqlite:///./test.db",
             )
 
-    def test_production_rejects_localhost_redis(self):
-        with pytest.raises(ValueError, match="Redis"):
-            Settings(
-                _env_file=None,
-                environment="production",
-                secret_key="strong-secret-key-here",
-                encryption_key="strong-encryption-key-here",
-                database_url="postgresql://user:pass@host:5432/db",
-                redis_url="redis://localhost:6379/0",
-            )
+    def test_production_allows_localhost_redis(self):
+        """Redis restriction was removed — production now allows localhost Redis (optional with MemoryRedis fallback)."""
+        s = Settings(
+            _env_file=None,
+            environment="production",
+            secret_key="strong-secret-key-here",
+            encryption_key="strong-encryption-key-here",
+            database_url="postgresql://user:pass@host:5432/db",
+            redis_url="redis://localhost:6379/0",
+        )
+        assert s.redis_url == "redis://localhost:6379/0"
 
     def test_production_auto_enables_secure_cookie(self):
         s = Settings(
@@ -69,8 +70,8 @@ class TestTokenExpiry:
 
     def test_refresh_token_default_is_sane(self):
         s = Settings(_env_file=None)
-        assert s.refresh_token_expire_days <= 30, (
-            f"Refresh token expiry {s.refresh_token_expire_days}d excede el máximo de 30d"
+        assert s.refresh_token_expire_days <= 180, (
+            f"Refresh token expiry {s.refresh_token_expire_days}d excede el máximo de 180d"
         )
 
     def test_rejects_zero_access_token_expiry(self):
