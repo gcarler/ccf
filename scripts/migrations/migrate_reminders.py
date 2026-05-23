@@ -27,7 +27,9 @@ def migrate():
     try:
         if not table_exists(db, "user_reminders"):
             logger.info("Creando tabla user_reminders...")
-            db.execute(text("""
+            db.execute(
+                text(
+                    """
                 CREATE TABLE user_reminders (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id INTEGER NOT NULL,
@@ -41,7 +43,9 @@ def migrate():
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY(user_id) REFERENCES users(id)
                 )
-            """))
+            """
+                )
+            )
             db.execute(
                 text(
                     "CREATE INDEX idx_user_reminders_user_id ON user_reminders (user_id)"

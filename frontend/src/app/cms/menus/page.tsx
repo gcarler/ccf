@@ -363,7 +363,7 @@ export default function CmsMenusManagement() {
             <header className="min-h-14 border-b border-slate-100 dark:border-white/5 flex flex-wrap items-center px-6 py-3 gap-3 shrink-0">
                 <div className="flex items-center gap-2 flex-1">
                     <Link2 size={16} className="text-blue-600" />
-                    <h2 className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                    <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                         NAVEGACION CMS
                     </h2>
                 </div>
@@ -396,7 +396,7 @@ export default function CmsMenusManagement() {
                         <button
                             onClick={handleToggleMenuActive}
                             disabled={!canEdit}
-                            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
                             title={selectedMenu.is_active ? "Desactivar menu publico" : "Activar menu publico"}
                         >
                             {selectedMenu.is_active ? <Archive size={14} /> : <RotateCcw size={14} />}
@@ -406,7 +406,7 @@ export default function CmsMenusManagement() {
                     <button 
                         onClick={() => setIsQuickAddOpen(!isQuickAddOpen)}
                         disabled={!canEdit || !menuKey}
-                        className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
+                        className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
                     >
                         <Plus size={14} />
                         Añadir Enlace
@@ -418,7 +418,7 @@ export default function CmsMenusManagement() {
                 onSubmit={handleCreateMenu}
                 className="border-b border-slate-100 dark:border-white/5 px-6 py-3 flex flex-wrap items-center gap-3 bg-slate-50/60 dark:bg-white/[0.02]"
             >
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nuevo menu</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Nuevo menu</p>
                 <input
                     value={newMenuName}
                     onChange={(event) => {
@@ -439,7 +439,7 @@ export default function CmsMenusManagement() {
                 <button
                     type="submit"
                     disabled={!canEdit || !siteKey || !sanitizeKey(newMenuKey || newMenuName)}
-                    className="rounded-lg border border-blue-200 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-blue-600 disabled:opacity-50"
+                    className="rounded-lg border border-blue-200 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-blue-600 disabled:opacity-50"
                 >
                     Crear menu
                 </button>
@@ -482,7 +482,7 @@ export default function CmsMenusManagement() {
                                 <button 
                                     type="submit"
                                     disabled={!canEdit || !menuKey}
-                                    className="bg-blue-600 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                                    className="bg-blue-600 text-white px-3 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
                                 >
                                     GUARDAR
                                 </button>
@@ -504,12 +504,12 @@ export default function CmsMenusManagement() {
                 {loading ? (
                     <div className="space-y-4">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className="h-16 bg-slate-50 dark:bg-white/5 rounded-2xl animate-pulse" />
+                            <div key={i} className="h-16 bg-slate-50 dark:bg-white/5 rounded-lg animate-pulse" />
                         ))}
                     </div>
                 ) : !menuKey ? (
                     <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-60">
-                        <div className="size-16 rounded-[2rem] bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
+                        <div className="size-16 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
                             <Link2 size={32} />
                         </div>
                         <div>
@@ -519,7 +519,7 @@ export default function CmsMenusManagement() {
                     </div>
                 ) : navConfig.items.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-50">
-                        <div className="size-16 rounded-[2rem] bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
+                        <div className="size-16 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
                             <Link2 size={32} />
                         </div>
                         <div>
@@ -536,7 +536,7 @@ export default function CmsMenusManagement() {
                                 await moveToRoot(draggedId);
                                 setDraggedId(null);
                             }}
-                            className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400"
+                            className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400"
                         >
                             Soltar aquí para mover a nivel raíz
                         </div>
@@ -571,7 +571,7 @@ export default function CmsMenusManagement() {
                                     }}
                                     onDragEnd={() => setDraggedId(null)}
                                     className={clsx(
-                                        "group rounded-2xl border p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center gap-4",
+                                        "group rounded-lg border p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center gap-4",
                                         item.visibility === "hidden"
                                             ? "bg-slate-50 dark:bg-white/[0.03] border-dashed border-slate-200 dark:border-white/10 opacity-75"
                                             : "bg-white dark:bg-[#252528] border-slate-200/70 dark:border-white/5"
@@ -592,12 +592,12 @@ export default function CmsMenusManagement() {
                                     </div>
 
                                     {item.is_external && (
-                                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-slate-100 dark:bg-white/5 text-slate-500 uppercase tracking-widest">
+                                        <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-slate-100 dark:bg-white/5 text-slate-500 uppercase tracking-wide">
                                             EXTERNO
                                         </span>
                                     )}
                                     {item.visibility === "hidden" && (
-                                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-50 dark:bg-amber-500/10 text-amber-700 uppercase tracking-widest">
+                                        <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-amber-50 dark:bg-amber-500/10 text-amber-700 uppercase tracking-wide">
                                             OCULTO
                                         </span>
                                     )}
@@ -672,7 +672,7 @@ export default function CmsMenusManagement() {
                     <div className="space-y-6">
                         <section className="space-y-4">
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+                                <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                                     TEXTO DEL ENLACE
                                 </label>
                                 <input 
@@ -685,7 +685,7 @@ export default function CmsMenusManagement() {
                             </div>
                             
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+                                <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                                     DESTINO (URL)
                                 </label>
                                 <input 
@@ -698,7 +698,7 @@ export default function CmsMenusManagement() {
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+                                <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                                     PADRE (SUBMENÚ)
                                 </label>
                                 <select
@@ -723,7 +723,7 @@ export default function CmsMenusManagement() {
                         </section>
 
                         <section className="pt-6 border-t border-slate-100 dark:border-white/5 space-y-3">
-                            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                                 VISIBILIDAD
                             </p>
                             <div className="grid grid-cols-2 gap-2">
@@ -732,7 +732,7 @@ export default function CmsMenusManagement() {
                                     onClick={() => handleUpdateItem(selectedIndex, { ...selectedItem, visibility: "public" })}
                                     disabled={!canEdit}
                                     className={clsx(
-                                        "rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all",
+                                        "rounded-xl border px-3 py-2 text-[10px] font-semibold uppercase tracking-wide transition-all",
                                         selectedItem.visibility !== "hidden"
                                             ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10"
                                             : "border-slate-200 text-slate-500 dark:border-white/10"
@@ -745,7 +745,7 @@ export default function CmsMenusManagement() {
                                     onClick={() => handleUpdateItem(selectedIndex, { ...selectedItem, visibility: "hidden" })}
                                     disabled={!canEdit}
                                     className={clsx(
-                                        "rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all",
+                                        "rounded-xl border px-3 py-2 text-[10px] font-semibold uppercase tracking-wide transition-all",
                                         selectedItem.visibility === "hidden"
                                             ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10"
                                             : "border-slate-200 text-slate-500 dark:border-white/10"
@@ -761,7 +761,7 @@ export default function CmsMenusManagement() {
                                 onClick={() => handleUpdateItem(selectedIndex, { ...selectedItem, is_external: !selectedItem.is_external })}
                                 disabled={!canEdit}
                                 className={clsx(
-                                    "w-full flex items-center justify-between p-4 rounded-2xl border transition-all",
+                                    "w-full flex items-center justify-between p-4 rounded-lg border transition-all",
                                     selectedItem.is_external 
                                         ? "bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30" 
                                         : "bg-slate-50 dark:bg-white/5 border-transparent"
@@ -794,7 +794,7 @@ export default function CmsMenusManagement() {
                                     setSelectedItem(null);
                                     setSelectedIndex(null);
                                 }}
-                                className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3 rounded-xl text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2"
                             >
                                 <Save size={14} />
                                 CERRAR Y LISTO

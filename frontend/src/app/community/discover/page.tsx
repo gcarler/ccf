@@ -50,7 +50,7 @@ export default function DiscoverPage() {
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21]">
             <header className="p-6 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 space-y-4">
                 <div>
-                    <h1 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Descubrir Grupos</h1>
+                    <h1 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">Descubrir Grupos</h1>
                     <p className="text-xs text-slate-500 font-medium mt-1">Encuentra una casa de bendición cerca de ti</p>
                 </div>
                 <div className="relative max-w-xl">
@@ -82,9 +82,9 @@ export default function DiscoverPage() {
                                 <article key={group.id} className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-primary/30 transition-colors group">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <h3 className="text-sm font-black text-slate-900 dark:text-white">{group.name}</h3>
+                                            <h3 className="text-sm font-bold text-slate-900 dark:text-white">{group.name}</h3>
                                             {group.zone && (
-                                                <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-md text-[9px] font-black uppercase tracking-widest">
+                                                <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-md text-[9px] font-bold uppercase tracking-widest">
                                                     {group.zone}
                                                 </span>
                                             )}
@@ -94,7 +94,7 @@ export default function DiscoverPage() {
                                             <span className="flex items-center gap-1"><Users size={12} /> Lider: {group.leader_name || 'N/A'}</span>
                                         </div>
                                     </div>
-                                    <button className="shrink-0 px-4 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-2">
+                                    <button className="shrink-0 px-4 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-2">
                                         <Navigation size={12} /> Contactar
                                     </button>
                                 </article>

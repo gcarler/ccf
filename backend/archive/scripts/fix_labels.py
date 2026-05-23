@@ -23,9 +23,11 @@ for t in tasks:
 
     # Let's also check attachments
     if t.attachments and not isinstance(t.attachments, list):
-         print(f"Task {t.id} has invalid attachments: {t.attachments} (type: {type(t.attachments)})")
-         t.attachments = []
-         
+        print(
+            f"Task {t.id} has invalid attachments: {t.attachments} (type: {type(t.attachments)})"
+        )
+        t.attachments = []
+
 db.commit()
 print("Fixed tasks.")
 db.close()

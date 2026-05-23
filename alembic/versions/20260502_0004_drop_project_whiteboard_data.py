@@ -37,42 +37,64 @@ def _drop_sqlite_project_triggers(bind) -> None:
 
 
 def _create_sqlite_project_triggers(bind) -> None:
-    bind.execute(sa.text("""
+    bind.execute(
+        sa.text(
+            """
             CREATE TRIGGER IF NOT EXISTS after_project_insert_search AFTER INSERT ON projects BEGIN
               INSERT INTO projects_search_idx(rowid, title, description) VALUES (new.id, NEW.title, NEW.description);
             END
-            """))
-    bind.execute(sa.text("""
+            """
+        )
+    )
+    bind.execute(
+        sa.text(
+            """
             CREATE TRIGGER IF NOT EXISTS after_project_update_search AFTER UPDATE ON projects BEGIN
               INSERT INTO projects_search_idx(projects_search_idx, rowid, title, description) VALUES('delete', old.id, old.title, old.description);
               INSERT INTO projects_search_idx(rowid, title, description) VALUES (new.id, NEW.title, NEW.description);
             END
-            """))
-    bind.execute(sa.text("""
+            """
+        )
+    )
+    bind.execute(
+        sa.text(
+            """
             CREATE TRIGGER IF NOT EXISTS log_task_creation
             AFTER INSERT ON project_tasks
             BEGIN
                 INSERT INTO project_activity_logs (project_id, action_type, description)
                 VALUES (NEW.project_id, 'task_created', 'Nueva tarea: ' || NEW.title);
             END
-            """))
-    bind.execute(sa.text("""
+            """
+        )
+    )
+    bind.execute(
+        sa.text(
+            """
             CREATE TRIGGER IF NOT EXISTS log_task_priority_change
             AFTER UPDATE OF priority ON project_tasks
             BEGIN
                 INSERT INTO project_activity_logs (project_id, action_type, description)
                 VALUES (NEW.project_id, 'priority_changed', 'Tarea ' || NEW.title || ' cambio prioridad a ' || NEW.priority);
             END
-            """))
-    bind.execute(sa.text("""
+            """
+        )
+    )
+    bind.execute(
+        sa.text(
+            """
             CREATE TRIGGER IF NOT EXISTS log_task_status_change
             AFTER UPDATE OF status ON project_tasks
             BEGIN
                 INSERT INTO project_activity_logs (project_id, action_type, description)
                 VALUES (NEW.project_id, 'status_changed', 'Tarea ' || NEW.title || ' cambio a ' || NEW.status);
             END
-            """))
-    bind.execute(sa.text("""
+            """
+        )
+    )
+    bind.execute(
+        sa.text(
+            """
             CREATE TRIGGER IF NOT EXISTS update_project_progress_on_task_insert
             AFTER INSERT ON project_tasks
             BEGIN
@@ -84,8 +106,12 @@ def _create_sqlite_project_triggers(bind) -> None:
                 )
                 WHERE id = NEW.project_id;
             END
-            """))
-    bind.execute(sa.text("""
+            """
+        )
+    )
+    bind.execute(
+        sa.text(
+            """
             CREATE TRIGGER IF NOT EXISTS update_project_progress_on_task_update
             AFTER UPDATE OF status ON project_tasks
             BEGIN
@@ -97,7 +123,9 @@ def _create_sqlite_project_triggers(bind) -> None:
                 )
                 WHERE id = NEW.project_id;
             END
-            """))
+            """
+        )
+    )
 
 
 def upgrade() -> None:

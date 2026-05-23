@@ -33,5 +33,6 @@ def diagnose():
 
     db.close()
 
+
 if __name__ == "__main__":
     diagnose()

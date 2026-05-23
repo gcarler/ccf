@@ -149,7 +149,7 @@ export default function ContactsPage() {
             rightActions={
                 <button
                     onClick={() => setIsCreateOpen(true)}
-                    className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+                    className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
                 >
                     <Plus size={14} /> Nuevo Contacto
                 </button>
@@ -163,7 +163,7 @@ export default function ContactsPage() {
                         <input
                             type="text"
                             placeholder="Buscar por nombre o fuente..."
-                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-1.5 pl-11 pr-4 text-sm font-medium focus:ring-2 focus:ring-blue-500/20 outline-none dark:text-white transition-all"
+                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-sm font-medium focus:ring-2 focus:ring-blue-500/20 outline-none dark:text-white transition-all"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                         />
@@ -171,7 +171,7 @@ export default function ContactsPage() {
                     <div className="flex gap-2 overflow-x-auto pb-1">
                         <button
                             onClick={() => setActiveFilter('all')}
-                            className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border whitespace-nowrap ${activeFilter === 'all' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-white/5 text-slate-400 border-slate-200 dark:border-white/10'}`}
+                            className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === 'all' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-white/5 text-slate-400 border-slate-200 dark:border-white/10'}`}
                         >
                             Todos ({leads.length})
                         </button>
@@ -179,7 +179,7 @@ export default function ContactsPage() {
                             <button
                                 key={s}
                                 onClick={() => setActiveFilter(s)}
-                                className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border whitespace-nowrap ${activeFilter === s ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-white/5 text-slate-400 border-slate-200 dark:border-white/10'}`}
+                                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === s ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-white/5 text-slate-400 border-slate-200 dark:border-white/10'}`}
                             >
                                 {STAGE_LABELS[s]} ({leads.filter(l => l.stage === s).length})
                             </button>
@@ -192,15 +192,15 @@ export default function ContactsPage() {
                     {loading ? (
                         [...Array(5)].map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)
                     ) : filtered.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-1.52 text-center space-y-4">
-                            <div className="size-20 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-300 border border-slate-200 dark:border-white/10">
+                        <div className="flex flex-col items-center justify-center py-4 text-center space-y-4">
+                            <div className="size-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-300 border border-slate-200 dark:border-white/10">
                                 <Search size={40} />
                             </div>
-                            <h4 className="text-slate-800 dark:text-white font-black text-sm">No hay contactos</h4>
+                            <h4 className="text-slate-800 dark:text-white font-bold text-sm">No hay contactos</h4>
                             <p className="text-slate-400 text-sm max-w-[200px]">Agrega un nuevo contacto o ajusta los filtros.</p>
                             <button
                                 onClick={() => setIsCreateOpen(true)}
-                                className="px-4 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20"
+                                className="px-4 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20"
                             >
                                 Agregar Contacto
                             </button>
@@ -209,18 +209,18 @@ export default function ContactsPage() {
                         <div
                             key={lead.id}
                             onClick={() => router.push(`/crm/contacts/${lead.id}`)}
-                            className="bg-white dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl p-5 hover:border-blue-300 dark:hover:border-blue-700 transition-all group cursor-pointer shadow-sm hover:shadow-xl"
+                            className="bg-white dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl p-3 hover:border-blue-300 dark:hover:border-blue-700 transition-all group cursor-pointer shadow-sm hover:shadow-xl"
                         >
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex gap-4">
                                     <div className="relative">
-                                        <div className="size-14 rounded-2xl bg-blue-500/10 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-white font-black text-sm uppercase group-hover:border-blue-400 transition-colors">
+                                        <div className="size-8 rounded-lg bg-blue-500/10 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-white font-bold text-sm uppercase group-hover:border-blue-400 transition-colors">
                                             {lead.first_name?.charAt(0)}{lead.last_name?.charAt(0)}
                                         </div>
                                         <div className={`absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-white dark:border-[#1e1f21] ${getStatusDot(lead.stage)}`} />
                                     </div>
                                     <div>
-                                        <h3 className="font-black text-slate-800 dark:text-white text-base tracking-tight group-hover:text-blue-600 transition-colors">
+                                        <h3 className="font-bold text-slate-800 dark:text-white text-base tracking-tight group-hover:text-blue-600 transition-colors">
                                             {lead.first_name} {lead.last_name}
                                         </h3>
                                         <p className="text-[11px] text-slate-400 font-medium">
@@ -228,14 +228,14 @@ export default function ContactsPage() {
                                         </p>
                                     </div>
                                 </div>
-                                <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${getStatusStyles(lead.stage)}`}>
+                                <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide border ${getStatusStyles(lead.stage)}`}>
                                     {STAGE_LABELS[lead.stage] || lead.stage}
                                 </span>
                             </div>
                             <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/5">
                                 <button
                                     onClick={e => { e.stopPropagation(); router.push('/crm/pipeline'); }}
-                                    className="text-blue-600 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:text-blue-700 transition-colors"
+                                    className="text-blue-600 text-[10px] font-bold uppercase tracking-wide flex items-center gap-2 hover:text-blue-700 transition-colors"
                                 >
                                     <div className="size-5 rounded-lg bg-blue-600/10 flex items-center justify-center">
                                         <Link2 size={11} />
@@ -264,20 +264,20 @@ export default function ContactsPage() {
                     )) : ['board', 'kanban'].includes(viewType) ? (
                         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
                             {PIPELINE_STAGES.map(stage => (
-                                <div key={stage} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.03] p-3">
+                                <div key={stage} className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.03] p-3">
                                     <div className="mb-3 flex items-center justify-between">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{STAGE_LABELS[stage]}</span>
-                                        <span className="text-[10px] font-black text-slate-400">{groupedByStage[stage]?.length ?? 0}</span>
+                                        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{STAGE_LABELS[stage]}</span>
+                                        <span className="text-[10px] font-bold text-slate-400">{groupedByStage[stage]?.length ?? 0}</span>
                                     </div>
                                     <div className="space-y-2">
                                         {(groupedByStage[stage] ?? []).map(lead => (
                                             <button key={lead.id} onClick={() => router.push(`/crm/contacts/${lead.id}`)} className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
-                                                <p className="text-xs font-black text-slate-800 dark:text-slate-100">{lead.first_name} {lead.last_name}</p>
+                                                <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{lead.first_name} {lead.last_name}</p>
                                                 <p className="text-[10px] text-slate-400">{lead.phone || 'Sin teléfono'}</p>
                                             </button>
                                         ))}
                                         {(groupedByStage[stage] ?? []).length === 0 && (
-                                            <div className="py-6 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">Vacío</div>
+                                            <div className="py-2 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">Vacío</div>
                                         )}
                                     </div>
                                 </div>
@@ -286,17 +286,17 @@ export default function ContactsPage() {
                     ) : viewType === 'calendar' ? (
                         <div className="space-y-4">
                             {groupedByDate.length === 0 ? (
-                                <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 p-5 text-center text-slate-400">
+                                <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 p-3 text-center text-slate-400">
                                     <Calendar size={24} className="mx-auto mb-2" />
                                     Sin actividad para mostrar
                                 </div>
                             ) : groupedByDate.map(([dateKey, payload]) => (
-                                <div key={dateKey} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
-                                    <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">{payload.label}</p>
+                                <div key={dateKey} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                                    <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{payload.label}</p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {payload.items.map(lead => (
                                             <button key={lead.id} onClick={() => router.push(`/crm/contacts/${lead.id}`)} className="rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
-                                                <p className="text-sm font-black text-slate-800 dark:text-slate-100">{lead.first_name} {lead.last_name}</p>
+                                                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{lead.first_name} {lead.last_name}</p>
                                                 <p className="text-[10px] text-slate-400">{STAGE_LABELS[lead.stage] || lead.stage}</p>
                                             </button>
                                         ))}
@@ -305,30 +305,30 @@ export default function ContactsPage() {
                             ))}
                         </div>
                     ) : viewType === 'gantt' ? (
-                        <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500"><BarChart3 size={12} /> Progreso por contacto</div>
+                        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-slate-500"><BarChart3 size={12} /> Progreso por contacto</div>
                             {filtered.map(lead => (
                                 <div key={lead.id} className="space-y-1">
                                     <div className="flex items-center justify-between text-[11px]">
                                         <span className="font-bold text-slate-700 dark:text-slate-300">{lead.first_name} {lead.last_name}</span>
-                                        <span className="font-black text-slate-400">{STAGE_PROGRESS[lead.stage] ?? 0}%</span>
+                                        <span className="font-bold text-slate-400">{STAGE_PROGRESS[lead.stage] ?? 0}%</span>
                                     </div>
                                     <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
                                         <div className="h-full bg-blue-600" style={{ width: `${STAGE_PROGRESS[lead.stage] ?? 0}%` }} />
                                     </div>
                                 </div>
                             ))}
-                            {filtered.length === 0 && <div className="py-4 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">Sin datos</div>}
+                            {filtered.length === 0 && <div className="py-4 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">Sin datos</div>}
                         </div>
                     ) : viewType === 'table' ? (
-                        <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
+                        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
                             <table className="w-full text-left">
                                 <thead className="bg-slate-50 dark:bg-white/5">
                                     <tr>
-                                        <th className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Nombre</th>
-                                        <th className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Fuente</th>
-                                        <th className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Telefono</th>
-                                        <th className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Etapa</th>
+                                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">Nombre</th>
+                                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">Fuente</th>
+                                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">Telefono</th>
+                                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">Etapa</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -344,13 +344,13 @@ export default function ContactsPage() {
                             </table>
                         </div>
                     ) : viewType === 'wiki' ? (
-                        <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500"><BookOpen size={12} /> Wiki de contactos</div>
+                        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-slate-500"><BookOpen size={12} /> Wiki de contactos</div>
                             <textarea
                                 value={wikiNotes}
                                 onChange={(e) => setWikiNotes(e.target.value)}
                                 placeholder="Documenta políticas de seguimiento, guiones de llamada y estándares de consolidación..."
-                                className="w-full min-h-[360px] rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20"
+                                className="w-full min-h-[360px] rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20"
                             />
                         </div>
                     ) : (
@@ -374,7 +374,7 @@ export default function ContactsPage() {
                             form="create-contact-form"
                             type="submit"
                             disabled={isSaving}
-                            className="px-5 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
+                            className="px-3 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Registrar
@@ -385,64 +385,64 @@ export default function ContactsPage() {
                 <form id="create-contact-form" onSubmit={handleCreate} className="space-y-2">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre *</label>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Nombre *</label>
                             <input
                                 required
                                 value={newLead.first_name}
                                 onChange={e => setNewLead({ ...newLead, first_name: e.target.value })}
                                 placeholder="Juan"
-                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Apellido</label>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Apellido</label>
                             <input
                                 value={newLead.last_name}
                                 onChange={e => setNewLead({ ...newLead, last_name: e.target.value })}
                                 placeholder="Pérez"
-                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
                             />
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Teléfono</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Teléfono</label>
                         <input
                             value={newLead.phone}
                             onChange={e => setNewLead({ ...newLead, phone: e.target.value })}
                             placeholder="+57 300 123 4567"
-                            className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fuente</label>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Fuente</label>
                             <select
                                 value={newLead.source}
                                 onChange={e => setNewLead({ ...newLead, source: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
                             >
                                 {SOURCE_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Etapa inicial</label>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Etapa inicial</label>
                             <select
                                 value={newLead.stage}
                                 onChange={e => setNewLead({ ...newLead, stage: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
                             >
                                 {PIPELINE_STAGES.map(s => <option key={s} value={s}>{STAGE_LABELS[s]}</option>)}
                             </select>
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Notas</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Notas</label>
                         <textarea
                             value={newLead.notes}
                             onChange={e => setNewLead({ ...newLead, notes: e.target.value })}
                             placeholder="Contexto del contacto inicial..."
                             rows={3}
-                            className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white resize-none"
+                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white resize-none"
                         />
                     </div>
                 </form>

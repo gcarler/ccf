@@ -36,42 +36,42 @@ export default function EventsPage() {
             <div className="pt-28" />
 
             {/* Hero */}
-            <section className="py-20 px-6 text-center relative overflow-hidden">
+            <section className="py-4 px-6 text-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-emerald-600/10 to-transparent pointer-events-none" />
                 <div className="max-w-4xl mx-auto relative">
-                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-black uppercase tracking-widest mb-6">
+                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-bold uppercase tracking-wide mb-3">
                         <Calendar size={11} /> Próximos Eventos
                     </span>
-                    <h1 className="text-5xl font-black text-white mb-4 tracking-tight">
+                    <h1 className="text-xl font-bold text-white mb-3 tracking-tight">
                         Momentos que<br /><span className="text-emerald-400">Marcan tu Historia</span>
                     </h1>
-                    <p className="text-slate-400 text-lg mb-8 max-w-xl mx-auto">
+                    <p className="text-slate-400 text-lg mb-3 max-w-xl mx-auto">
                         Retiros, cultos especiales, seminarios y momentos de comunidad diseñados para transformar tu vida.
                     </p>
                     <div className="max-w-lg mx-auto relative">
                         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
                         <input value={search} onChange={e => setSearch(e.target.value)}
                             placeholder="Buscar evento..."
-                            className="w-full pl-12 pr-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-[14px] outline-none focus:ring-2 focus:ring-emerald-500/30 backdrop-blur" />
+                            className="w-full pl-12 pr-5 py-4 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-[14px] outline-none focus:ring-2 focus:ring-emerald-500/30 backdrop-blur" />
                     </div>
                 </div>
             </section>
 
             {/* Featured Events Carousel */}
             <section className="max-w-6xl mx-auto px-6 mb-12">
-                <p className="text-[11px] font-black uppercase tracking-widest text-slate-500 mb-5">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-3">
                     <Star size={10} className="inline mr-1.5 text-amber-400" />Eventos Destacados
                 </p>
                 <div className="grid grid-cols-3 gap-5">
                     {featured.map((ev, i) => (
                         <motion.div key={ev.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
-                            className={`h-52 rounded-3xl bg-gradient-to-br ${ev.color} relative overflow-hidden cursor-pointer group hover:scale-[1.02] transition-all shadow-2xl`}>
+                            className={`h-52 rounded-lg bg-gradient-to-br ${ev.color} relative overflow-hidden cursor-pointer group hover:scale-[1.02] transition-all shadow-2xl`}>
                             <div className="absolute inset-0 bg-black/30" />
                             <div className="absolute inset-0 p-6 flex flex-col justify-between">
                                 <div className="flex items-start justify-between">
-                                    <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur text-white text-[9px] font-black uppercase tracking-widest">{ev.category}</span>
+                                    <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur text-white text-[9px] font-bold uppercase tracking-wide">{ev.category}</span>
                                     <div className="text-right">
-                                        <p className="text-white/70 text-[9px] font-bold uppercase tracking-widest">{ev.date}</p>
+                                        <p className="text-white/70 text-[9px] font-bold uppercase tracking-wide">{ev.date}</p>
                                         <p className="text-white text-[10px] font-bold">{ev.time}</p>
                                     </div>
                                 </div>
@@ -97,7 +97,7 @@ export default function EventsPage() {
                 <Filter size={12} className="text-slate-600" />
                 {CATEGORIES.map(c => (
                     <button key={c} onClick={() => setCat(c)}
-                        className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${cat === c ? 'bg-emerald-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'}`}>
+                        className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all ${cat === c ? 'bg-emerald-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'}`}>
                         {c}
                     </button>
                 ))}
@@ -109,13 +109,13 @@ export default function EventsPage() {
                     const occupation = pct(ev.attendees, ev.capacity);
                     return (
                         <motion.div key={ev.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
-                            className="bg-white/5 hover:bg-white/8 border border-white/5 hover:border-white/10 rounded-2xl p-5 flex items-center gap-5 cursor-pointer group transition-all">
+                            className="bg-white/5 hover:bg-white/8 border border-white/5 hover:border-white/10 rounded-lg p-3 flex items-center gap-5 cursor-pointer group transition-all">
                             <div className={`size-14 rounded-2xl bg-gradient-to-br ${ev.color} flex items-center justify-center text-white shrink-0`}>
                                 <Calendar size={22} />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-0.5">
-                                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/10 text-slate-400 font-black uppercase tracking-widest">{ev.category}</span>
+                                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/10 text-slate-400 font-bold uppercase tracking-wide">{ev.category}</span>
                                     {ev.featured && <Star size={10} className="text-amber-400 fill-amber-400" />}
                                 </div>
                                 <p className="text-[14px] font-bold text-white group-hover:text-emerald-400 transition-colors">{ev.title}</p>
@@ -134,7 +134,7 @@ export default function EventsPage() {
                                     <div className={clsx("rounded-full h-1.5", occupation > 80 ? "bg-rose-500" : occupation > 50 ? "bg-amber-500" : "bg-emerald-500")}
                                         style={{ width: `${occupation}%` }} />
                                 </div>
-                                <button className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-400 hover:text-white transition-colors">
+                                <button className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-emerald-400 hover:text-white transition-colors">
                                     <Ticket size={11} /> Inscribirme <ChevronRight size={10} />
                                 </button>
                             </div>

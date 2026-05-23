@@ -159,7 +159,7 @@ export default function LeadDetail() {
 
     if (!isAuthenticated) return null;
     if (loading) return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center text-primary font-black uppercase tracking-widest text-xs">
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center text-primary font-bold uppercase tracking-wide text-xs">
             Cargando...
         </div>
     );
@@ -192,8 +192,8 @@ export default function LeadDetail() {
             <div className="space-y-4">
                 <section className="px-4 pt-2 pb-6 flex flex-col items-center text-center space-y-4">
                     <div className="relative group">
-                        <div className="size-32 rounded-xl overflow-hidden border-4 border-white/10 group-hover:border-primary/50 transition-all shadow-2xl relative">
-                            <div className="size-full rounded-[2.2rem] bg-slate-800 flex items-center justify-center text-white text-3xl font-black">
+                        <div className="size-10 rounded-xl overflow-hidden border-4 border-white/10 group-hover:border-primary/50 transition-all shadow-2xl relative">
+                            <div className="size-full rounded-lg bg-slate-800 flex items-center justify-center text-white text-xl font-bold">
                                 {lead?.first_name?.charAt(0).toUpperCase() || '?'}
                             </div>
                         </div>
@@ -202,14 +202,14 @@ export default function LeadDetail() {
                         </div>
                     </div>
                     <div className="space-y-1">
-                        <h1 className="text-3xl font-black tracking-tight text-white">{lead?.first_name} {lead?.last_name}</h1>
-                        <p className="text-primary font-black uppercase tracking-[0.2em] text-[10px]">
+                        <h1 className="text-xl font-bold tracking-tight text-white">{lead?.first_name} {lead?.last_name}</h1>
+                        <p className="text-primary font-bold uppercase tracking-[0.2em] text-[10px]">
                             Etapa: {STAGE_LABELS[lead?.stage] ?? lead?.stage} • Origen: {lead?.source ?? '...'}
                         </p>
                     </div>
                     <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/5">
                         <Clock size={12} className="text-primary" />
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide leading-none">
                             Registrado: {lead ? new Date(lead.created_at).toLocaleDateString() : '...'}
                         </span>
                     </div>
@@ -220,13 +220,13 @@ export default function LeadDetail() {
                         { label: 'Llamadas', val: callLogs.length.toString(), icon: Phone },
                         { label: 'Prayer Requests', val: callLogs.filter(l => l.prayer_requests).length.toString(), icon: Heart },
                     ].map((stat, i) => (
-                        <div key={i} className="flex-1 min-w-[120px] bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-xl p-5 flex flex-col gap-2 group hover:border-primary/30 transition-all">
+                        <div key={i} className="flex-1 min-w-[120px] bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-xl p-3 flex flex-col gap-2 group hover:border-primary/30 transition-all">
                             <div className="size-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all text-xs">
                                 <stat.icon size={16} />
                             </div>
                             <div>
-                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">{stat.label}</p>
-                                <p className="text-lg font-black text-white">{stat.val}</p>
+                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wide leading-none mb-1">{stat.label}</p>
+                                <p className="text-lg font-bold text-white">{stat.val}</p>
                             </div>
                         </div>
                     ))}
@@ -241,7 +241,7 @@ export default function LeadDetail() {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`pb-4 text-xs font-black uppercase tracking-widest transition-all relative ${activeTab === tab.id ? 'text-primary' : 'text-slate-500 hover:text-slate-300'}`}
+                                className={`pb-4 text-xs font-bold uppercase tracking-wide transition-all relative ${activeTab === tab.id ? 'text-primary' : 'text-slate-500 hover:text-slate-300'}`}
                             >
                                 {tab.label}
                                 {activeTab === tab.id && (
@@ -252,28 +252,28 @@ export default function LeadDetail() {
                     </div>
                 </section>
 
-                <section className="px-5 py-6 space-y-4">
+                <section className="px-3 py-2 space-y-4">
                     {combinedTimeline.map((item, idx) => (
                         <div key={item.id} className="relative flex gap-4">
                             {idx !== combinedTimeline.length - 1 && (
                                 <div className="absolute left-[1.125rem] top-5 bottom-[-40px] w-px bg-white/5"></div>
                             )}
-                            <div className={`z-10 size-9 shrink-0 items-center justify-center rounded-2xl ${item.color} text-white shadow-xl flex border-4 border-slate-950`}>
+                            <div className={`z-10 size-9 shrink-0 items-center justify-center rounded-lg ${item.color} text-white shadow-xl flex border-4 border-slate-950`}>
                                 {item.type === 'call' && <Phone size={16} />}
                                 {item.type === 'spiritual' && <Sparkles size={16} />}
                                 {item.type === 'counseling' && <MessageSquare size={16} />}
                             </div>
-                            <div className={`flex flex-col gap-2 flex-1 ${item.isInsight ? 'bg-amber-500/5 border border-amber-500/10 p-5 rounded-xl' : 'bg-white/2 p-5 rounded-xl border border-white/5'}`}>
+                            <div className={`flex flex-col gap-2 flex-1 ${item.isInsight ? 'bg-amber-500/5 border border-amber-500/10 p-3 rounded-xl' : 'bg-white/2 p-3 rounded-xl border border-white/5'}`}>
                                 <div className="flex justify-between items-start">
-                                    <h4 className={`text-sm font-black tracking-tight ${item.isInsight ? 'text-amber-500' : 'text-white'}`}>{item.title}</h4>
-                                    <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{item.time}</span>
+                                    <h4 className={`text-sm font-bold tracking-tight ${item.isInsight ? 'text-amber-500' : 'text-white'}`}>{item.title}</h4>
+                                    <span className="text-[9px] font-bold text-slate-600 uppercase tracking-wide">{item.time}</span>
                                 </div>
                                 <p className={`text-xs leading-relaxed font-medium ${item.isInsight ? 'text-amber-200/60 italic' : 'text-slate-400'}`}>
                                     {item.message || 'Sin observaciones.'}
                                 </p>
                                 {item.prayer && (
                                     <div className="mt-2 p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
-                                        <p className="text-[10px] text-emerald-500 font-bold flex items-center gap-1 uppercase tracking-widest mb-1">
+                                        <p className="text-[10px] text-emerald-500 font-bold flex items-center gap-1 uppercase tracking-wide mb-1">
                                             <Heart size={10} /> Motivo de Oración
                                         </p>
                                         <p className="text-xs text-emerald-200/80">{item.prayer}</p>
@@ -284,30 +284,30 @@ export default function LeadDetail() {
                     ))}
 
                     {combinedTimeline.length === 0 && (
-                        <div className="py-20 text-center space-y-4">
+                        <div className="py-4 text-center space-y-4">
                             <History size={48} className="mx-auto text-slate-800" />
-                            <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Sin historial registrado</p>
+                            <p className="text-slate-500 font-bold uppercase tracking-wide text-[10px]">Sin historial registrado</p>
                         </div>
                     )}
                 </section>
 
                 {/* Actions */}
-                <section className="px-4 py-6 border-t border-white/5 mt-6 space-y-3">
+                <section className="px-4 py-2 border-t border-white/5 mt-3 space-y-3">
                     <div className="bg-primary/5 rounded-xl border border-primary/20 p-4 flex flex-col gap-4 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 -mr-10 -mt-10 size-32 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
+                        <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
                         <div className="flex items-center gap-4 relative z-10">
-                            <div className="bg-primary size-9 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-primary/20">
+                            <div className="bg-primary size-9 rounded-lg flex items-center justify-center text-white shadow-xl shadow-primary/20">
                                 <Calendar size={24} />
                             </div>
                             <div>
-                                <h4 className="text-white font-black tracking-tight">Acciones de Consolidación</h4>
-                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Gestión del Seguimiento</p>
+                                <h4 className="text-white font-bold tracking-tight">Acciones de Consolidación</h4>
+                                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wide">Gestión del Seguimiento</p>
                             </div>
                         </div>
                         <div className="flex gap-4 relative z-10">
                             <button
                                 onClick={() => setIsCallDrawerOpen(true)}
-                                className="flex-1 bg-primary hover:bg-primary-600 text-white py-2 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-primary/30 active:scale-95 transition-all flex items-center justify-center gap-2 border border-primary-400/20"
+                                className="flex-1 bg-primary hover:bg-primary-600 text-white py-2 rounded-lg font-bold uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-primary/30 active:scale-95 transition-all flex items-center justify-center gap-2 border border-primary-400/20"
                             >
                                 <Phone size={16} />
                                 Registrar Llamada
@@ -317,7 +317,7 @@ export default function LeadDetail() {
                                 <button
                                     onClick={() => setIsStageOpen(s => !s)}
                                     disabled={isSavingStage}
-                                    className="size-14 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                                    className="size-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
                                     title="Cambiar etapa"
                                 >
                                     {isSavingStage
@@ -326,13 +326,13 @@ export default function LeadDetail() {
                                     }
                                 </button>
                                 {isStageOpen && (
-                                    <div className="absolute bottom-16 right-0 w-48 bg-slate-900 border border-white/10 rounded-2xl overflow-hidden shadow-2xl z-50">
+                                    <div className="absolute bottom-16 right-0 w-48 bg-slate-900 border border-white/10 rounded-lg overflow-hidden shadow-2xl z-50">
                                         {STAGES.map(s => (
                                             <button
                                                 key={s}
                                                 onClick={() => handleStageChange(s)}
                                                 className={clsx(
-                                                    "w-full px-4 py-1.5 text-left text-[11px] font-black uppercase tracking-widest transition-all hover:bg-white/10",
+                                                    "w-full px-4 py-1.5 text-left text-[11px] font-bold uppercase tracking-wide transition-all hover:bg-white/10",
                                                     lead?.stage === s ? 'text-primary bg-white/5' : 'text-slate-400'
                                                 )}
                                             >
@@ -362,7 +362,7 @@ export default function LeadDetail() {
                             form="call-form"
                             type="submit"
                             disabled={isSavingCall}
-                            className="px-5 py-2 bg-primary text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all flex items-center gap-2"
+                            className="px-3 py-2 bg-primary text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isSavingCall ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Registrar
@@ -372,11 +372,11 @@ export default function LeadDetail() {
             >
                 <form id="call-form" onSubmit={handleRegisterCall} className="space-y-2">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Resultado de la llamada</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Resultado de la llamada</label>
                         <select
                             value={callForm.outcome}
                             onChange={e => setCallForm({ ...callForm, outcome: e.target.value })}
-                            className="w-full px-4 py-1.5 rounded-2xl border border-white/10 bg-black/20 outline-none focus:ring-2 focus:ring-primary/20 font-bold text-sm text-white appearance-none"
+                            className="w-full px-4 py-1.5 rounded-lg border border-white/10 bg-black/20 outline-none focus:ring-2 focus:ring-primary/20 font-bold text-sm text-white appearance-none"
                         >
                             {['Exitoso', 'Sin respuesta', 'Buzón de voz', 'Número equivocado', 'Reagendar'].map(o =>
                                 <option key={o} value={o}>{o}</option>
@@ -384,23 +384,23 @@ export default function LeadDetail() {
                         </select>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Notas de la llamada</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Notas de la llamada</label>
                         <textarea
                             value={callForm.notes}
                             onChange={e => setCallForm({ ...callForm, notes: e.target.value })}
                             placeholder="Observaciones, próximos pasos..."
                             rows={3}
-                            className="w-full px-4 py-1.5 rounded-2xl border border-white/10 bg-black/20 outline-none focus:ring-2 focus:ring-primary/20 font-bold text-sm text-white resize-none"
+                            className="w-full px-4 py-1.5 rounded-lg border border-white/10 bg-black/20 outline-none focus:ring-2 focus:ring-primary/20 font-bold text-sm text-white resize-none"
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Motivo de Oración (opcional)</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Motivo de Oración (opcional)</label>
                         <textarea
                             value={callForm.prayer_requests}
                             onChange={e => setCallForm({ ...callForm, prayer_requests: e.target.value })}
                             placeholder="Petición de oración mencionada..."
                             rows={2}
-                            className="w-full px-4 py-1.5 rounded-2xl border border-white/10 bg-black/20 outline-none focus:ring-2 focus:ring-primary/20 font-bold text-sm text-white resize-none"
+                            className="w-full px-4 py-1.5 rounded-lg border border-white/10 bg-black/20 outline-none focus:ring-2 focus:ring-primary/20 font-bold text-sm text-white resize-none"
                         />
                     </div>
                 </form>

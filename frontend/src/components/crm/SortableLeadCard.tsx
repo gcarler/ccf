@@ -60,7 +60,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
             {...listeners}
             onClick={onClick}
             className={clsx(
-                "group relative p-4 mb-3 rounded-[1.8rem] transition-all cursor-grab active:cursor-grabbing",
+                "group relative p-4 mb-3 rounded-lg transition-all cursor-grab active:cursor-grabbing",
                 "bg-white dark:bg-[#1e1f21] border border-slate-200/50 dark:border-white/5",
                 "hover:border-blue-500/30 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)]",
                 "hover:-translate-y-1 active:scale-[0.98]",
@@ -71,7 +71,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
         >
             {/* SLA Overdue Pulse */}
             {isSlaOverdue && (
-                <div className="absolute inset-0 rounded-[1.8rem] ring-2 ring-amber-500/10 animate-pulse pointer-events-none" />
+                <div className="absolute inset-0 rounded-lg ring-2 ring-amber-500/10 animate-pulse pointer-events-none" />
             )}
             {/* Top Glow Accent */}
             <div className={clsx("absolute top-0 left-6 right-6 h-[1.5px] opacity-20 blur-[1px]", stage.color)} />
@@ -80,7 +80,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
             <div className="flex items-start gap-4 mb-4 relative">
                 <div className="relative shrink-0">
                     {/* Progress Circle SVG */}
-                    <svg className="size-11 -rotate-90 absolute -top-0.5 -left-0.5 pointer-events-none">
+                    <svg className="size-8 -rotate-90 absolute -top-0.5 -left-0.5 pointer-events-none">
                         <circle
                             cx="22" cy="22" r={radius}
                             fill="transparent"
@@ -103,7 +103,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                     </svg>
 
                     <div className={clsx(
-                        "size-8 rounded-2xl flex items-center justify-center text-white font-black text-xs shadow-lg relative z-10 transition-transform group-hover:scale-105",
+                        "size-8 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-lg relative z-10 transition-transform group-hover:scale-105",
                         stage.color,
                         glowColor
                     )}>
@@ -117,7 +117,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                 
                 <div className="flex-1 min-w-0 pt-0.5">
                     <div className="flex items-center justify-between gap-2">
-                        <h4 className="font-black text-slate-900 dark:text-white text-[14px] leading-tight truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        <h4 className="font-bold text-slate-900 dark:text-white text-[14px] leading-tight truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                             {lead.first_name} {lead.last_name}
                         </h4>
                         <ChevronRight size={14} className="text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
@@ -151,7 +151,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
             {/* Footer Metadata */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <div className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-white/5 text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                    <div className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-white/5 text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
                         <span className="text-[12px]">{SOURCES[lead.source] ?? '📌'}</span>
                         {lead.source}
                     </div>
@@ -160,7 +160,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                 <div className="flex items-center gap-2">
                     {daysSince !== null && (
                         <div className={clsx(
-                            "flex items-center gap-1 text-[10px] font-black",
+                            "flex items-center gap-1 text-[10px] font-bold",
                             daysSince > 14 ? 'text-rose-500' :
                             daysSince > 7 ? 'text-amber-500' :
                             'text-slate-400'

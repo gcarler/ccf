@@ -53,7 +53,7 @@ export default function MessagingDetailPage() {
 
     if (loading) {
         return (
-            <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">
+            <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-slate-400">
                 Analizando metricas de comunicacion...
             </div>
         );
@@ -61,7 +61,7 @@ export default function MessagingDetailPage() {
 
     if (!campaign) {
         return (
-            <div className="p-20 text-center font-black uppercase tracking-widest text-slate-400">
+            <div className="p-4 text-center font-bold uppercase tracking-wide text-slate-400">
                 No se pudo cargar la campana.
             </div>
         );
@@ -86,7 +86,7 @@ export default function MessagingDetailPage() {
                             tone={campaign.status === "sent" ? "emerald" : "blue"}
                             label={String(campaign.status || "sent").toUpperCase()}
                         />
-                        <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">
+                        <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase leading-none">
                             {title}
                         </h1>
                         <div className="flex items-center gap-4 text-sm font-bold text-slate-500">
@@ -120,7 +120,7 @@ export default function MessagingDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Contenido del Mensaje</h3>
+                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Contenido del Mensaje</h3>
                             <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
                                 <p className="text-sm font-medium text-slate-800 dark:text-slate-200 leading-relaxed">
                                     {campaign.content}
@@ -131,7 +131,7 @@ export default function MessagingDetailPage() {
 
                     <aside className="space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Estado de Entrega</h3>
+                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Estado de Entrega</h3>
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between text-xs font-bold">
                                     <span className="text-slate-500">Completado</span>

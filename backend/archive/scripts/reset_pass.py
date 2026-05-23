@@ -10,7 +10,9 @@ hash_str = get_password_hash("admin1234")
 
 conn = sqlite3.connect(r"d:\ccf\ccf_v2.db")
 c = conn.cursor()
-c.execute("UPDATE users SET password_hash = ? WHERE email = ?", (hash_str, 'admin@ccf.la'))
+c.execute(
+    "UPDATE users SET password_hash = ? WHERE email = ?", (hash_str, "admin@ccf.la")
+)
 conn.commit()
 print("Password reset to admin1234 for admin@ccf.la")
 conn.close()

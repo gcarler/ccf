@@ -33,43 +33,57 @@ export const colors = {
     danger: '#ef4444',
 };
 
+// Compact border radii (ClickUp-style: 4-8px max for most elements)
 export const radii = {
-    pill: '9999px',
-    xl: '1.5rem',
-    bubble: '3rem',
+    sm: '0.25rem',     // 4px - badges, chips
+    md: '0.375rem',    // 6px - buttons, inputs
+    lg: '0.5rem',      // 8px - cards, dropdowns
+    xl: '0.75rem',     // 12px - modals (max)
+    pill: '9999px',    // only for avatar/status indicators
 };
 
+// Subtle shadows for compact UI
 export const shadows = {
-    soft: '0 25px 55px rgba(15, 23, 42, 0.15)',
-    glow: '0 0 35px rgba(99, 102, 241, 0.45)',
-    inner: 'inset 0 1px 0 rgba(255,255,255,0.15)',
+    soft: '0 1px 3px rgba(15, 23, 42, 0.08)',
+    card: '0 1px 2px rgba(15, 23, 42, 0.06)',
+    dropdown: '0 4px 12px rgba(15, 23, 42, 0.1)',
+    inner: 'inset 0 1px 0 rgba(255,255,255,0.1)',
 };
 
+// Compact typography with weight hierarchy
 export const typography = {
     family: 'var(--font-manrope, "Manrope", system-ui, -apple-system, sans-serif)',
-    letterSpacing: {
-        wide: '0.3em',
-        base: '0.05em',
-    },
     sizes: {
-        eyebrow: '0.65rem',
-        body: '0.95rem',
+        xs: '0.6875rem',    // 11px - metadata, badges
+        sm: '0.75rem',      // 12px - labels, secondary text
+        base: '0.8125rem',  // 13px - body text default
+        md: '0.875rem',     // 14px - primary text
+        lg: '1rem',         // 16px - headings
+        xl: '1.125rem',     // 18px - page titles
+    },
+    weights: {
+        normal: 400,
+        medium: 500,   // labels, body
+        semibold: 600, // emphasis
+        bold: 700,     // headings
+        black: 900,    // sparingly - key metrics only
     },
 };
 
+// Compact spacing scale
 export const spacing = {
-    xs: '0.35rem',
-    sm: '0.65rem',
-    md: '1rem',
-    lg: '1.5rem',
-    xl: '2.5rem',
+    xs: '0.25rem',   // 4px - tight gaps
+    sm: '0.375rem',  // 6px - item gaps
+    md: '0.5rem',    // 8px - section gaps
+    lg: '0.75rem',   // 12px - card padding
+    xl: '1rem',      // 16px - page padding
 };
 
 export const motion = {
     duration: {
-        quick: '120ms',
-        base: '200ms',
-        slow: '350ms',
+        quick: '100ms',
+        base: '150ms',
+        slow: '250ms',
     },
     easing: {
         entrance: 'cubic-bezier(0.16,1,0.3,1)',

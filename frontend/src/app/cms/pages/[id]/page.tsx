@@ -79,7 +79,7 @@ export default function CmsPageDetailPage() {
   if (loading) {
     return (
       <div className="flex flex-col h-full items-center justify-center gap-6 bg-white dark:bg-[#0d0e11]">
-        <div className="size-16 rounded-[2rem] bg-slate-100 dark:bg-white/5 flex items-center justify-center animate-pulse">
+        <div className="size-16 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center animate-pulse">
           <Layout size={28} strokeWidth={1} className="text-slate-400" />
         </div>
         <div className="space-y-2 text-center">
@@ -101,7 +101,7 @@ export default function CmsPageDetailPage() {
       >
         {/* Icon */}
         <div className="flex justify-center">
-          <div className="size-20 rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-2xl shadow-blue-500/30">
+          <div className="size-20 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-2xl shadow-blue-500/30">
             <PenTool size={32} className="text-white" strokeWidth={1.5} />
           </div>
         </div>
@@ -109,11 +109,11 @@ export default function CmsPageDetailPage() {
         {/* Page info */}
         <div className="space-y-3">
           <div className="flex justify-center">
-            <span className={clsx("px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border", status.color)}>
+            <span className={clsx("px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide border", status.color)}>
               {status.label}
             </span>
           </div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight">
             {page?.title}
           </h1>
           <div className="flex items-center justify-center gap-4 text-[11px] font-bold text-slate-400">
@@ -138,9 +138,9 @@ export default function CmsPageDetailPage() {
         </div>
 
         {/* Redirect card */}
-        <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-6 space-y-5">
+        <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-6 space-y-5">
           <div className="space-y-1">
-            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
+            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
               Redirigiendo al Builder
             </p>
             <p className="text-slate-600 dark:text-slate-300 text-sm font-medium">
@@ -161,7 +161,7 @@ export default function CmsPageDetailPage() {
                   strokeLinecap="round"
                 />
               </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-xl font-black text-slate-800 dark:text-white">
+              <span className="absolute inset-0 flex items-center justify-center text-xl font-semibold text-slate-800 dark:text-white">
                 {countdown}
               </span>
             </div>
@@ -170,7 +170,7 @@ export default function CmsPageDetailPage() {
           {/* CTA button */}
           <button
             onClick={handleGoNow}
-            className="w-full flex items-center justify-center gap-3 py-4 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all"
+            className="w-full flex items-center justify-center gap-3 py-4 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all"
           >
             <PenTool size={16} />
             Abrir en el Builder ahora
@@ -179,7 +179,7 @@ export default function CmsPageDetailPage() {
 
           <button
             onClick={() => router.push("/cms/pages")}
-            className="w-full py-2.5 text-slate-400 hover:text-slate-600 text-[10px] font-black uppercase tracking-widest transition-colors"
+            className="w-full py-2.5 text-slate-400 hover:text-slate-600 text-[10px] font-semibold uppercase tracking-wide transition-colors"
           >
             ← Volver a páginas
           </button>

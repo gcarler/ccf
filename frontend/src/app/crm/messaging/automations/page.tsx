@@ -164,7 +164,7 @@ export default function AutomationsPage() {
             rightActions={
                 <button
                     onClick={openCreate}
-                    className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+                    className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
                 >
                     <Plus size={14} /> Nueva Regla
                 </button>
@@ -179,9 +179,9 @@ export default function AutomationsPage() {
                         { label: 'Activas', val: rules.filter(r => r.active).length, color: 'text-emerald-600' },
                         { label: 'Inactivas', val: rules.filter(r => !r.active).length, color: 'text-slate-400' },
                     ].map(s => (
-                        <div key={s.label} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 text-center">
-                            <p className={`text-lg font-black ${s.color}`}>{s.val}</p>
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{s.label}</p>
+                        <div key={s.label} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 text-center">
+                            <p className={`text-lg font-bold ${s.color}`}>{s.val}</p>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">{s.label}</p>
                         </div>
                     ))}
                 </div>
@@ -190,17 +190,17 @@ export default function AutomationsPage() {
                 {loading ? (
                     [...Array(3)].map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)
                 ) : rules.length === 0 ? (
-                    <div className="py-1.52 flex flex-col items-center justify-center gap-4 text-center">
-                        <div className="size-24 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-300">
+                    <div className="py-4 flex flex-col items-center justify-center gap-4 text-center">
+                        <div className="size-10 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-300">
                             <Zap size={48} strokeWidth={1} />
                         </div>
                         <div>
-                            <h3 className="text-slate-800 dark:text-white font-black text-base">Sin automatizaciones</h3>
+                            <h3 className="text-slate-800 dark:text-white font-bold text-base">Sin automatizaciones</h3>
                             <p className="text-slate-400 text-sm mt-1">Crea reglas que disparen acciones pastorales automáticamente</p>
                         </div>
                         <button
                             onClick={openCreate}
-                            className="px-5 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20"
+                            className="px-3 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20"
                         >
                             Crear primera regla
                         </button>
@@ -220,7 +220,7 @@ export default function AutomationsPage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.97 }}
                                     className={clsx(
-                                        "bg-white dark:bg-white/5 border rounded-xl p-5 transition-all",
+                                        "bg-white dark:bg-white/5 border rounded-xl p-3 transition-all",
                                         rule.active
                                             ? "border-slate-200 dark:border-white/10 shadow-sm"
                                             : "border-dashed border-slate-200 dark:border-white/5 opacity-60"
@@ -228,17 +228,17 @@ export default function AutomationsPage() {
                                 >
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex items-center gap-4 flex-1 min-w-0">
-                                            <div className={clsx("size-9 rounded-2xl border flex items-center justify-center shrink-0", TRIGGER_COLORS[rule.trigger] || 'bg-slate-100 text-slate-400 border-slate-200')}>
+                                            <div className={clsx("size-9 rounded-lg border flex items-center justify-center shrink-0", TRIGGER_COLORS[rule.trigger] || 'bg-slate-100 text-slate-400 border-slate-200')}>
                                                 <TrigIcon size={20} />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="font-black text-slate-800 dark:text-white text-base tracking-tight truncate">{rule.name}</h3>
+                                                <h3 className="font-bold text-slate-800 dark:text-white text-base tracking-tight truncate">{rule.name}</h3>
                                                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                                    <span className={clsx("px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border", TRIGGER_COLORS[rule.trigger] || 'bg-slate-100 text-slate-400 border-slate-200')}>
+                                                    <span className={clsx("px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wide border", TRIGGER_COLORS[rule.trigger] || 'bg-slate-100 text-slate-400 border-slate-200')}>
                                                         {trig?.label || rule.trigger}
                                                     </span>
                                                     <span className="text-slate-300 text-xs">→</span>
-                                                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-[9px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">
+                                                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-[9px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                                                         <ActIcon size={10} />
                                                         {act?.label || rule.action}
                                                     </div>
@@ -301,7 +301,7 @@ export default function AutomationsPage() {
                             form="automation-form"
                             type="submit"
                             disabled={isSaving}
-                            className="px-5 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
+                            className="px-3 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
                             {editingRule ? 'Guardar Cambios' : 'Crear Regla'}
@@ -311,18 +311,18 @@ export default function AutomationsPage() {
             >
                 <form id="automation-form" onSubmit={handleSave} className="space-y-2">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre de la regla *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Nombre de la regla *</label>
                         <input
                             required
                             value={form.name}
                             onChange={e => setForm({ ...form, name: e.target.value })}
                             placeholder="Ej: Bienvenida a nuevos miembros"
-                            className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Disparador (Trigger)</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Disparador (Trigger)</label>
                         <div className="grid grid-cols-1 gap-2">
                             {TRIGGERS.map(t => {
                                 const Icon = t.icon;
@@ -333,7 +333,7 @@ export default function AutomationsPage() {
                                         type="button"
                                         onClick={() => setForm({ ...form, trigger: t.value })}
                                         className={clsx(
-                                            "flex items-center gap-3 px-4 py-1.5 rounded-2xl border text-left transition-all",
+                                            "flex items-center gap-3 px-4 py-1.5 rounded-lg border text-left transition-all",
                                             selected
                                                 ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                                                 : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:border-blue-300"
@@ -342,7 +342,7 @@ export default function AutomationsPage() {
                                         <div className={clsx("size-8 rounded-xl flex items-center justify-center", selected ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-400')}>
                                             <Icon size={16} />
                                         </div>
-                                        <span className={clsx("text-[11px] font-black uppercase tracking-wide", selected ? 'text-blue-700 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300')}>
+                                        <span className={clsx("text-[11px] font-bold uppercase tracking-wide", selected ? 'text-blue-700 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300')}>
                                             {t.label}
                                         </span>
                                         {selected && <CheckCircle2 size={16} className="ml-auto text-blue-600" />}
@@ -353,11 +353,11 @@ export default function AutomationsPage() {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Acción a ejecutar</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Acción a ejecutar</label>
                         <select
                             value={form.action}
                             onChange={e => setForm({ ...form, action: e.target.value })}
-                            className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
                         >
                             {ACTIONS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
                         </select>
@@ -365,17 +365,17 @@ export default function AutomationsPage() {
 
                     {form.action === 'create_task' ? (
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Título de la tarea pastoral</label>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Título de la tarea pastoral</label>
                             <input
                                 value={form.taskTitle}
                                 onChange={e => setForm({ ...form, taskTitle: e.target.value })}
                                 placeholder="Ej: Visitar al nuevo miembro"
-                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
                             />
                         </div>
                     ) : (
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
                                 Mensaje a enviar <span className="normal-case font-bold">(usa {'{'+'nombre'+'}'} para personalizar)</span>
                             </label>
                             <textarea
@@ -383,7 +383,7 @@ export default function AutomationsPage() {
                                 onChange={e => setForm({ ...form, message: e.target.value })}
                                 placeholder="Hola {nombre}, bienvenido a CCF El Faro..."
                                 rows={4}
-                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white resize-none"
+                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white resize-none"
                             />
                         </div>
                     )}

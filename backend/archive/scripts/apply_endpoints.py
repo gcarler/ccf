@@ -1,14 +1,17 @@
 import collections
 import json
 
-with open('d:/ccf/backend/api/evangelism_faro.py', 'r', encoding='utf-8') as f:
+with open("d:/ccf/backend/api/evangelism_faro.py", "r", encoding="utf-8") as f:
     content = f.read()
 
 # 1. Add alias
-content = content.replace('@router.get("/glory-houses/{house_id}", response_model=dict)', '@router.get("/glory-houses/{house_id}", response_model=dict)\n@router.get("/micro/{house_id}", response_model=dict)')
+content = content.replace(
+    '@router.get("/glory-houses/{house_id}", response_model=dict)',
+    '@router.get("/glory-houses/{house_id}", response_model=dict)\n@router.get("/micro/{house_id}", response_model=dict)',
+)
 
 # 2. Append new endpoint
-new_endpoint = '''
+new_endpoint = """
 
 @router.get("/macro/despliegue", response_model=dict)
 def get_macro_despliegue(
@@ -85,11 +88,11 @@ def get_macro_despliegue(
         "total_houses": len(houses),
         "despliegue": despliegue
     }
-'''
+"""
 
 content += new_endpoint
 
-with open('d:/ccf/backend/api/evangelism_faro.py', 'w', encoding='utf-8') as f:
+with open("d:/ccf/backend/api/evangelism_faro.py", "w", encoding="utf-8") as f:
     f.write(content)
 
 print("Python modifications done")

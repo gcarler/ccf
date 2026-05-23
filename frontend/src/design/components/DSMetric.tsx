@@ -19,12 +19,12 @@ export function DSMetric({ label, value, trend, tone = 'blue' }: DSMetricProps) 
     };
 
     return (
-        <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/5 rounded-[2rem] p-6 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">{label}</p>
-            <p className="text-4xl font-black mt-3 text-slate-800 dark:text-white leading-none">{value}</p>
+        <div className="bg-white dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/5 rounded-lg p-3 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</p>
+            <p className="text-xl font-bold mt-1.5 text-slate-800 dark:text-white leading-tight">{value}</p>
             {trend && (
-                <div className="mt-4">
-                    <span className={clsx("inline-flex items-center px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest", tones[tone].bg, tones[tone].text)}>
+                <div className="mt-2">
+                    <span className={clsx("inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wide", tones[tone].bg, tones[tone].text)}>
                         {trend}
                     </span>
                 </div>

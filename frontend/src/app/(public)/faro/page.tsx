@@ -69,7 +69,7 @@ export default function PublicHomePage() {
                 {/* Content */}
                 <div className="relative z-10 text-center w-full px-6 md:px-16 lg:px-24 pt-24">
                     <span
-                        className="inline-block text-xs font-black uppercase tracking-[0.5em] mb-8"
+                        className="inline-block text-xs font-bold uppercase tracking-wide mb-3"
                         style={{ color: "rgba(165, 200, 255, 0.7)" }}
                     >
                         {heroEyebrow}
@@ -105,7 +105,7 @@ export default function PublicHomePage() {
                         </span>
                     </h1>
                     <p
-                        className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-12"
+                        className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-3"
                         style={{ color: "rgba(217, 226, 255, 0.75)" }}
                     >
                         {heroDescription}
@@ -113,7 +113,7 @@ export default function PublicHomePage() {
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Link
                             href="/faro/conocer-a-jesus"
-                            className="group flex items-center gap-3 px-8 py-4 rounded-full text-sm font-black uppercase tracking-[0.2em] text-white transition-all hover:scale-105"
+                            className="group flex items-center gap-3 px-8 py-4 rounded-full text-sm font-bold uppercase tracking-wide text-white transition-all hover:scale-105"
                             style={{
                                 background:
                                     "linear-gradient(135deg, #018abd 0%, #2c609d 100%)",
@@ -128,7 +128,7 @@ export default function PublicHomePage() {
                         </Link>
                         <Link
                             href="/faro/predicas"
-                            className="flex items-center gap-3 px-8 py-4 rounded-full text-sm font-black uppercase tracking-[0.2em] transition-all hover:scale-105"
+                            className="flex items-center gap-3 px-8 py-4 rounded-full text-sm font-bold uppercase tracking-wide transition-all hover:scale-105"
                             style={{
                                 background: "rgba(255,255,255,0.08)",
                                 border: "2px solid rgba(255,255,255,0.15)",
@@ -150,7 +150,7 @@ export default function PublicHomePage() {
                     className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
                 >
                     <div className="w-px h-12 bg-white animate-pulse" />
-                    <span className="text-white text-[9px] uppercase tracking-[0.3em]">
+                    <span className="text-white text-[9px] uppercase tracking-wide">
                         Descubrir
                     </span>
                 </motion.div>
@@ -158,7 +158,7 @@ export default function PublicHomePage() {
 
             {/* ─── BENTO: Bienvenidos a Casa ────────────────────────── */}
             <section
-                className="py-24 px-6 md:px-16 lg:px-24 overflow-hidden"
+                className="py-4 px-6 md:px-16 lg:px-24 overflow-hidden"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
                 <div className="w-full max-w-[1600px] mx-auto px-6 md:px-16 lg:px-24">
@@ -166,16 +166,16 @@ export default function PublicHomePage() {
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true, margin: "-100px" }}
-                        className="mb-14"
+                        className="mb-3"
                     >
                         <span
-                            className="text-xs font-black uppercase tracking-[0.25em] block mb-4"
+                            className="text-xs font-bold uppercase tracking-wide block mb-3"
                             style={{ color: "var(--faro-primary)" }}
                         >
                             Nuestra esencia
                         </span>
                         <h2
-                            className="font-black text-4xl md:text-5xl tracking-tight"
+                            className="font-bold text-lg md:text-xl tracking-tight"
                             style={{ color: "var(--faro-on-background)" }}
                         >
                             Bienvenidos a Casa
@@ -188,7 +188,7 @@ export default function PublicHomePage() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: 0.1 }}
-                            className="md:col-span-2 rounded-3xl p-10 flex flex-col justify-between group relative overflow-hidden min-h-[280px]"
+                            className="md:col-span-2 rounded-lg p-4 flex flex-col justify-between group relative overflow-hidden min-h-[280px]"
                             style={{ background: "var(--faro-surface-container)" }}
                         >
                             <div
@@ -200,13 +200,13 @@ export default function PublicHomePage() {
                             />
                             <div className="relative z-10">
                                 <div
-                                    className="w-12 h-12 rounded-2xl flex items-center justify-center mb-6"
+                                    className="w-12 h-12 rounded-lg flex items-center justify-center mb-3"
                                     style={{ background: "var(--faro-primary-container)" }}
                                 >
                                     <span style={{ color: "var(--faro-primary)", fontSize: "22px" }}>✦</span>
                                 </div>
                                 <h3
-                                    className="text-2xl font-black mb-4"
+                                    className="text-lg font-bold mb-3"
                                     style={{ color: "var(--faro-on-surface)" }}
                                 >
                                     Conocer a Jesús
@@ -222,7 +222,7 @@ export default function PublicHomePage() {
                             <div className="relative z-10 mt-8">
                                 <Link
                                     href="/faro/conocer-a-jesus"
-                                    className="inline-flex items-center gap-2 font-black text-sm uppercase tracking-widest group-hover:gap-4 transition-all"
+                                    className="inline-flex items-center gap-2 font-bold text-sm uppercase tracking-wide group-hover:gap-4 transition-all"
                                     style={{ color: "var(--faro-primary)" }}
                                 >
                                     Empezar el camino
@@ -243,11 +243,11 @@ export default function PublicHomePage() {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.1 * (idx + 1) }}
-                                className="rounded-2xl p-7 flex items-center gap-5 transition-all hover:scale-[1.02]"
+                                className="rounded-lg p-4 flex items-center gap-5 transition-all hover:scale-[1.02]"
                                 style={{ background: "var(--faro-surface-container)" }}
                             >
                                 <div
-                                    className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
+                                    className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0"
                                     style={{
                                         background: "var(--faro-primary-container)",
                                         color: "var(--faro-primary)",
@@ -257,7 +257,7 @@ export default function PublicHomePage() {
                                 </div>
                                 <div>
                                     <h4
-                                        className="font-black mb-1"
+                                        className="font-bold mb-1"
                                         style={{ color: "var(--faro-on-surface)" }}
                                     >
                                         {title}
@@ -277,7 +277,7 @@ export default function PublicHomePage() {
 
             {/* ─── ACTIVIDADES RECIENTES ────────────────────────────── */}
             <section
-                className="py-24 px-6 md:px-16 lg:px-24 overflow-hidden"
+                className="py-4 px-6 md:px-16 lg:px-24 overflow-hidden"
                 style={{ background: "var(--faro-surface)" }}
             >
                 <div className="w-full max-w-[1600px] mx-auto px-6 md:px-16 lg:px-24">
@@ -285,17 +285,17 @@ export default function PublicHomePage() {
                         initial={{ opacity: 0, x: -30 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
-                        className="flex justify-between items-end mb-14"
+                        className="flex justify-between items-end mb-3"
                     >
                         <div>
                             <span
-                                className="text-xs font-black uppercase tracking-[0.25em] block mb-4"
+                                className="text-xs font-bold uppercase tracking-wide block mb-3"
                                 style={{ color: "var(--faro-primary)" }}
                             >
                                 Actualidad
                             </span>
                             <h2
-                                className="font-black text-4xl md:text-5xl tracking-tight"
+                                className="font-bold text-lg md:text-xl tracking-tight"
                                 style={{ color: "var(--faro-on-background)" }}
                             >
                                 Actividades Recientes
@@ -303,7 +303,7 @@ export default function PublicHomePage() {
                         </div>
                         <Link
                             href="/faro/eventos"
-                            className="hidden md:block text-sm font-black uppercase tracking-widest border-b-2 pb-1 transition-all hover:-translate-y-1"
+                            className="hidden md:block text-sm font-bold uppercase tracking-wide border-b-2 pb-1 transition-all hover:-translate-y-1"
                             style={{
                                 color: "var(--faro-primary)",
                                 borderColor: "var(--faro-primary)",
@@ -313,11 +313,11 @@ export default function PublicHomePage() {
                         </Link>
                     </motion.div>
                     {publicEvents.length === 0 ? (
-                        <p className="text-center py-12" style={{ color: "var(--faro-on-surface-variant)" }}>
+                        <p className="text-center py-4" style={{ color: "var(--faro-on-surface-variant)" }}>
                             Próximamente encontrarás aquí nuestras actividades. Mientras tanto, síguenos en redes sociales.
                         </p>
                     ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         {publicEvents.slice(0, 3).map(({ img, tag, date, title, desc }, idx: number) => (
                             <motion.div 
                                 key={title} 
@@ -328,7 +328,7 @@ export default function PublicHomePage() {
                                 className="group cursor-pointer"
                             >
                                 <div
-                                    className="relative aspect-video rounded-3xl overflow-hidden mb-6 shadow-md"
+                                    className="relative aspect-video rounded-lg overflow-hidden mb-3 shadow-md"
                                     style={{ background: "var(--faro-surface-container-high)" }}
                                 >
                                     <Image
@@ -340,7 +340,7 @@ export default function PublicHomePage() {
                                 </div>
                                 <div className="flex gap-3 mb-3 items-center">
                                     <span
-                                        className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider"
+                                        className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
                                         style={{
                                             background: "var(--faro-secondary-container)",
                                             color: "var(--faro-on-secondary-container)",
@@ -356,7 +356,7 @@ export default function PublicHomePage() {
                                     </span>
                                 </div>
                                 <h3
-                                    className="font-black text-xl mb-2 group-hover:opacity-80 transition-opacity"
+                                    className="font-bold text-lg mb-3 group-hover:opacity-80 transition-opacity"
                                     style={{ color: "var(--faro-on-surface)" }}
                                 >
                                     {title}
@@ -383,7 +383,7 @@ export default function PublicHomePage() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
-                    className="max-w-4xl mx-auto rounded-[3rem] p-12 md:p-20 relative overflow-hidden text-center shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] backdrop-blur-2xl"
+                    className="max-w-4xl mx-auto rounded-lg p-4 md:p-8 relative overflow-hidden text-center shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] backdrop-blur-2xl"
                     style={{
                         background:
                             "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.02) 100%)",
@@ -400,13 +400,13 @@ export default function PublicHomePage() {
                     />
                     <div className="relative z-10">
                         <h2
-                            className="font-black text-3xl md:text-5xl tracking-tight mb-6"
+                            className="font-bold text-lg md:text-xl tracking-tight mb-3"
                             style={{ color: "var(--faro-on-background)" }}
                         >
                             ¿Quieres recibir nuestras novedades?
                         </h2>
                         <p
-                            className="text-lg mb-10"
+                            className="text-lg mb-3"
                             style={{ color: "var(--faro-on-surface-variant)" }}
                         >
                             Meditaciones semanales, eventos exclusivos y más. Directo a tu correo.
@@ -415,7 +415,7 @@ export default function PublicHomePage() {
                             <input
                                 type="email"
                                 placeholder="Tu correo electrónico"
-                                className="flex-grow rounded-2xl px-6 py-4 text-sm focus:outline-none"
+                                className="flex-grow rounded-lg px-6 py-4 text-sm focus:outline-none"
                                 style={{
                                     background: "var(--faro-surface)",
                                     border: "2px solid var(--faro-outline-variant)",
@@ -424,7 +424,7 @@ export default function PublicHomePage() {
                             />
                             <button
                                 type="button"
-                                className="px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest text-white transition-all hover:scale-105"
+                                className="px-8 py-4 rounded-lg font-bold text-sm uppercase tracking-wide text-white transition-all hover:scale-105"
                                 style={{
                                     background:
                                         "linear-gradient(135deg, var(--faro-primary) 0%, var(--faro-secondary) 100%)",

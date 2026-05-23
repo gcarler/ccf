@@ -2,6 +2,7 @@
 CRM Tasks migration utility.
 Reads database connection from environment variables.
 """
+
 import os
 import sys
 
@@ -16,10 +17,14 @@ def get_connection():
     database = os.getenv("DB_NAME", "ccf_db")
 
     if not user or not password:
-        print("ERROR: Set DB_USER and DB_PASSWORD environment variables.", file=sys.stderr)
+        print(
+            "ERROR: Set DB_USER and DB_PASSWORD environment variables.", file=sys.stderr
+        )
         sys.exit(1)
 
-    return pg8000.connect(host=host, port=port, user=user, password=password, database=database)
+    return pg8000.connect(
+        host=host, port=port, user=user, password=password, database=database
+    )
 
 
 def main():
@@ -29,7 +34,9 @@ def main():
 
     # Add category column if missing
     try:
-        cur.execute("ALTER TABLE crm_tasks ADD COLUMN category VARCHAR(100) DEFAULT 'Pastoral'")
+        cur.execute(
+            "ALTER TABLE crm_tasks ADD COLUMN category VARCHAR(100) DEFAULT 'Pastoral'"
+        )
         print("Added: category column")
     except Exception as e:
         if "already exists" in str(e):
@@ -41,7 +48,9 @@ def main():
     try:
         cur.execute("UPDATE crm_tasks SET status = 'pending' WHERE status = 'todo'")
         print("Updated 'todo' -> 'pending'")
-        cur.execute("UPDATE crm_tasks SET priority = 'medium' WHERE priority = 'normal'")
+        cur.execute(
+            "UPDATE crm_tasks SET priority = 'medium' WHERE priority = 'normal'"
+        )
         print("Updated 'normal' -> 'medium'")
     except Exception as e:
         print(f"Error updating: {e}")

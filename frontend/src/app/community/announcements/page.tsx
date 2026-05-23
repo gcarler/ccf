@@ -67,13 +67,13 @@ export default function AnnouncementsPage() {
     }, [token]);
 
     return (
-        <div className="max-w-4xl mx-auto space-y-4 pb-20 animate-in fade-in duration-700">
+        <div className="max-w-4xl mx-auto space-y-3 pb-4 animate-in fade-in duration-700">
             <header className="space-y-2">
-                <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-black uppercase tracking-[0.3em] text-[10px]">
+                <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-bold uppercase tracking-wide text-[10px]">
                     <div className="size-2 rounded-full bg-current shadow-[0_0_10px_currentColor]"></div>
                     Comunicación Oficial
                 </div>
-                <h1 className="text-4xl font-black text-[hsl(var(--text-primary))] tracking-tighter">Anuncios</h1>
+                <h1 className="text-4xl font-bold text-[hsl(var(--text-primary))] tracking-tighter">Anuncios</h1>
                 <p className="text-[hsl(var(--text-secondary))] font-medium">Mantente al tanto de las últimas noticias y actualizaciones de nuestra comunidad.</p>
             </header>
 
@@ -93,20 +93,20 @@ export default function AnnouncementsPage() {
                         )}
 
                         <div className="flex items-start gap-4">
-                            <div className="size-14 rounded-2xl bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--primary))] group-hover:scale-110 transition-transform">
+                            <div className="size-14 rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--primary))] group-hover:scale-110 transition-transform">
                                 <Megaphone size={24} strokeWidth={2.5} />
                             </div>
 
                             <div className="flex-1 space-y-3">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">
+                                    <span className="text-[10px] font-bold uppercase tracking-wide px-3 py-1 rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">
                                         {item.category}
                                     </span>
                                     <span className="text-[10px] font-bold text-[hsl(var(--text-secondary)/0.6)] uppercase tracking-tight">
                                         {item.date}
                                     </span>
                                 </div>
-                                <h3 className="text-base font-black text-[hsl(var(--text-primary))] tracking-tight group-hover:text-[hsl(var(--primary))] transition-colors">
+                                <h3 className="text-base font-bold text-[hsl(var(--text-primary))] tracking-tight group-hover:text-[hsl(var(--primary))] transition-colors">
                                     {item.title}
                                 </h3>
                                 <p className="text-[hsl(var(--text-secondary))] text-sm leading-relaxed font-medium">
@@ -119,15 +119,15 @@ export default function AnnouncementsPage() {
             </div>
 
             {/* Empty State / More Info */}
-            <div className="bg-[hsl(var(--surface-3))] rounded-2xl p-4 text-center border-2 border-dashed border-[hsl(var(--border))]">
-                <div className="size-16 rounded-[1.5rem] bg-[hsl(var(--surface-1))] flex items-center justify-center text-[hsl(var(--text-secondary)/0.3)] mx-auto mb-6">
+            <div className="bg-[hsl(var(--surface-3))] rounded-lg p-4 text-center border-2 border-dashed border-[hsl(var(--border))]">
+                <div className="size-16 rounded-lg bg-[hsl(var(--surface-1))] flex items-center justify-center text-[hsl(var(--text-secondary)/0.3)] mx-auto mb-6">
                     <Sparkles size={32} />
                 </div>
-                <h4 className="text-sm font-black text-[hsl(var(--text-primary))] tracking-tight mb-2">¿Tienes algo que anunciar?</h4>
+                <h4 className="text-sm font-bold text-[hsl(var(--text-primary))] tracking-tight mb-2">¿Tienes algo que anunciar?</h4>
                 <p className="text-[hsl(var(--text-secondary))] text-sm font-medium max-w-xs mx-auto mb-8">
                     Si eres líder de ministerio y tienes una actualización importante, contacta al equipo de comunicaciones.
                 </p>
-                <button className="px-5 h-12 bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] rounded-2xl font-black uppercase tracking-widest text-[10px] hover:opacity-90 transition-all">
+                <button className="px-5 h-12 bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] rounded-lg font-bold uppercase tracking-wide text-[10px] hover:opacity-90 transition-all">
                     Contactar Equipo
                 </button>
             </div>

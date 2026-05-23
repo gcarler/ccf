@@ -62,23 +62,23 @@ export default function AcademyStudentsPage() {
                     { label: "Estudiantes", icon: UserRound },
                 ]}
                 rightActions={
-                    <span className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">
+                    <span className="text-[11px] font-black uppercase tracking-wide text-slate-400">
                         {filtered.length} activos
                     </span>
                 }
             />
 
             <main className="flex-1 overflow-y-auto p-4 lg:p-4 space-y-3">
-                <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
                     <Metric icon={UserRound} label="Estudiantes" value={students.length} />
                     <Metric icon={BookOpen} label="Inscripciones" value={students.reduce((sum, row) => sum + (row.course_count ?? 0), 0)} />
                     <Metric icon={BarChart3} label="Progreso prom." value={`${Math.round(students.reduce((sum, row) => sum + (row.progress ?? 0), 0) / Math.max(students.length, 1))}%`} />
                 </section>
 
-                <section className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
-                    <header className="flex flex-col gap-4 border-b border-slate-100 p-5 dark:border-white/10 md:flex-row md:items-center md:justify-between">
+                <section className="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
+                    <header className="flex flex-col gap-4 border-b border-slate-100 p-3 dark:border-white/10 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500">Directorio academico</p>
+                            <p className="text-[10px] font-black uppercase tracking-wide text-blue-500">Directorio academico</p>
                             <h1 className="text-lg font-black text-slate-900 dark:text-white">Estudiantes</h1>
                         </div>
                         <div className="relative w-full md:max-w-sm">
@@ -87,7 +87,7 @@ export default function AcademyStudentsPage() {
                                 value={query}
                                 onChange={(event) => setQuery(event.target.value)}
                                 placeholder="Buscar estudiante..."
-                                className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-1.5 pl-11 pr-4 text-sm font-semibold outline-none focus:border-blue-400 dark:border-white/10 dark:bg-black/20"
+                                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-11 pr-4 text-sm font-semibold outline-none focus:border-blue-400 dark:border-white/10 dark:bg-black/20"
                             />
                         </div>
                     </header>
@@ -95,12 +95,12 @@ export default function AcademyStudentsPage() {
                     <div className="overflow-x-auto">
                         <table className="min-w-full text-sm">
                             <thead>
-                                <tr className="border-b border-slate-100 text-left text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 dark:border-white/10">
-                                    <th className="px-4 py-2">Nombre</th>
-                                    <th className="px-4 py-2">Correo</th>
-                                    <th className="px-4 py-2">Cursos</th>
-                                    <th className="px-4 py-2">Progreso</th>
-                                    <th className="px-4 py-2">Estado</th>
+                                <tr className="border-b border-slate-100 text-left text-[10px] font-black uppercase tracking-wide text-slate-400 dark:border-white/10">
+                                    <th className="px-4 py-1.5">Nombre</th>
+                                    <th className="px-4 py-1.5">Correo</th>
+                                    <th className="px-4 py-1.5">Cursos</th>
+                                    <th className="px-4 py-1.5">Progreso</th>
+                                    <th className="px-4 py-1.5">Estado</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -110,12 +110,12 @@ export default function AcademyStudentsPage() {
                                         className="cursor-pointer border-b border-slate-50 transition-colors hover:bg-slate-50 dark:border-white/5 dark:hover:bg-white/[0.03]"
                                         onClick={() => router.push(`/academy/profile?student=${student.id}`)}
                                     >
-                                        <td className="px-4 py-2 font-black text-slate-900 dark:text-white">{student.full_name || student.name || "Estudiante"}</td>
-                                        <td className="px-4 py-2 text-slate-500">{student.email || "Sin correo"}</td>
-                                        <td className="px-4 py-2 text-slate-500">{student.course_count ?? 0}</td>
-                                        <td className="px-4 py-2 text-slate-500">{student.progress ?? 0}%</td>
-                                        <td className="px-4 py-2">
-                                            <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-600">
+                                        <td className="px-4 py-1.5 font-black text-slate-900 dark:text-white">{student.full_name || student.name || "Estudiante"}</td>
+                                        <td className="px-4 py-1.5 text-slate-500">{student.email || "Sin correo"}</td>
+                                        <td className="px-4 py-1.5 text-slate-500">{student.course_count ?? 0}</td>
+                                        <td className="px-4 py-1.5 text-slate-500">{student.progress ?? 0}%</td>
+                                        <td className="px-4 py-1.5">
+                                            <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-emerald-600">
                                                 {student.status || "Activo"}
                                             </span>
                                         </td>
@@ -123,14 +123,14 @@ export default function AcademyStudentsPage() {
                                 ))}
                                 {!loading && filtered.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} className="px-4 py-12 text-center text-sm font-semibold text-slate-400">
+                                        <td colSpan={5} className="px-4 py-4 text-center text-sm font-semibold text-slate-400">
                                             No hay estudiantes registrados para mostrar.
                                         </td>
                                     </tr>
                                 )}
                                 {loading && (
                                     <tr>
-                                        <td colSpan={5} className="px-4 py-12 text-center text-sm font-semibold text-slate-400">
+                                        <td colSpan={5} className="px-4 py-4 text-center text-sm font-semibold text-slate-400">
                                             Cargando estudiantes...
                                         </td>
                                     </tr>
@@ -146,11 +146,11 @@ export default function AcademyStudentsPage() {
 
 function Metric({ icon: Icon, label, value }: { icon: any; label: string; value: number | string }) {
     return (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
-            <div className="mb-4 flex size-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-500/10">
+        <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-white/5">
+            <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10">
                 <Icon size={20} />
             </div>
-            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">{label}</p>
+            <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">{label}</p>
             <p className="text-lg font-black text-slate-900 dark:text-white">{value}</p>
         </div>
     );

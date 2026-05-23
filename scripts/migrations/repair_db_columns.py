@@ -31,7 +31,8 @@ def repair_db():
 
         # Crear la tabla de donaciones si no existe
         print("Verificando tabla 'donations'...")
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS donations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 member_id INTEGER,
@@ -43,7 +44,8 @@ def repair_db():
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(member_id) REFERENCES members(id)
             )
-        """)
+        """
+        )
         print("Tabla 'donations' lista.")
 
         conn.commit()

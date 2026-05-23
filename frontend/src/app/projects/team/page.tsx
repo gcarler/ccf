@@ -52,7 +52,7 @@ export default function TeamPage() {
     return (
         <div className="flex h-full overflow-hidden">
             <div className="flex-1 flex flex-col bg-slate-50 dark:bg-[#0f1012] overflow-y-auto font-display">
-                <div className="w-full mx-auto p-6 space-y-6 pb-20">
+                <div className="w-full mx-auto p-3 space-y-3 pb-4">
 
                     {/* Sub-header */}
                     <div className="flex items-center justify-between">
@@ -87,8 +87,8 @@ export default function TeamPage() {
 
                     {/* Team Grid */}
                     {loading ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-48 rounded-2xl" />)}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-48 rounded-lg" />)}
                         </div>
                     ) : team.length === 0 ? (
                         <EmptyState
@@ -97,7 +97,7 @@ export default function TeamPage() {
                             description="Invita colaboradores al proyecto para visualizar su carga y disponibilidad aquí."
                         />
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {team.map((member, idx) => {
                                 const isOverloaded = member.load_status === 'sobrecargado';
                                 return (
@@ -107,7 +107,7 @@ export default function TeamPage() {
                                         animate={{ opacity: 1, scale: 1 }}
                                         transition={{ delay: idx * 0.05 }}
                                         onClick={() => handleSelect(member)}
-                                        className="group relative bg-white dark:bg-[#1a1b1e] rounded-2xl border border-slate-200/70 dark:border-white/[0.06] p-5 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 transition-all cursor-pointer overflow-hidden active:scale-[0.99]"
+                                        className="group relative bg-white dark:bg-[#1a1b1e] rounded-lg border border-slate-200/70 dark:border-white/[0.06] p-3 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 transition-all cursor-pointer overflow-hidden active:scale-[0.99]"
                                     >
                                         {/* Status bar */}
                                         <div className={clsx(
@@ -116,13 +116,13 @@ export default function TeamPage() {
                                             member.load_status === 'en_capacidad' ? "bg-amber-500" : "bg-emerald-500"
                                         )} />
 
-                                        <div className="flex items-start justify-between mb-4">
+                                        <div className="flex items-start justify-between mb-3">
                                             <div className="flex items-center gap-3">
-                                                <div className="size-10 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm font-black text-sm">
+                                                <div className="size-8 rounded-md bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm font-bold text-xs">
                                                     {member.name.substring(0, 2).toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <p className="text-[13px] font-bold text-slate-900 dark:text-white leading-none">{member.name}</p>
+                                                    <p className="text-[13px] font-medium text-slate-900 dark:text-white leading-none">{member.name}</p>
                                                     <span className={clsx(
                                                         "text-[9px] font-black uppercase tracking-widest mt-0.5 block",
                                                         isOverloaded ? "text-rose-500" : "text-slate-400"
@@ -132,14 +132,14 @@ export default function TeamPage() {
                                             {isOverloaded && <AlertTriangle className="text-rose-500 shrink-0" size={16} />}
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-2 mb-4">
-                                            <div className="p-3 bg-slate-50 dark:bg-black/20 rounded-xl">
-                                                <p className="text-[9px] font-black uppercase text-slate-400 mb-0.5">Activas</p>
-                                                <p className="text-[18px] font-black text-slate-900 dark:text-white">{member.open}</p>
+                                        <div className="grid grid-cols-2 gap-2 mb-3">
+                                            <div className="p-2 bg-slate-50 dark:bg-black/20 rounded-md">
+                                                <p className="text-[9px] font-bold uppercase text-slate-400 mb-0.5">Activas</p>
+                                                <p className="text-lg font-bold text-slate-900 dark:text-white">{member.open}</p>
                                             </div>
-                                            <div className="p-3 bg-slate-50 dark:bg-black/20 rounded-xl">
-                                                <p className="text-[9px] font-black uppercase text-slate-400 mb-0.5">Críticas</p>
-                                                <p className={clsx("text-[18px] font-black", member.critical > 0 ? "text-rose-500" : "text-slate-900 dark:text-white")}>
+                                            <div className="p-2 bg-slate-50 dark:bg-black/20 rounded-md">
+                                                <p className="text-[9px] font-bold uppercase text-slate-400 mb-0.5">Criticas</p>
+                                                <p className={clsx("text-lg font-bold", member.critical > 0 ? "text-rose-500" : "text-slate-900 dark:text-white")}>
                                                     {member.critical}
                                                 </p>
                                             </div>
@@ -174,13 +174,13 @@ export default function TeamPage() {
             {/* Right Panel — Member Detail (no modal) */}
             {selectedMember && (
                 <RightPanel title="Perfil de Carga" width={360}>
-                    <div className="p-5 space-y-5">
-                        <div className="flex items-center gap-4">
-                            <div className="size-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/20">
+                    <div className="p-3 space-y-3">
+                        <div className="flex items-center gap-3">
+                            <div className="size-10 rounded-md bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-blue-500/20">
                                 {selectedMember.name.substring(0, 2).toUpperCase()}
                             </div>
                             <div>
-                                <h3 className="text-[15px] font-bold text-slate-900 dark:text-white">{selectedMember.name}</h3>
+                                <h3 className="text-sm font-medium text-slate-900 dark:text-white">{selectedMember.name}</h3>
                                 <span className={clsx(
                                     "text-[9px] font-black uppercase tracking-widest",
                                     selectedMember.load_status === 'sobrecargado' ? "text-rose-500" : "text-emerald-500"
@@ -191,20 +191,20 @@ export default function TeamPage() {
                         <div className="grid grid-cols-2 gap-3">
                             {[
                                 { label: 'Tareas Activas', value: selectedMember.open, color: 'text-blue-600' },
-                                { label: 'Críticas Hoy', value: selectedMember.critical, color: 'text-rose-500' },
-                                { label: 'Saturación', value: `${selectedMember.capacity_percent}%`, color: selectedMember.capacity_percent > 80 ? 'text-rose-500' : 'text-blue-600' },
+                                { label: 'Criticas Hoy', value: selectedMember.critical, color: 'text-rose-500' },
+                                { label: 'Saturacion', value: `${selectedMember.capacity_percent}%`, color: selectedMember.capacity_percent > 80 ? 'text-rose-500' : 'text-blue-600' },
                                 { label: 'Estado', value: selectedMember.load_status === 'disponible' ? 'Disponible' : 'Ocupado', color: 'text-emerald-500' },
                             ].map(item => (
-                                <div key={item.label} className="bg-slate-50 dark:bg-white/5 rounded-xl p-3 border border-slate-100 dark:border-white/5">
-                                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">{item.label}</p>
-                                    <p className={clsx("text-xl font-black mt-0.5", item.color)}>{item.value}</p>
+                                <div key={item.label} className="bg-slate-50 dark:bg-white/5 rounded-md p-2 border border-slate-100 dark:border-white/5">
+                                    <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">{item.label}</p>
+                                    <p className={clsx("text-lg font-bold mt-0.5", item.color)}>{item.value}</p>
                                 </div>
                             ))}
                         </div>
 
                         <button
                             onClick={() => closeLayer('RIGHT')}
-                            className="w-full py-2 border border-slate-200 dark:border-white/10 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+                            className="w-full py-2 border border-slate-200 dark:border-white/10 rounded-md text-[11px] font-bold uppercase tracking-wide text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
                         >
                             Cerrar
                         </button>

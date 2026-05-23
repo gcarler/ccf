@@ -24,7 +24,7 @@ export default function AutomationsPage() {
 
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-[#0f1012] overflow-y-auto font-display">
-            <div className="w-full mx-auto p-6 space-y-6 pb-20">
+            <div className="w-full mx-auto p-3 space-y-3 pb-4">
 
                 {/* Sub-header */}
                 <div className="flex items-center justify-between">
@@ -68,7 +68,7 @@ export default function AutomationsPage() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.07 }}
                                 className={clsx(
-                                    "group p-5 rounded-2xl border transition-all",
+                                    "group p-3 rounded-lg border transition-all",
                                     rule.active
                                         ? "bg-white dark:bg-[#1a1b1e] border-slate-200 dark:border-white/[0.06] shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-500/20"
                                         : "bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/[0.04] opacity-60"
@@ -116,7 +116,7 @@ export default function AutomationsPage() {
                         initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: rules.length * 0.07 }}
-                        className="flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-dashed border-slate-200 dark:border-white/10 text-center gap-3 group cursor-pointer hover:border-blue-400 dark:hover:border-blue-500/40 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all min-h-[140px]"
+                        className="flex flex-col items-center justify-center p-3 rounded-lg border-2 border-dashed border-slate-200 dark:border-white/10 text-center gap-2 group cursor-pointer hover:border-blue-400 dark:hover:border-blue-500/40 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all min-h-[100px]"
                     >
                         <div className="size-10 rounded-xl bg-white dark:bg-white/5 shadow-sm border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 group-hover:text-blue-600 group-hover:border-blue-200 dark:group-hover:border-blue-500/30 transition-all">
                             <Plus size={18} />

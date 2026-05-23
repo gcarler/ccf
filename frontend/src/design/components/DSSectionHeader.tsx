@@ -14,20 +14,20 @@ interface DSSectionHeaderProps {
 
 export function DSSectionHeader({ eyebrow, title, description, actions, align = 'left' }: DSSectionHeaderProps) {
     return (
-        <div className={clsx('flex flex-col gap-3 md:flex-row md:items-center', align === 'center' && 'text-center md:text-center md:flex-col')}
+        <div className={clsx('flex flex-col gap-2 md:flex-row md:items-center', align === 'center' && 'text-center md:text-center md:flex-col')}
             style={{ fontFamily: typography.family }}
         >
-            <div className={clsx('flex-1 space-y-2', align === 'center' && 'md:items-center')}>
+            <div className={clsx('flex-1 space-y-1', align === 'center' && 'md:items-center')}>
                 {eyebrow && (
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                         {eyebrow}
                     </p>
                 )}
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{title}</h3>
-                {description && <p className="text-sm text-slate-500 dark:text-slate-300 max-w-2xl">{description}</p>}
+                <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">{title}</h3>
+                {description && <p className="text-xs text-slate-500 dark:text-slate-300 max-w-2xl">{description}</p>}
             </div>
             {actions && (
-                <div className={clsx('mt-3 md:mt-0 flex items-center gap-3', align === 'center' && 'justify-center')}>
+                <div className={clsx('mt-2 md:mt-0 flex items-center gap-2', align === 'center' && 'justify-center')}>
                     {actions}
                 </div>
             )}

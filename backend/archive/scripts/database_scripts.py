@@ -6,7 +6,7 @@ def create_stored_procedures(db: Session):
     """
     Creates the required Stored Procedures for CCF Platform.
     """
-    
+
     # SP for calculating student status based on course completion and prerequisites
     sp_calculate_student_status = """
     CREATE OR REPLACE FUNCTION sp_calculate_student_status(p_user_id INTEGER)

@@ -35,38 +35,38 @@ export default function SermonsPage() {
             <div className="pt-28" />
 
             {/* Hero */}
-            <section className="relative py-20 px-6 overflow-hidden">
+            <section className="relative py-4 px-6 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-blue-600/10 to-transparent" />
                 <div className="max-w-6xl mx-auto relative text-center">
-                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 text-blue-400 text-[11px] font-black uppercase tracking-widest mb-6">
+                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 text-blue-400 text-[11px] font-bold uppercase tracking-wide mb-3">
                         <Mic size={11} /> Prédicas & Mensajes
                     </span>
-                    <h1 className="text-5xl font-black text-white mb-4 tracking-tight">
+                    <h1 className="text-xl font-bold text-white mb-3 tracking-tight">
                         La Palabra que<br /><span className="text-blue-400">Transforma Vidas</span>
                     </h1>
-                    <p className="text-slate-400 text-lg mb-8 max-w-xl mx-auto">
+                    <p className="text-slate-400 text-lg mb-3 max-w-xl mx-auto">
                         Accede a todas nuestras prédicas, series y mensajes pastorales. Disponibles cuando los necesitas.
                     </p>
                     <div className="max-w-lg mx-auto relative">
                         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
                         <input value={search} onChange={e => setSearch(e.target.value)}
                             placeholder="Buscar prédica..."
-                            className="w-full pl-12 pr-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-[14px] outline-none focus:ring-2 focus:ring-blue-500/30 backdrop-blur" />
+                            className="w-full pl-12 pr-5 py-4 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-[14px] outline-none focus:ring-2 focus:ring-blue-500/30 backdrop-blur" />
                     </div>
                 </div>
             </section>
 
             {/* Series */}
-            <section className="max-w-6xl mx-auto px-6 py-10">
-                <p className="text-[11px] font-black uppercase tracking-widest text-slate-500 mb-5">Series Destacadas</p>
-                <div className="grid grid-cols-3 gap-5 mb-14">
+            <section className="max-w-6xl mx-auto px-6 py-4">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-3">Series Destacadas</p>
+                <div className="grid grid-cols-3 gap-3 mb-3">
                     {SERIES.map((s, i) => (
                         <motion.div key={s.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
-                            className={`h-44 rounded-3xl bg-gradient-to-br ${s.thumb} relative overflow-hidden cursor-pointer group hover:scale-[1.02] transition-all shadow-2xl`}>
+                            className={`h-44 rounded-lg bg-gradient-to-br ${s.thumb} relative overflow-hidden cursor-pointer group hover:scale-[1.02] transition-all shadow-2xl`}>
                             <div className="absolute inset-0 bg-black/30" />
-                            <div className="absolute inset-0 p-6 flex flex-col justify-end">
-                                <span className="text-white/60 text-[10px] font-black uppercase tracking-widest">{s.category} · {s.count} episodios</span>
-                                <p className="text-white font-black text-lg">{s.title}</p>
+                            <div className="absolute inset-0 p-4 flex flex-col justify-end">
+                                <span className="text-white/60 text-[10px] font-bold uppercase tracking-wide">{s.category} · {s.count} episodios</span>
+                                <p className="text-white font-bold text-lg">{s.title}</p>
                             </div>
                             <div className="absolute top-4 right-4 size-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
                                 <ChevronRight size={16} className="text-white" />
@@ -80,7 +80,7 @@ export default function SermonsPage() {
                     <Filter size={12} className="text-slate-600 shrink-0" />
                     {CATEGORIES.map(c => (
                         <button key={c} onClick={() => setCat(c)}
-                            className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${cat === c ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'}`}>
+                            className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all whitespace-nowrap ${cat === c ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'}`}>
                             {c}
                         </button>
                     ))}
@@ -90,7 +90,7 @@ export default function SermonsPage() {
                 <div className="space-y-3">
                     {filtered.map((s, i) => (
                         <motion.div key={s.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
-                            className="bg-white/5 hover:bg-white/8 border border-white/5 hover:border-white/10 rounded-2xl p-5 flex items-center gap-4 cursor-pointer group transition-all">
+                            className="bg-white/5 hover:bg-white/8 border border-white/5 hover:border-white/10 rounded-lg p-3 flex items-center gap-4 cursor-pointer group transition-all">
                             <div className="size-14 rounded-2xl bg-blue-600/20 flex items-center justify-center text-blue-400 shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all">
                                 <Play size={22} className="ml-0.5" />
                             </div>

@@ -11,7 +11,7 @@ def test_api():
         "/api/content/faro_home_hero",
         "/api/agents/analytics/summary",
     ]
-    
+
     print(f"Testing API at {base_url}")
     for ep in endpoints:
         try:
@@ -20,6 +20,7 @@ def test_api():
             print(f"GET {ep:25} -> {resp.status_code}")
         except Exception as e:
             print(f"Error testing {ep}: {e}")
+
 
 if __name__ == "__main__":
     test_api()

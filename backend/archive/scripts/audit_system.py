@@ -45,7 +45,9 @@ def run_audit():
     admin_password = os.getenv("CCF_ADMIN_PASSWORD")
 
     if not admin_password:
-        print("[AUTH] ERROR: Set CCF_ADMIN_PASSWORD environment variable. Skipping auth tests.")
+        print(
+            "[AUTH] ERROR: Set CCF_ADMIN_PASSWORD environment variable. Skipping auth tests."
+        )
         token = None
     else:
         print("\n[AUTH] Testing Admin Login...")
@@ -70,7 +72,9 @@ def run_audit():
 
         # 4. Test Testimonials (Admin)
         s, r = audit_endpoint("GET", "/admin/testimonials", token=token)
-        print(f"[TESTIMONIALS] Admin: {s} (Found: {len(r) if isinstance(r, list) else 0})")
+        print(
+            f"[TESTIMONIALS] Admin: {s} (Found: {len(r) if isinstance(r, list) else 0})"
+        )
 
         # 5. Test Members
         s, r = audit_endpoint("GET", "/crm/members/", token=token)

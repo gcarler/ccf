@@ -53,15 +53,15 @@ function SidebarSection({
     isMini?: boolean;
 }) {
     const [open, setOpen] = useState(defaultOpen);
-    if (isMini) return <div className="mb-1">{children}</div>;
+    if (isMini) return <div className="mb-0.5">{children}</div>;
     return (
-        <div className="mb-1">
+        <div className="mb-0.5">
             {title && (
                 <div
                     onClick={() => setOpen(v => !v)}
-                    className="flex items-center justify-between px-4 py-1 cursor-pointer group/hdr"
+                    className="flex items-center justify-between px-2.5 py-0.5 cursor-pointer group/hdr"
                 >
-                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 group-hover/hdr:text-slate-600 dark:group-hover/hdr:text-slate-300 transition-colors select-none">
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 group-hover/hdr:text-slate-600 dark:group-hover/hdr:text-slate-300 transition-colors select-none">
                         {title}
                     </span>
                     <div className="flex items-center gap-0.5 opacity-0 group-hover/hdr:opacity-100 transition-opacity">
@@ -70,10 +70,10 @@ function SidebarSection({
                                 onClick={e => { e.stopPropagation(); }}
                                 className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                             >
-                                <Plus size={12} />
+                                <Plus size={10} />
                             </button>
                         )}
-                        <ChevronDown size={11} className={clsx('text-slate-300 transition-transform', !open && '-rotate-90')} />
+                        <ChevronDown size={10} className={clsx('text-slate-300 transition-transform', !open && '-rotate-90')} />
                     </div>
                 </div>
             )}
@@ -107,8 +107,8 @@ function NavRow({
     const Icon = item.icon ?? Circle;
     // Items that have a drill-down chevron (indicated by suffix or specific metadata)
     return (
-        <Link 
-            href={item.href} 
+        <Link
+            href={item.href}
             onClick={() => {
                 if (item.onClick) {
                     item.onClick();
@@ -116,24 +116,24 @@ function NavRow({
             }}
         >
             <div className={clsx(
-                'relative flex items-center gap-2.5 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group cursor-pointer',
+                'relative flex items-center gap-1.5 px-2 py-1.5 mx-1.5 rounded-md transition-all duration-150 group cursor-pointer',
                 isActive
                     ? 'bg-blue-600/10 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-white'
             )}>
                 {/* Active indicator bar */}
                 {isActive && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-blue-600 rounded-full -ml-2" />
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-3.5 bg-blue-600 rounded-full -ml-1.5" />
                 )}
                 {item.color ? (
                     <span
-                        className="size-4 rounded-lg shrink-0 flex items-center justify-center text-[10px] font-black text-white"
+                        className="size-5 rounded shrink-0 flex items-center justify-center text-[9px] font-bold text-white"
                         style={{ backgroundColor: item.color }}
                     >
                         {item.label.charAt(0)}
                     </span>
                 ) : (
-                    <Icon size={16} className={clsx(
+                    <Icon size={14} className={clsx(
                         'shrink-0 transition-colors',
                         isActive ? 'text-blue-500' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'
                     )} />
@@ -141,12 +141,12 @@ function NavRow({
                 {!isMini && (
                     <>
                         <span className={clsx(
-                            'text-[13px] flex-1 truncate leading-none',
-                            isActive ? 'font-black' : 'font-semibold'
+                            'text-xs flex-1 truncate leading-none',
+                            isActive ? 'font-bold' : 'font-medium'
                         )}>{item.label}</span>
                         {item.count !== undefined && (
                             <span className={clsx(
-                                'px-1.5 py-0.5 rounded-md text-[9px] font-black leading-none shrink-0',
+                                'px-1 py-px rounded text-[9px] font-bold leading-none shrink-0',
                                 isActive
                                     ? 'bg-blue-200 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
                                     : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
@@ -154,8 +154,8 @@ function NavRow({
                                 {item.count}
                             </span>
                         )}
-                        <ChevronRight size={12} className={clsx(
-                            'shrink-0 transition-all duration-200',
+                        <ChevronRight size={10} className={clsx(
+                            'shrink-0 transition-all duration-150',
                             isActive ? 'opacity-80 text-blue-500' : 'opacity-0 group-hover:opacity-100 text-slate-400 translate-x-1 group-hover:translate-x-0'
                         )} />
                     </>
@@ -219,11 +219,11 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
             <div className="shrink-0 border-b border-slate-100 dark:border-white/[0.04] relative z-20 bg-white/80 dark:bg-[#0f1113]/80 backdrop-blur-xl">
                 {/* 1. Breadcrumbs (Opcional pero recomendado para contexto) */}
                 {!isMini && (
-                    <div className="px-5 pt-5 pb-1 flex items-center gap-2 overflow-hidden min-h-[22px]">
-                        <span 
+                    <div className="px-3 pt-2 pb-0.5 flex items-center gap-1.5 overflow-hidden min-h-[18px]">
+                        <span
                             onClick={() => resetSidebarStack()}
                             className={clsx(
-                                "text-[10px] font-black uppercase tracking-[0.15em] transition-all cursor-pointer",
+                                "text-[9px] font-semibold uppercase tracking-wide transition-all cursor-pointer",
                                 isDrillDown ? "text-slate-400 hover:text-blue-500" : "text-blue-600"
                             )}
                         >
@@ -231,9 +231,9 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
                         </span>
                         {isDrillDown && sidebarStack.map((level, i) => (
                             <React.Fragment key={level.id}>
-                                <div className="size-1 rounded-full bg-slate-300 dark:bg-white/10 shrink-0 mx-0.5" />
+                                <div className="size-[3px] rounded-full bg-slate-300 dark:bg-white/10 shrink-0" />
                                 <span className={clsx(
-                                    "text-[10px] font-black uppercase tracking-[0.15em] truncate transition-all",
+                                    "text-[9px] font-semibold uppercase tracking-wide truncate transition-all",
                                     i === sidebarStack.length - 1 ? "text-slate-900 dark:text-white" : "text-slate-400"
                                 )}>
                                     {level.title}
@@ -244,7 +244,7 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
                 )}
 
                 {/* 2. Header Anatomy: Botón Atrás + Título */}
-                <div className="h-[52px] flex items-center px-5 gap-3">
+                <div className="h-10 flex items-center px-3 gap-2">
                     {!isMini && (
                         <>
                             {isDrillDown && (
@@ -256,13 +256,13 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
                                         if (currentPanel?.onBack) currentPanel.onBack();
                                         popSidebarPanel();
                                     }}
-                                    className="p-2 -ml-2 rounded-xl bg-slate-50 dark:bg-white/5 text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-white/10 transition-all shadow-sm flex items-center justify-center shrink-0 border border-slate-100 dark:border-white/5 active:scale-90"
+                                    className="p-1 -ml-1 rounded-md bg-slate-50 dark:bg-white/5 text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-white/10 transition-all flex items-center justify-center shrink-0 border border-slate-100 dark:border-white/5 active:scale-90"
                                 >
-                                    <ChevronLeft size={18} strokeWidth={2.5} />
+                                    <ChevronLeft size={14} strokeWidth={2.5} />
                                 </motion.button>
                             )}
                             <h2 className={clsx(
-                                "text-[15px] font-black text-slate-900 dark:text-white truncate tracking-tight flex-1",
+                                "text-sm font-bold text-slate-900 dark:text-white truncate tracking-tight flex-1",
                                 isDrillDown && "italic"
                             )}>
                                 {displayTitle}

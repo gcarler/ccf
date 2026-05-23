@@ -80,9 +80,9 @@ export default function ProjectsGeneralPage() {
                 setViewType={setViewType}
                 availableViews={GENERAL_VIEWS}
             />
-            <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-                <section className="rounded-2xl border border-slate-200 dark:border-white/10 p-4 bg-slate-50 dark:bg-white/5 mb-5">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Publicar en canal</p>
+            <main className="flex-1 overflow-y-auto p-4">
+                <section className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50 dark:bg-white/5 mb-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-2">Publicar en canal</p>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                         <select
                             value={projectId}
@@ -109,13 +109,13 @@ export default function ProjectsGeneralPage() {
                     </div>
                 </section>
                 {loading ? (
-                    <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <Skeleton key={idx} className="h-20 rounded-2xl" />)}</div>
+                    <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <Skeleton key={idx} className="h-20 rounded-lg" />)}</div>
                 ) : viewType === 'table' ? (
-                    <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden"><table className="w-full text-left"><thead className="bg-slate-50 dark:bg-white/5"><tr><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Proyecto</th><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Actividad</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-white/5">{activities.map((activity) => <tr key={activity.id}><td className="px-4 py-3 text-sm font-bold">{activity.project_title}</td><td className="px-4 py-3 hidden md:table-cell text-[11px] text-slate-500">{activity.description}</td></tr>)}</tbody></table></div>
+                    <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden"><table className="w-full text-left"><thead className="bg-slate-50 dark:bg-white/5"><tr><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Proyecto</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 hidden md:table-cell">Actividad</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-white/5">{activities.map((activity) => <tr key={activity.id}><td className="px-3 py-2 text-sm font-medium">{activity.project_title}</td><td className="px-3 py-2 hidden md:table-cell text-[11px] text-slate-500">{activity.description}</td></tr>)}</tbody></table></div>
                 ) : viewType === 'grid' ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">{activities.map((activity) => <article key={activity.id} className="rounded-2xl border border-slate-200 dark:border-white/10 p-4 bg-slate-50 dark:bg-white/5"><p className="text-[10px] font-black uppercase tracking-widest text-blue-600">{activity.project_title}</p><h3 className="font-black mt-2">{activity.task_title || 'Actividad'}</h3><p className="text-sm mt-2">{activity.description}</p></article>)}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">{activities.map((activity) => <article key={activity.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50 dark:bg-white/5"><p className="text-[10px] font-bold uppercase tracking-wide text-blue-600">{activity.project_title}</p><h3 className="font-bold mt-1">{activity.task_title || 'Actividad'}</h3><p className="text-sm mt-1">{activity.description}</p></article>)}</div>
                 ) : viewType === 'board' || viewType === 'kanban' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">{Object.entries(groupedActivities).map(([project, rows]) => <section key={project} className="rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-4"><div className="flex justify-between mb-4"><span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{project}</span><span className="text-[10px] font-black text-slate-400">{rows.length}</span></div><div className="space-y-3">{rows.map((row) => <div key={row.id} className="rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-3 text-sm">{row.description}</div>)}</div></section>)}</div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">{Object.entries(groupedActivities).map(([project, rows]) => <section key={project} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3"><div className="flex justify-between mb-3"><span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{project}</span><span className="text-[10px] font-bold text-slate-400">{rows.length}</span></div><div className="space-y-2">{rows.map((row) => <div key={row.id} className="rounded-md bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-2 text-sm">{row.description}</div>)}</div></section>)}</div>
                 ) : viewType === 'calendar' ? (
                     <UniversalCalendarView events={calendarEvents} title="Calendario del canal general" />
                 ) : viewType === 'gantt' ? (
@@ -125,14 +125,14 @@ export default function ProjectsGeneralPage() {
                 ) : (
                     <div className="space-y-3">
                         {activities.map((activity) => (
-                            <article key={activity.id} className="rounded-2xl border border-slate-200 dark:border-white/10 p-4 bg-slate-50 dark:bg-white/5">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">{activity.project_title}</p>
-                                <h3 className="font-black text-slate-800 dark:text-white mt-1">{activity.task_title || 'Actividad'}</h3>
-                                <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">{activity.description}</p>
+                            <article key={activity.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50 dark:bg-white/5">
+                                <p className="text-[10px] font-bold uppercase tracking-wide text-blue-600">{activity.project_title}</p>
+                                <h3 className="font-bold text-slate-800 dark:text-white mt-1">{activity.task_title || 'Actividad'}</h3>
+                                <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{activity.description}</p>
                             </article>
                         ))}
                         {activities.length === 0 && (
-                            <div className="rounded-3xl border border-slate-200 dark:border-white/10 p-8 text-center text-slate-500">Sin novedades para mostrar.</div>
+                            <div className="rounded-lg border border-slate-200 dark:border-white/10 p-4 text-center text-slate-500">Sin novedades para mostrar.</div>
                         )}
                     </div>
                 )}

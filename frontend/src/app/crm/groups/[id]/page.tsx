@@ -50,7 +50,7 @@ export default function GroupDetailPage() {
 
     if (loading) {
         return (
-            <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">
+            <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-slate-400">
                 Recuperando informacion de la Casa de Bendicion...
             </div>
         );
@@ -58,7 +58,7 @@ export default function GroupDetailPage() {
 
     if (!group) {
         return (
-            <div className="p-20 text-center font-black uppercase tracking-widest text-slate-400">
+            <div className="p-4 text-center font-bold uppercase tracking-wide text-slate-400">
                 No se pudo cargar la Casa.
             </div>
         );
@@ -76,7 +76,7 @@ export default function GroupDetailPage() {
                 <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div className="space-y-4">
                         <DSBadge tone="blue" label={group.status || "GRUPO ACTIVO"} />
-                        <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">
+                        <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase leading-none">
                             {group.name}
                         </h1>
                         <div className="flex items-center gap-4 text-sm font-bold text-slate-500">
@@ -95,30 +95,30 @@ export default function GroupDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Liderazgo</h3>
+                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Liderazgo</h3>
                             <div className="flex items-center gap-4">
-                                <div className="size-9 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600">
+                                <div className="size-9 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600">
                                     <Shield size={24} />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-black text-slate-900 dark:text-white uppercase">{group.leader_name || "Sin lider asignado"}</p>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Lider de Casa</p>
+                                    <p className="text-xs font-bold text-slate-900 dark:text-white uppercase">{group.leader_name || "Sin lider asignado"}</p>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Lider de Casa</p>
                                 </div>
                             </div>
                         </DSCard>
 
                         <DSCard>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Estadisticas del Grupo</h3>
+                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Estadisticas del Grupo</h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
                                     <Users size={20} className="text-blue-600 mb-2" />
-                                    <p className="text-lg font-black">{group.members_count ?? 0}</p>
-                                    <p className="text-[9px] font-black text-slate-400 uppercase">Miembros Frecuentes</p>
+                                    <p className="text-lg font-bold">{group.members_count ?? 0}</p>
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase">Miembros Frecuentes</p>
                                 </div>
                                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
                                     <History size={20} className="text-emerald-500 mb-2" />
-                                    <p className="text-lg font-black">{group.capacity ?? 0}</p>
-                                    <p className="text-[9px] font-black text-slate-400 uppercase">Capacidad</p>
+                                    <p className="text-lg font-bold">{group.capacity ?? 0}</p>
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase">Capacidad</p>
                                 </div>
                             </div>
                         </DSCard>
@@ -126,7 +126,7 @@ export default function GroupDetailPage() {
 
                     <aside className="space-y-3">
                         <div className="p-4 bg-slate-900 rounded-xl text-white space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-blue-400">
                                 <History size={14} /> Linea de Tiempo
                             </div>
                             <div className="space-y-3">

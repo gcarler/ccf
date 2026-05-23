@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
@@ -13,8 +13,8 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 
-const INPUT = "w-full bg-slate-50 dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-2xl px-4 py-5 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all text-slate-900 dark:text-white";
-const LABEL = "text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4";
+const INPUT = "w-full bg-slate-50 dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-3 py-1.5 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all text-slate-900 dark:text-white";
+const LABEL = "text-[10px] font-black uppercase tracking-wide text-slate-400 ml-4";
 
 export default function EditCoursePage() {
     const params = useParams();
@@ -81,82 +81,80 @@ export default function EditCoursePage() {
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Academia', icon: GraduationCap, href: '/academy' },
-                    { label: 'Coordinación', icon: ShieldCheck, href: '/academy/coordination' },
+                    { label: 'Coordinacion', icon: ShieldCheck, href: '/academy/coordination' },
                     { label: 'Editar Curso', icon: FileText },
                 ]}
                 viewType={viewType}
                 setViewType={setViewType}
                 availableViews={['grid', 'list', 'table']}
                 leftActions={
-                    <button onClick={() => router.back()} className="p-2.5 hover:bg-white dark:hover:bg-white/5 rounded-xl transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10">
+                    <button onClick={() => router.back()} className="p-2.5 hover:bg-white dark:hover:bg-white/5 rounded-lg transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10">
                         <ArrowLeft size={18} className="text-slate-500" />
                     </button>
                 }
             />
 
-            <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-6 relative z-10">
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative z-10">
                 {loading ? (
                     <div className="flex justify-center items-center h-64">
                         <Loader2 className="animate-spin text-blue-600" size={32} />
                     </div>
                 ) : (
-                    <motion.div variants={containerVariants} initial="hidden" animate="show" className="max-w-4xl mx-auto space-y-10">
+                    <motion.div variants={containerVariants} initial="hidden" animate="show" className="max-w-4xl mx-auto space-y-3">
 
                         <motion.header variants={itemVariants} className="space-y-3">
-                            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/10 rounded-full text-[10px] font-black uppercase tracking-[0.3em] text-amber-600 dark:text-amber-400">
-                                <FileText size={13} strokeWidth={3} /> Edición de Contenido
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/10 rounded-full text-[10px] font-black uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                                <FileText size={13} strokeWidth={3} /> Edicion de Contenido
                             </div>
-                            <h1 className="text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                            <h1 className="text-lg lg:text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
                                 Actualiza el <br />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-400">Programa.</span>
                             </h1>
                         </motion.header>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            {/* Identidad */}
-                            <motion.div variants={itemVariants} className="bg-white dark:bg-[#15171c] rounded-2xl border border-slate-200 dark:border-white/5 p-6 lg:p-10 shadow-sm space-y-5 hover:border-blue-500/20 transition-all">
+                            <motion.div variants={itemVariants} className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-sm space-y-3 hover:border-blue-500/20 transition-all">
                                 <div className="flex items-center gap-4 text-blue-600">
-                                    <div className="size-9 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shadow-inner">
+                                    <div className="size-9 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shadow-inner">
                                         <FileText size={22} strokeWidth={2.5} />
                                     </div>
-                                    <h2 className="text-base font-black uppercase tracking-widest">Identidad del Programa</h2>
+                                    <h2 className="text-base font-black uppercase tracking-wide">Identidad del Programa</h2>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div className="space-y-2">
-                                        <label className={LABEL}>Código Identificador</label>
+                                        <label className={LABEL}>Codigo Identificador</label>
                                         <input type="text" required placeholder="Ej: FARO-01" value={form.code} onChange={set('code')} className={INPUT} />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className={LABEL}>Nombre Público</label>
+                                        <label className={LABEL}>Nombre Publico</label>
                                         <input type="text" required placeholder="Ej: Fundamentos de la Fe" value={form.title} onChange={set('title')} className={INPUT} />
                                     </div>
                                     <div className="md:col-span-2 space-y-2">
-                                        <label className={LABEL}>Descripción</label>
+                                        <label className={LABEL}>Descripcion</label>
                                         <textarea rows={4} placeholder="Objetivos e impacto del programa..." value={form.description} onChange={set('description')}
-                                            className={clsx(INPUT, "resize-none py-4 leading-relaxed")} />
+                                            className={clsx(INPUT, "resize-none py-1.5 leading-relaxed")} />
                                     </div>
                                 </div>
                             </motion.div>
 
-                            {/* Configuración */}
-                            <motion.div variants={itemVariants} className="bg-white dark:bg-[#15171c] rounded-2xl border border-slate-200 dark:border-white/5 p-6 lg:p-10 shadow-sm space-y-5 hover:border-sky-500/20 transition-all">
+                            <motion.div variants={itemVariants} className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-sm space-y-3 hover:border-sky-500/20 transition-all">
                                 <div className="flex items-center gap-4 text-sky-600">
-                                    <div className="size-9 rounded-2xl bg-sky-50 dark:bg-sky-500/10 flex items-center justify-center shadow-inner">
+                                    <div className="size-9 rounded-lg bg-sky-50 dark:bg-sky-500/10 flex items-center justify-center shadow-inner">
                                         <Clock size={22} strokeWidth={2.5} />
                                     </div>
-                                    <h2 className="text-base font-black uppercase tracking-widest">Configuración Académica</h2>
+                                    <h2 className="text-base font-black uppercase tracking-wide">Configuracion Academica</h2>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                     <div className="space-y-2">
                                         <label className={LABEL}>Modalidad</label>
                                         <select value={form.modality} onChange={set('modality')}
                                             className={clsx(INPUT, "appearance-none cursor-pointer")}>
                                             <option value="formal">Academia Formal</option>
-                                            <option value="non_formal">Capacitación Libre</option>
+                                            <option value="non_formal">Capacitacion Libre</option>
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className={LABEL}>Duración (horas)</label>
+                                        <label className={LABEL}>Duracion (horas)</label>
                                         <input type="number" min={0} value={form.duration_hours} onChange={set('duration_hours')} className={INPUT} />
                                     </div>
                                     <div className="space-y-2">
@@ -164,19 +162,19 @@ export default function EditCoursePage() {
                                         <input type="text" placeholder="Ej: Diplomado" value={form.certificate_type} onChange={set('certificate_type')} className={INPUT} />
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
                                     {[
-                                        { key: 'is_published', title: 'Publicado', desc: 'Visible en el catálogo global' },
+                                        { key: 'is_published', title: 'Publicado', desc: 'Visible en el catalogo global' },
                                         { key: 'is_self_paced', title: 'Autogestionado', desc: 'Sin restricciones de cohorte' },
                                     ].map(({ key, title, desc }) => (
-                                        <label key={key} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-black/20 border-2 border-transparent cursor-pointer hover:border-blue-500/20 transition-all">
+                                        <label key={key} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-black/20 border-2 border-transparent cursor-pointer hover:border-blue-500/20 transition-all">
                                             <div>
                                                 <p className="text-sm font-black text-slate-800 dark:text-white">{title}</p>
                                                 <p className={LABEL}>{desc}</p>
                                             </div>
                                             <input type="checkbox" checked={(form as any)[key]}
                                                 onChange={e => setForm(f => ({ ...f, [key]: e.target.checked }))}
-                                                className="size-8 rounded-xl accent-blue-600 transition-transform active:scale-90" />
+                                                className="size-8 rounded-lg accent-blue-600 transition-transform active:scale-90" />
                                         </label>
                                     ))}
                                 </div>
@@ -184,11 +182,11 @@ export default function EditCoursePage() {
 
                             <div className="flex items-center justify-end gap-4 pt-4">
                                 <button type="button" onClick={() => router.back()}
-                                    className="px-6 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-800 dark:hover:text-white transition-all">
+                                    className="px-3 py-1.5 text-[11px] font-black uppercase tracking-wide text-slate-400 hover:text-slate-800 dark:hover:text-white transition-all">
                                     Descartar
                                 </button>
                                 <button type="submit" disabled={saving}
-                                    className="px-10 py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-wait group">
+                                    className="px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-wait group">
                                     {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} className="group-hover:-translate-y-0.5 transition-transform" />}
                                     {saving ? 'Guardando...' : 'Guardar Cambios'}
                                 </button>

@@ -62,32 +62,32 @@ export default function CmsSitesPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-6 flex items-center justify-between">
+      <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-6 flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">CMS V2</p>
-          <h1 className="mt-2 text-2xl font-black">Gestión de sitios</h1>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">CMS V2</p>
+          <h1 className="mt-2 text-2xl font-semibold">Gestión de sitios</h1>
         </div>
-        <div className="rounded-xl bg-primary/10 px-3 py-2 text-primary text-xs font-black uppercase tracking-widest inline-flex items-center gap-2">
+        <div className="rounded-xl bg-primary/10 px-3 py-2 text-primary text-xs font-semibold uppercase tracking-wide inline-flex items-center gap-2">
           <Globe size={14} /> Multisitio
         </div>
       </div>
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-3">
+        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-3">
           {!canManage && (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
               Tu rol puede consultar sitios, pero no crear ni activar/desactivar.
             </div>
           )}
-          <p className="text-xs font-black uppercase tracking-widest text-slate-500">Nuevo sitio</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Nuevo sitio</p>
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre (ej. Comunidad)" className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm" disabled={!canManage} />
           <input value={siteKey} onChange={(e) => setSiteKey(sanitizeSiteKey(e.target.value))} placeholder="site_key (ej. comunidad)" className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm" disabled={!canManage} />
           <input value={basePath} onChange={(e) => setBasePath(e.target.value)} placeholder="base_path (ej. /comunidad)" className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm" disabled={!canManage} />
-          <button onClick={create} disabled={!canManage} className="w-full rounded-xl bg-primary px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white inline-flex items-center justify-center gap-2 disabled:opacity-50"><Plus size={13} /> Crear sitio</button>
+          <button onClick={create} disabled={!canManage} className="w-full rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white inline-flex items-center justify-center gap-2 disabled:opacity-50"><Plus size={13} /> Crear sitio</button>
         </div>
 
-        <div className="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-3">
-          <p className="text-xs font-black uppercase tracking-widest text-slate-500">Sitios registrados</p>
+        <div className="lg:col-span-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sitios registrados</p>
           {loading ? (
             <p className="text-sm text-slate-500">Cargando sitios...</p>
           ) : (
@@ -96,9 +96,9 @@ export default function CmsSitesPage() {
                 <div key={site.id} className="rounded-xl border border-slate-200 dark:border-white/10 p-3 flex items-center justify-between">
                   <div>
                     <p className="text-sm font-bold">{site.name}</p>
-                    <p className="text-[10px] uppercase tracking-widest text-slate-400">{site.site_key} · {site.base_path}</p>
+                    <p className="text-[10px] uppercase tracking-wide text-slate-400">{site.site_key} · {site.base_path}</p>
                   </div>
-                  <button onClick={() => toggle(site)} disabled={!canManage} className={`rounded-lg px-3 py-1.5 text-[10px] font-black uppercase tracking-widest ${site.is_active ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"} disabled:opacity-50`}>
+                  <button onClick={() => toggle(site)} disabled={!canManage} className={`rounded-lg px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide ${site.is_active ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"} disabled:opacity-50`}>
                     {site.is_active ? "Activo" : "Inactivo"}
                   </button>
                 </div>

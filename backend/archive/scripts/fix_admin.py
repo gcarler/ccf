@@ -26,7 +26,10 @@ def reset_admin():
         sys.exit(1)
 
     if admin_password == "admin1234":
-        print("WARNING: You are using the default insecure password. Please change it.", file=sys.stderr)
+        print(
+            "WARNING: You are using the default insecure password. Please change it.",
+            file=sys.stderr,
+        )
 
     upgrade_with_optional_bootstrap()
     db = SessionLocal()

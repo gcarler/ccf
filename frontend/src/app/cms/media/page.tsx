@@ -225,15 +225,15 @@ export default function CmsMediaLibrary() {
   });
 
   const renderMediaTable = () => (
-    <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
+    <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
       <table className="w-full text-left">
         <thead className="bg-slate-50 dark:bg-white/5">
           <tr>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Archivo</th>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Tipo</th>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">TamaÃ±o</th>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden xl:table-cell">Subido</th>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Acciones</th>
+            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Archivo</th>
+            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden md:table-cell">Tipo</th>
+            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden lg:table-cell">TamaÃ±o</th>
+            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden xl:table-cell">Subido</th>
+            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Acciones</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100 dark:divide-white/5">
@@ -247,7 +247,7 @@ export default function CmsMediaLibrary() {
                       {isImage(item.mime_type) ? <img src={item.url} alt="" className="w-full h-full object-cover" /> : <FileIcon size={16} className="text-slate-400" />}
                     </div>
                     <span className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate max-w-[260px]">{item.filename || "Archivo"}</span>
-                    {item.status === "archived" && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-700">Archivado</span>}
+                    {item.status === "archived" && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</span>}
                   </div>
                 </td>
                 <td className="px-4 py-3 hidden md:table-cell text-[11px] text-slate-500">{item.mime_type || "—"}</td>
@@ -269,22 +269,22 @@ export default function CmsMediaLibrary() {
   const renderMediaBoard = () => (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-full">
       {mediaGroups.map(group => (
-        <section key={group.id} className="rounded-3xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-4">
+        <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-4">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{group.label}</span>
-            <span className="text-[10px] font-black text-slate-400">{group.items.length}</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{group.label}</span>
+            <span className="text-[10px] font-semibold text-slate-400">{group.items.length}</span>
           </div>
           <div className="space-y-3">
             {group.items.map(item => {
               const FileIcon = getFileTypeIcon(item.mime_type);
               return (
-                <button key={item.id} onClick={() => setSelectedItem(item)} className={clsx("w-full text-left bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/5 rounded-2xl p-3 hover:border-blue-400 transition-all flex items-center gap-3", item.status === "archived" && "opacity-70 border-amber-200 bg-amber-50/40 dark:bg-amber-500/5")}>
+                <button key={item.id} onClick={() => setSelectedItem(item)} className={clsx("w-full text-left bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/5 rounded-lg p-3 hover:border-blue-400 transition-all flex items-center gap-3", item.status === "archived" && "opacity-70 border-amber-200 bg-amber-50/40 dark:bg-amber-500/5")}>
                   <div className="size-10 rounded-xl overflow-hidden bg-slate-100 dark:bg-white/5 flex items-center justify-center shrink-0">
                     {isImage(item.mime_type) ? <img src={item.url} alt="" className="w-full h-full object-cover" /> : <FileIcon size={18} className="text-slate-400" />}
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{item.filename || "Archivo"}</p>
-                    {item.status === "archived" && <p className="text-[9px] font-black uppercase tracking-widest text-amber-600">Archivado</p>}
+                    {item.status === "archived" && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-600">Archivado</p>}
                     <p className="text-[10px] text-slate-400 mt-1">{formatBytes(item.file_size)}</p>
                   </div>
                 </button>
@@ -308,10 +308,10 @@ export default function CmsMediaLibrary() {
         {isDraggingOver && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-blue-600/20 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none border-4 border-dashed border-blue-500 rounded-3xl m-4"
+            className="fixed inset-0 z-50 bg-blue-600/20 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none border-4 border-dashed border-blue-500 rounded-lg m-4"
           >
             <Upload size={64} className="text-blue-500 mb-4" strokeWidth={1} />
-            <p className="text-blue-600 dark:text-blue-400 font-black text-xl uppercase tracking-widest">
+            <p className="text-blue-600 dark:text-blue-400 font-semibold text-xl uppercase tracking-wide">
               Suelta para subir
             </p>
           </motion.div>
@@ -322,10 +322,10 @@ export default function CmsMediaLibrary() {
       <header className="shrink-0 border-b border-slate-100 dark:border-white/5 px-6 py-4 flex items-center gap-4">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <FileImage size={18} className="text-blue-600 shrink-0" />
-          <h1 className="text-[13px] font-black uppercase tracking-widest text-slate-800 dark:text-white truncate">
+          <h1 className="text-[13px] font-semibold uppercase tracking-wide text-slate-800 dark:text-white truncate">
             Biblioteca de Medios
           </h1>
-          <span className="text-[10px] font-black text-slate-400 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full shrink-0">
+          <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full shrink-0">
             {filtered.length} archivos
           </span>
         </div>
@@ -347,7 +347,7 @@ export default function CmsMediaLibrary() {
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
-          className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-60 shrink-0"
+          className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-60 shrink-0"
         >
           {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
           {uploading ? "Subiendo..." : "Subir Archivos"}
@@ -362,7 +362,7 @@ export default function CmsMediaLibrary() {
             key={opt.id}
             onClick={() => setFilter(opt.id)}
             className={clsx(
-              "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+              "px-4 py-1.5 rounded-xl text-[10px] font-semibold uppercase tracking-wide transition-all",
               filter === opt.id
                 ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
                 : "bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10"
@@ -380,16 +380,16 @@ export default function CmsMediaLibrary() {
           {loading ? (
             <div className={clsx("gap-4", viewType === "grid" ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6" : "space-y-2")}>
               {Array.from({ length: 12 }).map((_, i) => (
-                <div key={i} className={clsx("animate-pulse bg-slate-100 dark:bg-white/5 rounded-2xl", viewType === "grid" ? "aspect-square" : "h-14")} />
+                <div key={i} className={clsx("animate-pulse bg-slate-100 dark:bg-white/5 rounded-lg", viewType === "grid" ? "aspect-square" : "h-14")} />
               ))}
             </div>
           ) : filtered.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center space-y-6 py-20">
-              <div className="size-24 rounded-[2.5rem] bg-slate-50 dark:bg-white/5 flex items-center justify-center">
+              <div className="size-24 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center">
                 <FileImage size={40} strokeWidth={1} className="text-slate-300" />
               </div>
               <div className="space-y-2">
-                <p className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">
+                <p className="text-lg font-semibold text-slate-800 dark:text-white uppercase tracking-tight">
                   {search ? "Sin resultados" : "Biblioteca vacía"}
                 </p>
                 <p className="text-sm text-slate-400 font-medium">
@@ -399,7 +399,7 @@ export default function CmsMediaLibrary() {
               {!search && (
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all"
+                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all"
                 >
                   <Plus size={16} /> Subir primer archivo
                 </button>
@@ -417,7 +417,7 @@ export default function CmsMediaLibrary() {
                     animate={{ opacity: 1, scale: 1 }}
                     onClick={() => setSelectedItem(item)}
                     className={clsx(
-                      "group relative aspect-square rounded-2xl border overflow-hidden cursor-pointer transition-all",
+                      "group relative aspect-square rounded-lg border overflow-hidden cursor-pointer transition-all",
                       item.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5",
                       selectedItem?.id === item.id
                         ? "border-blue-500 ring-2 ring-blue-500/30"
@@ -430,20 +430,20 @@ export default function CmsMediaLibrary() {
                     ) : (
                       <div className="w-full h-full bg-slate-50 dark:bg-white/5 flex flex-col items-center justify-center gap-2">
                         <FileIcon size={32} strokeWidth={1} className="text-slate-400" />
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center px-2 line-clamp-2">{item.filename}</p>
+                        <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide text-center px-2 line-clamp-2">{item.filename}</p>
                       </div>
                     )}
 
                     {/* Hover overlay */}
                     {item.status === "archived" && (
-                      <span className="absolute left-2 top-2 rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-700">
+                      <span className="absolute left-2 top-2 rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700">
                         Archivado
                       </span>
                     )}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-2 p-2">
                       <button
                         onClick={e => { e.stopPropagation(); copyUrl(item); }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-800 hover:bg-blue-50 transition-all w-full justify-center"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg text-[9px] font-semibold uppercase tracking-wide text-slate-800 hover:bg-blue-50 transition-all w-full justify-center"
                       >
                         {copiedId === item.id ? <Check size={10} className="text-emerald-600" /> : <Copy size={10} />}
                         {copiedId === item.id ? "¡Copiado!" : "Copiar URL"}
@@ -452,7 +452,7 @@ export default function CmsMediaLibrary() {
                         onClick={e => { e.stopPropagation(); toggleArchiveItem(item); }}
                         disabled={deletingId === item.id}
                         className={clsx(
-                          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-white transition-all w-full justify-center disabled:opacity-60",
+                          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-semibold uppercase tracking-wide text-white transition-all w-full justify-center disabled:opacity-60",
                           item.status === "archived" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-amber-500 hover:bg-amber-600"
                         )}
                       >
@@ -501,7 +501,7 @@ export default function CmsMediaLibrary() {
                     animate={{ opacity: 1, x: 0 }}
                     onClick={() => setSelectedItem(item)}
                     className={clsx(
-                      "group flex items-center gap-4 p-3 rounded-2xl border cursor-pointer transition-all",
+                      "group flex items-center gap-4 p-3 rounded-lg border cursor-pointer transition-all",
                       item.status === "archived" && "opacity-70 border-amber-200 bg-amber-50/40 dark:bg-amber-500/5",
                       selectedItem?.id === item.id
                         ? "border-blue-500 bg-blue-50 dark:bg-blue-900/10"
@@ -522,7 +522,7 @@ export default function CmsMediaLibrary() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{item.filename || "Archivo"}</p>
-                        {item.status === "archived" && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-700">Archivado</span>}
+                        {item.status === "archived" && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</span>}
                       </div>
                       <p className="text-[10px] text-slate-400 font-medium">{item.mime_type || "—"} · {formatBytes(item.file_size)}</p>
                     </div>
@@ -578,7 +578,7 @@ export default function CmsMediaLibrary() {
             >
               {/* Header */}
               <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-white/5">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Detalle</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Detalle</p>
                 <button onClick={() => setSelectedItem(null)} className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 text-slate-400 transition-all">
                   <X size={14} />
                 </button>
@@ -591,18 +591,18 @@ export default function CmsMediaLibrary() {
                   <img
                     src={selectedItem.url}
                     alt={selectedItem.alt_text || selectedItem.filename}
-                    className="w-full rounded-2xl border border-slate-200 dark:border-white/10 object-cover max-h-56"
+                    className="w-full rounded-lg border border-slate-200 dark:border-white/10 object-cover max-h-56"
                   />
                 ) : selectedItem.mime_type?.startsWith("video/") ? (
-                  <video controls className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-black max-h-56">
+                  <video controls className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-black max-h-56">
                     <source src={selectedItem.url} type={selectedItem.mime_type} />
                   </video>
                 ) : selectedItem.mime_type?.startsWith("audio/") ? (
-                  <div className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                  <div className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
                     <audio controls src={selectedItem.url} className="w-full" />
                   </div>
                 ) : (
-                  <div className="w-full h-40 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 flex flex-col items-center justify-center gap-3">
+                  <div className="w-full h-40 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 flex flex-col items-center justify-center gap-3">
                     {React.createElement(getFileTypeIcon(selectedItem.mime_type), { size: 40, strokeWidth: 1, className: "text-slate-300" })}
                     <p className="text-[10px] font-bold text-slate-400 uppercase">{selectedItem.mime_type}</p>
                   </div>
@@ -625,16 +625,16 @@ export default function CmsMediaLibrary() {
                       : []),
                   ].map(item => (
                     <div key={item.label} className="flex items-start gap-3">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest w-20 shrink-0 pt-0.5">{item.label}</p>
+                      <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide w-20 shrink-0 pt-0.5">{item.label}</p>
                       <p className="text-[11px] font-bold text-slate-700 dark:text-slate-200 break-all">{item.val}</p>
                     </div>
                   ))}
                 </div>
 
-                <div className="space-y-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Metadata editable</p>
+                <div className="space-y-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                  <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">Metadata editable</p>
                   <label className="block space-y-1.5">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Alt / titulo accesible</span>
+                    <span className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Alt / titulo accesible</span>
                     <input
                       value={selectedItem.alt_text || ""}
                       onChange={event => updateSelectedItem({ alt_text: event.target.value })}
@@ -642,7 +642,7 @@ export default function CmsMediaLibrary() {
                     />
                   </label>
                   <label className="block space-y-1.5">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Seccion</span>
+                    <span className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Seccion</span>
                     <input
                       value={selectedItem.section || "general"}
                       onChange={event => updateSelectedItem({ section: event.target.value })}
@@ -650,7 +650,7 @@ export default function CmsMediaLibrary() {
                     />
                   </label>
                   <label className="block space-y-1.5">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Tags</span>
+                    <span className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Tags</span>
                     <input
                       value={tagsText}
                       onChange={event => setTagsText(event.target.value)}
@@ -662,7 +662,7 @@ export default function CmsMediaLibrary() {
 
                 {/* URL field */}
                 <div className="space-y-1.5">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">URL pública</p>
+                  <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">URL pública</p>
                   <div className="flex gap-2">
                     <input
                       readOnly
@@ -689,7 +689,7 @@ export default function CmsMediaLibrary() {
                 <button
                   onClick={saveMetadata}
                   disabled={metadataSaving}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all disabled:opacity-60"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-semibold uppercase tracking-wide hover:bg-blue-700 transition-all disabled:opacity-60"
                 >
                   {metadataSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                   Guardar metadata
@@ -698,7 +698,7 @@ export default function CmsMediaLibrary() {
                   href={selectedItem.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-[10px] font-semibold uppercase tracking-wide hover:opacity-90 transition-all"
                 >
                   <Download size={14} /> Descargar
                 </a>
@@ -706,7 +706,7 @@ export default function CmsMediaLibrary() {
                   onClick={() => toggleArchiveItem(selectedItem)}
                   disabled={deletingId === selectedItem.id}
                   className={clsx(
-                    "flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-60",
+                    "flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[10px] font-semibold uppercase tracking-wide transition-all disabled:opacity-60",
                     selectedItem.status === "archived"
                       ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 hover:bg-emerald-100"
                       : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 hover:bg-amber-100"

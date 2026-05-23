@@ -14,7 +14,8 @@ def ensure_tasks_table():
         cursor = conn.cursor()
 
         print("Verificando tabla 'crm_tasks'...")
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS crm_tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 title VARCHAR(200) NOT NULL,
@@ -30,7 +31,8 @@ def ensure_tasks_table():
                 FOREIGN KEY(lead_id) REFERENCES consolidation_pipeline(id),
                 FOREIGN KEY(assignee_id) REFERENCES users(id)
             )
-        """)
+        """
+        )
         print("Tabla 'crm_tasks' lista.")
 
         conn.commit()

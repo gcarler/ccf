@@ -38,7 +38,9 @@ def alter_db():
 
             try:
                 # Manual create table since SQLAlchemy already knows it
-                conn.execute(text("""
+                conn.execute(
+                    text(
+                        """
                     CREATE TABLE academy_activity_logs (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         event_type VARCHAR(50) NOT NULL,
@@ -50,13 +52,17 @@ def alter_db():
                         FOREIGN KEY(course_id) REFERENCES courses(id),
                         FOREIGN KEY(user_id) REFERENCES users(id)
                     )
-                """))
+                """
+                    )
+                )
                 print("Created academy_activity_logs table")
             except Exception as e:
                 print(f"Skipped academy_activity_logs creation: {e}")
 
             try:
-                conn.execute(text("""
+                conn.execute(
+                    text(
+                        """
                     CREATE TABLE course_attendance (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         enrollment_id INTEGER NOT NULL,
@@ -66,7 +72,9 @@ def alter_db():
                         FOREIGN KEY(enrollment_id) REFERENCES enrollments(id) ON DELETE CASCADE,
                         FOREIGN KEY(recorded_by_id) REFERENCES users(id)
                     )
-                """))
+                """
+                    )
+                )
                 print("Created course_attendance table")
             except Exception as e:
                 print(f"Skipped course_attendance creation: {e}")

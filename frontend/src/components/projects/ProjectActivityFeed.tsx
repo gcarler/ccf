@@ -23,17 +23,17 @@ export default function ProjectActivityFeed({ activities }: Props) {
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden font-display">
-            <header className="p-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
+            <header className="p-3 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
                 <div>
-                    <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-slate-400">Actividad Reciente</h3>
-                    <p className="text-[9px] font-bold text-blue-600 uppercase mt-1">Pulso del Equipo</p>
+                    <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Actividad Reciente</h3>
+                    <p className="text-[9px] font-medium text-blue-600 uppercase mt-0.5">Pulso del Equipo</p>
                 </div>
-                <div className="size-8 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
-                    <Clock size={14} />
+                <div className="size-7 rounded-md bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
+                    <Clock size={12} />
                 </div>
             </header>
 
-            <div className="flex-1 overflow-y-auto scrollbar-hide p-6 space-y-8 relative">
+            <div className="flex-1 overflow-y-auto scrollbar-hide p-3 space-y-4 relative">
                 {/* Línea de conexión temporal */}
                 <div className="absolute left-[2.25rem] top-8 bottom-8 w-[1px] bg-slate-100 dark:bg-white/5" />
 
@@ -52,18 +52,18 @@ export default function ProjectActivityFeed({ activities }: Props) {
                             className="relative flex gap-4 group"
                         >
                             <div className={clsx(
-                                "size-9 rounded-xl flex items-center justify-center z-10 shadow-sm transition-transform group-hover:scale-110",
+                                "size-7 rounded-md flex items-center justify-center z-10 shadow-sm transition-transform group-hover:scale-110",
                                 getIconBg(log.kind)
                             )}>
                                 {getIcon(log.kind)}
                             </div>
-                            
-                            <div className="flex-1 min-w-0 space-y-1">
+
+                            <div className="flex-1 min-w-0 space-y-0.5">
                                 <div className="flex items-center justify-between gap-2">
-                                    <span className="text-[11px] font-black text-slate-900 dark:text-white truncate">
+                                    <span className="text-[11px] font-bold text-slate-900 dark:text-white truncate">
                                         {log.task_title || log.project_title || 'Sistema'}
                                     </span>
-                                    <span className="text-[9px] font-bold text-slate-400 whitespace-nowrap">
+                                    <span className="text-[9px] font-medium text-slate-400 whitespace-nowrap">
                                         {formatRelative(log.created_at)}
                                     </span>
                                 </div>

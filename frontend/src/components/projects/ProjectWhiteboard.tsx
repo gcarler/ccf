@@ -149,13 +149,13 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
                                 <Dialog.Title className="sr-only">Pizarra Infinita Ministerial</Dialog.Title>
 
                                 {/* Top Bar: Calidad Premium */}
-                                <header className="h-16 px-8 border-b border-slate-200 dark:border-white/5 flex items-center justify-between bg-white dark:bg-[#1e1f21] shrink-0">
-                                    <div className="flex items-center gap-4">
-                                        <div className="size-10 rounded-2xl bg-orange-500 flex items-center justify-center text-white shadow-xl shadow-orange-500/20">
-                                            <LayoutDashboard size={20} />
+                                <header className="h-12 px-4 border-b border-slate-200 dark:border-white/5 flex items-center justify-between bg-white dark:bg-[#1e1f21] shrink-0">
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-8 rounded-md bg-orange-500 flex items-center justify-center text-white shadow-xl shadow-orange-500/20">
+                                            <LayoutDashboard size={16} />
                                         </div>
                                         <div>
-                                            <h3 className="text-[13px] font-black text-slate-900 dark:text-white uppercase tracking-wider">Lienzo Creativo: Proyecto {project_id}</h3>
+                                            <h3 className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-wide">Lienzo Creativo: Proyecto {project_id}</h3>
                                             <div className="flex items-center gap-2 mt-0.5">
                                                 {saveStatus === 'saving' ? (
                                                     <><Loader2 size={10} className="animate-spin text-blue-500" /> <span className="text-[8px] font-black uppercase text-blue-500">Sincronizando...</span></>
@@ -166,20 +166,20 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3">
-                                        <button onClick={handleAiDiagram} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-blue-500/30">
-                                            {isAiDrawing ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} 
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={handleAiDiagram} className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-md text-[10px] font-bold uppercase tracking-wide hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-blue-500/30">
+                                            {isAiDrawing ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                                             Diagramar con IA
                                         </button>
-                                        <div className="w-[1px] h-6 bg-slate-200 dark:bg-white/10 mx-2" />
-                                        <button onClick={onClose} className="p-2.5 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-500 hover:text-rose-500 transition-all"><X size={20} /></button>
+                                        <div className="w-[1px] h-5 bg-slate-200 dark:bg-white/10 mx-1" />
+                                        <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-white/5 rounded-md text-slate-500 hover:text-rose-500 transition-all"><X size={16} /></button>
                                     </div>
                                 </header>
 
                                 {/* Drawing Area */}
-                                <main className="flex-1 relative overflow-hidden flex items-center justify-center p-10">
+                                <main className="flex-1 relative overflow-hidden flex items-center justify-center p-4">
                                     {/* Toolbar Flotante Estilo ClickUp */}
-                                    <div className="absolute left-10 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-2 p-2 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-3xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)]">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-1.5 p-1.5 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)]">
                                         <ToolBtn active={tool === 'select'} onClick={() => { setTool('select'); if (fabricCanvas.current) fabricCanvas.current.isDrawingMode = false; }} icon={MousePointer2} label="Selección" />
                                         <ToolBtn active={tool === 'pencil'} onClick={() => { setTool('pencil'); if (fabricCanvas.current) { fabricCanvas.current.isDrawingMode = true; fabricCanvas.current.freeDrawingBrush = new fabric.PencilBrush(fabricCanvas.current); fabricCanvas.current.freeDrawingBrush.width = 3; fabricCanvas.current.freeDrawingBrush.color = '#2563eb'; } }} icon={Pencil} label="Dibujo" />
                                         <div className="h-[1px] w-8 bg-slate-100 dark:bg-white/5 mx-auto my-1" />
@@ -191,13 +191,13 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
                                     </div>
 
                                     {/* El Lienzo con Grid de Ingeniería */}
-                                    <div className="relative rounded-[2.5rem] shadow-[0_64px_128px_-24px_rgba(0,0,0,0.1)] overflow-hidden border-8 border-white dark:border-[#1e1f21]">
+                                    <div className="relative rounded-lg shadow-[0_64px_128px_-24px_rgba(0,0,0,0.1)] overflow-hidden border-4 border-white dark:border-[#1e1f21]">
                                         <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(#000 1.5px, transparent 0)', backgroundSize: '32px 32px' }} />
                                         <canvas ref={canvasRef} />
                                     </div>
 
                                     {/* Floating Zoom & Controls */}
-                                    <div className="absolute bottom-10 right-10 flex items-center gap-4 bg-white/80 dark:bg-[#1e1f21]/80 backdrop-blur-xl px-6 py-3 rounded-full border border-slate-200 dark:border-white/10 shadow-2xl">
+                                    <div className="absolute bottom-4 right-4 flex items-center gap-3 bg-white/80 dark:bg-[#1e1f21]/80 backdrop-blur-xl px-3 py-2 rounded-full border border-slate-200 dark:border-white/10 shadow-2xl">
                                         <button className="text-slate-400 hover:text-blue-600"><ZoomOut size={18} /></button>
                                         <span className="text-xs font-black w-12 text-center text-slate-600 dark:text-slate-200">100%</span>
                                         <button className="text-slate-400 hover:text-blue-600"><ZoomIn size={18} /></button>
@@ -219,10 +219,10 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
 
 function ToolBtn({ active, onClick, icon: Icon, label, color = "text-slate-500" }: any) {
     return (
-        <button 
+        <button
             onClick={onClick}
             className={clsx(
-                "p-3 rounded-2xl transition-all relative group",
+                "p-2 rounded-md transition-all relative group",
                 active ? "bg-blue-600 text-white shadow-xl shadow-blue-500/20" : `hover:bg-slate-50 dark:hover:bg-white/5 ${color}`
             )}
         >

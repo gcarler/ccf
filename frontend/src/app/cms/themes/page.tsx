@@ -103,19 +103,19 @@ export default function CmsThemesPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-6">
+      <div className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-6">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">CMS V2</p>
-          <h1 className="mt-2 text-2xl font-black">Editor de temas multisitio</h1>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">CMS V2</p>
+          <h1 className="mt-2 text-2xl font-semibold">Editor de temas multisitio</h1>
         </div>
-        <div className="flex items-center gap-2 rounded-xl bg-primary/10 px-3 py-2 text-primary text-xs font-black uppercase tracking-wider">
+        <div className="flex items-center gap-2 rounded-xl bg-primary/10 px-3 py-2 text-primary text-xs font-semibold uppercase tracking-wider">
           <Palette size={14} /> Tokens
         </div>
       </div>
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-3">
-          <label className="text-xs font-black uppercase tracking-wider text-slate-500">Sitio</label>
+        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-3">
+          <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Sitio</label>
           <select value={siteKey} onChange={(e) => setSiteKey(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm">
             {sites.length === 0 && <option value="faro">faro</option>}
             {sites.map((site) => (
@@ -123,7 +123,7 @@ export default function CmsThemesPage() {
             ))}
           </select>
 
-          <label className="text-xs font-black uppercase tracking-wider text-slate-500">Nombre del tema</label>
+          <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Nombre del tema</label>
           <input value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm" disabled={!canEdit} />
           <button
             onClick={() => {
@@ -133,14 +133,14 @@ export default function CmsThemesPage() {
               setMessage("Creación de nuevo tema.");
             }}
             disabled={!canEdit}
-            className="w-full rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-wider"
+            className="w-full rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider"
           >
             Nuevo tema
           </button>
 
           {Object.entries(tokens).map(([key, value]) => (
             <div key={key} className="space-y-1">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{key}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{key}</p>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
@@ -159,32 +159,32 @@ export default function CmsThemesPage() {
             </div>
           ))}
 
-          <button onClick={saveTheme} disabled={saving || !canEdit} className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white disabled:opacity-60">
+          <button onClick={saveTheme} disabled={saving || !canEdit} className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white disabled:opacity-60">
             <Save size={13} /> {saving ? "Guardando" : editingThemeId ? "Actualizar y activar" : "Guardar y activar"}
           </button>
           {message && <p className="text-xs text-slate-500">{message}</p>}
         </div>
 
-        <div className="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-3">
+        <div className="lg:col-span-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-3">
           <div
-            className="rounded-2xl border border-slate-200 dark:border-white/10 p-6"
+            className="rounded-lg border border-slate-200 dark:border-white/10 p-6"
             style={{
               background: tokens["--faro-background"],
               color: tokens["--faro-on-background"],
             }}
           >
-            <p className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: tokens["--faro-secondary"] }}>Preview</p>
-            <h3 className="mt-2 text-2xl font-black">Tema en vivo</h3>
+            <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: tokens["--faro-secondary"] }}>Preview</p>
+            <h3 className="mt-2 text-2xl font-semibold">Tema en vivo</h3>
             <p className="mt-2 text-sm opacity-80">Así se verían tus variables principales en una sección pública.</p>
             <button
-              className="mt-5 rounded-full px-5 py-2.5 text-[11px] font-black uppercase tracking-widest"
+              className="mt-5 rounded-full px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide"
               style={{ background: tokens["--faro-primary"], color: tokens["--faro-background"] }}
             >
               Acción principal
             </button>
           </div>
 
-          <h2 className="text-sm font-black uppercase tracking-wider text-slate-500">Temas existentes</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">Temas existentes</h2>
           <div className="space-y-2">
             {themes.map((theme) => {
               const isArchived = theme.status === "archived";
@@ -192,7 +192,7 @@ export default function CmsThemesPage() {
                 <div key={theme.id} className={`flex items-center justify-between rounded-xl border p-3 ${isArchived ? "border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200 dark:border-white/10"}`}>
                   <div>
                     <p className="text-sm font-bold">{theme.name}</p>
-                    <p className="text-[10px] uppercase tracking-widest text-slate-400">
+                    <p className="text-[10px] uppercase tracking-wide text-slate-400">
                       {isArchived ? "Archivado" : theme.is_active ? "Activo" : "Disponible"}
                     </p>
                   </div>
@@ -206,12 +206,12 @@ export default function CmsThemesPage() {
                         setMessage("Editando tema seleccionado.");
                       }}
                       disabled={!canEdit || isArchived}
-                      className="rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest"
+                      className="rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide"
                     >
                       Editar
                     </button>
                     {!theme.is_active && !isArchived && (
-                      <button onClick={() => activate(theme.id)} disabled={!canPublish} className="rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest disabled:opacity-50">
+                      <button onClick={() => activate(theme.id)} disabled={!canPublish} className="rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50">
                         Activar
                       </button>
                     )}
@@ -219,7 +219,7 @@ export default function CmsThemesPage() {
                       <button
                         onClick={() => archive(theme.id)}
                         disabled={!canPublish}
-                        className="inline-flex items-center gap-1 rounded-lg border border-amber-200 dark:border-amber-500/20 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-amber-700 disabled:opacity-50"
+                        className="inline-flex items-center gap-1 rounded-lg border border-amber-200 dark:border-amber-500/20 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 disabled:opacity-50"
                       >
                         <Archive size={12} />
                         Archivar
@@ -229,7 +229,7 @@ export default function CmsThemesPage() {
                       <button
                         onClick={() => restore(theme.id)}
                         disabled={!canEdit}
-                        className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 dark:border-emerald-500/20 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-700 disabled:opacity-50"
+                        className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 dark:border-emerald-500/20 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 disabled:opacity-50"
                       >
                         <RotateCcw size={12} />
                         Restaurar

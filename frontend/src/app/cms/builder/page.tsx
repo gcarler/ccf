@@ -200,18 +200,18 @@ function SectionPreview({ section }: { section: CmsSection }) {
   const typeLabel = SECTION_TYPE_LABEL[section.type] ?? section.type;
 
   const TypeBadge = () => (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest text-white ${typeColor}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wide text-white ${typeColor}`}>
       {typeLabel}
     </span>
   );
 
   if (section.type === "hero" || section.type === "video_hero") {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-300 dark:border-white/20 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed border-slate-300 dark:border-white/20 p-4 space-y-2">
         <TypeBadge />
-        <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight">{title || "Título hero"}</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white leading-tight">{title || "Título hero"}</h3>
         <p className="text-sm text-slate-500 line-clamp-2">{body || "Subtítulo o descripción principal"}</p>
-        {ctaLabel && <span className="inline-block mt-1 px-3 py-1 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase">{ctaLabel}</span>}
+        {ctaLabel && <span className="inline-block mt-1 px-3 py-1 bg-blue-600 text-white rounded-lg text-[10px] font-semibold uppercase">{ctaLabel}</span>}
         {section.type === "video_hero" && <p className="text-[9px] text-slate-400 font-bold uppercase">🎬 Video de fondo configurado</p>}
       </div>
     );
@@ -221,7 +221,7 @@ function SectionPreview({ section }: { section: CmsSection }) {
       ? (section.props_json.items as Array<Record<string,unknown>>).filter((item) => item.status !== "archived")
       : [];
     return (
-      <div className="rounded-2xl border border-dashed border-slate-300 dark:border-white/20 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed border-slate-300 dark:border-white/20 p-4 space-y-2">
         <TypeBadge />
         <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{title || "Bloque de tarjetas"}</p>
         {items.length > 0 && (
@@ -239,7 +239,7 @@ function SectionPreview({ section }: { section: CmsSection }) {
   }
   if (section.type === "gallery") {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-300 dark:border-white/20 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed border-slate-300 dark:border-white/20 p-4 space-y-2">
         <TypeBadge />
         {imageUrl
           // eslint-disable-next-line @next/next/no-img-element
@@ -251,17 +251,17 @@ function SectionPreview({ section }: { section: CmsSection }) {
   }
   if (section.type === "cta_banner") {
     return (
-      <div className="rounded-2xl border border-dashed border-emerald-300 dark:border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-900/10 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed border-emerald-300 dark:border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-900/10 p-4 space-y-2">
         <TypeBadge />
-        <p className="text-sm font-black text-slate-800 dark:text-slate-100">{title || "Llamado a la Acción"}</p>
+        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{title || "Llamado a la Acción"}</p>
         <p className="text-xs text-slate-500 line-clamp-1">{body || "Subtítulo"}</p>
-        {ctaLabel && <span className="inline-block px-3 py-1 bg-emerald-600 text-white rounded-lg text-[10px] font-black uppercase">{ctaLabel}</span>}
+        {ctaLabel && <span className="inline-block px-3 py-1 bg-emerald-600 text-white rounded-lg text-[10px] font-semibold uppercase">{ctaLabel}</span>}
       </div>
     );
   }
   if (section.type === "testimonials") {
     return (
-      <div className="rounded-2xl border border-dashed border-rose-300 dark:border-rose-500/30 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed border-rose-300 dark:border-rose-500/30 p-4 space-y-2">
         <TypeBadge />
         <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{title || "Sección de Testimonios"}</p>
         <div className="flex gap-2">
@@ -275,12 +275,12 @@ function SectionPreview({ section }: { section: CmsSection }) {
   if (section.type === "stats") {
     const stats = Array.isArray(section.props_json?.items) ? section.props_json.items as Array<Record<string,unknown>> : [];
     return (
-      <div className="rounded-2xl border border-dashed border-teal-300 dark:border-teal-500/30 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed border-teal-300 dark:border-teal-500/30 p-4 space-y-2">
         <TypeBadge />
         <div className="grid grid-cols-3 gap-2">
           {(stats.length > 0 ? stats : [{value: "—", label: "Métrica"}]).slice(0,3).map((s, i) => (
             <div key={i} className="text-center">
-              <p className="text-base font-black text-teal-600">{safeString(s.value) || "—"}</p>
+              <p className="text-base font-semibold text-teal-600">{safeString(s.value) || "—"}</p>
               <p className="text-[9px] text-slate-400 font-bold uppercase">{safeString(s.label) || "Métrica"}</p>
             </div>
           ))}
@@ -290,7 +290,7 @@ function SectionPreview({ section }: { section: CmsSection }) {
   }
   if (section.type === "team") {
     return (
-      <div className="rounded-2xl border border-dashed border-orange-300 dark:border-orange-500/30 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed border-orange-300 dark:border-orange-500/30 p-4 space-y-2">
         <TypeBadge />
         <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{title || "Nuestro Equipo"}</p>
         <div className="flex gap-2">
@@ -304,13 +304,13 @@ function SectionPreview({ section }: { section: CmsSection }) {
   if (section.type === "countdown") {
     const target = safeString(section.props_json?.target_date);
     return (
-      <div className="rounded-2xl border border-dashed border-red-300 dark:border-red-500/30 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed border-red-300 dark:border-red-500/30 p-4 space-y-2">
         <TypeBadge />
         <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{title || "Cuenta Regresiva"}</p>
         <div className="flex gap-3">
           {["DD", "HH", "MM", "SS"].map(u => (
             <div key={u} className="text-center">
-              <div className="size-10 rounded-xl bg-red-600 flex items-center justify-center text-white font-black text-sm">00</div>
+              <div className="size-10 rounded-xl bg-red-600 flex items-center justify-center text-white font-semibold text-sm">00</div>
               <p className="text-[8px] text-slate-400 mt-0.5 font-bold uppercase">{u}</p>
             </div>
           ))}
@@ -324,12 +324,12 @@ function SectionPreview({ section }: { section: CmsSection }) {
       ? (section.props_json.items as Array<Record<string,unknown>>).filter((item) => item.status !== "archived")
       : [];
     return (
-      <div className="rounded-2xl border border-dashed border-amber-300 dark:border-amber-500/30 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed border-amber-300 dark:border-amber-500/30 p-4 space-y-2">
         <TypeBadge />
         <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{title || "Preguntas Frecuentes"}</p>
         {faqs.slice(0,2).map((f, i) => (
           <div key={i} className="flex items-start gap-2 text-xs">
-            <span className="text-amber-500 font-black mt-0.5">Q</span>
+            <span className="text-amber-500 font-semibold mt-0.5">Q</span>
             <span className="text-slate-600 dark:text-slate-300 line-clamp-1">{safeString(f.q) || "Pregunta"}</span>
           </div>
         ))}
@@ -339,7 +339,7 @@ function SectionPreview({ section }: { section: CmsSection }) {
   if (section.type === "embed") {
     const embedUrl = safeString(section.props_json?.embed_url);
     return (
-      <div className="rounded-2xl border border-dashed border-cyan-300 dark:border-cyan-500/30 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed border-cyan-300 dark:border-cyan-500/30 p-4 space-y-2">
         <TypeBadge />
         {embedUrl
           ? <p className="text-[10px] text-slate-500 font-mono truncate">{embedUrl}</p>
@@ -350,9 +350,9 @@ function SectionPreview({ section }: { section: CmsSection }) {
   }
   // rich_text, rich_text_columns, default
   return (
-    <div className="rounded-2xl border border-dashed border-slate-300 dark:border-white/20 p-4 space-y-2">
+    <div className="rounded-lg border border-dashed border-slate-300 dark:border-white/20 p-4 space-y-2">
       <TypeBadge />
-      <h4 className="text-base font-black text-slate-800 dark:text-slate-100">{title || "Título"}</h4>
+      <h4 className="text-base font-semibold text-slate-800 dark:text-slate-100">{title || "Título"}</h4>
       <p className="text-sm text-slate-500 line-clamp-3">{body || "Contenido de sección"}</p>
       {section.type === "rich_text_columns" && (
         <div className="flex gap-2 mt-1">
@@ -430,15 +430,15 @@ function MediaPicker({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-sm p-4 flex items-center justify-center" onClick={onClose}>
-      <div className="w-full max-w-5xl max-h-[86vh] overflow-hidden rounded-2xl bg-white dark:bg-[#111418] border border-slate-200 dark:border-white/10 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+      <div className="w-full max-w-5xl max-h-[86vh] overflow-hidden rounded-lg bg-white dark:bg-[#111418] border border-slate-200 dark:border-white/10 shadow-2xl" onClick={(event) => event.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 px-5 py-4">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300 flex items-center justify-center">
               <ImageIcon size={18} />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Biblioteca CMS</p>
-              <h2 className="text-base font-black text-slate-900 dark:text-white">Seleccionar imagen</h2>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Biblioteca CMS</p>
+              <h2 className="text-base font-semibold text-slate-900 dark:text-white">Seleccionar imagen</h2>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10">
@@ -456,7 +456,7 @@ function MediaPicker({
               className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-500"
             />
           </div>
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-50">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50">
             <Upload size={14} />
             {uploading ? "Subiendo..." : "Subir imagen"}
             <input type="file" accept="image/*" className="hidden" onChange={uploadImage} disabled={uploading} />
@@ -479,7 +479,7 @@ function MediaPicker({
                   <button
                     key={item.id}
                     onClick={() => onSelect(item)}
-                    className={`group text-left rounded-2xl border overflow-hidden bg-white dark:bg-white/[0.03] transition-all ${isSelected ? "border-blue-500 ring-2 ring-blue-500/20" : "border-slate-200 dark:border-white/10 hover:border-blue-300"}`}
+                    className={`group text-left rounded-lg border overflow-hidden bg-white dark:bg-white/[0.03] transition-all ${isSelected ? "border-blue-500 ring-2 ring-blue-500/20" : "border-slate-200 dark:border-white/10 hover:border-blue-300"}`}
                   >
                     <div className="relative aspect-video bg-slate-100 dark:bg-white/5">
                       <img src={item.url} alt={item.alt_text || item.filename || ""} className="h-full w-full object-cover" />
@@ -490,7 +490,7 @@ function MediaPicker({
                       )}
                     </div>
                     <div className="p-3">
-                      <p className="truncate text-xs font-black text-slate-800 dark:text-slate-100">{item.filename || "Imagen CMS"}</p>
+                      <p className="truncate text-xs font-semibold text-slate-800 dark:text-slate-100">{item.filename || "Imagen CMS"}</p>
                       <p className="mt-1 truncate text-[10px] text-slate-400">{item.alt_text || item.section || "Sin alt text"}</p>
                     </div>
                   </button>
@@ -816,19 +816,19 @@ export default function CmsBuilderPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-6 flex items-center justify-between">
+      <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-6 flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">CMS V2 Builder</p>
-          <h1 className="mt-2 text-2xl font-black">Constructor visual multisitio</h1>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">CMS V2 Builder</p>
+          <h1 className="mt-2 text-2xl font-semibold">Constructor visual multisitio</h1>
         </div>
-        <div className="rounded-xl bg-primary/10 px-3 py-2 text-primary text-xs font-black uppercase tracking-widest inline-flex items-center gap-2">
+        <div className="rounded-xl bg-primary/10 px-3 py-2 text-primary text-xs font-semibold uppercase tracking-wide inline-flex items-center gap-2">
           <LayoutPanelTop size={14} /> Beta
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <aside className="lg:col-span-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-3">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sitio</label>
+        <aside className="lg:col-span-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-3">
+          <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sitio</label>
           <select value={siteKey} onChange={(e) => setSiteKey(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm">
             {sites.length === 0 && <option value="faro">faro</option>}
             {sites.map((site) => (
@@ -837,31 +837,31 @@ export default function CmsBuilderPage() {
           </select>
 
           <div className="rounded-xl border border-slate-200 dark:border-white/10 p-3 space-y-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nueva página</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Nueva página</p>
             <input value={newPageTitle} onChange={(e) => setNewPageTitle(e.target.value)} placeholder="Ej: Página de bienvenida" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm" disabled={!canEdit} />
-            <button onClick={createPage} disabled={!canEdit} className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-50"><Plus size={12} /> Crear vacía</button>
+            <button onClick={createPage} disabled={!canEdit} className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50"><Plus size={12} /> Crear vacía</button>
             <select value={pageTemplateKey} onChange={(e) => setPageTemplateKey(e.target.value)} className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs">
               {PAGE_TEMPLATES.map((template) => (
                 <option key={template.key} value={template.key}>{template.label}</option>
               ))}
             </select>
-            <button onClick={createPageFromTemplate} disabled={!canEdit} className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest disabled:opacity-50">
+            <button onClick={createPageFromTemplate} disabled={!canEdit} className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50">
               <Plus size={12} /> Crear con plantilla
             </button>
           </div>
 
           <div className="space-y-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Páginas</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Páginas</p>
             {pages.map((page) => (
               <button key={page.id} onClick={() => setActiveSlug(page.slug)} className={`w-full text-left rounded-lg border px-3 py-2 text-sm ${activeSlug === page.slug ? "border-primary/40 bg-primary/5" : "border-slate-200 dark:border-white/10"}`}>
                 <p className="font-bold">{page.title}</p>
-                <p className="text-[10px] uppercase tracking-widest text-slate-400">/{page.slug} · {page.status}</p>
+                <p className="text-[10px] uppercase tracking-wide text-slate-400">/{page.slug} · {page.status}</p>
               </button>
             ))}
           </div>
 
           <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-white/10">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Plantillas rápidas</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Plantillas rápidas</p>
             {SECTION_TEMPLATES.map((template) => (
               <button
                 key={template.label}
@@ -875,20 +875,20 @@ export default function CmsBuilderPage() {
           </div>
         </aside>
 
-        <section className="lg:col-span-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-4">
+        <section className="lg:col-span-6 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-4">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-lg font-black">Canvas · {activeSlug ? `/${activeSlug}` : "Selecciona página"}</h2>
+            <h2 className="text-lg font-semibold">Canvas · {activeSlug ? `/${activeSlug}` : "Selecciona página"}</h2>
             <div className="flex items-center gap-2">
               <div className="inline-flex rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
                 <button
                   onClick={() => setPreviewDevice("desktop")}
-                  className={`px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1 ${previewDevice === "desktop" ? "bg-primary text-white" : "bg-transparent"}`}
+                  className={`px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center gap-1 ${previewDevice === "desktop" ? "bg-primary text-white" : "bg-transparent"}`}
                 >
                   <Monitor size={11} /> Desktop
                 </button>
                 <button
                   onClick={() => setPreviewDevice("mobile")}
-                  className={`px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1 ${previewDevice === "mobile" ? "bg-primary text-white" : "bg-transparent"}`}
+                  className={`px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center gap-1 ${previewDevice === "mobile" ? "bg-primary text-white" : "bg-transparent"}`}
                 >
                   <Smartphone size={11} /> Mobile
                 </button>
@@ -896,7 +896,7 @@ export default function CmsBuilderPage() {
               <select value={newSectionType} onChange={(e) => setNewSectionType(e.target.value)} className="rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm">
                 {SECTION_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
               </select>
-              <button onClick={addSection} disabled={!activeSlug || !canEdit} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest disabled:opacity-50">
+              <button onClick={addSection} disabled={!activeSlug || !canEdit} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50">
                 <Plus size={12} /> Añadir
               </button>
             </div>
@@ -920,7 +920,7 @@ export default function CmsBuilderPage() {
               >
                 <div className="flex items-center justify-between gap-2">
                   <button onClick={() => setActiveSectionId(section.id)} className="text-left">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                       {section.type} {section.status === "archived" ? "· archivada" : ""}
                     </p>
                     <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{safeString(section.props_json?.title) || "Sección"}</p>
@@ -949,7 +949,7 @@ export default function CmsBuilderPage() {
                   setDraggedSectionId(null);
                   await loadSectionsAndVersions(activeSlug);
                 }}
-                className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 p-3 text-center text-[10px] font-black uppercase tracking-widest text-slate-400"
+                className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 p-3 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-400"
               >
                 Soltar aquí para mover al final
               </div>
@@ -957,11 +957,11 @@ export default function CmsBuilderPage() {
           </div>
         </section>
 
-        <aside className="lg:col-span-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-4">
+        <aside className="lg:col-span-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4 space-y-4">
           <div className="space-y-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Estado página</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Estado página</p>
             <p className="text-sm font-bold">{activePage?.title || "Sin página"}</p>
-            <p className="text-[10px] uppercase tracking-widest text-slate-400">{activePage?.status || "-"}</p>
+            <p className="text-[10px] uppercase tracking-wide text-slate-400">{activePage?.status || "-"}</p>
             <input
               value={pageTitleDraft}
               onChange={(e) => setPageTitleDraft(e.target.value)}
@@ -975,7 +975,7 @@ export default function CmsBuilderPage() {
               className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
             />
             <div className="rounded-xl border border-slate-200 dark:border-white/10 p-3 space-y-2">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">SEO</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">SEO</p>
               <input
                 value={seoTitleDraft}
                 onChange={(e) => setSeoTitleDraft(e.target.value)}
@@ -993,7 +993,7 @@ export default function CmsBuilderPage() {
                   <img src={seoImageDraft} alt="Imagen SEO" className="h-24 w-full object-cover" />
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 p-3 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                <div className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 p-3 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">
                   Sin imagen social
                 </div>
               )}
@@ -1004,7 +1004,7 @@ export default function CmsBuilderPage() {
                   setMediaPickerOpen(true);
                 }}
                 disabled={!canEdit}
-                className="w-full rounded-lg bg-blue-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full rounded-lg bg-blue-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white inline-flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <ImageIcon size={13} /> Elegir imagen SEO
               </button>
@@ -1018,17 +1018,17 @@ export default function CmsBuilderPage() {
             <button
               onClick={savePageMetadata}
               disabled={!activePage || !canEdit}
-              className="w-full rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+              className="w-full rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
             >
               Guardar pagina/SEO
             </button>
             <textarea value={note} onChange={(e) => setNote(e.target.value)} disabled={!canEdit && !canPublish} placeholder="Nota para workflow..." className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs disabled:opacity-60" />
             <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => runWorkflow("submit_review")} disabled={!activeSlug || !canEdit} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-1 disabled:opacity-50"><Send size={11} /> Review</button>
-              <button onClick={() => runWorkflow("approve")} disabled={!activeSlug || !canPublish} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-1 disabled:opacity-50"><Save size={11} /> Aprobar</button>
-              <button onClick={() => runWorkflow("publish")} disabled={!activeSlug || !canPublish} className="rounded-lg bg-primary text-white px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-1 disabled:opacity-50"><Upload size={11} /> Publicar</button>
-              <button onClick={() => runWorkflow("revert_draft")} disabled={!activeSlug || !canEdit} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-1 disabled:opacity-50"><Undo2 size={11} /> Draft</button>
-              <button onClick={() => runWorkflow("archive")} disabled={!activeSlug || !canPublish} className="col-span-2 rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-1 disabled:opacity-50">Archivar</button>
+              <button onClick={() => runWorkflow("submit_review")} disabled={!activeSlug || !canEdit} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Send size={11} /> Review</button>
+              <button onClick={() => runWorkflow("approve")} disabled={!activeSlug || !canPublish} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Save size={11} /> Aprobar</button>
+              <button onClick={() => runWorkflow("publish")} disabled={!activeSlug || !canPublish} className="rounded-lg bg-primary text-white px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Upload size={11} /> Publicar</button>
+              <button onClick={() => runWorkflow("revert_draft")} disabled={!activeSlug || !canEdit} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Undo2 size={11} /> Draft</button>
+              <button onClick={() => runWorkflow("archive")} disabled={!activeSlug || !canPublish} className="col-span-2 rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50">Archivar</button>
             </div>
             <button
               onClick={() => {
@@ -1036,7 +1036,7 @@ export default function CmsBuilderPage() {
                 window.open(`/cms/preview?site=${encodeURIComponent(siteKey)}&page=${encodeURIComponent(activeSlug)}`, "_blank");
               }}
               disabled={!activeSlug}
-              className="w-full rounded-lg border border-blue-200 text-blue-600 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-1 disabled:opacity-50"
+              className="w-full rounded-lg border border-blue-200 text-blue-600 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"
             >
               <Eye size={11} /> Vista previa borrador
             </button>
@@ -1048,26 +1048,26 @@ export default function CmsBuilderPage() {
                 window.open(`${normalized}/${activeSlug}`, "_blank");
               }}
               disabled={!activeSlug}
-              className="w-full rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-1 disabled:opacity-50"
+              className="w-full rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"
             >
               <ExternalLink size={11} /> Ver página pública
             </button>
               <button
                 onClick={togglePageArchive}
                 disabled={!activePage || !canEdit}
-                className={`w-full rounded-lg border px-2 py-1.5 text-[10px] font-black uppercase tracking-widest disabled:opacity-50 ${activePage?.status === "archived" ? "border-emerald-200 text-emerald-600" : "border-amber-200 text-amber-600"}`}
+                className={`w-full rounded-lg border px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50 ${activePage?.status === "archived" ? "border-emerald-200 text-emerald-600" : "border-amber-200 text-amber-600"}`}
               >
                 {activePage?.status === "archived" ? "Restaurar pagina" : "Archivar pagina"}
               </button>
           </div>
 
           <div className="space-y-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Inspector sección</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Inspector sección</p>
             {!activeSection ? (
               <p className="text-xs text-slate-500">Selecciona una sección del canvas.</p>
             ) : (
               <fieldset disabled={!canEdit} className="space-y-0 disabled:opacity-60">
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-500">{activeSection.type}</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{activeSection.type}</p>
                 <input
                   value={safeString(activeSection.props_json?.title)}
                   onChange={(e) => setSections((prev) => prev.map((s) => s.id === activeSection.id ? { ...s, props_json: { ...(s.props_json || {}), title: e.target.value } } : s))}
@@ -1099,7 +1099,7 @@ export default function CmsBuilderPage() {
 
                 {(activeSection.type === "hero" || activeSection.type === "gallery") && (
                   <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                       {activeSection.type === "hero" ? "Imagen hero" : "Imagen de galeria"}
                     </p>
                     {safeString(activeSection.props_json?.image_url) ? (
@@ -1107,7 +1107,7 @@ export default function CmsBuilderPage() {
                         <img src={safeString(activeSection.props_json?.image_url)} alt={safeString(activeSection.props_json?.image_alt) || "Imagen seleccionada"} className="h-28 w-full object-cover" />
                       </div>
                     ) : (
-                      <div className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 p-4 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                      <div className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 p-4 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">
                         Sin imagen seleccionada
                       </div>
                     )}
@@ -1117,7 +1117,7 @@ export default function CmsBuilderPage() {
                         setMediaPickerTarget("section");
                         setMediaPickerOpen(true);
                       }}
-                      className="w-full rounded-lg bg-blue-600 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white inline-flex items-center justify-center gap-2"
+                      className="w-full rounded-lg bg-blue-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white inline-flex items-center justify-center gap-2"
                     >
                       <ImageIcon size={13} /> Elegir de media
                     </button>
@@ -1159,13 +1159,13 @@ export default function CmsBuilderPage() {
 
                 {activeSection.type === "cards" && (
                   <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Items de tarjetas</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Items de tarjetas</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                       <div key={`card-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
-                        {isItemArchived && <p className="text-[9px] font-black uppercase tracking-widest text-amber-700">Archivado</p>}
+                        {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
                         <input
                           value={safeString(itemObject.title)}
                           onChange={(e) => {
@@ -1195,7 +1195,7 @@ export default function CmsBuilderPage() {
                             const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" });
                             if (nextProps) saveSectionProps(nextProps);
                           }}
-                          className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-widest ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}
+                          className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}
                         >
                           {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                           {isItemArchived ? "Restaurar item" : "Archivar item"}
@@ -1208,7 +1208,7 @@ export default function CmsBuilderPage() {
                         const nextProps = addArrayItem("items", { title: "Nueva tarjeta", body: "Descripción", status: "published" });
                         if (nextProps) saveSectionProps(nextProps);
                       }}
-                      className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-black uppercase tracking-widest"
+                      className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
                     >
                       + Añadir tarjeta
                     </button>
@@ -1217,13 +1217,13 @@ export default function CmsBuilderPage() {
 
                 {activeSection.type === "faq" && (
                   <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Preguntas</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Preguntas</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                       <div key={`faq-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
-                        {isItemArchived && <p className="text-[9px] font-black uppercase tracking-widest text-amber-700">Archivado</p>}
+                        {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
                         <input
                           value={safeString(itemObject.q)}
                           onChange={(e) => {
@@ -1253,7 +1253,7 @@ export default function CmsBuilderPage() {
                             const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" });
                             if (nextProps) saveSectionProps(nextProps);
                           }}
-                          className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-widest ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}
+                          className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}
                         >
                           {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                           {isItemArchived ? "Restaurar pregunta" : "Archivar pregunta"}
@@ -1266,7 +1266,7 @@ export default function CmsBuilderPage() {
                         const nextProps = addArrayItem("items", { q: "Nueva pregunta", a: "Respuesta", status: "published" });
                         if (nextProps) saveSectionProps(nextProps);
                       }}
-                      className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-black uppercase tracking-widest"
+                      className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
                     >
                       + Añadir pregunta
                     </button>
@@ -1275,7 +1275,7 @@ export default function CmsBuilderPage() {
 
                 {activeSection.type === "video_hero" && (
                   <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Video de fondo</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Video de fondo</p>
                     <input
                       value={safeString(activeSection.props_json?.video_url)}
                       onChange={(e) => {
@@ -1291,7 +1291,7 @@ export default function CmsBuilderPage() {
 
                 {activeSection.type === "rich_text_columns" && (
                   <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Segunda columna</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Segunda columna</p>
                     <textarea
                       value={safeString(activeSection.props_json?.body_2)}
                       onChange={(e) => {
@@ -1307,7 +1307,7 @@ export default function CmsBuilderPage() {
 
                 {activeSection.type === "countdown" && (
                   <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Fecha objetivo</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Fecha objetivo</p>
                     <input
                       type="datetime-local"
                       value={safeString(activeSection.props_json?.target_date).slice(0, 16)}
@@ -1323,7 +1323,7 @@ export default function CmsBuilderPage() {
 
                 {activeSection.type === "popup_banner" && (
                   <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pop-up</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Pop-up</p>
                     <input
                       type="number"
                       value={safeString(activeSection.props_json?.delay_ms) || "2000"}
@@ -1340,23 +1340,23 @@ export default function CmsBuilderPage() {
 
                 {activeSection.type === "stats" && (
                   <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Metricas</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Metricas</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                         <div key={`stat-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
-                          {isItemArchived && <p className="text-[9px] font-black uppercase tracking-widest text-amber-700">Archivado</p>}
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
                           <input value={safeString(itemObject.value)} onChange={(e) => upsertArrayItem("items", index, { value: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { value: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Valor: 10K+" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.label)} onChange={(e) => upsertArrayItem("items", index, { label: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { label: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Etiqueta" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-widest ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
                             {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                             {isItemArchived ? "Restaurar metrica" : "Archivar metrica"}
                           </button>
                         </div>
                       );
                     })}
-                    <button onClick={() => { const nextProps = addArrayItem("items", { value: "0", label: "Nueva metrica", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-black uppercase tracking-widest">
+                    <button onClick={() => { const nextProps = addArrayItem("items", { value: "0", label: "Nueva metrica", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
                       + Anadir metrica
                     </button>
                   </div>
@@ -1364,24 +1364,24 @@ export default function CmsBuilderPage() {
 
                 {activeSection.type === "team" && (
                   <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Equipo</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Equipo</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                         <div key={`team-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
-                          {isItemArchived && <p className="text-[9px] font-black uppercase tracking-widest text-amber-700">Archivado</p>}
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
                           <input value={safeString(itemObject.name)} onChange={(e) => upsertArrayItem("items", index, { name: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { name: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Nombre" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.role)} onChange={(e) => upsertArrayItem("items", index, { role: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { role: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Rol" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.image)} onChange={(e) => upsertArrayItem("items", index, { image: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { image: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="URL imagen" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-widest ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
                             {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                             {isItemArchived ? "Restaurar persona" : "Archivar persona"}
                           </button>
                         </div>
                       );
                     })}
-                    <button onClick={() => { const nextProps = addArrayItem("items", { name: "Nombre", role: "Rol", image: "", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-black uppercase tracking-widest">
+                    <button onClick={() => { const nextProps = addArrayItem("items", { name: "Nombre", role: "Rol", image: "", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
                       + Anadir persona
                     </button>
                   </div>
@@ -1389,25 +1389,25 @@ export default function CmsBuilderPage() {
 
                 {activeSection.type === "pricing" && (
                   <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Planes / donaciones</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Planes / donaciones</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                         <div key={`pricing-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
-                          {isItemArchived && <p className="text-[9px] font-black uppercase tracking-widest text-amber-700">Archivado</p>}
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
                           <input value={safeString(itemObject.name)} onChange={(e) => upsertArrayItem("items", index, { name: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { name: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Nombre del plan" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.price)} onChange={(e) => upsertArrayItem("items", index, { price: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { price: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Precio" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <textarea value={safeString(itemObject.features)} onChange={(e) => upsertArrayItem("items", index, { features: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { features: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Beneficios, uno por linea" className="w-full min-h-[64px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.btn)} onChange={(e) => upsertArrayItem("items", index, { btn: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { btn: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Texto del boton" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-widest ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
                             {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                             {isItemArchived ? "Restaurar plan" : "Archivar plan"}
                           </button>
                         </div>
                       );
                     })}
-                    <button onClick={() => { const nextProps = addArrayItem("items", { name: "Nuevo plan", price: "$0", features: "Beneficio", btn: "Seleccionar", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-black uppercase tracking-widest">
+                    <button onClick={() => { const nextProps = addArrayItem("items", { name: "Nuevo plan", price: "$0", features: "Beneficio", btn: "Seleccionar", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
                       + Anadir plan
                     </button>
                   </div>
@@ -1415,37 +1415,37 @@ export default function CmsBuilderPage() {
 
                 {activeSection.type === "testimonials" && (
                   <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Testimonios manuales de esta seccion</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Testimonios manuales de esta seccion</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                         <div key={`manual-testimonial-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
-                          {isItemArchived && <p className="text-[9px] font-black uppercase tracking-widest text-amber-700">Archivado</p>}
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
                           <input value={safeString(itemObject.author)} onChange={(e) => upsertArrayItem("items", index, { author: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { author: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Autor" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.role)} onChange={(e) => upsertArrayItem("items", index, { role: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { role: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Rol" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <textarea value={safeString(itemObject.content)} onChange={(e) => upsertArrayItem("items", index, { content: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { content: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Contenido" className="w-full min-h-[64px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-widest ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
                             {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                             {isItemArchived ? "Restaurar" : "Archivar"}
                           </button>
                         </div>
                       );
                     })}
-                    <button onClick={() => { const nextProps = addArrayItem("items", { author: "Autor", role: "Rol", content: "Testimonio", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-black uppercase tracking-widest">
+                    <button onClick={() => { const nextProps = addArrayItem("items", { author: "Autor", role: "Rol", content: "Testimonio", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
                       + Anadir testimonio
                     </button>
                   </div>
                 )}
 
                 <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => setSectionVisibility(!activeSection.is_visible)} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-1">
+                  <button onClick={() => setSectionVisibility(!activeSection.is_visible)} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1">
                     {activeSection.is_visible ? <EyeOff size={11} /> : <Eye size={11} />} {activeSection.is_visible ? "Ocultar" : "Mostrar"}
                   </button>
-                  <button onClick={duplicateSection} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-1">
+                  <button onClick={duplicateSection} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1">
                     <Copy size={11} /> Duplicar
                   </button>
-                  <button onClick={toggleSectionArchive} className={`col-span-2 rounded-lg border px-2 py-1.5 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-1 ${activeSection.status === "archived" ? "border-emerald-200 text-emerald-600" : "border-amber-200 text-amber-600"}`}>
+                  <button onClick={toggleSectionArchive} className={`col-span-2 rounded-lg border px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 ${activeSection.status === "archived" ? "border-emerald-200 text-emerald-600" : "border-amber-200 text-amber-600"}`}>
                     {activeSection.status === "archived" ? <RotateCcw size={11} /> : <Archive size={11} />}
                     {activeSection.status === "archived" ? "Restaurar seccion" : "Archivar seccion"}
                   </button>
@@ -1456,11 +1456,11 @@ export default function CmsBuilderPage() {
           </div>
 
           <div className="space-y-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Versiones</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Versiones</p>
             <div className="max-h-44 overflow-auto space-y-2 pr-1">
               {versions.map((version) => (
                 <button key={version.id} onClick={() => rollback(version.id)} disabled={!canPublish} className="w-full rounded-lg border border-slate-200 dark:border-white/10 p-2 text-left text-xs hover:border-primary/40 transition-all disabled:opacity-50">
-                  <p className="font-black">v{version.version_number}</p>
+                  <p className="font-semibold">v{version.version_number}</p>
                   <p className="text-[10px] text-slate-400">{new Date(version.created_at).toLocaleString()}</p>
                 </button>
               ))}
@@ -1468,14 +1468,14 @@ export default function CmsBuilderPage() {
             </div>
           </div>
           <div className="space-y-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Historial</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Historial</p>
             <div className="max-h-44 overflow-auto space-y-2 pr-1">
               {publishLogs.map((entry) => {
                 const notes = typeof entry.metadata_json?.notes === "string" ? entry.metadata_json.notes : "";
                 return (
                   <div key={entry.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-2 text-xs">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="font-black uppercase tracking-widest text-[10px]">{entry.action}</p>
+                      <p className="font-semibold uppercase tracking-wide text-[10px]">{entry.action}</p>
                       <p className="text-[10px] text-slate-400">{new Date(entry.created_at).toLocaleString()}</p>
                     </div>
                     <p className="mt-1 text-[10px] text-slate-500">{entry.from_status || "sin estado"} &rarr; {entry.to_status || "sin estado"}</p>

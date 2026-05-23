@@ -4,12 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import { 
-    CheckCircle2, 
-    AlertCircle, 
-    ArrowRight, 
-    ArrowLeft, 
-    Loader2, 
+import {
+    CheckCircle2,
+    AlertCircle,
+    ArrowRight,
+    ArrowLeft,
+    Loader2,
     Trophy,
     Clock,
     GraduationCap,
@@ -66,9 +66,9 @@ export default function AssessmentPage() {
         try {
             const enrollments = await apiFetch<Enrollment[]>(`/academy/users/${user.id}/enrollments`, { token });
             const enrollment = enrollments.find((e: Enrollment) => e.course.id === assessment.course_id);
-            
+
             if (!enrollment) {
-                alert("No estás inscrito en este curso.");
+                alert("No estas inscrito en este curso.");
                 return;
             }
 
@@ -89,12 +89,12 @@ export default function AssessmentPage() {
     };
 
     if (loading) return <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-blue-500" /></div>;
-    if (!assessment) return <div className="p-5 text-center">Evaluación no encontrada.</div>;
+    if (!assessment) return <div className="p-3 text-center">Evaluacion no encontrada.</div>;
 
     if (result) {
         return (
             <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden">
-                <WorkspaceToolbar 
+                <WorkspaceToolbar
                     breadcrumbs={[
                         { label: 'Academia', icon: GraduationCap },
                         { label: 'Resultado', icon: Trophy }
@@ -104,38 +104,38 @@ export default function AssessmentPage() {
                     availableViews={['grid', 'list', 'table']}
                 />
                 <main className="flex-1 overflow-y-auto flex items-center justify-center p-4">
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="max-w-md w-full text-center space-y-3 p-5 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 shadow-xl"
+                        className="max-w-md w-full text-center space-y-3 p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/5 shadow-xl"
                     >
                         <div className={clsx(
-                            "size-20 rounded-full mx-auto flex items-center justify-center shadow-lg",
+                            "size-10 rounded-full mx-auto flex items-center justify-center shadow-lg",
                             result.passed ? "bg-emerald-500 text-white shadow-emerald-500/20" : "bg-rose-500 text-white shadow-rose-500/20"
                         )}>
                             {result.passed ? <Trophy size={40} /> : <AlertCircle size={40} />}
                         </div>
                         <div>
-                            <h2 className="text-3xl font-black mb-2">{result.passed ? '¡Felicitaciones!' : 'Sigue intentando'}</h2>
-                            <p className="text-slate-500 dark:text-slate-400 font-medium">Has completado la evaluación de {assessment.title}</p>
+                            <h2 className="text-xl font-black mb-2">{result.passed ? '¡Felicitaciones!' : 'Sigue intentando'}</h2>
+                            <p className="text-slate-500 dark:text-slate-400 font-medium">Has completado la evaluacion de {assessment.title}</p>
                         </div>
-                        <div className="py-6 border-y border-slate-200 dark:border-white/5">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tu Puntaje</p>
-                            <span className="text-5xl font-black tracking-tighter">{Math.round(result.submitted_score)}%</span>
+                        <div className="py-4 border-y border-slate-200 dark:border-white/5">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide mb-1">Tu Puntaje</p>
+                            <span className="text-xl font-black tracking-tighter">{Math.round(result.submitted_score)}%</span>
                         </div>
                         <div className="space-y-3">
-                            <button 
+                            <button
                                 onClick={() => router.push('/academy')}
-                                className="w-full py-2 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+                                className="w-full py-1.5 bg-blue-600 text-white rounded-lg font-black text-sm uppercase tracking-wide shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
                             >
                                 Volver a la Academia
                             </button>
                             {!result.passed && (
-                                <button 
+                                <button
                                     onClick={() => window.location.reload()}
-                                    className="w-full py-2 text-slate-500 font-bold text-sm uppercase tracking-widest hover:text-slate-700 transition-colors"
+                                    className="w-full py-1.5 text-slate-500 font-bold text-sm uppercase tracking-wide hover:text-slate-700 transition-colors"
                                 >
-                                    Reintentar Evaluación
+                                    Reintentar Evaluacion
                                 </button>
                             )}
                         </div>
@@ -151,7 +151,7 @@ export default function AssessmentPage() {
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden">
-            <WorkspaceToolbar 
+            <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Academia', icon: GraduationCap },
                     { label: assessment.title, icon: HelpCircle }
@@ -174,7 +174,7 @@ export default function AssessmentPage() {
                                 key={question.id}
                                 onClick={() => setCurrentStep(index)}
                                 className={clsx(
-                                    "w-full rounded-xl border p-4 text-left transition-all",
+                                    "w-full rounded-lg border p-4 text-left transition-all",
                                     currentStep === index
                                         ? "border-blue-500 bg-blue-50/70 dark:bg-blue-500/10"
                                         : "border-slate-200 bg-white hover:border-blue-200 dark:border-white/10 dark:bg-white/5"
@@ -182,11 +182,11 @@ export default function AssessmentPage() {
                             >
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pregunta {index + 1}</p>
+                                        <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">Pregunta {index + 1}</p>
                                         <h3 className="mt-2 text-base font-black text-slate-900 dark:text-white">{question.question_text}</h3>
                                     </div>
                                     <span className={clsx(
-                                        "rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest",
+                                        "rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wide",
                                         answeredQuestionIds.has(question.id)
                                             ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
                                             : "bg-slate-100 text-slate-500 dark:bg-white/10"
@@ -200,26 +200,26 @@ export default function AssessmentPage() {
                 )}
 
                 {viewType === 'table' && (
-                    <div className="max-w-5xl mx-auto overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+                    <div className="max-w-5xl mx-auto overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
                         <table className="w-full text-left">
-                            <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:bg-white/5">
+                            <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-wide text-slate-400 dark:bg-white/5">
                                 <tr>
-                                    <th className="px-4 py-2">#</th>
-                                    <th className="px-4 py-2">Pregunta</th>
-                                    <th className="px-4 py-2">Opciones</th>
-                                    <th className="px-4 py-2">Estado</th>
+                                    <th className="px-4 py-1.5">#</th>
+                                    <th className="px-4 py-1.5">Pregunta</th>
+                                    <th className="px-4 py-1.5">Opciones</th>
+                                    <th className="px-4 py-1.5">Estado</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {assessment.questions.map((question: any, index: number) => (
                                     <tr key={question.id} className="border-t border-slate-100 dark:border-white/5">
-                                        <td className="px-4 py-2 font-black text-slate-400">{index + 1}</td>
-                                        <td className="px-4 py-2 font-bold text-slate-800 dark:text-white">{question.question_text}</td>
-                                        <td className="px-4 py-2 text-slate-500">{question.options.length}</td>
-                                        <td className="px-4 py-2">
+                                        <td className="px-4 py-1.5 font-black text-slate-400">{index + 1}</td>
+                                        <td className="px-4 py-1.5 font-bold text-slate-800 dark:text-white">{question.question_text}</td>
+                                        <td className="px-4 py-1.5 text-slate-500">{question.options.length}</td>
+                                        <td className="px-4 py-1.5">
                                             <button
                                                 onClick={() => setCurrentStep(index)}
-                                                className="text-xs font-black uppercase tracking-widest text-blue-600"
+                                                className="text-xs font-black uppercase tracking-wide text-blue-600"
                                             >
                                                 {answeredQuestionIds.has(question.id) ? 'Revisar' : 'Responder'}
                                             </button>
@@ -232,12 +232,12 @@ export default function AssessmentPage() {
                 )}
 
                 {viewType === 'grid' && (
-                <div className="max-w-3xl mx-auto space-y-12">
+                <div className="max-w-3xl mx-auto space-y-3">
                     {/* Progress Header */}
                     <div className="space-y-4">
                         <div className="flex justify-between items-end">
                             <div>
-                                <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Pregunta {currentStep + 1} de {assessment.questions.length}</p>
+                                <p className="text-[10px] font-black text-blue-500 uppercase tracking-wide mb-1">Pregunta {currentStep + 1} de {assessment.questions.length}</p>
                                 <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight leading-tight">
                                     {currentQuestion.question_text}
                                 </h3>
@@ -245,7 +245,7 @@ export default function AssessmentPage() {
                             <span className="text-[12px] font-black text-slate-400 shrink-0">{Math.round(((currentStep + 1) / assessment.questions.length) * 100)}%</span>
                         </div>
                         <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                            <motion.div 
+                            <motion.div
                                 className="h-full bg-blue-600"
                                 initial={{ width: 0 }}
                                 animate={{ width: `${((currentStep + 1) / assessment.questions.length) * 100}%` }}
@@ -256,7 +256,7 @@ export default function AssessmentPage() {
                     {/* Options Grid */}
                     <div className="grid grid-cols-1 gap-4">
                         <AnimatePresence mode="wait">
-                            <motion.div 
+                            <motion.div
                                 key={currentQuestion.id}
                                 initial={{ x: 20, opacity: 0 }}
                                 animate={{ x: 0, opacity: 1 }}
@@ -269,7 +269,7 @@ export default function AssessmentPage() {
                                             key={option.id}
                                             onClick={() => handleAnswer(currentQuestion.id, { selected_option_id: option.id })}
                                             className={clsx(
-                                                "w-full p-5 text-left rounded-2xl border-2 transition-all group relative overflow-hidden",
+                                                "w-full p-3 text-left rounded-lg border-2 transition-all group relative overflow-hidden",
                                                 answers.find(a => a.selected_option_id === option.id)
                                                     ? "border-blue-600 bg-blue-600 text-white shadow-xl shadow-blue-500/20"
                                                     : "border-slate-100 dark:border-white/5 hover:border-blue-200 dark:hover:border-white/10 bg-white dark:bg-white/5"
@@ -289,11 +289,11 @@ export default function AssessmentPage() {
                                         </button>
                                     ))
                                 ) : (
-                                    <textarea 
+                                    <textarea
                                         value={answers.find(a => a.question_id === currentQuestion.id)?.text_response || ''}
                                         onChange={(e) => handleAnswer(currentQuestion.id, { text_response: e.target.value })}
-                                        placeholder="Escribe tu respuesta aquí..."
-                                        className="w-full bg-white dark:bg-white/5 border-2 border-slate-100 dark:border-white/5 rounded-2xl p-6 text-base font-medium outline-none focus:border-blue-500 transition-all min-h-[200px]"
+                                        placeholder="Escribe tu respuesta aqui..."
+                                        className="w-full bg-white dark:bg-white/5 border-2 border-slate-100 dark:border-white/5 rounded-lg p-3 text-base font-medium outline-none focus:border-blue-500 transition-all min-h-[200px]"
                                     />
                                 )}
                             </motion.div>
@@ -301,28 +301,28 @@ export default function AssessmentPage() {
                     </div>
 
                     {/* Navigation Actions */}
-                    <div className="flex items-center justify-between pt-12 border-t border-slate-100 dark:border-white/5">
-                        <button 
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/5">
+                        <button
                             disabled={currentStep === 0}
                             onClick={() => setCurrentStep(prev => prev - 1)}
-                            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 disabled:opacity-0 transition-all"
+                            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wide text-slate-400 hover:text-slate-600 disabled:opacity-0 transition-all"
                         >
                             <ArrowLeft size={16} /> Anterior
                         </button>
 
                         {isLastStep ? (
-                            <button 
+                            <button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting || answers.length < assessment.questions.length}
-                                className="px-8 py-3 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50"
+                                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg font-black text-[10px] uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50"
                             >
-                                {isSubmitting ? 'Enviando...' : 'Finalizar Evaluación'}
+                                {isSubmitting ? 'Enviando...' : 'Finalizar Evaluacion'}
                             </button>
                         ) : (
-                            <button 
+                            <button
                                 onClick={() => setCurrentStep(prev => prev + 1)}
                                 disabled={!answers.find(a => a.question_id === currentQuestion.id)}
-                                className="px-8 py-3 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
+                                className="px-3 py-1.5 bg-slate-900 text-white rounded-lg font-black text-[10px] uppercase tracking-wide shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
                             >
                                 Siguiente <ArrowRight size={16} />
                             </button>

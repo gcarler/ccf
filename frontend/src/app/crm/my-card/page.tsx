@@ -47,7 +47,7 @@ export default function MyCardPage() {
         return (
             <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-4">
                 <Loader2 className="animate-spin text-primary" size={48} />
-                <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px]">Generando Credencial...</p>
+                <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px]">Generando Credencial...</p>
             </div>
         );
     }
@@ -58,9 +58,9 @@ export default function MyCardPage() {
                 <div className="p-4 bg-rose-500/10 rounded-full text-rose-500">
                     <ShieldCheck size={48} />
                 </div>
-                <h1 className="text-lg font-black text-white">Perfil no Encontrado</h1>
+                <h1 className="text-lg font-bold text-white">Perfil no Encontrado</h1>
                 <p className="text-slate-400 max-w-sm">No hemos podido encontrar tu perfil de miembro vinculado a este usuario. Contacta con administración.</p>
-                <button onClick={() => router.back()} className="px-5 py-1.5 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all">
+                <button onClick={() => router.back()} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white rounded-lg font-bold uppercase tracking-wide text-[10px] transition-all">
                     Volver
                 </button>
             </div>
@@ -123,7 +123,7 @@ export default function MyCardPage() {
         <CrmShell
             breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'Consolidación', icon: Users }, { label: 'Mi carnet', icon: QrCode }]}
             rightActions={
-                <button className="flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-2xl text-[11px] font-black text-white hover:bg-black transition-all">
+                <button className="flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-lg text-[11px] font-bold text-white hover:bg-black transition-all">
                     <Share2 size={16} /> Compartir
                 </button>
             }
@@ -137,37 +137,37 @@ export default function MyCardPage() {
             primaryAction={{ label: 'Descargar PDF', icon: Download, onClick: () => window.print() }}
             secondaryAction={{ label: 'Ver políticas', icon: Link2, onClick: () => router.push('/privacy') }}
         />
-        <div className="flex flex-col items-center justify-center space-y-12 pb-20 relative overflow-hidden">
+        <div className="flex flex-col items-center justify-center space-y-3 pb-4 relative overflow-hidden">
             <div className={`absolute -top-40 -right-40 w-[600px] h-[600px] bg-gradient-to-br ${theme.primary} opacity-20 blur-[120px] rounded-full pointer-events-none`}></div>
             <div className={`absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-gradient-to-tr ${theme.primary} opacity-10 blur-[120px] rounded-full pointer-events-none`}></div>
 
-            <div className={`relative z-10 w-full max-w-[340px] aspect-[4/6] bg-gradient-to-br ${theme.primary} ${theme.border} border rounded-2xl shadow-2xl ${theme.glow} overflow-hidden p-4 flex flex-col animate-in zoom-in-95 duration-700 group`}>
+            <div className={`relative z-10 w-full max-w-[340px] aspect-[4/6] bg-gradient-to-br ${theme.primary} ${theme.border} border rounded-lg shadow-2xl ${theme.glow} overflow-hidden p-4 flex flex-col animate-in zoom-in-95 duration-700 group`}>
 
                 {/* Textures/Overlays */}
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
                 <div className="absolute -top-24 -right-24 size-48 bg-white/10 rounded-full blur-3xl"></div>
 
                 {/* Card Header */}
-                <div className="flex justify-between items-start relative z-10 mb-8">
+                <div className="flex justify-between items-start relative z-10 mb-3">
                     <Church className="text-white/80" size={32} />
-                    <div className={`${theme.badge} px-3 py-1 rounded-full text-[8px] font-black text-white uppercase tracking-widest`}>
+                    <div className={`${theme.badge} px-3 py-1 rounded-full text-[8px] font-bold text-white uppercase tracking-wide`}>
                         {theme.name}
                     </div>
                 </div>
 
                 {/* Profile Picture Placeholder */}
-                <div className="flex flex-col items-center text-center space-y-4 mb-8 mt-2 relative z-10">
-                    <div className="size-24 rounded-[2.2rem] bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white relative group-hover:scale-105 transition-transform duration-500">
+                <div className="flex flex-col items-center text-center space-y-4 mb-3 mt-2 relative z-10">
+                    <div className="size-10 rounded-lg bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white relative group-hover:scale-105 transition-transform duration-500">
                         <User size={48} className="text-white/50" />
                         <div className="absolute -bottom-1 -right-1 size-6 bg-emerald-500 rounded-lg flex items-center justify-center border-4 border-slate-900 translate-x-1 translate-y-1">
                             <ShieldCheck size={12} className="text-white" />
                         </div>
                     </div>
                     <div>
-                        <h1 className="text-lg font-black text-white tracking-tight leading-tight">
+                        <h1 className="text-lg font-bold text-white tracking-tight leading-tight">
                             {member.first_name}<br />{member.last_name}
                         </h1>
-                        <p className={`text-[10px] font-black uppercase tracking-widest mt-2 ${theme.accent}`}>
+                        <p className={`text-[10px] font-bold uppercase tracking-wide mt-2 ${theme.accent}`}>
                             {member.church_role} • ID: CCF-{member.id.toString().padStart(4, '0')}
                         </p>
                     </div>
@@ -191,19 +191,19 @@ export default function MyCardPage() {
                             }}
                         />
                     </div>
-                    <p className="text-[8px] font-black text-white/40 uppercase tracking-[0.2em] mt-6">
+                    <p className="text-[8px] font-bold text-white/40 uppercase tracking-[0.2em] mt-3">
                         Escanea para validar asistencia
                     </p>
                 </div>
 
                 {/* Bottom Bar */}
-                <div className="mt-6 pt-6 border-t border-white/10 relative z-10 flex justify-between items-end">
+                <div className="mt-3 pt-6 border-t border-white/10 relative z-10 flex justify-between items-end">
                     <div className="space-y-1">
-                        <p className="text-[7px] font-black text-white/50 uppercase tracking-widest">Miembro Desde</p>
+                        <p className="text-[7px] font-bold text-white/50 uppercase tracking-wide">Miembro Desde</p>
                         <p className="text-[10px] font-bold text-white">{new Date(member.join_date).toLocaleDateString()}</p>
                     </div>
                     <div className="text-right">
-                        <p className="text-[7px] font-black text-white/50 uppercase tracking-widest">Vigencia</p>
+                        <p className="text-[7px] font-bold text-white/50 uppercase tracking-wide">Vigencia</p>
                         <p className="text-[10px] font-bold text-white">2026-2027</p>
                     </div>
                 </div>
@@ -212,19 +212,19 @@ export default function MyCardPage() {
             <div className="grid grid-cols-2 gap-4 w-full max-w-sm relative z-10">
                 <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-xl transition-all active:scale-95 group">
                     <Share2 size={18} className="text-slate-400 group-hover:text-primary transition-colors" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Compartir</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wide">Compartir</span>
                 </button>
                 <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-xl transition-all active:scale-95 group">
                     <Download size={18} className="text-slate-400 group-hover:text-emerald-500 transition-colors" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Descargar</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wide">Descargar</span>
                 </button>
-                <button className="col-span-2 flex items-center justify-center gap-3 bg-white text-slate-900 p-5 rounded-xl font-black uppercase tracking-widest text-[11px] shadow-2xl hover:scale-105 transition-all active:scale-95">
+                <button className="col-span-2 flex items-center justify-center gap-3 bg-white text-slate-900 p-3 rounded-xl font-bold uppercase tracking-wide text-[11px] shadow-2xl hover:scale-105 transition-all active:scale-95">
                     <Sparkles size={20} className="text-amber-500" /> Añadir a Google Wallet
                 </button>
             </div>
 
-            <div className="w-full max-w-[340px] text-center px-5 relative z-10">
-                <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest leading-relaxed">
+            <div className="w-full max-w-[340px] text-center px-3 relative z-10">
+                <p className="text-[9px] text-slate-600 font-bold uppercase tracking-wide leading-relaxed">
                     Esta credencial es personal e intransferible. El uso indebido será reportado a la administración del ministerio.
                 </p>
             </div>

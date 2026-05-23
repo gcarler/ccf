@@ -23,12 +23,12 @@ export function DSBadge({ tone = 'slate', label, className, ...props }: DSBadgeP
     return (
         <span
             className={clsx(
-                'px-3 py-1 inline-flex items-center justify-center text-[10px] font-black uppercase tracking-[0.25em]',
+                'px-1.5 py-0.5 inline-flex items-center justify-center text-[9px] font-semibold uppercase tracking-wide',
                 'border border-white/10 shadow-sm backdrop-blur',
                 toneStyles[tone],
                 className
             )}
-            style={{ borderRadius: radii.pill, fontFamily: typography.family }}
+            style={{ borderRadius: radii.sm, fontFamily: typography.family }}
             {...props}
         >
             {label}

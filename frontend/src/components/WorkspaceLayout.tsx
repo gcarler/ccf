@@ -256,7 +256,7 @@ function WorkspaceLayoutInner({
             <button
                 onClick={toggleFocusMode}
                 className={clsx(
-                    "p-2 rounded-lg transition-all",
+                    "p-1.5 rounded-md transition-all",
                     isFocusMode
                         ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
                         : "text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-white/5"
@@ -264,25 +264,25 @@ function WorkspaceLayoutInner({
                 aria-label={isFocusMode ? "Salir de modo enfoque" : "Entrar en modo enfoque"}
                 title={isFocusMode ? "Salir de modo enfoque" : "Modo enfoque"}
             >
-                {isFocusMode ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
+                {isFocusMode ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
             </button>
 
             <button
                 onClick={() => setShowInbox(!showInbox)}
-                className="p-2 text-slate-400 hover:text-blue-600 relative rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+                className="p-1.5 text-slate-400 hover:text-blue-600 relative rounded-md hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
                 aria-label="Notificaciones"
             >
-                <Bell size={17} />
-                <span className="absolute top-1.5 right-1.5 size-1.5 bg-rose-500 rounded-full ring-1 ring-white dark:ring-[#141517]" />
+                <Bell size={14} />
+                <span className="absolute top-1 right-1 size-1 bg-rose-500 rounded-full ring-1 ring-white dark:ring-[#141517]" />
             </button>
 
-            <div className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-2" />
+            <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
 
-            <button className="flex items-center gap-2 h-9 pl-2.5 pr-1 bg-slate-50 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.07] rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all group">
-                <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors max-w-[80px] truncate">
+            <button className="flex items-center gap-1.5 h-7 pl-2 pr-1 bg-slate-50 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.07] rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-all group">
+                <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors max-w-[80px] truncate">
                     {displayName}
                 </span>
-                <div className="size-7 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-black text-[10px] shadow-md">
+                <div className="size-5 rounded-md bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-[8px]">
                     {displayName?.substring(0, 2).toUpperCase()}
                 </div>
             </button>
@@ -338,20 +338,20 @@ function WorkspaceLayoutInner({
                             onAddOption={onAddOption}
                         />
                     ) : (
-                        <header className="h-14 border-b border-slate-100/80 dark:border-white/[0.05] flex items-center px-5 gap-3 shrink-0 bg-white dark:bg-[#141517] relative">
+                        <header className="h-10 border-b border-slate-100/80 dark:border-white/[0.05] flex items-center px-3 gap-2 shrink-0 bg-white dark:bg-[#141517] relative">
                             {depth > 1 && (
                                 <button
                                     onClick={onBack}
-                                    className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all text-slate-400"
+                                    className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-all text-slate-400"
                                 >
-                                    <ChevronLeft size={20} />
+                                    <ChevronLeft size={14} />
                                 </button>
                             )}
 
-                            <div className="flex-1 flex items-center gap-3 overflow-hidden min-w-0">
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                    <div className="size-2 rounded-full bg-blue-500 shrink-0 shadow-[0_0_6px_2px_rgba(59,130,246,0.4)]" />
-                                    <h1 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 truncate tracking-tight leading-none">
+                            <div className="flex-1 flex items-center gap-2 overflow-hidden min-w-0">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                    <div className="size-1.5 rounded-full bg-blue-500 shrink-0" />
+                                    <h1 className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate tracking-tight leading-none">
                                         {displayTitle}
                                     </h1>
                                 </div>

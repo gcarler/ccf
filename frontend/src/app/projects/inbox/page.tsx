@@ -89,7 +89,7 @@ export default function ProjectsInboxPage() {
                 availableViews={['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki']}
             />
 
-            <div className="flex px-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 shrink-0">
+            <div className="flex px-3 py-1.5 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 shrink-0">
                 <Tab active={filter === 'all'} onClick={() => setFilter('all')} label="Todo" />
                 <Tab active={filter === 'unread'} onClick={() => setFilter('unread')} label="No leídos" />
                 <Tab active={filter === 'mentions'} onClick={() => setFilter('mentions')} label="Menciones" />
@@ -97,34 +97,34 @@ export default function ProjectsInboxPage() {
 
             <main className="flex-1 overflow-y-auto scrollbar-thin">
                 {loading ? (
-                    <div className="p-8 space-y-4">
-                        {[1,2,3].map(i => <Skeleton key={i} className="h-20 w-full rounded-2xl" />)}
+                    <div className="p-4 space-y-3">
+                        {[1,2,3].map(i => <Skeleton key={i} className="h-20 w-full rounded-lg" />)}
                     </div>
                 ) : viewType === 'table' ? (
-                    <div className="p-6"><div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden"><table className="w-full text-left"><thead className="bg-slate-50 dark:bg-white/5"><tr><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Usuario</th><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Proyecto</th><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Estado</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-white/5">{filteredMessages.map((msg) => <tr key={msg.id}><td className="px-4 py-3 text-sm font-bold">{msg.user}</td><td className="px-4 py-3 hidden md:table-cell text-[11px] text-slate-500">{msg.project}</td><td className="px-4 py-3 text-[11px] text-slate-500">{msg.is_read ? 'Leído' : 'Pendiente'}</td></tr>)}</tbody></table></div></div>
+                    <div className="p-3"><div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden"><table className="w-full text-left"><thead className="bg-slate-50 dark:bg-white/5"><tr><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Usuario</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 hidden md:table-cell">Proyecto</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Estado</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-white/5">{filteredMessages.map((msg) => <tr key={msg.id}><td className="px-3 py-2 text-sm font-medium">{msg.user}</td><td className="px-3 py-2 hidden md:table-cell text-[11px] text-slate-500">{msg.project}</td><td className="px-3 py-2 text-[11px] text-slate-500">{msg.is_read ? 'Leído' : 'Pendiente'}</td></tr>)}</tbody></table></div></div>
                 ) : viewType === 'grid' ? (
-                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">{filteredMessages.map((msg) => <article key={msg.id} className="rounded-2xl border border-slate-200 dark:border-white/10 p-4 bg-white dark:bg-white/5"><p className="text-[10px] font-black uppercase tracking-widest text-blue-600">{msg.project}</p><h3 className="font-black mt-2">{msg.user}</h3><p className="text-sm mt-2 line-clamp-3">{msg.content}</p></article>)}</div>
+                    <div className="p-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">{filteredMessages.map((msg) => <article key={msg.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5"><p className="text-[10px] font-bold uppercase tracking-wide text-blue-600">{msg.project}</p><h3 className="font-bold mt-1">{msg.user}</h3><p className="text-sm mt-1 line-clamp-3">{msg.content}</p></article>)}</div>
                 ) : viewType === 'board' || viewType === 'kanban' ? (
-                    <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-4">{groupedMessages.map((group) => <section key={group.id} className="rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-4"><div className="flex justify-between mb-4"><span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{group.label}</span><span className="text-[10px] font-black text-slate-400">{group.rows.length}</span></div><div className="space-y-3">{group.rows.map((msg) => <div key={msg.id} className="rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-3 text-sm">{msg.content}</div>)}</div></section>)}</div>
+                    <div className="p-3 grid grid-cols-1 lg:grid-cols-2 gap-3">{groupedMessages.map((group) => <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3"><div className="flex justify-between mb-3"><span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{group.label}</span><span className="text-[10px] font-bold text-slate-400">{group.rows.length}</span></div><div className="space-y-2">{group.rows.map((msg) => <div key={msg.id} className="rounded-md bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-2 text-sm">{msg.content}</div>)}</div></section>)}</div>
                 ) : viewType === 'calendar' ? (
-                    <div className="p-6"><UniversalCalendarView events={calendarEvents} title="Calendario de inbox" /></div>
+                    <div className="p-3"><UniversalCalendarView events={calendarEvents} title="Calendario de inbox" /></div>
                 ) : viewType === 'gantt' ? (
-                    <div className="p-6"><UniversalGanttView items={ganttItems} moduleName="Inbox de proyectos" /></div>
+                    <div className="p-3"><UniversalGanttView items={ganttItems} moduleName="Inbox de proyectos" /></div>
                 ) : viewType === 'wiki' ? (
-                    <div className="p-6"><UniversalWikiView moduleName="Inbox de proyectos" storageKey="wiki_projects_inbox" /></div>
+                    <div className="p-3"><UniversalWikiView moduleName="Inbox de proyectos" storageKey="wiki_projects_inbox" /></div>
                 ) : (
                     <div className="divide-y divide-slate-100 dark:divide-white/5">
                         {filteredMessages.map((msg, idx) => (
                             <motion.div 
                                 key={msg.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
                                 className={clsx(
-                                    "p-6 flex gap-6 hover:bg-blue-50/30 dark:hover:bg-blue-500/5 transition-all cursor-pointer group relative",
+                                    "p-4 flex gap-4 hover:bg-blue-50/30 dark:hover:bg-blue-500/5 transition-all cursor-pointer group relative",
                                     !msg.is_read && "bg-blue-50/50 dark:bg-blue-500/5"
                                 )}
                             >
                                     <div className="shrink-0 pt-1">
                                         <div className={clsx(
-                                            "size-10 rounded-2xl flex items-center justify-center shadow-sm",
+                                            "size-8 rounded-lg flex items-center justify-center shadow-sm",
                                             msg.type === 'mention' ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600" : "bg-blue-100 dark:bg-blue-900/30 text-blue-600"
                                         )}>
                                             {msg.type === 'mention' ? <AtSign size={20} /> : <MessageCircle size={20} />}
@@ -181,7 +181,7 @@ function formatRelative(rawDate: string) {
 
 function Tab({ active, label, onClick }: any) {
     return (
-        <button onClick={onClick} className={clsx("px-6 py-4 text-[11px] font-black uppercase tracking-widest transition-all border-b-2", active ? "text-blue-600 border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600")}>{label}</button>
+        <button onClick={onClick} className={clsx("px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition-all border-b-2", active ? "text-blue-600 border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600")}>{label}</button>
     );
 }
 

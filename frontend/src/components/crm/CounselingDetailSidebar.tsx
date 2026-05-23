@@ -74,7 +74,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
         return (
             <div className="flex flex-col items-center justify-center h-full gap-4">
                 <Loader2 className="animate-spin text-sky-600" size={32} />
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Cargando expediente...</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Cargando expediente...</p>
             </div>
         );
     }
@@ -82,21 +82,21 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
     return (
         <div className="flex flex-col h-full bg-white dark:bg-[#0f1113]">
             {/* Header Cinematic */}
-            <div className="p-4 border-b border-slate-100 dark:border-white/[0.04] bg-slate-50/50 dark:bg-[#0f1113]/50 backdrop-blur-3xl shrink-0 relative overflow-hidden rounded-t-[2.5rem]">
+            <div className="p-4 border-b border-slate-100 dark:border-white/[0.04] bg-slate-50/50 dark:bg-[#0f1113]/50 backdrop-blur-3xl shrink-0 relative overflow-hidden rounded-t-lg">
                 <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-sky-600 dark:text-white">
                     <Heart size={160} />
                 </div>
                 
-                <div className="flex justify-between items-start mb-8 relative z-10">
+                <div className="flex justify-between items-start mb-3 relative z-10">
                     <button 
                         onClick={onClose} 
-                        className="p-2.5 bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-2xl text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm border border-slate-100 dark:border-white/5 active:scale-95"
+                        className="p-2.5 bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm border border-slate-100 dark:border-white/5 active:scale-95"
                     >
                         <CloseIcon size={20} />
                     </button>
                     <div className="flex gap-2">
                         <span className={clsx(
-                            "px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-2 shadow-lg",
+                            "px-3 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg",
                             session.status === 'Realizada' ? "bg-emerald-600 text-white shadow-emerald-500/20" : "bg-amber-500 text-white shadow-amber-500/20"
                         )}>
                             <div className="size-1.5 rounded-full bg-white animate-pulse" />
@@ -108,30 +108,30 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                 <div className="flex items-center gap-4 relative z-10">
                     <motion.div 
                         whileHover={{ scale: 1.05 }}
-                        className="size-20 rounded-[2.2rem] bg-gradient-to-br from-sky-600 to-indigo-700 flex items-center justify-center text-white shadow-2xl shadow-sky-500/30 border-4 border-white dark:border-[#1e1f21]"
+                        className="size-10 rounded-lg bg-gradient-to-br from-sky-600 to-indigo-700 flex items-center justify-center text-white shadow-2xl shadow-sky-500/30 border-4 border-white dark:border-[#1e1f21]"
                     >
                         <Heart size={28} />
                     </motion.div>
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-[-0.04em] leading-[0.9] mb-2">
+                        <h2 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-[-0.04em] leading-[0.9] mb-2">
                             {session.topic || 'Sin tema <br/> asignado'}
                         </h2>
-                        <p className="text-[11px] font-black text-slate-400 flex items-center gap-1.5 uppercase tracking-widest opacity-70">
+                        <p className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-wide opacity-70">
                             <span className="p-1.5 bg-sky-500/10 rounded-lg text-sky-600"><User size={12} /></span> {session.member_name || 'Miembro CCF'}
                         </p>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mt-10 relative z-10">
+                <div className="grid grid-cols-2 gap-3 mt-3 relative z-10">
                     <div className="bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm p-4 rounded-xl border border-slate-100 dark:border-white/[0.05] shadow-sm">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1.5">Fecha de Sesión</p>
-                        <p className="text-[11px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">
+                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Fecha de Sesión</p>
+                        <p className="text-[11px] font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">
                             {session.scheduled_at ? new Date(session.scheduled_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Pendiente'}
                         </p>
                     </div>
                     <div className="bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm p-4 rounded-xl border border-slate-100 dark:border-white/[0.05] shadow-sm">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1.5">Duración Est.</p>
-                        <p className="text-[11px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">{session.duration_minutes || 60} MINUTOS</p>
+                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Duración Est.</p>
+                        <p className="text-[11px] font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">{session.duration_minutes || 60} MINUTOS</p>
                     </div>
                 </div>
             </div>
@@ -147,7 +147,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)} 
                         className={clsx(
-                            "px-5 py-2 text-[10px] font-black uppercase tracking-[0.2em] border-b-2 transition-all flex items-center gap-2.5 shrink-0",
+                            "px-3 py-2 text-[10px] font-bold uppercase tracking-wide border-b-2 transition-all flex items-center gap-2.5 shrink-0",
                             activeTab === tab.id ? "border-sky-600 text-sky-600" : "border-transparent text-slate-400 hover:text-slate-800 dark:hover:text-white"
                         )}
                     >
@@ -162,7 +162,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                     {activeTab === 'details' && (
                         <motion.div key="details" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="space-y-3">
                             <section className="space-y-4">
-                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-2">
                                     <BookOpen size={14} className="text-sky-600" /> Resumen
                                 </h3>
                                 <div className="p-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl text-sm text-slate-700 dark:text-slate-300 italic leading-relaxed">
@@ -172,12 +172,12 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
 
                             <section className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-2">
                                         <Lock size={14} className="text-rose-500" /> Notas Confidenciales
                                     </h3>
                                     <button 
                                         onClick={() => setShowNotes(!showNotes)}
-                                        className="text-[9px] font-black text-sky-600 uppercase tracking-[0.15em] flex items-center gap-1.5 p-1 px-2.5 bg-sky-50 dark:bg-white/5 rounded-xl border border-sky-100 dark:border-white/10 active:scale-90 transition-all"
+                                        className="text-[9px] font-bold text-sky-600 uppercase tracking-wider flex items-center gap-1.5 p-1 px-2.5 bg-sky-50 dark:bg-white/5 rounded-xl border border-sky-100 dark:border-white/10 active:scale-90 transition-all"
                                     >
                                         {showNotes ? <EyeOff size={12} /> : <Eye size={12} />} {showNotes ? 'Ocultar' : 'Revelar Portal'}
                                     </button>
@@ -192,10 +192,10 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                                 className="absolute inset-0 bg-slate-900/10 dark:bg-black/40 backdrop-blur-md z-10 flex flex-col items-center justify-center gap-4 border-2 border-dashed border-slate-200 dark:border-white/10 cursor-pointer"
                                                 onClick={() => setShowNotes(true)}
                                             >
-                                                <div className="size-9 rounded-2xl bg-white dark:bg-white/10 flex items-center justify-center text-slate-400 shadow-xl group-hover:scale-110 transition-transform">
+                                                <div className="size-9 rounded-lg bg-white dark:bg-white/10 flex items-center justify-center text-slate-400 shadow-xl group-hover:scale-110 transition-transform">
                                                     <Lock size={20} />
                                                 </div>
-                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Sesión Encriptada</p>
+                                                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Sesión Encriptada</p>
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
@@ -227,13 +227,13 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                 <div className="grid grid-cols-2 gap-3 pt-4">
                                     <button 
                                         onClick={() => handleUpdateStatus('Realizada')}
-                                        className="py-2 bg-emerald-600 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+                                        className="py-2 bg-emerald-600 text-white rounded-lg text-[9px] font-bold uppercase tracking-wide shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
                                     >
                                         <CheckCircle2 size={14} /> Completar
                                     </button>
                                     <button 
                                         onClick={() => handleUpdateStatus('Cancelada')}
-                                        className="py-2 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl text-[9px] font-black uppercase tracking-widest border border-slate-200 dark:border-white/10 flex items-center justify-center gap-2"
+                                        className="py-2 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-lg text-[9px] font-bold uppercase tracking-wide border border-slate-200 dark:border-white/10 flex items-center justify-center gap-2"
                                     >
                                         <XCircle size={14} /> Cancelar
                                     </button>
@@ -244,21 +244,21 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
 
                     {activeTab === 'timeline' && (
                         <motion.div key="timeline" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="space-y-3">
-                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Seguimiento Histórico</h3>
+                            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Seguimiento Histórico</h3>
                             {session.history?.length > 0 ? (
                                 <div className="relative border-l-2 border-slate-100 dark:border-white/5 ml-2 space-y-3 pl-6">
                                     {session.history.map((h: any) => (
                                         <div key={h.id} className="relative">
                                             <div className="absolute -left-[31px] top-1 size-4 rounded-full border-4 border-white dark:border-[#1e1f21] bg-sky-600 shadow-sm" />
-                                            <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10">
+                                            <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/10">
                                                 <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">{h.text}</p>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{h.date}</p>
+                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{h.date}</p>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="p-5 text-center border-2 border-dashed border-slate-100 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-300">
+                                <div className="p-3 text-center border-2 border-dashed border-slate-100 dark:border-white/10 rounded-xl text-[10px] font-bold uppercase tracking-wide text-slate-300">
                                     Sin historial previo
                                 </div>
                             )}
@@ -266,19 +266,19 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                     )}
 
                     {activeTab === 'ai' && (
-                        <motion.div key="ai" initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="py-6 text-center space-y-3">
-                            <div className="size-16 rounded-[1.8rem] bg-indigo-600 mx-auto flex items-center justify-center text-white shadow-xl">
+                        <motion.div key="ai" initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="py-2 text-center space-y-3">
+                            <div className="size-8 rounded-lg bg-indigo-600 mx-auto flex items-center justify-center text-white shadow-xl">
                                 <Zap size={24} fill="currentColor" />
                             </div>
                             <div className="space-y-2">
-                                <h4 className="text-sm font-black dark:text-white uppercase tracking-tighter italic">Análisis Optimus</h4>
+                                <h4 className="text-sm font-bold dark:text-white uppercase tracking-tighter italic">Análisis Optimus</h4>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
                                     IA analizando indicadores emocionales para salud espiritual de 360°.
                                 </p>
                             </div>
                             <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center gap-4">
                                 <Loader2 size={24} className="animate-spin text-indigo-400" />
-                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 animate-pulse">Sincronizando Grafo...</span>
+                                <span className="text-[9px] font-bold uppercase tracking-wide text-slate-400 animate-pulse">Sincronizando Grafo...</span>
                             </div>
                         </motion.div>
                     )}

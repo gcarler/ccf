@@ -45,11 +45,11 @@ export default function PrayerDetailPage() {
     }, [id, token]);
 
     if (loading) {
-        return <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Accediendo al muro de intercesion...</div>;
+        return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-slate-400">Accediendo al muro de intercesion...</div>;
     }
 
     if (!prayer) {
-        return <div className="p-20 text-center font-black uppercase tracking-widest text-slate-400">No se pudo cargar la peticion.</div>;
+        return <div className="p-4 text-center font-bold uppercase tracking-wide text-slate-400">No se pudo cargar la peticion.</div>;
     }
 
     return (
@@ -67,14 +67,14 @@ export default function PrayerDetailPage() {
                             <DSBadge tone="violet" label={(prayer.category || "General").toUpperCase()} />
                             <DSBadge tone={prayer.status === "answered" ? "emerald" : "amber"} label={prayer.status.toUpperCase()} />
                         </div>
-                        <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">
+                        <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase leading-none">
                             {prayer.requester_name}
                         </h1>
                         <p className="flex items-center gap-2 text-sm font-bold text-slate-500">
                             <Calendar size={18} className="text-blue-600" /> Recibida el {prayer.created_at ? new Date(prayer.created_at).toLocaleDateString() : "Sin fecha"}
                         </p>
                     </div>
-                    <button className="px-4 py-1.5 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/30 hover:scale-105 transition-all flex items-center gap-2">
+                    <button className="px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/30 hover:scale-105 transition-all flex items-center gap-2">
                         <HandHelping size={16} /> Marcar como Respondida
                     </button>
                 </header>
@@ -82,7 +82,7 @@ export default function PrayerDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Motivo de Oracion</h3>
+                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Motivo de Oracion</h3>
                             <p className="text-base font-medium text-slate-700 dark:text-slate-200 italic leading-relaxed">
                                 &quot;{prayer.request_text}&quot;
                             </p>
@@ -91,7 +91,7 @@ export default function PrayerDetailPage() {
 
                     <aside className="space-y-3">
                         <div className="p-4 bg-slate-900 rounded-xl text-white space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-blue-400">
                                 <Sparkles size={14} /> AI Context
                             </div>
                             <p className="text-[11px] font-bold leading-relaxed opacity-90">

@@ -56,28 +56,28 @@ export default function DonatePage() {
     if (completed) {
         return (
             <div className="min-h-screen bg-white dark:bg-[#1e1f21] flex items-center justify-center p-6">
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                    className="max-w-md w-full text-center space-y-8 p-10 bg-slate-50 dark:bg-white/5 rounded-[3rem] border border-slate-200 dark:border-white/10 shadow-2xl"
+                    className="max-w-md w-full text-center space-y-3 p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 shadow-2xl"
                 >
                     <div className="size-24 rounded-full bg-emerald-500 text-white mx-auto flex items-center justify-center shadow-lg shadow-emerald-500/20">
                         <CheckCircle2 size={48} />
                     </div>
                     <div className="space-y-3">
-                        <h2 className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">¡Ofrenda Recibida!</h2>
+                        <h2 className="text-xl font-bold text-slate-800 dark:text-white tracking-tighter">¡Ofrenda Recibida!</h2>
                         <p className="text-slate-500 dark:text-slate-400 font-medium">Tu generosidad permite que el ministerio siga creciendo y alcanzando más vidas.</p>
                     </div>
                     <div className="py-6 border-y border-slate-200 dark:border-white/10 flex justify-between items-center px-4">
                         <div className="text-left">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Monto Sembrado</p>
-                            <p className="text-2xl font-black text-slate-800 dark:text-white">${amount}</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Monto Sembrado</p>
+                            <p className="text-lg font-bold text-slate-800 dark:text-white">${amount}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Categoría</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Categoría</p>
                             <p className="text-sm font-bold text-blue-600 dark:text-blue-400">{type}</p>
                         </div>
                     </div>
-                    <Link href="/" className="block w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-3xl font-black text-sm uppercase tracking-widest active:scale-95 transition-all shadow-xl">
+                    <Link href="/" className="block w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-bold text-sm uppercase tracking-wide active:scale-95 transition-all shadow-xl">
                         Volver al Inicio
                     </Link>
                 </motion.div>
@@ -92,23 +92,23 @@ export default function DonatePage() {
             <div className="absolute top-[-10%] right-[-10%] size-96 bg-blue-500 rounded-full blur-[120px] opacity-10 animate-pulse" />
 
             <header className="w-full max-w-5xl px-6 pt-12 flex items-center justify-between relative z-10">
-                <Link href="/" className="size-12 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-blue-600 transition-all shadow-sm">
+                <Link href="/" className="size-12 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-blue-600 transition-all shadow-sm">
                     <ChevronLeft size={24} />
                 </Link>
                 <div className="flex flex-col items-center">
-                    <h1 className="text-sm font-black uppercase tracking-[0.3em] text-slate-400">Generosidad</h1>
+                    <h1 className="text-sm font-bold uppercase tracking-wide text-slate-400">Generosidad</h1>
                     <div className="h-1 w-8 bg-blue-600 rounded-full mt-1" />
                 </div>
                 <div className="size-12" />
             </header>
 
-            <main className="w-full max-w-5xl px-6 py-12 grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10 items-start">
+            <main className="w-full max-w-5xl px-6 py-4 grid grid-cols-1 lg:grid-cols-2 gap-3 relative z-10 items-start">
                 {/* Left Side: Inspiration */}
-                <div className="space-y-8 pt-4">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest">
+                <div className="space-y-3 pt-4">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-bold uppercase tracking-wide">
                         <HandHeart size={14} /> Tu siembra tiene propósito
                     </div>
-                    <h2 className="text-4xl lg:text-6xl font-black text-slate-800 dark:text-white tracking-tighter leading-[0.9]">
+                    <h2 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-white tracking-tighter leading-[0.9]">
                         Honramos a Dios <br /> con nuestra <br /> <span className="text-blue-600">generosidad.</span>
                     </h2>
                     <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-md leading-relaxed">
@@ -122,20 +122,20 @@ export default function DonatePage() {
                 </div>
 
                 {/* Right Side: Action Card */}
-                <div className="bg-white dark:bg-[#1e1f21] rounded-[3rem] border border-slate-100 dark:border-white/5 p-8 lg:p-12 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] dark:shadow-black/50 space-y-10">
+                <div className="bg-white dark:bg-[#1e1f21] rounded-lg border border-slate-100 dark:border-white/5 p-4 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] dark:shadow-black/50 space-y-3">
                     {/* Amount Selector */}
-                    <div className="space-y-6">
+                    <div className="space-y-3">
                         <div className="text-center">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Selecciona un monto</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-4">Selecciona un monto</p>
                             <div className="flex items-center justify-center gap-2">
-                                <span className="text-3xl font-black text-slate-300">$</span>
+                                <span className="text-lg font-bold text-slate-300">$</span>
                                 {isCustom ? (
-                                    <input 
+                                    <input
                                         type="number" autoFocus value={amount} onChange={(e) => setAmount(e.target.value)}
-                                        className="text-6xl font-black text-slate-800 dark:text-white bg-transparent w-48 text-center outline-none tracking-tighter"
+                                        className="text-xl font-bold text-slate-800 dark:text-white bg-transparent w-48 text-center outline-none tracking-tighter"
                                     />
                                 ) : (
-                                    <span className="text-7xl font-black text-slate-800 dark:text-white tracking-tighter">{amount}</span>
+                                    <span className="text-xl font-bold text-slate-800 dark:text-white tracking-tighter">{amount}</span>
                                 )}
                             </div>
                         </div>
@@ -145,7 +145,7 @@ export default function DonatePage() {
                                 <button 
                                     key={val} onClick={() => { setAmount(val); setIsCustom(false); }}
                                     className={clsx(
-                                        "py-4 rounded-2xl font-black text-sm transition-all",
+                                        "py-4 rounded-lg font-bold text-sm transition-all",
                                         amount === val && !isCustom 
                                             ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105" 
                                             : "bg-slate-50 dark:bg-white/5 text-slate-500 hover:bg-slate-100"
@@ -158,7 +158,7 @@ export default function DonatePage() {
                         <button 
                             onClick={() => setIsCustom(true)}
                             className={clsx(
-                                "w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border-2",
+                                "w-full py-4 rounded-lg font-bold text-[10px] uppercase tracking-wide transition-all border-2",
                                 isCustom ? "border-blue-600 bg-blue-50/50 dark:bg-blue-500/10 text-blue-600" : "border-transparent bg-slate-50 dark:bg-white/5 text-slate-400"
                             )}
                         >
@@ -168,7 +168,7 @@ export default function DonatePage() {
 
                     {/* Type Selector */}
                     <div className="space-y-4">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Destino de la semilla</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Destino de la semilla</p>
                         <div className="grid grid-cols-2 gap-3">
                             <TypeOption active={type === 'Diezmo'} onClick={() => setType('Diezmo')} icon={Building} label="Diezmo" />
                             <TypeOption active={type === 'Ofrenda'} onClick={() => setType('Ofrenda')} icon={Heart} label="Ofrenda" />
@@ -179,7 +179,7 @@ export default function DonatePage() {
                     <button 
                         onClick={handleDonation}
                         disabled={loading || !amount || parseFloat(amount) <= 0}
-                        className="w-full py-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-3xl font-black text-sm uppercase tracking-[0.2em] shadow-2xl active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                        className="w-full py-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-bold text-sm uppercase tracking-wide shadow-2xl active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                     >
                         {loading ? <Loader2 size={24} className="animate-spin" /> : <><CreditCard size={20} /> Continuar al Pago</>}
                     </button>
@@ -201,7 +201,7 @@ function BenefitCard({ icon: Icon, title, desc }: any) {
                 <Icon size={20} />
             </div>
             <div>
-                <h4 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">{title}</h4>
+                <h4 className="text-sm font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200">{title}</h4>
                 <p className="text-xs text-slate-500 leading-relaxed mt-0.5">{desc}</p>
             </div>
         </div>
@@ -213,7 +213,7 @@ function TypeOption({ active, onClick, icon: Icon, label }: any) {
         <button 
             onClick={onClick}
             className={clsx(
-                "p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all group",
+                "p-4 rounded-lg border-2 flex flex-col items-center gap-2 transition-all group",
                 active 
                     ? "border-blue-600 bg-blue-50/50 dark:bg-blue-500/10 shadow-md" 
                     : "border-slate-50 dark:border-white/5 hover:border-blue-200"
@@ -225,7 +225,7 @@ function TypeOption({ active, onClick, icon: Icon, label }: any) {
             )}>
                 <Icon size={20} />
             </div>
-            <span className={clsx("text-[10px] font-black uppercase tracking-widest", active ? "text-blue-600 dark:text-white" : "text-slate-500")}>{label}</span>
+            <span className={clsx("text-[10px] font-bold uppercase tracking-wide", active ? "text-blue-600 dark:text-white" : "text-slate-500")}>{label}</span>
         </button>
     );
 }

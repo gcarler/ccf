@@ -22,24 +22,24 @@ export function DSCommandEntry({
   return (
     <div
       className={clsx(
-        "flex items-center gap-3 rounded-2xl border px-3 py-2.5 transition-all",
+        "flex items-center gap-2 rounded-md border px-2.5 py-1.5 transition-all",
         active
-          ? "border-blue-500/40 bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+          ? "border-blue-500/40 bg-blue-600 text-white shadow-sm"
           : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50",
       )}
     >
       <div
         className={clsx(
-          "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl",
+          "flex h-6 w-6 shrink-0 items-center justify-center rounded-md",
           active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500",
         )}
       >
-        {Icon ? <Icon size={16} /> : <CornerDownLeft size={16} />}
+        {Icon ? <Icon size={13} /> : <CornerDownLeft size={13} />}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-black tracking-tight">{label}</p>
+        <p className="truncate text-xs font-semibold tracking-tight">{label}</p>
         {description ? (
-          <p className={clsx("truncate text-xs", active ? "text-white/80" : "text-slate-500")}>
+          <p className={clsx("truncate text-[10px]", active ? "text-white/80" : "text-slate-500")}>
             {description}
           </p>
         ) : null}
@@ -47,7 +47,7 @@ export function DSCommandEntry({
       {shortcut ? (
         <span
           className={clsx(
-            "rounded-lg px-2 py-1 text-[10px] font-black uppercase tracking-widest",
+            "rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide",
             active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-400",
           )}
         >

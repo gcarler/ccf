@@ -6,10 +6,10 @@ import { radii, shadows } from '../tokens';
 
 interface DSCardProps extends React.HTMLAttributes<HTMLDivElement> {
     tone?: 'light' | 'dark' | 'glass';
-    padding?: 'md' | 'lg';
+    padding?: 'sm' | 'md';
 }
 
-export function DSCard({ tone = 'glass', padding = 'lg', className, children, ...props }: DSCardProps) {
+export function DSCard({ tone = 'light', padding = 'md', className, children, ...props }: DSCardProps) {
     const toneClass =
         tone === 'dark'
             ? 'bg-[#0f1116] border border-white/5'
@@ -17,12 +17,12 @@ export function DSCard({ tone = 'glass', padding = 'lg', className, children, ..
             ? 'bg-white border border-slate-100'
             : 'bg-white/10 backdrop-blur-xl border border-white/10';
 
-    const paddingClass = padding === 'lg' ? 'p-6' : 'p-4';
+    const paddingClass = padding === 'md' ? 'p-3' : 'p-2';
 
     return (
         <div
-            className={clsx('rounded-[2.5rem] shadow-xl', toneClass, paddingClass, className)}
-            style={{ borderRadius: radii.bubble, boxShadow: shadows.soft }}
+            className={clsx('rounded-lg shadow-sm', toneClass, paddingClass, className)}
+            style={{ borderRadius: radii.lg, boxShadow: shadows.card }}
             {...props}
         >
             {children}

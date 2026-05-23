@@ -131,11 +131,11 @@ export default function ConsolidationPipelinePage() {
                 const initials = `${l.first_name?.[0] ?? ''}${l.last_name?.[0] ?? ''}`.toUpperCase();
                 return (
                     <div className="flex items-center gap-3">
-                        <div className="size-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xs shadow-lg shadow-blue-500/20 shrink-0">
+                        <div className="size-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-blue-500/20 shrink-0">
                             {initials}
                         </div>
                         <div>
-                            <p className="font-black text-slate-800 dark:text-white text-xs leading-tight">{l.first_name} {l.last_name}</p>
+                            <p className="font-bold text-slate-800 dark:text-white text-xs leading-tight">{l.first_name} {l.last_name}</p>
                             <p className="text-[10px] font-medium text-slate-400">{l.phone}</p>
                         </div>
                     </div>
@@ -149,7 +149,7 @@ export default function ConsolidationPipelinePage() {
             cell: ({ row }) => {
                 const stage = PIPELINE_STAGES.find(s => s.value === row.original.stage);
                 return stage ? (
-                    <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest', stage.bg, stage.text)}>
+                    <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wide', stage.bg, stage.text)}>
                         <span className={clsx('size-1.5 rounded-full', stage.color)} />
                         {stage.label}
                     </span>
@@ -270,7 +270,7 @@ export default function ConsolidationPipelinePage() {
     }, [resetSidebarStack]);
 
     if (loading && leads.length === 0) return (
-        <div className="p-5 space-y-3">
+        <div className="p-3 space-y-3">
             <div className="grid grid-cols-4 gap-4">
                 {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-8 rounded-full" />)}
             </div>
@@ -331,21 +331,21 @@ export default function ConsolidationPipelinePage() {
                                                 <div
                                                     key={lead.id}
                                                     onClick={() => handleLeadSelect(lead)}
-                                                    className="p-5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer group"
+                                                    className="p-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer group"
                                                 >
                                                     <div className="flex items-center gap-3 mb-3">
-                                                        <div className="size-8 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xs shadow-lg shadow-blue-500/20">
+                                                        <div className="size-8 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-blue-500/20">
                                                             {lead.first_name?.[0]}{lead.last_name?.[0]}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="font-black text-slate-800 dark:text-white text-sm truncate">{lead.first_name} {lead.last_name}</p>
+                                                            <p className="font-bold text-slate-800 dark:text-white text-sm truncate">{lead.first_name} {lead.last_name}</p>
                                                             <p className="text-[10px] text-slate-400">{lead.phone}</p>
                                                         </div>
                                                         <ChevronRight size={14} className="text-slate-300 group-hover:text-blue-500 transition-all" />
                                                     </div>
                                                     <div className="flex items-center justify-between">
                                                         {stage ? (
-                                                            <span className={clsx('inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest', stage.bg, stage.text)}>
+                                                            <span className={clsx('inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide', stage.bg, stage.text)}>
                                                                 <span className={clsx('size-1.5 rounded-full', stage.color)} /> {stage.label}
                                                             </span>
                                                         ) : null}
@@ -361,14 +361,14 @@ export default function ConsolidationPipelinePage() {
                             ) : viewType === 'calendar' ? (
                                 <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-4 overflow-y-auto space-y-4">
                                     {groupedByDate.length === 0 ? (
-                                        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 p-5 text-center text-slate-400">Sin actividad de pipeline</div>
+                                        <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 p-3 text-center text-slate-400">Sin actividad de pipeline</div>
                                     ) : groupedByDate.map(([key, payload]) => (
-                                        <div key={key} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
-                                            <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">{payload.label}</p>
+                                        <div key={key} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                                            <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{payload.label}</p>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 {payload.items.map((lead: any) => (
                                                     <button key={lead.id} onClick={() => setSelectedLead(lead)} className="rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
-                                                        <p className="text-sm font-black text-slate-800 dark:text-slate-100">{lead.first_name} {lead.last_name}</p>
+                                                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{lead.first_name} {lead.last_name}</p>
                                                         <p className="text-[10px] text-slate-400">{STAGE_LABEL[lead.stage] ?? lead.stage}</p>
                                                     </button>
                                                 ))}
@@ -378,20 +378,20 @@ export default function ConsolidationPipelinePage() {
                                 </motion.div>
                             ) : viewType === 'gantt' ? (
                                 <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-4 overflow-y-auto">
-                                    <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Evolucion de prospectos</p>
+                                    <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+                                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Evolucion de prospectos</p>
                                         {filteredLeads.map((lead: any) => (
                                             <div key={lead.id} className="space-y-1">
                                                 <div className="flex items-center justify-between text-[11px]">
                                                     <span className="font-bold text-slate-700 dark:text-slate-300">{lead.first_name} {lead.last_name}</span>
-                                                    <span className="font-black text-slate-400">{STAGE_PROGRESS[lead.stage] ?? 0}%</span>
+                                                    <span className="font-bold text-slate-400">{STAGE_PROGRESS[lead.stage] ?? 0}%</span>
                                                 </div>
                                                 <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
                                                     <div className="h-full bg-blue-600" style={{ width: `${STAGE_PROGRESS[lead.stage] ?? 0}%` }} />
                                                 </div>
                                             </div>
                                         ))}
-                                        {filteredLeads.length === 0 && <div className="py-4 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">Sin prospectos</div>}
+                                        {filteredLeads.length === 0 && <div className="py-4 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">Sin prospectos</div>}
                                     </div>
                                 </motion.div>
                             ) : viewType === 'wiki' ? (
@@ -399,15 +399,15 @@ export default function ConsolidationPipelinePage() {
                                     {/* Wiki Header */}
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-3 italic uppercase">
+                                            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3 italic uppercase">
                                                 <FileText className="text-blue-600" size={28} />
                                                 Manual de Consolidación
                                             </h2>
                                             <p className="text-slate-500 font-medium text-sm mt-1">Playbooks pastorales y acuerdos de nivel de servicio (SLA)</p>
                                         </div>
-                                        <div className="px-5 py-2 rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-700/30 flex items-center gap-2">
+                                        <div className="px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-700/30 flex items-center gap-2">
                                             <Sparkles size={16} className="text-blue-600" />
-                                            <span className="text-[10px] font-black text-blue-700 dark:text-blue-300 uppercase tracking-widest">Guía de Consolidación IA</span>
+                                            <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide">Guía de Consolidación IA</span>
                                         </div>
                                     </div>
 
@@ -423,7 +423,7 @@ export default function ConsolidationPipelinePage() {
                                                         <div className={clsx("size-8 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110", card.color.split(' ')[1])}>
                                                             <card.icon className={card.color.split(' ')[0]} size={20} />
                                                         </div>
-                                                        <h4 className="font-black text-slate-800 dark:text-white mb-2 uppercase italic">{card.title}</h4>
+                                                        <h4 className="font-bold text-slate-800 dark:text-white mb-2 uppercase italic">{card.title}</h4>
                                                         <p className="text-xs text-slate-500 leading-relaxed font-medium">{card.desc}</p>
                                                     </div>
                                                 ))}
@@ -431,8 +431,8 @@ export default function ConsolidationPipelinePage() {
 
                                             {/* Notes Area with Premium Styling */}
                                             <div className="p-1 rounded-xl bg-gradient-to-br from-blue-500/10 via-transparent to-indigo-500/10">
-                                                <div className="p-4 rounded-[2.4rem] bg-white dark:bg-[#1e1f21] border border-white/20 shadow-2xl space-y-4">
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block pl-1">Notas Dinámicas de Proceso</label>
+                                                <div className="p-4 rounded-lg bg-white dark:bg-[#1e1f21] border border-white/20 shadow-2xl space-y-4">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] block pl-1">Notas Dinámicas de Proceso</label>
                                                     <textarea
                                                         value={wikiNotes}
                                                         onChange={(e) => setWikiNotes(e.target.value)}
@@ -449,7 +449,7 @@ export default function ConsolidationPipelinePage() {
                                                 <div className="absolute top-0 right-0 p-4 opacity-10">
                                                     <Clock size={80} />
                                                 </div>
-                                                <h4 className="font-black text-[10px] tracking-[0.25em] uppercase text-blue-400 mb-4 relative z-10">Tiempos de Respuesta (SLA)</h4>
+                                                <h4 className="font-bold text-[10px] tracking-[0.25em] uppercase text-blue-400 mb-4 relative z-10">Tiempos de Respuesta (SLA)</h4>
                                                 <div className="space-y-4 relative z-10">
                                                     {[
                                                         { label: 'Nuevo → Llamado', time: '24 Horas', progress: 100 },
@@ -470,7 +470,7 @@ export default function ConsolidationPipelinePage() {
                                             </div>
 
                                             <div className="p-4 rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10">
-                                                <h4 className="font-black text-[10px] tracking-[0.25em] uppercase text-slate-500 mb-4">Ayuda de Sistema</h4>
+                                                <h4 className="font-bold text-[10px] tracking-[0.25em] uppercase text-slate-500 mb-4">Ayuda de Sistema</h4>
                                                 <div className="space-y-3">
                                                     <div className="flex items-center gap-3 text-xs font-bold text-slate-600 dark:text-slate-300">
                                                         <div className="size-2 rounded-full bg-blue-500" />
@@ -518,7 +518,7 @@ export default function ConsolidationPipelinePage() {
                             form="new-lead-form"
                             type="submit"
                             disabled={isSavingLead}
-                            className="px-7 py-2.5 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/25 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60"
+                            className="px-3 py-2.5 bg-blue-600 text-white rounded-xl text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/25 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60"
                         >
                             {isSavingLead ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />}
                             Registrar Prospecto
@@ -530,30 +530,30 @@ export default function ConsolidationPipelinePage() {
                     {/* Nombre / Apellido */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Nombre <span className="text-blue-500">*</span></label>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Nombre <span className="text-blue-500">*</span></label>
                             <input
                                 required
                                 value={newLeadForm.first_name}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, first_name: e.target.value })}
                                 placeholder="Juan"
-                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder-slate-300 transition-all"
+                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder-slate-300 transition-all"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Apellido <span className="text-blue-500">*</span></label>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Apellido <span className="text-blue-500">*</span></label>
                             <input
                                 required
                                 value={newLeadForm.last_name}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, last_name: e.target.value })}
                                 placeholder="Pérez"
-                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder-slate-300 transition-all"
+                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder-slate-300 transition-all"
                             />
                         </div>
                     </div>
 
                     {/* Teléfono */}
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Teléfono / WhatsApp <span className="text-blue-500">*</span></label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Teléfono / WhatsApp <span className="text-blue-500">*</span></label>
                         <div className="relative">
                             <Phone size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input
@@ -561,7 +561,7 @@ export default function ConsolidationPipelinePage() {
                                 value={newLeadForm.phone}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, phone: e.target.value })}
                                 placeholder="+57 300 000 0000"
-                                className="w-full pl-10 pr-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder-slate-300 transition-all"
+                                className="w-full pl-10 pr-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder-slate-300 transition-all"
                             />
                         </div>
                     </div>
@@ -569,21 +569,21 @@ export default function ConsolidationPipelinePage() {
                     {/* Fuente / Etapa */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Fuente de Contacto</label>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Fuente de Contacto</label>
                             <select
                                 value={newLeadForm.source}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, source: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white appearance-none transition-all"
+                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white appearance-none transition-all"
                             >
                                 {Object.keys(SOURCES).map(s => <option key={s} value={s}>{SOURCES[s]} {s}</option>)}
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Etapa Inicial</label>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Etapa Inicial</label>
                             <select
                                 value={newLeadForm.stage}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, stage: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white appearance-none transition-all"
+                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white appearance-none transition-all"
                             >
                                 {PIPELINE_STAGES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                             </select>
@@ -592,25 +592,25 @@ export default function ConsolidationPipelinePage() {
 
                     {/* Notas */}
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Notas del Primer Contacto</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Notas del Primer Contacto</label>
                         <textarea
                             value={newLeadForm.notes}
                             onChange={e => setNewLeadForm({ ...newLeadForm, notes: e.target.value })}
                             placeholder="¿Cómo llegó? ¿Qué contó? ¿Tiene familia en la iglesia?..."
                             rows={4}
-                            className="w-full px-4 py-1.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder-slate-300 resize-none transition-all"
+                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder-slate-300 resize-none transition-all"
                         />
                     </div>
 
                     {/* Preview chip */}
                     {(newLeadForm.first_name || newLeadForm.last_name) && (
-                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-700/30 flex items-center gap-3">
-                            <div className="size-8 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xs shadow">
+                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-700/30 flex items-center gap-3">
+                            <div className="size-8 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow">
                                 {newLeadForm.first_name?.[0] ?? ''}{newLeadForm.last_name?.[0] ?? ''}
                             </div>
                             <div>
-                                <p className="text-sm font-black text-blue-800 dark:text-blue-300">{newLeadForm.first_name} {newLeadForm.last_name}</p>
-                                <p className="text-[9px] text-blue-500 uppercase tracking-widest font-bold">Vista previa del prospecto</p>
+                                <p className="text-sm font-bold text-blue-800 dark:text-blue-300">{newLeadForm.first_name} {newLeadForm.last_name}</p>
+                                <p className="text-[9px] text-blue-500 uppercase tracking-wide font-bold">Vista previa del prospecto</p>
                             </div>
                         </div>
                     )}

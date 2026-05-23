@@ -36,7 +36,7 @@ export default function VideoPlayer({ src, onProgress, onComplete, initialTime =
             const percent = (current / total) * 100;
             setProgress(percent);
             onProgress(percent, current);
-            
+
             if (percent >= 95) {
                 onComplete();
             }
@@ -56,7 +56,7 @@ export default function VideoPlayer({ src, onProgress, onComplete, initialTime =
     };
 
     return (
-        <div className="relative group bg-black rounded-3xl overflow-hidden shadow-2xl aspect-video">
+        <div className="relative group bg-black rounded-lg overflow-hidden shadow-2xl aspect-video">
             <video
                 ref={videoRef}
                 src={src}
@@ -67,17 +67,17 @@ export default function VideoPlayer({ src, onProgress, onComplete, initialTime =
             />
 
             {/* Overlay Controls */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6 space-y-4">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 space-y-3">
                 {/* Progress Bar */}
                 <div className="relative h-1.5 w-full bg-white/20 rounded-full cursor-pointer overflow-hidden">
-                    <div 
+                    <div
                         className="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-100"
                         style={{ width: `${progress}%` }}
                     />
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-3">
                         <button onClick={togglePlay} className="text-white hover:scale-110 transition-transform">
                             {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
                         </button>
@@ -99,11 +99,11 @@ export default function VideoPlayer({ src, onProgress, onComplete, initialTime =
 
             {/* Big Play Button when paused */}
             {!isPlaying && (
-                <div 
+                <div
                     onClick={togglePlay}
                     className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px] cursor-pointer"
                 >
-                    <div className="size-20 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-2xl shadow-blue-500/40 animate-pulse">
+                    <div className="size-10 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-2xl shadow-blue-500/40 animate-pulse">
                         <Play size={32} fill="currentColor" className="ml-1" />
                     </div>
                 </div>

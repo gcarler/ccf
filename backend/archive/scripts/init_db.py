@@ -12,5 +12,6 @@ def init_db():
     print_schema_drift_report()
     print("Database initialization complete.")
 
+
 if __name__ == "__main__":
     init_db()

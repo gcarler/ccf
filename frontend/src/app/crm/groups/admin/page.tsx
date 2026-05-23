@@ -118,7 +118,7 @@ export default function GloryHouseAdmin() {
                 secondaryAction={{ label: "Exportar Reportes", icon: FileText, onClick: () => window.print() }}
             />
 
-            <main className="space-y-4 pb-20">
+            <main className="space-y-4 pb-4">
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <Stat label="Casas Activas" value={loading ? "..." : houses.length.toString()} />
                     <Stat label="Miembros Base" value={loading ? "..." : totalMembers.toString()} />
@@ -134,24 +134,24 @@ export default function GloryHouseAdmin() {
                             onClick={() => openReport(house)}
                             className="rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-white/5"
                         >
-                            <div className="mb-6 flex items-start justify-between">
-                                <div className="flex size-9 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-900/20"><Home size={24} /></div>
-                                <span className="rounded-lg bg-emerald-50 px-2 py-1 text-[8px] font-black uppercase text-emerald-600 dark:bg-emerald-900/20">{house.status || "Activa"}</span>
+                            <div className="mb-3 flex items-start justify-between">
+                                <div className="flex size-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/20"><Home size={24} /></div>
+                                <span className="rounded-lg bg-emerald-50 px-2 py-1 text-[8px] font-bold uppercase text-emerald-600 dark:bg-emerald-900/20">{house.status || "Activa"}</span>
                             </div>
-                            <h4 className="text-base font-black uppercase tracking-tight">{house.name}</h4>
-                            <p className="mt-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-slate-400"><MapPin size={12} /> {house.zone || "Sin zona"}</p>
-                            <div className="mt-6 flex items-center gap-2 border-t border-slate-100 pt-6 text-[11px] font-bold text-slate-500 dark:border-white/5"><Users size={14} /> {house.members_count || 0} miembros</div>
+                            <h4 className="text-base font-bold uppercase tracking-tight">{house.name}</h4>
+                            <p className="mt-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-slate-400"><MapPin size={12} /> {house.zone || "Sin zona"}</p>
+                            <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-6 text-[11px] font-bold text-slate-500 dark:border-white/5"><Users size={14} /> {house.members_count || 0} miembros</div>
                         </motion.button>
                     ))}
                 </section>
             </main>
 
             <WorkspaceDrawer isOpen={Boolean(selectedHouse)} onClose={() => setSelectedHouse(null)} title={selectedHouse?.name || "Reporte"} subtitle="REPORTE OPERATIVO SEMANAL">
-                <div className="space-y-3 pb-20">
+                <div className="space-y-3 pb-4">
                     <div className="grid grid-cols-2 gap-4">
-                        <Field label="Fecha"><input type="date" value={reportDate} onChange={(event) => setReportDate(event.target.value)} className="w-full bg-transparent text-sm font-black outline-none" /></Field>
+                        <Field label="Fecha"><input type="date" value={reportDate} onChange={(event) => setReportDate(event.target.value)} className="w-full bg-transparent text-sm font-bold outline-none" /></Field>
                         <Field label="Temporada">
-                            <select value={seasonId} onChange={(event) => setSeasonId(Number(event.target.value) || "")} className="w-full bg-transparent text-sm font-black outline-none">
+                            <select value={seasonId} onChange={(event) => setSeasonId(Number(event.target.value) || "")} className="w-full bg-transparent text-sm font-bold outline-none">
                                 <option value="">Selecciona</option>
                                 {seasons.map((season) => <option key={season.id} value={season.id}>{season.name}</option>)}
                             </select>
@@ -160,12 +160,12 @@ export default function GloryHouseAdmin() {
 
                     <section className="space-y-4">
                         <div className="flex items-center justify-between px-2">
-                            <h5 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Asistencia</h5>
-                            <button onClick={() => setSelectedIds(attendees.map((attendee) => attendee.member_id))} className="text-[9px] font-black uppercase text-blue-600">Seleccionar Todos</button>
+                            <h5 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Asistencia</h5>
+                            <button onClick={() => setSelectedIds(attendees.map((attendee) => attendee.member_id))} className="text-[9px] font-bold uppercase text-blue-600">Seleccionar Todos</button>
                         </div>
                         <div className="space-y-2">
                             {attendees.map((attendee) => (
-                                <label key={attendee.member_id} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-4 dark:border-white/5 dark:bg-white/5">
+                                <label key={attendee.member_id} className="flex items-center justify-between rounded-lg border border-slate-100 bg-white p-4 dark:border-white/5 dark:bg-white/5">
                                     <span className="text-xs font-bold">{attendee.name}</span>
                                     <input
                                         type="checkbox"
@@ -174,11 +174,11 @@ export default function GloryHouseAdmin() {
                                     />
                                 </label>
                             ))}
-                            {attendees.length === 0 && <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400 dark:border-white/10">No hay miembros base asignados.</div>}
+                            {attendees.length === 0 && <div className="rounded-lg border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400 dark:border-white/10">No hay miembros base asignados.</div>}
                         </div>
                     </section>
 
-                    <button onClick={sendReport} disabled={submitting} className="flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-white disabled:opacity-50">
+                    <button onClick={sendReport} disabled={submitting} className="flex w-full items-center justify-center gap-3 rounded-lg bg-blue-600 py-2 text-[11px] font-bold uppercase tracking-[0.2em] text-white disabled:opacity-50">
                         {submitting ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} fill="currentColor" />}
                         Enviar Reporte Semanal
                     </button>
@@ -189,9 +189,9 @@ export default function GloryHouseAdmin() {
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
-    return <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5"><p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</p><h4 className="mt-2 text-lg font-black">{value}</h4></div>;
+    return <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</p><h4 className="mt-2 text-lg font-bold">{value}</h4></div>;
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-    return <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-white/5 dark:bg-white/5"><p className="mb-1 text-[9px] font-black uppercase tracking-widest text-slate-400">{label}</p>{children}</div>;
+    return <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-white/5 dark:bg-white/5"><p className="mb-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">{label}</p>{children}</div>;
 }

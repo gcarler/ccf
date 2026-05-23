@@ -5,15 +5,15 @@ import clsx from 'clsx';
 import { shadows, radii } from '../tokens';
 
 interface DSSkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
-    rounded?: 'pill' | 'xl' | 'none';
+    rounded?: 'sm' | 'md' | 'none';
 }
 
-export function DSSkeleton({ rounded = 'xl', className, style, ...props }: DSSkeletonProps) {
+export function DSSkeleton({ rounded = 'md', className, style, ...props }: DSSkeletonProps) {
     return (
         <div
             className={clsx('relative overflow-hidden bg-slate-200 dark:bg-white/10', className)}
             style={{
-                borderRadius: rounded === 'pill' ? radii.pill : rounded === 'xl' ? radii.xl : undefined,
+                borderRadius: rounded === 'sm' ? radii.sm : rounded === 'md' ? radii.md : undefined,
                 boxShadow: shadows.inner,
                 ...style,
             }}

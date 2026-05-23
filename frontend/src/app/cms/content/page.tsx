@@ -193,18 +193,18 @@ function RichTextEditor({ value, onChange }: { value: string; onChange: (value: 
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-[#0f1318]">
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-[#0f1318]">
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 p-2 dark:border-white/10">
-        <button type="button" onClick={() => runCommand("bold")} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-black uppercase tracking-widest">
+        <button type="button" onClick={() => runCommand("bold")} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
           <Bold size={13} />
         </button>
-        <button type="button" onClick={() => runCommand("italic")} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-black uppercase tracking-widest">
+        <button type="button" onClick={() => runCommand("italic")} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
           <Italic size={13} />
         </button>
-        <button type="button" onClick={() => runCommand("formatBlock", "h2")} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-black uppercase tracking-widest">
+        <button type="button" onClick={() => runCommand("formatBlock", "h2")} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
           H2
         </button>
-        <button type="button" onClick={() => runCommand("insertUnorderedList")} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-black uppercase tracking-widest">
+        <button type="button" onClick={() => runCommand("insertUnorderedList")} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
           <List size={13} />
         </button>
         <button
@@ -213,7 +213,7 @@ function RichTextEditor({ value, onChange }: { value: string; onChange: (value: 
             const url = window.prompt("URL del enlace");
             if (url) runCommand("createLink", url);
           }}
-          className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-black uppercase tracking-widest"
+          className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide"
         >
           <LinkIcon size={13} />
         </button>
@@ -247,25 +247,25 @@ function EditableNode({
   if (Array.isArray(value)) {
     const template = value[0] ?? { title: "", content: "" };
     return (
-      <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+      <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">{formatLabel(label)}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{formatLabel(label)}</p>
             <p className="text-[11px] text-slate-400">{value.length} elementos editables</p>
           </div>
           <button
             type="button"
             onClick={() => setValue([...value, cloneTemplate(template)])}
-            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white dark:bg-white dark:text-slate-900"
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white dark:bg-white dark:text-slate-900"
           >
             <Plus size={12} /> Agregar
           </button>
         </div>
         <div className="space-y-3">
           {value.map((_, index) => (
-            <div key={index} className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#0f1318]">
+            <div key={index} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#0f1318]">
               <div className="mb-3 flex items-center justify-between gap-3">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Elemento {index + 1}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Elemento {index + 1}</p>
                 <button type="button" onClick={() => onChange(removeAtPath(root, [...path, index]))} className="text-rose-500">
                   <Trash2 size={14} />
                 </button>
@@ -280,9 +280,9 @@ function EditableNode({
 
   if (isRecord(value)) {
     return (
-      <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#111418]">
+      <div className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#111418]">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">{formatLabel(label)}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{formatLabel(label)}</p>
           <p className="text-[11px] text-slate-400">{Object.keys(value).length} campos</p>
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -298,8 +298,8 @@ function EditableNode({
 
   if (typeof value === "boolean") {
     return (
-      <label className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#0f1318]">
-        <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">{formatLabel(fieldKey)}</span>
+      <label className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#0f1318]">
+        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{formatLabel(fieldKey)}</span>
         <input type="checkbox" checked={value} onChange={event => setValue(event.target.checked)} className="size-4" />
       </label>
     );
@@ -308,7 +308,7 @@ function EditableNode({
   if (typeof value === "number") {
     return (
       <label className="block space-y-2">
-        <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">{formatLabel(fieldKey)}</span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{formatLabel(fieldKey)}</span>
         <input
           type="number"
           value={value}
@@ -323,7 +323,7 @@ function EditableNode({
   const className = "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-[#0f1318]";
   return (
     <label className="block space-y-2">
-      <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">{formatLabel(fieldKey)}</span>
+      <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{formatLabel(fieldKey)}</span>
       {isLongTextField(fieldKey) ? (
         <textarea value={stringValue} onChange={event => setValue(event.target.value)} rows={4} className={`${className} resize-y`} />
       ) : (
@@ -501,7 +501,7 @@ export default function CmsContentPage() {
   if (!isAuthenticated) {
     return (
       <div className="max-w-3xl mx-auto py-24 text-center space-y-3">
-        <h1 className="text-3xl font-black">Inicia sesion</h1>
+        <h1 className="text-xl font-semibold">Inicia sesion</h1>
         <p className="text-slate-500">Necesitas una sesion valida para administrar contenido.</p>
       </div>
     );
@@ -520,28 +520,28 @@ export default function CmsContentPage() {
       />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[320px_1fr_300px]">
-        <aside className="space-y-4 rounded-[2rem] border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#111418]">
+        <aside className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#111418]">
           <div>
-            <p className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Bloques FARO</p>
+            <p className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Bloques FARO</p>
             <div className="space-y-2">
               {FARO_BLOCKS.map(block => (
                 <button
                   key={block.key}
                   onClick={() => setSelectedKey(block.key)}
-                  className={`w-full rounded-2xl border p-3 text-left transition-colors ${
+                  className={`w-full rounded-lg border p-3 text-left transition-colors ${
                     selectedKey === block.key ? "border-primary/40 bg-primary/5" : "border-slate-100 hover:border-primary/30 dark:border-white/10"
                   }`}
                 >
                   <p className="text-sm font-bold text-slate-900 dark:text-white">{block.label}</p>
                   <p className="mt-1 text-xs text-slate-500">{block.description}</p>
-                  <p className="mt-2 text-[10px] uppercase tracking-[0.25em] text-primary">{block.page}</p>
+                  <p className="mt-2 text-[10px] uppercase tracking-wider text-primary">{block.page}</p>
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-dashed border-slate-200 p-3 dark:border-white/10">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Nuevo texto enriquecido</p>
+          <div className="rounded-lg border border-dashed border-slate-200 p-3 dark:border-white/10">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Nuevo texto enriquecido</p>
             <div className="mt-3 flex gap-2">
               <input
                 value={newBlockName}
@@ -557,13 +557,13 @@ export default function CmsContentPage() {
 
           {extraBlocks.length > 0 && (
             <div>
-              <p className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Otros bloques</p>
+              <p className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Otros bloques</p>
               <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
                 {extraBlocks.map(record => (
                   <button
                     key={record.page_key}
                     onClick={() => setSelectedKey(record.page_key || "")}
-                    className={`w-full rounded-2xl border p-3 text-left transition-colors ${
+                    className={`w-full rounded-lg border p-3 text-left transition-colors ${
                       selectedKey === record.page_key ? "border-primary/40 bg-primary/5" : "border-slate-100 hover:border-primary/30 dark:border-white/10"
                     }`}
                   >
@@ -576,15 +576,15 @@ export default function CmsContentPage() {
           )}
         </aside>
 
-        <section className="space-y-5 rounded-[2rem] border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-[#111418]">
+        <section className="space-y-5 rounded-lg border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-[#111418]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-1">
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Llave</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Llave</p>
               <p className="font-mono text-sm text-primary">{selectedKey}</p>
               <p className="text-xs text-slate-500">Modo: {editorMode === "rich" ? "texto enriquecido" : "campos estructurados"}</p>
             </div>
             {workflow && (
-              <span className="w-fit rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-primary">
+              <span className="w-fit rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
                 {STATUS_LABEL[workflow.status] || workflow.status}
               </span>
             )}
@@ -592,7 +592,7 @@ export default function CmsContentPage() {
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <label className="block space-y-2 md:col-span-2">
-              <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Titulo editorial</span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Titulo editorial</span>
               <input
                 value={title}
                 onChange={event => setTitle(event.target.value)}
@@ -601,7 +601,7 @@ export default function CmsContentPage() {
               />
             </label>
             <label className="block space-y-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Publicar en</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Publicar en</span>
               <input
                 type="datetime-local"
                 value={publishAt}
@@ -610,7 +610,7 @@ export default function CmsContentPage() {
               />
             </label>
             <label className="block space-y-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Expirar en</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Expirar en</span>
               <input
                 type="datetime-local"
                 value={expireAt}
@@ -621,21 +621,21 @@ export default function CmsContentPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button onClick={() => transition("submit_review")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-black uppercase tracking-[0.2em]">
+            <button onClick={() => transition("submit_review")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
               <Send size={13} /> Revision
             </button>
-            <button onClick={() => transition("approve")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-black uppercase tracking-[0.2em]">
+            <button onClick={() => transition("approve")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
               <ShieldCheck size={13} /> Aprobar
             </button>
-            <button onClick={() => transition("publish")} className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-black uppercase tracking-[0.2em] text-white">
+            <button onClick={() => transition("publish")} className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white">
               <CheckCircle2 size={13} /> Publicar
             </button>
-            <button onClick={() => transition("revert_draft")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-black uppercase tracking-[0.2em]">
+            <button onClick={() => transition("revert_draft")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
               Borrador
             </button>
             <button
               onClick={() => setShowMedia(prev => !prev)}
-              className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-black uppercase tracking-[0.2em] transition-colors ${
+              className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-colors ${
                 showMedia ? "border-primary bg-primary/10 text-primary" : "border-slate-200"
               }`}
             >
@@ -653,7 +653,7 @@ export default function CmsContentPage() {
             <button
               onClick={save}
               disabled={saving || loading}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-xs font-black uppercase tracking-[0.2em] text-white disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-xs font-semibold uppercase tracking-wide text-white disabled:opacity-60"
             >
               <Save size={14} />
               {saving ? "Guardando" : "Guardar"}
@@ -663,7 +663,7 @@ export default function CmsContentPage() {
           </div>
 
           <div className="rounded-xl border border-slate-200 p-4 dark:border-white/10">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Versiones recientes</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Versiones recientes</p>
             {versions.length === 0 ? (
               <p className="mt-2 text-xs text-slate-500">Sin versiones registradas aun.</p>
             ) : (
@@ -671,7 +671,7 @@ export default function CmsContentPage() {
                 {versions.map(version => (
                   <div key={version.id} className="flex items-center justify-between rounded-xl border border-slate-100 px-3 py-2 dark:border-white/10">
                     <p className="text-xs text-slate-500">#{version.id} - {new Date(version.created_at).toLocaleString()}</p>
-                    <button onClick={() => rollback(version.id)} className="inline-flex items-center gap-1 text-xs font-black uppercase tracking-[0.2em] text-primary">
+                    <button onClick={() => rollback(version.id)} className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-primary">
                       <RotateCcw size={12} /> Restaurar
                     </button>
                   </div>
@@ -688,29 +688,29 @@ export default function CmsContentPage() {
           </div>
         </section>
 
-        <aside className={`rounded-[2rem] border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#111418] ${showMedia ? "block" : "hidden xl:block"}`}>
+        <aside className={`rounded-lg border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#111418] ${showMedia ? "block" : "hidden xl:block"}`}>
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Media</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Media</p>
               <p className="text-xs text-slate-500">Copia URLs para imagenes, videos y podcasts.</p>
             </div>
-            <Link href="/cms/media" className="text-[10px] font-black uppercase tracking-widest text-primary">
+            <Link href="/cms/media" className="text-[10px] font-semibold uppercase tracking-wide text-primary">
               Gestionar
             </Link>
           </div>
           {media.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-xs text-slate-500 dark:border-white/10">
+            <div className="rounded-lg border border-dashed border-slate-200 p-4 text-xs text-slate-500 dark:border-white/10">
               Abre la biblioteca o sube archivos en Media Manager.
             </div>
           ) : (
             <div className="max-h-[720px] space-y-3 overflow-y-auto pr-1">
               {media.map(item => (
-                <div key={item.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                <div key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
                   <div className="relative mb-3 aspect-video overflow-hidden rounded-xl bg-slate-200 dark:bg-white/5">
                     {item.mime_type?.startsWith("image/") ? (
                       <Image src={item.url} alt={item.alt_text || ""} fill unoptimized className="object-cover" />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-xs font-black uppercase tracking-widest text-slate-400">
+                      <div className="flex h-full items-center justify-center text-xs font-semibold uppercase tracking-wide text-slate-400">
                         {item.mime_type?.startsWith("video/") ? "Video" : item.mime_type?.startsWith("audio/") ? "Podcast" : "Archivo"}
                       </div>
                     )}
@@ -720,7 +720,7 @@ export default function CmsContentPage() {
                   <button
                     type="button"
                     onClick={() => copyMediaUrl(item)}
-                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white dark:bg-white dark:text-slate-900"
+                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white dark:bg-white dark:text-slate-900"
                   >
                     <Copy size={12} /> {copiedMediaId === item.id ? "Copiado" : "Copiar URL"}
                   </button>

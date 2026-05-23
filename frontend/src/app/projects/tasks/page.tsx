@@ -107,51 +107,51 @@ export default function ProjectsTasksPage() {
                 ))}
             </div>
 
-            <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+            <main className="flex-1 overflow-y-auto p-4">
                 {loading ? (
-                    <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <Skeleton key={idx} className="h-20 rounded-2xl" />)}</div>
+                    <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <Skeleton key={idx} className="h-20 rounded-lg" />)}</div>
                 ) : filtered.length === 0 ? (
-                    <div className="rounded-3xl border border-slate-200 dark:border-white/10 p-8 text-center text-slate-500">No hay tareas para este filtro.</div>
+                    <div className="rounded-lg border border-slate-200 dark:border-white/10 p-4 text-center text-slate-500">No hay tareas para este filtro.</div>
                 ) : viewType === 'table' ? (
-                    <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
+                    <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 dark:bg-white/5">
                                 <tr>
-                                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Tarea</th>
-                                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Estado</th>
-                                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Prioridad</th>
+                                    <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Tarea</th>
+                                    <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 hidden md:table-cell">Estado</th>
+                                    <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 hidden lg:table-cell">Prioridad</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                                 {filtered.map((task) => (
                                     <tr key={task.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03]">
-                                        <td className="px-4 py-3 text-sm font-bold text-slate-800 dark:text-white">{task.title}</td>
-                                        <td className="px-4 py-3 hidden md:table-cell text-[11px] text-slate-500">{task.status}</td>
-                                        <td className="px-4 py-3 hidden lg:table-cell text-[11px] text-slate-500">{task.priority}</td>
+                                        <td className="px-3 py-2 text-sm font-medium text-slate-800 dark:text-white">{task.title}</td>
+                                        <td className="px-3 py-2 hidden md:table-cell text-[11px] text-slate-500">{task.status}</td>
+                                        <td className="px-3 py-2 hidden lg:table-cell text-[11px] text-slate-500">{task.priority}</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
                 ) : viewType === 'grid' ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                         {filtered.map((task) => (
-                            <article key={task.id} className="rounded-2xl border border-slate-200 dark:border-white/10 p-4 bg-white dark:bg-white/5">
-                                <h3 className="font-black text-slate-800 dark:text-white">{task.title}</h3>
-                                <p className="text-xs text-slate-500 uppercase tracking-wider mt-2">{task.status} · {task.priority}</p>
+                            <article key={task.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5">
+                                <h3 className="font-bold text-slate-800 dark:text-white">{task.title}</h3>
+                                <p className="text-xs text-slate-500 uppercase tracking-wide mt-1">{task.status} · {task.priority}</p>
                             </article>
                         ))}
                     </div>
                 ) : viewType === 'board' || viewType === 'kanban' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
                         {groupedTasks.map((group) => (
-                            <section key={group.id} className="rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-4">
-                                <div className="flex items-center justify-between mb-4">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{group.label}</span>
-                                    <span className="text-[10px] font-black text-slate-400">{group.rows.length}</span>
+                            <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{group.label}</span>
+                                    <span className="text-[10px] font-bold text-slate-400">{group.rows.length}</span>
                                 </div>
-                                <div className="space-y-3">
-                                    {group.rows.map((task) => <div key={task.id} className="rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-3 text-sm font-bold">{task.title}</div>)}
+                                <div className="space-y-2">
+                                    {group.rows.map((task) => <div key={task.id} className="rounded-md bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-2 text-sm font-medium">{task.title}</div>)}
                                 </div>
                             </section>
                         ))}
@@ -165,11 +165,11 @@ export default function ProjectsTasksPage() {
                 ) : (
                     <div className="space-y-3">
                         {filtered.map((task) => (
-                            <article key={task.id} className="rounded-2xl border border-slate-200 dark:border-white/10 p-4 bg-white dark:bg-white/5">
-                                <div className="flex items-center justify-between gap-4">
+                            <article key={task.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5">
+                                <div className="flex items-center justify-between gap-3">
                                     <div>
-                                        <h3 className="font-black text-slate-800 dark:text-white">{task.title}</h3>
-                                        <p className="text-xs text-slate-500 uppercase tracking-wider mt-1">Estado: {task.status} · Prioridad: {task.priority}</p>
+                                        <h3 className="font-bold text-slate-800 dark:text-white">{task.title}</h3>
+                                        <p className="text-xs text-slate-500 uppercase tracking-wide mt-1">Estado: {task.status} · Prioridad: {task.priority}</p>
                                     </div>
                                     <button
                                         onClick={() => moveForward(task)}

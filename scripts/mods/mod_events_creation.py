@@ -75,7 +75,9 @@ form_old = """                <div className="space-y-1.5">
                     </select>
                 </div>"""
 
-form_new = form_old + """
+form_new = (
+    form_old
+    + """
 
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Audiencia Objetivo</label>
@@ -103,6 +105,7 @@ form_new = form_old + """
                         </select>
                     </div>
                 )}"""
+)
 
 c = c.replace(form_old, form_new)
 

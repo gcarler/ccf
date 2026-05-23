@@ -71,15 +71,15 @@ export default function ProjectsMorePage() {
                 setViewType={setViewType}
                 availableViews={['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki']}
             />
-            <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+            <main className="flex-1 overflow-y-auto p-3">
                 {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{[1, 2, 3].map((idx) => <Skeleton key={idx} className="h-32 rounded-3xl" />)}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{[1, 2, 3].map((idx) => <Skeleton key={idx} className="h-32 rounded-lg" />)}</div>
                 ) : viewType === 'list' ? (
-                    <div className="space-y-4">{summary.map((row) => <article key={row.project_status} className="rounded-2xl border border-slate-200 dark:border-white/10 p-5 bg-white dark:bg-white/5"><h3 className="font-black uppercase">{row.project_status}</h3><p className="text-sm text-slate-500 mt-2">{row.total_projects} proyectos · {row.total_tasks} tareas · {row.completed_tasks} completadas</p></article>)}</div>
+                    <div className="space-y-3">{summary.map((row) => <article key={row.project_status} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5"><h3 className="font-bold uppercase">{row.project_status}</h3><p className="text-sm text-slate-500 mt-1">{row.total_projects} proyectos · {row.total_tasks} tareas · {row.completed_tasks} completadas</p></article>)}</div>
                 ) : viewType === 'table' ? (
-                    <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden"><table className="w-full text-left"><thead className="bg-slate-50 dark:bg-white/5"><tr><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Estado</th><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Proyectos</th><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Tareas</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-white/5">{summary.map((row) => <tr key={row.project_status}><td className="px-4 py-3 text-sm font-bold">{row.project_status}</td><td className="px-4 py-3 text-[11px] text-slate-500">{row.total_projects}</td><td className="px-4 py-3 text-[11px] text-slate-500">{row.total_tasks}</td></tr>)}</tbody></table></div>
+                    <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden"><table className="w-full text-left"><thead className="bg-slate-50 dark:bg-white/5"><tr><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Estado</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Proyectos</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Tareas</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-white/5">{summary.map((row) => <tr key={row.project_status}><td className="px-3 py-2 text-sm font-medium">{row.project_status}</td><td className="px-3 py-2 text-[11px] text-slate-500">{row.total_projects}</td><td className="px-3 py-2 text-[11px] text-slate-500">{row.total_tasks}</td></tr>)}</tbody></table></div>
                 ) : viewType === 'board' || viewType === 'kanban' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">{summary.map((row) => <section key={row.project_status} className="rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-4"><p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{row.project_status}</p><p className="text-3xl font-black mt-3">{row.total_projects}</p><p className="text-sm text-slate-500 mt-2">{row.total_tasks} tareas</p></section>)}</div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">{summary.map((row) => <section key={row.project_status} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{row.project_status}</p><p className="text-xl font-bold mt-2">{row.total_projects}</p><p className="text-sm text-slate-500 mt-1">{row.total_tasks} tareas</p></section>)}</div>
                 ) : viewType === 'calendar' ? (
                     <UniversalCalendarView events={calendarEvents} title="Calendario de carga" />
                 ) : viewType === 'gantt' ? (
@@ -93,9 +93,9 @@ export default function ProjectsMorePage() {
                             <MetricCard label="Tareas" value={metrics.tasks} />
                             <MetricCard label="Tareas completadas" value={metrics.done} />
                         </section>
-                        <section className="mt-6 rounded-3xl border border-slate-200 dark:border-white/10 p-6 bg-slate-50 dark:bg-white/5">
-                            <h3 className="font-black flex items-center gap-2"><BarChart3 size={16} /> Estado de pipeline</h3>
-                            <p className="text-sm text-slate-500 mt-3">En planificacion: {metrics.planning} · Activos: {metrics.active}</p>
+                        <section className="mt-3 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50 dark:bg-white/5">
+                            <h3 className="font-bold flex items-center gap-2"><BarChart3 size={16} /> Estado de pipeline</h3>
+                            <p className="text-sm text-slate-500 mt-2">En planificacion: {metrics.planning} · Activos: {metrics.active}</p>
                             <p className="text-sm text-slate-500 mt-1">Responsables con tareas vencidas: {metrics.overloaded}</p>
                         </section>
                     </>
@@ -107,9 +107,9 @@ export default function ProjectsMorePage() {
 
 function MetricCard({ label, value }: { label: string; value: number }) {
     return (
-        <article className="rounded-3xl border border-slate-200 dark:border-white/10 p-6 bg-white dark:bg-white/5">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</p>
-            <p className="text-4xl font-black text-slate-800 dark:text-white mt-2">{value}</p>
+        <article className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</p>
+            <p className="text-xl font-bold text-slate-800 dark:text-white mt-1">{value}</p>
         </article>
     );
 }

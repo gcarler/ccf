@@ -89,7 +89,7 @@ function MentorAssignmentDrawer({
                         <button disabled={saving} onClick={onClose} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-50">
                             Cancelar
                         </button>
-                        <button disabled={!selected || saving} onClick={handleConfirm} className="flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50">
+                        <button disabled={!selected || saving} onClick={handleConfirm} className="flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50">
                             {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />} 
                             {saving ? 'Guardando...' : 'Confirmar'}
                         </button>
@@ -100,10 +100,10 @@ function MentorAssignmentDrawer({
             <div className="mt-4 flex-1 overflow-hidden flex flex-col">
                 {saved ? (
                     <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
-                        <div className="size-20 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 flex items-center justify-center mb-6">
+                        <div className="size-10 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 flex items-center justify-center mb-3">
                             <Check size={40} strokeWidth={3} />
                         </div>
-                        <p className="text-base font-black text-slate-800 dark:text-white">Mentor Asignado</p>
+                        <p className="text-base font-bold text-slate-800 dark:text-white">Mentor Asignado</p>
                         <p className="text-sm text-slate-400 mt-2">El proceso de mentoría ha sido inicializado correctamente.</p>
                     </div>
                 ) : (
@@ -119,14 +119,14 @@ function MentorAssignmentDrawer({
                                     className="w-full pl-10 pr-4 py-1.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                                 />
                             </div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
                                 Mentores Sugeridos ({filtered.length})
                             </p>
                         </div>
 
                         <div className="flex-1 overflow-y-auto space-y-3 pb-6">
                             {filtered.length === 0 ? (
-                                <div className="p-4 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
+                                <div className="p-4 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-lg">
                                     <p className="text-sm font-bold text-slate-500">No hay mentores que coincidan.</p>
                                 </div>
                             ) : (
@@ -135,22 +135,22 @@ function MentorAssignmentDrawer({
                                         key={m.id}
                                         onClick={() => m.available && setSelected(m.id)}
                                         className={clsx(
-                                            "p-4 rounded-2xl border-2 transition-all flex items-center gap-4",
+                                            "p-4 rounded-lg border-2 transition-all flex items-center gap-4",
                                             !m.available ? "opacity-50 cursor-not-allowed border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-black/20" :
                                             selected === m.id ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 cursor-pointer" : "border-slate-100 dark:border-white/5 bg-white dark:bg-[#15171c] hover:border-indigo-200 cursor-pointer"
                                         )}
                                     >
-                                        <div className="size-9 rounded-full bg-slate-100 dark:bg-white/10 flex flex-col items-center justify-center font-black text-slate-400">
+                                        <div className="size-9 rounded-full bg-slate-100 dark:bg-white/10 flex flex-col items-center justify-center font-bold text-slate-400">
                                             {m.name.charAt(0)}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{m.name}</p>
                                             <div className="flex items-center gap-2 mt-0.5">
-                                                <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-black uppercase tracking-widest bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-full">
+                                                <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wide bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-full">
                                                     {m.role}
                                                 </span>
                                                 {!m.available && (
-                                                    <span className="text-[9px] text-rose-500 font-black uppercase tracking-widest bg-rose-50 dark:bg-rose-500/10 px-2 py-0.5 rounded-full">
+                                                    <span className="text-[9px] text-rose-500 font-bold uppercase tracking-wide bg-rose-50 dark:bg-rose-500/10 px-2 py-0.5 rounded-full">
                                                         Cupo Lleno
                                                     </span>
                                                 )}
@@ -194,11 +194,11 @@ function formatCurrency(val?: number | null): string {
 
 function QuickStat({ label, value, icon: Icon, color }: any) {
     return (
-        <div className="px-4 py-2 bg-slate-50 dark:bg-black/20 rounded-2xl flex items-center gap-4 border border-slate-100 dark:border-white/5 min-w-[180px]">
+        <div className="px-4 py-2 bg-slate-50 dark:bg-black/20 rounded-lg flex items-center gap-4 border border-slate-100 dark:border-white/5 min-w-[180px]">
             <Icon size={20} className={color} />
             <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
-                <p className="text-[15px] font-black text-slate-800 dark:text-white leading-none mt-1">{value ?? '—'}</p>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{label}</p>
+                <p className="text-[15px] font-bold text-slate-800 dark:text-white leading-none mt-1">{value ?? '—'}</p>
             </div>
         </div>
     );
@@ -207,9 +207,9 @@ function QuickStat({ label, value, icon: Icon, color }: any) {
 function HealthIndicator({ label, value, color }: { label: string; value: number; color: string }) {
     return (
         <div className="space-y-2">
-            <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+            <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wide">
                 <span>{label}</span>
-                <span className="font-black text-slate-800 dark:text-white">{value}%</span>
+                <span className="font-bold text-slate-800 dark:text-white">{value}%</span>
             </div>
             <div className="h-1.5 w-full bg-slate-50 dark:bg-white/5 rounded-full overflow-hidden">
                 <motion.div initial={{ width: 0 }} animate={{ width: `${value}%` }} transition={{ duration: 0.8, ease: 'easeOut' }} className={clsx("h-full rounded-full", color)} />
@@ -220,12 +220,12 @@ function HealthIndicator({ label, value, color }: { label: string; value: number
 
 function EmptyState({ icon: Icon, title, description, action }: { icon: any; title: string; description: string; action?: React.ReactNode }) {
     return (
-        <div className="lg:col-span-12 py-20 flex flex-col items-center gap-4 text-center">
-            <div className="size-20 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+        <div className="lg:col-span-12 py-4 flex flex-col items-center gap-4 text-center">
+            <div className="size-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center">
                 <Icon size={36} className="text-slate-300" />
             </div>
             <div className="space-y-2">
-                <p className="text-sm font-black text-slate-600 dark:text-slate-300 tracking-tight">{title}</p>
+                <p className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-tight">{title}</p>
                 <p className="text-sm text-slate-400 max-w-xs">{description}</p>
             </div>
             {action}
@@ -238,7 +238,7 @@ function InfoGrid({ items }: { items: { label: string; value: string | React.Rea
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {items.map((item, i) => (
                 <div key={i} className="space-y-1">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{item.label}</p>
                     <p className="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
                         {item.icon && <item.icon size={16} className="text-blue-500 shrink-0" />}
                         {item.value || '—'}
@@ -331,21 +331,21 @@ export default function MemberDetailPage() {
 
     if (loading) return (
         <div className="h-full flex flex-col items-center justify-center space-y-4">
-            <div className="size-9 rounded-2xl bg-blue-600/10 flex items-center justify-center">
+            <div className="size-9 rounded-lg bg-blue-600/10 flex items-center justify-center">
                 <Activity size={24} className="text-blue-600 animate-spin" />
             </div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Accediendo al Expediente...</p>
+            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Accediendo al Expediente...</p>
         </div>
     );
 
     if (!member) return (
-        <div className="h-full flex flex-col items-center justify-center gap-4 text-center p-20">
+        <div className="h-full flex flex-col items-center justify-center gap-4 text-center p-4">
             <AlertCircle size={48} className="text-slate-300" />
             <div>
-                <p className="text-base font-black text-slate-600 dark:text-slate-300">Miembro no encontrado</p>
+                <p className="text-base font-bold text-slate-600 dark:text-slate-300">Miembro no encontrado</p>
                 <p className="text-sm text-slate-400 mt-1">El expediente #{id} no existe o no tienes acceso.</p>
             </div>
-            <button onClick={() => router.push('/crm/members')} className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-700 transition-all">
+            <button onClick={() => router.push('/crm/members')} className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all">
                 <ArrowLeft size={16} /> Volver a Miembros
             </button>
         </div>
@@ -376,21 +376,21 @@ export default function MemberDetailPage() {
                 </div>
             }
         >
-        <div className="max-w-[1400px] mx-auto space-y-3 pb-20 p-4 lg:p-4">
+        <div className="max-w-[1400px] mx-auto space-y-3 pb-4 p-4 lg:p-4">
 
             {/* ── 1. Profile Hero ── */}
             <motion.section
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                className="relative bg-white dark:bg-[#15171c] rounded-2xl border border-slate-100 dark:border-white/5 p-5 lg:p-14 shadow-xl shadow-slate-200/20 dark:shadow-none overflow-hidden group"
+                className="relative bg-white dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 p-3 lg:p-4 shadow-xl shadow-slate-200/20 dark:shadow-none overflow-hidden group"
             >
                 <div className="absolute top-0 right-0 w-[500px] h-full bg-gradient-to-l from-blue-600/5 to-transparent pointer-events-none" />
                 <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-5">
                     {/* Avatar */}
                     <div className="relative shrink-0">
-                        <div className="size-36 lg:size-44 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-700 flex items-center justify-center text-white text-5xl font-black shadow-2xl shadow-blue-500/30 group-hover:scale-105 transition-transform duration-500">
+                        <div className="size-10 lg:size-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-700 flex items-center justify-center text-white text-xl font-bold shadow-2xl shadow-blue-500/30 group-hover:scale-105 transition-transform duration-500">
                             {initials}
                         </div>
-                        <div className="absolute -bottom-3 -right-3 size-9 bg-white dark:bg-[#15171c] rounded-2xl flex items-center justify-center shadow-xl border border-slate-50 dark:border-white/10">
+                        <div className="absolute -bottom-3 -right-3 size-9 bg-white dark:bg-[#15171c] rounded-lg flex items-center justify-center shadow-xl border border-slate-50 dark:border-white/10">
                             <ShieldCheck size={24} className="text-blue-600" />
                         </div>
                     </div>
@@ -398,10 +398,10 @@ export default function MemberDetailPage() {
                     {/* Info */}
                     <div className="flex-1 space-y-2">
                         <div className="space-y-2">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-500/10 rounded-full text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest border border-blue-100 dark:border-blue-500/20">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-500/10 rounded-full text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide border border-blue-100 dark:border-blue-500/20">
                                 ID: #{member.id} <span className="text-slate-300">•</span> {member.status}
                             </div>
-                            <h1 className="text-4xl lg:text-5xl font-black text-slate-800 dark:text-white tracking-tighter">{fullName}</h1>
+                            <h1 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-white tracking-tighter">{fullName}</h1>
                             <p className="text-sm text-slate-500 font-semibold">{member.church_role}</p>
                         </div>
                         <div className="flex flex-wrap gap-5 items-center">
@@ -429,7 +429,7 @@ export default function MemberDetailPage() {
                             key={tabId}
                             onClick={() => setActiveTab(tabId)}
                             className={clsx(
-                                "flex items-center gap-2 px-4 py-2 text-[11px] font-black uppercase tracking-[0.15em] transition-all relative whitespace-nowrap shrink-0",
+                                "flex items-center gap-2 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.15em] transition-all relative whitespace-nowrap shrink-0",
                                 active ? "text-blue-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                             )}
                         >
@@ -455,8 +455,8 @@ export default function MemberDetailPage() {
                     {activeTab === 'overview' && <>
                         <div className="lg:col-span-8 space-y-3">
                             {/* Perfil de Consolidación */}
-                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-5 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
-                                <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Perfil de Consolidación</h3>
+                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Perfil de Consolidación</h3>
                                 <InfoGrid items={[
                                     { label: 'Fecha de Ingreso', value: formatDate(member.joinedAt), icon: Calendar },
                                     { label: 'Fecha de Nacimiento', value: formatDate(member.birthday), icon: Calendar },
@@ -464,32 +464,32 @@ export default function MemberDetailPage() {
                                     { label: 'Rol en Ministerio', value: member.church_role, icon: ShieldCheck },
                                 ]} />
                                 {member.pastoral_notes && (
-                                    <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-[1.5rem] border border-slate-100 dark:border-white/5">
-                                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Notas Pastorales</p>
+                                    <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5">
+                                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-2">Notas Pastorales</p>
                                         <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed italic">&ldquo;{member.pastoral_notes}&rdquo;</p>
                                     </div>
                                 )}
                             </div>
 
                             {/* Núcleo Familiar */}
-                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-5 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Núcleo Familiar</h3>
-                                    <button className="flex items-center gap-1.5 text-[10px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-all">
+                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Núcleo Familiar</h3>
+                                    <button className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600 uppercase tracking-wide hover:text-blue-700 transition-all">
                                         <Plus size={12} /> Añadir
                                     </button>
                                 </div>
                                 {member.family.length > 0 ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {member.family.map((f: any) => (
-                                            <div key={f.id} className="p-5 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all cursor-pointer">
+                                            <div key={f.id} className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all cursor-pointer">
                                                 <div className="flex items-center gap-3">
                                                     <div className="size-9 rounded-xl bg-white dark:bg-[#15171c] flex items-center justify-center shadow-sm border border-slate-100 dark:border-white/10">
                                                         <User size={16} className="text-slate-400" />
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-bold text-slate-800 dark:text-white">{f.name ?? f.first_name}</p>
-                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{f.relation}</p>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{f.relation}</p>
                                                     </div>
                                                 </div>
                                                 <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
@@ -497,9 +497,9 @@ export default function MemberDetailPage() {
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="py-6 text-center rounded-2xl bg-slate-50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10">
+                                    <div className="py-2 text-center rounded-lg bg-slate-50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10">
                                         <Users size={28} className="mx-auto text-slate-300 mb-3" />
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sin núcleo familiar registrado</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Sin núcleo familiar registrado</p>
                                         <p className="text-xs text-slate-400 mt-1">Este miembro aún no pertenece a una familia</p>
                                     </div>
                                 )}
@@ -513,7 +513,7 @@ export default function MemberDetailPage() {
                                 <div className="relative z-10 space-y-2">
                                     <div className="flex items-center gap-2">
                                         <Flame size={18} className="text-amber-300" />
-                                        <h4 className="text-base font-black tracking-tight uppercase">MESH Insight</h4>
+                                        <h4 className="text-base font-bold tracking-tight uppercase">MESH Insight</h4>
                                     </div>
                                     <p className="text-sm font-medium text-indigo-100 leading-relaxed">
                                         {fullName} tiene potencial pastoral en su área de servicio. Su participación este mes es consistente.
@@ -526,7 +526,7 @@ export default function MemberDetailPage() {
                                             });
                                             setMentorDrawerOpen(true);
                                         }}
-                                        className="w-full py-1.5 bg-white text-indigo-900 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all"
+                                        className="w-full py-1.5 bg-white text-indigo-900 rounded-lg font-bold text-[10px] uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all"
                                     >
                                         Asignar Mentoría
                                     </button>
@@ -535,7 +535,7 @@ export default function MemberDetailPage() {
 
                             {/* Indicadores de Salud */}
                             <div className="bg-white dark:bg-[#15171c] rounded-xl p-4 border border-slate-100 dark:border-white/5 shadow-sm space-y-2">
-                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Indicadores de Salud</h3>
+                                <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Indicadores de Salud</h3>
                                 <HealthIndicator label="Asistencia Mensual" value={85} color="bg-emerald-500" />
                                 <HealthIndicator label="Progreso Academia" value={65} color="bg-blue-500" />
                                 <HealthIndicator label="Compromiso Voluntario" value={92} color="bg-amber-500" />
@@ -546,8 +546,8 @@ export default function MemberDetailPage() {
                     {/* ── VIDA ESPIRITUAL ── */}
                     {activeTab === 'spiritual' && <>
                         <div className="lg:col-span-8 space-y-3">
-                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-5 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
-                                <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Datos Espirituales</h3>
+                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Datos Espirituales</h3>
                                 <InfoGrid items={[
                                     { label: 'Fecha de Bautismo', value: formatDate(member.baptism_date), icon: CheckCircle2 },
                                     { label: 'Faro en Casa', value: member.house, icon: Heart },
@@ -556,23 +556,23 @@ export default function MemberDetailPage() {
                                 ]} />
                                 {member.spiritual_gifts ? (
                                     <div className="space-y-3">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Dones Espirituales</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Dones Espirituales</p>
                                         <div className="flex flex-wrap gap-2">
                                             {member.spiritual_gifts.split(',').map((gift: string, i: number) => (
-                                                <span key={i} className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 text-[11px] font-black rounded-xl border border-indigo-100 dark:border-indigo-500/20 uppercase tracking-widest">
+                                                <span key={i} className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 text-[11px] font-bold rounded-xl border border-indigo-100 dark:border-indigo-500/20 uppercase tracking-wide">
                                                     {gift.trim()}
                                                 </span>
                                             ))}
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 text-center">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Dones espirituales no registrados</p>
+                                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-dashed border-slate-200 dark:border-white/10 text-center">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Dones espirituales no registrados</p>
                                     </div>
                                 )}
                                 {member.talents ? (
                                     <div className="space-y-3">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Talentos y Habilidades</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Talentos y Habilidades</p>
                                         <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{member.talents}</p>
                                     </div>
                                 ) : null}
@@ -582,7 +582,7 @@ export default function MemberDetailPage() {
                             <div className="p-4 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl text-white shadow-xl relative overflow-hidden">
                                 <div className="absolute top-0 right-0 p-4 opacity-10"><Heart size={80} /></div>
                                 <div className="relative z-10 space-y-4">
-                                    <h4 className="text-sm font-black uppercase tracking-widest">Cuidado Pastoral</h4>
+                                    <h4 className="text-sm font-bold uppercase tracking-wide">Cuidado Pastoral</h4>
                                     <p className="text-sm text-rose-100 leading-relaxed">Este miembro está siendo acompañado activamente en su proceso espiritual.</p>
                                     <button
                                         onClick={() => {
@@ -592,7 +592,7 @@ export default function MemberDetailPage() {
                                             });
                                             setMentorDrawerOpen(true);
                                         }}
-                                        className="w-full py-1.5 bg-white text-rose-700 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all"
+                                        className="w-full py-1.5 bg-white text-rose-700 rounded-lg font-bold text-[10px] uppercase tracking-wide hover:scale-105 transition-all"
                                     >
                                         Asignar Pastor
                                     </button>
@@ -604,10 +604,10 @@ export default function MemberDetailPage() {
                     {/* ── ACADEMIA ── */}
                     {activeTab === 'academy' && <>
                         <div className="lg:col-span-12">
-                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-5 border border-slate-100 dark:border-white/5 shadow-sm">
-                                <div className="flex items-center justify-between mb-8">
-                                    <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Progreso Académico</h3>
-                                    <a href="/academy" className="flex items-center gap-1.5 text-[10px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-all">
+                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-3 border border-slate-100 dark:border-white/5 shadow-sm">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Progreso Académico</h3>
+                                    <a href="/academy" className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600 uppercase tracking-wide hover:text-blue-700 transition-all">
                                         Ver Academia <ExternalLink size={12} />
                                     </a>
                                 </div>
@@ -616,7 +616,7 @@ export default function MemberDetailPage() {
                                     title="Sin cursos registrados"
                                     description={`${fullName} aún no está inscrito en ningún curso de la Academia CCF.`}
                                     action={
-                                        <a href="/academy" className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-700 transition-all mt-2">
+                                        <a href="/academy" className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all mt-2">
                                             <BookOpen size={16} /> Explorar Cursos
                                         </a>
                                     }
@@ -639,21 +639,21 @@ export default function MemberDetailPage() {
                                         <div className={clsx('size-8 rounded-xl flex items-center justify-center text-white', stat.color)}>
                                             <stat.icon size={18} />
                                         </div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
-                                        <p className="text-lg font-black text-slate-800 dark:text-white">{formatCurrency(stat.value)}</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{stat.label}</p>
+                                        <p className="text-lg font-bold text-slate-800 dark:text-white">{formatCurrency(stat.value)}</p>
                                     </div>
                                 ))}
                             </div>
 
                             {/* Transactions */}
-                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-5 border border-slate-100 dark:border-white/5 shadow-sm">
-                                <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-6">Historial de Siembras</h3>
+                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-3 border border-slate-100 dark:border-white/5 shadow-sm">
+                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-3">Historial de Siembras</h3>
                                 {loadingDonations ? (
-                                    <div className="py-6 text-center text-slate-400 text-sm">Cargando...</div>
+                                    <div className="py-2 text-center text-slate-400 text-sm">Cargando...</div>
                                 ) : donations.length > 0 ? (
                                     <div className="space-y-3">
                                         {donations.map((d: any, i: number) => (
-                                            <div key={i} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl">
+                                            <div key={i} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-lg">
                                                 <div className="flex items-center gap-3">
                                                     <div className="size-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
                                                         <DollarSign size={16} className="text-emerald-600" />
@@ -663,7 +663,7 @@ export default function MemberDetailPage() {
                                                         <p className="text-[10px] text-slate-400">{formatDate(d.created_at)}</p>
                                                     </div>
                                                 </div>
-                                                <p className="text-sm font-black text-emerald-600">{formatCurrency(d.amount)}</p>
+                                                <p className="text-sm font-bold text-emerald-600">{formatCurrency(d.amount)}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -681,10 +681,10 @@ export default function MemberDetailPage() {
                     {/* ── HISTORIAL ── */}
                     {activeTab === 'history' && <>
                         <div className="lg:col-span-12">
-                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-5 border border-slate-100 dark:border-white/5 shadow-sm">
-                                <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-6">Línea de Tiempo Pastoral</h3>
+                            <div className="bg-white dark:bg-[#15171c] rounded-xl p-3 border border-slate-100 dark:border-white/5 shadow-sm">
+                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-3">Línea de Tiempo Pastoral</h3>
                                 {loadingHistory ? (
-                                    <div className="py-6 text-center text-slate-400 text-sm">Cargando historial...</div>
+                                    <div className="py-2 text-center text-slate-400 text-sm">Cargando historial...</div>
                                 ) : history.length > 0 ? (
                                     <div className="relative space-y-0">
                                         <div className="absolute left-5 top-0 bottom-0 w-px bg-slate-100 dark:bg-white/5" />
@@ -693,7 +693,7 @@ export default function MemberDetailPage() {
                                                 <div className="absolute left-0 top-1 size-8 rounded-xl bg-white dark:bg-[#15171c] border border-slate-100 dark:border-white/10 flex items-center justify-center shadow-sm z-10">
                                                     <MessageSquare size={16} className="text-blue-500" />
                                                 </div>
-                                                <div className="flex-1 bg-slate-50 dark:bg-white/5 rounded-2xl p-5">
+                                                <div className="flex-1 bg-slate-50 dark:bg-white/5 rounded-lg p-3">
                                                     <div className="flex items-center justify-between mb-2">
                                                         <p className="text-sm font-bold text-slate-800 dark:text-white">{event.event_type ?? event.type ?? 'Evento'}</p>
                                                         <p className="text-[10px] text-slate-400">{formatDate(event.created_at)}</p>
@@ -709,7 +709,7 @@ export default function MemberDetailPage() {
                                         title="Sin historial registrado"
                                         description={`No se han registrado eventos pastorales para ${fullName} aún.`}
                                         action={
-                                            <button className="flex items-center gap-2 px-4 py-1.5 bg-slate-800 dark:bg-white text-white dark:text-slate-800 rounded-2xl font-black text-sm hover:opacity-90 transition-all mt-2">
+                                            <button className="flex items-center gap-2 px-4 py-1.5 bg-slate-800 dark:bg-white text-white dark:text-slate-800 rounded-lg font-bold text-sm hover:opacity-90 transition-all mt-2">
                                                 <Plus size={16} /> Registrar Evento
                                             </button>
                                         }

@@ -61,7 +61,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead }
                         <div className={clsx("size-1.5 rounded-full animate-pulse", stage.dot || stage.color)} />
                     </div>
                     <div className="flex flex-col">
-                        <h3 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] leading-tight">
+                        <h3 className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide leading-tight">
                             {stage.label}
                         </h3>
                         <span className="text-[9px] font-bold text-slate-300 dark:text-slate-600 uppercase">
@@ -122,16 +122,16 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead }
                     {/* Empty State */}
                     {leads.length === 0 && (
                         <div className={clsx(
-                            "flex flex-col items-center justify-center gap-3 py-12 px-4 rounded-[1.5rem] border-2 border-dashed transition-all duration-500",
+                            "flex flex-col items-center justify-center gap-3 py-4 px-4 rounded-lg border-2 border-dashed transition-all duration-500",
                             isOver 
                                 ? "border-blue-500/50 bg-blue-500/5 scale-[0.98]" 
                                 : "border-slate-200 dark:border-white/5"
                         )}>
-                            <div className="p-4 rounded-2xl bg-white dark:bg-white/5 shadow-sm border border-slate-100 dark:border-white/5">
+                            <div className="p-4 rounded-lg bg-white dark:bg-white/5 shadow-sm border border-slate-100 dark:border-white/5">
                                 {stage.emptyIcon ? <stage.emptyIcon size={24} className="text-slate-300" /> : <UserPlus size={24} className="text-slate-300" />}
                             </div>
                             <div className="text-center">
-                                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-normal">
+                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide leading-normal">
                                     {isOver ? '¡Suelta para asignar!' : `Sin ${stage.label.toLowerCase()}`}
                                 </p>
                                 {!isOver && (
@@ -150,7 +150,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead }
                 {/* Footer Add Button */}
                 <button
                     onClick={onNewLead}
-                    className="w-full mt-auto py-1.5 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 text-[10px] font-black text-slate-400 hover:text-blue-500 hover:border-blue-500/30 hover:bg-white dark:hover:bg-white/5 transition-all flex items-center justify-center gap-2 group"
+                    className="w-full mt-auto py-1.5 rounded-lg border border-dashed border-slate-200 dark:border-white/10 text-[10px] font-bold text-slate-400 hover:text-blue-500 hover:border-blue-500/30 hover:bg-white dark:hover:bg-white/5 transition-all flex items-center justify-center gap-2 group"
                 >
                     <div className="size-5 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
                         <UserPlus size={10} />

@@ -75,7 +75,7 @@ export function AcademyDetailShell({
                             <ArrowLeft size={18} />
                         </button>
                         <div className="flex-1 text-center">
-                            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/40">Academia</p>
+                            <p className="text-[10px] font-black uppercase tracking-wide text-white/40">Academia</p>
                             <h1 className="text-xl font-black tracking-tight text-white">{title}</h1>
                             {description && <p className="text-xs text-white/60 mt-1 font-medium leading-tight">{description}</p>}
                         </div>

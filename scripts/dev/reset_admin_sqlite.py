@@ -46,10 +46,12 @@ with Session(engine) as session:
     else:
         hashed = get_password_hash(PASSWORD)
         session.execute(
-            text("""
+            text(
+                """
                 INSERT INTO users (username, email, password_hash, role, is_active, is_email_verified, created_at, updated_at)
                 VALUES (:username, :email, :hash, :role, 1, 1, datetime('now'), datetime('now'))
-            """),
+            """
+            ),
             {"username": USERNAME, "email": EMAIL, "hash": hashed, "role": ROLE},
         )
         session.commit()

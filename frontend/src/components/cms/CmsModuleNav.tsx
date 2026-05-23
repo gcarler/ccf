@@ -53,9 +53,9 @@ export function CmsModuleNav() {
   return (
     <nav className="shrink-0 border-b border-slate-100 bg-white dark:border-white/[0.05] dark:bg-[#141517]">
       <div className="flex items-center gap-1.5 px-4 pt-2.5">
-        <Globe size={11} className="text-slate-400" />
+        <Globe size={8} className="text-slate-400" />
         <span className="text-[11px] text-slate-400">Sitio web</span>
-        <ChevronRight size={10} className="text-slate-300" />
+        <ChevronRight size={8} className="text-slate-300" />
         <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-200">
           {activeTab?.label ?? "CMS"}
         </span>
@@ -78,7 +78,7 @@ export function CmsModuleNav() {
                     : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100",
                 )}
               >
-                <Icon size={13} />
+                <Icon size={8} />
                 {tab.label}
               </Link>
             );

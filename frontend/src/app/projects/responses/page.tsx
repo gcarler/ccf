@@ -80,17 +80,17 @@ export default function ProjectsResponsesPage() {
                 availableViews={RESPONSE_VIEWS}
             />
 
-            <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+            <main className="flex-1 overflow-y-auto p-4">
                 {loading ? (
-                    <div className="space-y-3">{[1, 2, 3].map((idx) => <Skeleton key={idx} className="h-20 rounded-2xl" />)}</div>
+                    <div className="space-y-3">{[1, 2, 3].map((idx) => <Skeleton key={idx} className="h-20 rounded-lg" />)}</div>
                 ) : unread.length === 0 ? (
-                    <div className="rounded-3xl border border-slate-200 dark:border-white/10 p-8 text-center text-slate-500">No hay respuestas pendientes.</div>
+                    <div className="rounded-lg border border-slate-200 dark:border-white/10 p-4 text-center text-slate-500">No hay respuestas pendientes.</div>
                 ) : viewType === 'table' ? (
-                    <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden"><table className="w-full text-left"><thead className="bg-slate-50 dark:bg-white/5"><tr><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Respuesta</th><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Proyecto</th><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Tipo</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-white/5">{unread.map((item) => <tr key={item.id}><td className="px-4 py-3 text-sm font-bold">{item.task_title || 'Actualización'}</td><td className="px-4 py-3 hidden md:table-cell text-[11px] text-slate-500">{item.project}</td><td className="px-4 py-3 text-[11px] text-slate-500">{item.type}</td></tr>)}</tbody></table></div>
+                    <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden"><table className="w-full text-left"><thead className="bg-slate-50 dark:bg-white/5"><tr><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Respuesta</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 hidden md:table-cell">Proyecto</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Tipo</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-white/5">{unread.map((item) => <tr key={item.id}><td className="px-3 py-2 text-sm font-medium">{item.task_title || 'Actualización'}</td><td className="px-3 py-2 hidden md:table-cell text-[11px] text-slate-500">{item.project}</td><td className="px-3 py-2 text-[11px] text-slate-500">{item.type}</td></tr>)}</tbody></table></div>
                 ) : viewType === 'grid' ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">{unread.map((item) => <article key={item.id} className="rounded-2xl border border-slate-200 dark:border-white/10 p-4 bg-slate-50/60 dark:bg-white/5"><p className="text-[10px] font-black uppercase tracking-widest text-blue-600">{item.project}</p><h3 className="text-sm font-black mt-2">{item.task_title || 'Actualización'}</h3><p className="text-sm text-slate-600 dark:text-slate-300 mt-2 line-clamp-3">{item.content}</p></article>)}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">{unread.map((item) => <article key={item.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/60 dark:bg-white/5"><p className="text-[10px] font-bold uppercase tracking-wide text-blue-600">{item.project}</p><h3 className="text-sm font-bold mt-1">{item.task_title || 'Actualización'}</h3><p className="text-sm text-slate-600 dark:text-slate-300 mt-1 line-clamp-3">{item.content}</p></article>)}</div>
                 ) : viewType === 'board' || viewType === 'kanban' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">{grouped.map((group) => <section key={group.id} className="rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-4"><div className="flex justify-between mb-4"><span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{group.label}</span><span className="text-[10px] font-black text-slate-400">{group.rows.length}</span></div><div className="space-y-3">{group.rows.map((item) => <div key={item.id} className={clsx("rounded-xl border p-3 bg-white dark:bg-white/5", item.type === 'mention' ? "border-amber-200" : "border-slate-100 dark:border-white/5")}><p className="text-sm font-bold">{item.task_title || item.project}</p></div>)}</div></section>)}</div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">{grouped.map((group) => <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3"><div className="flex justify-between mb-3"><span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{group.label}</span><span className="text-[10px] font-bold text-slate-400">{group.rows.length}</span></div><div className="space-y-2">{group.rows.map((item) => <div key={item.id} className={clsx("rounded-md border p-2 bg-white dark:bg-white/5", item.type === 'mention' ? "border-amber-200" : "border-slate-100 dark:border-white/5")}><p className="text-sm font-medium">{item.task_title || item.project}</p></div>)}</div></section>)}</div>
                 ) : viewType === 'calendar' ? (
                     <UniversalCalendarView events={calendarEvents} title="Calendario de respuestas" />
                 ) : viewType === 'gantt' ? (
@@ -100,10 +100,10 @@ export default function ProjectsResponsesPage() {
                 ) : (
                     <div className="space-y-3">
                         {unread.map((item) => (
-                            <article key={item.id} className="rounded-2xl border border-slate-200 dark:border-white/10 p-4 bg-slate-50/60 dark:bg-white/5">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">{item.project}</p>
-                                <h3 className="text-sm font-black text-slate-800 dark:text-white mt-1">{item.task_title || 'Actualizacion'}</h3>
-                                <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">{item.content}</p>
+                            <article key={item.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/60 dark:bg-white/5">
+                                <p className="text-[10px] font-bold uppercase tracking-wide text-blue-600">{item.project}</p>
+                                <h3 className="text-sm font-bold text-slate-800 dark:text-white mt-1">{item.task_title || 'Actualizacion'}</h3>
+                                <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{item.content}</p>
                                 <div className="mt-3 flex items-center gap-2">
                                     <button
                                         onClick={() => router.push(`/projects/${item.project_id}`)}

@@ -7,12 +7,12 @@ This package re-exports everything so that existing callers using
 """
 
 # Utils
-from backend.crud._utils import (_utcnow,  # noqa: F401
-                                 analyze_pastoral_priority,
+from backend.crud._utils import _utcnow  # noqa: F401
+from backend.crud._utils import (analyze_pastoral_priority,
                                  analyze_pastoral_sentiment)
 # Academy
-from backend.crud.academy import (check_user_meets_prerequisites,  # noqa: F401
-                                  close_formal_acta, create_assessment,
+from backend.crud.academy import check_user_meets_prerequisites  # noqa: F401
+from backend.crud.academy import (close_formal_acta, create_assessment,
                                   create_assessment_option,
                                   create_assessment_question,
                                   create_assignment_submission, create_course,
@@ -54,22 +54,22 @@ from backend.crud.academy import (check_user_meets_prerequisites,  # noqa: F401
                                   update_enrollment, update_lesson,
                                   update_lesson_progress)
 # Agents
-from backend.crud.agents import (acknowledge_insight,  # noqa: F401
-                                 create_agent_insight, create_agent_task,
+from backend.crud.agents import acknowledge_insight  # noqa: F401
+from backend.crud.agents import (create_agent_insight, create_agent_task,
                                  delete_agent_insight, delete_agent_task,
                                  list_agent_insights, list_agent_tasks,
                                  update_agent_task)
 # Assets
-from backend.crud.assets import (create_asset,  # noqa: F401
-                                 create_maintenance_log, delete_asset,
+from backend.crud.assets import create_asset  # noqa: F401
+from backend.crud.assets import (create_maintenance_log, delete_asset,
                                  get_asset, get_assets, get_maintenance_logs,
                                  update_asset)
 # Audit
-from backend.crud.audit import (create_admin_audit_log,  # noqa: F401
-                                get_admin_audit_logs)
+from backend.crud.audit import create_admin_audit_log  # noqa: F401
+from backend.crud.audit import get_admin_audit_logs
 # CMS
-from backend.crud.cms import (activate_cms_theme,  # noqa: F401
-                              archive_cms_section, archive_cms_site,
+from backend.crud.cms import activate_cms_theme  # noqa: F401
+from backend.crud.cms import (archive_cms_section, archive_cms_site,
                               archive_cms_theme, create_announcement,
                               create_cms_media_item, create_cms_menu,
                               create_cms_menu_item, create_cms_page,
@@ -115,8 +115,8 @@ from backend.crud.consolidation import (  # noqa: F401
     update_consolidation_assignment, update_consolidation_follow_up_task,
     update_consolidation_interaction)
 # CRM
-from backend.crud.crm import (create_communication_log,  # noqa: F401
-                              create_community_card, create_consolidation_case,
+from backend.crud.crm import create_communication_log  # noqa: F401
+from backend.crud.crm import (create_community_card, create_consolidation_case,
                               create_counseling_ticket, create_crm_event,
                               create_crm_task, create_donation,
                               create_evangelism_strategy,
@@ -189,18 +189,18 @@ from backend.crud.crm_extended import (  # noqa: F401; Positions; Member Positio
     update_member_position, update_ministry, update_position,
     update_role_definition, update_volunteer_skill)
 # Dashboard
-from backend.crud.dashboard import (get_dashboard_metrics,  # noqa: F401
-                                    get_pastor_radar, get_pilot_readiness,
+from backend.crud.dashboard import get_dashboard_metrics  # noqa: F401
+from backend.crud.dashboard import (get_pastor_radar, get_pilot_readiness,
                                     search_knowledge_base)
 # Governance
-from backend.crud.governance import (create_automation_rule,  # noqa: F401
-                                     delete_automation_rule,
+from backend.crud.governance import create_automation_rule  # noqa: F401
+from backend.crud.governance import (delete_automation_rule,
                                      get_automation_rule, get_automation_rules,
                                      record_automation_run,
                                      update_automation_rule)
 # Identity & auth
-from backend.crud.identity import (award_badge,  # noqa: F401
-                                   create_refresh_token, create_reset_token,
+from backend.crud.identity import award_badge  # noqa: F401
+from backend.crud.identity import (create_refresh_token, create_reset_token,
                                    create_user, create_verification_token,
                                    delete_user, ensure_ui_preferences,
                                    get_ui_preferences, get_user,
@@ -210,8 +210,8 @@ from backend.crud.identity import (award_badge,  # noqa: F401
                                    update_ui_preferences, update_user,
                                    use_reset_token, use_verification_token)
 # Ops — church locations, social channels, system variables
-from backend.crud.ops import (ChurchLocationCreate,  # noqa: F401
-                              ChurchLocationUpdate, SocialChannelCreate,
+from backend.crud.ops import ChurchLocationCreate  # noqa: F401
+from backend.crud.ops import (ChurchLocationUpdate, SocialChannelCreate,
                               SocialChannelUpdate, SystemVariableCreate,
                               SystemVariableUpdate, create_church_location,
                               create_social_channel, create_system_variable,
@@ -223,8 +223,8 @@ from backend.crud.ops import (ChurchLocationCreate,  # noqa: F401
                               update_church_location, update_social_channel,
                               update_system_variable, upsert_system_variable)
 # Projects
-from backend.crud.projects import (create_activity_log,  # noqa: F401
-                                   create_attachment, create_comment,
+from backend.crud.projects import create_activity_log  # noqa: F401
+from backend.crud.projects import (create_attachment, create_comment,
                                    create_default_phases, create_milestone,
                                    create_project, create_project_task,
                                    create_supply, delete_attachment,

@@ -1,12 +1,12 @@
 import os
 
-path = r'd:\ccf\backend\models.py'
-with open(path, 'rb') as f:
+path = r"d:\ccf\backend\models.py"
+with open(path, "rb") as f:
     content = f.read()
 
-clean_content = content.replace(b'\x00', b'')
+clean_content = content.replace(b"\x00", b"")
 
-with open(path, 'wb') as f:
+with open(path, "wb") as f:
     f.write(clean_content)
 
 print(f"Original size: {len(content)}")

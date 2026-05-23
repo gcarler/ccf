@@ -58,7 +58,7 @@ export default function LeadDetailPage() {
         loadLead();
     }, [id, token]);
 
-    if (loading) return <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Recuperando expediente ministerial...</div>;
+    if (loading) return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-slate-400">Recuperando expediente ministerial...</div>;
 
     const STAGE_LABELS: any = {
         'new': 'NUEVO',
@@ -88,7 +88,7 @@ export default function LeadDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 lg:p-4">
                     <div className="lg:col-span-2 space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Información de Contacto</h3>
+                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Información de Contacto</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="flex items-center gap-3 text-sm">
                                     <Phone size={16} className="text-slate-400" />
@@ -102,24 +102,24 @@ export default function LeadDetailPage() {
                         </DSCard>
 
                         <DSCard>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Notas de Seguimiento</h3>
+                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-4">Notas de Seguimiento</h3>
                             <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed italic">
                                 &quot;{lead.notes || 'Sin notas adicionales.'}&quot;
                             </p>
                         </DSCard>
 
                         <section className="space-y-4">
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Historial de Interacciones</h3>
+                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Historial de Interacciones</h3>
                             <div className="space-y-3">
                                 {history.map(item => (
-                                    <div key={item.id} className="p-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 flex items-center justify-between">
+                                    <div key={item.id} className="p-4 rounded-lg bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 flex items-center justify-between">
                                         <div className="flex items-center gap-4">
                                             <div className="size-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600">
                                                 <Clock size={14} />
                                             </div>
                                             <div>
                                                 <p className="text-xs font-bold">{item.action}</p>
-                                                <p className="text-[10px] text-slate-400 uppercase font-black">{item.actor}</p>
+                                                <p className="text-[10px] text-slate-400 uppercase font-bold">{item.actor}</p>
                                             </div>
                                         </div>
                                         <span className="text-[10px] font-bold text-slate-400">{item.date}</span>
@@ -131,23 +131,23 @@ export default function LeadDetailPage() {
 
                     <div className="space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Estado de Consolidación</h3>
+                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Estado de Consolidación</h3>
                             <div className="space-y-3">
                                 <div className="space-y-2">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Etapa Actual</p>
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Etapa Actual</p>
                                     <DSBadge tone={lead.stage === 'consolidated' || lead.stage === 'integrated' ? 'emerald' : 'blue'} label={STAGE_LABELS[lead.stage] || lead.stage.toUpperCase()} />
                                 </div>
                                 
                                 <div className="h-px bg-slate-100 dark:bg-white/5" />
                                 
-                                <button className="w-full py-1.5 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
+                                <button className="w-full py-1.5 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
                                     Mover a Siguiente Etapa
                                 </button>
                             </div>
                         </DSCard>
 
                         <div className="p-4 bg-slate-900 rounded-xl text-white space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400">
                                 <MessageSquare size={14} /> Optimus Brain
                             </div>
                             <p className="text-[11px] font-medium leading-relaxed opacity-80">

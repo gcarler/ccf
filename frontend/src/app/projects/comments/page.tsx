@@ -100,9 +100,9 @@ export default function ProjectsCommentsPage() {
                 setViewType={setViewType}
                 availableViews={COMMENT_VIEWS}
             />
-            <main className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4">
-                <section className="rounded-3xl border border-slate-200 dark:border-white/10 p-5 bg-slate-50 dark:bg-white/5">
-                    <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 mb-3">Nuevo comentario</h2>
+            <main className="flex-1 overflow-y-auto p-4 space-y-3">
+                <section className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50 dark:bg-white/5">
+                    <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500 mb-2">Nuevo comentario</h2>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <select
                             value={projectId}
@@ -130,15 +130,15 @@ export default function ProjectsCommentsPage() {
                 </section>
 
                 {loading ? (
-                    <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <Skeleton key={idx} className="h-20 rounded-2xl" />)}</div>
+                    <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <Skeleton key={idx} className="h-20 rounded-lg" />)}</div>
                 ) : comments.length === 0 ? (
-                    <div className="rounded-3xl border border-slate-200 dark:border-white/10 p-8 text-center text-slate-500">Sin comentarios pendientes.</div>
+                    <div className="rounded-lg border border-slate-200 dark:border-white/10 p-4 text-center text-slate-500">Sin comentarios pendientes.</div>
                 ) : viewType === 'table' ? (
-                    <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden"><table className="w-full text-left"><thead className="bg-slate-50 dark:bg-white/5"><tr><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Autor</th><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Comentario</th><th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Estado</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-white/5">{comments.map((item) => <tr key={item.id}><td className="px-4 py-3 text-sm font-bold">{item.author_name}</td><td className="px-4 py-3 hidden md:table-cell text-[11px] text-slate-500">{item.content}</td><td className="px-4 py-3"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", item.is_resolved ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600")}>{item.is_resolved ? 'Resuelto' : 'Pendiente'}</span></td></tr>)}</tbody></table></div>
+                    <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden"><table className="w-full text-left"><thead className="bg-slate-50 dark:bg-white/5"><tr><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Autor</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 hidden md:table-cell">Comentario</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Estado</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-white/5">{comments.map((item) => <tr key={item.id}><td className="px-3 py-2 text-sm font-medium">{item.author_name}</td><td className="px-3 py-2 hidden md:table-cell text-[11px] text-slate-500">{item.content}</td><td className="px-3 py-2"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-bold uppercase", item.is_resolved ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600")}>{item.is_resolved ? 'Resuelto' : 'Pendiente'}</span></td></tr>)}</tbody></table></div>
                 ) : viewType === 'grid' ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">{comments.map((item) => <article key={item.id} className="rounded-2xl border border-slate-200 dark:border-white/10 p-4 bg-white dark:bg-white/5"><p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{item.author_name}</p><p className="text-sm mt-2">{item.content}</p></article>)}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">{comments.map((item) => <article key={item.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5"><p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">{item.author_name}</p><p className="text-sm mt-1">{item.content}</p></article>)}</div>
                 ) : viewType === 'board' || viewType === 'kanban' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">{[false, true].map((resolved) => <section key={String(resolved)} className="rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-4"><div className="flex justify-between mb-4"><span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{resolved ? 'Resueltos' : 'Pendientes'}</span><span className="text-[10px] font-black text-slate-400">{comments.filter((item) => item.is_resolved === resolved).length}</span></div><div className="space-y-3">{comments.filter((item) => item.is_resolved === resolved).map((item) => <div key={item.id} className="rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-3 text-sm">{item.content}</div>)}</div></section>)}</div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">{[false, true].map((resolved) => <section key={String(resolved)} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3"><div className="flex justify-between mb-3"><span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{resolved ? 'Resueltos' : 'Pendientes'}</span><span className="text-[10px] font-bold text-slate-400">{comments.filter((item) => item.is_resolved === resolved).length}</span></div><div className="space-y-2">{comments.filter((item) => item.is_resolved === resolved).map((item) => <div key={item.id} className="rounded-md bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 p-2 text-sm">{item.content}</div>)}</div></section>)}</div>
                 ) : viewType === 'calendar' ? (
                     <UniversalCalendarView events={calendarEvents} title="Calendario de comentarios" />
                 ) : viewType === 'gantt' ? (
@@ -146,14 +146,14 @@ export default function ProjectsCommentsPage() {
                 ) : viewType === 'wiki' ? (
                     <UniversalWikiView moduleName="Comentarios de proyectos" storageKey="wiki_projects_comments" />
                 ) : (
-                    <div className="space-y-6">
+                    <div className="space-y-3">
                         {Object.entries(grouped).map(([pid, rows]) => {
                             const project = projects.find((p) => p.id === Number(pid));
                             return (
-                                <section key={pid} className="space-y-3">
-                                    <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">{project?.title || `Proyecto #${pid}`}</h3>
+                                <section key={pid} className="space-y-2">
+                                    <h3 className="text-xs font-bold uppercase tracking-wide text-blue-600">{project?.title || `Proyecto #${pid}`}</h3>
                                     {rows.map((item) => (
-                                        <article key={item.id} className="rounded-2xl border border-slate-200 dark:border-white/10 p-4 bg-white dark:bg-white/5">
+                                        <article key={item.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5">
                                             <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{item.author_name}</p>
                                             <p className="text-sm text-slate-700 dark:text-slate-200 mt-2">{item.content}</p>
                                             <div className="mt-3 flex items-center justify-between">

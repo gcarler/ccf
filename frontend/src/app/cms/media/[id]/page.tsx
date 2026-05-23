@@ -111,8 +111,8 @@ export default function CmsMediaDetailPage() {
         }
     };
 
-    if (loading) return <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Recuperando Recurso Multimedia...</div>;
-    if (!item) return <div className="p-20 text-center font-black uppercase tracking-widest text-slate-400">Recurso multimedia no encontrado.</div>;
+    if (loading) return <div className="p-20 text-center animate-pulse font-semibold uppercase tracking-wide text-slate-400">Recuperando Recurso Multimedia...</div>;
+    if (!item) return <div className="p-20 text-center font-semibold uppercase tracking-wide text-slate-400">Recurso multimedia no encontrado.</div>;
 
     return (
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
@@ -127,7 +127,7 @@ export default function CmsMediaDetailPage() {
                         <button onClick={toggleArchiveItem} className={`p-2 rounded-xl transition-all ${item.status === 'archived' ? 'text-emerald-600 hover:bg-emerald-500/10' : 'text-amber-600 hover:bg-amber-500/10'}`}>
                             {item.status === 'archived' ? <RotateCcw size={20} /> : <Archive size={20} />}
                         </button>
-                        <button onClick={saveMetadata} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-50">
+                        <button onClick={saveMetadata} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-50">
                             <Save size={14} /> {saving ? 'Guardando...' : 'Guardar Cambios'}
                         </button>
                     </div>
@@ -137,7 +137,7 @@ export default function CmsMediaDetailPage() {
             <main className="flex-1 overflow-y-auto p-8 lg:p-12">
                 <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
                     <div className="space-y-8">
-                        <div className="aspect-video rounded-[2.5rem] bg-slate-900 overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl relative group">
+                        <div className="aspect-video rounded-lg bg-slate-900 overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl relative group">
                             {item.mime_type?.startsWith('image/') ? (
                                 <img
                                     src={item.url}
@@ -156,7 +156,7 @@ export default function CmsMediaDetailPage() {
                                     <audio controls src={item.url} className="w-full" />
                                 </div>
                             ) : (
-                                <div className="flex h-full items-center justify-center text-xs font-black uppercase tracking-widest text-slate-500">
+                                <div className="flex h-full items-center justify-center text-xs font-semibold uppercase tracking-wide text-slate-500">
                                     Sin vista previa
                                 </div>
                             )}
@@ -168,10 +168,10 @@ export default function CmsMediaDetailPage() {
                         </div>
 
                         <div className="flex gap-4">
-                            <button onClick={() => item?.url && window.open(item.url, '_blank')} className="flex-1 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
+                            <button onClick={() => item?.url && window.open(item.url, '_blank')} className="flex-1 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
                                 <Download size={14} /> Descargar Original
                             </button>
-                            <button onClick={copyUrl} className="flex-1 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
+                            <button onClick={copyUrl} className="flex-1 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
                                 <Link2 size={14} /> Copiar URL
                             </button>
                         </div>
@@ -180,15 +180,15 @@ export default function CmsMediaDetailPage() {
                     <div className="space-y-8">
                         <section className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">TÃ­tulo del Recurso</label>
+                                <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">TÃ­tulo del Recurso</label>
                                 <input 
                                     value={item.alt_text || ''}
                                     onChange={(e) => setItem({ ...item, alt_text: e.target.value })}
-                                    className="w-full bg-transparent border-b border-slate-200 dark:border-white/10 py-2 text-2xl font-black outline-none focus:border-blue-500 transition-all"
+                                    className="w-full bg-transparent border-b border-slate-200 dark:border-white/10 py-2 text-xl font-semibold outline-none focus:border-blue-500 transition-all"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Seccion CMS</label>
+                                <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Seccion CMS</label>
                                 <input
                                     value={item.section || 'general'}
                                     onChange={(e) => setItem({ ...item, section: e.target.value })}
@@ -198,35 +198,35 @@ export default function CmsMediaDetailPage() {
                         </section>
 
                         <DSCard>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">InformaciÃ³n TÃ©cnica</h3>
+                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-6">InformaciÃ³n TÃ©cnica</h3>
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nombre de Archivo</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Nombre de Archivo</p>
                                     <p className="text-xs font-bold truncate">{item.filename}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tipo de MIME</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Tipo de MIME</p>
                                     <p className="text-xs font-bold">{item.mime_type || 'sin tipo'}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">TamaÃ±o</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">TamaÃ±o</p>
                                     <p className="text-xs font-bold">{formatBytes(item.file_size)}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Subido</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Subido</p>
                                     <p className="text-xs font-bold">{new Date(item.created_at).toLocaleDateString()}</p>
                                 </div>
                             </div>
                         </DSCard>
 
                         <DSCard>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Etiquetas y OrganizaciÃ³n</h3>
+                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-6">Etiquetas y OrganizaciÃ³n</h3>
                             <div className="space-y-4">
                                 <input
                                     value={tagsText}
                                     onChange={(e) => setTagsText(e.target.value)}
                                     placeholder="hero, faro, campana"
-                                    className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-transparent px-4 py-3 text-sm font-bold outline-none focus:border-blue-500"
+                                    className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-4 py-3 text-sm font-bold outline-none focus:border-blue-500"
                                 />
                                 <div className="flex flex-wrap gap-2">
                                     {tagsText.split(',').map((tag: string) => tag.trim()).filter(Boolean).map((tag: string) => (

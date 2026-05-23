@@ -171,7 +171,17 @@ jobs:
         run: |
           echo "=== DEBUG: pwd=$(pwd), PYTHONPATH=$PYTHONPATH ==="
           python -c "import sys; print(sys.path)" || true
+          echo "=== HEAD check ==="
+          PYTHONPATH=. alembic heads 2>&1 || echo "heads check done"
+          echo "=== HISTORY preview ==="
+          PYTHONPATH=. alembic history 2>&1 | tail -20 || echo "history done"
+          echo "=== UPGRADE ==="
           PYTHONPATH=. alembic upgrade head 2>&1
+          rc=$?
+          echo "alembic exit code: $rc"
+          echo "alembic_exit=$rc" >> "$GITHUB_ENV"
+          echo "### Alembic upgrade result: $rc" >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
       - name: Run evangelism backend tests (fast feedback)
         run: PYTHONPATH=. pytest tests/test_crm_api.py -k evangelism -q
         working-directory: .
@@ -202,9 +212,9 @@ jobs:
           fi
           echo "✅ No default secrets in config.py"
       - name: Check security tests (production rejects insecure defaults)
-        working-directory: .
         run: |
-          PYTHONPATH=. python -m pytest tests/test_security_config.py -v --noconftest
+          PWD="$(pwd)"; echo "CWD=$PWD"
+          PYTHONPATH="$GITHUB_WORKSPACE" python -m pytest "$GITHUB_WORKSPACE/tests/test_security_config.py" -v
       - name: Run pip-audit (check for known vulnerabilities)
         run: |
           pip install pip-audit

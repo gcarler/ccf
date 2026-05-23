@@ -3,12 +3,12 @@ import os
 # Check current directory
 print(f"Current Directory: {os.getcwd()}")
 
-path = 'models.py'
+path = "models.py"
 if not os.path.exists(path):
     print(f"Error: {path} not found in {os.getcwd()}")
     sys.exit(1)
 
-with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+with open(path, "r", encoding="utf-8", errors="ignore") as f:
     content = f.read()
 
 print(f"File length: {len(content)}")

@@ -1,4 +1,5 @@
 """Add source column to prayer_requests table."""
+
 import os
 import sys
 
@@ -14,9 +15,11 @@ def migrate():
     with engine.connect() as conn:
         # Add source column if it doesn't exist
         try:
-            conn.execute(text(
-                "ALTER TABLE prayer_requests ADD COLUMN source VARCHAR(50) DEFAULT 'crm'"
-            ))
+            conn.execute(
+                text(
+                    "ALTER TABLE prayer_requests ADD COLUMN source VARCHAR(50) DEFAULT 'crm'"
+                )
+            )
             conn.commit()
             print("  Added source column to prayer_requests")
         except Exception as e:
@@ -24,9 +27,11 @@ def migrate():
 
         # Create index on source
         try:
-            conn.execute(text(
-                "CREATE INDEX IF NOT EXISTS ix_prayer_requests_source ON prayer_requests(source)"
-            ))
+            conn.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS ix_prayer_requests_source ON prayer_requests(source)"
+                )
+            )
             conn.commit()
             print("  Created index on source column")
         except Exception as e:

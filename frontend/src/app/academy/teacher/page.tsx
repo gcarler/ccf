@@ -104,11 +104,11 @@ export default function TeacherWorkspace() {
     if (loading) {
         return (
             <WorkspaceLayout sidebarTitle="Academia">
-                <div className="p-8 space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 rounded-[2rem]" />)}
+                <div className="p-4 space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 rounded-lg" />)}
                     </div>
-                    <Skeleton className="h-[400px] rounded-[2rem]" />
+                    <Skeleton className="h-[400px] rounded-lg" />
                 </div>
             </WorkspaceLayout>
         );
@@ -163,7 +163,7 @@ export default function TeacherWorkspace() {
                     )}
 
                     {viewType === 'wiki' && (
-                        <section className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[2.5rem] p-8 shadow-[var(--shadow-floating)] space-y-6">
+                        <section className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-8 shadow-[var(--shadow-floating)] space-y-6">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">Guía de Evaluación y Rúbricas</h3>
                                 <DSBadge tone="blue" label="Privado Docentes" />
@@ -178,7 +178,7 @@ export default function TeacherWorkspace() {
                     )}
 
                     {(viewType === 'grid' || viewType === 'table' || viewType === 'list') && (
-                        <DSCard tone="light" className="shadow-2xl overflow-hidden rounded-[2.5rem]">
+                        <DSCard tone="light" className="shadow-2xl overflow-hidden rounded-lg">
                             <header className="p-8 border-b border-slate-100 dark:border-white/5 space-y-6">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div>
@@ -217,7 +217,7 @@ export default function TeacherWorkspace() {
                                             </div>
                                         )}
                                         {courses.map(course => (
-                                            <div key={course.id} className="p-6 rounded-[2rem] border-2 border-slate-50 dark:border-white/5 bg-white dark:bg-white/5 group hover:border-blue-500/30 transition-all hover:shadow-xl hover:shadow-blue-500/5">
+                                            <div key={course.id} className="p-6 rounded-lg border-2 border-slate-50 dark:border-white/5 bg-white dark:bg-white/5 group hover:border-blue-500/30 transition-all hover:shadow-xl hover:shadow-blue-500/5">
                                                 <div className="flex justify-between items-start mb-6">
                                                     <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-[9px] font-black uppercase tracking-widest text-blue-600">{course.code}</span>
                                                     <DSBadge tone="emerald" label={course.modality} />

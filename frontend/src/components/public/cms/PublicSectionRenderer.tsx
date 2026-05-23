@@ -30,14 +30,14 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
   if (section.type === "hero") {
     if (imageUrl) {
       return (
-        <section className="relative overflow-hidden rounded-3xl min-h-[460px] flex items-end p-8 md:p-16">
+        <section className="relative overflow-hidden rounded-lg min-h-[460px] flex items-end p-4 md:p-8">
           <img src={imageUrl} alt={imageAlt} className="absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-black/10" />
           <div className="relative z-10 max-w-4xl">
-            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/75">Hero</p>
-            <h1 className="mt-3 text-4xl md:text-6xl font-black tracking-tight text-white">{title}</h1>
+            <p className="text-[10px] font-bold uppercase tracking-wide text-white/75">Hero</p>
+            <h1 className="mt-3 text-lg md:text-xl font-bold tracking-tight text-white">{title}</h1>
             <p className="mt-4 text-base md:text-lg max-w-3xl text-white/90">{body}</p>
-            <Link href={ctaHref} className="inline-flex mt-8 rounded-full px-6 py-3 text-xs font-black uppercase tracking-widest text-slate-950 bg-white hover:bg-slate-100 transition-colors">
+            <Link href={ctaHref} className="inline-flex mt-8 rounded-full px-6 py-3 text-xs font-bold uppercase tracking-wide text-slate-950 bg-white hover:bg-slate-100 transition-colors">
               {ctaLabel}
             </Link>
           </div>
@@ -45,11 +45,11 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
       );
     }
     return (
-      <section className="rounded-3xl p-10 md:p-16" style={{ background: "var(--faro-surface-container)" }}>
-        <p className="text-[10px] font-black uppercase tracking-[0.35em]" style={{ color: "var(--faro-primary)" }}>Hero</p>
-        <h1 className="mt-3 text-4xl md:text-6xl font-black tracking-tight" style={{ color: "var(--faro-on-surface)" }}>{title}</h1>
+      <section className="rounded-lg p-4 md:p-8" style={{ background: "var(--faro-surface-container)" }}>
+        <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "var(--faro-primary)" }}>Hero</p>
+        <h1 className="mt-3 text-lg md:text-xl font-bold tracking-tight" style={{ color: "var(--faro-on-surface)" }}>{title}</h1>
         <p className="mt-4 text-base md:text-lg max-w-3xl" style={{ color: "var(--faro-on-surface-variant)" }}>{body}</p>
-        <Link href={ctaHref} className="inline-flex mt-8 rounded-full px-6 py-3 text-xs font-black uppercase tracking-widest text-white" style={{ background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))" }}>
+        <Link href={ctaHref} className="inline-flex mt-8 rounded-full px-6 py-3 text-xs font-bold uppercase tracking-wide text-white" style={{ background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))" }}>
           {ctaLabel}
         </Link>
       </section>

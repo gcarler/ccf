@@ -264,7 +264,7 @@ export default function ProjectDetailPage() {
         setEditingProject(true);
     };
 
-    if (loading) return <div className="p-20 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Recuperando ecosistema de trabajo...</div>;
+    if (loading) return <div className="p-4 text-center animate-pulse font-bold text-slate-400">Recuperando ecosistema de trabajo...</div>;
 
     const doneCount = tasks.filter(t => t.status === 'done').length;
     const progressPercent = tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0;
@@ -296,22 +296,22 @@ export default function ProjectDetailPage() {
                 setViewType={setViewType}
                 availableViews={PROJECT_DETAIL_VIEWS}
                 rightActions={
-                    <div className="flex items-center gap-3">
-                        <button onClick={() => setShowTaskModal(true)} className="px-6 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => setShowTaskModal(true)} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
                             <Plus size={14} /> Nueva Tarea
                         </button>
-                        <button onClick={() => setWhiteboardOpen(true)} className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-2 dark:bg-white dark:text-slate-900">
+                        <button onClick={() => setWhiteboardOpen(true)} className="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2 dark:bg-white dark:text-slate-900">
                             <PencilRuler size={14} /> Pizarra
                         </button>
                         {phases.length > 0 && (
-                            <button onClick={() => setShowPhaseManager(true)} className="px-4 py-2 bg-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-2">
+                            <button onClick={() => setShowPhaseManager(true)} className="px-3 py-1.5 bg-indigo-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2">
                                 <Edit3 size={14} /> Fases
                             </button>
                         )}
-                        <button onClick={startEditing} className="px-4 py-2 bg-amber-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-2">
+                        <button onClick={startEditing} className="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2">
                             <Edit3 size={14} /> Editar
                         </button>
-                        <button onClick={handleDeleteProject} className="px-4 py-2 bg-rose-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-2">
+                        <button onClick={handleDeleteProject} className="px-3 py-1.5 bg-rose-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2">
                             <Trash2 size={14} /> Eliminar
                         </button>
                     </div>
@@ -319,34 +319,34 @@ export default function ProjectDetailPage() {
             />
 
             <div className="flex min-h-0 flex-1 overflow-hidden">
-            <main className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6">
+            <main className="flex-1 overflow-y-auto p-4 space-y-3">
                 {editingProject ? (
-                    <div className="bg-white dark:bg-white/5 rounded-[2rem] p-8 border border-slate-200 dark:border-white/10 space-y-4">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-slate-600">Editar Proyecto</h3>
-                        <input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="w-full p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm font-bold" placeholder="Título del proyecto" />
-                        <textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} rows={3} className="w-full p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm" placeholder="Descripción" />
-                        <select value={editStatus} onChange={e => setEditStatus(e.target.value)} className="w-full p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm font-bold">
+                    <div className="bg-white dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-white/10 space-y-3">
+                        <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600">Editar Proyecto</h3>
+                        <input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="w-full p-2 rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm font-medium" placeholder="Título del proyecto" />
+                        <textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} rows={3} className="w-full p-2 rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm" placeholder="Descripción" />
+                        <select value={editStatus} onChange={e => setEditStatus(e.target.value)} className="w-full p-2 rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm font-medium">
                             <option value="planning">Planificación</option>
                             <option value="active">En Marcha</option>
                             <option value="on_hold">En Pausa</option>
                             <option value="completed">Alcanzado</option>
                             <option value="archived">Archivado</option>
                         </select>
-                        <div className="flex gap-3">
-                            <button onClick={handleUpdateProject} className="px-6 py-2 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all">Guardar Cambios</button>
-                            <button onClick={() => setEditingProject(false)} className="px-6 py-2 bg-slate-200 dark:bg-white/10 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all">Cancelar</button>
+                        <div className="flex gap-2">
+                            <button onClick={handleUpdateProject} className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all">Guardar Cambios</button>
+                            <button onClick={() => setEditingProject(false)} className="px-3 py-1.5 bg-slate-200 dark:bg-white/10 rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all">Cancelar</button>
                         </div>
                     </div>
                 ) : (
                     <>
                         {viewType === 'dashboard' && (
-                            <div className="space-y-6">
-                                <header className="space-y-4">
+                            <div className="space-y-3">
+                                <header className="space-y-2">
                                     <div className="flex items-center gap-3">
                                         <DSBadge tone={project?.status === 'active' ? 'blue' : project?.status === 'completed' ? 'emerald' : 'amber'} label={project?.status?.toUpperCase() || 'PROYECTO'} />
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{progressPercent}% completado</span>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{progressPercent}% completado</span>
                                     </div>
-                                    <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
+                                    <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase">
                                         {project?.title}
                                     </h1>
                                     {project?.description && (
@@ -362,9 +362,9 @@ export default function ProjectDetailPage() {
                                 </section>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                                    <aside className="space-y-6 lg:col-span-1">
-                                        <div className="p-6 bg-blue-50/50 dark:bg-slate-900 border border-blue-100 dark:border-white/5 rounded-[2.5rem] shadow-sm dark:shadow-xl space-y-4">
-                                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">
+                                    <aside className="space-y-3 lg:col-span-1">
+                                        <div className="p-3 bg-blue-50/50 dark:bg-slate-900 border border-blue-100 dark:border-white/5 rounded-lg shadow-sm dark:shadow-xl space-y-2">
+                                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">
                                                 <Sparkles size={14} /> Asistente Ministerial
                                             </div>
                                             <p className="text-[11px] font-medium leading-relaxed italic text-slate-700 dark:text-slate-300">
@@ -374,7 +374,7 @@ export default function ProjectDetailPage() {
 
 
                                         <DSCard>
-                                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Hitos</h3>
+                                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-2">Hitos</h3>
                                             <div className="space-y-2">
                                                 {project?.milestones?.map((m: ProjectMilestoneRecord) => (
                                                     <div key={m.id} className="rounded-xl bg-slate-50 p-2 dark:bg-white/5">
@@ -466,7 +466,7 @@ export default function ProjectDetailPage() {
                                             </div>
                                         </DSCard>
                                     </aside>
-                                    <div className="min-h-[420px] lg:col-span-2 overflow-hidden rounded-[2rem] border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+                                    <div className="min-h-[420px] lg:col-span-2 overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
                                         <ProjectActivityFeed activities={activities} />
                                     </div>
                                 </div>
@@ -474,7 +474,7 @@ export default function ProjectDetailPage() {
                         )}
 
                         {viewType === 'table' && (
-                            <div className="h-[calc(100vh-14rem)] border border-slate-200 dark:border-white/5 rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#252528] shadow-sm">
+                            <div className="h-[calc(100vh-14rem)] border border-slate-200 dark:border-white/5 rounded-lg overflow-hidden bg-white dark:bg-[#252528] shadow-sm">
                                 <TaskTableView
                                     projectId={project?.id}
                                     tasks={tasks}
@@ -488,10 +488,10 @@ export default function ProjectDetailPage() {
                         {viewType === 'list' && (
                             <div className="w-full">
                                 <DSCard>
-                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Plan de Acción</h3>
+                                    <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Plan de Acción</h3>
                                     <div className="space-y-2">
                                         {tasks.map(task => (
-                                            <div key={task.id} onClick={() => handleOpenTask(task)} className="p-4 rounded-2xl bg-white dark:bg-[#252528] border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/30 transition-all duration-300 active:scale-[0.99] cursor-pointer">
+                                            <div key={task.id} onClick={() => handleOpenTask(task)} className="p-3 rounded-lg bg-white dark:bg-[#252528] border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/30 transition-all duration-300 active:scale-[0.99] cursor-pointer">
                                                 <div className="flex items-center gap-4 flex-1">
                                                     <button
                                                         onClick={(event) => {
@@ -536,11 +536,11 @@ export default function ProjectDetailPage() {
                         )}
 
                         {(viewType === 'board' || viewType === 'kanban') && (
-                            <div className="flex gap-4 overflow-x-auto pb-6">
+                            <div className="flex gap-3 overflow-x-auto pb-4">
                                 {phases.map((phase) => {
                                     const columnTasks = tasks.filter((task) => (task.status || 'todo') === phase.slug);
                                     return (
-                                        <section key={phase.slug} className="w-80 shrink-0 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-[#252528]">
+                                        <section key={phase.slug} className="w-80 shrink-0 rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-white/10 dark:bg-[#252528]">
                                             <div className="mb-3 flex items-center justify-between px-1">
                                                 <div className="flex items-center gap-2">
                                                     <div className="size-2 rounded-full" style={{ backgroundColor: phase.color }} />
@@ -550,9 +550,9 @@ export default function ProjectDetailPage() {
                                             </div>
                                             <div className="space-y-2">
                                                 {columnTasks.map((task) => (
-                                                    <article key={task.id} onClick={() => handleOpenTask(task)} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#1E1F21] cursor-pointer transition-all duration-300 hover:border-blue-300 active:scale-[0.99]">
-                                                        <p className="text-sm font-black text-slate-900 dark:text-white">{task.title}</p>
-                                                        <div className="mt-3 flex items-center justify-between gap-2">
+                                                    <article key={task.id} onClick={() => handleOpenTask(task)} className="rounded-md border border-slate-200 bg-white p-2 shadow-sm dark:border-white/10 dark:bg-[#1E1F21] cursor-pointer transition-all duration-300 hover:border-blue-300 active:scale-[0.99]">
+                                                        <p className="text-sm font-bold text-slate-900 dark:text-white">{task.title}</p>
+                                                        <div className="mt-2 flex items-center justify-between gap-2">
                                                             <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-slate-200 bg-slate-100 text-slate-600 dark:border-white/10">
                                                                 {phase.name}
                                                             </span>
@@ -560,7 +560,7 @@ export default function ProjectDetailPage() {
                                                         </div>
                                                     </article>
                                                 ))}
-                                                {columnTasks.length === 0 && <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center text-[10px] font-black uppercase tracking-widest text-slate-400 dark:border-white/10">Vacio</div>}
+                                                {columnTasks.length === 0 && <div className="rounded-md border border-dashed border-slate-200 py-4 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:border-white/10">Vacio</div>}
                                             </div>
                                         </section>
                                     );

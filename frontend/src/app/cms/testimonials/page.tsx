@@ -296,12 +296,12 @@ export default function CmsTestimonialsPage() {
       {filtered.map(t => {
         const cfg = EMOTION_CONFIG[t.emotion] ?? defaultEmotion;
         return (
-          <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-2xl p-4 hover:border-rose-300 transition-all flex items-center gap-4", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
-            <div className={clsx("size-10 rounded-2xl flex items-center justify-center text-white text-[11px] font-black shrink-0", getAvatarColor(t.author_id))}>{getInitials(t.author_id)}</div>
+          <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-lg p-4 hover:border-rose-300 transition-all flex items-center gap-4", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
+            <div className={clsx("size-10 rounded-lg flex items-center justify-center text-white text-[11px] font-semibold shrink-0", getAvatarColor(t.author_id))}>{getInitials(t.author_id)}</div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className={clsx("text-[10px] font-black uppercase tracking-widest", cfg.color)}>{cfg.emoji} {t.emotion || "Testimonio"}</span>
-                <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", t.status === "archived" ? "bg-slate-100 text-slate-500" : t.published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span>
+                <span className={clsx("text-[10px] font-semibold uppercase tracking-wide", cfg.color)}>{cfg.emoji} {t.emotion || "Testimonio"}</span>
+                <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", t.status === "archived" ? "bg-slate-100 text-slate-500" : t.published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span>
               </div>
               <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-1 mt-1">{t.content}</p>
             </div>
@@ -313,15 +313,15 @@ export default function CmsTestimonialsPage() {
   );
 
   const renderTestimonialTable = () => (
-    <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
+    <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
       <table className="w-full text-left">
         <thead className="bg-slate-50 dark:bg-white/5">
           <tr>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Testimonio</th>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Emoción</th>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Estado</th>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden xl:table-cell">Fecha</th>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Acción</th>
+            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Testimonio</th>
+            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden md:table-cell">Emoción</th>
+            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden lg:table-cell">Estado</th>
+            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden xl:table-cell">Fecha</th>
+            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Acción</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100 dark:divide-white/5">
@@ -329,10 +329,10 @@ export default function CmsTestimonialsPage() {
             <tr key={t.id} onClick={() => setSelected(t)} className={clsx("hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
               <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-200 line-clamp-1 max-w-[420px]">{t.content}</td>
               <td className="px-4 py-3 hidden md:table-cell text-[11px] font-bold text-slate-500">{t.emotion || "—"}</td>
-              <td className="px-4 py-3 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-black uppercase", t.status === "archived" ? "bg-slate-100 text-slate-500" : t.published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span></td>
+              <td className="px-4 py-3 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", t.status === "archived" ? "bg-slate-100 text-slate-500" : t.published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span></td>
               <td className="px-4 py-3 hidden xl:table-cell text-[11px] text-slate-400">{new Date(t.created_at).toLocaleDateString("es-CO")}</td>
               <td className="px-4 py-3">
-                <button onClick={e => { e.stopPropagation(); toggleArchive(t); }} disabled={processing === t.id} className="text-[9px] font-black uppercase tracking-widest text-amber-600 disabled:opacity-50">{t.status === "archived" ? "Restaurar" : "Archivar"}</button>
+                <button onClick={e => { e.stopPropagation(); toggleArchive(t); }} disabled={processing === t.id} className="text-[9px] font-semibold uppercase tracking-wide text-amber-600 disabled:opacity-50">{t.status === "archived" ? "Restaurar" : "Archivar"}</button>
               </td>
             </tr>
           ))}
@@ -344,15 +344,15 @@ export default function CmsTestimonialsPage() {
   const renderTestimonialBoard = () => (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-full">
       {testimonialGroups.map(group => (
-        <section key={group.id} className="rounded-3xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-4">
+        <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-4">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{group.label}</span>
-            <span className="text-[10px] font-black text-slate-400">{group.items.length}</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{group.label}</span>
+            <span className="text-[10px] font-semibold text-slate-400">{group.items.length}</span>
           </div>
           <div className="space-y-3">
             {group.items.map(t => (
-              <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/5 rounded-2xl p-4 hover:border-rose-300 transition-all", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Miembro #{t.author_id} · {t.emotion || "Testimonio"}</p>
+              <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/5 rounded-lg p-4 hover:border-rose-300 transition-all", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Miembro #{t.author_id} · {t.emotion || "Testimonio"}</p>
                 <p className="text-sm text-slate-700 dark:text-slate-200 line-clamp-3">{t.content}</p>
               </button>
             ))}
@@ -368,7 +368,7 @@ export default function CmsTestimonialsPage() {
       <header className="shrink-0 border-b border-slate-100 dark:border-white/5 px-6 py-4 flex items-center gap-4">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <MessageCircle size={18} className="text-rose-500 shrink-0" />
-          <h1 className="text-[13px] font-black uppercase tracking-widest text-slate-800 dark:text-white">
+          <h1 className="text-[13px] font-semibold uppercase tracking-wide text-slate-800 dark:text-white">
             Testimonios
           </h1>
         </div>
@@ -384,7 +384,7 @@ export default function CmsTestimonialsPage() {
         <ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={TESTIMONIAL_VIEWS} />
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-5 py-2 bg-rose-500 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-rose-500/20 hover:bg-rose-600 active:scale-95 transition-all"
+          className="flex items-center gap-2 px-5 py-2 bg-rose-500 text-white rounded-xl text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-rose-500/20 hover:bg-rose-600 active:scale-95 transition-all"
         >
           <Plus size={14} /> Nuevo Testimonio
         </button>
@@ -412,8 +412,8 @@ export default function CmsTestimonialsPage() {
               )}
             >
               <s.icon size={14} className={s.color} />
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{s.label}</span>
-              <span className={clsx("text-xl font-black tabular-nums leading-none", s.color)}>{s.value}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{s.label}</span>
+              <span className={clsx("text-xl font-semibold tabular-nums leading-none", s.color)}>{s.value}</span>
             </button>
           ))}
         </div>
@@ -429,7 +429,7 @@ export default function CmsTestimonialsPage() {
               key={f}
               onClick={() => setFilter(f)}
               className={clsx(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all",
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-semibold uppercase tracking-wide border transition-all",
                 filter === f
                   ? `${cfg.bg} ${cfg.border} ${cfg.color}`
                   : "bg-slate-100 dark:bg-white/5 border-transparent text-slate-500 hover:text-slate-700"
@@ -437,7 +437,7 @@ export default function CmsTestimonialsPage() {
             >
               {f !== "Todos" && <span>{cfg.emoji}</span>}
               {f}
-              <span className={clsx("ml-0.5 font-black", filter === f ? cfg.color : "text-slate-400")}>{count}</span>
+              <span className={clsx("ml-0.5 font-semibold", filter === f ? cfg.color : "text-slate-400")}>{count}</span>
             </button>
           );
         })}
@@ -450,16 +450,16 @@ export default function CmsTestimonialsPage() {
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-48 rounded-3xl bg-slate-100 dark:bg-white/5 animate-pulse" />
+                <div key={i} className="h-48 rounded-lg bg-slate-100 dark:bg-white/5 animate-pulse" />
               ))}
             </div>
           ) : filtered.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-20">
-              <div className="size-20 rounded-[2rem] bg-slate-50 dark:bg-white/5 flex items-center justify-center">
+              <div className="size-20 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center">
                 <MessageCircle size={36} strokeWidth={1} className="text-slate-300" />
               </div>
               <div className="space-y-1">
-                <p className="font-black text-slate-700 dark:text-white uppercase tracking-tight">Sin testimonios</p>
+                <p className="font-semibold text-slate-700 dark:text-white uppercase tracking-tight">Sin testimonios</p>
                 <p className="text-sm text-slate-400">Ajusta los filtros o agrega uno nuevo</p>
               </div>
             </div>
@@ -502,7 +502,7 @@ export default function CmsTestimonialsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     onClick={() => setSelected(isSelected ? null : t)}
                     className={clsx(
-                      "group relative rounded-3xl border p-5 flex flex-col gap-4 cursor-pointer transition-all",
+                      "group relative rounded-lg border p-5 flex flex-col gap-4 cursor-pointer transition-all",
                       isSelected
                         ? `${cfg.bg} ${cfg.border} ring-2 ring-current`
                         : "bg-white dark:bg-white/[0.02] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:shadow-lg"
@@ -511,7 +511,7 @@ export default function CmsTestimonialsPage() {
                     {/* Status badge */}
                     <div className="absolute top-4 right-4">
                       <span className={clsx(
-                        "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                        "px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide border",
                         t.published
                           ? "bg-emerald-50 text-emerald-600 border-emerald-200"
                           : "bg-amber-50 text-amber-600 border-amber-200"
@@ -522,17 +522,17 @@ export default function CmsTestimonialsPage() {
 
                     {/* Author */}
                     <div className="flex items-center gap-3 pr-20">
-                      <div className={clsx("size-10 rounded-2xl flex items-center justify-center text-white text-[11px] font-black shrink-0", getAvatarColor(t.author_id))}>
+                      <div className={clsx("size-10 rounded-lg flex items-center justify-center text-white text-[11px] font-semibold shrink-0", getAvatarColor(t.author_id))}>
                         {getInitials(t.author_id)}
                       </div>
                       <div>
-                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Miembro #{t.author_id}</p>
-                        <div className={clsx("flex items-center gap-1 text-[10px] font-black uppercase tracking-widest", cfg.color)}>
+                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Miembro #{t.author_id}</p>
+                        <div className={clsx("flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide", cfg.color)}>
                           <span>{cfg.emoji}</span>
                           <span>{t.emotion || "Testimonio"}</span>
                         </div>
                         {getTestimonialMediaUrl(t) && (
-                          <div className="mt-1 flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-slate-400">
+                          <div className="mt-1 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-slate-400">
                             {t.media_type === "video" ? <PlayCircle size={10} /> : t.media_type === "podcast" ? <Headphones size={10} /> : <ImageIcon size={10} />}
                             {getMediaLabel(t)}
                           </div>
@@ -555,7 +555,7 @@ export default function CmsTestimonialsPage() {
                           onClick={e => { e.stopPropagation(); handleToggle(t); }}
                           disabled={processing === t.id || t.status === "archived"}
                           className={clsx(
-                            "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border",
+                            "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-semibold uppercase tracking-wide transition-all border",
                             t.published
                               ? "bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100"
                               : "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
@@ -567,7 +567,7 @@ export default function CmsTestimonialsPage() {
                           onClick={e => { e.stopPropagation(); toggleArchive(t); }}
                           disabled={processing === t.id}
                           className={clsx(
-                            "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border",
+                            "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-semibold uppercase tracking-wide transition-all border",
                             t.status === "archived"
                               ? "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
                               : "bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100"
@@ -605,7 +605,7 @@ export default function CmsTestimonialsPage() {
               <div className="p-5 flex items-center justify-between border-b border-slate-200 dark:border-white/5 shrink-0">
                 <div className="flex items-center gap-2">
                   <MessageCircle size={14} className="text-rose-500" />
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Testimonio #{selected.id}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Testimonio #{selected.id}</p>
                 </div>
                 <button onClick={() => setSelected(null)} className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 text-slate-400 transition-all">
                   <X size={14} />
@@ -617,18 +617,18 @@ export default function CmsTestimonialsPage() {
                 const cfg = EMOTION_CONFIG[selected.emotion] ?? defaultEmotion;
                 return (
                   <div className={clsx("p-5 flex items-center gap-4 border-b border-slate-200 dark:border-white/5", cfg.bg)}>
-                    <div className={clsx("size-14 rounded-2xl flex items-center justify-center text-white text-base font-black shrink-0", getAvatarColor(selected.author_id))}>
+                    <div className={clsx("size-14 rounded-lg flex items-center justify-center text-white text-base font-semibold shrink-0", getAvatarColor(selected.author_id))}>
                       {getInitials(selected.author_id)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-black text-slate-800 dark:text-white">Miembro #{selected.author_id}</p>
-                      <div className={clsx("flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest mt-0.5", cfg.color)}>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-white">Miembro #{selected.author_id}</p>
+                      <div className={clsx("flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide mt-0.5", cfg.color)}>
                         <span>{cfg.emoji}</span>
                         <span>{selected.emotion || "Sin categoría"}</span>
                       </div>
                     </div>
                     <span className={clsx(
-                      "px-2 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border",
+                      "px-2 py-1 rounded-xl text-[9px] font-semibold uppercase tracking-wide border",
                       selected.status === "archived" ? "bg-slate-100 text-slate-500 border-slate-200" : selected.published ? "bg-emerald-50 text-emerald-600 border-emerald-200" : "bg-amber-50 text-amber-600 border-amber-200"
                     )}>
                       {selected.status === "archived" ? "Archivado" : selected.published ? "✓ Publicado" : "⏳ Pendiente"}
@@ -640,12 +640,12 @@ export default function CmsTestimonialsPage() {
               {/* Full content */}
               <div className="p-5 flex-1 space-y-4">
                 <div className="space-y-2">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Contenido completo</p>
+                  <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">Contenido completo</p>
                   <textarea
                     value={selected.content}
                     onChange={event => setSelected(prev => prev ? { ...prev, content: event.target.value } : prev)}
                     rows={5}
-                    className="w-full resize-none text-sm text-slate-700 dark:text-slate-200 leading-relaxed bg-white dark:bg-white/5 rounded-2xl p-4 border border-slate-200 dark:border-white/10 outline-none focus:ring-2 focus:ring-rose-500/20"
+                    className="w-full resize-none text-sm text-slate-700 dark:text-slate-200 leading-relaxed bg-white dark:bg-white/5 rounded-lg p-4 border border-slate-200 dark:border-white/10 outline-none focus:ring-2 focus:ring-rose-500/20"
                   />
                 </div>
 
@@ -660,7 +660,7 @@ export default function CmsTestimonialsPage() {
                       key={option.id}
                       onClick={() => changeSelectedMediaType(option.id as TestimonialMediaType)}
                       className={clsx(
-                        "flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-[9px] font-black uppercase tracking-widest transition-all",
+                        "flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-[9px] font-semibold uppercase tracking-wide transition-all",
                         (selected.media_type || "text") === option.id
                           ? "border-rose-300 bg-rose-50 text-rose-600"
                           : "border-slate-200 dark:border-white/10 text-slate-400 hover:text-slate-700"
@@ -673,10 +673,10 @@ export default function CmsTestimonialsPage() {
 
                 {(selected.media_type || "text") !== "text" && (
                   <div className="space-y-2">
-                    <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                    <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
                       <div className="mb-2 flex items-center justify-between gap-3">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Seleccionar desde media</p>
-                        <Link href="/cms/media" className="text-[9px] font-black uppercase tracking-widest text-rose-500 hover:underline">
+                        <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">Seleccionar desde media</p>
+                        <Link href="/cms/media" className="text-[9px] font-semibold uppercase tracking-wide text-rose-500 hover:underline">
                           Subir archivo
                         </Link>
                       </div>
@@ -718,7 +718,7 @@ export default function CmsTestimonialsPage() {
                       )}
                     </div>
 
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">URL multimedia</p>
+                    <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">URL multimedia</p>
                     <input
                       value={getTestimonialMediaUrl(selected)}
                       onChange={event => {
@@ -735,7 +735,7 @@ export default function CmsTestimonialsPage() {
                       className="w-full text-xs bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/20"
                     />
                     {getTestimonialMediaUrl(selected) && (
-                      <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 overflow-hidden">
+                      <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 overflow-hidden">
                         {selected.media_type === "image" ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={getTestimonialMediaUrl(selected)} alt="" className="w-full max-h-48 object-cover" />
@@ -753,8 +753,8 @@ export default function CmsTestimonialsPage() {
                   </div>
                 )}
 
-                <label className="flex items-center justify-between rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Mostrar en inicio</span>
+                <label className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Mostrar en inicio</span>
                   <input
                     type="checkbox"
                     checked={!!selected.show_on_home}
@@ -764,7 +764,7 @@ export default function CmsTestimonialsPage() {
                 </label>
 
                 <div className="space-y-2">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Categoria / emocion</p>
+                  <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">Categoria / emocion</p>
                   <input
                     value={selected.emotion || ""}
                     onChange={event => setSelected(prev => prev ? { ...prev, emotion: event.target.value } : prev)}
@@ -789,7 +789,7 @@ export default function CmsTestimonialsPage() {
                 <button
                   onClick={saveSelected}
                   disabled={processing === selected.id}
-                  className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest bg-slate-900 text-white dark:bg-white dark:text-slate-900 transition-all active:scale-95 disabled:opacity-60"
+                  className="flex items-center justify-center gap-2 w-full py-3 rounded-lg text-[11px] font-semibold uppercase tracking-wide bg-slate-900 text-white dark:bg-white dark:text-slate-900 transition-all active:scale-95 disabled:opacity-60"
                 >
                   <Save size={16} /> Guardar cambios
                 </button>
@@ -797,7 +797,7 @@ export default function CmsTestimonialsPage() {
                   onClick={() => handleToggle(selected)}
                   disabled={processing === selected.id || selected.status === "archived"}
                   className={clsx(
-                    "flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95 disabled:opacity-60",
+                    "flex items-center justify-center gap-2 w-full py-3 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg transition-all active:scale-95 disabled:opacity-60",
                     selected.published
                       ? "bg-rose-500 text-white shadow-rose-500/20 hover:bg-rose-600"
                       : "bg-emerald-600 text-white shadow-emerald-500/20 hover:bg-emerald-700"
@@ -812,7 +812,7 @@ export default function CmsTestimonialsPage() {
                   onClick={() => toggleArchive(selected)}
                   disabled={processing === selected.id}
                   className={clsx(
-                    "flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95 disabled:opacity-60",
+                    "flex items-center justify-center gap-2 w-full py-3 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg transition-all active:scale-95 disabled:opacity-60",
                     selected.status === "archived"
                       ? "bg-emerald-600 text-white shadow-emerald-500/20 hover:bg-emerald-700"
                       : "bg-amber-500 text-white shadow-amber-500/20 hover:bg-amber-600"

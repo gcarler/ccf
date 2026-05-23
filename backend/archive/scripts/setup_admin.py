@@ -10,6 +10,7 @@ except ImportError:
     from core.database import SessionLocal
     from core.security import get_password_hash
 
+
 def create_admin():
     admin_email = os.getenv("CCF_ADMIN_EMAIL", "admin@ccf.com")
     admin_password = os.getenv("CCF_ADMIN_PASSWORD")
@@ -22,27 +23,30 @@ def create_admin():
     try:
         user = db.query(models.User).filter(models.User.email == admin_email).first()
         if user:
-            print(f"User {user.email} already exists with role {user.role}. Updating to admin.")
-            user.role = 'admin'
+            print(
+                f"User {user.email} already exists with role {user.role}. Updating to admin."
+            )
+            user.role = "admin"
             user.password_hash = get_password_hash(admin_password)
         else:
             print("Creating new admin user.")
             user = models.User(
-                username='admin',
+                username="admin",
                 email=admin_email,
                 password_hash=get_password_hash(admin_password),
-                role='admin',
-                is_active=True
+                role="admin",
+                is_active=True,
             )
             db.add(user)
 
         db.commit()
-        print('Admin user setup complete')
+        print("Admin user setup complete")
     except Exception as e:
         print(f"Error: {e}")
         db.rollback()
     finally:
         db.close()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     create_admin()

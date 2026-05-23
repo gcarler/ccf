@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-// /academy/courses redirects to /academy (el listado de cursos está en la página principal)
+// /academy/courses redirects to /academy (el listado de cursos esta en la pagina principal)
 // La ruta correcta para un curso individual es /academy/course/[id]
 export default function AcademyCoursesPage() {
     const router = useRouter();
@@ -21,4 +21,3 @@ export default function AcademyCoursesPage() {
         </div>
     );
 }
-

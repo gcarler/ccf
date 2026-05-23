@@ -84,11 +84,11 @@ export default function CoordinationConsole() {
     if (loading) {
         return (
             <WorkspaceLayout sidebarTitle="Academia">
-                <div className="p-8 space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 rounded-[2rem]" />)}
+                <div className="p-4 space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 rounded-lg" />)}
                     </div>
-                    <Skeleton className="h-[400px] rounded-[2rem]" />
+                    <Skeleton className="h-[400px] rounded-lg" />
                 </div>
             </WorkspaceLayout>
         );
@@ -117,7 +117,7 @@ export default function CoordinationConsole() {
                                 <Plus size={14} /> Nuevo Programa
                             </button>
                             <div className="h-4 w-px bg-slate-200 dark:bg-white/10 mx-1" />
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                            <span className="text-[10px] font-black uppercase tracking-wide text-slate-400">
                                 Alistamiento: {readinessPerc}%
                             </span>
                         </div>
@@ -134,10 +134,10 @@ export default function CoordinationConsole() {
                     )}
 
                     {readiness && viewType === 'grid' && (
-                        <section className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[2.5rem] p-8 shadow-[var(--shadow-floating)]">
+                        <section className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-8 shadow-[var(--shadow-floating)]">
                             <header className="flex items-center justify-between mb-8">
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500 mb-2">Checklist de alistamiento</p>
+                                    <p className="text-[10px] font-black uppercase tracking-wide text-blue-500 mb-2">Checklist de alistamiento</p>
                                     <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Piloto Academia Faro</h2>
                                 </div>
                                 <div className="text-right">
@@ -152,7 +152,7 @@ export default function CoordinationConsole() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {readiness.checklist.map((item) => (
                                     <article key={item.key} className={clsx(
-                                        'rounded-2xl border p-5 flex items-center gap-4 transition-all group hover:scale-[1.01]',
+                                        'rounded-2xl border p-3 flex items-center gap-4 transition-all group hover:scale-[1.01]',
                                         item.completed 
                                             ? 'border-emerald-100 dark:border-emerald-500/20 bg-emerald-50/30 dark:bg-emerald-500/5' 
                                             : 'border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]'
@@ -176,7 +176,7 @@ export default function CoordinationConsole() {
                     )}
 
                     {viewType === 'wiki' && (
-                        <section className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[2.5rem] p-8 shadow-[var(--shadow-floating)] space-y-6">
+                        <section className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-8 shadow-[var(--shadow-floating)] space-y-6">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">Manual Operativo de Coordinación</h3>
                                 <DSBadge tone="blue" label="Autosave activo" />
@@ -191,7 +191,7 @@ export default function CoordinationConsole() {
                     )}
 
                     {(viewType === 'grid' || viewType === 'table' || viewType === 'list') && (
-                        <DSCard tone="light" className="shadow-2xl overflow-hidden rounded-[2.5rem]">
+                        <DSCard tone="light" className="shadow-2xl overflow-hidden rounded-lg">
                             <header className="p-8 border-b border-slate-100 dark:border-white/5 space-y-6">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div>

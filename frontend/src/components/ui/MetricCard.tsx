@@ -32,29 +32,28 @@ export function MetricCard({
     loading
 }: MetricCardProps) {
     return (
-        <article className="bg-[hsl(var(--surface-2))] p-6 rounded-[1.75rem] border border-[hsl(var(--border))] shadow-sm flex flex-col gap-3 hover:shadow-md transition-all">
+        <article className="bg-[hsl(var(--surface-2))] p-3 rounded-lg border border-[hsl(var(--border))] shadow-sm flex flex-col gap-1.5 hover:shadow-md transition-all duration-150">
             <div className="flex items-center justify-between">
-                <div className={clsx('p-3 rounded-xl transition-transform group-hover:scale-105 shadow-sm', COLOR_STYLES[tone])}>
-                    <Icon size={18} />
+                <div className={clsx('p-1.5 rounded-md transition-transform group-hover:scale-105', COLOR_STYLES[tone])}>
+                    <Icon size={15} />
                 </div>
                 {trend && !loading && (
-                    <span className={clsx('text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest', COLOR_STYLES[tone])}>{trend}</span>
+                    <span className={clsx('text-[9px] font-semibold px-1.5 py-0.5 rounded-md uppercase', COLOR_STYLES[tone])}>{trend}</span>
                 )}
             </div>
             <div>
-                <p className="text-[10px] font-black text-[hsl(var(--text-secondary))] uppercase tracking-[0.2em] mb-1">{title}</p>
+                <p className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-0.5">{title}</p>
                 {loading ? (
-                    <div className="h-6 w-1/2 bg-[hsl(var(--border))] rounded-full animate-pulse" />
+                    <div className="h-5 w-1/2 bg-[hsl(var(--border))] rounded animate-pulse" />
                 ) : (
-                    <span className="text-3xl font-black text-[hsl(var(--text-primary))]">{value}</span>
+                    <span className="text-xl font-bold text-[hsl(var(--text-primary))] leading-tight">{value}</span>
                 )}
             </div>
             {helper && (
-                <p className="text-[11px] text-slate-500 dark:text-[hsl(var(--text-secondary))]">{helper}</p>
+                <p className="text-[10px] text-slate-500 dark:text-[hsl(var(--text-secondary))] leading-tight">{helper}</p>
             )}
         </article>
     );
 }
 
 export default MetricCard;
-

@@ -70,18 +70,18 @@ export default function CrmDetailShell({
             )}
 
             <div className="relative z-10 max-w-6xl mx-auto flex flex-col min-h-screen px-4">
-                <header className={`sticky top-0 backdrop-blur-2xl border-b py-5 flex flex-col gap-4 ${headerBg}`}>
+                <header className={`sticky top-0 backdrop-blur-2xl border-b py-2 flex flex-col gap-4 ${headerBg}`}>
                     <div className="flex items-center justify-between gap-4">
                         <button
                             onClick={handleBack}
-                            className={`size-11 rounded-full border flex items-center justify-center transition-colors ${isDark ? 'border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:border-white/30' : 'border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:border-[hsl(var(--primary))]'}`}
+                            className={`size-8 rounded-full border flex items-center justify-center transition-colors ${isDark ? 'border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:border-white/30' : 'border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:border-[hsl(var(--primary))]'}`}
                             aria-label="Regresar"
                         >
                             <ArrowLeft size={18} />
                         </button>
                         <div className="flex-1 text-center">
-                            <p className={`text-[10px] font-black uppercase tracking-[0.35em] ${accentText}`}>Consolidación</p>
-                            <h1 className={`text-lg font-black tracking-tight ${isDark ? 'text-[hsl(var(--text-primary))]' : 'text-[hsl(var(--text-primary))]'}`}>{title}</h1>
+                            <p className={`text-[10px] font-bold uppercase tracking-[0.35em] ${accentText}`}>Consolidación</p>
+                            <h1 className={`text-lg font-bold tracking-tight ${isDark ? 'text-[hsl(var(--text-primary))]' : 'text-[hsl(var(--text-primary))]'}`}>{title}</h1>
                             {description && <p className={`text-xs mt-1 font-medium ${subtleText}`}>{description}</p>}
                         </div>
                         <div className="flex items-center justify-end min-w-[44px]">
@@ -92,7 +92,7 @@ export default function CrmDetailShell({
                     {headerContent && <div>{headerContent}</div>}
                 </header>
 
-                <main className={`flex-1 py-6 ${contentClassName ?? "space-y-3"}`}>
+                <main className={`flex-1 py-2 ${contentClassName ?? "space-y-3"}`}>
                     {children}
                 </main>
             </div>

@@ -26,7 +26,7 @@ export default function AcademyAccountPage() {
         { icon: BookOpen, label: 'Cursos Activos', value: enrollments.length, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-500/10' },
         { icon: Award, label: 'Certificados', value: 2, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10' },
         { icon: Star, label: 'Promedio', value: '9.4', color: 'text-sky-600', bg: 'bg-sky-50 dark:bg-sky-500/10' },
-        { icon: Calendar, label: 'Días Activo', value: 47, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
+        { icon: Calendar, label: 'Dias Activo', value: 47, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
     ];
 
     return (
@@ -35,23 +35,23 @@ export default function AcademyAccountPage() {
             <div className="bg-gradient-to-br from-blue-600 to-indigo-700 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10"
                     style={{ backgroundImage: "radial-gradient(circle at 70% 50%, white 0%, transparent 60%)" }} />
-                <div className="max-w-4xl mx-auto px-5 py-12 relative">
+                <div className="max-w-4xl mx-auto px-5 py-4 relative">
                     <div className="flex items-end gap-4">
                         <div className="relative">
-                            <div className="size-24 rounded-xl bg-white/20 backdrop-blur border-2 border-white/30 flex items-center justify-center text-white text-3xl font-black shadow-2xl">
+                            <div className="size-10 rounded-lg bg-white/20 backdrop-blur border-2 border-white/30 flex items-center justify-center text-white text-xl font-black shadow-2xl">
                                 {(user as any)?.name?.[0] ?? 'E'}
                             </div>
-                            <button className="absolute -bottom-2 -right-2 size-8 rounded-xl bg-white text-blue-600 flex items-center justify-center shadow-lg hover:scale-110 transition-all">
+                            <button className="absolute -bottom-2 -right-2 size-8 rounded-lg bg-white text-blue-600 flex items-center justify-center shadow-lg hover:scale-110 transition-all">
                                 <Camera size={14} />
                             </button>
                         </div>
                         <div className="pb-1">
                             <div className="flex items-center gap-2 mb-1">
-                                <span className="px-2 py-0.5 rounded-full bg-white/20 text-white text-[9px] font-black uppercase tracking-widest">
+                                <span className="px-2 py-0.5 rounded-full bg-white/20 text-white text-[9px] font-black uppercase tracking-wide">
                                     Estudiante
                                 </span>
-                                <span className="px-2 py-0.5 rounded-full bg-amber-400/30 text-amber-200 text-[9px] font-black uppercase tracking-widest">
-                                    ⭐ Destacado
+                                <span className="px-2 py-0.5 rounded-full bg-amber-400/30 text-amber-200 text-[9px] font-black uppercase tracking-wide">
+                                    Destacado
                                 </span>
                             </div>
                             <h1 className="text-lg font-black text-white tracking-tight">
@@ -62,7 +62,7 @@ export default function AcademyAccountPage() {
                             </p>
                         </div>
                         <div className="ml-auto pb-1">
-                            <button className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur border border-white/20 text-white rounded-xl text-[11px] font-black uppercase tracking-widest transition-all">
+                            <button className="flex items-center gap-2 px-3 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur border border-white/20 text-white rounded-lg text-[11px] font-black uppercase tracking-wide transition-all">
                                 <Edit2 size={14} /> Editar Perfil
                             </button>
                         </div>
@@ -72,36 +72,36 @@ export default function AcademyAccountPage() {
 
             <div className="max-w-4xl mx-auto px-5 py-4 space-y-3">
                 {/* Stats */}
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-4 gap-3">
                     {stats.map((s, i) => (
                         <motion.div
                             key={s.label}
                             initial={{ opacity: 0, y: 12 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.05 }}
-                            className="bg-white dark:bg-[#1a1d27] rounded-2xl border border-slate-200/60 dark:border-white/5 p-5 shadow-sm"
+                            className="bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 shadow-sm"
                         >
-                            <div className={`size-8 rounded-xl ${s.bg} flex items-center justify-center mb-3`}>
+                            <div className={`size-8 rounded-lg ${s.bg} flex items-center justify-center mb-3`}>
                                 <s.icon size={18} className={s.color} />
                             </div>
                             <p className={`text-lg font-black ${s.color}`}>{s.value}</p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{s.label}</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">{s.label}</p>
                         </motion.div>
                     ))}
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-3">
                     {/* Personal Info */}
                     <motion.div
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="col-span-1 bg-white dark:bg-[#1a1d27] rounded-2xl border border-slate-200/60 dark:border-white/5 p-4 shadow-sm space-y-4"
+                        className="col-span-1 bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 shadow-sm space-y-4"
                     >
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Información Personal</p>
+                        <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">Informacion Personal</p>
                         {[
                             { icon: Mail, label: 'Email', value: (user as any)?.email ?? '—' },
-                            { icon: Phone, label: 'Teléfono', value: '+57 300 000 0000' },
+                            { icon: Phone, label: 'Telefono', value: '+57 300 000 0000' },
                             { icon: MapPin, label: 'Ciudad', value: 'Mocoa, Putumayo' },
                             { icon: ShieldCheck, label: 'Rol', value: 'Miembro Activo' },
                         ].map(row => (
@@ -110,7 +110,7 @@ export default function AcademyAccountPage() {
                                     <row.icon size={14} />
                                 </div>
                                 <div>
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{row.label}</p>
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{row.label}</p>
                                     <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 truncate">{row.value}</p>
                                 </div>
                             </div>
@@ -122,29 +122,29 @@ export default function AcademyAccountPage() {
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.25 }}
-                        className="col-span-2 bg-white dark:bg-[#1a1d27] rounded-2xl border border-slate-200/60 dark:border-white/5 p-4 shadow-sm"
+                        className="col-span-2 bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 shadow-sm"
                     >
                         <div className="flex items-center justify-between mb-4">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mis Cursos</p>
+                            <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">Mis Cursos</p>
                             <GraduationCap size={16} className="text-slate-300" />
                         </div>
                         {loading ? (
                             <div className="space-y-3">
                                 {[1, 2, 3].map(i => (
-                                    <div key={i} className="h-14 bg-slate-50 dark:bg-white/5 rounded-xl animate-pulse" />
+                                    <div key={i} className="h-14 bg-slate-50 dark:bg-white/5 rounded-lg animate-pulse" />
                                 ))}
                             </div>
                         ) : enrollments.length === 0 ? (
-                            <div className="py-6 text-center">
+                            <div className="py-4 text-center">
                                 <BookOpen size={32} className="mx-auto text-slate-200 mb-3" />
-                                <p className="text-sm font-bold text-slate-400">Sin cursos inscritos aún</p>
-                                <p className="text-xs text-slate-300 mt-1">Explora el catálogo de cursos disponible</p>
+                                <p className="text-sm font-bold text-slate-400">Sin cursos inscritos aun</p>
+                                <p className="text-xs text-slate-300 mt-1">Explora el catalogo de cursos disponible</p>
                             </div>
                         ) : (
                             <div className="space-y-2">
                                 {enrollments.map((course: any, i) => (
-                                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
-                                        <div className="size-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-black shrink-0">
+                                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
+                                        <div className="size-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-black shrink-0">
                                             {course.title?.[0] ?? 'C'}
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -164,4 +164,3 @@ export default function AcademyAccountPage() {
         </div>
     );
 }
-

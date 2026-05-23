@@ -7,7 +7,8 @@ def seed_evangelism_v2():
     cursor = conn.cursor()
 
     # 1. Ensure project_milestones table exists
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS project_milestones (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             project_id INTEGER NOT NULL,
@@ -18,7 +19,8 @@ def seed_evangelism_v2():
             created_at DATETIME,
             FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
         )
-    """)
+    """
+    )
 
     # 2. Ensure parent_id exists in project_tasks
     cursor.execute("PRAGMA table_info(project_tasks)")

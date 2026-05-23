@@ -100,19 +100,19 @@ export function PhaseManagerModal({ projectId, phases, onClose, onSaved }: Props
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="bg-white dark:bg-[#1e1f21] rounded-[2rem] shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col border border-slate-200 dark:border-white/10">
+            <div className="bg-white dark:bg-[#1e1f21] rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col border border-slate-200 dark:border-white/10">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-white/5 shrink-0">
-                    <h2 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest">
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 dark:border-white/5 shrink-0">
+                    <h2 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wide">
                         Gestionar Fases
                     </h2>
-                    <button onClick={onClose} className="size-8 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 flex items-center justify-center text-slate-400 transition-all">
-                        <X size={16} />
+                    <button onClick={onClose} className="size-7 rounded-md hover:bg-slate-100 dark:hover:bg-white/5 flex items-center justify-center text-slate-400 transition-all">
+                        <X size={14} />
                     </button>
                 </div>
 
                 {/* Body */}
-                <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-2">
+                <div className="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-2">
                     {items.map((phase, i) => (
                         <div
                             key={phase.slug}
@@ -176,17 +176,17 @@ export function PhaseManagerModal({ projectId, phases, onClose, onSaved }: Props
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-white/5 shrink-0">
+                <div className="flex items-center justify-end gap-2 px-4 py-2.5 border-t border-slate-100 dark:border-white/5 shrink-0">
                     <button
                         onClick={onClose}
-                        className="px-5 py-2 text-[11px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all"
+                        className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-all"
                     >
                         Cancelar
                     </button>
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 flex items-center gap-2 hover:bg-blue-700 active:scale-95 disabled:opacity-50 transition-all"
+                        className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 flex items-center gap-2 hover:bg-blue-700 active:scale-95 disabled:opacity-50 transition-all"
                     >
                         {saving ? (
                             <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
