@@ -317,3 +317,75 @@ def get_admin_dashboard(db: Session) -> schemas.AdminGlobalDashboard:
 # Legacy / Backward Compatibility
 def get_dashboard_metrics(db: Session):
     return get_academy_dashboard(db)
+
+
+def get_pastor_radar(db: Session):
+    return {
+        "membresia_viva": db.query(models.Member).count(),
+        "bautismos_este_anio": 0,
+        "estudiantes_activos": db.query(models.Enrollment)
+        .filter(models.Enrollment.status == "active")
+        .count(),
+        "recaudacion_mes": 0.0,
+    }
+
+
+def get_pilot_readiness(db: Session) -> schemas.PilotReadiness:
+    checklist = [
+        {
+            "key": "courses",
+            "label": "Catálogo de Cursos",
+            "completed": db.query(models.Course).count() >= 5,
+        },
+        {
+            "key": "users",
+            "label": "Usuarios Estudiantes",
+            "completed": db.query(models.User)
+            .filter(models.User.role == "estudiante")
+            .count()
+            >= 10,
+        },
+        {
+            "key": "enrollments",
+            "label": "Matrículas Activas",
+            "completed": db.query(models.Enrollment).count() >= 5,
+        },
+    ]
+    completed_count = sum(1 for item in checklist if item["completed"])
+    readiness_score = (completed_count / len(checklist)) if checklist else 0.0
+
+    return schemas.PilotReadiness(
+        environment_ready=True, readiness_score=readiness_score, checklist=checklist
+    )
+
+
+def search_knowledge_base(db: Session, query: str):
+    if not query:
+        return []
+    mock_docs = [
+        {
+            "title": "Protocolo de Consolidación Ministerial",
+            "content": "Lineamientos para la bienvenida de nuevos miembros y seguimiento pastoral en las primeras 48 horas tras su primera visita.",
+            "category": "Operaciones",
+            "relevance": 0.98,
+        },
+        {
+            "title": "Manual de Liderazgo: Casas de Gloria",
+            "content": "Principios bíblicos para la gestión de grupos pequeños, resolución de conflictos y multiplicación celular en zonas urbanas.",
+            "category": "Liderazgo",
+            "relevance": 0.85,
+        },
+        {
+            "title": "Directiva de Seguridad Digital y Auditoría",
+            "content": "Normativas para el manejo de datos sensibles de la congregación, protección de privacidad y registro exhaustivo de acciones administrativas.",
+            "category": "Seguridad",
+            "relevance": 0.72,
+        },
+        {
+            "title": "Reglamento Académico MESH",
+            "content": "Estatutos para la formación teológica formal y no formal, criterios de evaluación y requisitos para la certificación ministerial.",
+            "category": "Educación",
+            "relevance": 0.65,
+        },
+    ]
+    return mock_docs

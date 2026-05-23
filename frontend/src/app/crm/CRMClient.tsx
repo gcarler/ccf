@@ -36,7 +36,7 @@ import { ViewType } from '@/components/ViewSwitcher';
 import { CrmGridView, CrmTableView, CrmKanbanView, CrmCalendarView, CrmGanttView } from '@/components/crm/CrmViews';
 import RightPanel from '@/components/ui/RightPanel';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
-import { CrmAnalyticsSummary, CrmMember } from './types';
+import { CrmMember } from './types';
 
 interface Member {
     id: number;
@@ -105,43 +105,21 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
         return () => clearTimeout(timer);
     }, [token, search]);
 
-    useEffect(() => {
-        if (!token) return;
-
-        let alive = true;
-        const fetchAnalytics = async () => {
-            try {
-                const data = await apiFetch<CrmAnalyticsSummary>('/crm/analytics', {
-                    token,
-                    cache: 'no-store',
-                });
-                if (alive) setAnalytics(data);
-            } catch (err) {
-                console.error(err);
-            }
-        };
-
-        fetchAnalytics();
-        return () => {
-            alive = false;
-        };
-    }, [token]);
-
     const stats = useMemo(() => {
         const activeMembersFromRows = members.filter(member =>
             ['activo', 'active', 'miembro activo'].includes(member.spiritual_status?.toLowerCase() ?? '')
         ).length;
 
         return {
-            total: analytics?.total_members ?? members.length,
-            active: analytics?.active_members ?? activeMembersFromRows,
+            total: dashboard?.total_members ?? members.length,
+            active: dashboard?.active_members ?? activeMembersFromRows,
             leaders: members.filter(m => m.church_role?.toLowerCase().includes('líder')).length,
         };
-    }, [analytics, members]);
+    }, [dashboard, members]);
 
     return (
         <WorkspaceLayout
-            breadcrumbs={[{ label: 'Consolidación', icon: Users }, { label: 'Comunidad Viva', icon: Heart }]}
+            breadcrumbs={[{ label: 'Consolidación', icon: Users }, { label: 'Dashboard Pastoral', icon: Heart }]}
             viewType={viewType}
             setViewType={setViewType}
             onSearch={setSearch}
@@ -164,12 +142,34 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
             <main className="flex-1 overflow-y-auto scrollbar-thin p-3 relative">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
                 
-                <div className="max-w-[1400px] mx-auto space-y-4 relative z-10">
-                    {/* Metrics Bento Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <MetricCard title="Membresía Total" value={stats.total} icon={Users} color="text-blue-600" bg="bg-blue-50 dark:bg-blue-500/10" />
-                        <MetricCard title="Miembros Activos" value={stats.active} icon={GraduationCap} color="text-emerald-600" bg="bg-emerald-50 dark:bg-emerald-500/10" />
-                        <MetricCard title="Liderazgo" value={stats.leaders} icon={ShieldCheck} color="text-orange-600" bg="bg-orange-50 dark:bg-orange-500/10" />
+                <div className="max-w-[1400px] mx-auto space-y-6 relative z-10">
+                    {/* 📊 Pastoral Metrics */}
+                    <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        {dashboard?.cards.map((card: any, idx: number) => (
+                            <DSMetric 
+                                key={idx}
+                                label={card.title} 
+                                value={card.value} 
+                                trend={card.trend} 
+                                tone={card.color} 
+                            />
+                        ))}
+                    </section>
+
+                    {/* 📈 Growth & Distribution */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2">
+                            <DSCard>
+                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-6">Crecimiento de Membresía</h3>
+                                <DSChart type="area" data={dashboard?.growth_chart} color="#10b981" height={220} />
+                            </DSCard>
+                        </div>
+                        <div>
+                            <DSCard>
+                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-6">Pipeline de Consolidación</h3>
+                                <DSChart type="bar" data={dashboard?.pipeline_distribution} color="#3b82f6" height={220} />
+                            </DSCard>
+                        </div>
                     </div>
 
                     {/* Member Directory */}
@@ -233,7 +233,7 @@ function MetricCard({ title, value, icon: Icon, color, bg }: any) {
                 </span>
             </div>
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1 relative z-10">{title}</p>
-            <div className="text-lg font-black text-slate-900 dark:text-white leading-none tracking-tight relative z-10">{value}</div>
+            <div className="text-lg font-bold text-slate-900 dark:text-white leading-none tracking-tight relative z-10">{value}</div>
         </div>
     );
 }
@@ -359,7 +359,7 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
             <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-hide">
                 {/* Perfil Header */}
                 <div className="text-center space-y-4">
-                    <div className="size-10 rounded-md bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center mx-auto text-xl font-black shadow-xl shadow-blue-500/20">
+                    <div className="size-10 rounded-md bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center mx-auto text-xl font-bold shadow-xl shadow-blue-500/20">
                         {member.first_name[0]}{member.last_name[0]}
                     </div>
                     <div>
@@ -404,11 +404,11 @@ function MemberDetailView({ member, onClose }: { member: Member, onClose: () => 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-md border border-slate-100 dark:border-white/5 hover:shadow-md transition-all">
                         <span className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 block mb-2">Salud Espiritual</span>
-                        <div className="text-xl font-black text-blue-600">{Math.round((member.spiritual_health || 0.8) * 100)}%</div>
+                        <div className="text-xl font-bold text-blue-600">{Math.round((member.spiritual_health || 0.8) * 100)}%</div>
                     </div>
                     <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-md border border-slate-100 dark:border-white/5 hover:shadow-md transition-all">
                         <span className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 block mb-2">Academia</span>
-                        <div className="text-xl font-black text-emerald-600">{Math.round((member.academy_progress || 0) * 100)}%</div>
+                        <div className="text-xl font-bold text-emerald-600">{Math.round((member.academy_progress || 0) * 100)}%</div>
                     </div>
                 </div>
 
