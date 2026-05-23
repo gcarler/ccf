@@ -76,9 +76,43 @@ class RefreshToken(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     token = Column(String(255), unique=True, index=True, nullable=False)
+    ip_address = Column(String(45), nullable=True)  # IPv6 length
+    user_agent = Column(String(255), nullable=True)
     expires_at = Column(DateTime, nullable=False)
     revoked = Column(Boolean, default=False)
+    last_active = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     created_at = Column(DateTime, default=_utcnow)
+
+
+class VerificationToken(Base):
+    __tablename__ = "verification_tokens"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    token = Column(String(255), unique=True, index=True, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    used = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=_utcnow)
+
+
+class ResetToken(Base):
+    __tablename__ = "reset_tokens"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    token = Column(String(255), unique=True, index=True, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    used = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=_utcnow)
+
+
+class UserPermission(Base):
+    """Permisos individuales por usuario (sobrescribe/amplía los del rol)."""
+    __tablename__ = "user_permissions"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    permissions = Column(JSON, default={})
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+    user = relationship("User", backref=backref("permissions_override", uselist=False))
 
 
 class Notification(Base):
