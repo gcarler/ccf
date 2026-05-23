@@ -73,7 +73,7 @@ jobs:
       - name: Run pre-commit
         run: SKIP=mypy pre-commit run --all-files
       - name: Bootstrap ORM tables
-        run: PYTHONPATH=. python -c "from backend.models import Base; from backend.core.database import engine; Base.metadata.create_all(bind=engine); print('ORM tables created')"
+        run: PYTHONPATH=. python -c "from backend.core.database import Base, engine; import backend.models; Base.metadata.create_all(bind=engine); print('ORM tables created')"
       - name: Run alembic migrations
         run: PYTHONPATH=. alembic upgrade head
       - name: Run tests with coverage (min 70%)
@@ -123,7 +123,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Bootstrap ORM tables
-        run: PYTHONPATH=. python -c "from backend.models import Base; from backend.core.database import engine; Base.metadata.create_all(bind=engine); print('ORM tables created')"
+        run: PYTHONPATH=. python -c "from backend.core.database import Base, engine; import backend.models; Base.metadata.create_all(bind=engine); print('ORM tables created')"
       - name: Run alembic migrations
         run: PYTHONPATH=. alembic upgrade head
       - name: Run Evangelism integrity audit
@@ -175,7 +175,7 @@ jobs:
         run: |
           python -c "import os; print('DATABASE_URL:', os.environ.get('DATABASE_URL','NOT SET')); print('SECRET_KEY:', '***set***' if os.environ.get('SECRET_KEY') else 'NOT SET')" 2>&1
       - name: Bootstrap ORM tables (create tables needed before Alembic)
-        run: PYTHONPATH=. python -c "from backend.models import Base; from backend.core.database import engine; Base.metadata.create_all(bind=engine); print('OK')"
+        run: PYTHONPATH=. python -c "from backend.core.database import Base, engine; import backend.models; Base.metadata.create_all(bind=engine); print('ORM tables created')"
       - name: Run alembic migrations
         run: |
           set +e
