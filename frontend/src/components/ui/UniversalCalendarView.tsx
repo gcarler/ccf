@@ -130,7 +130,7 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                             >
                                 <div className="flex items-center justify-between relative z-10">
                                     <span className={clsx(
-                                        "text-xl font-black italic tracking-tighter leading-none",
+                                        "text-xl font-bold italic tracking-tighter leading-none",
                                         isToday ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white"
                                     )}>
                                         {day.getDate()}

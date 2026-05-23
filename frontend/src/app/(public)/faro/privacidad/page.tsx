@@ -49,7 +49,7 @@ export default function PrivacidadPage() {
         animate={{ opacity: 1, y: 0 }}
         className="max-w-4xl mx-auto"
       >
-        <h1 className="text-lg md:text-xl font-black mb-3 text-faro-on-background">
+        <h1 className="text-lg md:text-xl font-bold mb-3 text-faro-on-background">
           {cms?.parsed && typeof cms.parsed === "object" && !Array.isArray(cms.parsed)
             ? (cms.parsed as Record<string, unknown>).title as string || "Política de Privacidad"
             : "Política de Privacidad"}

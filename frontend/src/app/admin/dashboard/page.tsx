@@ -270,7 +270,7 @@ export default function AdminDashboard() {
                             ].map((event, i) => (
                                 <div key={i} className="flex gap-3 items-center group cursor-pointer">
                                     <div className="flex flex-col items-center justify-center size-7 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                                        <span className="text-lg font-black leading-none">{event.day}</span>
+                                        <span className="text-lg font-bold leading-none">{event.day}</span>
                                         <span className="text-[8px] font-semibold uppercase">{event.month}</span>
                                     </div>
                                     <div>
@@ -360,7 +360,7 @@ function StatCard({ label, value, icon: Icon, trend, color }: any) {
                 </div>
                 <div>
                     <p className="font-semibold text-slate-400 uppercase tracking-wide mb-1">{label}</p>
-                    <h4 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">{value}</h4>
+                    <h4 className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">{value}</h4>
                 </div>
             </div>
         </div>

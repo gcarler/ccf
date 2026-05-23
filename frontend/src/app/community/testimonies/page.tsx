@@ -44,7 +44,7 @@ export default function TestimoniesWall() {
                         <Star size={14} className="fill-current shadow-[0_0_8px_currentColor]" />
                         Muro de Milagros
                     </div>
-                    <h1 className="text-lg font-black text-[hsl(var(--text-primary))] tracking-tighter">Testimonios</h1>
+                    <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tighter">Testimonios</h1>
                     <p className="text-[hsl(var(--text-secondary))] text-sm font-medium mt-1">Lo que Dios ha hecho, lo volverá a hacer.</p>
                 </div>
                 
@@ -76,7 +76,7 @@ export default function TestimoniesWall() {
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.3 }}
-                        className="text-[hsl(var(--text-primary))] text-lg md:text-xl font-black leading-tight tracking-tighter"
+                        className="text-[hsl(var(--text-primary))] text-lg md:text-xl font-bold leading-tight tracking-tighter"
                     >
                         Milagros que <br /> Transforman
                     </motion.h2>
@@ -139,7 +139,7 @@ export default function TestimoniesWall() {
                                             </div>
                                         </div>
                                         {testimony.emotion && (
-                                            <span className="bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)] text-[9px] uppercase font-black px-3 py-1 rounded-md tracking-wide">
+                                            <span className="font-semibold px-3 py-1 rounded-md tracking-wide">
                                                 {testimony.emotion}
                                             </span>
                                         )}

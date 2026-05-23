@@ -80,7 +80,7 @@ export default function SpiritualCertificatesPanel() {
                                 </div>
 
                                 <div className="space-y-2 mb-3 relative z-10">
-                                    <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tight">
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight uppercase tracking-tight">
                                         {cert.course_title || cert.certificate_type}
                                     </h3>
                                     <p className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-2">

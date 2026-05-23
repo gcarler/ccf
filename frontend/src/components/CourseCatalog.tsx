@@ -329,7 +329,7 @@ export default function CourseCatalog({
                 <div key={course.id} className="space-y-1">
                   <div className="flex items-center justify-between text-[11px]">
                     <span className="font-bold text-slate-200">{course.title}</span>
-                    <span className="font-black text-slate-400">{progress}%</span>
+                    <span className="font-semibold text-slate-400">{progress}%</span>
                   </div>
                   <div className="h-2 rounded-full bg-white/10 overflow-hidden">
                     <div className="h-full bg-primary" style={{ width: `${progress}%` }} />

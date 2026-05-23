@@ -58,7 +58,7 @@ export default function CursoDetailPage() {
         return (
             <main className="pt-[120px] pb-4 min-h-[70vh] flex flex-col items-center justify-center text-center px-3">
                 <BookOpen size={80} className="mb-3 opacity-20" style={{ color: "var(--faro-primary)" }} />
-                <h1 className="text-lg font-black mb-4" style={{ color: "var(--faro-on-background)" }}>Curso no encontrado</h1>
+                <h1 className="text-lg font-bold mb-4" style={{ color: "var(--faro-on-background)" }}>Curso no encontrado</h1>
                 <p className="text-xl mb-3 opacity-70 max-w-lg" style={{ color: "var(--faro-on-surface-variant)" }}>
                     El curso que buscas ya no está disponible o el enlace es incorrecto.
                 </p>
@@ -185,7 +185,7 @@ export default function CursoDetailPage() {
             {/* ── SYLLABUS & DETAILS ──────────────────────────────── */}
             <section className="px-3 md:px-20 py-1.5" style={{ background: "var(--faro-surface-container-lowest)" }}>
                 <div className="max-w-4xl mx-auto">
-                    <h2 className="text-lg font-black mb-3" style={{ color: "var(--faro-on-surface)" }}>Acerca de este programa</h2>
+                    <h2 className="text-lg font-bold mb-3" style={{ color: "var(--faro-on-surface)" }}>Acerca de este programa</h2>
                     <p className="text-xl leading-relaxed mb-16" style={{ color: "var(--faro-on-surface-variant)" }}>
                         {course.desc}
                     </p>
@@ -199,7 +199,7 @@ export default function CursoDetailPage() {
 
                     {course.syllabus && course.syllabus.length > 0 && (
                         <div>
-                            <h3 className="text-lg font-black mb-3" style={{ color: "var(--faro-on-surface)" }}>Temario del Curso</h3>
+                            <h3 className="text-lg font-bold mb-3" style={{ color: "var(--faro-on-surface)" }}>Temario del Curso</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {course.syllabus.map((item, idx) => (
                                     <div 

@@ -197,7 +197,7 @@ export default function DonationConfig() {
                         >
                             <Sparkles size={12} className="animate-pulse" /> Ingeniería de Tesorería v3.9
                         </motion.div>
-                        <h1 className="text-xl lg:text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                        <h1 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">
                             Estructura de <br/> <span className="text-blue-600 italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-400">Recaudación Pro.</span>
                         </h1>
                         <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-2xl leading-relaxed">
@@ -320,7 +320,7 @@ export default function DonationConfig() {
                                 <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-full text-[10px] font-semibold uppercase tracking-wide text-slate-500 shadow-sm">
                                     <Zap size={14} className="text-amber-500" fill="currentColor" /> Automatización de Flujo
                                 </div>
-                                <h3 className="text-xl lg:text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">Certificación de <br/> <span className="text-blue-600 italic">Generosidad.</span></h3>
+                                <h3 className="text-xl lg:text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tighter leading-none">Certificación de <br/> <span className="text-blue-600 italic">Generosidad.</span></h3>
                                 <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-md leading-relaxed">
                                     Emite automáticamente reportes de donación en PDF con firma digital institucional tras cada validación de tesorería.
                                 </p>

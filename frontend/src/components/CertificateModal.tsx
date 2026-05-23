@@ -68,7 +68,7 @@ export default function CertificateModal({ certificate, enrollment, userName, on
                         <div className="size-8 bg-blue-600 text-white rounded-lg flex items-center justify-center mb-3 shadow-xl shadow-blue-600/20">
                             <Award size={36} />
                         </div>
-                        <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tighter leading-tight">Certificado Oficial</h2>
+                        <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter leading-tight">Certificado Oficial</h2>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-3 font-medium leading-relaxed">
                             Este documento avala tu formación teológica y ministerial en la Comunidad Cristiana El Faro.
                         </p>
@@ -152,7 +152,7 @@ export default function CertificateModal({ certificate, enrollment, userName, on
                         
                         <p className="text-slate-500 font-bold italic mb-3 uppercase tracking-wide text-[10px] relative z-10">Se otorga con distinción a:</p>
                         <div className="relative mb-3 px-4 z-10">
-                            <h2 className="text-lg md:text-xl font-black text-slate-900 tracking-tight">
+                            <h2 className="text-lg md:text-xl font-bold text-slate-900 tracking-tight">
                                 {userName}
                             </h2>
                             <div className="absolute -bottom-4 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
@@ -161,7 +161,7 @@ export default function CertificateModal({ certificate, enrollment, userName, on
                         <p className="text-slate-600 max-w-xl leading-relaxed mb-3 text-xl font-medium relative z-10">
                             Por haber culminado con excelencia académica todos los módulos, evaluaciones y requisitos prácticos del curso:
                             <br />
-                            <span className="font-black text-lg text-slate-900 mt-4 block tracking-tight uppercase">&quot;{enrollment.course.title}&quot;</span>
+                            <span className="font-semibold text-lg text-slate-900 mt-4 block tracking-tight uppercase">&quot;{enrollment.course.title}&quot;</span>
                         </p>
 
                         {/* Signatures & Seal Area */}

@@ -213,7 +213,7 @@ export default function FundsPage() {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-[9px] font-semibold uppercase text-slate-400">Balance</p>
-                                        <p className="text-lg font-black text-emerald-600">${f.current_balance.toLocaleString()}</p>
+                                        <p className="text-lg font-bold text-emerald-600">${f.current_balance.toLocaleString()}</p>
                                     </div>
                                     <span className={clsx(
                                         "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[9px] font-semibold uppercase tracking-wide",
@@ -250,7 +250,7 @@ export default function FundsPage() {
                                     <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">
                                         {drawerMode === "create" ? "Nuevo Fondo" : "Editar Fondo"}
                                     </p>
-                                    <h2 className="text-xl font-black text-slate-900 dark:text-white mt-1">
+                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-1">
                                         {drawerMode === "create" ? "Crear Fondo Ministerial" : selected?.name}
                                     </h2>
                                 </div>
@@ -319,7 +319,7 @@ export default function FundsPage() {
                             <div className="size-7 rounded-lg bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center text-rose-600 mb-5">
                                 <Trash2 size={24} />
                             </div>
-                            <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">¿Eliminar fondo?</h3>
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">¿Eliminar fondo?</h3>
                             <p className="text-sm text-slate-500 mb-3">
                                 Se eliminará <span className="font-bold">{deleteTarget.name}</span>. Esta acción no se puede deshacer.
                             </p>

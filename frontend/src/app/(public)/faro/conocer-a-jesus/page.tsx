@@ -196,7 +196,7 @@ export default function ConocerAJesusPage() {
                         viewport={{ once: true }}
                     >
                         <h2
-                            className="text-lg font-black mb-3"
+                            className="text-lg font-bold mb-3"
                             style={{ color: "var(--faro-primary)" }}
                         >
                             Un Encuentro Personal
@@ -271,7 +271,7 @@ export default function ConocerAJesusPage() {
             >
                 <div className="max-w-6xl mx-auto">
                     <h2
-                        className="text-xl font-black mb-3 text-center"
+                        className="text-xl font-bold mb-3 text-center"
                         style={{ color: "var(--faro-on-background)" }}
                     >
                         Historias que{" "}
@@ -325,7 +325,7 @@ export default function ConocerAJesusPage() {
                     {/* Info lado izq */}
                     <div>
                         <h2
-                            className="text-lg font-black mb-3"
+                            className="text-lg font-bold mb-3"
                             style={{ color: "var(--faro-on-background)" }}
                         >
                             Hablemos de Tu Caminar
@@ -379,7 +379,7 @@ export default function ConocerAJesusPage() {
                                     <Heart size={28} style={{ color: "var(--faro-primary)" }} />
                                 </div>
                                 <h3
-                                    className="text-lg font-black mb-3"
+                                    className="text-lg font-bold mb-3"
                                     style={{ color: "var(--faro-on-surface)" }}
                                 >
                                     ¡Gracias!

@@ -83,7 +83,7 @@ export default function StudentGrades() {
                                         <h4 className="text-slate-900 dark:text-white text-sm font-bold leading-tight">{enrollment.course.title}</h4>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-primary text-lg font-black">
+                                        <p className="text-primary text-lg font-bold">
                                             {typeof enrollment.final_grade === 'number' ? enrollment.final_grade.toFixed(1) : '--'}
                                             <span className="text-xs text-slate-400 font-bold">/10</span>
                                         </p>
@@ -115,7 +115,7 @@ function MetricCard({ label, value }: { label: string; value: string }) {
     return (
         <div className="bg-white/15 rounded-lg px-3 py-1.5 border border-white/20 text-center">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-white/70">{label}</p>
-            <p className="text-lg font-black text-white mt-1">{value}</p>
+            <p className="text-lg font-bold text-white mt-1">{value}</p>
         </div>
     );
 }

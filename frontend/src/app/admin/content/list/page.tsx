@@ -177,7 +177,7 @@ export default function AdminContentList() {
                                         <div className={clsx("size-8 rounded-lg flex items-center justify-center mb-3", item.is_published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>
                                             <BookOpen size={30} strokeWidth={1.5} />
                                         </div>
-                                        <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight line-clamp-2">{item.title}</h3>
+                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight line-clamp-2">{item.title}</h3>
                                         <p className="mt-3 text-[10px] font-bold text-slate-400 uppercase tracking-wide">{item.code || activeTab} · {item.duration_hours || 0} horas</p>
                                         <span className={clsx("inline-flex mt-3 px-3 py-1 rounded-md text-[9px] font-semibold uppercase tracking-wide", item.is_published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{item.is_published ? 'Publicado' : 'Borrador'}</span>
                                     </motion.button>
@@ -268,7 +268,7 @@ export default function AdminContentList() {
                                             </div>
                                             <div className="flex-1 space-y-2">
                                                 <div className="flex items-center gap-3">
-                                                    <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none group-hover:text-blue-600 transition-colors">{item.title}</h3>
+                                                    <h3 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight leading-none group-hover:text-blue-600 transition-colors">{item.title}</h3>
                                                     <span className="px-2 py-0.5 bg-slate-100 dark:bg-white/10 rounded font-semibold text-slate-400 uppercase tracking-wide">{item.code}</span>
                                                 </div>
                                                 <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-wide">
@@ -302,7 +302,7 @@ export default function AdminContentList() {
                                     <Sparkles size={40} strokeWidth={1} />
                                 </div>
                                 <div className="space-y-2">
-                                    <p className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight">Biblioteca en blanco</p>
+                                    <p className="text-xl font-bold text-slate-800 dark:text-white uppercase tracking-tight">Biblioteca en blanco</p>
                                     <p className="text-xs text-slate-400 font-bold uppercase tracking-wide">Comienza a crear el currículo de tu iglesia hoy mismo.</p>
                                 </div>
                             </motion.div>

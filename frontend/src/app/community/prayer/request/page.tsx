@@ -86,14 +86,14 @@ export default function PrayerRequestForm() {
                         <div className="size-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]"></div>
                         Interacción
                     </div>
-                    <h1 className="text-xl font-black text-[hsl(var(--text-primary))] tracking-tighter">Pedir Oración</h1>
+                    <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tighter">Pedir Oración</h1>
                 </div>
             </header>
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Hero / Instruction */}
                 <div className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md p-4 md:p-3 shadow-sm">
-                    <h2 className="text-lg font-black text-[hsl(var(--text-primary))] tracking-tight mb-2">¿En qué podemos orar por ti?</h2>
+                    <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tight mb-2">¿En qué podemos orar por ti?</h2>
                     <p className="text-[hsl(var(--text-secondary))] text-sm font-medium">Tu congregación está aquí para apoyarte en intercesión.</p>
                 </div>
 

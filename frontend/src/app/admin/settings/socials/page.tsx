@@ -225,7 +225,7 @@ export default function SocialMediaSettings() {
                         >
                             <Sparkles size={12} className="animate-pulse" /> Ecosistema Digital CCF
                         </motion.div>
-                        <h1 className="text-xl lg:text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                        <h1 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">
                             Tu voz en la <br/> <span className="text-blue-600 italic">nube global.</span>
                         </h1>
                         <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-xl">
@@ -272,7 +272,7 @@ export default function SocialMediaSettings() {
                                                 </div>
                                                 <div className="flex-1 space-y-4">
                                                     <div>
-                                                        <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none mb-1">{platform.label}</h3>
+                                                        <h3 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight leading-none mb-1">{platform.label}</h3>
                                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide leading-none">Perfil de la Congregación</p>
                                                     </div>
                                                     <div className="relative group/input">

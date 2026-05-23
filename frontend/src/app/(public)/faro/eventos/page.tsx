@@ -151,7 +151,7 @@ export default function EventosPage() {
                                 ) : null}
                             </div>
                             <h2
-                                className="text-xl font-black mb-4"
+                                className="text-xl font-bold mb-4"
                                 style={{ color: "var(--faro-on-surface)" }}
                             >
                                 {featuredEvent.title || "Evento destacado"}
@@ -189,7 +189,7 @@ export default function EventosPage() {
                                     Sin eventos publicados
                                 </p>
                                 <h2
-                                    className="text-xl font-black mb-3"
+                                    className="text-xl font-bold mb-3"
                                     style={{ color: "var(--faro-on-surface)" }}
                                 >
                                     Esperando agenda desde el CMS
@@ -211,7 +211,7 @@ export default function EventosPage() {
                 >
                     <div>
                         <h3
-                            className="text-xl font-black mb-3"
+                            className="text-xl font-bold mb-3"
                             style={{ color: "var(--faro-on-surface)" }}
                         >
                             Filtrar por tipo
@@ -331,7 +331,7 @@ export default function EventosPage() {
                                             ) : null}
                                             {day ? (
                                                 <p
-                                                    className="text-xl font-black"
+                                                    className="text-xl font-bold"
                                                     style={{ color: "var(--faro-primary)" }}
                                                 >
                                                     {day}
@@ -375,7 +375,7 @@ export default function EventosPage() {
                             Sin eventos publicados
                         </p>
                         <h3
-                            className="text-lg font-black mb-2"
+                            className="text-lg font-bold mb-2"
                             style={{ color: "var(--faro-on-surface)" }}
                         >
                             El calendario aun no tiene contenido real
@@ -437,7 +437,7 @@ export default function EventosPage() {
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-4">
                                 <h3
-                                    className="text-lg font-black"
+                                    className="text-lg font-bold"
                                     style={{ color: "var(--faro-on-surface)" }}
                                 >
                                     Junio 2025
@@ -530,7 +530,7 @@ export default function EventosPage() {
                             }}
                         >
                             <h3
-                                className="text-xl font-black mb-3 flex items-center gap-2"
+                                className="text-xl font-bold mb-3 flex items-center gap-2"
                                 style={{ color: "var(--faro-on-surface)" }}
                             >
                                 <Star size={18} style={{ color: "var(--faro-primary)" }} />

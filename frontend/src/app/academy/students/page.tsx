@@ -79,7 +79,7 @@ export default function AcademyStudentsPage() {
                     <header className="flex flex-col gap-4 border-b border-slate-100 p-3 dark:border-white/10 md:flex-row md:items-center md:justify-between">
                         <div>
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-500">Directorio academico</p>
-                            <h1 className="text-lg font-black text-slate-900 dark:text-white">Estudiantes</h1>
+                            <h1 className="text-lg font-bold text-slate-900 dark:text-white">Estudiantes</h1>
                         </div>
                         <div className="relative w-full md:max-w-sm">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
@@ -151,7 +151,7 @@ function Metric({ icon: Icon, label, value }: { icon: any; label: string; value:
                 <Icon size={20} />
             </div>
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
-            <p className="text-lg font-black text-slate-900 dark:text-white">{value}</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-white">{value}</p>
         </div>
     );
 }

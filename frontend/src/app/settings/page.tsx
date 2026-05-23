@@ -71,11 +71,11 @@ export default function SettingsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-white dark:bg-[#1a1d27] rounded-lg border border-slate-200/60 dark:border-white/5 p-3 flex items-center gap-5 shadow-sm"
                 >
-                    <div className="size-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xl font-black shadow-lg shadow-blue-500/20 shrink-0">
+                    <div className="size-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-blue-500/20 shrink-0">
                         {(user as any)?.name?.[0] ?? 'A'}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-base font-black text-slate-800 dark:text-white truncate">
+                        <p className="text-base font-bold text-slate-800 dark:text-white truncate">
                             {(user as any)?.name ?? 'Usuario CCF'}
                         </p>
                         <p className="text-[11px] text-slate-400 font-medium truncate">

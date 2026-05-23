@@ -8,7 +8,10 @@ import {
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { DSMetric } from '@/design/components/DSMetric';
+import { DSChart } from '@/design/components/DSChart';
+import { DSCard } from '@/design/components/DSCard';
+import { toast } from 'sonner';
 import clsx from 'clsx';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
@@ -24,6 +27,7 @@ export default function AdminInventoryPage() {
     const { token } = useAuth();
     const { addToast } = useToast();
     const [assets, setAssets] = useState<any[]>([]);
+    const [dashboard, setDashboard] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [viewType, setViewType] = useState<ViewType>('table');
@@ -34,15 +38,19 @@ export default function AdminInventoryPage() {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<any[]>('/assets/', { token, cache: 'no-store' });
+            const [data, dbData] = await Promise.all([
+                apiFetch<any[]>('/assets/', { token, cache: 'no-store' }),
+                apiFetch<any>('/dashboard/assets', { token, cache: 'no-store' })
+            ]);
             setAssets(Array.isArray(data) ? data : []);
+            setDashboard(dbData);
         } catch (e) { 
             console.error(e);
-            addToast("Error al cargar inventario", "error");
+            toast.error("Error al cargar inventario");
         } finally { 
             setLoading(false); 
         }
-    }, [token, addToast]);
+    }, [token]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
 

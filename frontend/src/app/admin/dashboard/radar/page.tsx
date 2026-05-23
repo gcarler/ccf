@@ -153,7 +153,7 @@ export default function PastorRadarPage() {
                     >
                         <div className="flex items-center justify-between">
                             <div className="space-y-1">
-                                <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tighter uppercase flex items-center gap-3">
+                                <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter uppercase flex items-center gap-3">
                                     <BarChart3 className="text-blue-600" /> Crecimiento Orgánico
                                 </h2>
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Métricas consolidadas semestrales</p>
@@ -189,7 +189,7 @@ export default function PastorRadarPage() {
                     >
                         <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:rotate-12 transition-transform duration-1000"><Sparkles size={120} /></div>
                         
-                        <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tighter uppercase flex items-center gap-3">
+                        <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter uppercase flex items-center gap-3">
                             <Target className="text-indigo-500" /> Metas Trimestrales
                         </h2>
                         <div className="space-y-3">
@@ -237,7 +237,7 @@ function RadarStat({ label, value, icon: Icon, color, trend, auraColor }: any) {
                 </div>
                 <div>
                     <p className="font-semibold text-slate-400 uppercase tracking-wide mb-1">{label}</p>
-                    <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tighter leading-none">{value}</h4>
+                    <h4 className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter leading-none">{value}</h4>
                 </div>
             </div>
         </div>

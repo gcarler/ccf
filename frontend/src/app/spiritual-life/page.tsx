@@ -141,7 +141,7 @@ export default function SpiritualLifePage() {
                                 <div className={clsx("size-9 rounded-md flex items-center justify-center mb-3", kpi.bg)}>
                                     <kpi.icon size={17} className={kpi.color} />
                                 </div>
-                                <div className="text-lg font-black text-slate-900 dark:text-white tracking-tight">{kpi.value}</div>
+                                <div className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{kpi.value}</div>
                                 <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5">{kpi.label}</div>
                             </motion.div>
                         ))}

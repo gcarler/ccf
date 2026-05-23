@@ -32,7 +32,7 @@ export default function BoletinPage() {
                         Recibe meditaciones semanales, anuncios de eventos y contenido exclusivo directo a tu correo.
                     </p>
                     {status === "sent" ? (
-                        <div className="text-lg font-black text-faro-primary">¡Gracias por suscribirte!</div>
+                        <div className="text-lg font-bold text-faro-primary">¡Gracias por suscribirte!</div>
                     ) : (
                         <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
                             <input

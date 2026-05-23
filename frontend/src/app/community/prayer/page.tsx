@@ -102,7 +102,7 @@ export default function PrayerWall() {
                         <Sparkles size={14} className="animate-pulse" />
                         Interacción Celestial
                     </div>
-                    <h1 className="text-xl lg:text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">Muro de <span className="italic text-primary">Oración</span></h1>
+                    <h1 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">Muro de <span className="italic text-primary">Oración</span></h1>
                     <p className="text-slate-500 dark:text-slate-400 text-sm font-medium max-w-lg">Comparte tus cargas y apóyanos en intercesión. Tu fe activa el movimiento de Dios.</p>
                 </motion.div>
                 
@@ -161,7 +161,7 @@ export default function PrayerWall() {
                             <HandHeart size={48} strokeWidth={1} />
                         </div>
                         <div className="space-y-2">
-                            <h3 className="text-base font-black text-slate-800 dark:text-white uppercase tracking-tight">El muro está en silencio</h3>
+                            <h3 className="text-base font-bold text-slate-800 dark:text-white uppercase tracking-tight">El muro está en silencio</h3>
                             <p className="text-slate-500 dark:text-slate-400 text-sm font-medium max-w-xs mx-auto leading-relaxed">Este es un espacio sagrado. Sé el primero en compartir tu necesidad.</p>
                         </div>
                     </motion.div>
@@ -197,7 +197,7 @@ export default function PrayerWall() {
                                                 </p>
                                             </div>
                                         </div>
-                                        <span className="bg-primary/10 text-primary border border-primary/20 text-[9px] uppercase font-black px-4 py-1.5 rounded-lg tracking-wide shadow-sm">
+                                        <span className="font-semibold px-4 py-1.5 rounded-lg tracking-wide shadow-sm">
                                             {request.category}
                                         </span>
                                     </div>

@@ -138,14 +138,14 @@ export default function CoordinationConsole() {
                             <header className="flex items-center justify-between mb-3">
                                 <div>
                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-500 mb-2">Checklist de alistamiento</p>
-                                    <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Piloto Academia Faro</h2>
+                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Piloto Academia Faro</h2>
                                 </div>
                                 <div className="text-right">
                                     <div className="size-8 rounded-full border-4 border-blue-500/20 flex items-center justify-center relative">
                                         <svg className="absolute inset-0 rotate-[-90deg]">
                                             <circle cx="40" cy="40" r="36" fill="transparent" stroke="currentColor" strokeWidth="4" className="text-blue-500" strokeDasharray={226} strokeDashoffset={226 - (226 * readinessPerc / 100)} />
                                         </svg>
-                                        <span className="text-xl font-black text-blue-600">{readinessPerc}%</span>
+                                        <span className="text-xl font-bold text-blue-600">{readinessPerc}%</span>
                                     </div>
                                 </div>
                             </header>
@@ -178,7 +178,7 @@ export default function CoordinationConsole() {
                     {viewType === 'wiki' && (
                         <section className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-4 shadow-[var(--shadow-floating)] space-y-6">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">Manual Operativo de Coordinación</h3>
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight">Manual Operativo de Coordinación</h3>
                                 <DSBadge tone="blue" label="Autosave activo" />
                             </div>
                             <textarea
@@ -196,7 +196,7 @@ export default function CoordinationConsole() {
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div>
                                         <DSBadge tone="blue" label="Gestión de Cohortes" />
-                                        <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight mt-2">Programas Académicos</h3>
+                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight mt-2">Programas Académicos</h3>
                                     </div>
                                     <button 
                                         onClick={downloadSnapshot}

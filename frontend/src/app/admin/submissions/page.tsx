@@ -75,7 +75,7 @@ export default function SubmissionsPage() {
         <div className="space-y-6 animate-in fade-in duration-500 max-w-5xl mx-auto">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
                 <div>
-                    <h1 className="flex items-center gap-3 text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                    <h1 className="flex items-center gap-3 text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                         <FileText className="text-primary" size={32} /> Calificar Trabajos
                     </h1>
                     <p className="text-slate-500 font-medium mt-1">Revisa y califica las evidencias enviadas por los estudiantes.</p>
@@ -93,7 +93,7 @@ export default function SubmissionsPage() {
                                             <User size={24} />
                                         </div>
                                         <div>
-                                            <p className="font-black text-slate-900 dark:text-white text-base leading-none mb-1">{sub.student_name}</p>
+                                            <p className="font-semibold text-slate-900 dark:text-white text-base leading-none mb-1">{sub.student_name}</p>
                                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1">
                                                 <Clock size={10} /> {new Date(sub.submitted_at).toLocaleString()}
                                             </p>
@@ -163,7 +163,7 @@ export default function SubmissionsPage() {
                                                 <div className="flex flex-col items-center gap-3">
                                                     <div className="p-4 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 rounded-lg border border-emerald-500/20 shadow-sm">
                                                         <p className="text-[10px] font-semibold uppercase tracking-wide mb-1">Calificación</p>
-                                                        <p className="text-lg font-black leading-none">{sub.grade}</p>
+                                                        <p className="text-lg font-bold leading-none">{sub.grade}</p>
                                                     </div>
                                                     {sub.teacher_feedback && (
                                                         <p className="text-xs text-slate-500 font-medium italic px-2 bg-white/50 dark:bg-white/5 p-3 rounded-md border border-slate-200 dark:border-white/5 w-full">&ldquo;{sub.teacher_feedback}&rdquo;</p>

@@ -82,7 +82,7 @@ export default function FinanceAdminPage() {
             cell: ({ row }) => (
                 <div className={clsx("font-black text-sm flex items-baseline gap-1", row.original.type === 'income' ? "text-emerald-600" : "text-rose-600")}>
                     <span>${row.original.amount.toLocaleString()}</span>
-                    <span className="text-[9px] text-slate-400 font-black opacity-50 uppercase">{row.original.currency}</span>
+                    <span className="font-semibold opacity-50 uppercase">{row.original.currency}</span>
                 </div>
             )
         },
@@ -421,7 +421,7 @@ function SummaryCard({ title, value, trend, icon: Icon, color, auraColor }: any)
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 group-hover:rotate-12 transition-all duration-700"><Icon size={64} /></div>
             <div className="space-y-5 relative z-10">
                 <p className="font-semibold text-slate-400 uppercase tracking-wide">{title}</p>
-                <h3 className="text-lg font-black text-slate-800 dark:text-white tracking-tighter leading-none">{value}</h3>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-white tracking-tighter leading-none">{value}</h3>
                 <div className={clsx("inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full font-semibold shadow-sm border border-black/5", color === 'rose' ? "bg-rose-50 text-rose-600" : "bg-emerald-50 text-emerald-600")}>
                     {color === 'rose' ? <TrendingDown size={14} /> : <TrendingUp size={14} />} {trend}
                 </div>

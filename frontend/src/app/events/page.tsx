@@ -76,7 +76,7 @@ export default function EventsPage() {
                                     </div>
                                 </div>
                                 <div>
-                                    <p className="text-white font-black text-lg leading-tight">{ev.title}</p>
+                                    <p className="font-semibold text-lg leading-tight">{ev.title}</p>
                                     <div className="flex items-center gap-1 text-white/60 text-[10px] mt-1">
                                         <MapPin size={9} /> {ev.location}
                                     </div>

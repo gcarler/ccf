@@ -20,7 +20,7 @@ function ResetPasswordContent() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 px-3">
                 <div className="p-4 rounded-lg bg-slate-900 border border-white/10 text-center space-y-4">
-                    <h1 className="text-lg font-black">Token inválido</h1>
+                    <h1 className="text-lg font-bold">Token inválido</h1>
                     <p className="text-slate-400 text-sm">El enlace no es válido o ya fue utilizado.</p>
                     <Link href="/auth/forgot" className="text-primary font-semibold text-sm hover:underline">
                         Solicitar uno nuevo

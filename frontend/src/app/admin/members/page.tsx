@@ -247,7 +247,7 @@ export default function AdminMembersPage() {
                             <Image src={`https://ui-avatars.com/api/?name=${selectedMember?.username}&background=random&color=fff`} alt="AV" width={80} height={80} unoptimized />
                         </div>
                         <div className="space-y-1">
-                            <h3 className="text-lg font-black text-slate-800 dark:text-white tracking-tight">{selectedMember?.username}</h3>
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">{selectedMember?.username}</h3>
                             <p className="text-sm text-slate-500 font-medium">{selectedMember?.email}</p>
                         </div>
                     </section>

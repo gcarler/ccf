@@ -79,7 +79,7 @@ export default function ScannerPage() {
                         <Zap size={14} className="animate-pulse" />
                         <span className="text-[10px] font-semibold uppercase tracking-wide">Validación en Tiempo Real</span>
                     </div>
-                    <h1 className="text-xl font-black text-white tracking-tight">Escáner de Asistencia</h1>
+                    <h1 className="text-xl font-bold text-white tracking-tight">Escáner de Asistencia</h1>
                     <p className="text-slate-500 text-sm">Escanea el QR del carnet digital para validar el ingreso.</p>
                 </div>
 
@@ -137,7 +137,7 @@ export default function ScannerPage() {
                                 <ShieldCheck size={80} />
                             </div>
                             <div className="space-y-2">
-                                <h2 className="text-lg font-black text-white">{scannedData?.member_name}</h2>
+                                <h2 className="text-lg font-bold text-white">{scannedData?.member_name}</h2>
                                 <p className="text-emerald-500 font-extrabold uppercase tracking-wide text-xs px-3 py-1 bg-emerald-500/10 rounded-full inline-block">
                                     {scannedData?.role} â€¢ VALIDADO
                                 </p>

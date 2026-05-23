@@ -61,13 +61,13 @@ export default function DonationDetailPage() {
                         <div className="space-y-3">
                             <header className="flex flex-col gap-4 border-b border-slate-100 pb-6 dark:border-white/10 md:flex-row md:items-start md:justify-between">
                                 <div>
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-blue-500">Detalle de aporte</p>
-                                    <h1 className="mt-2 text-xl font-black text-slate-950 dark:text-white">{donation.donor || "Donante"}</h1>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-500">Detalle de aporte</p>
+                                    <h1 className="mt-2 text-xl font-bold text-slate-950 dark:text-white">{donation.donor || "Donante"}</h1>
                                     <p className="mt-2 text-sm font-semibold text-slate-500">Referencia: {donation.reference_code || `DON-${donationId}`}</p>
                                 </div>
                                 <div className="rounded-lg bg-blue-50 px-3 py-1.5 text-right dark:bg-blue-500/10">
                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-500">Monto</p>
-                                    <p className="text-xl font-black text-blue-700 dark:text-blue-300">${amount.toLocaleString()}</p>
+                                    <p className="text-xl font-bold text-blue-700 dark:text-blue-300">${amount.toLocaleString()}</p>
                                 </div>
                             </header>
 
@@ -88,7 +88,7 @@ export default function DonationDetailPage() {
                     ) : (
                         <div className="py-1.5 text-center">
                             <ReceiptText className="mx-auto mb-4 text-slate-300" size={42} />
-                            <h1 className="text-xl font-black text-slate-900 dark:text-white">Donacion no encontrada</h1>
+                            <h1 className="text-xl font-bold text-slate-900 dark:text-white">Donacion no encontrada</h1>
                             <p className="mt-2 text-sm font-semibold text-slate-400">No hay datos para el registro #{donationId}.</p>
                         </div>
                     )}

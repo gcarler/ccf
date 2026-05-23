@@ -80,7 +80,7 @@ export default function CrmDetailShell({
                             <ArrowLeft size={18} />
                         </button>
                         <div className="flex-1 text-center">
-                            <p className={`text-[10px] font-bold uppercase tracking-[0.35em] ${accentText}`}>Consolidación</p>
+                            <p className={`text-[10px] font-bold uppercase tracking-wide ${accentText}`}>Consolidación</p>
                             <h1 className={`text-lg font-bold tracking-tight ${isDark ? 'text-[hsl(var(--text-primary))]' : 'text-[hsl(var(--text-primary))]'}`}>{title}</h1>
                             {description && <p className={`text-xs mt-1 font-medium ${subtleText}`}>{description}</p>}
                         </div>

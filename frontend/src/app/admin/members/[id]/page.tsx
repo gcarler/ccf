@@ -114,7 +114,7 @@ export default function MemberDetailPage() {
                             {initials || <User size={48} />}
                         </motion.div>
                         <div className="relative z-10 space-y-3">
-                            <h1 className="text-xl lg:text-lg font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">
+                            <h1 className="text-xl lg:text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase leading-none">
                                 {member.first_name} <span className="text-blue-600">{member.last_name}</span>
                             </h1>
                             <div className="flex flex-wrap items-center gap-2">
@@ -157,7 +157,7 @@ export default function MemberDetailPage() {
                                                 <Icon size={16} />
                                             </div>
                                             <div>
-                                                <p className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">{s.value}</p>
+                                                <p className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter">{s.value}</p>
                                                 <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">{s.label}</p>
                                             </div>
                                         </div>

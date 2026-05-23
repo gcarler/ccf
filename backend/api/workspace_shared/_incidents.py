@@ -8,9 +8,11 @@ from fastapi import HTTPException
 
 from backend.api.workspace_shared import SEVERITY_ORDER
 from backend.api.workspace_shared._audit import _parse_timestamp
-from backend.api.workspace_shared._storage import (_append_incident_history,
-                                                   _append_notification,
-                                                   _now_iso)
+from backend.api.workspace_shared._storage import (
+    _append_incident_history,
+    _append_notification,
+    _now_iso,
+)
 
 
 def _incident_fingerprint(kind: str, key: str) -> str:

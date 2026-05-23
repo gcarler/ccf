@@ -186,7 +186,7 @@ export default function StudentProgressPage() {
                                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-xl rounded-full text-[10px] font-semibold uppercase tracking-wide text-blue-100 border border-white/10">
                                     <Trophy size={14} className="text-amber-400" /> Rendimiento Académico
                                 </div>
-                                <h1 className="text-xl lg:text-xl font-black text-white tracking-tighter leading-[0.9] mb-4">
+                                <h1 className="text-xl lg:text-xl font-bold text-white tracking-tighter leading-[0.9] mb-4">
                                     Tu camino <br /> al <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-500">Propósito.</span>
                                 </h1>
                                 <p className="text-blue-100/60 text-sm font-medium leading-relaxed">
@@ -207,7 +207,7 @@ export default function StudentProgressPage() {
                     <motion.section variants={itemVariants} className="space-y-3">
                         <div className="flex items-end justify-between px-4">
                             <div>
-                                <h2 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">Detalle por Curso</h2>
+                                <h2 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight">Detalle por Curso</h2>
                                 <p className="text-slate-500 font-medium">Desglose de notas y asistencia de tus inscripciones.</p>
                             </div>
                             <div className="flex gap-2">
@@ -238,7 +238,7 @@ export default function StudentProgressPage() {
                                                     <BookOpen size={12} /> {course.lessons_completed} / {course.total_lessons} Lecciones
                                                 </span>
                                             </div>
-                                            <h3 className="text-xl font-black text-slate-800 dark:text-white group-hover:text-blue-600 transition-colors leading-none tracking-tight">{course.title}</h3>
+                                            <h3 className="text-xl font-bold text-slate-800 dark:text-white group-hover:text-blue-600 transition-colors leading-none tracking-tight">{course.title}</h3>
                                             <div className="flex items-center gap-4">
                                                 <div className="flex items-center gap-2 text-slate-500">
                                                     <Clock size={14} strokeWidth={2.5} />
@@ -294,7 +294,7 @@ export default function StudentProgressPage() {
                                         <BookOpen size={48} />
                                     </div>
                                     <div className="max-w-md mx-auto space-y-4">
-                                        <h3 className="text-lg font-black text-slate-800 dark:text-white">Aún no tienes progreso registrado</h3>
+                                        <h3 className="text-lg font-bold text-slate-800 dark:text-white">Aún no tienes progreso registrado</h3>
                                         <p className="text-slate-500 font-medium">Inscríbete en un curso de nuestro catálogo para comenzar tu formación espiritual hoy mismo.</p>
                                         <button onClick={() => router.push('/academy')} className="mt-3 px-3 py-2 bg-blue-600 text-white rounded-md font-black text-xs uppercase tracking-wide shadow-2xl shadow-blue-500/30 hover:scale-105 transition-all">Explorar Catálogo</button>
                                     </div>
@@ -317,7 +317,7 @@ function HeaderStat({ label, value, icon: Icon, color, bg }: any) {
             </div>
             <div>
                 <p className="font-semibold text-blue-200/50 uppercase tracking-wide mb-1 leading-none">{label}</p>
-                <p className="text-xl font-black text-white tracking-tighter leading-none">{value}</p>
+                <p className="text-xl font-bold text-white tracking-tighter leading-none">{value}</p>
             </div>
         </div>
     );

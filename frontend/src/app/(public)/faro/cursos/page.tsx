@@ -169,7 +169,7 @@ export default function CursosPage() {
                 >
                     <div className="max-w-2xl">
                         <h2
-                            className="text-lg md:text-xl font-black mb-4 tracking-tight"
+                            className="text-lg md:text-xl font-bold mb-4 tracking-tight"
                             style={{ color: "var(--faro-on-surface)" }}
                         >
                             Cursos & Academia
@@ -219,7 +219,7 @@ export default function CursosPage() {
                                         {featuredCourse.tag || "Destacado"}
                                     </span>
                                     <h3
-                                        className="text-lg md:text-xl font-black mb-4 tracking-tight"
+                                        className="text-lg md:text-xl font-bold mb-4 tracking-tight"
                                         style={{ color: "var(--faro-on-surface)" }}
                                     >
                                         {featuredCourse.title}
@@ -239,7 +239,7 @@ export default function CursosPage() {
                                             {featuredCourse.modality || "Online"}
                                         </span>
                                         <button
-                                            className="ml-auto px-4 py-3.5 rounded-lg font-black text-sm text-white transition-all hover:scale-105 uppercase tracking-wide flex items-center gap-2"
+                                            className="ml-auto px-4 py-1.5 rounded-lg font-black text-sm text-white transition-all hover:scale-105 uppercase tracking-wide flex items-center gap-2"
                                             style={{ background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))" }}
                                         >
                                             {featuredCourse.cta || "Ver Curso"} <ArrowRight size={16} />
@@ -273,7 +273,7 @@ export default function CursosPage() {
                                             {c.modality || c.tag}
                                         </span>
                                         <h4
-                                            className="text-lg font-black mb-4 group-hover:opacity-80 transition-opacity leading-tight"
+                                            className="text-lg font-bold mb-4 group-hover:opacity-80 transition-opacity leading-tight"
                                             style={{ color: "var(--faro-on-surface)" }}
                                         >
                                             {c.title}
@@ -317,7 +317,7 @@ export default function CursosPage() {
                     className="max-w-xl mb-16"
                 >
                     <h2
-                        className="text-lg md:text-xl font-black mb-3 tracking-tight"
+                        className="text-lg md:text-xl font-bold mb-3 tracking-tight"
                         style={{ color: "var(--faro-on-surface)" }}
                     >
                         Nuestra Librería
@@ -373,7 +373,7 @@ export default function CursosPage() {
                                 </p>
                                 <div className="flex items-center justify-between pt-4 border-t" style={{ borderColor: "var(--faro-outline-variant)" }}>
                                     <span
-                                        className="text-lg font-black"
+                                        className="text-lg font-bold"
                                         style={{ color: "var(--faro-on-surface)" }}
                                     >
                                         {book.price}
@@ -414,7 +414,7 @@ export default function CursosPage() {
                     <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
                         <div>
                             <h2
-                                className="text-lg md:text-xl font-black mb-3 tracking-tight leading-[1.1]"
+                                className="text-lg md:text-xl font-bold mb-3 tracking-tight leading-[1.1]"
                                 style={{ color: "var(--faro-on-surface)" }}
                             >
                                 Únete a la <br/>Academia FARO

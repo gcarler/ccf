@@ -230,7 +230,7 @@ function ShortcutSheet({ onClose }: { onClose: () => void }) {
             >
                 <div className="mb-5">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Atajos</p>
-                    <h2 className="mt-1 text-xl font-black text-slate-900 dark:text-white">Productividad global</h2>
+                    <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">Productividad global</h2>
                 </div>
                 <div className="space-y-2">
                     {[

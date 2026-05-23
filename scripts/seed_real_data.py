@@ -8,9 +8,18 @@ sys.path.append(str(current_dir.parent))
 
 from backend.core.database import SessionLocal
 from backend.core.security import get_password_hash
-from backend.models import (ConsolidationPipeline, Course, Family, GloryHouse,
-                            Lesson, Member, PastoralCallLog, Project,
-                            ProjectTask, User)
+from backend.models import (
+    ConsolidationPipeline,
+    Course,
+    Family,
+    GloryHouse,
+    Lesson,
+    Member,
+    PastoralCallLog,
+    Project,
+    ProjectTask,
+    User,
+)
 
 
 def seed_real_data():

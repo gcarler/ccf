@@ -88,7 +88,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                 <header className="px-4 py-2 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <ShieldCheck size={18} className="text-indigo-600" />
-                        <h2 className="text-xl font-black italic tracking-tighter text-slate-900 dark:text-white uppercase leading-none">Protocolo de Operacion</h2>
+                        <h2 className="text-xl font-bold italic tracking-tighter text-slate-900 dark:text-white uppercase leading-none">Protocolo de Operacion</h2>
                     </div>
                     <div className="flex items-center gap-3">
                         {lastSaved && (

@@ -1,8 +1,13 @@
 import datetime as dt
 
 from backend.core.database import SessionLocal
-from backend.models import (Assessment, AssessmentOption, AssessmentQuestion,
-                            Course, Lesson)
+from backend.models import (
+    Assessment,
+    AssessmentOption,
+    AssessmentQuestion,
+    Course,
+    Lesson,
+)
 
 
 def seed_assessments():

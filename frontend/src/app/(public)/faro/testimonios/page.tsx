@@ -104,7 +104,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
                                 </div>
                             ) : (
                                 <div
-                                    className="w-12 h-8 rounded-full flex items-center justify-center text-lg font-black shrink-0"
+                                    className="w-12 h-8 rounded-full flex items-center justify-center text-lg font-bold shrink-0"
                                     style={{
                                         background: isHighlight ? "var(--faro-primary)" : "var(--faro-surface-container-highest)",
                                         color: isHighlight ? "var(--faro-on-primary)" : "var(--faro-primary)",
@@ -114,7 +114,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
                                 </div>
                             )}
                             <div className="min-w-0">
-                                <p className="font-black text-base truncate" style={{ color: "var(--faro-on-surface)" }}>
+                                <p className="font-semibold text-base truncate" style={{ color: "var(--faro-on-surface)" }}>
                                     {t.author?.username ?? "Anónimo"}
                                 </p>
                                 <p
@@ -300,7 +300,7 @@ export default function TestimoniosPage() {
                             className="flex flex-col items-center justify-center text-center py-1.5"
                         >
                             <Users size={64} className="mb-3 opacity-20" style={{ color: "var(--faro-primary)" }} />
-                            <h3 className="text-xl font-black mb-4" style={{ color: "var(--faro-on-surface)" }}>No encontramos resultados</h3>
+                            <h3 className="text-xl font-bold mb-4" style={{ color: "var(--faro-on-surface)" }}>No encontramos resultados</h3>
                             <p className="text-lg opacity-80 max-w-md" style={{ color: "var(--faro-on-surface-variant)" }}>
                                 Intenta buscar con otras palabras clave o categorías.
                             </p>

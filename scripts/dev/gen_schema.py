@@ -6,9 +6,10 @@ import os
 def write_schema():
     path = "/root/ccf/master_schema.sql"
     parts = []
-    
+
     # Header
-    parts.append("""-- ============================================================================
+    parts.append(
+        """-- ============================================================================
 -- master_schema.sql
 -- DDL completo para SQLite generado a partir de los modelos Python (models_*.py)
 -- Proyecto: CCF (Church Management System)
@@ -19,10 +20,12 @@ def write_schema():
 -- ============================================================================
 
 BEGIN TRANSACTION;
-""")
-    
+"""
+    )
+
     # Section 1
-    parts.append("""
+    parts.append(
+        """
 -- ============================================================================
 -- 1. IDENTITY, GAMIFICATION & UI  (models_identity.py)
 -- ============================================================================
@@ -61,11 +64,12 @@ CREATE INDEX IF NOT EXISTS ix_users_xp ON users(xp);
 CREATE INDEX IF NOT EXISTS ix_users_is_active ON users(is_active);
 CREATE INDEX IF NOT EXISTS ix_users_is_email_verified ON users(is_email_verified);
 CREATE INDEX IF NOT EXISTS ix_users_created_at ON users(created_at);
-""")
-    
+"""
+    )
+
     with open(path, "w") as f:
-        f.write("
-".join(parts))
+        f.write("\n".join(parts))
     print(f"Written {len(parts)} parts to {path}")
+
 
 write_schema()

@@ -125,7 +125,7 @@ function AnalyticCard({ title, value, detail, icon: Icon, color }: any) {
                 </div>
                 <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{title}</span>
             </div>
-            <div className="text-xl font-black text-slate-900 dark:text-white leading-none">{value}</div>
+            <div className="text-xl font-bold text-slate-900 dark:text-white leading-none">{value}</div>
             <p className="text-[10px] font-medium text-slate-400 mt-1 uppercase tracking-tight">{detail}</p>
         </div>
     );

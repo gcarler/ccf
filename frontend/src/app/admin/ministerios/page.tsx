@@ -149,7 +149,7 @@ export default function MinisteriosPage() {
                                     <Icon size={20} />
                                 </div>
                                 <div>
-                                    <p className="text-lg font-black text-slate-900 dark:text-white tracking-tighter">{stat.value}</p>
+                                    <p className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter">{stat.value}</p>
                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{stat.label}</p>
                                 </div>
                             </motion.div>
@@ -168,7 +168,7 @@ export default function MinisteriosPage() {
                             <Church size={36} />
                         </div>
                         <div>
-                            <h3 className="text-base font-black text-slate-800 dark:text-white">
+                            <h3 className="text-base font-bold text-slate-800 dark:text-white">
                                 {search ? 'Sin resultados' : 'Sin ministerios registrados'}
                             </h3>
                             <p className="text-sm text-slate-400 mt-1">
@@ -380,7 +380,7 @@ export default function MinisteriosPage() {
                             <div className="size-7 bg-rose-50 dark:bg-rose-500/10 rounded-md flex items-center justify-center text-rose-600 mb-4">
                                 <Trash2 size={20} />
                             </div>
-                            <h3 className="text-base font-black text-slate-900 dark:text-white">¿Eliminar ministerio?</h3>
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white">¿Eliminar ministerio?</h3>
                             <p className="text-sm text-slate-400 mt-1 mb-5">Esta acción no se puede deshacer.</p>
                             <div className="flex gap-3">
                                 <button onClick={() => setDeleteId(null)} className="flex-1 py-3 rounded-md border border-slate-200 dark:border-white/10 text-[11px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 transition-all">

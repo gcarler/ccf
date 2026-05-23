@@ -84,7 +84,7 @@ export default function SecurityAuditPage() {
                             <Lock size={32} />
                         </div>
                         <div>
-                            <h1 className="text-lg font-black text-emerald-400 uppercase tracking-wide flex items-center gap-3">
+                            <h1 className="text-lg font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-3">
                                 Control de Acceso Maestro
                                 <span className="flex size-3 relative">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75"></span>

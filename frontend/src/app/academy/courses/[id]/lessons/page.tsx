@@ -163,7 +163,7 @@ export default function LessonsPage() {
                             <BookOpen size={36} />
                         </div>
                         <div>
-                            <h3 className="text-base font-black text-slate-800 dark:text-white">Sin lecciones aún</h3>
+                            <h3 className="text-base font-bold text-slate-800 dark:text-white">Sin lecciones aún</h3>
                             <p className="text-sm text-slate-400 mt-1">Crea la primera lección de este curso.</p>
                         </div>
                         <button onClick={openCreate}

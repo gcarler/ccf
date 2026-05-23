@@ -43,7 +43,7 @@ function VerifyEmailContent() {
         <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 px-3">
             <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl rounded-lg border border-white/10 shadow-2xl p-4 text-center space-y-6">
                 <div className="flex justify-center">{icon()}</div>
-                <h1 className="text-lg font-black">Verificación de correo</h1>
+                <h1 className="text-lg font-bold">Verificación de correo</h1>
                 <p className="text-slate-300 text-sm leading-relaxed">{message}</p>
                 <div className="space-y-2">
                     <Link href="/login" className="block w-full py-3 rounded-lg font-semibold uppercase tracking-wide text-sm bg-primary text-white hover:bg-primary/90 transition">

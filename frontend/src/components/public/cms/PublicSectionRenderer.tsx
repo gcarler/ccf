@@ -366,7 +366,7 @@ function PopupBlock({ section }: { section: CmsSection }) {
                 <Link
                   href={ctaHref}
                   onClick={handleClose}
-                  className="w-full py-3.5 rounded-full text-xs font-bold uppercase tracking-wide text-white transition-transform hover:scale-[1.02]"
+                  className="w-full py-1.5 rounded-full text-xs font-bold uppercase tracking-wide text-white transition-transform hover:scale-[1.02]"
                   style={{ background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))" }}
                 >
                   {ctaLabel}

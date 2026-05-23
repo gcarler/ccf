@@ -9,11 +9,19 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.api.crm._shared import (_member_full_name, _serialize_case,
-                                     _serialize_message_group, _serialize_task,
-                                     utc_now)
-from backend.auth import (get_current_user, normalize_role,
-                          require_active_user, require_pastor_or_admin)
+from backend.api.crm._shared import (
+    _member_full_name,
+    _serialize_case,
+    _serialize_message_group,
+    _serialize_task,
+    utc_now,
+)
+from backend.auth import (
+    get_current_user,
+    normalize_role,
+    require_active_user,
+    require_pastor_or_admin,
+)
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.mesh_websockets import manager

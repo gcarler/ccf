@@ -198,7 +198,7 @@ export default function SpiritualMilestones() {
                         >
                             <Sparkles size={12} className="animate-pulse" /> Reconocimiento del Crecimiento
                         </motion.div>
-                        <h1 className="text-xl lg:text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                        <h1 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">
                             Consola de <br/> <span className="text-blue-600 italic">Hitos de Fe.</span>
                         </h1>
                     </header>
@@ -245,7 +245,7 @@ export default function SpiritualMilestones() {
                                                     </div>
                                                     <div>
                                                         <p className="font-semibold text-slate-400 uppercase tracking-wide mb-2">{m.description || 'Hito Ministerial'}</p>
-                                                        <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none mb-1">{m.name}</h3>
+                                                        <h3 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tighter leading-none mb-1">{m.name}</h3>
                                                         <p className="text-[11px] font-bold text-blue-500 uppercase tracking-wide">{m.count} Personas Alcanzadas</p>
                                                     </div>
                                                     <div className="pt-6 border-t border-slate-50 dark:border-white/5 flex items-center justify-between">

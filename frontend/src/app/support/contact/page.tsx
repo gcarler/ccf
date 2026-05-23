@@ -70,7 +70,7 @@ export default function SupportContactPage() {
                 <CheckCircle size={48} className="text-emerald-500" />
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="text-center">
-                <h2 className="text-xl font-black text-slate-800 dark:text-white mb-2">Mensaje Enviado</h2>
+                <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Mensaje Enviado</h2>
                 <p className="text-sm text-slate-500">Nuestro equipo te respondera en menos de 24 horas.</p>
                 <p className="text-[11px] text-slate-400 mt-1">Numero de caso: CCF-{ticketId}</p>
             </motion.div>

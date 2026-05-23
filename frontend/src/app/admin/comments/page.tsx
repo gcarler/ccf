@@ -163,7 +163,7 @@ export default function CommentModeration() {
                             >
                                 <Zap size={12} className="animate-pulse" /> Protocolo de Moderación Activo
                             </motion.div>
-                            <h1 className="text-xl lg:text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                            <h1 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">
                                 Centro de <span className="text-blue-600 italic">Interacción.</span>
                             </h1>
                         </div>
@@ -172,7 +172,7 @@ export default function CommentModeration() {
                             <input 
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
+                                className="w-full pl-12 pr-4 py-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
                                 placeholder="Filtrar por autor o contenido..."
                             />
                         </div>
@@ -268,7 +268,7 @@ export default function CommentModeration() {
                                             <div className="flex-1 space-y-4">
                                                 <div className="flex justify-between items-center">
                                                     <div>
-                                                        <h4 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none group-hover:text-blue-600 transition-colors">{comment.author}</h4>
+                                                        <h4 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight leading-none group-hover:text-blue-600 transition-colors">{comment.author}</h4>
                                                         <p className="font-semibold text-blue-500 uppercase tracking-wide mt-2 flex items-center gap-2">
                                                             <Globe size={10} /> En: <span className="text-slate-400 italic">&quot;{comment.context}&quot;</span>
                                                         </p>
@@ -304,7 +304,7 @@ export default function CommentModeration() {
                                     <Sparkles size={48} strokeWidth={1} />
                                 </div>
                                 <div className="space-y-2">
-                                    <p className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight">Comunidad Limpia</p>
+                                    <p className="text-xl font-bold text-slate-800 dark:text-white uppercase tracking-tight">Comunidad Limpia</p>
                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">No hay interacciones pendientes de moderación.</p>
                                 </div>
                             </motion.div>

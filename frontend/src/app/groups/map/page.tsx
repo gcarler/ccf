@@ -77,15 +77,15 @@ export default function GroupsMapPage() {
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <article className="rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/[0.03]">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Total casas</p>
-                        <p className="mt-2 text-xl font-black text-slate-800 dark:text-slate-100">{groups.length}</p>
+                        <p className="mt-2 text-xl font-bold text-slate-800 dark:text-slate-100">{groups.length}</p>
                     </article>
                     <article className="rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/[0.03]">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Con coordenadas</p>
-                        <p className="mt-2 text-xl font-black text-emerald-600">{geolocated.length}</p>
+                        <p className="mt-2 text-xl font-bold text-emerald-600">{geolocated.length}</p>
                     </article>
                     <article className="rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/[0.03]">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sin coordenadas</p>
-                        <p className="mt-2 text-xl font-black text-amber-500">{Math.max(0, groups.length - geolocated.length)}</p>
+                        <p className="mt-2 text-xl font-bold text-amber-500">{Math.max(0, groups.length - geolocated.length)}</p>
                     </article>
                 </section>
 

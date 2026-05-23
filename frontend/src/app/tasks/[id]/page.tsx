@@ -83,7 +83,7 @@ export default function TaskDetailPage() {
                                 <DSBadge tone={task.priority === 'high' ? 'violet' : 'amber'} label={task.priority.toUpperCase()} />
                                 <DSBadge tone="blue" label={task.status.toUpperCase()} />
                             </div>
-                            <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-tight uppercase">
+                            <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-tight uppercase">
                                 {task.title}
                             </h1>
                         </header>
@@ -126,7 +126,7 @@ export default function TaskDetailPage() {
                                 <div className="space-y-4">
                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Seguimiento de Tiempo</p>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-lg font-black text-slate-900 dark:text-white font-mono">00:45:12</span>
+                                        <span className="text-lg font-bold text-slate-900 dark:text-white font-mono">00:45:12</span>
                                         <button 
                                             onClick={() => setIsTimerRunning(!isTimerRunning)}
                                             className={clsx(

@@ -52,7 +52,7 @@ export default function PastoresPage() {
                     <span className="text-xs font-semibold uppercase tracking-wide mb-3 block text-faro-primary">
                         Liderazgo
                     </span>
-                    <h1 className="text-lg md:text-xl font-black mb-3 text-faro-on-background tracking-tight">
+                    <h1 className="text-lg md:text-xl font-bold mb-3 text-faro-on-background tracking-tight">
                         Nuestro <span className="italic bg-clip-text text-transparent bg-gradient-to-r from-faro-primary to-faro-secondary">Equipo Pastoral</span>
                     </h1>
                     <p className="text-lg text-faro-on-surface-variant leading-relaxed">
@@ -63,7 +63,7 @@ export default function PastoresPage() {
                 {/* APÓSTOLES */}
                 <div className="mb-24">
                     <div className="flex items-center gap-4 mb-3">
-                        <h2 className="text-xl font-black text-faro-on-surface">Apóstoles</h2>
+                        <h2 className="text-xl font-bold text-faro-on-surface">Apóstoles</h2>
                         <div className="h-px flex-1 bg-faro-outline-variant/30" />
                     </div>
                     
@@ -93,7 +93,7 @@ export default function PastoresPage() {
                                         <span className="text-[10px] font-semibold uppercase tracking-wide text-faro-primary mb-3">
                                             {person.role}
                                         </span>
-                                        <h3 className="text-lg font-black text-faro-on-surface mb-4 group-hover:text-faro-primary transition-colors">
+                                        <h3 className="text-lg font-bold text-faro-on-surface mb-4 group-hover:text-faro-primary transition-colors">
                                             {person.name}
                                         </h3>
                                         <p className="text-sm text-faro-on-surface-variant line-clamp-3 leading-relaxed mb-3">
@@ -112,7 +112,7 @@ export default function PastoresPage() {
                 {/* PASTORES */}
                 <div>
                     <div className="flex items-center gap-4 mb-3">
-                        <h2 className="text-xl font-black text-faro-on-surface">Equipo Pastoral</h2>
+                        <h2 className="text-xl font-bold text-faro-on-surface">Equipo Pastoral</h2>
                         <div className="h-px flex-1 bg-faro-outline-variant/30" />
                     </div>
                     
@@ -139,7 +139,7 @@ export default function PastoresPage() {
                                         <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
                                     </div>
                                     <div className="p-3 flex flex-col flex-1">
-                                        <h3 className="text-xl font-black text-faro-on-surface mb-2 group-hover:text-faro-primary transition-colors">
+                                        <h3 className="text-xl font-bold text-faro-on-surface mb-2 group-hover:text-faro-primary transition-colors">
                                             {person.name}
                                         </h3>
                                         <p className="text-xs font-bold uppercase tracking-wide text-faro-primary/70 mb-4">

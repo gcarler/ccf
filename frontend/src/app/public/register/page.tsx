@@ -50,7 +50,7 @@ function RegisterForm() {
                     <Check size={48} strokeWidth={3} />
                 </div>
                 <div>
-                    <h2 className="text-xl font-black text-slate-900 tracking-tight mb-2">¡Registro Exitoso!</h2>
+                    <h2 className="text-xl font-bold text-slate-900 tracking-tight mb-2">¡Registro Exitoso!</h2>
                     <p className="text-slate-500 font-medium">
                         Te hemos registrado correctamente para este evento. ¡Bienvenido a casa!
                     </p>
@@ -163,7 +163,7 @@ export default function PublicRegistrationPage() {
                         <Heart size={28} className="drop-shadow-md" />
                     </div>
                     <div>
-                        <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Registro de Asistencia</h1>
+                        <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Registro de Asistencia</h1>
                         <p className="text-sm font-medium text-slate-500 mt-2 flex items-center justify-center gap-2">
                             <Calendar size={14} /> CCF Eventos
                         </p>

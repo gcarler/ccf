@@ -81,7 +81,7 @@ export default function AcademyTeachersPage() {
                     <header className="flex flex-col gap-4 border-b border-slate-100 p-3 dark:border-white/10 md:flex-row md:items-center md:justify-between">
                         <div>
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-500">Equipo academico</p>
-                            <h1 className="text-lg font-black text-slate-900 dark:text-white">Facilitadores</h1>
+                            <h1 className="text-lg font-bold text-slate-900 dark:text-white">Facilitadores</h1>
                         </div>
                         <div className="relative w-full md:max-w-sm">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
@@ -112,8 +112,8 @@ export default function AcademyTeachersPage() {
                                 </div>
                                 <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{teacher.specialty || "Formacion ministerial"}</p>
                                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                                    <span className="rounded-lg bg-white p-3 font-black text-slate-500 dark:bg-black/20">{teacher.course_count ?? 0} cursos</span>
-                                    <span className="rounded-lg bg-white p-3 font-black text-slate-500 dark:bg-black/20">{teacher.active_students ?? 0} alumnos</span>
+                                    <span className="font-semibold text-slate-500 dark:bg-black/20">{teacher.course_count ?? 0} cursos</span>
+                                    <span className="font-semibold text-slate-500 dark:bg-black/20">{teacher.active_students ?? 0} alumnos</span>
                                 </div>
                             </article>
                         ))}
@@ -141,7 +141,7 @@ function Metric({ icon: Icon, label, value }: { icon: any; label: string; value:
                 <Icon size={20} />
             </div>
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
-            <p className="text-lg font-black text-slate-900 dark:text-white">{value}</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-white">{value}</p>
         </div>
     );
 }

@@ -59,17 +59,17 @@ export default function TransparencyPage() {
                 {data && (
                     <div className="flex items-center justify-center gap-3 pt-2">
                         <div className="text-center">
-                            <p className="text-lg font-black text-slate-900 dark:text-white">{data.total_miembros.toLocaleString()}</p>
+                            <p className="text-lg font-bold text-slate-900 dark:text-white">{data.total_miembros.toLocaleString()}</p>
                             <p className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-1 justify-center"><Users size={10}/> Miembros</p>
                         </div>
                         <div className="w-px h-8 bg-slate-200 dark:bg-white/10" />
                         <div className="text-center">
-                            <p className="text-lg font-black text-slate-900 dark:text-white">{data.total_familias.toLocaleString()}</p>
+                            <p className="text-lg font-bold text-slate-900 dark:text-white">{data.total_familias.toLocaleString()}</p>
                             <p className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-1 justify-center"><Home size={10}/> Familias</p>
                         </div>
                         <div className="w-px h-8 bg-slate-200 dark:bg-white/10" />
                         <div className="text-center">
-                            <p className="text-lg font-black text-emerald-600">{fmt(data.total_donaciones_cop)}</p>
+                            <p className="text-lg font-bold text-emerald-600">{fmt(data.total_donaciones_cop)}</p>
                             <p className="font-semibold text-slate-400 uppercase tracking-wide">Total Histórico</p>
                         </div>
                     </div>
@@ -89,7 +89,7 @@ export default function TransparencyPage() {
                                     <stat.icon size={32} />
                                 </div>
                                 <div>
-                                    <div className="text-lg font-black text-slate-900 dark:text-white italic tracking-tighter">{stat.value}</div>
+                                    <div className="text-lg font-bold text-slate-900 dark:text-white italic tracking-tighter">{stat.value}</div>
                                     <div className="font-semibold text-slate-400 uppercase tracking-wide mt-1">{stat.label}</div>
                                 </div>
                             </div>
@@ -99,13 +99,13 @@ export default function TransparencyPage() {
                     <div className="bg-white dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 rounded-lg overflow-hidden shadow-sm">
                         <div className="grid grid-cols-1 lg:grid-cols-2">
                             <div className="p-4 space-y-3">
-                                <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">
+                                <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight uppercase italic">
                                     ¿Donde se invierte tu <span className="text-emerald-500">semilla?</span>
                                 </h2>
                                 <div className="space-y-6">
                                     {(data?.distribucion ?? []).map((item, i) => (
                                         <div key={i} className="flex gap-3 group">
-                                            <div className="text-lg font-black text-emerald-500/30 dark:text-emerald-500/20 group-hover:text-emerald-500 transition-colors">{item.pct}%</div>
+                                            <div className="text-lg font-bold text-emerald-500/30 dark:text-emerald-500/20 group-hover:text-emerald-500 transition-colors">{item.pct}%</div>
                                             <div className="space-y-1">
                                                 <div className="text-sm font-bold text-slate-800 dark:text-white uppercase">{item.label}</div>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">{item.desc}</p>
@@ -123,7 +123,7 @@ export default function TransparencyPage() {
                                         <BarChart3 size={48} />
                                     </div>
                                     <div className="space-y-2">
-                                        <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase italic">Auditoría Externa</h3>
+                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase italic">Auditoría Externa</h3>
                                         <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
                                             Nuestros estados financieros son revisados trimestralmente por un comité de transparencia.
                                         </p>

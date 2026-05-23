@@ -105,7 +105,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                     <div className="absolute -bottom-1 -right-1 size-4 bg-emerald-500 rounded-full border-2 border-white dark:border-[#15171c]" />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight leading-none mb-1">Optimus Brain</h3>
+                                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight leading-none mb-1">Optimus Brain</h3>
                                     <div className="flex items-center gap-2">
                                         <span className="text-[9px] font-semibold uppercase tracking-wide text-emerald-500">Neural Active</span>
                                         <div className="size-1 rounded-full bg-emerald-500 animate-pulse" />

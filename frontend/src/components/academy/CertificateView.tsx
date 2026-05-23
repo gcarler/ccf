@@ -43,14 +43,14 @@ export default function CertificateView({ data }: CertificateProps) {
                 <div className="relative z-10 space-y-3 py-8">
                     <div>
                         <p className="text-slate-500 dark:text-slate-400 italic font-serif text-lg">Este documento certifica que</p>
-                        <h2 className="text-xl lg:text-xl font-black text-slate-900 dark:text-white tracking-tight mt-2 uppercase">
+                        <h2 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tight mt-2 uppercase">
                             {data.enrollment.student.username}
                         </h2>
                     </div>
 
                     <div className="max-w-lg mx-auto">
                         <p className="text-slate-500 dark:text-slate-400 font-medium">Ha completado satisfactoriamente los requisitos academicos para el curso de:</p>
-                        <h3 className="text-xl font-black text-blue-600 dark:text-blue-400 mt-2">
+                        <h3 className="text-xl font-bold text-blue-600 dark:text-blue-400 mt-2">
                             {data.enrollment.course.title}
                         </h3>
                     </div>

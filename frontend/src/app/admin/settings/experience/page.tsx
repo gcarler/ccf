@@ -210,7 +210,7 @@ export default function WorkspaceExperienceManager() {
                         <div className="inline-flex items-center gap-2 px-3 py-1 bg-sky-50 dark:bg-sky-900/20 text-sky-600 rounded-lg text-[10px] font-semibold uppercase tracking-wide border border-sky-100 dark:border-sky-900/30">
                             <Zap size={14} /> Workspace Experience Manager v3.0
                         </div>
-                        <h1 className="text-lg lg:text-xl font-black text-slate-800 dark:text-white tracking-tighter leading-none">
+                        <h1 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-white tracking-tighter leading-none">
                             El cerebro de tu <span className="text-blue-600 italic">interfaz.</span>
                         </h1>
                         <p className="text-xl text-slate-500 dark:text-slate-400 font-medium max-w-2xl leading-relaxed">

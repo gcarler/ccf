@@ -14,12 +14,14 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.api.evangelism_shared import (ABSENTEES_PREVIEW_LIMIT,
-                                           get_expected_members_for_event,
-                                           normalize_role_scope_payload,
-                                           parse_session_date, utc_now)
-from backend.auth import (normalize_role, require_active_user,
-                          require_pastor_or_admin)
+from backend.api.evangelism_shared import (
+    ABSENTEES_PREVIEW_LIMIT,
+    get_expected_members_for_event,
+    normalize_role_scope_payload,
+    parse_session_date,
+    utc_now,
+)
+from backend.auth import normalize_role, require_active_user, require_pastor_or_admin
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 

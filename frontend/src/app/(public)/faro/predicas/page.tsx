@@ -123,7 +123,7 @@ export default function PredicasPage() {
             <section className="py-1.5 px-3 md:px-4 lg:px-24">
                 <div className="max-w-7xl mx-auto space-y-3">
                     <div className="flex justify-between items-end">
-                        <h2 className="text-lg font-black" style={{ color: "var(--faro-on-surface)" }}>Nuevos Lanzamientos</h2>
+                        <h2 className="text-lg font-bold" style={{ color: "var(--faro-on-surface)" }}>Nuevos Lanzamientos</h2>
                         <button className="text-xs font-semibold uppercase tracking-wide flex items-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
                             Ver todo <ChevronRight size={16} />
                         </button>
@@ -157,7 +157,7 @@ export default function PredicasPage() {
                                     <span>•</span>
                                     <span>{featuredSermon?.duration ?? ""}</span>
                                 </div>
-                                <h3 className="text-xl font-black mb-4 group-hover:text-faro-primary transition-colors">{featuredSermon?.title ?? ""}</h3>
+                                <h3 className="text-xl font-bold mb-4 group-hover:text-faro-primary transition-colors">{featuredSermon?.title ?? ""}</h3>
                                 <p className="text-lg opacity-70 line-clamp-2 max-w-2xl">{featuredSermon?.excerpt ?? ""}</p>
                             </div>
                         </motion.div>

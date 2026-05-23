@@ -168,7 +168,7 @@ export default function FamiliasPage() {
                                     <Icon size={20} />
                                 </div>
                                 <div>
-                                    <p className="text-lg font-black text-slate-900 dark:text-white tracking-tighter">{stat.value}</p>
+                                    <p className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter">{stat.value}</p>
                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{stat.label}</p>
                                 </div>
                             </motion.div>
@@ -187,7 +187,7 @@ export default function FamiliasPage() {
                             <Home size={36} />
                         </div>
                         <div>
-                            <h3 className="text-base font-black text-slate-800 dark:text-white">
+                            <h3 className="text-base font-bold text-slate-800 dark:text-white">
                                 {search ? 'Sin resultados' : 'Sin familias registradas'}
                             </h3>
                             <p className="text-sm text-slate-400 mt-1">
@@ -395,7 +395,7 @@ export default function FamiliasPage() {
                         <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
                             className="bg-white dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/10 p-3 shadow-2xl max-w-sm w-full">
                             <div className="size-7 bg-rose-50 dark:bg-rose-500/10 rounded-md flex items-center justify-center text-rose-600 mb-4"><Trash2 size={20} /></div>
-                            <h3 className="text-base font-black text-slate-900 dark:text-white">¿Eliminar familia?</h3>
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white">¿Eliminar familia?</h3>
                             <p className="text-sm text-slate-400 mt-1 mb-5">Esta acción eliminará el registro permanentemente.</p>
                             <div className="flex gap-3">
                                 <button onClick={() => setDeleteId(null)} className="flex-1 py-3 rounded-md border border-slate-200 dark:border-white/10 text-[11px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 transition-all">Cancelar</button>

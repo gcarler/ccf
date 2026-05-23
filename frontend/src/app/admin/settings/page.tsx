@@ -58,7 +58,7 @@ export default function MinistrySettings() {
                     <button onClick={() => router.back()} className="p-3 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all">
                         <ArrowLeft size={20} />
                     </button>
-                    <h1 className="text-xl font-black text-white tracking-tight uppercase tracking-tight">Configuración</h1>
+                    <h1 className="text-xl font-bold text-white tracking-tight uppercase tracking-tight">Configuración</h1>
                     <button className="p-3 rounded-lg bg-white/5 border border-white/10 text-primary hover:bg-primary/10 transition-all">
                         <Bell size={20} />
                     </button>
@@ -78,7 +78,7 @@ export default function MinistrySettings() {
                         </button>
                     </div>
                     <div className="mt-3 text-center space-y-2">
-                        <h2 className="text-xl font-black text-white tracking-tight uppercase">Comunidad Cristiana el Faro</h2>
+                        <h2 className="text-xl font-bold text-white tracking-tight uppercase">Comunidad Cristiana el Faro</h2>
                         <div className="flex items-center justify-center gap-2 text-slate-500 font-bold text-[10px] uppercase tracking-wide">
                             <MapPin size={12} className="text-primary" />
                             Sede Central • Mocoa, Putumayo
@@ -105,7 +105,7 @@ export default function MinistrySettings() {
                                             <item.icon size={24} />
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-base font-black text-white tracking-tight uppercase tracking-tight">{item.label}</p>
+                                            <p className="text-base font-bold text-white tracking-tight uppercase tracking-tight">{item.label}</p>
                                             <p className="font-semibold text-slate-500 uppercase tracking-wide">{item.sub}</p>
                                         </div>
                                     </div>

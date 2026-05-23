@@ -790,7 +790,7 @@ export default function SystemSettings() {
                                     {(auditSummary?.top_actors || []).slice(0, 4).map((item: any) => (
                                         <div key={`${item.actor}-${item.count}`} className="flex items-center justify-between text-xs">
                                             <span className="font-semibold text-slate-600 dark:text-slate-300">{item.actor}</span>
-                                            <span className="font-black text-slate-500">{item.count}</span>
+                                            <span className="font-semibold text-slate-500">{item.count}</span>
                                         </div>
                                     ))}
                                     {(!auditSummary?.top_actors || auditSummary.top_actors.length === 0) ? (
@@ -804,7 +804,7 @@ export default function SystemSettings() {
                                     {(auditSummary?.top_features || []).slice(0, 4).map((item: any) => (
                                         <div key={`${item.feature}-${item.count}`} className="flex items-center justify-between text-xs">
                                             <span className="font-semibold text-slate-600 dark:text-slate-300">{item.feature}</span>
-                                            <span className="font-black text-slate-500">{item.count}</span>
+                                            <span className="font-semibold text-slate-500">{item.count}</span>
                                         </div>
                                     ))}
                                     {(!auditSummary?.top_features || auditSummary.top_features.length === 0) ? (
@@ -821,7 +821,7 @@ export default function SystemSettings() {
                                         {auditAnomalies.actor_spikes.map((item: any) => (
                                             <div key={`${item.actor}-${item.count}`} className="flex items-center justify-between text-xs">
                                                 <span className="font-semibold text-slate-600 dark:text-slate-300">{item.actor}</span>
-                                                <span className="font-black text-rose-600">{item.count}</span>
+                                                <span className="font-semibold text-rose-600">{item.count}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -836,7 +836,7 @@ export default function SystemSettings() {
                                         {auditAnomalies.action_spikes.map((item: any) => (
                                             <div key={`${item.action}-${item.count}`} className="flex items-center justify-between text-xs">
                                                 <span className="font-semibold text-slate-600 dark:text-slate-300">{item.action}</span>
-                                                <span className="font-black text-rose-600">{item.count}</span>
+                                                <span className="font-semibold text-rose-600">{item.count}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -947,7 +947,7 @@ export default function SystemSettings() {
                                     <div className="max-h-52 overflow-y-auto space-y-2">
                                         {incidentTrends.slice(-7).map((row) => (
                                             <div key={row.date} className="grid grid-cols-4 gap-2 text-[11px]">
-                                                <span className="font-black text-slate-500">{row.date}</span>
+                                                <span className="font-semibold text-slate-500">{row.date}</span>
                                                 <span className="text-slate-600">+{row.created}</span>
                                                 <span className="text-emerald-600">-{row.closed}</span>
                                                 <span className="text-blue-600">ack {row.acknowledged}</span>
@@ -1068,7 +1068,7 @@ export default function SystemSettings() {
                                 <div className="max-h-48 overflow-y-auto space-y-1">
                                     {complianceWeeklySummary.map((row) => (
                                         <div key={row.week} className="grid grid-cols-5 gap-2 text-[10px]">
-                                            <span className="font-black text-slate-500">{row.week}</span>
+                                            <span className="font-semibold text-slate-500">{row.week}</span>
                                             <span className="text-slate-600">snap {row.snapshots}</span>
                                             <span className="text-amber-600">anom {row.anomaly_snapshots}</span>
                                             <span className="text-rose-600">driftC {row.critical_drift_alerts}</span>
@@ -1180,7 +1180,7 @@ export default function SystemSettings() {
                                                 <div className="space-y-2">
                                                     {incident.history.slice(-4).reverse().map((entry: any, idx: number) => (
                                                         <div key={`${entry.at || idx}-${entry.event || 'event'}`} className="text-xs">
-                                                            <p className="font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">{entry.event} <span className="font-bold text-slate-400">by {entry.by || 'system'}</span></p>
+                                                            <p className="font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">{entry.event} <span className="font-bold text-slate-400">by {entry.by || 'system'}</span></p>
                                                             <p className="text-[11px] text-slate-500 dark:text-slate-400">{entry.at ? new Date(entry.at).toLocaleString() : 'n/a'}</p>
                                                             {entry.note ? <p className="text-[11px] text-slate-600 dark:text-slate-300">{entry.note}</p> : null}
                                                         </div>
@@ -1248,7 +1248,7 @@ function HealthCard({ label, value, status, icon: Icon }: any) {
             </div>
             <div>
                 <p className="font-semibold text-slate-400 uppercase tracking-wide mb-1">{label}</p>
-                <h4 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">{value}</h4>
+                <h4 className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter">{value}</h4>
             </div>
         </div>
     );
@@ -1278,7 +1278,7 @@ function AuditMetric({ label, value }: { label: string; value: string }) {
     return (
         <div className="rounded-lg border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
-            <p className="text-lg font-black text-slate-800 dark:text-white mt-1">{value}</p>
+            <p className="text-lg font-bold text-slate-800 dark:text-white mt-1">{value}</p>
         </div>
     );
 }
@@ -1291,7 +1291,7 @@ function DeltaMetric({ label, value, inverse }: { label: string; value: number |
     return (
         <div className={clsx('rounded-lg border p-4', tone)}>
             <p className="text-[10px] font-semibold uppercase tracking-wide">{label}</p>
-            <p className="text-xl font-black mt-1">{numeric == null ? '-' : `${numeric > 0 ? '+' : ''}${numeric}%`}</p>
+            <p className="text-xl font-bold mt-1">{numeric == null ? '-' : `${numeric > 0 ? '+' : ''}${numeric}%`}</p>
         </div>
     );
 }
@@ -1324,7 +1324,7 @@ function SecurityCheck({ label }: any) {
     return (
         <div className="flex items-center gap-3">
             <div className="size-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]" />
-            <span className="font-semibold text-blue-100/80 uppercase tracking-[0.1em]">{label}</span>
+            <span className="font-semibold text-blue-100/80 uppercase tracking-wider">{label}</span>
         </div>
     );
 }

@@ -174,7 +174,7 @@ export default function FaroPage() {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Evangelismo · Estrategia</p>
-                            <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Faro en Casa</h1>
+                            <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Faro en Casa</h1>
                             {activeSeason
                                 ? <p className="text-slate-500 dark:text-slate-400 text-sm font-medium flex items-center gap-1.5 mt-2">
                                     <span className="inline-block size-2 rounded-full bg-emerald-500" />
@@ -218,7 +218,7 @@ export default function FaroPage() {
                                             <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                                                 <Home size={24} />
                                             </div>
-                                            <p className="text-lg font-black text-slate-900 dark:text-white">{h.name}</p>
+                                            <p className="text-lg font-bold text-slate-900 dark:text-white">{h.name}</p>
                                             <p className="text-sm font-bold text-slate-500 dark:text-slate-400 mt-1">{h.zone || 'Sin zona'} · {h.day_of_week || 'Sin dia'}</p>
                                         </button>
                                     ))}
@@ -249,7 +249,7 @@ export default function FaroPage() {
                                                     <DSBadge tone={s.status === 'Activa' ? 'emerald' : 'slate'} label={s.status} />
                                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{PERIODICITY_LABEL[s.periodicity]}</span>
                                                 </div>
-                                                <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">{s.name}</h3>
+                                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight">{s.name}</h3>
                                                 <p className="text-sm text-slate-500 font-bold mb-3">{s.start_date} → {s.end_date}</p>
                                                 {s.status === 'Activa' && (
                                                     <button onClick={() => handleCloseSeason(s.id)} className="w-full py-2 bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors">
@@ -286,7 +286,7 @@ export default function FaroPage() {
                                                             <td className="px-4 py-2">
                                                                 <div className="flex items-center gap-4">
                                                                     <div className="size-10 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Home size={18} /></div>
-                                                                    <span className="text-base font-black text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{house?.name || `Faro #${row.glory_house_id}`}</span>
+                                                                    <span className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{house?.name || `Faro #${row.glory_house_id}`}</span>
                                                                 </div>
                                                             </td>
                                                             <td className="px-4 py-2 text-center text-sm font-bold text-slate-600 dark:text-slate-400">{row.total_sessions}</td>

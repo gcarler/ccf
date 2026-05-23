@@ -99,7 +99,7 @@ export default function CourseManagementPage() {
                     <XCircle size={48} strokeWidth={2.5} />
                 </motion.div>
                 <div className="space-y-2">
-                    <h2 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">Acceso Restringido</h2>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight">Acceso Restringido</h2>
                     <p className="text-slate-500 max-w-sm font-medium">Esta consola de gestion esta reservada para personal autorizado. Contacta a coordinacion academica.</p>
                 </div>
                 <button onClick={() => router.back()} className="px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-semibold uppercase tracking-wide text-[10px] shadow-2xl transition-all active:scale-95">Volver a puerto</button>
@@ -191,7 +191,7 @@ export default function CourseManagementPage() {
                                 </div>
                             </div>
                             <div>
-                                <h1 className="text-lg lg:text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-3">
+                                <h1 className="text-lg lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none mb-3">
                                     {course ? course.title : (loading ? 'Sincronizando...' : 'Datos del Curso (No Disponible)')}
                                 </h1>
                                 <div className="flex items-center gap-4 text-slate-500 font-bold text-sm">
@@ -285,7 +285,7 @@ export default function CourseManagementPage() {
                                                 </div>
 
                                                 <div className="mt-3 space-y-1 relative z-10">
-                                                    <h4 className="text-base font-black text-slate-800 dark:text-white truncate tracking-tight">{student.username}</h4>
+                                                    <h4 className="text-base font-bold text-slate-800 dark:text-white truncate tracking-tight">{student.username}</h4>
                                                     <p className="text-[11px] font-bold text-slate-400 truncate tracking-wide">{student.email}</p>
                                                 </div>
 
@@ -316,7 +316,7 @@ export default function CourseManagementPage() {
                                                 <Search size={48} strokeWidth={1.5} />
                                             </div>
                                             <div className="space-y-2">
-                                                <p className="text-base font-black text-slate-800 dark:text-white">Cero coincidencias</p>
+                                                <p className="text-base font-bold text-slate-800 dark:text-white">Cero coincidencias</p>
                                                 <p className="text-slate-500 font-medium">Prueba con otros terminos de busqueda.</p>
                                             </div>
                                         </div>
@@ -334,7 +334,7 @@ export default function CourseManagementPage() {
                                     <Calendar size={56} strokeWidth={1.5} />
                                 </div>
                                 <div className="max-w-xl mx-auto space-y-3">
-                                    <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">Control de Asistencia</h3>
+                                    <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">Control de Asistencia</h3>
                                     <p className="text-slate-500 text-sm font-medium leading-relaxed">Inicia el registro para la sesion de hoy. Recuerda que el 75% de asistencia es requisito para la certificacion formal.</p>
                                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
                                         <button className="w-full sm:w-auto px-3 py-1.5 bg-blue-600 text-white rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all">
@@ -357,7 +357,7 @@ export default function CourseManagementPage() {
                                     <BookOpen size={56} strokeWidth={1.5} />
                                 </div>
                                 <div className="max-w-xl mx-auto space-y-3">
-                                    <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">Gestion Curricular</h3>
+                                    <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter">Gestion Curricular</h3>
                                     <p className="text-slate-500 text-sm font-medium">Ajusta el contenido de las lecciones, actualiza recursos descargables y configura los criterios de evaluacion del programa.</p>
                                     <button className="px-3 py-1.5 bg-sky-600 text-white rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl shadow-sky-500/30 hover:scale-105 transition-all">
                                         Abrir Editor Curricular

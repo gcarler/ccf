@@ -193,7 +193,7 @@ export default function KnowledgeGraphPage() {
               <>
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-black/20">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{selectedNode.type}</p>
-                  <h3 className="mt-1 text-lg font-black text-slate-900 dark:text-white">{selectedNode.label}</h3>
+                  <h3 className="mt-1 text-lg font-bold text-slate-900 dark:text-white">{selectedNode.label}</h3>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{selectedNode.detail || "Sin detalle"}</p>
                 </div>
                 {selectedNode.meta ? (
@@ -248,7 +248,7 @@ function SummaryBox({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-center dark:border-white/10 dark:bg-white/5">
       <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
-      <p className="text-lg font-black text-slate-800 dark:text-white">{value}</p>
+      <p className="text-lg font-bold text-slate-800 dark:text-white">{value}</p>
     </div>
   );
 }

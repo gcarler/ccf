@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
     Folder, 
     Layers, 
     Plus, 
     ArrowUpRight,
+    TrendingUp
 } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
@@ -23,6 +24,9 @@ import { useRegisterCommands } from '@/context/CommandCenterContext';
 import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/DataTable';
 import { SectionHeader } from '@/components/ui/SectionHeader';
+import { DSMetric } from '@/design/components/DSMetric';
+import { DSChart } from '@/design/components/DSChart';
+import { DSCard } from '@/design/components/DSCard';
 import { toast } from 'sonner';
 
 const PROJECT_VIEWS: ViewType[] = ['grid', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
@@ -42,15 +46,28 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
     const { token } = useAuth();
     const router = useRouter();
     const [projects, setProjects] = useState<ProjectRecord[]>(initialProjects);
+    const [dashboard, setDashboard] = useState<any>(null);
     const [viewType, setViewType] = useState<ViewType>('grid');
     const [search, setSearch] = useState('');
     const [isCreating, setIsCreating] = useState(false);
+
+    useEffect(() => {
+        if (!token) return;
+        const loadDashboard = async () => {
+            try {
+                const data = await apiFetch<any>('/dashboard/projects', { token });
+                setDashboard(data);
+            } catch (err) {
+                console.error('Error fetching projects dashboard', err);
+            }
+        };
+        loadDashboard();
+    }, [token]);
 
     // Quality filter: hide projects with nonsensical/test names
     const isValidProject = (p: ProjectRecord) => {
         const t = (p.title || '').trim();
         if (t.length < 2) return false;
-        // Detect repeated single character (e.g. 'aaaaaaa', 'qqqqq')
         if (/^(.)\1+$/i.test(t)) return false;
         return true;
     };
@@ -82,8 +99,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
             setTimeout(() => router.push(`/projects/${created.id}`), 200);
         } catch (e: any) {
             console.error('Error creating project:', e);
-            const detailMsg = e.detail?.detail || e.detail?.message || e.message || 'Intente de nuevo más tarde';
-            toast.error(`Error al crear el proyecto: ${detailMsg}`);
+            toast.error('Error al crear el proyecto');
         } finally {
             setIsCreating(false);
         }
@@ -92,14 +108,6 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
     const handleQuickCreate = (type: string) => {
         if (type === 'whiteboard') {
             router.push('/whiteboard/new');
-            return;
-        }
-        if (type === 'document') {
-            router.push('/wiki');
-            return;
-        }
-        if (type === 'reminder') {
-            router.push('/calendar');
             return;
         }
         handleCreateProject();
@@ -198,32 +206,69 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
     }), [filtered]);
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden">
+        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden">
             <WorkspaceToolbar
-                breadcrumbs={[{ label: 'Workspace', icon: Layers }, { label: 'Portfolio de Proyectos', icon: Folder }]}
+                breadcrumbs={[{ label: 'Proyectos', icon: Folder }, { label: 'Centro de Comando', icon: Layers }]}
                 viewType={viewType}
                 setViewType={setViewType}
-                availableViews={PROJECT_VIEWS}
+                allowedViews={PROJECT_VIEWS}
                 onSearch={setSearch}
                 rightActions={
-                    <div className="flex items-center gap-2">
-                        <SplitDropdownButton
-                            mainLabel={isCreating ? 'Creando...' : 'Nuevo'}
-                            icon={Plus}
-                            onMainClick={handleCreateProject}
-                            onOptionClick={handleQuickCreate}
-                        />
-                    </div>
+                    <SplitDropdownButton
+                        mainLabel={isCreating ? 'Creando...' : 'Nuevo Proyecto'}
+                        icon={Plus}
+                        onMainClick={handleCreateProject}
+                        options={[
+                            { id: 'whiteboard', label: 'Pizarra', icon: Layers, onClick: () => handleQuickCreate('whiteboard') },
+                        ]}
+                    />
                 }
             />
-            <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-3 relative">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
-                <div className="w-full space-y-6 relative z-10">
-                    <SectionHeader
-                        label="Estado del portfolio"
-                        caption="Supervisa y orquesta todas las iniciativas del ministerio desde un solo lugar."
-                    />
 
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-6 space-y-6">
+                {/* 📊 Project Metrics */}
+                <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    {dashboard?.cards.map((card: any, idx: number) => (
+                        <DSMetric 
+                            key={idx}
+                            label={card.title} 
+                            value={card.value} 
+                            trend={card.trend} 
+                            tone={card.color} 
+                        />
+                    ))}
+                </section>
+
+                {/* 📈 Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2">
+                        <DSCard>
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Carga de Trabajo del Equipo</h3>
+                            <DSChart type="bar" data={dashboard?.workload_distribution} color="#f59e0b" height={220} />
+                        </DSCard>
+                    </div>
+                    <div>
+                        <DSCard>
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Estado de Tareas</h3>
+                            <div className="space-y-4 pt-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold text-slate-400">Tareas Atrasadas</span>
+                                    <span className="text-sm font-black text-rose-500">{dashboard?.delayed_tasks_count || 0}</span>
+                                </div>
+                                <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                                    <div className="h-full bg-rose-500" style={{ width: '15%' }} />
+                                </div>
+                                <p className="text-[10px] text-slate-500 italic">
+                                    Se recomienda revisar los hitos críticos para evitar cuellos de botella.
+                                </p>
+                            </div>
+                        </DSCard>
+                    </div>
+                </div>
+
+                <div className="h-px bg-white/5 my-8" />
+
+                <div className="relative">
                     <AnimatePresence mode="wait">
                         {viewType === 'grid' ? (
                             <motion.div key="grid" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-4">
@@ -384,5 +429,3 @@ function ProjectCard({ project, index }: { project: ProjectRecord; index: number
         </motion.div>
     );
 }
-
-

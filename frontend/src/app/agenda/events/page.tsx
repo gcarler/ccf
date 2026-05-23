@@ -194,7 +194,7 @@ export default function AgendaEventsPage() {
                     <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
                         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                             <div>
-                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Agenda de iglesia</p>
+                                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Agenda de iglesia</p>
                                 <h1 className="mt-2 text-xl font-bold tracking-tight text-slate-900 dark:text-white">Eventos sin seguimiento de asistencia</h1>
                                 <p className="mt-2 max-w-2xl text-sm font-medium text-slate-500">
                                     Usa esta agenda para reuniones, avisos y actividades internas que deben aparecer en el calendario general, sin QR ni analítica ministerial.
@@ -409,7 +409,7 @@ export default function AgendaEventsPage() {
                                                                 onClick={() => router.push(`/agenda/events/${event.id}`)}
                                                                 className="text-left"
                                                             >
-                                                                <h3 className="text-lg font-black text-slate-900 transition-colors hover:text-blue-600 dark:text-white dark:hover:text-blue-400">{event.title}</h3>
+                                                                <h3 className="text-lg font-bold text-slate-900 transition-colors hover:text-blue-600 dark:text-white dark:hover:text-blue-400">{event.title}</h3>
                                                             </button>
                                                             {event.description ? (
                                                                 <p className="max-w-2xl text-sm font-medium text-slate-500">{event.description}</p>

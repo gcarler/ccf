@@ -172,7 +172,7 @@ export default function StudentProfilePage() {
                             <div className="relative z-10 flex flex-col items-center text-center space-y-3">
                                 <div className="relative">
                                     <div className="size-10 rounded-md bg-gradient-to-tr from-blue-600 to-indigo-600 p-1 shadow-2xl">
-                                        <div className="size-full rounded-lg bg-white dark:bg-[#0a0f16] flex items-center justify-center text-lg font-black text-blue-600 uppercase border-4 border-white dark:border-[#0a0f16]">
+                                        <div className="size-full rounded-lg bg-white dark:bg-[#0a0f16] flex items-center justify-center text-lg font-bold text-blue-600 uppercase border-4 border-white dark:border-[#0a0f16]">
                                             {user.username?.charAt(0)}
                                         </div>
                                     </div>
@@ -196,7 +196,7 @@ export default function StudentProfilePage() {
                                      <div className="flex justify-between items-end">
                                          <div className="text-left">
                                              <p className="font-semibold text-blue-600 uppercase tracking-wide mb-1">Nivel Actual</p>
-                                             <h4 className="text-base font-black dark:text-white">{profile?.active_courses.length ? 'Discípulo Maduro' : 'Nuevo estudiante'}</h4>
+                                             <h4 className="text-base font-bold dark:text-white">{profile?.active_courses.length ? 'Discípulo Maduro' : 'Nuevo estudiante'}</h4>
                                          </div>
                                          <span className="font-semibold text-slate-400 uppercase">Progreso total: {profile?.total_progress ?? 0}%</span>
                                      </div>
@@ -352,7 +352,7 @@ function StatBox({ icon: Icon, label, value, color }: any) {
             </div>
             <div>
                 <p className="font-semibold text-slate-400 uppercase tracking-wide mb-1 leading-none">{label}</p>
-                <h4 className="text-xl font-black text-slate-900 dark:text-white leading-none tracking-tighter">{value}</h4>
+                <h4 className="text-xl font-bold text-slate-900 dark:text-white leading-none tracking-tighter">{value}</h4>
             </div>
         </div>
     );

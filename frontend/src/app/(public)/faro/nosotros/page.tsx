@@ -84,7 +84,7 @@ export default function NosotrosPage() {
                                 <Target size={80} style={{ color: "var(--faro-primary)" }} />
                             </div>
                             <div className="relative z-10">
-                                <h3 className="text-lg font-black mb-3" style={{ color: "var(--faro-on-surface)" }}>Nuestra Visión</h3>
+                                <h3 className="text-lg font-bold mb-3" style={{ color: "var(--faro-on-surface)" }}>Nuestra Visión</h3>
                                 <p className="text-lg leading-relaxed opacity-80" style={{ color: "var(--faro-on-surface-variant)" }}>
                                     Ser un faro global de transformación espiritual, donde cada individuo descubra su luz interior y se convierta en un agente de cambio positivo en su sociedad, fundamentado en el amor y la verdad.
                                 </p>
@@ -103,7 +103,7 @@ export default function NosotrosPage() {
                         >
                             <Sparkles size={48} style={{ color: "var(--faro-secondary)" }} className="mb-3" />
                             <div>
-                                <h3 className="text-lg font-black mb-3" style={{ color: "var(--faro-on-surface)" }}>Nuestra Misión</h3>
+                                <h3 className="text-lg font-bold mb-3" style={{ color: "var(--faro-on-surface)" }}>Nuestra Misión</h3>
                                 <p className="text-lg leading-relaxed opacity-80" style={{ color: "var(--faro-on-surface-variant)" }}>
                                     Guiar, equipar y movilizar a la comunidad a través de la enseñanza práctica, el compañerismo genuino y el servicio desinteresado, reflejando el carácter de Jesús.
                                 </p>
@@ -135,7 +135,7 @@ export default function NosotrosPage() {
                         <span className="text-xs font-semibold uppercase tracking-wide mb-4 block" style={{ color: "var(--faro-primary)" }}>
                             {aboutData?.founder_label as string || "Nuestros Fundadores"}
                         </span>
-                        <h2 className="text-xl md:text-xl font-black mb-3 leading-tight" style={{ color: "var(--faro-on-background)" }}>
+                        <h2 className="text-xl md:text-xl font-bold mb-3 leading-tight" style={{ color: "var(--faro-on-background)" }}>
                             {(aboutData?.founder_name as string) || "Nuestros Fundadores"}
                         </h2>
                         <div className="space-y-6 text-lg leading-relaxed opacity-80" style={{ color: "var(--faro-on-surface-variant)" }}>
@@ -151,7 +151,7 @@ export default function NosotrosPage() {
                                         <React.Fragment key={stat.label}>
                                             {i > 0 && <div className="w-px h-8 bg-slate-200 dark:bg-white/10" />}
                                             <div>
-                                                <span className="text-lg font-black block" style={{ color: stat.color || "var(--faro-primary)" }}>{stat.value}</span>
+                                                <span className="text-lg font-bold block" style={{ color: stat.color || "var(--faro-primary)" }}>{stat.value}</span>
                                                 <span className="text-[10px] font-semibold uppercase tracking-wide opacity-50">{stat.label}</span>
                                             </div>
                                         </React.Fragment>
@@ -170,7 +170,7 @@ export default function NosotrosPage() {
             >
                 <div className="max-w-6xl mx-auto">
                     <div className="mb-20 text-center">
-                        <h2 className="text-lg font-black" style={{ color: "var(--faro-on-surface)" }}>Valores que nos Guían</h2>
+                        <h2 className="text-lg font-bold" style={{ color: "var(--faro-on-surface)" }}>Valores que nos Guían</h2>
                         <div 
                             className="h-1.5 w-24 mx-auto mt-3 rounded-full"
                             style={{ background: "linear-gradient(to right, var(--faro-primary), var(--faro-secondary))" }}
@@ -186,8 +186,8 @@ export default function NosotrosPage() {
                             ]
                         ).map((v) => (
                             <div key={v.num} className="space-y-4">
-                                <div className="text-xl font-black opacity-10" style={{ color: "var(--faro-primary)" }}>{v.num}</div>
-                                <h4 className="text-lg font-black" style={{ color: "var(--faro-on-surface)" }}>{v.title}</h4>
+                                <div className="text-xl font-bold opacity-10" style={{ color: "var(--faro-primary)" }}>{v.num}</div>
+                                <h4 className="text-lg font-bold" style={{ color: "var(--faro-on-surface)" }}>{v.title}</h4>
                                 <p className="leading-relaxed opacity-70" style={{ color: "var(--faro-on-surface-variant)" }}>{v.desc}</p>
                             </div>
                         ))}
@@ -200,12 +200,12 @@ export default function NosotrosPage() {
                 <div className="max-w-3xl mx-auto">
                     <Quote size={60} className="mx-auto mb-3 opacity-20" style={{ color: "var(--faro-primary)" }} />
                     <blockquote
-                        className="text-xl md:text-xl font-black leading-tight italic mb-3"
+                        className="text-xl md:text-xl font-bold leading-tight italic mb-3"
                         style={{ color: "var(--faro-on-surface)" }}
                     >
                         {aboutData?.quote_text as string || "La luz que encontramos en FARO no es para guardarla, es para guiar a otros que aún caminan en la oscuridad."}
                     </blockquote>
-                    <p className="font-black text-xl" style={{ color: "var(--faro-on-surface)" }}>{aboutData?.quote_author as string || "Pastor Luis Ricardo Meza Gutiérrez"}</p>
+                    <p className="font-semibold text-xl" style={{ color: "var(--faro-on-surface)" }}>{aboutData?.quote_author as string || "Pastor Luis Ricardo Meza Gutiérrez"}</p>
                     <p className="text-xs font-semibold uppercase tracking-wide mt-2" style={{ color: "var(--faro-primary)" }}>{aboutData?.quote_subtitle as string || "Visión 2026"}</p>
                 </div>
             </section>

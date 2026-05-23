@@ -126,7 +126,7 @@ export default function NewAssessmentPage() {
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     placeholder="Ej: Examen Final de Teologia Basica"
-                                    className="w-full bg-transparent border-b-2 border-slate-100 dark:border-white/5 py-1.5 text-lg font-black outline-none focus:border-blue-500 transition-all"
+                                    className="w-full bg-transparent border-b-2 border-slate-100 dark:border-white/5 py-1.5 text-lg font-bold outline-none focus:border-blue-500 transition-all"
                                 />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -169,7 +169,7 @@ export default function NewAssessmentPage() {
                                 <div className="space-y-3">
                                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                         <div className="flex items-center gap-2">
-                                            <span className="size-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-xs">
+                                            <span className="font-semibold text-xs">
                                                 {index + 1}
                                             </span>
                                             <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-lg border border-slate-200 dark:border-white/10">

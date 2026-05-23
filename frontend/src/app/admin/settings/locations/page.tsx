@@ -80,7 +80,7 @@ export default function LocationManagement() {
                         <ArrowLeft size={20} />
                     </button>
                     <div>
-                        <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">Gestión de Sedes</h1>
+                        <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter uppercase leading-none">Gestión de Sedes</h1>
                         <p className="font-semibold text-slate-400 uppercase tracking-wide mt-1">Nodos Ministeriales CCF</p>
                     </div>
                 </div>
@@ -120,7 +120,7 @@ export default function LocationManagement() {
                                             {loc.type === 'Central' ? <Church size={32} /> : loc.type === 'Sede' ? <Building2 size={32} /> : <DoorOpen size={32} />}
                                         </div>
                                         <div className="space-y-1">
-                                            <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">{loc.name}</h3>
+                                            <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase leading-none">{loc.name}</h3>
                                             <p className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-2">
                                                 <MapPin size={12} className="text-blue-500" />
                                                 {loc.address || 'Sin dirección registrada'}

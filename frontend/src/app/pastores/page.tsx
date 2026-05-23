@@ -48,7 +48,7 @@ export default function PastoresIndexPage() {
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                                     <div className="absolute bottom-4 left-5 right-5">
-                                        <h3 className="text-lg font-black text-white">{pastor.name}</h3>
+                                        <h3 className="text-lg font-bold text-white">{pastor.name}</h3>
                                         <p className="text-blue-300 font-bold text-sm tracking-wide">{pastor.title}</p>
                                     </div>
                                 </div>

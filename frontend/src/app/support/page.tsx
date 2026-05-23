@@ -260,7 +260,7 @@ export default function SupportPage() {
                         <section className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg p-4 text-white shadow-xl relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-48 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                             <div className="relative z-10">
-                                <h2 className="text-xl font-black mb-4">¿Cómo podemos ayudarte?</h2>
+                                <h2 className="text-xl font-bold mb-4">¿Cómo podemos ayudarte?</h2>
                                 <p className="text-blue-100 font-medium text-lg mb-3 max-w-xl">Nuestro equipo pastoral y técnico está listo para apoyarte en lo que necesites.</p>
                                 <button 
                                     onClick={() => setIsCreateDrawerOpen(true)}

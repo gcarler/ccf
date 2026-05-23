@@ -78,7 +78,7 @@ export default function GivingAndConnection() {
                     <CheckCircle2 size={48} className="text-white" />
                 </div>
 
-                <h1 className="text-[hsl(var(--text-primary))] text-lg font-black text-center leading-tight mb-4 tracking-tighter">
+                <h1 className="text-[hsl(var(--text-primary))] text-lg font-bold text-center leading-tight mb-4 tracking-tighter">
                     Generosidad en Acción
                 </h1>
 
@@ -128,7 +128,7 @@ export default function GivingAndConnection() {
                             <div className="size-2 rounded-full bg-current shadow-[0_0_10px_currentColor]"></div>
                             Ministerio
                         </div>
-                        <h1 className="text-lg md:text-xl font-black text-[hsl(var(--text-primary))] tracking-tighter leading-none">
+                        <h1 className="text-lg md:text-xl font-bold text-[hsl(var(--text-primary))] tracking-tighter leading-none">
                             Siembra en tierra <br/><span className="text-[hsl(var(--primary))]">Fértil</span>
                         </h1>
                         <p className="text-[hsl(var(--text-secondary))] text-sm leading-relaxed max-w-sm font-medium">
@@ -168,9 +168,9 @@ export default function GivingAndConnection() {
                             </div>
 
                             <div className="relative group">
-                                <span className="absolute left-6 top-1/2 -translate-y-1/2 text-[hsl(var(--primary))] font-black text-xl opacity-40 group-focus-within:opacity-100 transition-opacity">$</span>
+                                <span className="font-semibold text-xl opacity-40 group-focus-within:opacity-100 transition-opacity">$</span>
                                 <input
-                                    className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg py-2 pl-14 pr-6 text-[hsl(var(--text-primary))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] text-xl font-black shadow-inner outline-none transition-all"
+                                    className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg py-2 pl-14 pr-6 text-[hsl(var(--text-primary))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] text-xl font-bold shadow-inner outline-none transition-all"
                                     placeholder="0"
                                     type="number"
                                     value={amount}

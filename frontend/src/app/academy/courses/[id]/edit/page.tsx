@@ -106,7 +106,7 @@ export default function EditCoursePage() {
                             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/10 rounded-full text-[10px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
                                 <FileText size={13} strokeWidth={3} /> Edicion de Contenido
                             </div>
-                            <h1 className="text-lg lg:text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                            <h1 className="text-lg lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">
                                 Actualiza el <br />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-400">Programa.</span>
                             </h1>

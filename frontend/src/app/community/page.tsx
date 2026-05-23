@@ -712,7 +712,7 @@ export default function CommunityHubPage() {
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 text-[11px] font-semibold text-[hsl(var(--text-secondary))]">
                             <span className={`size-2 rounded-full ${columnAccentDot[column.id]}`}></span>
-                            <span className="uppercase tracking-[0.35em] text-[10px] text-[hsl(var(--text-primary))]">{column.title}</span>
+                            <span className="uppercase tracking-wide text-[10px] text-[hsl(var(--text-primary))]">{column.title}</span>
                             <span className="px-2 py-0.5 rounded-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[10px] font-medium">{column.items.length}</span>
                         </div>
                         <button className="text-[10px] font-medium uppercase tracking-wide text-[hsl(var(--primary))] flex items-center gap-2">
@@ -868,7 +868,7 @@ export default function CommunityHubPage() {
             </div>
             <header className="rounded-lg border border-[hsl(var(--border))] bg-gradient-to-br from-[hsl(var(--surface-2))] to-[hsl(var(--surface-1))] p-4 md:p-3 space-y-3">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div className="flex items-center gap-3 text-[9px] font-medium uppercase tracking-[0.35em] text-[hsl(var(--text-secondary))]">
+                    <div className="flex items-center gap-3 text-[9px] font-medium uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                         <button
                             type="button"
                             onClick={() => router.back()}
@@ -910,7 +910,7 @@ export default function CommunityHubPage() {
                                 type="button"
                                 onClick={handleShareToggle}
                                 aria-expanded={shareOpen}
-                                className="px-4 h-9 rounded-lg border border-[hsl(var(--border))] text-[10px] font-medium uppercase tracking-[0.35em] flex items-center gap-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
+                                className="px-4 h-9 rounded-lg border border-[hsl(var(--border))] text-[10px] font-medium uppercase tracking-wide flex items-center gap-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
                             >
                                 <Share2 size={14} /> Compartir acceso
                             </button>

@@ -277,7 +277,7 @@ export default function ActaManagementPage() {
                                                         <School size={24} />
                                                     </div>
                                                     <div>
-                                                        <h2 className="text-xl font-black text-slate-800 dark:text-white tracking-tighter leading-none">{selectedCourse.title}</h2>
+                                                        <h2 className="text-xl font-bold text-slate-800 dark:text-white tracking-tighter leading-none">{selectedCourse.title}</h2>
                                                         <p className="text-sm font-medium text-slate-500 mt-1">Gestión de Cierre Académico y Certificación.</p>
                                                     </div>
                                                 </div>
@@ -297,14 +297,14 @@ export default function ActaManagementPage() {
                                                         <label className="text-[10px] font-semibold uppercase text-slate-500 ml-2">Nota Mínima</label>
                                                         <div className="relative">
                                                             <input type="number" value={minGrade} onChange={(e) => setMinGrade(Number(e.target.value))} className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-lg p-4 font-semibold focus:ring-4 focus:ring-blue-500/10 transition-all outline-none" />
-                                                            <span className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 font-black">%</span>
+                                                            <span className="font-semibold">%</span>
                                                         </div>
                                                     </div>
                                                     <div className="space-y-2">
                                                         <label className="text-[10px] font-semibold uppercase text-slate-500 ml-2">Asistencia Mínima</label>
                                                         <div className="relative">
                                                             <input type="number" value={minAttendance} onChange={(e) => setMinAttendance(Number(e.target.value))} className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-lg p-4 font-semibold focus:ring-4 focus:ring-blue-500/10 transition-all outline-none" />
-                                                            <span className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 font-black">%</span>
+                                                            <span className="font-semibold">%</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -376,7 +376,7 @@ export default function ActaManagementPage() {
                                             <BookOpen size={64} strokeWidth={1} />
                                         </div>
                                         <div className="space-y-2">
-                                            <h3 className="text-lg font-black text-slate-800 dark:text-white tracking-tighter">Selecciona un Curso Formal</h3>
+                                            <h3 className="text-lg font-bold text-slate-800 dark:text-white tracking-tighter">Selecciona un Curso Formal</h3>
                                             <p className="text-slate-500 dark:text-slate-400 font-medium max-w-xs mx-auto leading-relaxed">Elige un curso del currículo de la Escuela de Líderes para gestionar su cierre oficial.</p>
                                         </div>
                                     </motion.div>

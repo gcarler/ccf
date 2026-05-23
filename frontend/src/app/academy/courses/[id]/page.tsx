@@ -70,7 +70,7 @@ export default function CourseCoordinationPage() {
 
     if (!course) return (
         <div className="flex flex-col items-center justify-center h-full p-3 text-center space-y-4">
-            <h2 className="text-lg font-black text-rose-500 uppercase">Programa no encontrado</h2>
+            <h2 className="text-lg font-bold text-rose-500 uppercase">Programa no encontrado</h2>
             <button onClick={() => router.back()} className="text-sm font-semibold text-blue-600 uppercase tracking-wide flex items-center gap-2">
                 <ArrowLeft size={14} /> Volver a Coordinación
             </button>
@@ -101,7 +101,7 @@ export default function CourseCoordinationPage() {
                 <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div className="space-y-2">
                         <DSBadge tone={course.modality === 'formal' ? 'violet' : 'emerald'} label={course.modality === 'formal' ? 'RUTA FORMAL' : 'RUTA NO FORMAL'} />
-                        <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none uppercase">
+                        <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-none uppercase">
                             {course.title}
                         </h1>
                         <p className="text-slate-500 font-bold uppercase tracking-wide text-xs flex items-center gap-2">

@@ -1,6 +1,8 @@
 from backend.core.database import Base, engine
 from backend.models_academy import (  # Import models to register them with Base
-    AssessmentAnswer, AssessmentAttempt)
+    AssessmentAnswer,
+    AssessmentAttempt,
+)
 
 
 def migrate():

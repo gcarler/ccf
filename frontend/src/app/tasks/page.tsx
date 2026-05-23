@@ -235,7 +235,7 @@ export default function UserTasksPage() {
               ].map(metric => (
                 <div key={metric.label} className="rounded-md border border-slate-200 px-3 py-2 dark:border-white/10">
                   <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">{metric.label}</p>
-                  <p className="text-lg font-black text-slate-900 dark:text-white">{metric.value}</p>
+                  <p className="text-lg font-bold text-slate-900 dark:text-white">{metric.value}</p>
                 </div>
               ))}
             </div>
@@ -282,7 +282,7 @@ export default function UserTasksPage() {
                 <CheckCircle2 size={28} />
               </div>
               <div>
-                <p className="text-lg font-black text-slate-800 dark:text-white">{query || filterPriority !== "all" ? "Sin resultados" : "Sin tareas pendientes"}</p>
+                <p className="text-lg font-bold text-slate-800 dark:text-white">{query || filterPriority !== "all" ? "Sin resultados" : "Sin tareas pendientes"}</p>
                 <p className="mt-1 max-w-sm text-sm text-slate-500">
                   {query || filterPriority !== "all" ? "Ajusta los filtros para ver otras tareas." : "No tienes tareas activas asignadas en este momento."}
                 </p>

@@ -64,7 +64,7 @@ export default function PublishTestimony() {
                         <div className="size-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]"></div>
                         Inspiración
                     </div>
-                    <h1 className="text-xl font-black text-[hsl(var(--text-primary))] tracking-tighter">Publicar Milagro</h1>
+                    <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tighter">Publicar Milagro</h1>
                 </div>
             </header>
 
@@ -72,7 +72,7 @@ export default function PublishTestimony() {
                 {/* Hero / Instruction */}
                 <div className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md p-4 md:p-3 shadow-sm relative overflow-hidden">
                     <div className="absolute -right-4 -top-4 size-10 bg-[hsl(var(--primary)/0.05)] rounded-full blur-3xl"></div>
-                    <h2 className="text-lg font-black text-[hsl(var(--text-primary))] tracking-tight mb-2 relative z-10">Cuéntanos tu historia</h2>
+                    <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tight mb-2 relative z-10">Cuéntanos tu historia</h2>
                     <p className="text-[hsl(var(--text-secondary))] text-sm font-medium relative z-10">Tu fe es la evidencia de que Dios sigue obrando milagros hoy.</p>
                 </div>
 
@@ -129,7 +129,7 @@ export default function PublishTestimony() {
                         <div className="size-8 rounded-lg bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))] mb-3 group-hover:scale-110 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all shadow-sm">
                             <Camera size={28} strokeWidth={2.5} />
                         </div>
-                        <p className="text-[hsl(var(--text-primary))] font-black text-sm uppercase tracking-tight">Añadir Evidencia</p>
+                        <p className="font-semibold text-sm uppercase tracking-tight">Añadir Evidencia</p>
                         <p className="text-[hsl(var(--text-secondary))] text-[10px] mt-2 font-semibold uppercase tracking-wide opacity-60">Foto o Video (Máx 50MB)</p>
                     </div>
                 </section>

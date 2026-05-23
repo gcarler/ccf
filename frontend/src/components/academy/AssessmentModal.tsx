@@ -135,7 +135,7 @@ export default function AssessmentModal({ assessmentId, enrollmentId, token, onC
                             <Sparkles size={24} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">{assessment.title}</h2>
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight">{assessment.title}</h2>
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Validación Ministerial MESH</p>
                         </div>
                     </div>
@@ -170,7 +170,7 @@ export default function AssessmentModal({ assessmentId, enrollmentId, token, onC
                                     </motion.div>
                                 </div>
                                 <div className="space-y-3">
-                                    <h3 className="text-lg font-black text-slate-800 dark:text-white tracking-tighter">
+                                    <h3 className="text-lg font-bold text-slate-800 dark:text-white tracking-tighter">
                                         {result.passed ? '¡Felicidades, Siervo!' : 'Sigue Intentándolo'}
                                     </h3>
                                     <p className="text-slate-500 dark:text-slate-400 font-medium max-w-md mx-auto text-lg leading-relaxed">
@@ -196,10 +196,10 @@ export default function AssessmentModal({ assessmentId, enrollmentId, token, onC
                                     <ShieldCheck size={48} />
                                 </div>
                                 <div className="space-y-3">
-                                    <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight uppercase">Instrucciones de Evaluación</h3>
+                                    <h3 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight uppercase">Instrucciones de Evaluación</h3>
                                     <p className="text-slate-500 dark:text-slate-400 font-medium max-w-lg mx-auto text-base">
-                                        Este examen consta de <span className="font-black text-blue-600">{questions.length} preguntas</span>. 
-                                        Para aprobar, necesitas una nota mínima de <span className="font-black text-blue-600">{assessment.min_score}%</span>. 
+                                        Este examen consta de <span className="font-semibold text-blue-600">{questions.length} preguntas</span>. 
+                                        Para aprobar, necesitas una nota mínima de <span className="font-semibold text-blue-600">{assessment.min_score}%</span>. 
                                         Asegúrate de estar en un lugar tranquilo antes de iniciar.
                                     </p>
                                 </div>
@@ -214,7 +214,7 @@ export default function AssessmentModal({ assessmentId, enrollmentId, token, onC
                             >
                                 <div className="space-y-4">
                                     <span className="font-semibold text-blue-600 uppercase tracking-wide bg-blue-50 dark:bg-blue-500/10 px-3 py-1 rounded-lg">Pregunta {currentStep} de {questions.length}</span>
-                                    <h3 className="text-lg lg:text-xl font-black text-slate-800 dark:text-white leading-tight">
+                                    <h3 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-white leading-tight">
                                         {questions[currentStep - 1].question_text}
                                     </h3>
                                 </div>

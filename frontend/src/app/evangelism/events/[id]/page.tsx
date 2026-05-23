@@ -348,7 +348,7 @@ export default function EventDetailPage() {
                     {/* Header */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-xl font-black text-slate-900 dark:text-white uppercase">{event.name}</h1>
+                            <h1 className="text-xl font-bold text-slate-900 dark:text-white uppercase">{event.name}</h1>
                             <p className="text-slate-500 font-medium text-sm flex items-center gap-2 mt-1">
                                 <MapPin size={14}/> {event.location || 'Sin ubicacion'}
                             </p>
@@ -418,19 +418,19 @@ export default function EventDetailPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-center">
                                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Promedio Histórico</p>
-                                            <h3 className="text-xl font-black text-slate-900 dark:text-white">{analytics.kpis.historical_avg}</h3>
+                                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">{analytics.kpis.historical_avg}</h3>
                                             <p className="text-xs font-medium text-slate-500 mt-1">Personas por sesión</p>
                                         </div>
                                         <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-center">
                                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Tendencia de Crecimiento</p>
-                                            <h3 className={`text-xl font-black ${analytics.kpis.trend_percentage > 0 ? 'text-emerald-500' : analytics.kpis.trend_percentage < 0 ? 'text-red-500' : 'text-slate-500'}`}>
+                                            <h3 className={`text-xl font-bold ${analytics.kpis.trend_percentage > 0 ? 'text-emerald-500' : analytics.kpis.trend_percentage < 0 ? 'text-red-500' : 'text-slate-500'}`}>
                                                 {analytics.kpis.trend_percentage > 0 ? '+' : ''}{analytics.kpis.trend_percentage}%
                                             </h3>
                                             <p className="text-xs font-medium text-slate-500 mt-1">Respecto al mes anterior</p>
                                         </div>
                                         <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-center">
                                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Mes Pico (Récord)</p>
-                                            <h3 className="text-xl font-black text-blue-500">{analytics.kpis.peak_month.avg}</h3>
+                                            <h3 className="text-xl font-bold text-blue-500">{analytics.kpis.peak_month.avg}</h3>
                                             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mt-1">{analytics.kpis.peak_month.month}</p>
                                         </div>
                                     </div>
@@ -539,11 +539,11 @@ export default function EventDetailPage() {
                                                 <Users className="text-emerald-500" size={18}/> Reporte de Asistencia
                                             </h3>
                                             <div className="flex items-center gap-4 mb-3">
-                                                <div className="size-8 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center text-lg font-black">
+                                                <div className="size-8 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center text-lg font-bold">
                                                     {sessionData?.total_attendance || 0}
                                                 </div>
                                                 <div>
-                                                    <p className="text-lg font-black text-slate-800 dark:text-white">Asistentes Totales</p>
+                                                    <p className="text-lg font-bold text-slate-800 dark:text-white">Asistentes Totales</p>
                                                     <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Registrados en check-in</p>
                                                 </div>
                                             </div>
@@ -563,7 +563,7 @@ export default function EventDetailPage() {
                                                 <div className="mt-3 p-4 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 flex items-center justify-between gap-4">
                                                     <div>
                                                         <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">Inasistentes</p>
-                                                        <p className="text-lg font-black text-amber-700 dark:text-amber-400 mt-0.5">{sessionData?.total_absentees}</p>
+                                                        <p className="text-lg font-bold text-amber-700 dark:text-amber-400 mt-0.5">{sessionData?.total_absentees}</p>
                                                         {sessionData?.absentees_truncated && (
                                                             <p className="text-[10px] text-amber-600/70 mt-1">Mostrando {sessionData?.absentees?.length} de {sessionData?.total_absentees}. Descarga el CSV para ver todos.</p>
                                                         )}

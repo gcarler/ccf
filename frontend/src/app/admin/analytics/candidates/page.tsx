@@ -218,7 +218,7 @@ function CandidateStat({ label, value, icon: Icon, color, auraColor }: any) {
             </div>
             <div>
                 <p className="font-semibold text-slate-400 uppercase tracking-wide mb-1 leading-none">{label}</p>
-                <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tighter leading-none">{value}</h4>
+                <h4 className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter leading-none">{value}</h4>
             </div>
         </div>
     );

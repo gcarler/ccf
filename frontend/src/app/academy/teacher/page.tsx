@@ -165,7 +165,7 @@ export default function TeacherWorkspace() {
                     {viewType === 'wiki' && (
                         <section className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-4 shadow-[var(--shadow-floating)] space-y-6">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">Guía de Evaluación y Rúbricas</h3>
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight">Guía de Evaluación y Rúbricas</h3>
                                 <DSBadge tone="blue" label="Privado Docentes" />
                             </div>
                             <textarea
@@ -183,7 +183,7 @@ export default function TeacherWorkspace() {
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div>
                                         <DSBadge tone="blue" label="Workspace Académico" />
-                                        <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight mt-2">Control de Entregas</h3>
+                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight mt-2">Control de Entregas</h3>
                                     </div>
                                     <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-lg border border-slate-200 dark:border-white/10 self-start md:self-center">
                                         {(['courses', 'pending', 'history'] as const).map((m) => (
@@ -222,7 +222,7 @@ export default function TeacherWorkspace() {
                                                     <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-[9px] font-semibold uppercase tracking-wide text-blue-600">{course.code}</span>
                                                     <DSBadge tone="emerald" label={course.modality} />
                                                 </div>
-                                                <h4 className="text-xl font-black text-slate-800 dark:text-white mb-4 tracking-tight leading-none">{course.title}</h4>
+                                                <h4 className="text-xl font-bold text-slate-800 dark:text-white mb-4 tracking-tight leading-none">{course.title}</h4>
                                                 <div className="flex items-center gap-4 mb-3">
                                                     <div className="flex items-center gap-2 text-slate-400 text-[10px] font-bold uppercase tracking-wide">
                                                         <Users size={14} className="text-blue-500" /> {course.students_count || 0} Alumnos
@@ -260,7 +260,7 @@ export default function TeacherWorkspace() {
                                                         <DSBadge tone="blue" label={submission.lesson_title} />
                                                         <span className="font-semibold text-slate-300 uppercase tracking-wide">Entrega #{submission.id}</span>
                                                     </div>
-                                                    <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none">
+                                                    <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">
                                                         {submission.student_name}
                                                     </h3>
                                                     <p className="text-sm text-slate-500 line-clamp-2 font-medium bg-slate-100/50 dark:bg-black/20 p-4 rounded-md italic">&quot;{submission.comment || 'Sin comentarios adicionales'}&quot;</p>
@@ -331,7 +331,7 @@ export default function TeacherWorkspace() {
                                                             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-1">{submission.lesson_title}</div>
                                                         </td>
                                                         <td className="px-4 py-2">
-                                                            <span className="text-lg font-black text-slate-900 dark:text-white">{submission.grade?.toFixed(1) ?? 'N/A'}</span>
+                                                            <span className="text-lg font-bold text-slate-900 dark:text-white">{submission.grade?.toFixed(1) ?? 'N/A'}</span>
                                                         </td>
                                                         <td className="px-4 py-2 text-xs text-slate-500 font-medium">{new Date(submission.submitted_at).toLocaleDateString()}</td>
                                                         <td className="px-4 py-2 text-right">

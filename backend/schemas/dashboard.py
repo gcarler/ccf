@@ -1,8 +1,12 @@
 from __future__ import annotations
-from typing import List, Dict, Optional
-from pydantic import BaseModel, Field
+
 from datetime import datetime
+from typing import Dict, List, Optional
+
+from pydantic import BaseModel, Field
+
 from backend.schemas._common import orm_config
+
 
 # --- Common Dashboard Elements ---
 class MetricCard(BaseModel):
@@ -12,11 +16,14 @@ class MetricCard(BaseModel):
     color: Optional[str] = "blue"
     icon: Optional[str] = None
 
+
 class ChartDataPoint(BaseModel):
     label: str
     value: float
 
+
 # --- Module Specific Dashboards ---
+
 
 class AcademyDashboard(BaseModel):
     cards: List[MetricCard]
@@ -26,6 +33,7 @@ class AcademyDashboard(BaseModel):
     at_risk_students_count: int
     model_config = orm_config
 
+
 class CrmDashboard(BaseModel):
     cards: List[MetricCard]
     pipeline_distribution: List[ChartDataPoint]
@@ -34,12 +42,14 @@ class CrmDashboard(BaseModel):
     conversion_rate: float
     model_config = orm_config
 
+
 class FinanceDashboard(BaseModel):
     cards: List[MetricCard]
     income_by_category: List[ChartDataPoint]
     monthly_comparison: List[ChartDataPoint]
     pending_pledges_total: float
     model_config = orm_config
+
 
 class ProjectsDashboard(BaseModel):
     cards: List[MetricCard]
@@ -48,12 +58,14 @@ class ProjectsDashboard(BaseModel):
     delayed_tasks_count: int
     model_config = orm_config
 
+
 class AssetsDashboard(BaseModel):
     cards: List[MetricCard]
     maintenance_cost_trends: List[ChartDataPoint]
     lifecycle_status: List[ChartDataPoint]
     critical_alerts_count: int
     model_config = orm_config
+
 
 class AdminGlobalDashboard(BaseModel):
     cards: List[MetricCard]

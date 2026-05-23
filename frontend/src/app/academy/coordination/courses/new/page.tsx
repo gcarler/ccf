@@ -139,7 +139,7 @@ export default function NewCoursePage() {
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/10 rounded-full text-[10px] font-semibold uppercase tracking-wide text-blue-600">
                             <Plus size={14} strokeWidth={3} /> Laboratorio de Contenido
                         </div>
-                        <h1 className="text-xl lg:text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">Diseña un <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-400">Nuevo Futuro.</span></h1>
+                        <h1 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">Diseña un <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-400">Nuevo Futuro.</span></h1>
                         <p className="text-slate-500 text-sm font-medium max-w-2xl leading-relaxed">Configura los cimientos de una nueva experiencia educativa para la comunidad CCF.</p>
                     </header>
 

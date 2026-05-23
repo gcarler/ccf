@@ -1,5 +1,7 @@
-from backend.management.schema import (print_schema_drift_report,
-                                       reset_database_for_local_bootstrap)
+from backend.management.schema import (
+    print_schema_drift_report,
+    reset_database_for_local_bootstrap,
+)
 
 
 def reset_database():

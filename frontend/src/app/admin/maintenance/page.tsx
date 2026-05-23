@@ -93,7 +93,7 @@ export default function AdminMaintenancePage() {
                             <AlertCircle size={24} />
                         </div>
                         <div>
-                            <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">{row.item}</h3>
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight">{row.item}</h3>
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">{row.task}</p>
                         </div>
                     </div>
@@ -260,7 +260,7 @@ export default function AdminMaintenancePage() {
                                                     <AlertCircle size={28} />
                                                 </div>
                                                 <div>
-                                                    <div className="text-lg font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight group-hover:text-amber-600 transition-colors leading-none mb-2">{row.item}</div>
+                                                    <div className="text-lg font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight group-hover:text-amber-600 transition-colors leading-none mb-2">{row.item}</div>
                                                     <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">{row.task}</div>
                                                 </div>
                                             </div>
@@ -299,7 +299,7 @@ export default function AdminMaintenancePage() {
                                     <div className="relative size-10 p-4 rounded-full border-2 border-slate-50 dark:border-white/5 flex items-center justify-center shadow-inner">
                                         <div className="size-full rounded-full bg-gradient-to-tr from-amber-500/5 to-amber-500/20 animate-pulse" />
                                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                            <span className="text-xl font-black text-slate-900 dark:text-white italic tracking-tighter">{stats.operative}%</span>
+                                            <span className="text-xl font-bold text-slate-900 dark:text-white italic tracking-tighter">{stats.operative}%</span>
                                             <span className="font-semibold text-emerald-500 uppercase tracking-wide mt-1">Óptimo</span>
                                         </div>
                                         {/* Circular Progress Simulated */}

@@ -516,7 +516,7 @@ export default function ProjectDetailPage() {
                                                             <span className="text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full border border-slate-200 bg-slate-50 text-slate-600 dark:border-white/10">
                                                                 {phases.find(p => p.slug === task.status)?.name || task.status}
                                                             </span>
-                                                            <span className="text-[10px] text-slate-400 uppercase font-black">{task.priority}</span>
+                                                            <span className="font-semibold">{task.priority}</span>
                                                             {task.due_date && <span className="text-[10px] text-slate-400">{new Date(task.due_date).toLocaleDateString()}</span>}
                                                         </div>
                                                     </div>

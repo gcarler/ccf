@@ -5,15 +5,13 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import (APIRouter, Depends, File, HTTPException, Query,
-                     UploadFile, status)
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from pydantic import BaseModel as pydantic_BaseModel
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session, selectinload
 
 from backend import crud, models, schemas
-from backend.auth import (normalize_role, require_active_user,
-                          require_staff_or_admin)
+from backend.auth import normalize_role, require_active_user, require_staff_or_admin
 from backend.core.audit import record_admin_action
 from backend.core.config import get_settings
 from backend.core.database import get_db

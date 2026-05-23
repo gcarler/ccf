@@ -63,7 +63,7 @@ export default function EvangelismShell({
                     <div className="mx-auto mb-4 size-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
                         <ShieldAlert size={22} />
                     </div>
-                    <h2 className="text-lg font-black text-amber-900">Acceso restringido</h2>
+                    <h2 className="text-lg font-bold text-amber-900">Acceso restringido</h2>
                     <p className="mt-2 text-sm font-medium text-amber-800">
                         Este módulo requiere rol pastoral o administrativo.
                     </p>

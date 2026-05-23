@@ -24,7 +24,7 @@ export const StatCard: React.FC<StatCardProps> = ({
             </div>
             <div>
                 <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mb-1">{label}</div>
-                <div className="text-xl font-black text-white tabular-nums tracking-tighter italic">
+                <div className="text-xl font-bold text-white tabular-nums tracking-tighter italic">
                     {value}
                 </div>
             </div>

@@ -81,15 +81,15 @@ export default function GroupsHistoryPage() {
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <article className="rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/[0.03]">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Total registros</p>
-                        <p className="mt-2 text-xl font-black text-slate-800 dark:text-slate-100">{groups.length}</p>
+                        <p className="mt-2 text-xl font-bold text-slate-800 dark:text-slate-100">{groups.length}</p>
                     </article>
                     <article className="rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/[0.03]">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Meses con actividad</p>
-                        <p className="mt-2 text-xl font-black text-indigo-600">{timeline.length}</p>
+                        <p className="mt-2 text-xl font-bold text-indigo-600">{timeline.length}</p>
                     </article>
                     <article className="rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/[0.03]">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Con lider asignado</p>
-                        <p className="mt-2 text-xl font-black text-emerald-600">{groups.filter((item) => !!item.leader_name).length}</p>
+                        <p className="mt-2 text-xl font-bold text-emerald-600">{groups.filter((item) => !!item.leader_name).length}</p>
                     </article>
                 </section>
 

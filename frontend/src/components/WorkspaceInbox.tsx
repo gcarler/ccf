@@ -135,7 +135,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                         <CheckCircle2 size={40} />
                                     </div>
                                     <div className="space-y-1">
-                                        <h4 className="text-lg font-black text-slate-800 dark:text-white tracking-tight">Estás al día</h4>
+                                        <h4 className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">Estás al día</h4>
                                         <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No tienes notificaciones pendientes de revisar.</p>
                                     </div>
                                 </div>

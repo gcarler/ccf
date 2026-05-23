@@ -142,7 +142,7 @@ export default function ForumThreadDetail() {
                                 <button className="p-2 text-slate-300 hover:text-slate-600 transition-colors"><MoreVertical size={20} /></button>
                             </div>
 
-                            <h1 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-tight">{thread.title}</h1>
+                            <h1 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight leading-tight">{thread.title}</h1>
 
                             <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-md border border-slate-100 dark:border-white/5">
                                 <p className="text-[16px] leading-relaxed text-slate-700 dark:text-slate-300 font-medium">

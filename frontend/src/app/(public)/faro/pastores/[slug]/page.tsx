@@ -60,7 +60,7 @@ export default function PastorProfilePage({ params }: { params: Promise<{ slug: 
                             <span className="text-sm font-semibold uppercase tracking-wide text-faro-primary mb-4 block">
                                 {pastor.role}
                             </span>
-                            <h1 className="text-xl md:text-xl font-black text-faro-on-background tracking-tighter mb-3">
+                            <h1 className="text-xl md:text-xl font-bold text-faro-on-background tracking-tighter mb-3">
                                 {pastor.name}
                             </h1>
                             <div className="flex gap-4">
@@ -83,7 +83,7 @@ export default function PastorProfilePage({ params }: { params: Promise<{ slug: 
             <section className="py-1.5 px-3 md:px-4 lg:px-24">
                 <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-3">
                     <div className="md:col-span-2">
-                        <h2 className="text-xl font-black text-faro-on-surface mb-3">Biografía</h2>
+                        <h2 className="text-xl font-bold text-faro-on-surface mb-3">Biografía</h2>
                         <div className="prose prose-lg dark:prose-invert prose-p:text-faro-on-surface-variant prose-p:leading-relaxed">
                             <p className="text-xl font-medium text-faro-on-surface mb-3">
                                 {pastor.description}
@@ -104,7 +104,7 @@ export default function PastorProfilePage({ params }: { params: Promise<{ slug: 
                     
                     <div className="md:col-span-1 space-y-3">
                         <div className="bg-faro-surface-container rounded-lg p-4 border border-faro-outline-variant/10">
-                            <h3 className="text-xl font-black text-faro-on-surface mb-3">Información</h3>
+                            <h3 className="text-xl font-bold text-faro-on-surface mb-3">Información</h3>
                             <ul className="space-y-6">
                                 <li>
                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-faro-primary mb-1">Rol Ministerial</p>
@@ -118,7 +118,7 @@ export default function PastorProfilePage({ params }: { params: Promise<{ slug: 
                         </div>
                         
                         <div className="bg-gradient-to-br from-faro-primary to-faro-secondary rounded-lg p-4 text-white text-center">
-                            <h3 className="text-xl font-black mb-4">Conéctate</h3>
+                            <h3 className="text-xl font-bold mb-4">Conéctate</h3>
                             <p className="text-sm opacity-90 mb-3">Únete a nosotros este domingo y recibe una palabra que iluminará tu semana.</p>
                             <Link href="/faro/sedes" className="inline-block bg-white text-faro-primary font-black text-[10px] uppercase tracking-wide px-3 py-3 rounded-md hover:scale-105 transition-transform">
                                 Ver Horarios

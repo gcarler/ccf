@@ -5,8 +5,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import (APIRouter, Depends, File, Form, HTTPException, Query,
-                     UploadFile)
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas

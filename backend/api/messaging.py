@@ -1,7 +1,6 @@
 from typing import List, Optional
 
-from fastapi import (APIRouter, Depends, HTTPException, WebSocket,
-                     WebSocketDisconnect)
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 

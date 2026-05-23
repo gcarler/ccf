@@ -37,11 +37,11 @@ export default function MinistryProfilePage() {
                 <div className="lg:col-span-2 space-y-3">
                     <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-lg space-y-3">
                         <div className="flex items-center gap-3">
-                            <div className="w-24 h-24 bg-gradient-to-br from-amber-500 to-primary rounded-lg flex items-center justify-center text-white text-lg font-black shadow-2xl">
+                            <div className="w-24 h-24 bg-gradient-to-br from-amber-500 to-primary rounded-lg flex items-center justify-center text-white text-lg font-bold shadow-2xl">
                                 R
                             </div>
                             <div className="space-y-1">
-                                <h2 className="text-xl font-black text-white tracking-tight uppercase italic">Ricardo <span className="text-amber-500">Gomez</span></h2>
+                                <h2 className="text-xl font-bold text-white tracking-tight uppercase italic">Ricardo <span className="text-amber-500">Gomez</span></h2>
                                 <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">
                                     <Shield size={12} className="text-amber-500" /> Miembro Activo <span className="opacity-20">•</span> Desde 2022
                                 </div>
@@ -78,7 +78,7 @@ export default function MinistryProfilePage() {
                     </div>
 
                     <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-lg space-y-6">
-                        <h3 className="text-xl font-black text-white tracking-tight uppercase italic">Mis <span className="text-amber-500">Logros</span></h3>
+                        <h3 className="text-xl font-bold text-white tracking-tight uppercase italic">Mis <span className="text-amber-500">Logros</span></h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {[
                                 { label: 'Fundamentos', icon: Star, color: 'text-blue-400' },
@@ -100,7 +100,7 @@ export default function MinistryProfilePage() {
                 <div className="space-y-6">
                     <div className="bg-gradient-to-br from-amber-500/20 to-primary/20 border border-amber-500/20 p-4 rounded-lg space-y-6">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-xl font-black text-white tracking-tighter uppercase italic">Nivel <span className="text-amber-500">12</span></h3>
+                            <h3 className="text-xl font-bold text-white tracking-tighter uppercase italic">Nivel <span className="text-amber-500">12</span></h3>
                             <Zap size={24} className="text-amber-500 animate-pulse" />
                         </div>
                         <div className="space-y-2">

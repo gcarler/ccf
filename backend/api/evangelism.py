@@ -10,13 +10,20 @@ from sqlalchemy.orm import Session
 from backend import crud, models, schemas
 from backend.api.evangelism_events import router as events_router
 from backend.api.evangelism_faro import router as faro_router
-from backend.api.evangelism_shared import (_channel_label,
-                                           _member_matches_segment,
-                                           _resolve_campaign_members,
-                                           _serialize_crm_task,
-                                           _serialize_message_group, utc_now)
-from backend.auth import (normalize_role, require_active_user, require_admin,
-                          require_pastor_or_admin)
+from backend.api.evangelism_shared import (
+    _channel_label,
+    _member_matches_segment,
+    _resolve_campaign_members,
+    _serialize_crm_task,
+    _serialize_message_group,
+    utc_now,
+)
+from backend.auth import (
+    normalize_role,
+    require_active_user,
+    require_admin,
+    require_pastor_or_admin,
+)
 from backend.core.database import get_db
 from backend.mesh_websockets import manager
 
@@ -1144,12 +1151,17 @@ def crm_analytics(
 
 # --- EVANGELISM STRATEGIES ---
 
-from backend.crud.crm import (create_evangelism_strategy,
-                              delete_evangelism_strategy,
-                              get_evangelism_strategies,
-                              update_evangelism_strategy)
-from backend.schemas.crm import (EvangelismStrategy, EvangelismStrategyCreate,
-                                 EvangelismStrategyUpdate)
+from backend.crud.crm import (
+    create_evangelism_strategy,
+    delete_evangelism_strategy,
+    get_evangelism_strategies,
+    update_evangelism_strategy,
+)
+from backend.schemas.crm import (
+    EvangelismStrategy,
+    EvangelismStrategyCreate,
+    EvangelismStrategyUpdate,
+)
 
 
 @router.get("/strategies", response_model=List[EvangelismStrategy])

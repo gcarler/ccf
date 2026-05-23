@@ -1,10 +1,33 @@
 """API routers grouped by domain."""
 
-from backend.api import (academy, admin, agenda, agents, analytics, assets,
-                         auth, cms, cms_v2, community, content, crm, dashboard,
-                         donations, evangelism, finance, governance, graph,
-                         messaging, prayer, projects, public, spiritual_life,
-                         support, system, workspace)
+from backend.api import (
+    academy,
+    admin,
+    agenda,
+    agents,
+    analytics,
+    assets,
+    auth,
+    cms,
+    cms_v2,
+    community,
+    content,
+    crm,
+    dashboard,
+    donations,
+    evangelism,
+    finance,
+    governance,
+    graph,
+    messaging,
+    prayer,
+    projects,
+    public,
+    spiritual_life,
+    support,
+    system,
+    workspace,
+)
 
 __all__ = [
     "academy",

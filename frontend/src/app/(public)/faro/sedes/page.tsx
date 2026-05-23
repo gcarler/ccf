@@ -85,7 +85,7 @@ export default function SedesPage() {
             {/* ── LISTADO DE SEDES ──────────────────────────── */}
             <aside className="w-full md:w-[450px] lg:w-[500px] flex flex-col h-[calc(100vh-88px)] bg-faro-surface-container-lowest border-r border-faro-outline-variant/10 z-20">
                 <div className="p-4 lg:p-4 border-b border-faro-outline-variant/10">
-                    <span className="text-faro-primary font-black text-[10px] tracking-wide uppercase block mb-4">
+                    <span className="font-semibold text-[10px] tracking-wide uppercase block mb-4">
                         {heroContent?.eyebrow || "Nuestra Presencia"}
                     </span>
                     <h1 className="text-lg font-bold tracking-tight text-faro-on-surface mb-3">
@@ -131,7 +131,7 @@ export default function SedesPage() {
                                         <span className="text-[9px] font-semibold uppercase tracking-wide bg-faro-secondary text-white px-2.5 py-1 rounded-full">Principal</span>
                                     )}
                                 </div>
-                                <h3 className="text-xl font-black text-faro-on-surface mb-2">{loc.name}</h3>
+                                <h3 className="text-xl font-bold text-faro-on-surface mb-2">{loc.name}</h3>
                                 <p className="text-faro-on-surface-variant text-sm mb-3 leading-relaxed opacity-80">{loc.address}</p>
 
                                 <AnimatePresence>

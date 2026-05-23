@@ -94,7 +94,7 @@ export default function RolesSettingsPage() {
                 <div className="max-w-4xl mx-auto space-y-3">
                     <header className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Ministerios y Tipos de Asistencia</h1>
+                            <h1 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">Ministerios y Tipos de Asistencia</h1>
                             <p className="text-sm font-medium text-slate-500 mt-2">Configura los roles de la iglesia. Esto afectará los perfiles y el CRM.</p>
                         </div>
                         <button 

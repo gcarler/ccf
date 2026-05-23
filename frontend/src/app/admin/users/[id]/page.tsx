@@ -189,7 +189,7 @@ export default function UserDetailPage() {
                             </div>
                             
                             <div className="space-y-3 text-center md:text-left relative z-10 flex-1">
-                                <h1 className="text-lg font-black text-slate-800 dark:text-white tracking-tight">{user.username}</h1>
+                                <h1 className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">{user.username}</h1>
                                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                                     <DSBadge tone={user.role === 'admin' ? 'violet' : 'blue'} label={user.role.toUpperCase()} />
                                     <DSBadge tone={user.is_active ? 'emerald' : 'amber'} label={user.is_active ? 'ACTIVO' : 'SUSPENDIDO'} />

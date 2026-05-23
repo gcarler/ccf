@@ -76,7 +76,7 @@ export default function AdminCourseContentPage() {
                                 <DSBadge tone="blue" label="PROGRAMA ACADÉMICO" />
                                 <DSBadge tone="emerald" label="PUBLICADO" />
                             </div>
-                            <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-tight uppercase">
+                            <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-tight uppercase">
                                 {course?.title}
                             </h1>
                         </header>
@@ -98,7 +98,7 @@ export default function AdminCourseContentPage() {
                                             </span>
                                             <div>
                                                 <h4 className="text-sm font-bold text-slate-800 dark:text-white">{lesson.title}</h4>
-                                                <p className="text-[10px] text-slate-400 uppercase font-black">{lesson.modality || 'Video + PDF'}</p>
+                                                <p className="font-semibold">{lesson.modality || 'Video + PDF'}</p>
                                             </div>
                                         </div>
                                         <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-500 transition-all" />

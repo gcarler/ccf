@@ -47,7 +47,7 @@ export default function GroupsPage() {
                         <div className="size-2 rounded-full bg-current shadow-[0_0_10px_currentColor]"></div>
                         Grupos Pequeños
                     </div>
-                    <h1 className="text-lg font-black text-[hsl(var(--text-primary))] tracking-tighter">Comunidades</h1>
+                    <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tighter">Comunidades</h1>
                     <p className="text-[hsl(var(--text-secondary))] font-medium">Encuentra un grupo para crecer juntos en fe y amistad.</p>
                 </div>
 
@@ -95,7 +95,7 @@ export default function GroupsPage() {
 
                         <div className="p-4 space-y-3 flex-1 flex flex-col">
                             <div className="space-y-1">
-                                <h3 className="text-base font-black text-[hsl(var(--text-primary))] tracking-tighter group-hover:text-[hsl(var(--primary))] transition-colors">
+                                <h3 className="text-base font-bold text-[hsl(var(--text-primary))] tracking-tighter group-hover:text-[hsl(var(--primary))] transition-colors">
                                     {group.name}
                                 </h3>
                                 <p className="text-[hsl(var(--text-secondary))] text-xs font-bold uppercase tracking-wide">

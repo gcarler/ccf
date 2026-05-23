@@ -94,7 +94,7 @@ function VerifyEmailContent() {
           transition={{ delay: 1 }}
           className="relative z-10"
         >
-          <p className="text-white/90 text-lg font-medium tracking-[0.02em] leading-relaxed">
+          <p className="text-white/90 text-lg font-medium tracking-normal leading-relaxed">
             Guiando a las naciones <br /> hacia la luz de la verdad.
           </p>
         </motion.div>

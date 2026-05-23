@@ -7,10 +7,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 
 from backend import crud, models, schemas
-from backend.api.evangelism_shared import (faro_expected_member_rows,
-                                           faro_member_payload, utc_now)
-from backend.auth import (get_current_user, normalize_role,
-                          require_pastor_or_admin)
+from backend.api.evangelism_shared import (
+    faro_expected_member_rows,
+    faro_member_payload,
+    utc_now,
+)
+from backend.auth import get_current_user, normalize_role, require_pastor_or_admin
 from backend.core.database import get_db
 
 router = APIRouter()

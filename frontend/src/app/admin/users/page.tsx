@@ -103,7 +103,7 @@ export default function AdminUsersPage() {
                 >
                     {/* Header */}
                     <motion.div variants={itemVariants} className="space-y-2">
-                        <h1 className="text-lg font-black text-slate-800 dark:text-white tracking-tighter">Usuarios <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Ministeriales.</span></h1>
+                        <h1 className="text-lg font-bold text-slate-800 dark:text-white tracking-tighter">Usuarios <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Ministeriales.</span></h1>
                         <p className="text-slate-500 dark:text-slate-400 font-medium">Control total sobre roles, permisos y estados de cuenta del staff y la congregación.</p>
                     </motion.div>
 

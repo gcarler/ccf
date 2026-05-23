@@ -618,7 +618,7 @@ export default function PlanificadorPage() {
                                 className="flex-1 text-[12px] bg-transparent outline-none text-slate-600 dark:text-slate-300 placeholder:text-slate-300 dark:placeholder:text-slate-600"
                             />
                             <div className="size-5 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
-                                <span className="text-[8px] text-white font-black">✦</span>
+                                <span className="font-semibold">✦</span>
                             </div>
                         </div>
                     </div>
@@ -641,7 +641,7 @@ export default function PlanificadorPage() {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Eventos visibles</p>
-                                        <p className="text-lg font-black text-slate-900 dark:text-white">{todayVisibleEvents.length}</p>
+                                        <p className="text-lg font-bold text-slate-900 dark:text-white">{todayVisibleEvents.length}</p>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Hoy</p>

@@ -8,12 +8,14 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.schemas.crm import (ConsolidationAssignmentCreate,
-                                 ConsolidationAssignmentUpdate,
-                                 ConsolidationFollowUpTaskCreate,
-                                 ConsolidationFollowUpTaskUpdate,
-                                 ConsolidationInteractionCreate,
-                                 ConsolidationInteractionUpdate)
+from backend.schemas.crm import (
+    ConsolidationAssignmentCreate,
+    ConsolidationAssignmentUpdate,
+    ConsolidationFollowUpTaskCreate,
+    ConsolidationFollowUpTaskUpdate,
+    ConsolidationInteractionCreate,
+    ConsolidationInteractionUpdate,
+)
 
 # ── Consolidation Assignments ────────────────────────────────────────────
 

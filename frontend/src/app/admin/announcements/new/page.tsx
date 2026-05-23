@@ -102,7 +102,7 @@ export default function NewAnnouncementPage() {
                                 <input 
                                     value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
                                     placeholder="Ej: Gran Vigilia de Oración - Próximo Viernes"
-                                    className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-lg py-2 px-4 text-lg font-black outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-lg py-2 px-4 text-lg font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
                                 />
                             </div>
 

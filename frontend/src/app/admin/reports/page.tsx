@@ -78,7 +78,7 @@ export default function AdvancedBIReports() {
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as ReportTab)}
                         className={clsx(
-                            "flex items-center gap-3 px-4 py-3.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all active:scale-95",
+                            "flex items-center gap-3 px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all active:scale-95",
                             activeTab === tab.id 
                                 ? "bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-xl shadow-blue-500/10" 
                                 : "text-slate-500 hover:bg-white/50 dark:hover:bg-white/5"
@@ -108,7 +108,7 @@ export default function AdvancedBIReports() {
                                 <p className="text-slate-400 text-sm font-medium max-w-md">Análisis predictivo basado en el comportamiento del último trimestre.</p>
                             </div>
                             <div className="flex flex-col items-end gap-2">
-                                <span className="text-xl font-black text-white tracking-tighter">84.2%</span>
+                                <span className="text-xl font-bold text-white tracking-tighter">84.2%</span>
                                 <div className="flex items-center gap-1.5 text-emerald-500 text-[10px] font-semibold uppercase tracking-wide">
                                     <TrendingUp size={14} /> +5.4% este mes
                                 </div>
@@ -233,7 +233,7 @@ export default function AdvancedBIReports() {
                                     <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#1e293b" strokeWidth="4" strokeDasharray="35 100" strokeDashoffset="-65" />
                                 </svg>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">$45K</span>
+                                    <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter">$45K</span>
                                     <span className="font-semibold text-slate-500 uppercase tracking-wide">Total USD</span>
                                 </div>
                             </div>

@@ -38,7 +38,7 @@ export default function AcademyAccountPage() {
                 <div className="max-w-4xl mx-auto px-3 py-1.5 relative">
                     <div className="flex items-end gap-4">
                         <div className="relative">
-                            <div className="size-10 rounded-lg bg-white/20 backdrop-blur border-2 border-white/30 flex items-center justify-center text-white text-xl font-black shadow-2xl">
+                            <div className="size-10 rounded-lg bg-white/20 backdrop-blur border-2 border-white/30 flex items-center justify-center text-white text-xl font-bold shadow-2xl">
                                 {(user as any)?.name?.[0] ?? 'E'}
                             </div>
                             <button className="absolute -bottom-2 -right-2 size-8 rounded-lg bg-white text-blue-600 flex items-center justify-center shadow-lg hover:scale-110 transition-all">
@@ -54,7 +54,7 @@ export default function AcademyAccountPage() {
                                     Destacado
                                 </span>
                             </div>
-                            <h1 className="text-lg font-black text-white tracking-tight">
+                            <h1 className="text-lg font-bold text-white tracking-tight">
                                 {(user as any)?.name ?? 'Estudiante CCF'}
                             </h1>
                             <p className="text-blue-200 text-sm font-medium">
@@ -84,7 +84,7 @@ export default function AcademyAccountPage() {
                             <div className={`size-8 rounded-lg ${s.bg} flex items-center justify-center mb-3`}>
                                 <s.icon size={18} className={s.color} />
                             </div>
-                            <p className={`text-lg font-black ${s.color}`}>{s.value}</p>
+                            <p className={`text-lg font-bold ${s.color}`}>{s.value}</p>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">{s.label}</p>
                         </motion.div>
                     ))}

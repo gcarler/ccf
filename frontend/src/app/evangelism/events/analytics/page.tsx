@@ -119,7 +119,7 @@ export default function GlobalEventAnalyticsPage() {
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Asistencia Total</p>
-                                    <p className="text-xl font-black text-slate-900 dark:text-white mt-1">{data.kpis.total_attendance}</p>
+                                    <p className="text-xl font-bold text-slate-900 dark:text-white mt-1">{data.kpis.total_attendance}</p>
                                 </div>
                             </div>
 
@@ -129,7 +129,7 @@ export default function GlobalEventAnalyticsPage() {
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Promedio por Sesión</p>
-                                    <p className="text-xl font-black text-slate-900 dark:text-white mt-1">{data.kpis.avg_per_session}</p>
+                                    <p className="text-xl font-bold text-slate-900 dark:text-white mt-1">{data.kpis.avg_per_session}</p>
                                 </div>
                             </div>
 
@@ -139,7 +139,7 @@ export default function GlobalEventAnalyticsPage() {
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Período Pico</p>
-                                    <p className="text-base font-black text-slate-900 dark:text-white mt-1">{data.kpis.peak_period?.label}</p>
+                                    <p className="text-base font-bold text-slate-900 dark:text-white mt-1">{data.kpis.peak_period?.label}</p>
                                     <p className="text-xs text-emerald-500 font-bold mt-1">{data.kpis.peak_period?.total} asistencias</p>
                                 </div>
                             </div>
@@ -152,7 +152,7 @@ export default function GlobalEventAnalyticsPage() {
                                 <div>
                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Crecimiento Cierre</p>
                                     <div className="flex items-end gap-2 mt-1">
-                                        <p className="text-xl font-black text-slate-900 dark:text-white">
+                                        <p className="text-xl font-bold text-slate-900 dark:text-white">
                                             {data.kpis.trend_percentage > 0 ? '+' : ''}{data.kpis.trend_percentage}%
                                         </p>
                                     </div>

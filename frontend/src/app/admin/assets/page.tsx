@@ -174,7 +174,7 @@ function AssetCard({ asset, mode, onDelete }: { asset: Asset; mode: "grid" | "li
                 <Icon size={64} strokeWidth={1} />
             </div>
             <h4 className="w-full truncate px-2 text-[13px] font-semibold uppercase text-slate-800 dark:text-white">{asset.filename}</h4>
-            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">{formatBytes(asset.sizeBytes)} | {date}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{formatBytes(asset.sizeBytes)} | {date}</p>
             <div className="absolute right-4 top-4 flex flex-col gap-2 opacity-0 transition-all group-hover:opacity-100">
                 <a href={asset.url} download className="rounded-lg bg-white p-3 text-slate-400 shadow-xl hover:text-blue-600 dark:bg-slate-800"><Download size={18} /></a>
                 <button onClick={onDelete} className="rounded-lg bg-white p-3 text-slate-400 shadow-xl hover:text-rose-600 dark:bg-slate-800"><Trash2 size={18} /></button>

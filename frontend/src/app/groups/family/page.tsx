@@ -44,11 +44,11 @@ export default function FamilyNucleusPage() {
                         
                         <div className="relative z-10 space-y-3">
                             <div className="flex items-center gap-4">
-                                <div className="w-16 h-8 bg-gradient-to-br from-rose-500 to-primary rounded-md flex items-center justify-center text-white text-lg font-black shadow-xl">
+                                <div className="w-16 h-8 bg-gradient-to-br from-rose-500 to-primary rounded-md flex items-center justify-center text-white text-lg font-bold shadow-xl">
                                     F
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-black text-white tracking-tight uppercase italic">Familia <span className="text-rose-500">Gomez Sanchez</span></h2>
+                                    <h2 className="text-lg font-bold text-white tracking-tight uppercase italic">Familia <span className="text-rose-500">Gomez Sanchez</span></h2>
                                     <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wide flex items-center gap-2">
                                         <Shield size={12} className="text-rose-500" /> Miembros Activos: 4
                                     </p>
@@ -109,7 +109,7 @@ export default function FamilyNucleusPage() {
 
                 <div className="space-y-3">
                     <div className="bg-gradient-to-br from-rose-500/20 to-primary/20 border border-rose-500/20 p-4 rounded-md space-y-3">
-                        <h3 className="text-base font-black text-white tracking-tighter uppercase italic">Impacto <span className="text-rose-500">Espiritual</span></h3>
+                        <h3 className="text-base font-bold text-white tracking-tighter uppercase italic">Impacto <span className="text-rose-500">Espiritual</span></h3>
                         <div className="space-y-4">
                             {[
                                 { label: 'Asistencia Total', value: '92%', color: 'bg-rose-500' },

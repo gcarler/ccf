@@ -149,7 +149,7 @@ export default function AcademyForumPage() {
                             {!loading && visibleThreads.length === 0 && (
                                 <div className="rounded-md border border-slate-200 bg-white/50 py-1.5 text-center dark:border-white/10 dark:bg-white/5">
                                     <MessageSquare className="mx-auto h-8 w-16 text-slate-300 dark:text-slate-600" />
-                                    <h3 className="mt-4 text-base font-black text-slate-900 dark:text-white">Aun no hay debates</h3>
+                                    <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-white">Aun no hay debates</h3>
                                     <p className="text-slate-500">Inicia una conversacion en esta categoria.</p>
                                 </div>
                             )}

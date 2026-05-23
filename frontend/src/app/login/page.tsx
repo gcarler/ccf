@@ -109,7 +109,7 @@ export default function LoginPage() {
                     transition={{ delay: 1 }}
                     className="relative z-10"
                 >
-                    <p className="text-white/90 text-lg font-medium tracking-[0.02em] leading-relaxed">
+                    <p className="text-white/90 text-lg font-medium tracking-normal leading-relaxed">
                         Guiando a las naciones <br /> hacia la luz de la verdad.
                     </p>
                 </motion.div>
@@ -204,7 +204,7 @@ export default function LoginPage() {
                                     initial={{ opacity: 0, scale: 0.96 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.96 }}
-                                    className="px-3 py-3.5 bg-rose-50 border-2 border-rose-200 rounded-lg text-rose-600 text-[11px] font-bold text-center uppercase tracking-wider"
+                                    className="px-3 py-1.5 bg-rose-50 border-2 border-rose-200 rounded-lg text-rose-600 text-[11px] font-bold text-center uppercase tracking-wider"
                                 >
                                     {error}
                                 </motion.div>

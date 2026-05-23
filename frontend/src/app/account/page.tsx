@@ -151,7 +151,7 @@ export default function AccountSettingsPage() {
                                             </div>
                                         </div>
                                         <div className="space-y-2 text-center md:text-left flex-1 min-w-0">
-                                            <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tighter">Tu Perfil Público</h3>
+                                            <h3 className="text-xl font-bold text-slate-800 dark:text-white tracking-tighter">Tu Perfil Público</h3>
                                             <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-sm">Esta es tu identidad dentro de la comunidad CCF.</p>
                                             <div className="flex flex-wrap justify-center md:justify-start gap-2 pt-4">
                                                 <div className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-[10px] font-semibold uppercase tracking-wide border border-blue-100 dark:border-blue-900/50 flex items-center gap-2"><ShieldCheck size={12} /> {user?.role || 'Miembro'}</div>

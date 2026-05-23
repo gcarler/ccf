@@ -55,7 +55,7 @@ export default function TestimonioDetailPage() {
         return (
             <main className="pt-[120px] pb-4 min-h-[70vh] flex flex-col items-center justify-center text-center px-3">
                 <Quote size={80} className="mb-3 opacity-20" style={{ color: "var(--faro-primary)" }} />
-                <h1 className="text-lg font-black mb-4" style={{ color: "var(--faro-on-background)" }}>Testimonio no encontrado</h1>
+                <h1 className="text-lg font-bold mb-4" style={{ color: "var(--faro-on-background)" }}>Testimonio no encontrado</h1>
                 <p className="text-xl mb-3 opacity-70 max-w-lg" style={{ color: "var(--faro-on-surface-variant)" }}>
                     Parece que la historia que buscas ya no está disponible o el enlace es incorrecto.
                 </p>
@@ -103,7 +103,7 @@ export default function TestimonioDetailPage() {
                         </div>
                     ) : (
                         <div
-                            className="w-32 h-32 md:w-40 md:h-40 rounded-full flex items-center justify-center text-xl font-black shadow-2xl shrink-0"
+                            className="w-32 h-32 md:w-40 md:h-40 rounded-full flex items-center justify-center text-xl font-bold shadow-2xl shrink-0"
                             style={{
                                 background: "var(--faro-primary-container)",
                                 color: "var(--faro-primary)",
@@ -228,7 +228,7 @@ export default function TestimonioDetailPage() {
                                     className="text-center py-8 space-y-4"
                                 >
                                     <CheckCircle2 size={56} className="mx-auto" style={{ color: "var(--faro-primary)" }} />
-                                    <h3 className="text-lg font-black" style={{ color: "var(--faro-on-background)" }}>Petición recibida</h3>
+                                    <h3 className="text-lg font-bold" style={{ color: "var(--faro-on-background)" }}>Petición recibida</h3>
                                     <p className="text-base opacity-70 max-w-md mx-auto leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>
                                         Tu solicitud de oración ha sido enviada a nuestro equipo de consolidación.
                                         No se publica en la página — es confidencial.

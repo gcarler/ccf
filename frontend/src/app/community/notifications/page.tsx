@@ -45,7 +45,7 @@ export default function NotificationsCenter() {
         <div className="p-4 lg:p-4 animate-in fade-in duration-700 max-w-4xl mx-auto">
             <header className="flex items-center justify-between mb-3">
                 <div>
-                    <h1 className="text-xl font-black text-[hsl(var(--text-primary))] tracking-tighter">Centro de Notificaciones</h1>
+                    <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tighter">Centro de Notificaciones</h1>
                     <p className="text-[hsl(var(--text-secondary))] text-sm font-medium mt-1">Mantente al tanto de lo que sucede en tu comunidad</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -87,7 +87,7 @@ export default function NotificationsCenter() {
                         <Inbox size={40} />
                     </div>
                     <div className="space-y-1">
-                        <h4 className="text-[hsl(var(--text-primary))] font-semibold uppercase tracking-[0.1em]">Bandeja Limpia</h4>
+                        <h4 className="text-[hsl(var(--text-primary))] font-semibold uppercase tracking-wider">Bandeja Limpia</h4>
                         <p className="text-[hsl(var(--text-secondary))] text-xs font-medium max-w-[240px]">Todo al dia. Te notificaremos cuando ocurra algo nuevo.</p>
                     </div>
                 </div>

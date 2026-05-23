@@ -76,7 +76,7 @@ export default function AuditDetailPage() {
                             <DSBadge tone="violet" label="SECURITY_LOG" />
                             <DSBadge tone="blue" label={log.action} />
                         </div>
-                        <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">
+                        <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase leading-none">
                             Detalle de Operación
                         </h1>
                     </header>

@@ -33,7 +33,7 @@ export default function SupportKBPage() {
                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 50% 0%, white 0%, transparent 60%)" }} />
                 <div className="relative">
                     <Book size={32} className="text-white/60 mx-auto mb-4" />
-                    <h1 className="text-lg font-black text-white mb-2">Base de Conocimientos</h1>
+                    <h1 className="text-lg font-bold text-white mb-2">Base de Conocimientos</h1>
                     <p className="text-blue-200 text-sm mb-3">Encuentra respuestas a todas tus preguntas sobre la plataforma CCF</p>
                     <div className="max-w-lg mx-auto relative">
                         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />

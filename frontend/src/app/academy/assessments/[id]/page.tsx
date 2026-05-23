@@ -116,7 +116,7 @@ export default function AssessmentPage() {
                             {result.passed ? <Trophy size={40} /> : <AlertCircle size={40} />}
                         </div>
                         <div>
-                            <h2 className="text-xl font-black mb-2">{result.passed ? '¡Felicitaciones!' : 'Sigue intentando'}</h2>
+                            <h2 className="text-xl font-bold mb-2">{result.passed ? '¡Felicitaciones!' : 'Sigue intentando'}</h2>
                             <p className="text-slate-500 dark:text-slate-400 font-medium">Has completado la evaluacion de {assessment.title}</p>
                         </div>
                         <div className="py-1.5 border-y border-slate-200 dark:border-white/5">
@@ -183,7 +183,7 @@ export default function AssessmentPage() {
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
                                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Pregunta {index + 1}</p>
-                                        <h3 className="mt-2 text-base font-black text-slate-900 dark:text-white">{question.question_text}</h3>
+                                        <h3 className="mt-2 text-base font-bold text-slate-900 dark:text-white">{question.question_text}</h3>
                                     </div>
                                     <span className={clsx(
                                         "rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide",
@@ -238,7 +238,7 @@ export default function AssessmentPage() {
                         <div className="flex justify-between items-end">
                             <div>
                                 <p className="font-semibold text-blue-500 uppercase tracking-wide mb-1">Pregunta {currentStep + 1} de {assessment.questions.length}</p>
-                                <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight leading-tight">
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight leading-tight">
                                     {currentQuestion.question_text}
                                 </h3>
                             </div>

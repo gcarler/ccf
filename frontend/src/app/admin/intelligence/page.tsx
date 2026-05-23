@@ -400,7 +400,7 @@ function StatusCard({ label, value, status, icon: Icon, color }: any) {
             </div>
             <div>
                 <p className="font-semibold text-slate-400 uppercase tracking-wide mb-1">{label}</p>
-                <h4 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{value}</h4>
+                <h4 className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter uppercase">{value}</h4>
             </div>
         </div>
     );

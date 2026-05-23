@@ -20,7 +20,7 @@ export default function PastorDetailPage() {
         return (
             <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
                 <div className="text-center">
-                    <h1 className="text-lg font-black text-slate-800 mb-4">Pastor no encontrado</h1>
+                    <h1 className="text-lg font-bold text-slate-800 mb-4">Pastor no encontrado</h1>
                     <button onClick={() => router.push('/pastores')} className="text-blue-600 font-bold hover:underline">
                         Volver a la galería
                     </button>
@@ -65,7 +65,7 @@ export default function PastorDetailPage() {
 
                             {/* Info Principal */}
                             <div className="w-full lg:w-7/12">
-                                <h1 className="text-xl lg:text-xl font-black text-slate-900 dark:text-white tracking-tight mb-4">
+                                <h1 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tight mb-4">
                                     {pastor.name}
                                 </h1>
                                 <p className="text-xl lg:text-xl text-blue-600 dark:text-blue-400 font-bold tracking-wide mb-3">
@@ -98,7 +98,7 @@ export default function PastorDetailPage() {
                 {/* Contenido / Historia */}
                 <div className="bg-slate-50 dark:bg-[#0f1117] py-1.5 border-t border-slate-200 dark:border-white/5">
                     <div className="max-w-3xl mx-auto px-3 lg:px-4">
-                        <h2 className="text-xl font-black text-slate-900 dark:text-white mb-3">Su Historia</h2>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Su Historia</h2>
                         
                         <div 
                             className="prose prose-lg dark:prose-invert prose-violet max-w-none

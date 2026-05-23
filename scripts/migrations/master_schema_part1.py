@@ -1,1 +1,1 @@
-sql_part1 = 
+sql_part1 = ""

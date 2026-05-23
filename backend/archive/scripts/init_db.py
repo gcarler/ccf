@@ -1,5 +1,7 @@
-from backend.management.schema import (print_schema_drift_report,
-                                       upgrade_with_optional_bootstrap)
+from backend.management.schema import (
+    print_schema_drift_report,
+    upgrade_with_optional_bootstrap,
+)
 
 
 def init_db():

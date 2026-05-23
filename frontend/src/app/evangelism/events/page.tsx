@@ -1417,7 +1417,7 @@ export default function EventsPage() {
                             {attendanceLoading ? 'Cargando sesión...' : `${filteredMembers.length} visibles en esta búsqueda`}
                         </p>
                     </div>
-                    <p className="text-base font-black text-emerald-600">{attendedMemberIds.length} <span className="text-sm font-bold text-slate-400">/ {expectedUniverseMembers.length}</span></p>
+                    <p className="text-base font-bold text-emerald-600">{attendedMemberIds.length} <span className="text-sm font-bold text-slate-400">/ {expectedUniverseMembers.length}</span></p>
                 </div>
 
                 {!attendanceLoading && (

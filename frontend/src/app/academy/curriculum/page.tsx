@@ -63,7 +63,7 @@ export default function StudentCurriculum() {
                     ))}
                 </div>
                 <div className="px-4 py-2 flex items-center justify-between">
-                    <h2 className="text-lg font-black text-slate-900 dark:text-white">{activeFilter}</h2>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">{activeFilter}</h2>
                     <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full">
                         {filtered.length} cursos
                     </span>

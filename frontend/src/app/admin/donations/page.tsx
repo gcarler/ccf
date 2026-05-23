@@ -222,7 +222,7 @@ export default function DonationsManagementPage() {
                                         onMouseLeave={() => setHoverId(null)}>
                                         <td className="px-3 py-1.5">
                                             <p className="text-sm font-bold text-slate-900 dark:text-white">{d.donor || "Anónimo"}</p>
-                                            <p className="text-[10px] text-slate-400 font-black">#{d.id}</p>
+                                            <p className="font-semibold">#{d.id}</p>
                                         </td>
                                         <td className="px-3 py-1.5 font-black text-slate-900 dark:text-white">${d.amount?.toLocaleString()}</td>
                                         <td className="px-3 py-1.5 text-xs text-slate-500">{d.type}</td>
@@ -285,7 +285,7 @@ export default function DonationsManagementPage() {
                                     <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">
                                         {drawerMode === "create" ? "Nueva Donación" : "Editar Donación"}
                                     </p>
-                                    <h2 className="text-xl font-black text-slate-900 dark:text-white mt-1">
+                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-1">
                                         {drawerMode === "create" ? "Registrar Ofrenda" : `Donación #${selected?.id}`}
                                     </h2>
                                 </div>

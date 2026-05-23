@@ -106,7 +106,7 @@ export default function AdminMissionImpactPage() {
                             <MapPin size={24} />
                         </div>
                         <div>
-                            <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">{item.title}</h3>
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight">{item.title}</h3>
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">{item.place} · {item.date}</p>
                         </div>
                     </div>
@@ -210,7 +210,7 @@ export default function AdminMissionImpactPage() {
                             >
                                 <Sparkles size={12} className="animate-pulse" /> Expansión del Reino 2026
                             </motion.div>
-                            <h1 className="text-xl lg:text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none uppercase italic">
+                            <h1 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none uppercase italic">
                                 Alcance <br/> <span className="text-blue-600">Misionero.</span>
                             </h1>
                             <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-xl leading-relaxed">
@@ -263,7 +263,7 @@ export default function AdminMissionImpactPage() {
                                                     <MapPin size={28} />
                                                 </div>
                                                 <div>
-                                                    <h4 className="text-lg font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight leading-none mb-2">{item.title}</h4>
+                                                    <h4 className="text-lg font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight leading-none mb-2">{item.title}</h4>
                                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide flex items-center gap-2">
                                                         {item.place} • {item.date}
                                                     </p>
@@ -336,7 +336,7 @@ function ImpactStat({ label, value, icon: Icon, color }: any) {
                 <Icon size={40} strokeWidth={1.5} />
             </div>
             <div>
-                <div className="text-lg font-black text-slate-900 dark:text-white italic tracking-tighter leading-none mb-1">{value}</div>
+                <div className="text-lg font-bold text-slate-900 dark:text-white italic tracking-tighter leading-none mb-1">{value}</div>
                 <div className="font-semibold text-slate-400 uppercase tracking-wide">{label}</div>
             </div>
         </div>

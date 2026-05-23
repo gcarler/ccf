@@ -400,7 +400,7 @@ export default function FaroDetailPage() {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Faro en Casa</p>
-                            <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">{house.name}</h1>
+                            <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{house.name}</h1>
                             <div className="flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400 font-medium mt-1.5">
                                 {house.code && <span className="flex items-center gap-1.5"><Activity size={12} /> CÃ³digo: {house.code}</span>}
                                 {house.leader_name && <span className="flex items-center gap-1.5"><Users size={12} /> LÃ­der: {house.leader_name}</span>}
@@ -410,15 +410,15 @@ export default function FaroDetailPage() {
                         </div>
                         <div className="flex gap-3 shrink-0">
                             <div className="text-center px-3 py-1.5 bg-white dark:bg-[#252528] rounded-md border border-slate-200 dark:border-white/5 shadow-sm">
-                                <p className="text-base font-black text-slate-900 dark:text-white">{house.total_sessions}</p>
+                                <p className="text-base font-bold text-slate-900 dark:text-white">{house.total_sessions}</p>
                                 <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide mt-0.5">Sesiones</p>
                             </div>
                             <div className="text-center px-3 py-1.5 bg-white dark:bg-[#252528] rounded-md border border-slate-200 dark:border-white/5 shadow-sm">
-                                <p className="text-base font-black text-slate-900 dark:text-white">{house.total_attendance}</p>
+                                <p className="text-base font-bold text-slate-900 dark:text-white">{house.total_attendance}</p>
                                 <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide mt-0.5">Asistentes</p>
                             </div>
                             <div className="text-center px-3 py-1.5 bg-white dark:bg-[#252528] rounded-md border border-slate-200 dark:border-white/5 shadow-sm">
-                                <p className="text-base font-black text-slate-900 dark:text-white">{avgAttendance}</p>
+                                <p className="text-base font-bold text-slate-900 dark:text-white">{avgAttendance}</p>
                                 <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide mt-0.5">Promedio</p>
                             </div>
                         </div>
@@ -456,15 +456,15 @@ export default function FaroDetailPage() {
                                 {/* Stat strip */}
                                 <div className="flex gap-4">
                                     <div className="flex-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 text-center">
-                                        <p className="text-lg font-black text-blue-600 dark:text-blue-400">{loadingAtt ? 'â€”' : attendance?.total ?? 0}</p>
+                                        <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{loadingAtt ? 'â€”' : attendance?.total ?? 0}</p>
                                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mt-1">Presentes</p>
                                     </div>
                                     <div className="flex-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 text-center">
-                                        <p className="text-lg font-black text-slate-700 dark:text-slate-300">{house.capacity ?? 'â€”'}</p>
+                                        <p className="text-lg font-bold text-slate-700 dark:text-slate-300">{house.capacity ?? 'â€”'}</p>
                                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mt-1">Capacidad</p>
                                     </div>
                                     <div className="flex-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 text-center">
-                                        <p className="text-lg font-black text-emerald-600 dark:emerald-400">
+                                        <p className="text-lg font-bold text-emerald-600 dark:emerald-400">
                                             {house.capacity && attendance ? `${Math.round(attendance.total / house.capacity * 100)}%` : 'â€”'}
                                         </p>
                                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mt-1">OcupaciÃ³n</p>
@@ -484,15 +484,15 @@ export default function FaroDetailPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div className="rounded-lg border border-slate-200 dark:border-white/10 p-4 bg-slate-50 dark:bg-black/20">
                                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Promedio de presencia</p>
-                                            <p className="mt-2 text-lg font-black text-slate-900 dark:text-white">{monitoring?.average_attendance ?? avgAttendance}</p>
+                                            <p className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{monitoring?.average_attendance ?? avgAttendance}</p>
                                         </div>
                                         <div className="rounded-lg border border-slate-200 dark:border-white/10 p-4 bg-slate-50 dark:bg-black/20">
                                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Tasa promedio</p>
-                                            <p className="mt-2 text-lg font-black text-slate-900 dark:text-white">{monitoring?.average_attendance_rate ?? 0}%</p>
+                                            <p className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{monitoring?.average_attendance_rate ?? 0}%</p>
                                         </div>
                                         <div className="rounded-lg border border-slate-200 dark:border-white/10 p-4 bg-slate-50 dark:bg-black/20">
                                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Alertas activas</p>
-                                            <p className="mt-2 text-lg font-black text-slate-900 dark:text-white">{alerts.length}</p>
+                                            <p className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{alerts.length}</p>
                                         </div>
                                     </div>
 

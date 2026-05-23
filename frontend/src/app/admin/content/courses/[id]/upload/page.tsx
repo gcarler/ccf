@@ -29,7 +29,7 @@ export default function UploadMaterials() {
                     <button onClick={() => router.back()} className="p-3 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all">
                         <ArrowLeft size={20} />
                     </button>
-                    <h1 className="text-xl font-black text-white tracking-tight uppercase tracking-tight">Cargar Materiales</h1>
+                    <h1 className="text-xl font-bold text-white tracking-tight uppercase tracking-tight">Cargar Materiales</h1>
                     <button className="p-3 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all">
                         <HelpCircle size={20} />
                     </button>
@@ -41,7 +41,7 @@ export default function UploadMaterials() {
                 {/* Lesson Header */}
                 <section className="space-y-4">
                     <span className="text-[10px] font-semibold uppercase tracking-wide text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20 shadow-lg shadow-primary/5">Gestión de Contenido</span>
-                    <h2 className="text-lg font-black text-white tracking-tight uppercase tracking-tight">Lección: Fundamentos de la Fe Cristiana</h2>
+                    <h2 className="text-lg font-bold text-white tracking-tight uppercase tracking-tight">Lección: Fundamentos de la Fe Cristiana</h2>
                     <p className="text-sm font-medium text-slate-500 leading-relaxed">Seleccione los archivos multimedia para esta sesión de discipulado.</p>
                 </section>
 
@@ -53,7 +53,7 @@ export default function UploadMaterials() {
                                 <Video size={28} />
                             </div>
                             <div>
-                                <p className="text-base font-black text-white tracking-tight uppercase tracking-tight">Video de la Lección</p>
+                                <p className="text-base font-bold text-white tracking-tight uppercase tracking-tight">Video de la Lección</p>
                                 <p className="font-semibold text-slate-500 uppercase tracking-wide mt-1">MP4 • Máx. 500MB</p>
                             </div>
                         </div>
@@ -88,7 +88,7 @@ export default function UploadMaterials() {
                                 <FileText size={28} />
                             </div>
                             <div>
-                                <p className="text-base font-black text-white tracking-tight uppercase tracking-tight">Guía del Alumno (PDF)</p>
+                                <p className="text-base font-bold text-white tracking-tight uppercase tracking-tight">Guía del Alumno (PDF)</p>
                                 <p className="font-semibold text-slate-500 uppercase tracking-wide mt-1">PDF • Máx. 25MB</p>
                             </div>
                         </div>
@@ -109,7 +109,7 @@ export default function UploadMaterials() {
                                 <Mic size={28} />
                             </div>
                             <div>
-                                <p className="text-base font-black text-white tracking-tight uppercase tracking-tight">Audio (MP3)</p>
+                                <p className="text-base font-bold text-white tracking-tight uppercase tracking-tight">Audio (MP3)</p>
                                 <p className="font-semibold text-slate-500 uppercase tracking-wide mt-1">MP3 • Máx. 100MB</p>
                             </div>
                         </div>

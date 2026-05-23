@@ -439,7 +439,7 @@ export default function AccessManagementPage() {
                             <div className="size-8 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center mb-3 border border-slate-200 dark:border-white/10">
                                 <Shield size={32} className="text-slate-300" />
                             </div>
-                            <h3 className="text-lg font-black text-slate-400 uppercase tracking-wide mb-2">
+                            <h3 className="text-lg font-bold text-slate-400 uppercase tracking-wide mb-2">
                                 {activeTab === 'roles' ? 'Sin roles ministeriales' : 'Sin usuarios'}
                             </h3>
                             <p className="text-xs text-slate-400 font-medium max-w-md">

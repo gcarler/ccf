@@ -352,7 +352,7 @@ export default function CourseViewPage() {
                                 <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-slate-50 dark:bg-black space-y-3">
                                     <FileText size={64} className="text-red-500" />
                                     <div>
-                                        <h3 className="text-base font-black text-slate-800 dark:text-white">Documento PDF Adjunto</h3>
+                                        <h3 className="text-base font-bold text-slate-800 dark:text-white">Documento PDF Adjunto</h3>
                                         <p className="text-slate-500 text-sm mt-2">Lee el documento para completar esta lección.</p>
                                     </div>
                                     <a href={activeLesson.media_url || "#"} target="_blank" rel="noreferrer" className="px-4 py-1.5 bg-blue-600 text-white rounded-md font-bold uppercase tracking-wide text-xs hover:bg-blue-700 transition-colors">
@@ -364,7 +364,7 @@ export default function CourseViewPage() {
                                 <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-slate-50 dark:bg-black space-y-3">
                                     <HelpCircle size={64} className="text-indigo-500" />
                                     <div>
-                                        <h3 className="text-base font-black text-slate-800 dark:text-white">Evaluación de Conocimiento</h3>
+                                        <h3 className="text-base font-bold text-slate-800 dark:text-white">Evaluación de Conocimiento</h3>
                                         <p className="text-slate-500 text-sm mt-2">Responde las preguntas para avanzar a la siguiente etapa.</p>
                                     </div>
                                     <button onClick={handleLessonComplete} className="px-4 py-1.5 bg-indigo-600 text-white rounded-md font-bold uppercase tracking-wide text-xs hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30">
@@ -382,7 +382,7 @@ export default function CourseViewPage() {
                                         <div className="size-1 rounded-full bg-slate-300" />
                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{activeLesson?.duration_minutes} Minutos de contenido</span>
                                     </div>
-                                    <h2 className="text-lg lg:text-xl font-black text-slate-800 dark:text-white tracking-tighter leading-none">
+                                    <h2 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-white tracking-tighter leading-none">
                                         {activeLesson?.title}
                                     </h2>
                                 </div>

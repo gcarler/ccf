@@ -177,7 +177,7 @@ function MetricCard({ label, value, tone }: { label: string; value: string; tone
     return (
         <article className="rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/[0.03]">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
-            <p className={`mt-2 text-xl font-black ${toneClass[tone]}`}>{value}</p>
+            <p className={`mt-2 text-xl font-bold ${toneClass[tone]}`}>{value}</p>
         </article>
     );
 }

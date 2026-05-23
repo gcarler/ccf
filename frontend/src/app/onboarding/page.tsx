@@ -71,7 +71,7 @@ export default function OnboardingPage() {
                                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-semibold uppercase tracking-wide">
                                     <Sparkles size={14} /> Bienvenido a la Familia
                                 </div>
-                                <h1 className="text-lg lg:text-xl font-black text-slate-800 dark:text-white tracking-tighter leading-tight">
+                                <h1 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-white tracking-tighter leading-tight">
                                     Tu viaje espiritual <br /> comienza aquí
                                 </h1>
                                 <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-md mx-auto">
@@ -100,7 +100,7 @@ export default function OnboardingPage() {
                             className="space-y-3"
                         >
                             <div className="text-center space-y-4">
-                                <h2 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">¿En qué sede te encuentras?</h2>
+                                <h2 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight">¿En qué sede te encuentras?</h2>
                                 <p className="text-slate-500 dark:text-slate-400 font-medium">Elige tu comunidad local para personalizar tu dashboard.</p>
                             </div>
 
@@ -146,7 +146,7 @@ export default function OnboardingPage() {
                             className="space-y-3"
                         >
                             <div className="text-center space-y-4">
-                                <h2 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">Últimos detalles</h2>
+                                <h2 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight">Últimos detalles</h2>
                                 <p className="text-slate-500 dark:text-slate-400 font-medium">Configura cómo quieres interactuar con la plataforma.</p>
                             </div>
 

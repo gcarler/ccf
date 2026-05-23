@@ -2,8 +2,7 @@ import logging
 import sys
 
 from backend import crud
-from backend.auth import (create_access_token, create_refresh_token,
-                          verify_password)
+from backend.auth import create_access_token, create_refresh_token, verify_password
 from backend.core.config import get_settings
 from backend.core.database import SessionLocal
 

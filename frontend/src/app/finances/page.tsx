@@ -11,6 +11,9 @@ import {
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
+import { DSMetric } from '@/design/components/DSMetric';
+import { DSChart } from '@/design/components/DSChart';
+import { DSCard } from '@/design/components/DSCard';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 
@@ -61,7 +64,7 @@ function StatCard({ label, value, sub, icon: Icon, colorClass, trend }: any) {
                 <Icon size={18} className="text-current" />
             </div>
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1 relative z-10">{label}</p>
-            <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none relative z-10">{value}</h3>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-none relative z-10">{value}</h3>
             {sub && (
                 <p className={clsx('text-[11px] font-bold mt-2.5 flex items-center gap-1 relative z-10', trend === 'up' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500')}>
                     {trend === 'up' ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
@@ -77,7 +80,7 @@ export default function FinancesPage() {
     const [filter, setFilter] = useState<'all' | 'ingreso' | 'egreso'>('all');
     const [search, setSearch] = useState('');
     const [transactions, setTransactions] = useState<TxRecord[]>([]);
-    const [funds, setFunds] = useState<FundsData | null>(null);
+    const [dashboard, setDashboard] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     const FINANCE_SECTIONS = useMemo(() => ([
@@ -94,10 +97,10 @@ export default function FinancesPage() {
         if (!token) { setLoading(false); return; }
         Promise.all([
             apiFetch<TxRecord[]>('/finance/transactions?limit=50', { token, cache: 'no-store' }),
-            apiFetch<FundsData>('/finance/funds', { token, cache: 'no-store' }),
-        ]).then(([txs, f]) => {
+            apiFetch<any>('/dashboard/finance', { token, cache: 'no-store' }),
+        ]).then(([txs, dbData]) => {
             if (Array.isArray(txs)) setTransactions(txs);
-            if (f && typeof f.ingresos_mes === 'number') setFunds(f);
+            if (dbData) setDashboard(dbData);
         }).catch(console.error).finally(() => setLoading(false));
     }, [token]);
 
@@ -111,25 +114,25 @@ export default function FinancesPage() {
         return true;
     }), [transactions, filter, search]);
 
-
     return (
         <WorkspaceLayout
-            sidebarTitle="Finanzas"
-            sidebarSections={FINANCE_SECTIONS}
-        >
-            <div className="h-full overflow-y-auto bg-slate-50/40 dark:bg-[#111213] font-display scrollbar-thin">
-                <div className="max-w-7xl mx-auto px-3 py-2 space-y-6">
+        sidebarTitle="Tesorería Pro"
+        sidebarSections={FINANCE_SECTIONS}
+    >
+        <div className="h-full overflow-y-auto bg-[#f8fafc] dark:bg-[#1E1F21] font-display scrollbar-thin">
+            <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
 
-                    {/* Header — Premium */}
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
-                                Panel Financiero
-                            </h1>
-                            <p className="text-[12px] text-slate-400 mt-0.5 font-medium">
-                                Visibilidad completa de los recursos de la comunidad
-                            </p>
-                        </div>
+                {/* Header — Premium */}
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter italic uppercase">
+                            Centro Financiero
+                        </h1>
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-blue-600 mt-1">
+                            Gestión de Recursos Ministeriales
+                        </p>
+                    </div>
+                </div>
                         <div className="flex items-center gap-2">
                             <div className="flex items-center gap-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-1 text-[11px] font-bold">
                                 {(['Semana', 'Mes', 'Año']).map((p) => (
@@ -148,15 +151,38 @@ export default function FinancesPage() {
                         </div>
                     </div>
 
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        <StatCard label="Ingresos Mes"  value={loading ? '...' : fmt(summary.ingresos_mes)} sub="Mes en curso" trend="up"   icon={TrendingUp}   colorClass="bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600" />
-                        <StatCard label="Egresos Est."  value={loading ? '...' : fmt(summary.egresos_mes)}  sub="Estimado"       trend="down" icon={TrendingDown}  colorClass="bg-rose-100 dark:bg-rose-500/10 text-rose-500" />
-                        <StatCard label="Balance Neto"  value={loading ? '...' : fmt(summary.balance)}      sub="Saldo disponible" trend="up" icon={Wallet}        colorClass="bg-blue-100 dark:bg-blue-500/10 text-blue-600" />
-                        <StatCard label="Fondo Reserva" value={loading ? '...' : fmt(summary.reserva)}      sub="10% histórico"              icon={PiggyBank}     colorClass="bg-blue-100 dark:bg-blue-500/10 text-blue-600" />
+                    {/* 📊 Financial Metrics */}
+                    <section className="grid grid-cols-1 md:grid-cols-4 gap-4 relative z-10">
+                        {dashboard?.cards.map((card: any, idx: number) => (
+                            <DSMetric 
+                                key={idx}
+                                label={card.title} 
+                                value={card.value} 
+                                trend={card.trend} 
+                                tone={card.color} 
+                            />
+                        ))}
+                    </section>
+
+                    {/* 📈 Charts */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
+                        <div className="lg:col-span-2">
+                            <DSCard>
+                                <h3 className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-6">Comparativa Mensual de Ingresos</h3>
+                                <DSChart type="area" data={dashboard?.monthly_comparison} color="#10b981" height={220} />
+                            </DSCard>
+                        </div>
+                        <div>
+                            <DSCard>
+                                <h3 className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-6">Distribución por Categoría</h3>
+                                <DSChart type="bar" data={dashboard?.income_by_category} color="#3b82f6" height={220} />
+                            </DSCard>
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                    <div className="h-px bg-white/5 my-8 relative z-10" />
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 relative z-10">
                         {/* Transaction List */}
                         <div className="lg:col-span-2 bg-white dark:bg-[#1a1b1e] rounded-lg border border-slate-100 dark:border-white/5 shadow-sm overflow-hidden">
                             {/* Table header */}
@@ -209,7 +235,7 @@ export default function FinancesPage() {
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
                                             transition={{ delay: idx * 0.03 }}
-                                            className="flex items-center gap-4 px-3 py-3.5 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer"
+                                            className="flex items-center gap-4 px-3 py-1.5 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer"
                                         >
                                             <div className={clsx(
                                                 'size-9 rounded-md flex items-center justify-center shrink-0',

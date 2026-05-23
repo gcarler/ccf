@@ -112,7 +112,7 @@ export default function EnrollmentWizard() {
                                             <span className="inline-block px-3 py-1 rounded-full bg-white/10 border border-white/10 text-[9px] font-semibold uppercase tracking-wide text-white mb-4">
                                                 {course.modality === 'formal' ? 'Ruta Formal' : 'Ruta No Formal'}
                                             </span>
-                                            <h1 className="text-xl font-black text-white leading-none tracking-tighter mb-2">{course.title}</h1>
+                                            <h1 className="text-xl font-bold text-white leading-none tracking-tighter mb-2">{course.title}</h1>
                                             <p className="text-white/60 text-xs font-bold uppercase tracking-wide">{course.code}</p>
                                         </div>
                                     </div>
@@ -186,15 +186,15 @@ export default function EnrollmentWizard() {
                                     <div className="space-y-4 pt-4">
                                         <div className="flex justify-between items-center text-xs">
                                             <span className="font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Matrícula Base</span>
-                                            <span className="font-black">$200.00 USD</span>
+                                            <span className="font-semibold">$200.00 USD</span>
                                         </div>
                                         <div className="flex justify-between items-center text-xs pb-4 border-b border-[hsl(var(--border))]">
                                             <span className="font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Derechos de Admisión</span>
-                                            <span className="font-black">$50.00 USD</span>
+                                            <span className="font-semibold">$50.00 USD</span>
                                         </div>
                                         <div className="flex justify-between items-center bg-[hsl(var(--surface-3))] p-4 rounded-lg">
                                             <span className="text-[11px] font-semibold uppercase tracking-wide">Inversión Total</span>
-                                            <span className="text-lg font-black text-[hsl(var(--primary))] tracking-tighter">$250.00</span>
+                                            <span className="text-lg font-bold text-[hsl(var(--primary))] tracking-tighter">$250.00</span>
                                         </div>
                                     </div>
                                 </div>
@@ -237,7 +237,7 @@ export default function EnrollmentWizard() {
                                 </div>
                                 <h2 className="text-lg font-bold tracking-tighter mb-4 leading-none">¡Bienvenido!</h2>
                                 <p className="text-sm text-[hsl(var(--text-secondary))] font-medium leading-relaxed max-w-[280px] mb-3">
-                                    Tu inscripción a <span className="text-[hsl(var(--text-primary))] font-black">{course.title}</span> ha sido procesada con éxito.
+                                    Tu inscripción a <span className="font-semibold">{course.title}</span> ha sido procesada con éxito.
                                 </p>
                                 <button
                                     onClick={() => router.push('/academy')}
@@ -272,7 +272,7 @@ export default function EnrollmentWizard() {
                         {step === 2 && (
                              <div className="flex items-center justify-center gap-2 mt-3">
                                 <Lock size={12} className="text-emerald-500" />
-                                <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-[hsl(var(--text-secondary))]">Transacción Encriptada 256-bit SSL</p>
+                                <p className="text-[9px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Transacción Encriptada 256-bit SSL</p>
                              </div>
                         )}
                     </div>

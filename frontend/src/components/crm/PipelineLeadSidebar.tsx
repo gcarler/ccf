@@ -113,7 +113,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                     <div className="space-y-2">
                         <button
                             onClick={() => onViewFullProfile(lead.id)}
-                            className="w-full flex items-center gap-4 p-3 bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-[0.1em] hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 active:scale-95 group"
+                            className="w-full flex items-center gap-4 p-3 bg-blue-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wider hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 active:scale-95 group"
                         >
                             <ExternalLink size={16} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /> 
                             Ver Expediente Completo

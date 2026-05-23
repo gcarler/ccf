@@ -324,7 +324,7 @@ export default function WhiteboardSessionPage() {
                 <aside className="w-80 shrink-0 space-y-6 overflow-y-auto border-l border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-[#111418]">
                     <section className="space-y-2">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Objetivo</p>
-                        <h1 className="text-lg font-black text-slate-900 dark:text-white">{title}</h1>
+                        <h1 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h1>
                         <p className="text-xs font-medium leading-5 text-slate-500">{description || "Sin objetivo documentado."}</p>
                     </section>
 

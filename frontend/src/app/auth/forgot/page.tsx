@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
 
                 <div className="order-2 w-full max-w-[480px] mx-auto lg:order-1 glass-card rounded-lg border border-white/10 p-4 shadow-2xl">
                     <div className="mb-3 space-y-3 text-center">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-slate-500">Recuperar acceso</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Recuperar acceso</p>
                         <h1 className="text-xl font-bold tracking-tight text-white">¿Olvidaste tu contraseña?</h1>
                         <p className="text-slate-400 text-sm">Ingresa tu correo y te enviaremos un enlace seguro para restablecerla.</p>
                     </div>

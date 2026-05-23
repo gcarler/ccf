@@ -3,12 +3,14 @@ from typing import Any, Dict
 from fastapi import APIRouter, Depends
 
 from backend import models
-from backend.api.workspace_shared import (DEFAULT_WORKSPACE_CONFIG,
-                                          _append_audit_event,
-                                          _load_workspace_config,
-                                          _normalize_rule_payload,
-                                          _sanitize_feature_payload,
-                                          _save_workspace_config)
+from backend.api.workspace_shared import (
+    DEFAULT_WORKSPACE_CONFIG,
+    _append_audit_event,
+    _load_workspace_config,
+    _normalize_rule_payload,
+    _sanitize_feature_payload,
+    _save_workspace_config,
+)
 from backend.auth import require_admin
 from backend.core.rate_limit import rate_limiter
 
