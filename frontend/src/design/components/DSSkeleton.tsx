@@ -5,7 +5,7 @@ import clsx from 'clsx';
 import { shadows, radii } from '../tokens';
 
 interface DSSkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
-    rounded?: 'sm' | 'md' | 'none';
+    rounded?: 'sm' | 'md' | 'lg' | 'xl' | 'pill' | 'none';
 }
 
 export function DSSkeleton({ rounded = 'md', className, style, ...props }: DSSkeletonProps) {
@@ -13,7 +13,7 @@ export function DSSkeleton({ rounded = 'md', className, style, ...props }: DSSke
         <div
             className={clsx('relative overflow-hidden bg-slate-200 dark:bg-white/10', className)}
             style={{
-                borderRadius: rounded === 'sm' ? radii.sm : rounded === 'md' ? radii.md : undefined,
+                borderRadius: rounded === 'none' ? undefined : radii[rounded],
                 boxShadow: shadows.inner,
                 ...style,
             }}
