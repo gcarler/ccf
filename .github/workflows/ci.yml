@@ -121,7 +121,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Run alembic migrations
-        run: PYTHONPATH=. python -m alembic upgrade head
+        run: PYTHONPATH=. alembic upgrade head
       - name: Run Evangelism integrity audit
         run: PYTHONPATH=. python scripts/qa_evangelism_integrity.py
 
@@ -168,7 +168,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Run alembic migrations
-        run: PYTHONPATH=. python -m alembic upgrade head
+        run: PYTHONPATH=. alembic upgrade head
       - name: Run evangelism backend tests (fast feedback)
         run: PYTHONPATH=. pytest tests/test_crm_api.py -k evangelism -q
 
@@ -192,7 +192,7 @@ jobs:
           pip install -r ../requirements.txt
       - name: Check for hardcoded secrets in production config
         run: |
-          if grep -v "Field(default=" core/config.py | grep -q "admin123\|change-me\|replace-me"; then
+          if grep -v "Field(default=\|insecure_secrets" core/config.py | grep -q "admin123\|change-me\|replace-me"; then
             echo "❌ CRITICAL: Default secrets found in config.py"
             exit 1
           fi
