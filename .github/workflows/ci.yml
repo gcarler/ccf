@@ -305,3 +305,4 @@ jobs:
           name: storybook-static
           path: frontend/storybook-static
           if-no-files-found: ignore
+
