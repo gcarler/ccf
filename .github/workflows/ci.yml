@@ -167,21 +167,38 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+      - name: Test PostgreSQL connection
+        run: |
+          python -c "
+import os
+print('DATABASE_URL:', os.environ.get('DATABASE_URL','NOT SET'))
+print('SECRET_KEY:', '***set***' if os.environ.get('SECRET_KEY') else 'NOT SET')
+" 2>&1
       - name: Run alembic migrations
         run: |
           set +e
-          echo "=== DEBUG: pwd=$(pwd) ==="
-          echo "=== HEAD check ==="
-          PYTHONPATH=. alembic heads 2>&1
-          echo "=== HISTORY preview ==="
-          PYTHONPATH=. alembic history 2>&1 | tail -30
-          echo "=== UPGRADE ==="
-          PYTHONPATH=. alembic upgrade head 2>&1
-          rc=$?
-          echo "alembic exit code: $rc"
+          exec 2>&1
+          LOG=/tmp/alembic_debug.log
+          echo "=== DEBUG: pwd=$(pwd) ===" | tee -a "$LOG"
+          echo "=== HEAD check ===" | tee -a "$LOG"
+          PYTHONPATH=. alembic heads 2>&1 | tee -a "$LOG"
+          echo "=== HISTORY preview ===" | tee -a "$LOG"
+          PYTHONPATH=. alembic history 2>&1 | tail -30 | tee -a "$LOG"
+          echo "=== CURRENT ===" | tee -a "$LOG"
+          PYTHONPATH=. alembic current 2>&1 | tee -a "$LOG"
+          echo "=== UPGRADE ===" | tee -a "$LOG"
+          PYTHONPATH=. alembic upgrade head --raiseerr 2>&1 | tee -a "$LOG"
+          rc=${PIPESTATUS[0]}
+          echo "alembic exit code: $rc" | tee -a "$LOG"
           echo "alembic_exit=$rc" >> "$GITHUB_ENV"
-          echo "### Alembic upgrade result: $rc" >> "$GITHUB_STEP_SUMMARY"
+          cat "$LOG" >> "$GITHUB_STEP_SUMMARY"
           exit $rc
+      - name: Upload alembic debug log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: alembic-debug
+          path: /tmp/alembic_debug.log
       - name: Run evangelism backend tests (fast feedback)
         run: PYTHONPATH=. pytest tests/test_crm_api.py -k evangelism -q
         working-directory: .
@@ -214,12 +231,9 @@ jobs:
       - name: Check security tests (production rejects insecure defaults)
         run: |
           cd "$GITHUB_WORKSPACE"
-          echo "=== DEBUG: pwd=$(pwd) ==="
-          ls tests/test_security_config.py 2>&1 || echo "FILE NOT FOUND"
-          echo "=== PYTHON import check ==="
-          PYTHONPATH="$GITHUB_WORKSPACE" python -c "from backend.core.config import Settings; print('import OK')" 2>&1
+          pip install pytest-cov pytest 2>&1 | tail -3
           echo "=== Running pytest ==="
-          PYTHONPATH="$GITHUB_WORKSPACE" python -m pytest tests/test_security_config.py -v 2>&1
+          PYTHONPATH="$GITHUB_WORKSPACE" python -m pytest tests/test_security_config.py -v --override-ini="addopts=" 2>&1
           rc=$?
           echo "pytest exit code: $rc"
           exit $rc
