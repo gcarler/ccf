@@ -158,9 +158,9 @@ export default function TeacherWorkspace() {
 
                     {viewType === 'grid' && (
                         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <DSMetric icon={Award} label="Entregas pendientes" value={String(pending.length)} tone="blue" trend="Acción inmediata" />
-                            <DSMetric icon={Shield} label="Revisadas" value={String(graded.length)} tone="emerald" trend="Esta semana" />
-                            <DSMetric icon={MessageCircle} label="Feedback promedio" value={graded.length ? 'Nivel Alto' : 'N/A'} tone="amber" trend="Calidad docente" />
+                            <DSMetric label="Entregas pendientes" value={String(pending.length)} tone="blue" trend="Acción inmediata" />
+                            <DSMetric label="Revisadas" value={String(graded.length)} tone="emerald" trend="Esta semana" />
+                            <DSMetric label="Feedback promedio" value={graded.length ? 'Nivel Alto' : 'N/A'} tone="amber" trend="Calidad docente" />
                         </section>
                     )}
 

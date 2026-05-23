@@ -191,10 +191,10 @@ export default function FaroPage() {
 
                     {/* KPIs */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        <DSMetric icon={Home} label="Faros Activos" value={String(analytics?.active_faros ?? '—')} tone="emerald" trend="Red actual" />
-                        <DSMetric icon={Calendar} label="Sesiones Totales" value={String(analytics?.total_sessions ?? '—')} tone="blue" trend={activeSeason?.name} />
-                        <DSMetric icon={Users} label="Asistentes Totales" value={String(analytics?.total_attendance ?? '—')} tone="blue" trend="Acumulado" />
-                        <DSMetric icon={BarChart3} label="Promedio / Sesión" value={String(analytics?.avg_per_session ?? '—')} tone="amber" trend="Por semana" />
+                        <DSMetric label="Faros Activos" value={String(analytics?.active_faros ?? '—')} tone="emerald" trend="Red actual" />
+                        <DSMetric label="Sesiones Totales" value={String(analytics?.total_sessions ?? '—')} tone="blue" trend={activeSeason?.name} />
+                        <DSMetric label="Asistentes Totales" value={String(analytics?.total_attendance ?? '—')} tone="blue" trend="Acumulado" />
+                        <DSMetric label="Promedio / Sesión" value={String(analytics?.avg_per_session ?? '—')} tone="amber" trend="Por semana" />
                     </div>
 
                     <div className="space-y-12 pb-12">
@@ -235,7 +235,8 @@ export default function FaroPage() {
                                         icon={Clock} 
                                         title="No hay temporadas" 
                                         description="Crea la primera temporada para comenzar a registrar sesiones."
-                                        action={{ label: "Nueva Temporada", onClick: () => setShowNewSeason(true) }}
+                                        onAction={() => setShowNewSeason(true)}
+                                        actionLabel="Nueva Temporada"
                                     />
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

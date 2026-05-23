@@ -1,8 +1,20 @@
 import React from 'react';
 import Link from 'next/link';
+import type { LucideIcon } from 'lucide-react';
 import { Church, Heart, Mail, Globe } from 'lucide-react';
 
-const footerLinks = [
+type FooterLink = {
+    label: string;
+    href: string;
+    icon?: LucideIcon;
+};
+
+type FooterGroup = {
+    title: string;
+    links: FooterLink[];
+};
+
+const footerLinks: FooterGroup[] = [
     {
         title: 'Plataforma',
         links: [

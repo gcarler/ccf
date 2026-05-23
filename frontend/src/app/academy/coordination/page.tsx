@@ -305,10 +305,8 @@ export default function CoordinationConsole() {
                                         icon={GraduationCap}
                                         title="No se encontraron programas"
                                         description="Ajusta los filtros o crea un nuevo programa académico para comenzar."
-                                        action={{
-                                            label: "Nuevo Programa",
-                                            onClick: () => router.push('/academy/coordination/courses/new')
-                                        }}
+                                        onAction={() => router.push('/academy/coordination/courses/new')}
+                                        actionLabel="Nuevo Programa"
                                     />
                                 </div>
                             )}
