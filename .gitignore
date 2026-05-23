@@ -55,3 +55,20 @@ tmp_mcp/
 tmp_stitch/
 .run/
 nul
+
+# Virtual environments
+.venv/
+venv/
+
+# Plans (local)
+PLAN_DE_TRABAJO.md
+PLAN_PRODUCCION.md
+
+# Archive
+archive/
+
+# IDE
+.vscode/
+
+# Runtime logs
+*.log

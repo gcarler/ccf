@@ -52,11 +52,11 @@ EXPOSE 8000
 
 # Gunicorn with Uvicorn workers for production
 # Workers = (2 × CPUs) + 1; adjust based on deployment resources
-CMD ["gunicorn", "backend.app:app", \
-     "--bind", "0.0.0.0:8000", \
+CMD ["uvicorn", "backend.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
      "--workers", "4", \
-     "--worker-class", "uvicorn.workers.UvicornWorker", \
-     "--timeout", "120", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-", \
-     "--log-level", "info"]
+     "--timeout-keep-alive", "120", \
+     "--log-level", "info", \
+     "--access-log", \
+     "--proxy-headers"]
