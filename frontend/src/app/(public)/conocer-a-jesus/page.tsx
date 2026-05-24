@@ -113,8 +113,7 @@ export default function ConocerAJesusPage() {
                 <div
                     className="absolute inset-0"
                     style={{
-                        background:
-                            "linear-gradient(to bottom, rgba(0,13,42,0.5) 0%, rgba(0,13,42,0.6) 50%, var(--faro-background) 100%)",
+                        background: "var(--faro-hero-overlay)",
                     }}
                 />
                 <div

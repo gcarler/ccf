@@ -71,9 +71,6 @@
 }
 
 /* 2. TEMA INSTITUCIONAL (Azul oscuro) — strict monochromatic, single tonal family */
-.theme-institutional
-
-/* 2. TEMA INSTITUCIONAL (Azul oscuro) — strict monochromatic, single tonal family */
 .theme-institutional {
   --faro-surface-container-lowest: #000d2a;
   --faro-surface-tint: #a5c8ff;
