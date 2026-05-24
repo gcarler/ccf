@@ -1,5 +1,7 @@
 """Admin audit log CRUD."""
 
+import datetime as dt
+
 from sqlalchemy.orm import Session
 
 from backend import models
@@ -14,15 +16,16 @@ def create_admin_audit_log(
     metadata: dict | None = None,
     ip_address: str | None = None,
 ):
+    now = dt.datetime.now(dt.UTC).replace(tzinfo=None)
     row = models.AdminAuditLog(
         actor_user_id=actor_user_id,
         action=action,
         resource_type=resource_type,
         resource_id=resource_id,
-        metadata_json={
-            **(metadata or {}),
-            **({"ip_address": ip_address} if ip_address else {}),
-        },
+        ip_address=ip_address,
+        metadata_json=metadata or {},
+        created_at=now,
+        updated_at=now,
     )
     db.add(row)
     db.commit()

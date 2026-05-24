@@ -1159,6 +1159,15 @@ def read_evangelism_strategies(
     return get_evangelism_strategies(db, skip=skip, limit=limit)
 
 
+@router.get("/strategies/{strategy_id}", response_model=EvangelismStrategy)
+def read_strategy(strategy_id: int, db: Session = Depends(get_db)):
+    from backend.models_crm import EvangelismStrategy
+    db_obj = db.query(EvangelismStrategy).filter(EvangelismStrategy.id == strategy_id).first()
+    if not db_obj:
+        raise HTTPException(status_code=404, detail="Evangelism strategy not found")
+    return db_obj
+
+
 @router.post("/strategies", response_model=EvangelismStrategy)
 def create_strategy(strategy: EvangelismStrategyCreate, db: Session = Depends(get_db)):
     return create_evangelism_strategy(db=db, strategy=strategy)

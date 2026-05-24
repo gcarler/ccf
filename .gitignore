@@ -11,6 +11,10 @@
 *.db-wal
 *.db.bak
 *.log
+.coverage
+backups/
+storage/
+seaweed_s3.json
 *_test_output.txt
 *storybook.log
 .env

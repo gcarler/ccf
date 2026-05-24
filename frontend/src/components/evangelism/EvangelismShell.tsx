@@ -1,11 +1,13 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { ViewType } from '@/components/ViewSwitcher';
 import { useAuth } from '@/context/AuthContext';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Flame, Calendar, Activity, Home, Scan, Plus, UserPlus, Shield, Zap, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { apiFetch } from '@/lib/http';
+import { toast } from 'sonner';
 
 export interface BreadcrumbOption {
     label: string;
@@ -29,6 +31,11 @@ interface EvangelismShellProps {
     onMore?: () => void;
 }
 
+interface StrategyItem {
+    id: string | number;
+    name: string;
+}
+
 export default function EvangelismShell({
     breadcrumbs,
     viewOptions,
@@ -44,9 +51,61 @@ export default function EvangelismShell({
     onGroup,
     onMore
 }: EvangelismShellProps) {
-    const { user, loading } = useAuth();
+    const { user, loading, token } = useAuth();
     const role = (user?.role || '').toLowerCase();
     const isAuthorized = role === 'admin' || role === 'pastor';
+    const [strategies, setStrategies] = useState<StrategyItem[]>([]);
+
+    const fetchStrategies = useCallback(async () => {
+        if (!token) return;
+        try {
+            const result = await apiFetch<StrategyItem[]>('/evangelism/strategies/', { token });
+            setStrategies(Array.isArray(result) ? result : []);
+        } catch {
+            // Silently fail — sidebar still works without strategies
+        }
+    }, [token]);
+
+    useEffect(() => {
+        if (isAuthorized) fetchStrategies();
+    }, [isAuthorized, fetchStrategies]);
+
+    // Listen for newly created strategies
+    useEffect(() => {
+        const handleCreated = () => fetchStrategies();
+        window.addEventListener('evangelism-strategy-created', handleCreated);
+        return () => window.removeEventListener('evangelism-strategy-created', handleCreated);
+    }, [fetchStrategies]);
+
+    const sidebarSections = [
+        {
+            title: 'Estrategia',
+            items: [
+                { id: 'ev-strategies', label: 'Todas las Estrategias', href: '/evangelism', icon: Flame, count: strategies.length },
+                ...strategies.map((s: StrategyItem) => ({
+                    id: `ev-strategy-${s.id}`,
+                    label: s.name,
+                    href: `/evangelism/strategies/${s.id}`,
+                    icon: Zap,
+                })),
+                { id: 'ev-events', label: 'Eventos', href: '/evangelism/events', icon: Calendar },
+                { id: 'ev-faro', label: 'Faro: Panel', href: '/evangelism/faro', icon: Activity },
+                { id: 'ev-faro-groups', label: 'Grupos Faro', href: '/evangelism/faro/groups', icon: Home },
+                { id: 'ev-scanner', label: 'Escáner ASST', href: '/evangelism/scanner', icon: Scan },
+            ],
+        },
+        {
+            title: 'Gestión Faro',
+            items: [
+                { id: 'faro-create', label: 'Crear Nuevo', href: '/evangelism/faro/groups?mode=create', icon: Plus },
+                { id: 'faro-leader', label: 'Asignar Líder', href: '/evangelism/faro/groups?mode=leader', icon: UserPlus },
+                { id: 'faro-assistant', label: 'Asignar Colíder', href: '/evangelism/faro/groups?mode=assistant', icon: Shield },
+                { id: 'faro-host', label: 'Asignar Anfitrión', href: '/evangelism/faro/groups?mode=host', icon: Home },
+                { id: 'faro-members', label: 'Asignar Miembros', href: '/evangelism/faro/groups?mode=members', icon: Users },
+                { id: 'faro-monitor', label: 'Monitoreo', href: '/evangelism/faro/groups?mode=monitor', icon: Activity },
+            ],
+        },
+    ];
 
     if (loading) {
         return (
@@ -74,6 +133,8 @@ export default function EvangelismShell({
 
     return (
         <WorkspaceLayout
+            sidebarTitle="Evangelismo & Eventos"
+            sidebarSections={sidebarSections}
             breadcrumbs={breadcrumbs}
             availableViews={viewOptions}
             viewType={viewType}
