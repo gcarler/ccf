@@ -2,15 +2,27 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { apiFetch } from "@/lib/http";
+import { toast } from "sonner";
 
 export default function BoletinPage() {
-    const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
+    const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
     const [email, setEmail] = useState("");
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setStatus("sending");
-        setTimeout(() => setStatus("sent"), 1500);
+        try {
+            await apiFetch("/public/newsletter/subscribe", {
+                method: "POST",
+                body: { email },
+            });
+            setStatus("sent");
+            toast.success("¡Suscrito al boletín de FARO!");
+        } catch {
+            setStatus("error");
+            toast.error("No se pudo suscribir. Intenta de nuevo.");
+        }
     };
 
     return (

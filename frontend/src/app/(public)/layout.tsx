@@ -14,6 +14,12 @@ const inter = Inter({
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
     return (
         <FaroThemeProvider>
+            {/* Apply theme class to <html> before React hydration so CSS vars resolve immediately */}
+            <script
+                dangerouslySetInnerHTML={{
+                    __html: `(function(){var t=localStorage.getItem("faro-theme-v2")||"institutional";document.documentElement.classList.add("theme-"+t)})()`,
+                }}
+            />
             <div className={`min-h-screen bg-faro-background text-faro-on-background font-body antialiased selection:bg-faro-primary/30 ${inter.variable}`}>
                 <FaroNavbar />
                 {children}

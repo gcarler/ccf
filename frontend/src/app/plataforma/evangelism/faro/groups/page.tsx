@@ -557,7 +557,7 @@ function FaroGroupsContent() {
   return (
     <EvangelismShell
       breadcrumbs={[
-        { label: 'Faro en Casa', href: '/evangelism/faro', icon: Home },
+        { label: 'Faro en Casa', href: '/plataforma/evangelism/faro', icon: Home },
         { label: 'Grupos', icon: Home },
       ]}
       viewType="wiki"
@@ -573,7 +573,7 @@ function FaroGroupsContent() {
               <div className="flex items-center gap-1">
                 {!isCreating && selectedHouse && (
                   <button
-                    onClick={() => router.push(`/evangelism/faro/sessions/${selectedHouse.id}`)}
+                    onClick={() => router.push(`/plataforma/evangelism/faro/sessions/${selectedHouse.id}`)}
                     className="size-8 rounded-lg bg-green-50 dark:bg-green-500/10 flex items-center justify-center text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors"
                     title="Reportar sesión"
                   >

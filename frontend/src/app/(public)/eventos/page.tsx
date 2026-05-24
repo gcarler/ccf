@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 
 import Image from "next/image";
-import { Bell, ChevronLeft, ChevronRight, MapPin, Star } from "lucide-react";
+import { Bell, ChevronLeft, ChevronRight, MapPin, Star, CalendarDays } from "lucide-react";
 import { useContentBlock } from "@/hooks/useContent";
+import { apiFetch } from "@/lib/http";
+import { toast } from "sonner";
 import { FARO_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
 
 interface PublicEventItem {
@@ -45,21 +47,27 @@ export default function EventosPage() {
     const { data: heroContent } = useContentBlock("faro_events_hero");
     const { data: eventsContent } = useContentBlock(FARO_EVENTS_BLOCK_KEY);
     const [activeFilter, setActiveFilter] = useState("Todos");
+    const [reserveModal, setReserveModal] = useState<PublicEventItem | null>(null);
 
     const heroEyebrow = heroContent?.eyebrow || "Calendario de Comunidad";
     const heroTitle = heroContent?.title || "Nuestra Agenda";
     const heroDescription =
         heroContent?.description ||
-        "Espacios disenados para el crecimiento, la conexion y la guia espiritual.";
+        "Espacios diseñados para el crecimiento, la conexión y la guía espiritual.";
 
     const parsedEvents = Array.isArray(eventsContent?.parsed)
         ? (eventsContent?.parsed as PublicEventItem[]).filter((event) => event.status !== "archived")
         : [];
 
-    const featuredEvent = parsedEvents.find((event) => event.featured) || parsedEvents[0];
-    const upcomingEvent = parsedEvents[1];
-    const upcomingCards = parsedEvents;
-    const hasEvents = parsedEvents.length > 0;
+    const filteredEvents = useMemo(() => {
+        if (activeFilter === "Todos") return parsedEvents;
+        return parsedEvents.filter((e) => e.category === activeFilter);
+    }, [parsedEvents, activeFilter]);
+
+    const featuredEvent = filteredEvents.find((event) => event.featured) || filteredEvents[0];
+    const upcomingEvent = filteredEvents[1];
+    const upcomingCards = filteredEvents;
+    const hasEvents = filteredEvents.length > 0;
 
     const calendarDays: CalendarDay[] = [
         { n: 26, prev: true },
@@ -158,6 +166,11 @@ export default function EventosPage() {
                             </h2>
                             <div className="flex items-center gap-3">
                                 <button
+                                    onClick={() => {
+                                        if (featuredEvent) {
+                                            toast.success(`Reserva iniciada para "${featuredEvent.title}"`);
+                                        }
+                                    }}
                                     className="px-4 py-1.5 rounded-md font-black text-sm uppercase tracking-wide text-white transition-all hover:scale-105"
                                     style={{
                                         background:

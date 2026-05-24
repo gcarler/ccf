@@ -7,6 +7,9 @@ import { ArrowRight, Play, Calendar, MapPin, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import { useContentBlock } from "@/hooks/useContent";
 import { FARO_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
+import { useState } from "react";
+import { apiFetch } from "@/lib/http";
+import { toast } from "sonner";
 
 export default function PublicHomePage() {
     const { data: heroContent } = useContentBlock("faro_home_hero");
@@ -30,6 +33,27 @@ export default function PublicHomePage() {
         desc?: string;
         status?: string;
     }
+
+    const [nlEmail, setNlEmail] = useState("");
+    const [nlStatus, setNlStatus] = useState<"idle" | "sending" | "sent">("idle");
+
+    const handleNewsletterSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!nlEmail) return;
+        setNlStatus("sending");
+        try {
+            await apiFetch("/public/newsletter/subscribe", {
+                method: "POST",
+                body: { email: nlEmail },
+            });
+            setNlStatus("sent");
+            setNlEmail("");
+            toast.success("¡Suscrito al boletín de FARO!");
+        } catch {
+            setNlStatus("idle");
+            toast.error("No se pudo suscribir. Intenta de nuevo.");
+        }
+    };
 
     const publicEvents: PublicEventItem[] = Array.isArray(eventsContent?.parsed)
         ? (eventsContent?.parsed as PublicEventItem[]).filter((event) => event.status !== "archived")
@@ -227,28 +251,32 @@ export default function PublicHomePage() {
 
                         {/* Mini cards */}
                         {[
-                            { icon: <BookOpen size={22} />, title: "Librería", desc: "Recursos para profundizar en tu estudio bíblico." },
-                            { icon: <Calendar size={22} />, title: "Horarios", desc: "Reuniones presenciales y online cada semana." },
-                            { icon: <MapPin size={22} />, title: "Sedes", desc: "Encuéntranos en tu ciudad." },
-                        ].map(({ icon, title, desc }, idx) => (
-                            <motion.div
+                            { icon: <BookOpen size={22} />, title: "Librería", desc: "Recursos para profundizar en tu estudio bíblico.", href: "/cursos" },
+                            { icon: <Calendar size={22} />, title: "Horarios", desc: "Reuniones presenciales y online cada semana.", href: "/eventos" },
+                            { icon: <MapPin size={22} />, title: "Sedes", desc: "Encuéntranos en tu ciudad.", href: "/sedes" },
+                        ].map(({ icon, title, desc, href }, idx) => (
+                            <Link
                                 key={title}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: 0.1 * (idx + 1) }}
-                                className="rounded-lg p-4 flex items-center gap-3 transition-all hover:scale-[1.02]"
+                                href={href}
+                                className="block rounded-lg p-4 flex items-center gap-3 transition-all hover:scale-[1.02]"
                                 style={{ background: "var(--faro-surface-container)" }}
                             >
-                                <div
-                                    className="w-12 h-8 rounded-lg flex items-center justify-center shrink-0"
-                                    style={{
-                                        background: "var(--faro-primary-container)",
-                                        color: "var(--faro-primary)",
-                                    }}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: 0.1 * (idx + 1) }}
                                 >
-                                    {icon}
-                                </div>
+                                    <div
+                                        className="w-12 h-8 rounded-lg flex items-center justify-center shrink-0"
+                                        style={{
+                                            background: "var(--faro-primary-container)",
+                                            color: "var(--faro-primary)",
+                                        }}
+                                    >
+                                        {icon}
+                                    </div>
+                                </motion.div>
                                 <div>
                                     <h4
                                         className="font-bold mb-1"
@@ -263,7 +291,7 @@ export default function PublicHomePage() {
                                         {desc}
                                     </p>
                                 </div>
-                            </motion.div>
+                            </Link>
                         ))}
                     </div>
                 </div>
@@ -405,19 +433,34 @@ export default function PublicHomePage() {
                         >
                             Meditaciones semanales, eventos exclusivos y más. Directo a tu correo.
                         </p>
-                        <form className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
-                            <input
-                                type="email"
-                                placeholder="Tu correo electrónico"
-                                className="flex-grow rounded-lg px-3 py-1.5 text-sm focus:outline-none"
-                                style={{
-                                    background: "var(--faro-surface)",
-                                    border: "2px solid var(--faro-outline-variant)",
-                                    color: "var(--faro-on-surface)",
-                                }}
-                            />
-                            <button
-                                type="button"
+                        {nlStatus === "sent" ? (
+                            <div className="relative z-10">
+                                <h2 className="font-bold text-lg md:text-xl tracking-tight mb-3" style={{ color: "var(--faro-on-background)" }}>
+                                    ¡Gracias por suscribirte!
+                                </h2>
+                                <p className="text-lg" style={{ color: "var(--faro-on-surface-variant)" }}>
+                                    Recibirás meditaciones y novedades semanales.
+                                </p>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
+                                <input
+                                    type="email"
+                                    value={nlEmail}
+                                    onChange={(e) => setNlEmail(e.target.value)}
+                                    placeholder="Tu correo electrónico"
+                                    required
+                                    disabled={nlStatus === "sending"}
+                                    className="flex-grow rounded-lg px-3 py-1.5 text-sm focus:outline-none disabled:opacity-60"
+                                    style={{
+                                        background: "var(--faro-surface)",
+                                        border: "2px solid var(--faro-outline-variant)",
+                                        color: "var(--faro-on-surface)",
+                                    }}
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={nlStatus === "sending"}
                                 className="px-4 py-1.5 rounded-lg font-bold text-sm uppercase tracking-wide text-white transition-all hover:scale-105"
                                 style={{
                                     background:
@@ -428,6 +471,7 @@ export default function PublicHomePage() {
                                 Suscribirme
                             </button>
                         </form>
+                        )}
                     </div>
                 </motion.div>
             </section>

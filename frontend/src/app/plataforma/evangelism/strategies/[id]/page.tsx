@@ -171,7 +171,7 @@ export default function StrategyDetailPage() {
             await apiFetch(`/evangelism/strategies/${id}`, { method: 'DELETE', token });
             toast.success('Estrategia eliminada');
             window.dispatchEvent(new CustomEvent('evangelism-strategy-created'));
-            router.push('/evangelism');
+            router.push('/plataforma/evangelism');
         } catch {
             toast.error('Error al eliminar');
         }
@@ -191,8 +191,8 @@ export default function StrategyDetailPage() {
         return (
             <EvangelismShell
                 breadcrumbs={[
-                    { label: 'Evangelismo', icon: Flame, href: '/evangelism' },
-                    { label: 'Estrategias', href: '/evangelism' },
+                    { label: 'Evangelismo', icon: Flame, href: '/plataforma/evangelism' },
+                    { label: 'Estrategias', href: '/plataforma/evangelism' },
                     { label: 'Cargando...' }
                 ]}
             >
@@ -209,8 +209,8 @@ export default function StrategyDetailPage() {
         return (
             <EvangelismShell
                 breadcrumbs={[
-                    { label: 'Evangelismo', icon: Flame, href: '/evangelism' },
-                    { label: 'Estrategias', href: '/evangelism' },
+                    { label: 'Evangelismo', icon: Flame, href: '/plataforma/evangelism' },
+                    { label: 'Estrategias', href: '/plataforma/evangelism' },
                     { label: 'No encontrada' }
                 ]}
             >
@@ -218,7 +218,7 @@ export default function StrategyDetailPage() {
                     <AlertCircle size={48} className="text-slate-300 dark:text-slate-600 mb-4" />
                     <h2 className="text-lg font-bold text-slate-700 dark:text-slate-300">Estrategia no encontrada</h2>
                     <button
-                        onClick={() => router.push('/evangelism')}
+                        onClick={() => router.push('/plataforma/evangelism')}
                         className="mt-4 px-4 h-9 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors"
                     >
                         Volver a Estrategias
@@ -231,8 +231,8 @@ export default function StrategyDetailPage() {
     return (
         <EvangelismShell
             breadcrumbs={[
-                { label: 'Evangelismo', icon: Flame, href: '/evangelism' },
-                { label: 'Estrategias', href: '/evangelism' },
+                { label: 'Evangelismo', icon: Flame, href: '/plataforma/evangelism' },
+                { label: 'Estrategias', href: '/plataforma/evangelism' },
                 { label: strategy.name }
             ]}
         >
@@ -241,7 +241,7 @@ export default function StrategyDetailPage() {
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
                         <button
-                            onClick={() => router.push('/evangelism')}
+                            onClick={() => router.push('/plataforma/evangelism')}
                             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-all mt-1"
                         >
                             <ArrowLeft size={16} />

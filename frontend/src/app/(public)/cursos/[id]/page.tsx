@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { PREMIUM_COURSES, CourseItem } from "@/lib/data/cursos";
 import { ArrowLeft, CheckCircle2, Clock, User, BookOpen, Share2 } from "lucide-react";
 import { apiFetch } from "@/lib/http";
+import { toast } from "sonner";
 
 export default function CursoDetailPage() {
     const params = useParams();
@@ -41,9 +42,17 @@ export default function CursoDetailPage() {
         setTimeout(() => setToastMessage(null), 3000);
     };
 
-    const handleEnroll = () => {
-        setEnrolled(true);
-        showToast(`Inscripción a "${course?.title}" iniciada. Revisa tu correo.`);
+    const handleEnroll = async () => {
+        try {
+            await apiFetch(`/public/courses/${params.id}/enroll`, {
+                method: "POST",
+                body: { course_id: params.id },
+            });
+            setEnrolled(true);
+            toast.success(`Inscrito en "${course?.title}". Revisa tu correo.`);
+        } catch {
+            toast.error("No se pudo completar la inscripción. Intenta de nuevo.");
+        }
     };
 
     if (loading) {
