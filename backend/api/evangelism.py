@@ -1255,9 +1255,8 @@ def _project_phases_as_tasks(db, strategy_id: int, strategy_name: str, phases: l
     return project
 
 
-@router.delete("/strategies/{strategy_id}", response_model=EvangelismStrategy)
+@router.delete("/strategies/{strategy_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_strategy(strategy_id: int, db: Session = Depends(get_db)):
     db_obj = delete_evangelism_strategy(db=db, strategy_id=strategy_id)
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
-    return db_obj
