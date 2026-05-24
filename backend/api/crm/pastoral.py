@@ -1587,3 +1587,125 @@ def get_crm_radar(
         "active_cases": active_cases,
         "pending_tasks": pending_tasks,
     }
+
+
+# ---------------------------------------------------------------------------
+# Task 3.2: Newsletter Leads Dashboard
+# ---------------------------------------------------------------------------
+
+@router.get("/leads/newsletter", response_model=dict)
+def get_newsletter_leads(
+    source: Optional[str] = None,
+    stage: Optional[str] = None,
+    landing_page: Optional[str] = None,
+    campaign: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    page: int = 1,
+    page_size: int = 50,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """
+    CRM view para ver todos los leads originados desde suscripción al newsletter.
+    Permite filtrar por source, stage, landing_page, campaign y rango de fechas.
+    """
+    query = (
+        db.query(models.ConsolidationCase)
+        .join(models.Member, models.ConsolidationCase.member_id == models.Member.id)
+        .filter(
+            models.ConsolidationCase.source.like("%newsletter%"),
+            models.ConsolidationCase.status == "active",
+        )
+    )
+
+    if source:
+        query = query.filter(models.ConsolidationCase.source == source)
+    if stage:
+        query = query.filter(models.ConsolidationCase.stage == stage)
+    if landing_page:
+        query = query.filter(models.ConsolidationCase.notes.like(f"%Landing: {landing_page}%"))
+    if campaign:
+        query = query.filter(models.ConsolidationCase.notes.like(f"%Campaign: {campaign}%"))
+    if date_from:
+        query = query.filter(models.ConsolidationCase.created_at >= date_from)
+    if date_to:
+        query = query.filter(models.ConsolidationCase.created_at <= date_to)
+
+    total = query.count()
+    cases = (
+        query.order_by(models.ConsolidationCase.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+
+    leads = []
+    for case in cases:
+        member = case.member
+        leads.append({
+            "case_id": case.id,
+            "member_id": member.id if member else None,
+            "first_name": member.first_name if member else "",
+            "last_name": member.last_name if member else "",
+            "email": member.email if member else None,
+            "phone": member.phone if member else None,
+            "source": case.source,
+            "stage": case.stage,
+            "notes": case.notes,
+            "created_at": case.created_at.isoformat() if case.created_at else None,
+        })
+
+    return {
+        "leads": leads,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": (total + page_size - 1) // page_size if page_size > 0 else 0,
+    }
+
+
+@router.get("/leads/export-newsletter", response_model=dict)
+def export_newsletter_leads_csv(
+    source: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """
+    Exporta leads de newsletter como lista de dicts (para generar CSV en frontend).
+    """
+    query = (
+        db.query(models.ConsolidationCase)
+        .join(models.Member, models.ConsolidationCase.member_id == models.Member.id)
+        .filter(
+            models.ConsolidationCase.source.like("%newsletter%"),
+            models.ConsolidationCase.status == "active",
+        )
+    )
+
+    if source:
+        query = query.filter(models.ConsolidationCase.source == source)
+    if date_from:
+        query = query.filter(models.ConsolidationCase.created_at >= date_from)
+    if date_to:
+        query = query.filter(models.ConsolidationCase.created_at <= date_to)
+
+    cases = query.order_by(models.ConsolidationCase.created_at.desc()).all()
+
+    rows = []
+    for case in cases:
+        member = case.member
+        rows.append({
+            "first_name": member.first_name if member else "",
+            "last_name": member.last_name if member else "",
+            "email": member.email if member else "",
+            "phone": member.phone if member else "",
+            "source": case.source,
+            "stage": case.stage,
+            "notes": case.notes or "",
+            "created_at": str(case.created_at) if case.created_at else "",
+        })
+
+    return {"rows": rows, "count": len(rows)}

@@ -1,6 +1,6 @@
 import logging
 import secrets
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from backend import models, schemas
 from backend.core.database import get_db
+from backend.services.public_contact_tracking import ContactRecord, tracker
 
 logger = logging.getLogger(__name__)
 
@@ -149,48 +150,16 @@ def public_newsletter_subscribe(
     subscription = models.NewsletterSubscription(email=email)
     db.add(subscription)
 
-    # Intentar vincular con Member existente
-    member = None
-    if payload.phone:
-        member = (
-            db.query(models.Member)
-            .filter(models.Member.phone == payload.phone)
-            .first()
-        )
-    if not member and payload.email:
-        member = (
-            db.query(models.Member)
-            .filter(models.Member.email == email)
-            .first()
-        )
-
-    if not member:
-        member = models.Member(
-            first_name=payload.first_name or "",
-            last_name=payload.last_name or "",
-            email=email,
-            phone=payload.phone,
-            spiritual_status="Nuevo",
-            church_role="Visitante",
-        )
-        db.add(member)
-        db.flush()
-
-    # Crear ConsolidationCase para visibilidad en CRM
-    notes_parts = []
-    if payload.landing_page:
-        notes_parts.append(f"Landing: {payload.landing_page}")
-    if payload.campaign:
-        notes_parts.append(f"Campaign: {payload.campaign}")
-
-    case = models.ConsolidationCase(
-        member_id=member.id,
-        stage="new",
-        status="active",
+    # Use unified contact tracker
+    result = tracker.record_contact(db, ContactRecord(
+        email=email,
+        phone=payload.phone,
+        first_name=payload.first_name,
+        last_name=payload.last_name,
         source=payload.source or "newsletter-web",
-        notes="\n".join(notes_parts) if notes_parts else None,
-    )
-    db.add(case)
+        landing_page=payload.landing_page,
+        campaign=payload.campaign,
+    ))
 
     db.commit()
     db.refresh(subscription)
@@ -319,6 +288,28 @@ def public_course_enroll(
         notes="\n".join(notes_parts),
     )
     db.add(case)
+    db.flush()
+
+    # Task 3.4: Auto-create follow-up task for CRM team
+    if member:
+        followup_task = models.ConsolidationFollowUpTask(
+            case_id=case.id,
+            title=f"Seguimiento: nuevo estudiante en {course.title}",
+            description=f"Contactar a {member.first_name} {member.last_name} para dar la bienvenida al curso '{course.title}' y ofrecer apoyo pastoral.",
+            due_date=datetime.utcnow() + timedelta(days=3),
+            status="pending",
+        )
+        db.add(followup_task)
+
+        # Log in CommunicationLog
+        comm_log = models.CommunicationLog(
+            member_id=member.id,
+            channel="system",
+            content=f"Auto follow-up task created: student enrolled in '{course.title}'",
+            outcome="task_created",
+            campaign_name="academy-auto-followup",
+        )
+        db.add(comm_log)
 
     db.commit()
     db.refresh(enrollment)
@@ -413,37 +404,19 @@ def public_wishlist(payload: WishlistCreate, db: Session = Depends(get_db)):
     email = (payload.email or "").strip().lower()
     phone = (payload.phone or "").strip()
 
-    member = None
-    if phone:
-        member = db.query(models.Member).filter(models.Member.phone == phone).first()
-    if not member and email:
-        member = db.query(models.Member).filter(models.Member.email == email).first()
-
-    if not member and (payload.full_name or email):
-        parts = (payload.full_name or "").strip().split(" ", 1)
-        member = models.Member(
-            first_name=parts[0] if parts else "Visitante",
-            last_name=parts[1] if len(parts) > 1 else "",
-            email=email,
-            phone=phone,
-            spiritual_status="Nuevo",
-            church_role="Visitante",
-        )
-        db.add(member)
-        db.flush()
-
-    case = models.ConsolidationCase(
-        member_id=member.id if member else 0,
-        stage="new",
-        status="active",
+    result = tracker.record_contact(db, ContactRecord(
+        email=email or None,
+        phone=phone or None,
+        first_name=payload.full_name,
         source="books-web",
-        notes=f"Libro: {payload.title}" + (f"\nLanding: {payload.landing_page}" if payload.landing_page else ""),
-    )
-    db.add(case)
+        landing_page=payload.landing_page,
+        extra_notes=[f"Libro: {payload.title}"],
+    ))
+
     db.commit()
 
     return {
         "status": "success",
         "title": payload.title,
-        "member_id": member.id if member else None,
+        "member_id": result.member.id if result.member else None,
     }

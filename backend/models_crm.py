@@ -19,6 +19,8 @@ class ConsolidationPipeline(Base):
     last_name = Column(String(100), nullable=False, index=True)
     phone = Column(String(20), nullable=False)
     source = Column(String(100), nullable=True)
+    landing_page = Column(String(500), nullable=True)
+    campaign = Column(String(200), nullable=True, index=True)
     stage = Column(String(20), default="new", index=True)
     notes = Column(Text, nullable=True)
 

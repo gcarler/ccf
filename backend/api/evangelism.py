@@ -1160,7 +1160,7 @@ def read_evangelism_strategies(
     strategies = get_evangelism_strategies(db, skip=skip, limit=limit)
     result = []
     for s in strategies:
-        obj = EvangelismStrategy.from_orm(s)
+        obj = EvangelismStrategy.model_validate(s)
         obj.group_count = db.query(GloryHouse).filter(
             GloryHouse.evangelism_strategy_id == s.id
         ).count()
@@ -1175,7 +1175,7 @@ def read_strategy(strategy_id: int, db: Session = Depends(get_db)):
     db_obj = db.query(EvangelismStrategy).filter(EvangelismStrategy.id == strategy_id).first()
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
-    result = EvangelismStrategy.from_orm(db_obj)
+    result = EvangelismStrategy.model_validate(db_obj)
     result.group_count = db.query(GloryHouse).filter(
         GloryHouse.evangelism_strategy_id == strategy_id
     ).count()
