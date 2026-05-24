@@ -133,19 +133,64 @@ def public_newsletter_subscribe(
 ):
     """
     Registra un correo en el boletín (Newsletter).
+    Además crea un Member y ConsolidationCase para que el equipo CRM pueda dar seguimiento.
     """
-    existing = (
+    email = payload.email.strip().lower()
+    existing_sub = (
         db.query(models.NewsletterSubscription)
-        .filter(models.NewsletterSubscription.email == payload.email.strip().lower())
+        .filter(models.NewsletterSubscription.email == email)
         .first()
     )
 
-    if existing:
-        # If it already exists, just return it as success
-        return existing
+    if existing_sub:
+        return existing_sub
 
-    subscription = models.NewsletterSubscription(email=payload.email.strip().lower())
+    subscription = models.NewsletterSubscription(email=email)
     db.add(subscription)
+
+    # Intentar vincular con Member existente
+    member = None
+    if payload.phone:
+        member = (
+            db.query(models.Member)
+            .filter(models.Member.phone == payload.phone)
+            .first()
+        )
+    if not member and payload.email:
+        member = (
+            db.query(models.Member)
+            .filter(models.Member.email == email)
+            .first()
+        )
+
+    if not member:
+        member = models.Member(
+            first_name=payload.first_name or "",
+            last_name=payload.last_name or "",
+            email=email,
+            phone=payload.phone,
+            spiritual_status="Nuevo",
+            church_role="Visitante",
+        )
+        db.add(member)
+        db.flush()
+
+    # Crear ConsolidationCase para visibilidad en CRM
+    notes_parts = []
+    if payload.landing_page:
+        notes_parts.append(f"Landing: {payload.landing_page}")
+    if payload.campaign:
+        notes_parts.append(f"Campaign: {payload.campaign}")
+
+    case = models.ConsolidationCase(
+        member_id=member.id,
+        stage="new",
+        status="active",
+        source=payload.source or "newsletter-web",
+        notes="\n".join(notes_parts) if notes_parts else None,
+    )
+    db.add(case)
+
     db.commit()
     db.refresh(subscription)
     return subscription

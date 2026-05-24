@@ -44,7 +44,7 @@ export default function PublicHomePage() {
         try {
             await apiFetch("/public/newsletter/subscribe", {
                 method: "POST",
-                body: { email: nlEmail },
+                body: { email: nlEmail, source: "newsletter-web", landing_page: "/" },
             });
             setNlStatus("sent");
             setNlEmail("");

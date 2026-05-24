@@ -431,6 +431,12 @@ class TestimonialRead(BaseModel):
 
 class NewsletterSubscriptionCreate(BaseModel):
     email: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone: Optional[str] = None
+    source: Optional[str] = "newsletter-web"
+    landing_page: Optional[str] = None
+    campaign: Optional[str] = None
 
 
 class NewsletterSubscriptionRead(BaseModel):

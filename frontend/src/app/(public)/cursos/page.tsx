@@ -40,7 +40,7 @@ export default function CursosPage() {
         try {
             await apiFetch("/public/newsletter/subscribe", {
                 method: "POST",
-                body: { email }
+                body: { email, source: "newsletter-web", landing_page: "/cursos" }
             });
             showToast("¡Te has suscrito con éxito a nuestra academia!");
             setEmail("");

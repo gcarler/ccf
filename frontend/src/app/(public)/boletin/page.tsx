@@ -15,7 +15,7 @@ export default function BoletinPage() {
         try {
             await apiFetch("/public/newsletter/subscribe", {
                 method: "POST",
-                body: { email },
+                body: { email, source: "newsletter-web", landing_page: "/boletin" },
             });
             setStatus("sent");
             toast.success("¡Suscrito al boletín de FARO!");
