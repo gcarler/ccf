@@ -30,11 +30,23 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
 
 
 def create_user(db: Session, user: schemas.UserCreate):
+    from backend.models_identity import Role
+
+    # Look up role_id from role name to keep both fields in sync
+    role_id = None
+    if user.role:
+        role = db.query(Role).filter(
+            Role.name.ilike(user.role.replace("_", " "))
+        ).first()
+        if role:
+            role_id = role.role_id
+
     db_user = models.User(
         username=user.username,
         email=user.email,
         password_hash=get_password_hash(user.password),
         role=user.role,
+        role_id=role_id,
     )
     db.add(db_user)
     db.commit()

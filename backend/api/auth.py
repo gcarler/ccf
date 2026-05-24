@@ -185,6 +185,47 @@ def logout(response: Response):
     )
 
 
+@router.get("/sessions")
+def get_sessions(current_user: dict = Depends(require_active_user), db: Session = Depends(get_db)):
+    """Lista las sesiones activas del usuario autenticado."""
+    from backend.models_identity import RefreshToken
+    sessions = db.query(RefreshToken).filter(
+        RefreshToken.user_id == current_user["user_id"],
+        RefreshToken.revoked == False
+    ).order_by(RefreshToken.last_active.desc()).all()
+    result = []
+    for s in sessions:
+        result.append({
+            "id": s.id,
+            "ip_address": s.ip_address,
+            "user_agent": s.user_agent,
+            "last_active": s.last_active.isoformat() if s.last_active else None,
+            "created_at": s.created_at.isoformat() if s.created_at else None,
+            "expires_at": s.expires_at.isoformat() if s.expires_at else None,
+            "is_current": True,  # Will be refined client-side
+        })
+    return result
+
+
+@router.post("/sessions/{session_id}/revoke", status_code=204)
+def revoke_session(
+    session_id: int,
+    current_user: dict = Depends(require_active_user),
+    db: Session = Depends(get_db)
+):
+    """Revoca una sesión específica del usuario autenticado."""
+    from backend.models_identity import RefreshToken
+    session = db.query(RefreshToken).filter(
+        RefreshToken.id == session_id,
+        RefreshToken.user_id == current_user["user_id"],
+        RefreshToken.revoked == False
+    ).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Sesión no encontrada")
+    session.revoked = True
+    db.commit()
+
+
 @router.post(
     "/register",
     response_model=schemas.User,

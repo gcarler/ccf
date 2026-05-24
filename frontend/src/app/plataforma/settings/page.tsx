@@ -5,7 +5,8 @@ import { motion } from 'framer-motion';
 import {
     Settings, User, Bell, Lock, Palette, Globe, Shield,
     ChevronRight, Moon, Sun, Monitor, Check,
-    Languages, Keyboard, Zap, LogOut, Trash2, Crown
+    Languages, Keyboard, Zap, LogOut, Trash2, Crown,
+    Monitor as MonitorIcon
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -20,6 +21,7 @@ const SETTINGS_GROUPS = [
             { icon: User, label: "Perfil Personal", desc: "Nombre, foto y datos personales", href: "/account" },
             { icon: Bell, label: "Notificaciones", desc: "Alertas, recordatorios y emails", href: "#notificaciones" },
             { icon: Lock, label: "Seguridad", desc: "Contraseña y autenticación", href: "#seguridad" },
+            { icon: MonitorIcon, label: "Sesiones Activas", desc: "Dispositivos conectados a tu cuenta", href: "/plataforma/admin/settings/sessions" },
         ]
     },
     {
@@ -61,6 +63,7 @@ export default function SettingsPage() {
                 { id: 'account-profile', label: 'Mi Perfil', href: '/account', icon: User },
                 { id: 'account-ministry', label: 'Perfil Ministerial', href: '/account/ministry-profile', icon: Crown },
                 { id: 'settings-roles', label: 'Roles de Acceso', href: '/settings/roles', icon: Shield },
+                { id: 'settings-sessions', label: 'Sesiones', href: '/plataforma/admin/settings/sessions', icon: MonitorIcon },
                 { id: 'theme-visual', label: 'Tema Visual', href: '/theme', icon: Palette },
             ]
         }

@@ -237,33 +237,23 @@ def public_course_enroll(
             "enrollment_id": existing_enroll.id,
         }
 
-    # Buscar Member existente
-    member = None
-    if phone:
-        member = (
-            db.query(models.Member)
-            .filter(models.Member.phone == phone)
-            .first()
-        )
-    if not member and email:
-        member = (
-            db.query(models.Member)
-            .filter(models.Member.email == email)
-            .first()
-        )
+    # Buscar Member existente o crearlo via tracker unificado
+    notes_parts = [f"Curso: {course.title}"]
 
-    if not member and (payload.full_name or email):
-        parts = (payload.full_name or "").strip().split(" ", 1)
-        member = models.Member(
-            first_name=parts[0] if parts else "Visitante",
-            last_name=parts[1] if len(parts) > 1 else "",
-            email=email,
-            phone=phone,
-            spiritual_status="Nuevo",
-            church_role="Visitante",
-        )
-        db.add(member)
-        db.flush()
+    result = tracker.record_contact(db, ContactRecord(
+        email=email or None,
+        phone=phone or None,
+        first_name=(payload.full_name or "").strip().split(" ", 1)[0] or "Visitante",
+        last_name=(payload.full_name or "").strip().split(" ", 1)[1] if payload.full_name and " " in payload.full_name.strip() else "",
+        source="academy-enrollment",
+        landing_page=payload.landing_page,
+        campaign=payload.campaign,
+        spiritual_status="Nuevo",
+        church_role="Visitante",
+        extra_notes=notes_parts,
+    ))
+    member = result.member
+    case = result.case
 
     # Crear Enrollment
     enrollment = models.Enrollment(
@@ -272,22 +262,6 @@ def public_course_enroll(
         status="active",
     )
     db.add(enrollment)
-
-    # Crear ConsolidationCase para CRM
-    notes_parts = [f"Curso: {course.title}"]
-    if payload.landing_page:
-        notes_parts.append(f"Landing: {payload.landing_page}")
-    if payload.campaign:
-        notes_parts.append(f"Campaign: {payload.campaign}")
-
-    case = models.ConsolidationCase(
-        member_id=member.id if member else 0,
-        stage="new",
-        status="active",
-        source="academy-enrollment",
-        notes="\n".join(notes_parts),
-    )
-    db.add(case)
     db.flush()
 
     # Task 3.4: Auto-create follow-up task for CRM team
@@ -335,39 +309,18 @@ class PublicContactCreate(BaseModel):
 @router.post("/contact", response_model=dict)
 def public_contact(payload: PublicContactCreate, db: Session = Depends(get_db)):
     """
-    Recibe un contacto desde un formulario pblico (ej. Conocer a Jesus).
-    Crea el miembro si no existe y lo añade a un caso de consolidación.
+    Recibe un contacto desde un formulario público (ej. Conocer a Jesús).
+    Usa el tracker unificado para crear Member + ConsolidationCase.
     """
-    parts = payload.full_name.strip().split(" ", 1)
-    first_name = parts[0] if parts else "Anónimo"
-    last_name = parts[1] if len(parts) > 1 else ""
-
-    member = None
-    if payload.phone:
-        member = (
-            db.query(models.Member).filter(models.Member.phone == payload.phone).first()
-        )
-
-    if not member:
-        member = models.Member(
-            first_name=first_name,
-            last_name=last_name,
-            phone=payload.phone,
-            spiritual_status="Nuevo",
-            church_role="Visitante",
-        )
-        db.add(member)
-        db.commit()
-        db.refresh(member)
-
-    case = models.ConsolidationCase(
-        member_id=member.id,
-        stage="Nuevo",
-        status="active",
-        source=payload.source or "website",
+    result = tracker.record_contact(db, ContactRecord(
+        first_name=payload.full_name.strip().split(" ", 1)[0] if payload.full_name else "Anónimo",
+        last_name=payload.full_name.strip().split(" ", 1)[1] if payload.full_name and " " in payload.full_name.strip() else "",
+        phone=payload.phone,
+        source=payload.source or "conocer-a-jesus",
         notes=payload.notes,
-    )
-    db.add(case)
+        spiritual_status="Nuevo",
+        church_role="Visitante",
+    ))
 
     # Si dejó notas/mensaje, crear una solicitud de oración para el CRM
     if payload.notes and payload.notes.strip():
@@ -383,7 +336,11 @@ def public_contact(payload: PublicContactCreate, db: Session = Depends(get_db)):
 
     db.commit()
 
-    return {"status": "success", "member_id": member.id}
+    return {
+        "status": "success",
+        "member_id": result.member.id if result.member else None,
+        "case_id": result.case.id if result.case else None,
+    }
 
 
 class WishlistCreate(BaseModel):

@@ -173,7 +173,7 @@ export default function LoginPage() {
                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                                     Contraseña
                                 </label>
-                                <Link href="#" className="text-[9px] text-ccf-blue-light font-bold uppercase tracking-wider no-underline">
+                                <Link href="/auth/forgot" className="text-[9px] text-ccf-blue-light font-bold uppercase tracking-wider no-underline">
                                     ¿Olvidaste la clave?
                                 </Link>
                             </div>

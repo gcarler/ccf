@@ -175,6 +175,214 @@ def create_consolidation_task(
     }
 
 
+# --- LIST / DELETE Cases, nested resources ---
+
+
+@router.get("/consolidation/cases", response_model=dict)
+def list_consolidation_cases(
+    source: Optional[str] = None,
+    stage: Optional[str] = None,
+    status: Optional[str] = None,
+    member_id: Optional[int] = None,
+    page: int = 1,
+    page_size: int = 50,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Lista casos de consolidación con paginación y filtros."""
+    q = db.query(models.ConsolidationCase)
+
+    if source:
+        q = q.filter(models.ConsolidationCase.source == source)
+    if stage:
+        q = q.filter(models.ConsolidationCase.stage == stage)
+    if status:
+        q = q.filter(models.ConsolidationCase.status == status)
+    if member_id:
+        q = q.filter(models.ConsolidationCase.member_id == member_id)
+
+    total = q.count()
+    cases = (
+        q.order_by(models.ConsolidationCase.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+
+    return {
+        "cases": [_serialize_case(c) for c in cases],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": (total + page_size - 1) // page_size if page_size > 0 else 0,
+    }
+
+
+@router.delete("/consolidation/cases/{case_id}", status_code=204)
+def delete_consolidation_case(
+    case_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Elimina un caso de consolidación."""
+    case = (
+        db.query(models.ConsolidationCase)
+        .filter(models.ConsolidationCase.id == case_id)
+        .first()
+    )
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    db.delete(case)
+    db.commit()
+    return None
+
+
+@router.get("/consolidation/cases/{case_id}/tasks", response_model=List[dict])
+def list_consolidation_tasks(
+    case_id: int,
+    status_filter: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Lista las tareas de seguimiento de un caso."""
+    case = (
+        db.query(models.ConsolidationCase)
+        .filter(models.ConsolidationCase.id == case_id)
+        .first()
+    )
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+
+    q = (
+        db.query(models.ConsolidationFollowUpTask)
+        .filter(models.ConsolidationFollowUpTask.case_id == case_id)
+    )
+    if status_filter:
+        q = q.filter(models.ConsolidationFollowUpTask.status == status_filter)
+
+    tasks = q.order_by(models.ConsolidationFollowUpTask.created_at.desc()).all()
+    return [
+        {
+            "id": t.id,
+            "case_id": t.case_id,
+            "assignment_id": t.assignment_id,
+            "title": t.title,
+            "description": t.description,
+            "status": t.status,
+            "due_date": t.due_date.isoformat() if t.due_date else None,
+            "completed_at": t.completed_at.isoformat() if t.completed_at else None,
+            "created_at": t.created_at.isoformat() if t.created_at else None,
+        }
+        for t in tasks
+    ]
+
+
+@router.patch("/consolidation/cases/{case_id}/tasks/{task_id}", response_model=dict)
+def update_consolidation_task(
+    case_id: int,
+    task_id: int,
+    payload: schemas.ConsolidationFollowUpTaskUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Actualiza una tarea de seguimiento (ej. marcar como completada)."""
+    task = (
+        db.query(models.ConsolidationFollowUpTask)
+        .filter(
+            models.ConsolidationFollowUpTask.id == task_id,
+            models.ConsolidationFollowUpTask.case_id == case_id,
+        )
+        .first()
+    )
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(task, key, value)
+    db.commit()
+    db.refresh(task)
+
+    return {
+        "id": task.id,
+        "case_id": task.case_id,
+        "assignment_id": task.assignment_id,
+        "title": task.title,
+        "status": task.status,
+        "due_date": task.due_date.isoformat() if task.due_date else None,
+        "completed_at": task.completed_at.isoformat() if task.completed_at else None,
+        "created_at": task.created_at.isoformat() if task.created_at else None,
+    }
+
+
+@router.get("/consolidation/cases/{case_id}/interactions", response_model=List[dict])
+def list_consolidation_interactions(
+    case_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Lista las interacciones de un caso de consolidación."""
+    case = (
+        db.query(models.ConsolidationCase)
+        .filter(models.ConsolidationCase.id == case_id)
+        .first()
+    )
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+
+    interactions = (
+        db.query(models.ConsolidationInteraction)
+        .filter(models.ConsolidationInteraction.case_id == case_id)
+        .order_by(models.ConsolidationInteraction.created_at.desc())
+        .all()
+    )
+    return [
+        {
+            "id": i.id,
+            "case_id": i.case_id,
+            "performed_by_member_id": i.performed_by_member_id,
+            "interaction_type": i.interaction_type,
+            "interaction_date": i.interaction_date.isoformat() if i.interaction_date else None,
+            "result": i.result,
+            "notes": i.notes,
+            "next_action_date": i.next_action_date.isoformat() if i.next_action_date else None,
+            "created_at": i.created_at.isoformat() if i.created_at else None,
+        }
+        for i in interactions
+    ]
+
+
+@router.patch("/consolidation/assignments/{assignment_id}", response_model=dict)
+def update_consolidation_assignment(
+    assignment_id: int,
+    payload: schemas.ConsolidationAssignmentUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Actualiza una asignación de consolidación."""
+    assignment = (
+        db.query(models.ConsolidationAssignment)
+        .filter(models.ConsolidationAssignment.id == assignment_id)
+        .first()
+    )
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(assignment, key, value)
+    db.commit()
+    db.refresh(assignment)
+    return {
+        "id": assignment.id,
+        "case_id": assignment.case_id,
+        "assigned_by_member_id": assignment.assigned_by_member_id,
+        "assigned_to_member_id": assignment.assigned_to_member_id,
+        "status": assignment.status,
+        "priority": assignment.priority,
+        "end_date": assignment.end_date.isoformat() if assignment.end_date else None,
+        "created_at": assignment.created_at.isoformat() if assignment.created_at else None,
+    }
+
+
 # --- CONSOLIDATION & PIPELINE ---
 
 
@@ -685,6 +893,25 @@ def update_crm_task(
     db.commit()
     db.refresh(task)
     return _serialize_task(task)
+
+
+@router.delete("/tasks/{task_id}", status_code=204)
+def delete_crm_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Elimina una tarea del CRM."""
+    task = (
+        db.query(models.CrmTask)
+        .filter(models.CrmTask.id == task_id)
+        .first()
+    )
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    db.delete(task)
+    db.commit()
+    return None
 
 
 @router.get("/counseling/{ticket_id}", response_model=dict)
