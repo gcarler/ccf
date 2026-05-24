@@ -105,16 +105,10 @@ export default function FaroFooter() {
                                     <li key={href}>
                                         <Link
                                             href={href}
-                                            className="text-sm transition-colors duration-200"
+                                            className="text-sm transition-colors duration-200 hover:text-[var(--faro-primary)]"
                                             style={{
                                                 color: "var(--faro-on-surface-variant)",
                                             }}
-                                            onMouseEnter={(e) =>
-                                                (e.currentTarget.style.color = "var(--faro-primary)")
-                                            }
-                                            onMouseLeave={(e) =>
-                                                (e.currentTarget.style.color = "var(--faro-on-surface-variant)")
-                                            }
                                         >
                                             {label}
                                         </Link>
@@ -136,16 +130,10 @@ export default function FaroFooter() {
                                     <li key={href}>
                                         <Link
                                             href={href}
-                                            className="text-sm transition-colors duration-200"
+                                            className="text-sm transition-colors duration-200 hover:text-[var(--faro-primary)]"
                                             style={{
                                                 color: "var(--faro-on-surface-variant)",
                                             }}
-                                            onMouseEnter={(e) =>
-                                                (e.currentTarget.style.color = "var(--faro-primary)")
-                                            }
-                                            onMouseLeave={(e) =>
-                                                (e.currentTarget.style.color = "var(--faro-on-surface-variant)")
-                                            }
                                         >
                                             {label}
                                         </Link>
@@ -174,7 +162,7 @@ export default function FaroFooter() {
                                 style={{
                                     background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
                                     color: "var(--faro-on-primary)",
-                                    boxShadow: "0 4px 16px rgba(44, 96, 157, 0.3)",
+                                    boxShadow: "var(--faro-cta-shadow)",
                                 }}
                             >
                                 Suscríbete
@@ -199,16 +187,10 @@ export default function FaroFooter() {
                     <div className="flex items-center gap-4">
                         <Link
                             href="/privacidad"
-                            className="text-xs transition-colors hover:underline"
+                            className="text-xs transition-colors hover:text-[var(--faro-primary)] hover:underline"
                             style={{
                                 color: "var(--faro-on-surface-variant)",
                             }}
-                            onMouseEnter={(e) =>
-                                (e.currentTarget.style.color = "var(--faro-primary)")
-                            }
-                            onMouseLeave={(e) =>
-                                (e.currentTarget.style.color = "var(--faro-on-surface-variant)")
-                            }
                         >
                             Política de Privacidad
                         </Link>

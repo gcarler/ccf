@@ -22,6 +22,18 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 
+interface Department {
+    id: number;
+    name: string;
+    code: string;
+}
+
+interface City {
+    id: number;
+    department_id: number;
+    name: string;
+}
+
 
 
 export default function MembersPage() {
@@ -40,7 +52,12 @@ export default function MembersPage() {
         email: '',
         phone: '',
         church_role: 'Miembro',
+        colombian_department_id: null as number | null,
+        city: '',
     });
+    const [departments, setDepartments] = useState<Department[]>([]);
+    const [cities, setCities] = useState<City[]>([]);
+    const [loadingCities, setLoadingCities] = useState(false);
     
     // Filters
     const [query, setQuery] = useState('');
@@ -52,12 +69,14 @@ export default function MembersPage() {
         const loadMembers = async () => {
             try {
                 setLoading(true);
-                const [membersData, rolesData] = await Promise.all([
+                const [membersData, rolesData, deptData] = await Promise.all([
                     apiFetch<any[]>('/crm/members', { token }).catch(() => []),
-                    apiFetch<any[]>('/crm/roles', { token }).catch(() => [])
+                    apiFetch<any[]>('/crm/roles', { token }).catch(() => []),
+                    apiFetch<Department[]>('/crm/colombian-departments', { token }).catch(() => []),
                 ]);
                 setMembers(membersData);
                 setRoles(rolesData);
+                setDepartments(deptData);
 
             } catch (err) {
                 toast.error('Error al cargar membresía');
@@ -67,6 +86,18 @@ export default function MembersPage() {
         };
         loadMembers();
     }, [token]);
+
+    useEffect(() => {
+        if (!token || !newMember.colombian_department_id) {
+            setCities([]);
+            return;
+        }
+        setLoadingCities(true);
+        apiFetch<City[]>(`/crm/colombian-departments/${newMember.colombian_department_id}/cities`, { token })
+            .then(setCities)
+            .catch(() => setCities([]))
+            .finally(() => setLoadingCities(false));
+    }, [token, newMember.colombian_department_id]);
 
 
     const getRoleColor = (roleName: string) => {
@@ -124,6 +155,8 @@ export default function MembersPage() {
                 email: '',
                 phone: '',
                 church_role: 'Miembro',
+                colombian_department_id: null,
+                city: '',
             });
             setIsCreateOpen(false);
             toast.success('Miembro registrado');
@@ -303,6 +336,37 @@ export default function MembersPage() {
                             <select value={newMember.church_role} onChange={event => setNewMember(prev => ({ ...prev, church_role: event.target.value }))} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white">
                                 <option value="Miembro">Miembro</option>
                                 {roles.map(role => <option key={role.id} value={role.name}>{role.name}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Departamento</label>
+                            <select
+                                value={newMember.colombian_department_id ?? ''}
+                                onChange={e => setNewMember(prev => ({ ...prev, colombian_department_id: e.target.value ? Number(e.target.value) : null, city: '' }))}
+                                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                            >
+                                <option value="">Seleccionar departamento</option>
+                                {departments.map(d => (
+                                    <option key={d.id} value={d.id}>{d.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Ciudad</label>
+                            <select
+                                value={newMember.city}
+                                onChange={e => setNewMember(prev => ({ ...prev, city: e.target.value }))}
+                                disabled={!newMember.colombian_department_id || loadingCities}
+                                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-black/20 dark:text-white"
+                            >
+                                <option value="">
+                                    {loadingCities ? 'Cargando ciudades...' : 'Seleccionar ciudad'}
+                                </option>
+                                {cities.map(c => (
+                                    <option key={c.id} value={c.name}>{c.name}</option>
+                                ))}
                             </select>
                         </div>
                     </div>
