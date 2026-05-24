@@ -7,7 +7,8 @@ import { toast } from 'sonner';
 import {
     ArrowLeft, Flame, Calendar, Clock, CheckCircle2,
     AlertCircle, Sparkles, Save, Trash2, Users,
-    BarChart3, FolderOpen, Plus, X, Home, UserPlus
+    BarChart3, FolderOpen, Plus, X, Home, UserPlus,
+    Search, UserMinus, UserCheck
 } from 'lucide-react';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
@@ -106,6 +107,14 @@ export default function StrategyDetailPage() {
         host_id: null as number | null,
     });
     const [groupSaving, setGroupSaving] = useState(false);
+
+    // Group member management
+    const [isMemberDrawerOpen, setIsMemberDrawerOpen] = useState(false);
+    const [selectedGroup, setSelectedGroup] = useState<StrategyGroup | null>(null);
+    const [groupMembers, setGroupMembers] = useState<any[]>([]);
+    const [allMembers, setAllMembers] = useState<any[]>([]);
+    const [memberSearch, setMemberSearch] = useState('');
+    const [memberSaving, setMemberSaving] = useState(false);
 
     const fetchStrategy = useCallback(async () => {
         setLoading(true);
@@ -233,6 +242,66 @@ export default function StrategyDetailPage() {
         } catch {
             toast.error('Error al eliminar');
         }
+    };
+
+    // ── Member management ──
+    const openMemberDrawer = async (group: StrategyGroup) => {
+        setSelectedGroup(group);
+        setIsMemberDrawerOpen(true);
+        const token = localStorage.getItem('ccf_token') || '';
+        // Fetch all members for search
+        if (allMembers.length === 0) {
+            try {
+                const m = await apiFetch<any[]>('/crm/members/', { token });
+                setAllMembers(m || []);
+            } catch { /* ignore */ }
+        }
+        // Fetch current group members
+        try {
+            const house = await apiFetch<any>(`/evangelism/glory-houses/${group.id}`, { token });
+            setGroupMembers(house?.base_attendees?.map((a: any) => ({
+                id: a.member_id,
+                name: `${a.member?.first_name || ''} ${a.member?.last_name || ''}`.trim(),
+                email: a.member?.email || '',
+                role: a.role || 'asistente'
+            })) || []);
+        } catch {
+            setGroupMembers([]);
+        }
+    };
+
+    const handleSaveMembers = async () => {
+        if (!selectedGroup) return;
+        setMemberSaving(true);
+        try {
+            const token = localStorage.getItem('ccf_token') || '';
+            await apiFetch(`/evangelism/glory-houses/${selectedGroup.id}`, {
+                method: 'PUT',
+                token,
+                body: { base_attendee_ids: groupMembers.map(m => m.id) }
+            });
+            toast.success('Miembros actualizados');
+            setIsMemberDrawerOpen(false);
+            fetchGroups();
+        } catch (e: any) {
+            toast.error('Error al guardar: ' + (e.message || 'Intente de nuevo'));
+        } finally {
+            setMemberSaving(false);
+        }
+    };
+
+    const addMemberToGroup = (member: any) => {
+        if (groupMembers.find(m => m.id === member.id)) return;
+        setGroupMembers(prev => [...prev, {
+            id: member.id,
+            name: `${member.first_name} ${member.last_name}`,
+            email: member.email || '',
+            role: 'asistente'
+        }]);
+    };
+
+    const removeMemberFromGroup = (memberId: number) => {
+        setGroupMembers(prev => prev.filter(m => m.id !== memberId));
     };
 
     const handleSave = async () => {
@@ -547,20 +616,27 @@ export default function StrategyDetailPage() {
                                 {groups.map(g => (
                                     <div
                                         key={g.id}
-                                        className="group bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4 hover:border-slate-300 dark:hover:border-white/20 transition-all cursor-pointer relative"
-                                        onClick={() => router.push(`/plataforma/evangelism/faro/${g.id}`)}
+                                        className="group bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4 hover:border-blue-300 dark:hover:border-blue-800 transition-all cursor-pointer relative"
+                                        onClick={() => openMemberDrawer(g)}
                                     >
                                         <button
                                             onClick={(e) => { e.stopPropagation(); handleDeleteGroup(g.id, g.name); }}
-                                            className="absolute top-2 right-2 p-1 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all"
+                                            className="absolute top-2 right-2 p-1 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all z-10"
                                             title="Eliminar grupo"
                                         >
                                             <Trash2 size={14} />
                                         </button>
-                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white pr-6">{g.name}</h3>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); router.push(`/plataforma/evangelism/faro/${g.id}`); }}
+                                            className="absolute top-2 right-8 p-1 rounded text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 opacity-0 group-hover:opacity-100 transition-all z-10"
+                                            title="Ver detalle del grupo"
+                                        >
+                                            <Calendar size={14} />
+                                        </button>
+                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white pr-16">{g.name}</h3>
                                         <p className="text-xs text-slate-400 mt-1">{g.zone || 'Sin zona'}</p>
                                         <div className="flex items-center gap-3 mt-3 text-xs text-slate-500">
-                                            <span className="flex items-center gap-1">
+                                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                                                 <Users size={12} />
                                                 {g.members_count} miembros
                                             </span>
@@ -872,6 +948,114 @@ export default function StrategyDetailPage() {
                                 </option>
                             ))}
                         </select>
+                    </div>
+                </div>
+            </WorkspaceDrawer>
+
+            {/* ── Member Management Drawer ── */}
+            <WorkspaceDrawer
+                isOpen={isMemberDrawerOpen}
+                onClose={() => setIsMemberDrawerOpen(false)}
+                title="Gestionar Miembros"
+                subtitle={selectedGroup?.name || ''}
+                actions={
+                    <>
+                        <button
+                            onClick={() => setIsMemberDrawerOpen(false)}
+                            className="px-4 py-1.5 text-[12px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleSaveMembers}
+                            disabled={memberSaving}
+                            className="px-4 py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors flex items-center gap-2"
+                        >
+                            {memberSaving ? (
+                                <><Sparkles size={14} className="animate-spin" /> Guardando...</>
+                            ) : (
+                                <><UserCheck size={14} /> Guardar ({groupMembers.length})</>
+                            )}
+                        </button>
+                    </>
+                }
+            >
+                <div className="space-y-4">
+                    {/* Current members */}
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                                Miembros actuales ({groupMembers.length})
+                            </label>
+                        </div>
+                        {groupMembers.length === 0 ? (
+                            <p className="text-xs text-slate-400 italic py-2">Sin miembros asignados</p>
+                        ) : (
+                            <div className="space-y-1 max-h-60 overflow-y-auto">
+                                {groupMembers.map(m => (
+                                    <div key={m.id} className="flex items-center justify-between px-2 py-1.5 bg-slate-50 dark:bg-white/5 rounded-md text-xs">
+                                        <div>
+                                            <span className="font-medium text-slate-700 dark:text-slate-200">{m.name}</span>
+                                            {m.email && <span className="text-slate-400 ml-2">{m.email}</span>}
+                                        </div>
+                                        <button
+                                            onClick={() => removeMemberFromGroup(m.id)}
+                                            className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                                            title="Remover"
+                                        >
+                                            <UserMinus size={14} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Search and add members */}
+                    <div className="border-t border-slate-100 dark:border-white/5 pt-4">
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                            Agregar miembros
+                        </label>
+                        <div className="relative mb-2">
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input
+                                value={memberSearch}
+                                onChange={e => setMemberSearch(e.target.value)}
+                                placeholder="Buscar por nombre o email..."
+                                className="w-full pl-9 pr-3 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                            />
+                        </div>
+                        <div className="space-y-1 max-h-48 overflow-y-auto">
+                            {allMembers
+                                .filter(m => {
+                                    if (!memberSearch) return true;
+                                    const term = memberSearch.toLowerCase();
+                                    const name = `${m.first_name} ${m.last_name}`.toLowerCase();
+                                    return name.includes(term) || (m.email || '').toLowerCase().includes(term);
+                                })
+                                .filter(m => !groupMembers.find(gm => gm.id === m.id))
+                                .slice(0, 20)
+                                .map(m => (
+                                    <button
+                                        key={m.id}
+                                        onClick={() => addMemberToGroup(m)}
+                                        className="w-full flex items-center justify-between px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md text-xs text-left transition-colors group/add"
+                                    >
+                                        <div>
+                                            <span className="font-medium text-slate-700 dark:text-slate-200">{m.first_name} {m.last_name}</span>
+                                            {m.email && <span className="text-slate-400 ml-2">{m.email}</span>}
+                                        </div>
+                                        <Plus size={14} className="text-slate-300 group-hover/add:text-blue-500 transition-colors" />
+                                    </button>
+                                ))}
+                            {allMembers.filter(m => {
+                                if (!memberSearch) return true;
+                                const term = memberSearch.toLowerCase();
+                                return `${m.first_name} ${m.last_name}`.toLowerCase().includes(term) || (m.email || '').toLowerCase().includes(term);
+                            }).filter(m => !groupMembers.find(gm => gm.id === m.id)).length === 0 && (
+                                <p className="text-xs text-slate-400 italic py-2">No se encontraron miembros</p>
+                            )}
+                        </div>
                     </div>
                 </div>
             </WorkspaceDrawer>
