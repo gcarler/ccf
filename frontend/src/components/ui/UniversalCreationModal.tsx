@@ -235,7 +235,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                 }
                 toast.success('Pizarra inicializada');
             } else if (type === 'evangelism_strategy') {
-                await apiFetch('/evangelism/strategies/', {
+                await apiFetch('/evangelism/strategies', {
                     method: 'POST', token,
                     body: {
                         name: title.trim(),

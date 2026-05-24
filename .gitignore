@@ -71,3 +71,5 @@ tmp_stitch/
 uploads/
 venv/
 .venv/
+ccf_final.db
+openapi_debug.json

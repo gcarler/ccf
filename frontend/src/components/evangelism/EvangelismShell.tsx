@@ -59,7 +59,7 @@ export default function EvangelismShell({
     const fetchStrategies = useCallback(async () => {
         if (!token) return;
         try {
-            const result = await apiFetch<StrategyItem[]>('/evangelism/strategies/', { token });
+            const result = await apiFetch<StrategyItem[]>('/evangelism/strategies', { token });
             setStrategies(Array.isArray(result) ? result : []);
         } catch {
             // Silently fail — sidebar still works without strategies
