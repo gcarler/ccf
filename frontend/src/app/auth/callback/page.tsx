@@ -2,11 +2,13 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 function AuthCallbackContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { login } = useAuth();
     const [status, setStatus] = useState('Procesando autenticación...');
 
     useEffect(() => {
@@ -24,14 +26,9 @@ function AuthCallbackContent() {
             return;
         }
 
-        localStorage.setItem('ccf_token', token);
-        if (refresh) {
-            localStorage.setItem('ccf_refresh_token', refresh);
-        }
-
+        login(token, refresh);
         setStatus('Autenticación exitosa. Redirigiendo...');
-        setTimeout(() => router.push('/'), 1500);
-    }, [searchParams, router]);
+    }, [searchParams, router, login]);
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50">
