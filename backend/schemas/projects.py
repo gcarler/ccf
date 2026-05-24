@@ -61,7 +61,7 @@ class ProjectTaskBase(BaseModel):
     title: str
     description: Optional[str] = None
     status: str = "todo"
-    priority: str = "normal"
+    priority: str = "medium"
     assignee_id: Optional[int] = None
     start_date: Optional[datetime] = None
     due_date: Optional[datetime] = None

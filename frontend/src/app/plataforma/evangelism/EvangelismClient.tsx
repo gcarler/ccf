@@ -244,11 +244,11 @@ export default function EvangelismClient() {
                                                 onClick={() => handleSelectStrategy(strategy)}
                                                 className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02] cursor-pointer group transition-colors"
                                             >
-                                                <td className="px-3 py-1.5 font-semibold text-slate-400 dark:text-slate-600">
+                                                <td className="px-3 py-1.5 text-[12px] font-semibold text-slate-400 dark:text-slate-600">
                                                     #{strategy.id}
                                                 </td>
                                                 <td className="px-3 py-1.5">
-                                                    <div className="text-[13px] font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                                                    <div className="text-[12px] font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
                                                         {strategy.name}
                                                     </div>
                                                     {strategy.description && (

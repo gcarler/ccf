@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import (APIRouter, Depends, File, HTTPException, Query,
                      UploadFile, status)
 from pydantic import BaseModel as pydantic_BaseModel
-from sqlalchemy import func, text
+from sqlalchemy import cast, func, Integer, text
 from sqlalchemy.orm import Session, selectinload
 
 from backend import crud, models, schemas
@@ -403,14 +403,16 @@ def portfolio_summary(
     current_user: models.User = Depends(require_active_user),
 ):
     """Resumen de portafolio agrupado por estatus de proyecto."""
+    done_case = func.coalesce(func.sum(
+        cast(models.ProjectTask.status == "done", Integer)
+    ), 0).label("completed_tasks")
+
     rows = (
         db.query(
             models.Project.status,
             func.count(models.Project.id).label("total_projects"),
             func.count(models.ProjectTask.id).label("total_tasks"),
-            func.sum(func.iif(models.ProjectTask.status == "done", 1, 0)).label(
-                "completed_tasks"
-            ),
+            done_case,
         )
         .outerjoin(
             models.ProjectTask, models.ProjectTask.project_id == models.Project.id
@@ -437,13 +439,15 @@ def workload_summary(
     current_user: models.User = Depends(require_active_user),
 ):
     """Resumen de carga de trabajo por persona."""
+    review_case = func.coalesce(func.sum(
+        cast(models.ProjectTask.status == "review", Integer)
+    ), 0).label("in_review")
+
     rows = (
         db.query(
             models.ProjectTask.assignee_id,
             func.count(models.ProjectTask.id).label("open_tasks"),
-            func.sum(func.iif(models.ProjectTask.status == "review", 1, 0)).label(
-                "in_review"
-            ),
+            review_case,
         )
         .filter(
             models.ProjectTask.status.in_(["todo", "in_progress", "review"]),
@@ -534,9 +538,96 @@ def update_task(
     update_data = payload.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(task, key, value)
+    task.updated_at = _utcnow()
     db.commit()
     db.refresh(task)
+    _normalize_dates(task)
     return task
+
+
+# ── INBOX (must be before /{project_id} routes) ────────────────────────────────
+
+
+@router.get("/inbox", response_model=List[schemas.ProjectInboxItem])
+def list_inbox(
+    limit: int = Query(50, le=200),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Bandeja de entrada: tareas recién asignadas y comentarios no leídos."""
+    inbox_items: list[schemas.ProjectInboxItem] = []
+
+    # Comentarios no leídos en proyectos del usuario
+    unread_comments = (
+        db.query(models.ProjectComment, models.Project)
+        .join(models.Project, models.Project.id == models.ProjectComment.project_id)
+        .filter(
+            models.ProjectComment.is_resolved == False,
+            models.ProjectComment.author_id != current_user.id,
+        )
+        .order_by(models.ProjectComment.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+    for comment, project in unread_comments:
+        state = (
+            db.query(models.ProjectInboxState)
+            .filter(
+                models.ProjectInboxState.user_id == current_user.id,
+                models.ProjectInboxState.item_id == f"comment-{comment.id}",
+            )
+            .first()
+        )
+        is_read = state.is_read if state else False
+
+        author = (
+            db.query(models.User).filter(models.User.id == comment.author_id).first()
+        )
+        inbox_items.append(
+            schemas.ProjectInboxItem(
+                id=f"comment-{comment.id}",
+                type="comment",
+                user=author.username if author else "Usuario",
+                content=comment.content[:120],
+                project=project.title,
+                project_id=project.id,
+                task_id=comment.task_id,
+                is_read=is_read,
+                created_at=comment.created_at,
+            )
+        )
+
+    return inbox_items[:limit]
+
+
+@router.post("/inbox/{item_id}/read", response_model=dict)
+def mark_inbox_read(
+    item_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Marca un item del inbox como leído."""
+    state = (
+        db.query(models.ProjectInboxState)
+        .filter(
+            models.ProjectInboxState.user_id == current_user.id,
+            models.ProjectInboxState.item_id == item_id,
+        )
+        .first()
+    )
+    if state:
+        state.is_read = True
+    else:
+        state = models.ProjectInboxState(
+            user_id=current_user.id, item_id=item_id, is_read=True
+        )
+        db.add(state)
+    db.commit()
+    return {"ok": True, "item_id": item_id}
+
+
+# ── PROJECT BY ID ─────────────────────────────────────────────────────────────
 
 
 @router.get("/{project_id}", response_model=schemas.Project)
@@ -805,6 +896,30 @@ def update_task_supply(
     return supply
 
 
+@router.delete("/{project_id}/tasks/{task_id}/supplies/{supply_id}", response_model=dict)
+def delete_task_supply(
+    project_id: int,
+    task_id: int,
+    supply_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Elimina un insumo de una tarea."""
+    task = _ensure_task_in_project(db, project_id, task_id)
+    supply = _ensure_supply_in_task(db, project_id, task_id, supply_id)
+    db.add(
+        models.ProjectActivityLog(
+            project_id=project_id,
+            user_id=current_user.id,
+            action_type="supply_deleted",
+            description=f"Insumo '{supply.item_name}' eliminado de '{task.title}'",
+        )
+    )
+    db.delete(supply)
+    db.commit()
+    return {"ok": True, "deleted": supply_id}
+
+
 # ── SUBTASKS ───────────────────────────────────────────────────────────────────
 
 
@@ -1012,91 +1127,6 @@ def update_project_comment(
         created_at=comment.created_at,
         updated_at=comment.updated_at,
     )
-
-
-# ── INBOX ──────────────────────────────────────────────────────────────────────
-
-
-@router.get("/inbox", response_model=List[schemas.ProjectInboxItem])
-def list_inbox(
-    limit: int = Query(50, le=200),
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
-):
-    """Bandeja de entrada: tareas recién asignadas y comentarios no leídos."""
-    inbox_items: list[schemas.ProjectInboxItem] = []
-
-    # Comentarios no leídos en proyectos del usuario
-    unread_comments = (
-        db.query(models.ProjectComment, models.Project)
-        .join(models.Project, models.Project.id == models.ProjectComment.project_id)
-        .filter(
-            models.ProjectComment.is_resolved == False,
-            models.ProjectComment.author_id != current_user.id,
-        )
-        .order_by(models.ProjectComment.created_at.desc())
-        .limit(limit)
-        .all()
-    )
-
-    for comment, project in unread_comments:
-        # Verificar si ya fue leído por el usuario
-        state = (
-            db.query(models.ProjectInboxState)
-            .filter(
-                models.ProjectInboxState.user_id == current_user.id,
-                models.ProjectInboxState.item_id == f"comment-{comment.id}",
-            )
-            .first()
-        )
-        is_read = state.is_read if state else False
-
-        author = (
-            db.query(models.User).filter(models.User.id == comment.author_id).first()
-        )
-        inbox_items.append(
-            schemas.ProjectInboxItem(
-                id=f"comment-{comment.id}",
-                type="comment",
-                user=author.username if author else "Usuario",
-                content=comment.content[:120],
-                project=project.title,
-                project_id=project.id,
-                task_id=comment.task_id,
-                is_read=is_read,
-                created_at=comment.created_at,
-            )
-        )
-
-    return inbox_items[:limit]
-
-
-@router.post("/inbox/{item_id}/read", response_model=dict)
-def mark_inbox_read(
-    item_id: str,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
-):
-    """Marca un item del inbox como leído."""
-    state = (
-        db.query(models.ProjectInboxState)
-        .filter(
-            models.ProjectInboxState.user_id == current_user.id,
-            models.ProjectInboxState.item_id == item_id,
-        )
-        .first()
-    )
-    if state:
-        state.is_read = True
-    else:
-        state = models.ProjectInboxState(
-            user_id=current_user.id,
-            item_id=item_id,
-            is_read=True,
-        )
-        db.add(state)
-    db.commit()
-    return {"ok": True, "item_id": item_id}
 
 
 # ── TASK LIST PER PROJECT ──────────────────────────────────────────────────────

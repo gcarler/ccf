@@ -108,7 +108,7 @@ class ProjectTask(Base):
     description = Column(Text, nullable=True)
 
     status = Column(String(20), default="todo")  # todo, in_progress, review, done
-    priority = Column(String(20), default="normal")  # urgent, high, normal, low
+    priority = Column(String(20), default="medium")  # urgent, high, medium, low
     assignee_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     start_date = Column(DateTime, nullable=True)
     due_date = Column(DateTime, nullable=True)
