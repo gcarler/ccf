@@ -3,12 +3,14 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from backend.schemas._common import orm_config
 
 
 class AdminAuditLog(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
     id: int
     actor_user_id: Optional[int] = None
     action: str
@@ -16,12 +18,13 @@ class AdminAuditLog(BaseModel):
     resource_id: Optional[str] = None
     ip_address: Optional[str] = None
     severity: str = "info"
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict, validation_alias="metadata_json")
     created_at: datetime
-    model_config = orm_config
 
 
 class AutomationRuleRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
     trigger_type: str
@@ -29,7 +32,6 @@ class AutomationRuleRead(BaseModel):
     action_payload: Dict[str, Any] = Field(default_factory=dict)
     is_active: bool = True
     last_run: Optional[datetime] = None
-    model_config = orm_config
 
 
 class AutomationRuleCreate(BaseModel):
