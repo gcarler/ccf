@@ -51,8 +51,14 @@ export default function CursosPage() {
         }
     };
 
+    const [wishlist, setWishlist] = useState<string[]>([]);
+
     const handleAddToCart = (title: string) => {
-        showToast(`"${title}" añadido al carrito de compras`);
+        setWishlist((prev) => {
+            if (prev.includes(title)) return prev;
+            return [...prev, title];
+        });
+        showToast(`"${title}" añadido a tu lista de recursos — contáctanos para obtenerlo`);
     };
 
     const heroEyebrow = heroContent?.eyebrow || "Formación & Sabiduría";
@@ -380,9 +386,10 @@ export default function CursosPage() {
                                     </span>
                                     <button
                                         onClick={() => handleAddToCart(book.title)}
-                                        className="w-12 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110 hover:-rotate-6"
+                                        disabled={wishlist.includes(book.title)}
+                                        className="w-12 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110 hover:-rotate-6 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:rotate-0"
                                         style={{
-                                            background: "var(--faro-primary-container)",
+                                            background: wishlist.includes(book.title) ? "var(--faro-surface-container-highest)" : "var(--faro-primary-container)",
                                             color: "var(--faro-primary)",
                                         }}
                                     >

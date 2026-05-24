@@ -48,6 +48,9 @@ export default function EventosPage() {
     const { data: eventsContent } = useContentBlock(FARO_EVENTS_BLOCK_KEY);
     const [activeFilter, setActiveFilter] = useState("Todos");
     const [reserveModal, setReserveModal] = useState<PublicEventItem | null>(null);
+    const [calendarView, setCalendarView] = useState<"Semanal" | "Mensual" | "Anual">("Mensual");
+    const [currentMonth, setCurrentMonth] = useState(5); // June (0-indexed)
+    const [currentYear, setCurrentYear] = useState(2026);
 
     const heroEyebrow = heroContent?.eyebrow || "Calendario de Comunidad";
     const heroTitle = heroContent?.title || "Nuestra Agenda";
@@ -69,17 +72,33 @@ export default function EventosPage() {
     const upcomingCards = filteredEvents;
     const hasEvents = filteredEvents.length > 0;
 
+    const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+    // Build dynamic calendar from events
+    const eventDays = useMemo(() => {
+        const days = new Set<number>();
+        filteredEvents.forEach((e) => {
+            if (e.date) {
+                const match = e.date.match(/(\d{1,2})\s/);
+                if (match) days.add(parseInt(match[1], 10));
+            }
+        });
+        return days;
+    }, [filteredEvents]);
+
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay();
+    const prevMonthDays = new Date(currentYear, currentMonth, 0).getDate();
+
     const calendarDays: CalendarDay[] = [
-        { n: 26, prev: true },
-        { n: 27, prev: true },
-        { n: 28, prev: true },
-        { n: 29, prev: true },
-        { n: 30, prev: true },
-        { n: 31, prev: true },
-        ...Array.from({ length: 29 }, (_, i) => ({
+        ...Array.from({ length: firstDayOfWeek }, (_, i) => ({
+            n: prevMonthDays - firstDayOfWeek + i + 1,
+            prev: true,
+        })),
+        ...Array.from({ length: daysInMonth }, (_, i) => ({
             n: i + 1,
             prev: false,
-            event: [2, 5, 12, 24].includes(i + 1),
+            event: eventDays.has(i + 1),
         })),
     ];
 
@@ -420,12 +439,13 @@ export default function EventosPage() {
                         className="inline-flex p-1 rounded-lg"
                         style={{ background: "var(--faro-surface-container-high)" }}
                     >
-                        {["Semanal", "Mensual", "Anual"].map((value) => (
+                        {(["Semanal", "Mensual", "Anual"] as const).map((value) => (
                             <button
                                 key={value}
+                                onClick={() => setCalendarView(value)}
                                 className="px-3 py-2 rounded-lg text-xs font-bold tracking-wide uppercase transition-all"
                                 style={
-                                    value === "Mensual"
+                                    calendarView === value
                                         ? {
                                               background: "var(--faro-primary)",
                                               color: "var(--faro-on-primary)",
@@ -453,10 +473,14 @@ export default function EventosPage() {
                                     className="text-lg font-bold"
                                     style={{ color: "var(--faro-on-surface)" }}
                                 >
-                                    Junio 2025
+                                    {monthNames[currentMonth]} {currentYear}
                                 </h3>
                                 <div className="flex gap-1">
                                     <button
+                                        onClick={() => {
+                                            if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear((y) => y - 1); }
+                                            else setCurrentMonth((m) => m - 1);
+                                        }}
                                         className="w-8 h-8 rounded-md flex items-center justify-center transition-colors hover:scale-110"
                                         style={{
                                             background: "var(--faro-surface-container)",
@@ -466,6 +490,10 @@ export default function EventosPage() {
                                         <ChevronLeft size={16} />
                                     </button>
                                     <button
+                                        onClick={() => {
+                                            if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear((y) => y + 1); }
+                                            else setCurrentMonth((m) => m + 1);
+                                        }}
                                         className="w-8 h-8 rounded-md flex items-center justify-center transition-colors hover:scale-110"
                                         style={{
                                             background: "var(--faro-surface-container)",
@@ -477,6 +505,7 @@ export default function EventosPage() {
                                 </div>
                             </div>
                             <button
+                                onClick={() => { setCurrentMonth(new Date().getMonth()); setCurrentYear(new Date().getFullYear()); }}
                                 className="text-xs font-semibold uppercase tracking-wide"
                                 style={{ color: "var(--faro-primary)" }}
                             >
@@ -590,6 +619,17 @@ export default function EventosPage() {
                                 )}
                             </div>
                             <button
+                                onClick={() => {
+                                    const ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//FARO//ES\n" +
+                                        filteredEvents.map((e) => `BEGIN:VEVENT\nSUMMARY:${e.title || "Evento"}\nDESCRIPTION:${e.excerpt || ""}\nEND:VEVENT`).join("\n") +
+                                        "\nEND:VCALENDAR";
+                                    const blob = new Blob([ics], { type: "text/calendar" });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement("a");
+                                    a.href = url; a.download = "faro-eventos.ics"; a.click();
+                                    URL.revokeObjectURL(url);
+                                    toast.success("Calendario descargado — impórtalo en Google Calendar o Outlook");
+                                }}
                                 className="w-full mt-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide border transition-all hover:scale-105"
                                 style={{
                                     borderColor: "var(--faro-primary)",
@@ -601,7 +641,8 @@ export default function EventosPage() {
                         </div>
 
                         <div
-                            className="rounded-lg p-3 flex items-center gap-4"
+                            onClick={() => toast.info("Notificaciones de eventos próximamente — te avisaremos")}
+                            className="rounded-lg p-3 flex items-center gap-4 cursor-pointer transition-all hover:scale-[1.02]"
                             style={{
                                 background: "var(--faro-primary-container)",
                                 border: "1px solid var(--faro-outline-variant)",
