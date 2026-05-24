@@ -12,12 +12,13 @@ echo ""
 echo "🔍 Pre-push: validando cambios antes de enviar a producción..."
 echo ""
 
-# Archivos Python modificados respecto a origin/main
+# Archivos modificados respecto a origin/main
 PY_FILES=$(git diff --name-only origin/main HEAD 2>/dev/null | grep '\.py$' || true)
+FRONTEND_FILES=$(git diff --name-only origin/main HEAD 2>/dev/null | grep '^frontend/' || true)
 
 # ─── 1. SINTAXIS PYTHON ───────────────────────────────────────────────────────
 if [ -n "$PY_FILES" ]; then
-    echo "  [1/3] Sintaxis Python..."
+    echo "  [1/4] Sintaxis Python..."
     SYNTAX_ERRORS=0
     while IFS= read -r f; do
         [ -f "$f" ] || continue
@@ -34,12 +35,12 @@ if [ -n "$PY_FILES" ]; then
         exit 1
     fi
 else
-    echo "  [1/3] Sin archivos Python modificados, saltando sintaxis."
+    echo "  [1/4] Sin archivos Python modificados, saltando sintaxis."
 fi
 
 # ─── 2. LINTING RUFF ─────────────────────────────────────────────────────────
 if [ -n "$PY_FILES" ]; then
-    echo "  [2/3] Linting (ruff)..."
+    echo "  [2/4] Linting (ruff)..."
     LINT_FILES=$(echo "$PY_FILES" | tr '\n' ' ')
     if ! $VENV/ruff check $LINT_FILES --quiet 2>/tmp/ruff_err; then
         echo -e "  ${YELLOW}⚠ Advertencias de linting:${NC}"
@@ -50,11 +51,11 @@ if [ -n "$PY_FILES" ]; then
         echo -e "  ${GREEN}✓ Linting OK${NC}"
     fi
 else
-    echo "  [2/3] Sin archivos Python modificados, saltando linting."
+    echo "  [2/4] Sin archivos Python modificados, saltando linting."
 fi
 
 # ─── 3. BACKEND ARRIBA ───────────────────────────────────────────────────────
-echo "  [3/3] Verificando que el backend sigue online..."
+echo "  [3/4] Verificando que el backend sigue online..."
 HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/healthz 2>/dev/null || echo "000")
 if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "204" ]; then
     echo -e "  ${GREEN}✓ Backend responde OK (HTTP $HTTP_STATUS)${NC}"
@@ -62,6 +63,38 @@ elif [ "$HTTP_STATUS" = "000" ]; then
     echo -e "  ${YELLOW}⚠ Backend no responde en :8000 — verifica con: pm2 list${NC}"
 else
     echo -e "  ${YELLOW}⚠ Backend responde HTTP $HTTP_STATUS — revisa pm2 logs ccf-backend-staging${NC}"
+fi
+
+# ─── 4. FRONTEND — reiniciar si hay cambios ──────────────────────────────────
+echo "  [4/4] Frontend..."
+if [ -n "$FRONTEND_FILES" ]; then
+    # Verificar que el build existe y es reciente (menos de 30 min)
+    BUILD_ID="/root/ccf/frontend/.next/BUILD_ID"
+    if [ ! -f "$BUILD_ID" ]; then
+        echo -e "  ${RED}✗ No hay build de Next.js en .next/ — ejecuta: cd frontend && npm run build${NC}"
+        exit 1
+    fi
+
+    BUILD_AGE=$(( $(date +%s) - $(stat -c %Y "$BUILD_ID") ))
+    if [ $BUILD_AGE -gt 1800 ]; then
+        echo -e "  ${YELLOW}⚠ El build tiene más de 30 min (${BUILD_AGE}s) — ¿olvidaste ejecutar npm run build?${NC}"
+        echo -e "  ${YELLOW}  Continúa de todas formas, pero reinicia el frontend manualmente si hay problemas.${NC}"
+    fi
+
+    echo -e "  Reiniciando ccf-frontend-staging para cargar el nuevo build..."
+    if pm2 restart ccf-frontend-staging --update-env > /dev/null 2>&1; then
+        sleep 3
+        FRONT_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3002 2>/dev/null || echo "000")
+        if [ "$FRONT_STATUS" = "200" ]; then
+            echo -e "  ${GREEN}✓ Frontend reiniciado y respondiendo OK (HTTP $FRONT_STATUS)${NC}"
+        else
+            echo -e "  ${YELLOW}⚠ Frontend reiniciado pero responde HTTP $FRONT_STATUS — revisa: pm2 logs ccf-frontend-staging${NC}"
+        fi
+    else
+        echo -e "  ${YELLOW}⚠ No se pudo reiniciar el frontend — hazlo manualmente: pm2 restart ccf-frontend-staging${NC}"
+    fi
+else
+    echo "  [4/4] Sin cambios en frontend/, no se reinicia el proceso."
 fi
 
 # ─── ARCHIVOS PELIGROSOS ─────────────────────────────────────────────────────
