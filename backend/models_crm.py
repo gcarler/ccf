@@ -180,23 +180,12 @@ class Ministry(Base):
     )
 
 
-class MemberDepartmentTracking(Base):
-    __tablename__ = "member_department_tracking"
+class ColombianDepartment(Base):
+    __tablename__ = "colombian_departments"
     id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(
-        Integer,
-        ForeignKey("members.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
-    department_name = Column(String(100), nullable=False)
-    fecha = Column(Date, nullable=True)
-    estado = Column(String(50), nullable=True)
-    detalle = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-
-    member = relationship("Member", back_populates="department_tracking")
+    name = Column(String(50), unique=True, nullable=False)
+    code = Column(String(3), unique=True, nullable=False)
+    capital = Column(String(100), nullable=False)
 
 
 class Member(Base):
@@ -260,6 +249,13 @@ class Member(Base):
     group_name = Column(String(100), nullable=True)
     campus = Column(String(100), nullable=True)
     church_join_date = Column(Date, nullable=True)
+    colombian_department_id = Column(
+        Integer,
+        ForeignKey("colombian_departments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    city = Column(String(100), nullable=True)
 
     # --- Management Fields ---
     talents = Column(Text, nullable=True)
@@ -321,9 +317,7 @@ class Member(Base):
         foreign_keys="ConsolidationInteraction.performed_by_member_id",
         back_populates="performed_by_member",
     )
-    department_tracking = relationship(
-        "MemberDepartmentTracking", back_populates="member", cascade="all, delete-orphan"
-    )
+    colombian_department = relationship("ColombianDepartment", foreign_keys=[colombian_department_id])
 
 
 class Position(Base):

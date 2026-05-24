@@ -20,7 +20,7 @@ const DEFAULT_NAV_LINKS = [
 ];
 
 export default function FaroNavbar() {
-    const { theme, toggle, themeTokens } = useFaroTheme();
+    const { toggle, themeTokens } = useFaroTheme();
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -91,9 +91,9 @@ export default function FaroNavbar() {
             <header
                 className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
                 style={{
-                    background: scrolled ? (theme === "dark" || theme === "institutional") ? "rgba(0, 13, 42, 0.92)" : "rgba(248, 249, 255, 0.92)" : (theme === "dark" || theme === "institutional") ? "rgba(0, 13, 42, 0.6)" : "rgba(255, 255, 255, 0.6)",
+                    background: scrolled ? "var(--faro-navbar-bg-scrolled)" : "var(--faro-navbar-bg)",
                     backdropFilter: "blur(20px)",
-                    borderBottom: scrolled ? "1px solid rgba(165, 200, 255, 0.08)" : "none",
+                    borderBottom: scrolled ? "1px solid var(--faro-navbar-border)" : "none",
                 }}
             >
                 <nav className="max-w-[1400px] mx-auto px-3 md:px-4 h-[72px] flex items-center justify-between gap-3">
@@ -147,7 +147,11 @@ export default function FaroNavbar() {
                                     )}
                                 </Link>
                                 {(children || []).length > 0 && (
-                                    <div className="absolute left-0 top-full mt-2 hidden group-hover:block min-w-[220px] rounded-lg border border-white/10 bg-[#0a1630]/95 backdrop-blur-xl shadow-2xl p-2">
+                                    <div className="absolute left-0 top-full mt-2 hidden group-hover:block min-w-[220px] rounded-lg backdrop-blur-xl shadow-2xl p-2"
+                                        style={{
+                                            background: "var(--faro-dropdown-bg)",
+                                            border: "1px solid var(--faro-dropdown-border)",
+                                        }}>
                                         {(children || []).map((child: any) => (
                                             <Link
                                                 key={`${href}-${child.href}`}
@@ -185,11 +189,9 @@ export default function FaroNavbar() {
                                 color: "var(--faro-on-surface-variant)",
                                 background: "var(--faro-surface-container)",
                             }}
-                            title={`Cambiar tema (Actual: ${theme})`}
+                            title="Cambiar tema"
                         >
-                            {theme === "institutional" && <Sun size={16} className="text-blue-500" />}
-                            {theme === "light" && <Moon size={16} />}
-                            {theme === "dark" && <Zap size={16} className="text-amber-500" />}
+                            <Sun size={16} />
                         </button>
 
                         {/* CTA Principal */}
@@ -197,12 +199,12 @@ export default function FaroNavbar() {
                             <Link
                                 href={ctaHref}
                                 onClick={() => setMobileOpen && setMobileOpen(false)}
-                                className="hidden lg:flex items-center gap-2 px-3 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all hover:scale-105 animate-gradient-xy"
+                                className="hidden lg:flex items-center gap-2 px-3 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all hover:scale-105"
                                 style={{
-                                    backgroundImage: "linear-gradient(to right, #004581, #018abd, #004581)",
+                                    background: "var(--faro-cta-gradient)",
                                     backgroundSize: "200% auto",
-                                    color: "white",
-                                    boxShadow: "0 4px 20px rgba(1, 138, 189, 0.5)",
+                                    color: "var(--faro-on-primary)",
+                                    boxShadow: "var(--faro-cta-shadow)",
                                 }}
                             >
                                 {ctaLabel}
@@ -263,12 +265,12 @@ export default function FaroNavbar() {
                             <Link
                                 href={ctaHref}
                                 onClick={() => setMobileOpen && setMobileOpen(false)}
-                                className="flex items-center justify-center gap-2 px-3 py-3 mt-4 w-full rounded-full text-[12px] font-bold uppercase tracking-wider transition-all hover:scale-105 animate-gradient-xy"
+                                className="flex items-center justify-center gap-2 px-3 py-3 mt-4 w-full rounded-full text-[12px] font-bold uppercase tracking-wider transition-all hover:scale-105"
                                 style={{
-                                    backgroundImage: "linear-gradient(to right, #004581, #018abd, #004581)",
+                                    background: "var(--faro-cta-gradient)",
                                     backgroundSize: "200% auto",
-                                    color: "white",
-                                    boxShadow: "0 4px 20px rgba(1, 138, 189, 0.5)",
+                                    color: "var(--faro-on-primary)",
+                                    boxShadow: "var(--faro-cta-shadow)",
                                 }}
                             >
                                 {ctaLabel}

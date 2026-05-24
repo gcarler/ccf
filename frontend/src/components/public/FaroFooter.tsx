@@ -3,7 +3,7 @@ import React from "react";
 
 export default function FaroFooter() {
     return (
-        <footer className="bg-[#001134] w-full rounded-none">
+        <footer className="w-full rounded-none" style={{ background: "var(--faro-background)" }}>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 px-4 py-1.5 border-t border-faro-primary-fixed-dim/10 max-w-[1440px] mx-auto">
                 <div className="space-y-3">
                     <div className="text-lg font-bold text-faro-primary-fixed-dim font-headline">FARO</div>

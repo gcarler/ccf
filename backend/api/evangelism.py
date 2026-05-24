@@ -1184,7 +1184,11 @@ def read_strategy(strategy_id: int, db: Session = Depends(get_db)):
 
 @router.post("/strategies", response_model=EvangelismStrategy)
 def create_strategy(strategy: EvangelismStrategyCreate, db: Session = Depends(get_db)):
-    return create_evangelism_strategy(db=db, strategy=strategy)
+    result = create_evangelism_strategy(db=db, strategy=strategy)
+    # ── Phase scheduling trigger ──
+    if strategy.typology == "evento_masivo" and strategy.phases:
+        _project_phases_as_tasks(db, result.id, result.name, strategy.phases, strategy.start_date)
+    return result
 
 
 @router.put("/strategies/{strategy_id}", response_model=EvangelismStrategy)
@@ -1196,7 +1200,59 @@ def update_strategy(
     )
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
+    # ── Phase scheduling trigger ──
+    if strategy.typology == "evento_masivo" and strategy.phases:
+        _project_phases_as_tasks(db, strategy_id, db_obj.name, strategy.phases, strategy.start_date)
     return db_obj
+
+
+def _project_phases_as_tasks(db, strategy_id: int, strategy_name: str, phases: list[dict], start_date=None):
+    """Create N1 tasks in Projects module for each phase of a mass event."""
+    from backend.models_projects import Project, ProjectTask
+    from datetime import datetime
+
+    # Create a project linked to the strategy
+    project = Project(
+        title=f"[MASIVO] {strategy_name}",
+        description=f"Evento masivo generado desde estrategia de evangelismo #{strategy_id}",
+        status="active",
+        created_at=datetime.utcnow(),
+    )
+    # Store strategy link in description
+    db.add(project)
+    db.flush()
+
+    for i, phase in enumerate(phases):
+        phase_name = phase.get("name", f"Fase {i + 1}")
+        phase_type = phase.get("type", "general")
+        phase_start = phase.get("start_date")
+        phase_end = phase.get("end_date")
+
+        try:
+            sd = datetime.fromisoformat(phase_start.replace("Z", "+00:00")) if phase_start else None
+        except Exception:
+            sd = None
+        try:
+            dd = datetime.fromisoformat(phase_end.replace("Z", "+00:00")) if phase_end else None
+        except Exception:
+            dd = None
+
+        task = ProjectTask(
+            project_id=project.id,
+            title=f"[N1] {phase_name}",
+            description=f"Fase '{phase_type}' del evento masivo '{strategy_name}'. Generada automáticamente.",
+            priority="urgent",  # N1 = highest priority
+            status="todo",
+            start_date=sd,
+            due_date=dd,
+            order_index=i,
+            labels=["N1", "Evangelismo", phase_type] if phase_type else ["N1", "Evangelismo"],
+            created_at=datetime.utcnow(),
+        )
+        db.add(task)
+
+    db.commit()
+    return project
 
 
 @router.delete("/strategies/{strategy_id}", response_model=EvangelismStrategy)

@@ -94,6 +94,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
     const [recurrence, setRecurrence] = useState('SEMANAL');
     const [eventFormat, setEventFormat] = useState('UNICA_LOCACION');
     const [nicheObjective, setNicheObjective] = useState('');
+    const [phases, setPhases] = useState<{ name: string; type: string; start_date: string; end_date: string }[]>([]);
     const [showTagsDropdown, setShowTagsDropdown] = useState(false);
     const [whiteboardBg, setWhiteboardBg] = useState('grid');
     const [panelLayout, setPanelLayout] = useState('board');
@@ -242,6 +243,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                         typology: typology || null,
                         recurrence: typology === 'relacional' ? recurrence : null,
                         event_format: typology === 'evento_masivo' ? eventFormat : null,
+                        phases: typology === 'evento_masivo' && phases.length > 0 ? phases : null,
                         niche_objective: typology === 'sectorial' ? nicheObjective : null,
                         strategy_type: strategyType,
                         start_date: eventDate ? new Date(eventDate).toISOString() : null,
@@ -778,6 +780,53 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                                 >
                                                                     {f.label}
                                                                 </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {typology === 'evento_masivo' && (
+                                                        <div className="px-3 py-1">
+                                                            <div className="flex items-center justify-between mb-1">
+                                                                <span className="text-[10px] font-semibold text-slate-400">Fases ({phases.length})</span>
+                                                                <button
+                                                                    onClick={() => setPhases(prev => [...prev, { name: '', type: 'preparacion', start_date: '', end_date: '' }])}
+                                                                    className="text-[10px] font-bold text-blue-500 hover:text-blue-600"
+                                                                >
+                                                                    + Fase
+                                                                </button>
+                                                            </div>
+                                                            {phases.map((phase, i) => (
+                                                                <div key={i} className="flex items-center gap-1 mb-1">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={phase.name}
+                                                                        onChange={e => setPhases(prev => prev.map((p, j) => j === i ? { ...p, name: e.target.value } : p))}
+                                                                        placeholder={`Fase ${i + 1}`}
+                                                                        className="flex-1 px-2 py-1 text-[10px] rounded border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-200 focus:border-blue-500 focus:outline-none"
+                                                                    />
+                                                                    <select
+                                                                        value={phase.type}
+                                                                        onChange={e => setPhases(prev => prev.map((p, j) => j === i ? { ...p, type: e.target.value } : p))}
+                                                                        className="px-1 py-1 text-[10px] rounded border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300"
+                                                                    >
+                                                                        <option value="preparacion">Prep.</option>
+                                                                        <option value="impacto">Impacto</option>
+                                                                        <option value="cosecha">Cosecha</option>
+                                                                        <option value="seguimiento">Seg.</option>
+                                                                    </select>
+                                                                    <input
+                                                                        type="date"
+                                                                        value={phase.start_date}
+                                                                        onChange={e => setPhases(prev => prev.map((p, j) => j === i ? { ...p, start_date: e.target.value } : p))}
+                                                                        className="px-1 py-1 text-[10px] rounded border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300"
+                                                                    />
+                                                                    <button
+                                                                        onClick={() => setPhases(prev => prev.filter((_, j) => j !== i))}
+                                                                        className="p-1 text-slate-400 hover:text-red-500"
+                                                                    >
+                                                                        <X size={10} />
+                                                                    </button>
+                                                                </div>
                                                             ))}
                                                         </div>
                                                     )}

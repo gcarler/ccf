@@ -32,12 +32,12 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
       return (
         <section className="relative overflow-hidden rounded-lg min-h-[460px] flex items-end p-4 md:p-4">
           <img src={imageUrl} alt={imageAlt} className="absolute inset-0 h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-black/10" />
+          <div className="absolute inset-0" style={{ background: "var(--faro-overlay-bg)" }} />
           <div className="relative z-10 max-w-4xl">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-white/75">Hero</p>
-            <h1 className="mt-3 text-lg md:text-xl font-bold tracking-tight text-white">{title}</h1>
-            <p className="mt-4 text-base md:text-lg max-w-3xl text-white/90">{body}</p>
-            <Link href={ctaHref} className="inline-flex mt-3 rounded-full px-3 py-3 text-xs font-bold uppercase tracking-wide text-slate-950 bg-white hover:bg-slate-100 transition-colors">
+            <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "var(--faro-on-primary)" }}>Hero</p>
+            <h1 className="mt-3 text-lg md:text-xl font-bold tracking-tight" style={{ color: "var(--faro-on-primary)" }}>{title}</h1>
+            <p className="mt-4 text-base md:text-lg max-w-3xl" style={{ color: "var(--faro-on-primary)" }}>{body}</p>
+            <Link href={ctaHref} className="inline-flex mt-3 rounded-full px-3 py-3 text-xs font-bold uppercase tracking-wide" style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)", opacity: 0.9 }}>
               {ctaLabel}
             </Link>
           </div>

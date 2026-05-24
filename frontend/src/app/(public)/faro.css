@@ -51,7 +51,12 @@
   --faro-mobile-nav-inactive: rgba(0, 27, 61, 0.5);
   --faro-cta-gradient: linear-gradient(to right, #004581, #018abd, #004581);
   --faro-cta-shadow: 0 4px 20px rgba(1, 138, 189, 0.5);
+  --faro-mobile-nav-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  --faro-mobile-nav-glow: 0 0 15px rgba(1, 138, 189, 0.3);
 }
+
+/* 2. TEMA INSTITUCIONAL (Azul oscuro) — strict monochromatic, single tonal family */
+.theme-institutional
 
 /* 2. TEMA INSTITUCIONAL (Azul oscuro) — strict monochromatic, single tonal family */
 .theme-institutional {
@@ -94,6 +99,8 @@
   --faro-mobile-nav-inactive: rgba(217, 226, 255, 0.5);
   --faro-cta-gradient: linear-gradient(to right, #004581, #018abd, #004581);
   --faro-cta-shadow: 0 4px 20px rgba(1, 138, 189, 0.5);
+  --faro-mobile-nav-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  --faro-mobile-nav-glow: 0 0 15px rgba(165, 200, 255, 0.3);
 }
 
 /* 3. TEMA OSCURO (Pure Dark) — dark surfaces, ONLY text/icons use high-luminosity */
@@ -137,6 +144,8 @@
   --faro-mobile-nav-inactive: rgba(238, 238, 238, 0.5);
   --faro-cta-gradient: linear-gradient(to right, #333333, #555555, #333333);
   --faro-cta-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  --faro-mobile-nav-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  --faro-mobile-nav-glow: 0 0 15px rgba(255, 255, 255, 0.15);
 }
 
 /* FARO Public Theme — Utility classes (ALL use --faro-* variables, ZERO hardcoded colors) */

@@ -289,28 +289,11 @@ class VolunteerShift(VolunteerShiftBase):
     model_config = orm_config
 
 
-class DepartmentTrackingBase(BaseModel):
-    department_name: str = Field(..., max_length=100)
-    fecha: Optional[date] = None
-    estado: Optional[str] = None
-    detalle: Optional[str] = None
-
-
-class DepartmentTrackingCreate(DepartmentTrackingBase):
-    member_id: int
-
-
-class DepartmentTrackingUpdate(BaseModel):
-    fecha: Optional[date] = None
-    estado: Optional[str] = None
-    detalle: Optional[str] = None
-
-
-class DepartmentTracking(DepartmentTrackingBase):
+class ColombianDepartment(BaseModel):
     id: int
-    member_id: int
-    created_at: datetime
-    updated_at: Optional[datetime] = None
+    name: str
+    code: str
+    capital: str
     model_config = orm_config
 
 
@@ -378,7 +361,8 @@ class Member(BaseModel):
     group_name: Optional[str] = None
     campus: Optional[str] = None
     church_join_date: Optional[date] = None
-    department_tracking: List[DepartmentTracking] = []
+    colombian_department_id: Optional[int] = None
+    city: Optional[str] = None
     created_at: datetime
     model_config = orm_config
 
@@ -440,6 +424,8 @@ class MemberCreate(BaseModel):
     group_name: Optional[str] = None
     campus: Optional[str] = None
     church_join_date: Optional[date] = None
+    colombian_department_id: Optional[int] = None
+    city: Optional[str] = None
 
 
 class MemberUpdate(BaseModel):
@@ -488,6 +474,8 @@ class MemberUpdate(BaseModel):
     group_name: Optional[str] = None
     campus: Optional[str] = None
     church_join_date: Optional[date] = None
+    colombian_department_id: Optional[int] = None
+    city: Optional[str] = None
 
 
 class PositionBase(BaseModel):
