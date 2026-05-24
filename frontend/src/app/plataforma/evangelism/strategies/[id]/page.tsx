@@ -110,7 +110,7 @@ export default function StrategyDetailPage() {
     const fetchStrategy = useCallback(async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('auth_token') || '';
+            const token = localStorage.getItem('ccf_token') || '';
             const result = await apiFetch<Strategy>(`/evangelism/strategies/${id}`, { token });
             setStrategy(result);
             setEditName(result.name);
@@ -131,7 +131,7 @@ export default function StrategyDetailPage() {
     }, [fetchStrategy]);
 
     const fetchGroups = useCallback(async () => {
-        const token = localStorage.getItem('auth_token') || '';
+        const token = localStorage.getItem('ccf_token') || '';
         try {
             const all = await apiFetch<StrategyGroup[]>('/evangelism/glory-houses/', { token });
             setGroups((all || []).filter(g => (g as any).evangelism_strategy_id === parseInt(id)));
@@ -141,7 +141,7 @@ export default function StrategyDetailPage() {
     }, [id]);
 
     const fetchMetrics = useCallback(async () => {
-        const token = localStorage.getItem('auth_token') || '';
+        const token = localStorage.getItem('ccf_token') || '';
         try {
             const m = await apiFetch<any>(`/evangelism/strategies/${id}/metrics`, { token });
             setMetrics(m);
@@ -158,7 +158,7 @@ export default function StrategyDetailPage() {
     // Fetch members for leader/assistant/host dropdowns
     useEffect(() => {
         if (isGroupDrawerOpen && members.length === 0) {
-            const token = localStorage.getItem('auth_token') || '';
+            const token = localStorage.getItem('ccf_token') || '';
             apiFetch<any[]>('/crm/members/', { token }).then(m => setMembers(m || [])).catch(() => {});
         }
     }, [isGroupDrawerOpen, members.length]);
@@ -187,7 +187,7 @@ export default function StrategyDetailPage() {
         }
         setGroupSaving(true);
         try {
-            const token = localStorage.getItem('auth_token') || '';
+            const token = localStorage.getItem('ccf_token') || '';
             await apiFetch('/evangelism/glory-houses', {
                 method: 'POST',
                 token,
@@ -225,7 +225,7 @@ export default function StrategyDetailPage() {
     const handleDeleteGroup = async (groupId: number, groupName: string) => {
         if (!window.confirm(`¿Eliminar "${groupName}"? Se borrará todo el historial de asistencia.`)) return;
         try {
-            const token = localStorage.getItem('auth_token') || '';
+            const token = localStorage.getItem('ccf_token') || '';
             await apiFetch(`/evangelism/glory-houses/${groupId}`, { method: 'DELETE', token });
             toast.success('Grupo eliminado');
             fetchGroups();
@@ -239,7 +239,7 @@ export default function StrategyDetailPage() {
         if (!strategy) return;
         setSaving(true);
         try {
-            const token = localStorage.getItem('auth_token') || '';
+            const token = localStorage.getItem('ccf_token') || '';
             const body = {
                 name: editName,
                 description: editDesc,
@@ -267,7 +267,7 @@ export default function StrategyDetailPage() {
         if (!strategy) return;
         if (!window.confirm('¿Está seguro de eliminar esta estrategia?')) return;
         try {
-            const token = localStorage.getItem('auth_token') || '';
+            const token = localStorage.getItem('ccf_token') || '';
             await apiFetch(`/evangelism/strategies/${id}`, { method: 'DELETE', token });
             toast.success('Estrategia eliminada');
             window.dispatchEvent(new CustomEvent('evangelism-strategy-created'));
