@@ -2,8 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-    ShieldCheck, Globe, Heart, Zap, Target, BarChart3, ArrowRight, Loader2, Users, Home
+    ShieldCheck, Globe, Heart, Zap, Target, BarChart3, ArrowRight, Loader2, Users, Home,
+    TrendingUp, TrendingDown, HeartHandshake
 } from 'lucide-react';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { apiFetch } from '@/lib/http';
 
 interface ImpactData {
@@ -41,8 +43,21 @@ export default function TransparencyPage() {
         { label: 'Misiones Rurales',   value: '—', icon: Globe, color: 'text-blue-500' },
     ];
 
+    const sidebarSections = [
+        {
+            title: 'Finanzas',
+            items: [
+                { id: 'finances-dashboard', label: 'Dashboard Financiero', href: '/finances', icon: BarChart3 },
+                { id: 'finances-ingresos', label: 'Ingresos', href: '/finances/ingresos', icon: TrendingUp },
+                { id: 'finances-egresos', label: 'Egresos', href: '/finances/egresos', icon: TrendingDown },
+                { id: 'finances-transparency', label: 'Transparencia', href: '/finances/transparency', icon: HeartHandshake },
+            ]
+        }
+    ];
+
     return (
-        <div className="p-3 space-y-3 animate-in fade-in duration-500 overflow-y-auto h-full">
+        <WorkspaceLayout sidebarTitle="Finanzas" sidebarSections={sidebarSections}>
+            <div className="p-3 space-y-3 animate-in fade-in duration-500 overflow-y-auto h-full">
             <div className="space-y-1 max-w-3xl">
                 <div className="flex items-center gap-2 mb-1">
                     <div className="size-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
@@ -138,6 +153,7 @@ export default function TransparencyPage() {
                 </>
             )}
         </div>
+        </WorkspaceLayout>
     );
 }
 

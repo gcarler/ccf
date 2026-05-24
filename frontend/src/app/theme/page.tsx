@@ -2,15 +2,30 @@
 
 import React from "react";
 import Link from "next/link";
-import { Palette, Settings2, SunMoon } from "lucide-react";
+import { Palette, Settings2, SunMoon, Settings, User, Crown, Shield } from "lucide-react";
+import WorkspaceLayout from '@/components/WorkspaceLayout';
 import PaletteSelector from "@/app/theme/PaletteSelector";
 import { useTheme } from "@/app/theme/ThemeContext";
 
 export default function ThemePage() {
     const { theme } = useTheme();
 
+    const sidebarSections = [
+        {
+            title: 'Configuración',
+            items: [
+                { id: 'settings-general', label: 'General', href: '/settings', icon: Settings },
+                { id: 'account-profile', label: 'Mi Perfil', href: '/account', icon: User },
+                { id: 'account-ministry', label: 'Perfil Ministerial', href: '/account/ministry-profile', icon: Crown },
+                { id: 'settings-roles', label: 'Roles de Acceso', href: '/settings/roles', icon: Shield },
+                { id: 'theme-visual', label: 'Tema Visual', href: '/theme', icon: Palette },
+            ]
+        }
+    ];
+
     return (
-        <div className="min-h-full bg-slate-50 dark:bg-[#0f1117]">
+        <WorkspaceLayout sidebarTitle="Configuración" sidebarSections={sidebarSections}>
+            <div className="min-h-full bg-slate-50 dark:bg-[#0f1117]">
             <header className="sticky top-0 z-20 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl dark:border-white/5 dark:bg-[#0f1117]/80">
                 <div className="mx-auto flex max-w-4xl items-center justify-between px-3 py-1.5">
                     <div className="flex items-center gap-3">
@@ -46,5 +61,6 @@ export default function ThemePage() {
                 </section>
             </main>
         </div>
+        </WorkspaceLayout>
     );
 }

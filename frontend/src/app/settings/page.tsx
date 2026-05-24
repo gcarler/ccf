@@ -5,11 +5,12 @@ import { motion } from 'framer-motion';
 import {
     Settings, User, Bell, Lock, Palette, Globe, Shield,
     ChevronRight, Moon, Sun, Monitor, Check,
-    Languages, Keyboard, Zap, LogOut, Trash2
+    Languages, Keyboard, Zap, LogOut, Trash2, Crown
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
 
 const SETTINGS_GROUPS = [
     {
@@ -52,8 +53,22 @@ export default function SettingsPage() {
     const router = useRouter();
     const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
 
+    const sidebarSections = [
+        {
+            title: 'Configuración',
+            items: [
+                { id: 'settings-general', label: 'General', href: '/settings', icon: Settings },
+                { id: 'account-profile', label: 'Mi Perfil', href: '/account', icon: User },
+                { id: 'account-ministry', label: 'Perfil Ministerial', href: '/account/ministry-profile', icon: Crown },
+                { id: 'settings-roles', label: 'Roles de Acceso', href: '/settings/roles', icon: Shield },
+                { id: 'theme-visual', label: 'Tema Visual', href: '/theme', icon: Palette },
+            ]
+        }
+    ];
+
     return (
-        <div className="min-h-full bg-slate-50 dark:bg-[#0f1117]">
+        <WorkspaceLayout sidebarTitle="Configuración" sidebarSections={sidebarSections}>
+            <div className="min-h-full bg-slate-50 dark:bg-[#0f1117]">
             {/* Header */}
             <div className="sticky top-0 z-30 bg-white/80 dark:bg-[#0f1117]/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-white/5">
                 <div className="max-w-3xl mx-auto px-3 py-1.5 flex items-center gap-3">
@@ -181,6 +196,7 @@ export default function SettingsPage() {
                 </p>
             </div>
         </div>
+        </WorkspaceLayout>
     );
 }
 

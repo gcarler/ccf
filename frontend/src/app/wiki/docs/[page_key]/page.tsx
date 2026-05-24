@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Share2, MoreHorizontal, History } from 'lucide-react';
+import { ChevronLeft, Share2, MoreHorizontal, History, BookOpen, FileText } from 'lucide-react';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import WikiEditor from '@/components/wiki/WikiEditor';
@@ -52,8 +53,18 @@ export default function WikiDocEditPage() {
         </div>
     );
 
+    const sidebarSections = [
+        {
+            title: 'Wiki',
+            items: [
+                { id: 'wiki-home', label: 'Inicio', href: '/wiki', icon: BookOpen },
+            ]
+        }
+    ];
+
     return (
-        <div className="flex-1 flex flex-col bg-white dark:bg-[#141517] overflow-hidden">
+        <WorkspaceLayout sidebarTitle="Wiki" sidebarSections={sidebarSections}>
+            <div className="flex-1 flex flex-col bg-white dark:bg-[#141517] overflow-hidden">
             {/* Minimal Header */}
             <header className="h-8 px-3 border-b border-slate-100 dark:border-white/5 flex items-center justify-between shrink-0 bg-white/80 dark:bg-[#141517]/80 backdrop-blur-md sticky top-0 z-10">
                 <div className="flex items-center gap-4">
@@ -91,5 +102,6 @@ export default function WikiDocEditPage() {
                 />
             </div>
         </div>
+        </WorkspaceLayout>
     );
 }

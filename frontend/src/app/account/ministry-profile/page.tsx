@@ -1,20 +1,35 @@
 "use client";
 
 import React from 'react';
-import { 
-    Award, 
-    Crown, 
-    Star, 
-    Zap, 
-    Shield, 
+import {
+    Award,
+    Crown,
+    Star,
+    Zap,
+    Shield,
     ChevronRight,
     Edit3,
-    Heart
+    Heart,
+    User,
+    Settings
 } from 'lucide-react';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
 
 export default function MinistryProfilePage() {
+    const sidebarSections = [
+        {
+            title: 'Cuenta',
+            items: [
+                { id: 'account-profile', label: 'Mi Perfil', href: '/account', icon: User },
+                { id: 'account-ministry', label: 'Perfil Ministerial', href: '/account/ministry-profile', icon: Crown },
+                { id: 'settings-general', label: 'Configuración', href: '/settings', icon: Settings },
+            ]
+        }
+    ];
+
     return (
-        <div className="p-4 space-y-3 animate-in fade-in duration-1000">
+        <WorkspaceLayout sidebarTitle="Cuenta" sidebarSections={sidebarSections}>
+            <div className="p-4 space-y-3 animate-in fade-in duration-1000">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
                 <div className="space-y-2">
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/10 text-amber-500 rounded-full text-[10px] font-semibold uppercase tracking-wide w-fit">
@@ -137,6 +152,7 @@ export default function MinistryProfilePage() {
                 </div>
             </div>
         </div>
+        </WorkspaceLayout>
     );
 }
 

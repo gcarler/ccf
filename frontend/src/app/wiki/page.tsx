@@ -10,6 +10,7 @@ import {
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
 
 interface WikiDoc {
     id: number;
@@ -65,8 +66,18 @@ export default function WikiHomePage() {
         }
     };
 
+    const sidebarSections = [
+        {
+            title: 'Wiki',
+            items: [
+                { id: 'wiki-home', label: 'Inicio', href: '/wiki', icon: BookOpen },
+            ]
+        }
+    ];
+
     return (
-        <div className="flex flex-col h-full bg-[#F8F9FB] dark:bg-[#1E1F21]">
+        <WorkspaceLayout sidebarTitle="Wiki" sidebarSections={sidebarSections}>
+            <div className="flex flex-col h-full bg-[#F8F9FB] dark:bg-[#1E1F21]">
             {/* TOOLBAR */}
             <header className="h-8 border-b border-slate-200/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-white dark:bg-[#1E1F21]">
                 <div className="flex items-center gap-2 flex-1">
@@ -208,6 +219,7 @@ export default function WikiHomePage() {
                 </div>
             </div>
         </div>
+        </WorkspaceLayout>
     );
 }
 

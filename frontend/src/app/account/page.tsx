@@ -7,12 +7,13 @@ import { useToast } from '@/context/ToastContext';
 import {
     User, Mail, Shield, Palette, Bell, Save, Camera, ChevronRight, UserCircle,
     Fingerprint, Moon, Sun, Monitor, Globe, Lock, ShieldCheck, Smartphone, Layout,
-    Sparkles, LogOut, Settings as SettingsIcon, Zap
+    Sparkles, LogOut, Settings as SettingsIcon, Zap, Crown
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import type { ViewType } from '@/components/ViewSwitcher';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
 
 export default function AccountSettingsPage() {
     const { user, logout } = useAuth();
@@ -43,8 +44,20 @@ export default function AccountSettingsPage() {
         }, 8000); // Artificial delay for shimmer effect
     };
 
+    const sidebarSections = [
+        {
+            title: 'Cuenta',
+            items: [
+                { id: 'account-profile', label: 'Mi Perfil', href: '/account', icon: User },
+                { id: 'account-ministry', label: 'Perfil Ministerial', href: '/account/ministry-profile', icon: Crown },
+                { id: 'settings-general', label: 'Configuración', href: '/settings', icon: SettingsIcon },
+            ]
+        }
+    ];
+
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+        <WorkspaceLayout sidebarTitle="Cuenta" sidebarSections={sidebarSections}>
+            <div className="flex flex-col h-full bg-white dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: 'CCF Platform', icon: Layout }, { label: 'Ajustes de Cuenta', icon: SettingsIcon }]}
                 viewType={viewType}
@@ -250,6 +263,7 @@ export default function AccountSettingsPage() {
             </div>
             )}
         </div>
+        </WorkspaceLayout>
     );
 }
 

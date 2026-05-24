@@ -19,6 +19,7 @@ import { DSCard } from '@/design/components/DSCard';
 import { DSBadge } from '@/design/components/DSBadge';
 import { toast } from 'sonner';
 import clsx from 'clsx';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
 
 export default function TaskDetailPage() {
     const params = useParams();
@@ -55,8 +56,18 @@ export default function TaskDetailPage() {
 
     if (loading) return <div className="p-4 text-center animate-pulse font-semibold uppercase tracking-wide text-slate-400">Sincronizando con el servidor...</div>;
 
+    const sidebarSections = [
+        {
+            title: 'Tareas',
+            items: [
+                { id: 'tasks-list', label: 'Mis Tareas', href: '/tasks', icon: LayoutDashboard },
+            ]
+        }
+    ];
+
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
+        <WorkspaceLayout sidebarTitle="Tareas" sidebarSections={sidebarSections}>
+            <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Proyectos', icon: LayoutDashboard, href: '/projects' },
@@ -153,5 +164,6 @@ export default function TaskDetailPage() {
                 </div>
             </main>
         </div>
+        </WorkspaceLayout>
     );
 }

@@ -10,6 +10,7 @@ import { useRegisterCommands } from "@/context/CommandCenterContext";
 import { useGraphInsights } from "@/hooks/useGraphInsights";
 import type { GraphNode } from "@/types/graph";
 import { useConfig } from "@/context/ConfigContext";
+import WorkspaceLayout from '@/components/WorkspaceLayout';
 
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d").then((mod) => mod.default), { ssr: false });
 
@@ -71,8 +72,18 @@ export default function KnowledgeGraphPage() {
     { id: "graph-clear-filter", label: "Limpiar filtros", group: "Datos", action: () => { setQuery(""); setSelectedType("all"); } },
   ]);
 
+  const sidebarSections = [
+    {
+      title: 'Análisis',
+      items: [
+        { id: 'graph-knowledge', label: 'Knowledge Graph', href: '/graph', icon: Network },
+      ]
+    }
+  ];
+
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-white font-display dark:bg-[#0f1114]">
+    <WorkspaceLayout sidebarTitle="Análisis" sidebarSections={sidebarSections}>
+      <div className="flex h-full flex-col overflow-hidden bg-white font-display dark:bg-[#0f1114]">
       <WorkspaceToolbar
         breadcrumbs={[{ label: "Insights", icon: Network }, { label: "Knowledge Graph", icon: Network }]}
         viewType={viewType}
@@ -226,6 +237,7 @@ export default function KnowledgeGraphPage() {
         )}
       </main>
     </div>
+    </WorkspaceLayout>
   );
 }
 
