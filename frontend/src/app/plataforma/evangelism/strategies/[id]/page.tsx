@@ -8,7 +8,7 @@ import {
     ArrowLeft, Flame, Calendar, Clock, CheckCircle2,
     AlertCircle, Sparkles, Save, Trash2, Users,
     BarChart3, FolderOpen, Plus, X, Home, UserPlus,
-    Search, UserMinus, UserCheck
+    Search, UserMinus, UserCheck, ClipboardList, ChevronDown, ChevronUp
 } from 'lucide-react';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
@@ -41,6 +41,24 @@ interface StrategyGroup {
     members_count: number;
 }
 
+interface SessionRow {
+    id: number;
+    glory_house_id: number;
+    session_date: string;
+    status: string;
+    topic?: string | null;
+    offering_amount?: number | null;
+    report_notes?: string | null;
+}
+
+interface AttendanceMember {
+    member_id: number;
+    name: string;
+    role: string;
+    status: 'present' | 'absent' | 'first_time';
+    notes?: string;
+}
+
 type TabId = 'overview' | 'groups' | 'sessions' | 'metrics';
 
 const STATUS_COLORS = {
@@ -55,16 +73,31 @@ const STATUS_LABELS = {
     done: 'Terminada',
 };
 
+const TYPOLOGY_COLORS: Record<string, string> = {
+    relacional: '#3B82F6',
+    evento_masivo: '#F97316',
+    sectorial: '#8B5CF6',
+};
+
 const TYPOLOGY_LABELS: Record<string, string> = {
     relacional: 'Relacional',
     evento_masivo: 'Evento Masivo',
     sectorial: 'Sectorial',
 };
 
-const TYPOLOGY_COLORS: Record<string, string> = {
-    relacional: '#3B82F6',
-    evento_masivo: '#F97316',
-    sectorial: '#8B5CF6',
+const MEMBER_ROLES = [
+    { value: 'lider', label: 'Líder' },
+    { value: 'colider', label: 'Colíder' },
+    { value: 'miembro', label: 'Miembro' },
+    { value: 'visitante', label: 'Visitante' },
+];
+
+const ROLE_COLORS: Record<string, string> = {
+    lider: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    colider: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    miembro: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
+    visitante: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+    asistente: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
 };
 
 const TABS: { id: TabId; label: string; icon: typeof Users }[] = [
@@ -95,26 +128,40 @@ export default function StrategyDetailPage() {
     // Group creation drawer
     const [isGroupDrawerOpen, setIsGroupDrawerOpen] = useState(false);
     const [groupForm, setGroupForm] = useState({
-        name: '',
-        zone: '',
-        address: '',
-        capacity: 15,
-        day_of_week: '',
-        start_time: '',
-        end_time: '',
+        name: '', zone: '', address: '', capacity: 15,
+        day_of_week: '', start_time: '', end_time: '',
         leader_id: null as number | null,
         assistant_id: null as number | null,
         host_id: null as number | null,
     });
     const [groupSaving, setGroupSaving] = useState(false);
 
-    // Group member management
+    // Member management drawer
     const [isMemberDrawerOpen, setIsMemberDrawerOpen] = useState(false);
     const [selectedGroup, setSelectedGroup] = useState<StrategyGroup | null>(null);
-    const [groupMembers, setGroupMembers] = useState<any[]>([]);
+    const [groupMembers, setGroupMembers] = useState<{ id: number; name: string; email: string; role: string }[]>([]);
     const [allMembers, setAllMembers] = useState<any[]>([]);
     const [memberSearch, setMemberSearch] = useState('');
     const [memberSaving, setMemberSaving] = useState(false);
+
+    // Sessions
+    const [sessions, setSessions] = useState<SessionRow[]>([]);
+    const [sessionsLoading, setSessionsLoading] = useState(false);
+    const [isNewSessionDrawerOpen, setIsNewSessionDrawerOpen] = useState(false);
+    const [sessionForm, setSessionForm] = useState({
+        glory_house_id: '' as string | number,
+        session_date: new Date().toISOString().split('T')[0],
+        topic: '',
+        offering_amount: '',
+        report_notes: '',
+    });
+    const [sessionSaving, setSessionSaving] = useState(false);
+
+    // Attendance drawer
+    const [attendanceSession, setAttendanceSession] = useState<SessionRow | null>(null);
+    const [attendanceMembers, setAttendanceMembers] = useState<AttendanceMember[]>([]);
+    const [attendanceSaving, setAttendanceSaving] = useState(false);
+    const [isAttendanceDrawerOpen, setIsAttendanceDrawerOpen] = useState(false);
 
     const fetchStrategy = useCallback(async () => {
         setLoading(true);
@@ -135,18 +182,14 @@ export default function StrategyDetailPage() {
         }
     }, [id]);
 
-    useEffect(() => {
-        fetchStrategy();
-    }, [fetchStrategy]);
+    useEffect(() => { fetchStrategy(); }, [fetchStrategy]);
 
     const fetchGroups = useCallback(async () => {
         const token = localStorage.getItem('ccf_token') || '';
         try {
-            const all = await apiFetch<StrategyGroup[]>('/evangelism/glory-houses/', { token });
+            const all = await apiFetch<StrategyGroup[]>('/evangelism/glory-houses', { token });
             setGroups((all || []).filter(g => (g as any).evangelism_strategy_id === parseInt(id)));
-        } catch {
-            // Silently fail
-        }
+        } catch { /* ignore */ }
     }, [id]);
 
     const fetchMetrics = useCallback(async () => {
@@ -154,17 +197,26 @@ export default function StrategyDetailPage() {
         try {
             const m = await apiFetch<any>(`/evangelism/strategies/${id}/metrics`, { token });
             setMetrics(m);
-        } catch {
-            // Silently fail
+        } catch { /* ignore */ }
+    }, [id]);
+
+    const fetchSessions = useCallback(async () => {
+        setSessionsLoading(true);
+        const token = localStorage.getItem('ccf_token') || '';
+        try {
+            const data = await apiFetch<SessionRow[]>(`/evangelism/sessions?strategy_id=${id}`, { token });
+            setSessions(data || []);
+        } catch { /* ignore */ } finally {
+            setSessionsLoading(false);
         }
     }, [id]);
 
     useEffect(() => {
         if (activeTab === 'groups') fetchGroups();
         if (activeTab === 'metrics') fetchMetrics();
-    }, [activeTab, fetchGroups, fetchMetrics]);
+        if (activeTab === 'sessions') { fetchGroups(); fetchSessions(); }
+    }, [activeTab, fetchGroups, fetchMetrics, fetchSessions]);
 
-    // Fetch members for leader/assistant/host dropdowns
     useEffect(() => {
         if (isGroupDrawerOpen && members.length === 0) {
             const token = localStorage.getItem('ccf_token') || '';
@@ -173,62 +225,47 @@ export default function StrategyDetailPage() {
     }, [isGroupDrawerOpen, members.length]);
 
     const openGroupDrawer = () => {
-        // Inherit strategy config for relacional typology
         setGroupForm({
-            name: '',
-            zone: '',
-            address: '',
-            capacity: 15,
+            name: '', zone: '', address: '', capacity: 15,
             day_of_week: strategy?.typology === 'relacional' ? strategy.day_of_week || '' : '',
             start_time: strategy?.typology === 'relacional' ? strategy.start_time || '' : '',
             end_time: '',
-            leader_id: null,
-            assistant_id: null,
-            host_id: null,
+            leader_id: null, assistant_id: null, host_id: null,
         });
         setIsGroupDrawerOpen(true);
     };
 
     const handleCreateGroup = async () => {
-        if (!groupForm.name.trim()) {
-            toast.error('El nombre del grupo es obligatorio');
-            return;
-        }
+        if (!groupForm.name.trim()) { toast.error('El nombre del grupo es obligatorio'); return; }
         setGroupSaving(true);
         try {
             const token = localStorage.getItem('ccf_token') || '';
             await apiFetch('/evangelism/glory-houses', {
-                method: 'POST',
-                token,
+                method: 'POST', token,
                 body: {
                     name: groupForm.name.trim(),
                     code: null,
                     zone: groupForm.zone || null,
                     address: groupForm.address || null,
-                    latitude: null,
-                    longitude: null,
+                    latitude: null, longitude: null,
                     leader_name: null,
                     leader_id: groupForm.leader_id,
                     assistant_id: groupForm.assistant_id,
                     host_id: groupForm.host_id,
                     evangelism_strategy_id: parseInt(id),
-                    members_count: 0,
-                    capacity: groupForm.capacity,
-                    status: 'active',
+                    members_count: 0, capacity: groupForm.capacity,
+                    status: 'Activo',
                     day_of_week: groupForm.day_of_week || null,
                     start_time: groupForm.start_time || null,
                     end_time: groupForm.end_time || null,
                 },
             });
-            toast.success('Grupo Faro creado');
+            toast.success('Grupo creado');
             setIsGroupDrawerOpen(false);
-            fetchGroups();
-            fetchStrategy(); // refresh group_count
+            fetchGroups(); fetchStrategy();
         } catch (e: any) {
             toast.error('Error al crear: ' + (e.message || 'Intente de nuevo'));
-        } finally {
-            setGroupSaving(false);
-        }
+        } finally { setGroupSaving(false); }
     };
 
     const handleDeleteGroup = async (groupId: number, groupName: string) => {
@@ -237,11 +274,8 @@ export default function StrategyDetailPage() {
             const token = localStorage.getItem('ccf_token') || '';
             await apiFetch(`/evangelism/glory-houses/${groupId}`, { method: 'DELETE', token });
             toast.success('Grupo eliminado');
-            fetchGroups();
-            fetchStrategy();
-        } catch {
-            toast.error('Error al eliminar');
-        }
+            fetchGroups(); fetchStrategy();
+        } catch { toast.error('Error al eliminar'); }
     };
 
     // ── Member management ──
@@ -249,25 +283,21 @@ export default function StrategyDetailPage() {
         setSelectedGroup(group);
         setIsMemberDrawerOpen(true);
         const token = localStorage.getItem('ccf_token') || '';
-        // Fetch all members for search
         if (allMembers.length === 0) {
             try {
                 const m = await apiFetch<any[]>('/crm/members/', { token });
                 setAllMembers(m || []);
             } catch { /* ignore */ }
         }
-        // Fetch current group members
         try {
             const house = await apiFetch<any>(`/evangelism/glory-houses/${group.id}`, { token });
             setGroupMembers(house?.base_attendees?.map((a: any) => ({
                 id: a.member_id,
-                name: `${a.member?.first_name || ''} ${a.member?.last_name || ''}`.trim(),
+                name: a.name || `${a.member?.first_name || ''} ${a.member?.last_name || ''}`.trim(),
                 email: a.member?.email || '',
-                role: a.role || 'asistente'
+                role: a.role || 'miembro',
             })) || []);
-        } catch {
-            setGroupMembers([]);
-        }
+        } catch { setGroupMembers([]); }
     };
 
     const handleSaveMembers = async () => {
@@ -276,18 +306,20 @@ export default function StrategyDetailPage() {
         try {
             const token = localStorage.getItem('ccf_token') || '';
             await apiFetch(`/evangelism/glory-houses/${selectedGroup.id}`, {
-                method: 'PUT',
-                token,
-                body: { base_attendee_ids: groupMembers.map(m => m.id) }
+                method: 'PUT', token,
+                body: {
+                    base_attendees_with_roles: groupMembers.map(m => ({
+                        member_id: m.id,
+                        role: m.role,
+                    })),
+                },
             });
             toast.success('Miembros actualizados');
             setIsMemberDrawerOpen(false);
             fetchGroups();
         } catch (e: any) {
             toast.error('Error al guardar: ' + (e.message || 'Intente de nuevo'));
-        } finally {
-            setMemberSaving(false);
-        }
+        } finally { setMemberSaving(false); }
     };
 
     const addMemberToGroup = (member: any) => {
@@ -296,12 +328,90 @@ export default function StrategyDetailPage() {
             id: member.id,
             name: `${member.first_name} ${member.last_name}`,
             email: member.email || '',
-            role: 'asistente'
+            role: 'miembro',
         }]);
+    };
+
+    const updateMemberRole = (memberId: number, role: string) => {
+        setGroupMembers(prev => prev.map(m => m.id === memberId ? { ...m, role } : m));
     };
 
     const removeMemberFromGroup = (memberId: number) => {
         setGroupMembers(prev => prev.filter(m => m.id !== memberId));
+    };
+
+    // ── Sessions ──
+    const handleCreateSession = async () => {
+        if (!sessionForm.glory_house_id) { toast.error('Selecciona un grupo'); return; }
+        if (!sessionForm.session_date) { toast.error('Selecciona una fecha'); return; }
+        setSessionSaving(true);
+        try {
+            const token = localStorage.getItem('ccf_token') || '';
+            await apiFetch('/evangelism/sessions', {
+                method: 'POST', token,
+                body: {
+                    glory_house_id: parseInt(String(sessionForm.glory_house_id)),
+                    session_date: sessionForm.session_date + 'T12:00:00',
+                    topic: sessionForm.topic || null,
+                    offering_amount: sessionForm.offering_amount ? parseFloat(sessionForm.offering_amount) : null,
+                    report_notes: sessionForm.report_notes || null,
+                    status: 'Realizada',
+                },
+            });
+            toast.success('Sesión registrada');
+            setIsNewSessionDrawerOpen(false);
+            setSessionForm({ glory_house_id: '', session_date: new Date().toISOString().split('T')[0], topic: '', offering_amount: '', report_notes: '' });
+            fetchSessions();
+        } catch (e: any) {
+            toast.error('Error al guardar: ' + (e.message || 'Intente de nuevo'));
+        } finally { setSessionSaving(false); }
+    };
+
+    const openAttendanceDrawer = async (session: SessionRow) => {
+        setAttendanceSession(session);
+        setIsAttendanceDrawerOpen(true);
+        const token = localStorage.getItem('ccf_token') || '';
+        try {
+            // Get house members to build attendance list
+            const house = await apiFetch<any>(`/evangelism/glory-houses/${session.glory_house_id}`, { token });
+            const existing = await apiFetch<any>(`/evangelism/sessions/${session.id}`, { token }).catch(() => null);
+            const existingMap: Record<number, string> = {};
+            if (existing?.attendance) {
+                for (const a of existing.attendance) {
+                    existingMap[a.member_id] = a.status;
+                }
+            }
+            const memberList = house?.base_attendees?.map((a: any) => ({
+                member_id: a.member_id,
+                name: a.name || `${a.member?.first_name || ''} ${a.member?.last_name || ''}`.trim(),
+                role: a.role || 'miembro',
+                status: (existingMap[a.member_id] as any) || 'present',
+                notes: '',
+            })) || [];
+            setAttendanceMembers(memberList);
+        } catch { setAttendanceMembers([]); }
+    };
+
+    const handleSaveAttendance = async () => {
+        if (!attendanceSession) return;
+        setAttendanceSaving(true);
+        try {
+            const token = localStorage.getItem('ccf_token') || '';
+            await apiFetch(`/evangelism/sessions/${attendanceSession.id}/attendance`, {
+                method: 'POST', token,
+                body: attendanceMembers.map(m => ({
+                    session_id: attendanceSession.id,
+                    member_id: m.member_id,
+                    status: m.status,
+                    notes: m.notes || null,
+                })),
+            });
+            toast.success('Asistencia guardada');
+            setIsAttendanceDrawerOpen(false);
+            fetchSessions();
+        } catch (e: any) {
+            toast.error('Error: ' + (e.message || 'Intente de nuevo'));
+        } finally { setAttendanceSaving(false); }
     };
 
     const handleSave = async () => {
@@ -309,27 +419,20 @@ export default function StrategyDetailPage() {
         setSaving(true);
         try {
             const token = localStorage.getItem('ccf_token') || '';
-            const body = {
-                name: editName,
-                description: editDesc,
-                strategy_type: editType,
-                status: editStatus,
-                start_date: editStartDate ? new Date(editStartDate).toISOString() : null,
-                end_date: editEndDate ? new Date(editEndDate).toISOString() : null,
-            };
             await apiFetch(`/evangelism/strategies/${id}`, {
-                method: 'PUT',
-                token,
-                body,
+                method: 'PUT', token,
+                body: {
+                    name: editName, description: editDesc, strategy_type: editType,
+                    status: editStatus,
+                    start_date: editStartDate ? new Date(editStartDate).toISOString() : null,
+                    end_date: editEndDate ? new Date(editEndDate).toISOString() : null,
+                },
             });
             toast.success('Estrategia actualizada');
             window.dispatchEvent(new CustomEvent('evangelism-strategy-created'));
             fetchStrategy();
-        } catch {
-            toast.error('Error al guardar');
-        } finally {
-            setSaving(false);
-        }
+        } catch { toast.error('Error al guardar'); }
+        finally { setSaving(false); }
     };
 
     const handleDelete = async () => {
@@ -341,34 +444,26 @@ export default function StrategyDetailPage() {
             toast.success('Estrategia eliminada');
             window.dispatchEvent(new CustomEvent('evangelism-strategy-created'));
             router.push('/plataforma/evangelism');
-        } catch {
-            toast.error('Error al eliminar');
-        }
+        } catch { toast.error('Error al eliminar'); }
     };
 
     const formatDate = (dateStr: string | null | undefined) => {
         if (!dateStr) return 'Sin fecha';
-        try {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
-        } catch {
-            return dateStr;
-        }
+        try { return new Date(dateStr).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }); }
+        catch { return dateStr; }
     };
+
+    const groupName = (houseId: number) => groups.find(g => g.id === houseId)?.name || `Grupo #${houseId}`;
 
     if (loading) {
         return (
-            <EvangelismShell
-                breadcrumbs={[
-                    { label: 'Evangelismo', icon: Flame, href: '/plataforma/evangelism' },
-                    { label: 'Estrategias', href: '/plataforma/evangelism' },
-                    { label: 'Cargando...' }
-                ]}
-            >
+            <EvangelismShell breadcrumbs={[
+                { label: 'Evangelismo', icon: Flame, href: '/plataforma/evangelism' },
+                { label: 'Estrategias', href: '/plataforma/evangelism' },
+                { label: 'Cargando...' }
+            ]}>
                 <div className="space-y-3 p-3">
-                    {[1, 2, 3].map(i => (
-                        <div key={i} className="h-12 bg-slate-100 dark:bg-white/5 rounded-lg animate-pulse" />
-                    ))}
+                    {[1, 2, 3].map(i => <div key={i} className="h-12 bg-slate-100 dark:bg-white/5 rounded-lg animate-pulse" />)}
                 </div>
             </EvangelismShell>
         );
@@ -376,20 +471,16 @@ export default function StrategyDetailPage() {
 
     if (!strategy) {
         return (
-            <EvangelismShell
-                breadcrumbs={[
-                    { label: 'Evangelismo', icon: Flame, href: '/plataforma/evangelism' },
-                    { label: 'Estrategias', href: '/plataforma/evangelism' },
-                    { label: 'No encontrada' }
-                ]}
-            >
+            <EvangelismShell breadcrumbs={[
+                { label: 'Evangelismo', icon: Flame, href: '/plataforma/evangelism' },
+                { label: 'Estrategias', href: '/plataforma/evangelism' },
+                { label: 'No encontrada' }
+            ]}>
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                     <AlertCircle size={48} className="text-slate-300 dark:text-slate-600 mb-4" />
                     <h2 className="text-lg font-bold text-slate-700 dark:text-slate-300">Estrategia no encontrada</h2>
-                    <button
-                        onClick={() => router.push('/plataforma/evangelism')}
-                        className="mt-4 px-4 h-9 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors"
-                    >
+                    <button onClick={() => router.push('/plataforma/evangelism')}
+                        className="mt-4 px-4 h-9 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors">
                         Volver a Estrategias
                     </button>
                 </div>
@@ -398,66 +489,41 @@ export default function StrategyDetailPage() {
     }
 
     return (
-        <EvangelismShell
-            breadcrumbs={[
-                { label: 'Evangelismo', icon: Flame, href: '/plataforma/evangelism' },
-                { label: 'Estrategias', href: '/plataforma/evangelism' },
-                { label: strategy.name }
-            ]}
-        >
+        <EvangelismShell breadcrumbs={[
+            { label: 'Evangelismo', icon: Flame, href: '/plataforma/evangelism' },
+            { label: 'Estrategias', href: '/plataforma/evangelism' },
+            { label: strategy.name }
+        ]}>
             <div className="p-4 lg:p-3 space-y-3 animate-fade-in max-w-5xl mx-auto">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
-                        <button
-                            onClick={() => router.push('/plataforma/evangelism')}
-                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-all mt-1"
-                        >
+                        <button onClick={() => router.push('/plataforma/evangelism')}
+                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-all mt-1">
                             <ArrowLeft size={16} />
                         </button>
                         <div>
                             <h1 className="text-xl font-bold text-slate-900 dark:text-white">{strategy.name}</h1>
                             <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 font-medium flex-wrap">
                                 {strategy.typology && (
-                                    <span
-                                        className="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                                        style={{
-                                            backgroundColor: `${TYPOLOGY_COLORS[strategy.typology]}18`,
-                                            color: TYPOLOGY_COLORS[strategy.typology],
-                                        }}
-                                    >
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                        style={{ backgroundColor: `${TYPOLOGY_COLORS[strategy.typology]}18`, color: TYPOLOGY_COLORS[strategy.typology] }}>
                                         {TYPOLOGY_LABELS[strategy.typology]}
                                     </span>
                                 )}
-                                {strategy.recurrence && (
-                                    <span className="inline-flex items-center gap-1.5">
-                                        <Clock size={12} />
-                                        {strategy.recurrence}
-                                    </span>
-                                )}
-                                <span
-                                    className="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                                    style={{
-                                        backgroundColor: `${STATUS_COLORS[strategy.status]}18`,
-                                        color: STATUS_COLORS[strategy.status],
-                                    }}
-                                >
+                                {strategy.recurrence && <span className="inline-flex items-center gap-1.5"><Clock size={12} />{strategy.recurrence}</span>}
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                    style={{ backgroundColor: `${STATUS_COLORS[strategy.status]}18`, color: STATUS_COLORS[strategy.status] }}>
                                     {STATUS_LABELS[strategy.status]}
                                 </span>
                                 {strategy.group_count !== undefined && (
-                                    <span className="inline-flex items-center gap-1.5">
-                                        <Users size={12} />
-                                        {strategy.group_count} grupo{strategy.group_count !== 1 ? 's' : ''}
-                                    </span>
+                                    <span className="inline-flex items-center gap-1.5"><Users size={12} />{strategy.group_count} grupo{strategy.group_count !== 1 ? 's' : ''}</span>
                                 )}
                             </div>
                         </div>
                     </div>
-                    <button
-                        onClick={handleDelete}
-                        className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
-                        title="Eliminar estrategia"
-                    >
+                    <button onClick={handleDelete}
+                        className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all" title="Eliminar estrategia">
                         <Trash2 size={16} />
                     </button>
                 </div>
@@ -465,59 +531,36 @@ export default function StrategyDetailPage() {
                 {/* Tabs */}
                 <div className="flex items-center gap-1 border-b border-slate-200 dark:border-white/10">
                     {TABS.map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-colors ${
                                 activeTab === tab.id
                                     ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
                                     : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                            }`}
-                        >
-                            <tab.icon size={14} />
-                            {tab.label}
+                            }`}>
+                            <tab.icon size={14} />{tab.label}
                         </button>
                     ))}
                 </div>
 
-                {/* Tab Content */}
+                {/* ── Overview ── */}
                 {activeTab === 'overview' && (
                     <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-4">
                         <div>
-                            <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                                Nombre
-                            </label>
-                            <input
-                                type="text"
-                                value={editName}
-                                onChange={(e) => setEditName(e.target.value)}
-                                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none transition-colors"
-                            />
+                            <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Nombre</label>
+                            <input type="text" value={editName} onChange={e => setEditName(e.target.value)}
+                                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none transition-colors" />
                         </div>
-
                         <div>
-                            <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                                Descripción
-                            </label>
-                            <textarea
-                                value={editDesc}
-                                onChange={(e) => setEditDesc(e.target.value)}
-                                rows={3}
+                            <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Descripción</label>
+                            <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={3}
                                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none transition-colors resize-none"
-                                placeholder="Detalles sobre la estrategia..."
-                            />
+                                placeholder="Detalles sobre la estrategia..." />
                         </div>
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                                    Tipo
-                                </label>
-                                <select
-                                    value={editType}
-                                    onChange={(e) => setEditType(e.target.value)}
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none transition-colors"
-                                >
+                                <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Tipo</label>
+                                <select value={editType} onChange={e => setEditType(e.target.value)}
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none transition-colors">
                                     <option value="">General</option>
                                     <option value="Campaña de Alcance">Campaña de Alcance</option>
                                     <option value="Consolidación">Consolidación</option>
@@ -527,82 +570,53 @@ export default function StrategyDetailPage() {
                                     <option value="Alcance Carcelario">Alcance Carcelario</option>
                                 </select>
                             </div>
-
                             <div>
-                                <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                                    Estado
-                                </label>
-                                <select
-                                    value={editStatus}
-                                    onChange={(e) => setEditStatus(e.target.value as 'active' | 'pending' | 'done')}
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none transition-colors"
-                                >
+                                <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Estado</label>
+                                <select value={editStatus} onChange={e => setEditStatus(e.target.value as any)}
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none transition-colors">
                                     <option value="pending">No iniciada</option>
                                     <option value="active">Iniciada</option>
                                     <option value="done">Terminada</option>
                                 </select>
                             </div>
                         </div>
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                                    Fecha de inicio
-                                </label>
-                                <input
-                                    type="date"
-                                    value={editStartDate}
-                                    onChange={(e) => setEditStartDate(e.target.value)}
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none transition-colors"
-                                />
+                                <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Fecha de inicio</label>
+                                <input type="date" value={editStartDate} onChange={e => setEditStartDate(e.target.value)}
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none transition-colors" />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                                    Fecha de fin
-                                </label>
-                                <input
-                                    type="date"
-                                    value={editEndDate}
-                                    onChange={(e) => setEditEndDate(e.target.value)}
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none transition-colors"
-                                />
+                                <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Fecha de fin</label>
+                                <input type="date" value={editEndDate} onChange={e => setEditEndDate(e.target.value)}
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none transition-colors" />
                             </div>
                         </div>
-
                         <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-white/5">
-                            <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={handleSave}
-                                disabled={saving}
-                                className="inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 disabled:opacity-60 transition-colors"
-                            >
-                                <Save size={14} />
-                                {saving ? 'Guardando...' : 'Guardar cambios'}
+                            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                                onClick={handleSave} disabled={saving}
+                                className="inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 disabled:opacity-60 transition-colors">
+                                <Save size={14} />{saving ? 'Guardando...' : 'Guardar cambios'}
                             </motion.button>
                         </div>
                     </div>
                 )}
 
+                {/* ── Grupos ── */}
                 {activeTab === 'groups' && (
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                                    Grupos de esta estrategia
-                                </h2>
+                                <h2 className="text-sm font-bold text-slate-900 dark:text-white">Grupos de esta estrategia</h2>
                                 {strategy.typology === 'relacional' && (
                                     <p className="text-[11px] text-slate-400 mt-0.5">
-                                        Configuración heredada: {strategy.recurrence} · {strategy.day_of_week ? `Día: ${strategy.day_of_week}` : ''} {strategy.start_time ? `Hora: ${strategy.start_time}` : ''}
+                                        Config: {strategy.recurrence} · {strategy.day_of_week ? `Día: ${strategy.day_of_week}` : ''} {strategy.start_time ? `Hora: ${strategy.start_time}` : ''}
                                     </p>
                                 )}
                             </div>
-                            <button
-                                onClick={openGroupDrawer}
-                                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors"
-                            >
-                                <Plus size={14} />
-                                Nuevo grupo
+                            <button onClick={openGroupDrawer}
+                                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors">
+                                <Plus size={14} />Nuevo grupo
                             </button>
                         </div>
                         {groups.length === 0 ? (
@@ -614,35 +628,24 @@ export default function StrategyDetailPage() {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                 {groups.map(g => (
-                                    <div
-                                        key={g.id}
+                                    <div key={g.id}
                                         className="group bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4 hover:border-blue-300 dark:hover:border-blue-800 transition-all cursor-pointer relative"
-                                        onClick={() => openMemberDrawer(g)}
-                                    >
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleDeleteGroup(g.id, g.name); }}
-                                            className="absolute top-2 right-2 p-1 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all z-10"
-                                            title="Eliminar grupo"
-                                        >
+                                        onClick={() => openMemberDrawer(g)}>
+                                        <button onClick={e => { e.stopPropagation(); handleDeleteGroup(g.id, g.name); }}
+                                            className="absolute top-2 right-2 p-1 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Eliminar">
                                             <Trash2 size={14} />
                                         </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); router.push(`/plataforma/evangelism/faro/${g.id}`); }}
-                                            className="absolute top-2 right-8 p-1 rounded text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 opacity-0 group-hover:opacity-100 transition-all z-10"
-                                            title="Ver detalle del grupo"
-                                        >
+                                        <button onClick={e => { e.stopPropagation(); router.push(`/plataforma/evangelism/faro/${g.id}`); }}
+                                            className="absolute top-2 right-8 p-1 rounded text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Ver detalle">
                                             <Calendar size={14} />
                                         </button>
                                         <h3 className="text-sm font-bold text-slate-900 dark:text-white pr-16">{g.name}</h3>
                                         <p className="text-xs text-slate-400 mt-1">{g.zone || 'Sin zona'}</p>
                                         <div className="flex items-center gap-3 mt-3 text-xs text-slate-500">
-                                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                                                <Users size={12} />
-                                                {g.members_count} miembros
+                                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5">
+                                                <Users size={12} />{g.members_count} miembros
                                             </span>
-                                            {g.leader_name && (
-                                                <span>Líder: {g.leader_name}</span>
-                                            )}
+                                            {g.leader_name && <span>Líder: {g.leader_name}</span>}
                                         </div>
                                     </div>
                                 ))}
@@ -651,24 +654,64 @@ export default function StrategyDetailPage() {
                     </div>
                 )}
 
+                {/* ── Sesiones ── */}
                 {activeTab === 'sessions' && (
                     <div className="space-y-3">
-                        <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                            Sesiones semanales
-                        </h2>
-                        <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-8 text-center">
-                            <Calendar size={32} className="text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                            <p className="text-sm font-medium text-slate-500">Próximamente</p>
-                            <p className="text-xs text-slate-400 mt-1">Reporte semanal de asistencia</p>
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Registro de sesiones</h2>
+                            <button onClick={() => {
+                                setSessionForm({ glory_house_id: groups[0]?.id || '', session_date: new Date().toISOString().split('T')[0], topic: '', offering_amount: '', report_notes: '' });
+                                setIsNewSessionDrawerOpen(true);
+                            }}
+                                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors">
+                                <Plus size={14} />Nueva sesión
+                            </button>
                         </div>
+
+                        {sessionsLoading ? (
+                            <div className="space-y-2">
+                                {[1, 2, 3].map(i => <div key={i} className="h-14 bg-slate-100 dark:bg-white/5 rounded-lg animate-pulse" />)}
+                            </div>
+                        ) : sessions.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-12 text-center bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg">
+                                <ClipboardList size={32} className="text-slate-300 dark:text-slate-600 mb-2" />
+                                <p className="text-sm font-medium text-slate-500">Sin sesiones registradas</p>
+                                <p className="text-xs text-slate-400">Registra la primera sesión semanal</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {sessions.map(s => (
+                                    <div key={s.id} className="flex items-center gap-3 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg px-4 py-3 hover:border-blue-300 dark:hover:border-blue-800 transition-all">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-bold text-slate-700 dark:text-white">
+                                                    {new Date(s.session_date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
+                                                </span>
+                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                                    {s.status}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-3 mt-0.5 text-[11px] text-slate-400">
+                                                <span>{groupName(s.glory_house_id)}</span>
+                                                {s.topic && <span>· {s.topic}</span>}
+                                                {s.offering_amount != null && <span>· Ofrenda: ${s.offering_amount.toLocaleString()}</span>}
+                                            </div>
+                                        </div>
+                                        <button onClick={() => openAttendanceDrawer(s)}
+                                            className="inline-flex items-center gap-1.5 px-3 h-7 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 text-[11px] font-semibold hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-colors whitespace-nowrap">
+                                            <Users size={12} />Asistencia
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
 
+                {/* ── Métricas ── */}
                 {activeTab === 'metrics' && (
                     <div className="space-y-3">
-                        <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                            Métricas de la estrategia
-                        </h2>
+                        <h2 className="text-sm font-bold text-slate-900 dark:text-white">Métricas de la estrategia</h2>
                         {!metrics ? (
                             <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-8 text-center">
                                 <BarChart3 size={32} className="text-slate-300 dark:text-slate-600 mx-auto mb-2" />
@@ -677,49 +720,35 @@ export default function StrategyDetailPage() {
                         ) : (
                             <>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                    <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Grupos</p>
-                                        <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">{metrics.summary.total_groups}</p>
-                                    </div>
-                                    <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Sesiones</p>
-                                        <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">{metrics.summary.total_sessions}</p>
-                                    </div>
-                                    <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Primeriza</p>
-                                        <p className="text-lg font-bold text-green-600 dark:text-green-400 mt-1">{metrics.summary.total_first_timers}</p>
-                                    </div>
-                                    <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Inasistencias</p>
-                                        <p className="text-lg font-bold text-red-500 dark:text-red-400 mt-1">{metrics.summary.total_absences}</p>
-                                    </div>
+                                    {[
+                                        { label: 'Grupos', value: metrics.summary.total_groups },
+                                        { label: 'Sesiones', value: metrics.summary.total_sessions },
+                                        { label: 'Primeriza', value: metrics.summary.total_first_timers, cls: 'text-green-600 dark:text-green-400' },
+                                        { label: 'Inasistencias', value: metrics.summary.total_absences, cls: 'text-red-500 dark:text-red-400' },
+                                    ].map(stat => (
+                                        <div key={stat.label} className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4">
+                                            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{stat.label}</p>
+                                            <p className={`text-lg font-bold mt-1 ${stat.cls || 'text-slate-900 dark:text-white'}`}>{stat.value}</p>
+                                        </div>
+                                    ))}
                                 </div>
-
-                                {/* Weekly chart */}
                                 {metrics.weekly && metrics.weekly.length > 0 && (
                                     <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4">
                                         <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-4">Asistencia semanal</h3>
                                         <div className="flex items-end gap-2 h-32">
                                             {metrics.weekly.map((w: any) => {
                                                 const max = Math.max(...metrics.weekly.map((x: any) => x.present + x.absent), 1);
-                                                const height = ((w.present + w.absent) / max) * 100;
                                                 return (
                                                     <div key={w.week} className="flex-1 flex flex-col items-center gap-1">
                                                         <div className="w-full flex flex-col" style={{ height: '100px' }}>
-                                                            <div
-                                                                className="w-full rounded-t bg-blue-500 dark:bg-blue-600 transition-all"
-                                                                style={{ height: `${(w.present / max) * 100}%`, minHeight: w.present > 0 ? '4px' : '0' }}
-                                                            />
+                                                            <div className="w-full rounded-t bg-blue-500 dark:bg-blue-600 transition-all"
+                                                                style={{ height: `${(w.present / max) * 100}%`, minHeight: w.present > 0 ? '4px' : '0' }} />
                                                             {w.absent > 0 && (
-                                                                <div
-                                                                    className="w-full rounded-t bg-red-300 dark:bg-red-800 transition-all"
-                                                                    style={{ height: `${(w.absent / max) * 100}%`, minHeight: '4px' }}
-                                                                />
+                                                                <div className="w-full rounded-t bg-red-300 dark:bg-red-800 transition-all"
+                                                                    style={{ height: `${(w.absent / max) * 100}%`, minHeight: '4px' }} />
                                                             )}
                                                         </div>
-                                                        <span className="text-[9px] text-slate-400 truncate w-full text-center">
-                                                            {w.week.slice(5)}
-                                                        </span>
+                                                        <span className="text-[9px] text-slate-400 truncate w-full text-center">{w.week.slice(5)}</span>
                                                     </div>
                                                 );
                                             })}
@@ -736,327 +765,259 @@ export default function StrategyDetailPage() {
                     <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-lg p-4">
                         <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">Información</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                            <div>
-                                <p className="text-slate-400 font-medium">ID</p>
-                                <p className="text-slate-700 dark:text-white font-bold">#{strategy.id}</p>
-                            </div>
-                            <div>
-                                <p className="text-slate-400 font-medium">Inicio</p>
-                                <p className="text-slate-700 dark:text-white font-bold">{formatDate(strategy.start_date)}</p>
-                            </div>
-                            <div>
-                                <p className="text-slate-400 font-medium">Fin</p>
-                                <p className="text-slate-700 dark:text-white font-bold">{formatDate(strategy.end_date)}</p>
-                            </div>
-                            <div>
-                                <p className="text-slate-400 font-medium">Última actualización</p>
-                                <p className="text-slate-700 dark:text-white font-bold">{formatDate(strategy.updated_at)}</p>
-                            </div>
+                            <div><p className="text-slate-400 font-medium">ID</p><p className="text-slate-700 dark:text-white font-bold">#{strategy.id}</p></div>
+                            <div><p className="text-slate-400 font-medium">Inicio</p><p className="text-slate-700 dark:text-white font-bold">{formatDate(strategy.start_date)}</p></div>
+                            <div><p className="text-slate-400 font-medium">Fin</p><p className="text-slate-700 dark:text-white font-bold">{formatDate(strategy.end_date)}</p></div>
+                            <div><p className="text-slate-400 font-medium">Actualización</p><p className="text-slate-700 dark:text-white font-bold">{formatDate(strategy.updated_at)}</p></div>
                         </div>
                     </div>
                 )}
             </div>
 
             {/* ── Group Creation Drawer ── */}
-            <WorkspaceDrawer
-                isOpen={isGroupDrawerOpen}
-                onClose={() => setIsGroupDrawerOpen(false)}
-                title="Nuevo Grupo Faro"
-                subtitle={`Estrategia: ${strategy?.name}`}
-                actions={
-                    <>
-                        <button
-                            onClick={() => setIsGroupDrawerOpen(false)}
-                            className="px-4 py-1.5 text-[12px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-colors"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            onClick={handleCreateGroup}
-                            disabled={groupSaving || !groupForm.name.trim()}
-                            className="px-4 py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors flex items-center gap-2"
-                        >
-                            {groupSaving ? (
-                                <><Sparkles size={14} className="animate-spin" /> Creando...</>
-                            ) : (
-                                <><Plus size={14} /> Crear Grupo</>
-                            )}
-                        </button>
-                    </>
-                }
-            >
-                <div className="space-y-5">
-                    {/* Strategy config notice */}
+            <WorkspaceDrawer isOpen={isGroupDrawerOpen} onClose={() => setIsGroupDrawerOpen(false)}
+                title="Nuevo Grupo" subtitle={`Estrategia: ${strategy?.name}`}
+                actions={<>
+                    <button onClick={() => setIsGroupDrawerOpen(false)}
+                        className="px-4 py-1.5 text-[12px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-colors">Cancelar</button>
+                    <button onClick={handleCreateGroup} disabled={groupSaving || !groupForm.name.trim()}
+                        className="px-4 py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
+                        {groupSaving ? <><Sparkles size={14} className="animate-spin" />Creando...</> : <><Plus size={14} />Crear Grupo</>}
+                    </button>
+                </>}>
+                <div className="space-y-4">
                     {strategy?.typology === 'relacional' && (
                         <div className="px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-[11px] text-blue-700 dark:text-blue-300">
-                            <p className="font-semibold">Configuración heredada de la estrategia</p>
+                            <p className="font-semibold">Config. heredada:</p>
                             <p>Recurrencia: {strategy.recurrence} · Día: {strategy.day_of_week} · Hora: {strategy.start_time}</p>
                         </div>
                     )}
-
-                    {/* Name */}
+                    {[
+                        { label: 'Nombre del grupo *', field: 'name', placeholder: 'Ej: Faro Norte' },
+                        { label: 'Zona / Sector', field: 'zone', placeholder: 'Ej: Zona Norte' },
+                        { label: 'Dirección', field: 'address', placeholder: 'Dirección completa' },
+                    ].map(({ label, field, placeholder }) => (
+                        <div key={field}>
+                            <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">{label}</label>
+                            <input value={(groupForm as any)[field]} onChange={e => setGroupForm(f => ({ ...f, [field]: e.target.value }))}
+                                placeholder={placeholder}
+                                className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+                        </div>
+                    ))}
                     <div>
-                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
-                            Nombre del grupo *
-                        </label>
-                        <input
-                            value={groupForm.name}
-                            onChange={e => setGroupForm(f => ({ ...f, name: e.target.value }))}
-                            placeholder="Ej: Faro Esperanza - Norte"
-                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                        />
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Capacidad</label>
+                        <input type="number" value={groupForm.capacity} onChange={e => setGroupForm(f => ({ ...f, capacity: parseInt(e.target.value) || 15 }))}
+                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
                     </div>
-
-                    {/* Zone */}
-                    <div>
-                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
-                            Zona / Sector
-                        </label>
-                        <input
-                            value={groupForm.zone}
-                            onChange={e => setGroupForm(f => ({ ...f, zone: e.target.value }))}
-                            placeholder="Ej: Zona Norte, Barrio La Paz"
-                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                        />
-                    </div>
-
-                    {/* Address */}
-                    <div>
-                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
-                            Dirección
-                        </label>
-                        <input
-                            value={groupForm.address}
-                            onChange={e => setGroupForm(f => ({ ...f, address: e.target.value }))}
-                            placeholder="Dirección completa"
-                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                        />
-                    </div>
-
-                    {/* Capacity */}
-                    <div>
-                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
-                            Capacidad máxima
-                        </label>
-                        <input
-                            type="number"
-                            value={groupForm.capacity}
-                            onChange={e => setGroupForm(f => ({ ...f, capacity: parseInt(e.target.value) || 15 }))}
-                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                        />
-                    </div>
-
-                    {/* Day & Time */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-2">
                         <div>
-                            <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
-                                Día de reunión
-                            </label>
-                            <select
-                                value={groupForm.day_of_week}
-                                onChange={e => setGroupForm(f => ({ ...f, day_of_week: e.target.value }))}
-                                className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                            >
-                                <option value="">Sin día fijo</option>
-                                <option value="Domingo">Domingo</option>
-                                <option value="Lunes">Lunes</option>
-                                <option value="Martes">Martes</option>
-                                <option value="Miércoles">Miércoles</option>
-                                <option value="Jueves">Jueves</option>
-                                <option value="Viernes">Viernes</option>
-                                <option value="Sábado">Sábado</option>
+                            <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Día</label>
+                            <select value={groupForm.day_of_week} onChange={e => setGroupForm(f => ({ ...f, day_of_week: e.target.value }))}
+                                className="w-full px-2 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none">
+                                <option value="">—</option>
+                                {['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].map(d => <option key={d} value={d}>{d}</option>)}
                             </select>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                            <div>
-                                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
-                                    Inicio
-                                </label>
-                                <input
-                                    type="time"
-                                    value={groupForm.start_time}
-                                    onChange={e => setGroupForm(f => ({ ...f, start_time: e.target.value }))}
-                                    className="w-full px-2 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
-                                    Fin
-                                </label>
-                                <input
-                                    type="time"
-                                    value={groupForm.end_time}
-                                    onChange={e => setGroupForm(f => ({ ...f, end_time: e.target.value }))}
-                                    className="w-full px-2 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                                />
-                            </div>
+                        <div>
+                            <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Inicio</label>
+                            <input type="time" value={groupForm.start_time} onChange={e => setGroupForm(f => ({ ...f, start_time: e.target.value }))}
+                                className="w-full px-2 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none" />
+                        </div>
+                        <div>
+                            <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Fin</label>
+                            <input type="time" value={groupForm.end_time} onChange={e => setGroupForm(f => ({ ...f, end_time: e.target.value }))}
+                                className="w-full px-2 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none" />
                         </div>
                     </div>
-
-                    {/* Leader */}
-                    <div>
-                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
-                            Líder
-                        </label>
-                        <select
-                            value={groupForm.leader_id || ''}
-                            onChange={e => setGroupForm(f => ({ ...f, leader_id: e.target.value ? parseInt(e.target.value) : null }))}
-                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                        >
-                            <option value="">Sin asignar</option>
-                            {members.map(m => (
-                                <option key={m.id} value={m.id}>
-                                    {m.first_name} {m.last_name} {m.church_role ? `(${m.church_role})` : ''}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Assistant */}
-                    <div>
-                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
-                            Colíder
-                        </label>
-                        <select
-                            value={groupForm.assistant_id || ''}
-                            onChange={e => setGroupForm(f => ({ ...f, assistant_id: e.target.value ? parseInt(e.target.value) : null }))}
-                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                        >
-                            <option value="">Sin asignar</option>
-                            {members.map(m => (
-                                <option key={m.id} value={m.id}>
-                                    {m.first_name} {m.last_name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Host */}
-                    <div>
-                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
-                            Anfitrión
-                        </label>
-                        <select
-                            value={groupForm.host_id || ''}
-                            onChange={e => setGroupForm(f => ({ ...f, host_id: e.target.value ? parseInt(e.target.value) : null }))}
-                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                        >
-                            <option value="">Sin asignar</option>
-                            {members.map(m => (
-                                <option key={m.id} value={m.id}>
-                                    {m.first_name} {m.last_name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                    {[
+                        { label: 'Líder', field: 'leader_id' },
+                        { label: 'Colíder', field: 'assistant_id' },
+                        { label: 'Anfitrión', field: 'host_id' },
+                    ].map(({ label, field }) => (
+                        <div key={field}>
+                            <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">{label}</label>
+                            <select value={(groupForm as any)[field] || ''} onChange={e => setGroupForm(f => ({ ...f, [field]: e.target.value ? parseInt(e.target.value) : null }))}
+                                className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                                <option value="">Sin asignar</option>
+                                {members.map(m => <option key={m.id} value={m.id}>{m.first_name} {m.last_name}{m.church_role ? ` (${m.church_role})` : ''}</option>)}
+                            </select>
+                        </div>
+                    ))}
                 </div>
             </WorkspaceDrawer>
 
             {/* ── Member Management Drawer ── */}
-            <WorkspaceDrawer
-                isOpen={isMemberDrawerOpen}
-                onClose={() => setIsMemberDrawerOpen(false)}
-                title="Gestionar Miembros"
-                subtitle={selectedGroup?.name || ''}
-                actions={
-                    <>
-                        <button
-                            onClick={() => setIsMemberDrawerOpen(false)}
-                            className="px-4 py-1.5 text-[12px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-colors"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            onClick={handleSaveMembers}
-                            disabled={memberSaving}
-                            className="px-4 py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors flex items-center gap-2"
-                        >
-                            {memberSaving ? (
-                                <><Sparkles size={14} className="animate-spin" /> Guardando...</>
-                            ) : (
-                                <><UserCheck size={14} /> Guardar ({groupMembers.length})</>
-                            )}
-                        </button>
-                    </>
-                }
-            >
+            <WorkspaceDrawer isOpen={isMemberDrawerOpen} onClose={() => setIsMemberDrawerOpen(false)}
+                title="Gestionar Miembros" subtitle={selectedGroup?.name || ''}
+                actions={<>
+                    <button onClick={() => setIsMemberDrawerOpen(false)}
+                        className="px-4 py-1.5 text-[12px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-colors">Cancelar</button>
+                    <button onClick={handleSaveMembers} disabled={memberSaving}
+                        className="px-4 py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
+                        {memberSaving ? <><Sparkles size={14} className="animate-spin" />Guardando...</> : <><UserCheck size={14} />Guardar ({groupMembers.length})</>}
+                    </button>
+                </>}>
                 <div className="space-y-4">
-                    {/* Current members */}
                     <div>
                         <div className="flex items-center justify-between mb-2">
                             <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                                Miembros actuales ({groupMembers.length})
+                                Miembros ({groupMembers.length})
                             </label>
                         </div>
                         {groupMembers.length === 0 ? (
                             <p className="text-xs text-slate-400 italic py-2">Sin miembros asignados</p>
                         ) : (
-                            <div className="space-y-1 max-h-60 overflow-y-auto">
+                            <div className="space-y-1.5 max-h-64 overflow-y-auto">
                                 {groupMembers.map(m => (
-                                    <div key={m.id} className="flex items-center justify-between px-2 py-1.5 bg-slate-50 dark:bg-white/5 rounded-md text-xs">
-                                        <div>
-                                            <span className="font-medium text-slate-700 dark:text-slate-200">{m.name}</span>
-                                            {m.email && <span className="text-slate-400 ml-2">{m.email}</span>}
+                                    <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 bg-slate-50 dark:bg-white/5 rounded-md">
+                                        <div className="flex-1 min-w-0">
+                                            <span className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate block">{m.name}</span>
                                         </div>
-                                        <button
-                                            onClick={() => removeMemberFromGroup(m.id)}
-                                            className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                                            title="Remover"
-                                        >
-                                            <UserMinus size={14} />
+                                        <select value={m.role} onChange={e => updateMemberRole(m.id, e.target.value)}
+                                            className={`text-[11px] font-semibold px-2 py-1 rounded border-0 outline-none cursor-pointer ${ROLE_COLORS[m.role] || ROLE_COLORS.miembro}`}>
+                                            {MEMBER_ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                                        </select>
+                                        <button onClick={() => removeMemberFromGroup(m.id)}
+                                            className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors">
+                                            <UserMinus size={13} />
                                         </button>
                                     </div>
                                 ))}
                             </div>
                         )}
                     </div>
-
-                    {/* Search and add members */}
                     <div className="border-t border-slate-100 dark:border-white/5 pt-4">
-                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
-                            Agregar miembros
-                        </label>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Agregar miembros</label>
                         <div className="relative mb-2">
                             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                            <input
-                                value={memberSearch}
-                                onChange={e => setMemberSearch(e.target.value)}
+                            <input value={memberSearch} onChange={e => setMemberSearch(e.target.value)}
                                 placeholder="Buscar por nombre o email..."
-                                className="w-full pl-9 pr-3 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                            />
+                                className="w-full pl-9 pr-3 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
                         </div>
                         <div className="space-y-1 max-h-48 overflow-y-auto">
                             {allMembers
                                 .filter(m => {
                                     if (!memberSearch) return true;
                                     const term = memberSearch.toLowerCase();
-                                    const name = `${m.first_name} ${m.last_name}`.toLowerCase();
-                                    return name.includes(term) || (m.email || '').toLowerCase().includes(term);
+                                    return `${m.first_name} ${m.last_name}`.toLowerCase().includes(term) || (m.email || '').toLowerCase().includes(term);
                                 })
                                 .filter(m => !groupMembers.find(gm => gm.id === m.id))
                                 .slice(0, 20)
                                 .map(m => (
-                                    <button
-                                        key={m.id}
-                                        onClick={() => addMemberToGroup(m)}
-                                        className="w-full flex items-center justify-between px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md text-xs text-left transition-colors group/add"
-                                    >
-                                        <div>
-                                            <span className="font-medium text-slate-700 dark:text-slate-200">{m.first_name} {m.last_name}</span>
+                                    <button key={m.id} onClick={() => addMemberToGroup(m)}
+                                        className="w-full flex items-center justify-between px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md text-xs text-left transition-colors group/add">
+                                        <span className="font-medium text-slate-700 dark:text-slate-200">{m.first_name} {m.last_name}
                                             {m.email && <span className="text-slate-400 ml-2">{m.email}</span>}
-                                        </div>
+                                        </span>
                                         <Plus size={14} className="text-slate-300 group-hover/add:text-blue-500 transition-colors" />
                                     </button>
                                 ))}
-                            {allMembers.filter(m => {
-                                if (!memberSearch) return true;
-                                const term = memberSearch.toLowerCase();
-                                return `${m.first_name} ${m.last_name}`.toLowerCase().includes(term) || (m.email || '').toLowerCase().includes(term);
-                            }).filter(m => !groupMembers.find(gm => gm.id === m.id)).length === 0 && (
-                                <p className="text-xs text-slate-400 italic py-2">No se encontraron miembros</p>
-                            )}
                         </div>
                     </div>
+                </div>
+            </WorkspaceDrawer>
+
+            {/* ── New Session Drawer ── */}
+            <WorkspaceDrawer isOpen={isNewSessionDrawerOpen} onClose={() => setIsNewSessionDrawerOpen(false)}
+                title="Registrar Sesión" subtitle={`Estrategia: ${strategy?.name}`}
+                actions={<>
+                    <button onClick={() => setIsNewSessionDrawerOpen(false)}
+                        className="px-4 py-1.5 text-[12px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-colors">Cancelar</button>
+                    <button onClick={handleCreateSession} disabled={sessionSaving}
+                        className="px-4 py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
+                        {sessionSaving ? <><Sparkles size={14} className="animate-spin" />Guardando...</> : <><Save size={14} />Guardar</>}
+                    </button>
+                </>}>
+                <div className="space-y-4">
+                    <div>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Grupo *</label>
+                        <select value={sessionForm.glory_house_id} onChange={e => setSessionForm(f => ({ ...f, glory_house_id: e.target.value }))}
+                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                            <option value="">Seleccionar grupo...</option>
+                            {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Fecha de la sesión *</label>
+                        <input type="date" value={sessionForm.session_date} onChange={e => setSessionForm(f => ({ ...f, session_date: e.target.value }))}
+                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+                    </div>
+                    <div>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Tema de la sesión</label>
+                        <input value={sessionForm.topic} onChange={e => setSessionForm(f => ({ ...f, topic: e.target.value }))}
+                            placeholder="Ej: La fe que mueve montañas"
+                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+                    </div>
+                    <div>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Ofrenda recogida</label>
+                        <input type="number" value={sessionForm.offering_amount} onChange={e => setSessionForm(f => ({ ...f, offering_amount: e.target.value }))}
+                            placeholder="0.00"
+                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+                    </div>
+                    <div>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Notas de la sesión</label>
+                        <textarea value={sessionForm.report_notes} onChange={e => setSessionForm(f => ({ ...f, report_notes: e.target.value }))} rows={3}
+                            placeholder="Observaciones, peticiones de oración, novedades..."
+                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none" />
+                    </div>
+                </div>
+            </WorkspaceDrawer>
+
+            {/* ── Attendance Drawer ── */}
+            <WorkspaceDrawer isOpen={isAttendanceDrawerOpen} onClose={() => setIsAttendanceDrawerOpen(false)}
+                title="Registrar Asistencia"
+                subtitle={attendanceSession ? new Date(attendanceSession.session_date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : ''}
+                actions={<>
+                    <button onClick={() => setIsAttendanceDrawerOpen(false)}
+                        className="px-4 py-1.5 text-[12px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-colors">Cancelar</button>
+                    <button onClick={handleSaveAttendance} disabled={attendanceSaving}
+                        className="px-4 py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
+                        {attendanceSaving ? <><Sparkles size={14} className="animate-spin" />Guardando...</> : <><UserCheck size={14} />Guardar asistencia</>}
+                    </button>
+                </>}>
+                <div className="space-y-3">
+                    {attendanceMembers.length === 0 ? (
+                        <div className="text-center py-8">
+                            <Users size={32} className="text-slate-300 mx-auto mb-2" />
+                            <p className="text-xs text-slate-400">Este grupo no tiene miembros asignados</p>
+                            <p className="text-[11px] text-slate-400 mt-1">Agrega miembros desde la pestaña Grupos</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="flex items-center gap-2 text-[11px] text-slate-400 mb-1">
+                                <span>{attendanceMembers.filter(m => m.status === 'present').length} presentes</span>
+                                <span>·</span>
+                                <span>{attendanceMembers.filter(m => m.status === 'absent').length} ausentes</span>
+                                <span>·</span>
+                                <span>{attendanceMembers.filter(m => m.status === 'first_time').length} primera vez</span>
+                            </div>
+                            <div className="space-y-2">
+                                {attendanceMembers.map((m, i) => (
+                                    <div key={m.member_id} className="flex items-center gap-3 px-3 py-2.5 bg-slate-50 dark:bg-white/5 rounded-lg">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{m.name}</p>
+                                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${ROLE_COLORS[m.role] || ROLE_COLORS.miembro}`}>
+                                                {MEMBER_ROLES.find(r => r.value === m.role)?.label || m.role}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            {[
+                                                { status: 'present', label: 'P', cls: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', activeCls: 'ring-2 ring-green-500' },
+                                                { status: 'absent', label: 'A', cls: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', activeCls: 'ring-2 ring-red-500' },
+                                                { status: 'first_time', label: '1°', cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', activeCls: 'ring-2 ring-blue-500' },
+                                            ].map(opt => (
+                                                <button key={opt.status}
+                                                    onClick={() => setAttendanceMembers(prev => prev.map((x, j) => j === i ? { ...x, status: opt.status as any } : x))}
+                                                    className={`w-8 h-8 rounded-lg text-[11px] font-bold transition-all ${opt.cls} ${m.status === opt.status ? opt.activeCls : 'opacity-50 hover:opacity-100'}`}>
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
                 </div>
             </WorkspaceDrawer>
         </EvangelismShell>

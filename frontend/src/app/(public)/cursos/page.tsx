@@ -320,7 +320,7 @@ export default function CursosPage() {
 
             {/* ── LIBRERÍA ──────────────────────────────── */}
             <section
-                className="px-4 md:px-8 lg:px-12 mt-32 py-1.5"
+                className="px-4 md:px-8 lg:px-12 mt-32 py-8 md:py-12 lg:py-16"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
                 <motion.div 

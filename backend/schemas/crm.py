@@ -931,6 +931,11 @@ class GloryHouseCreate(BaseModel):
     base_attendee_ids: Optional[List[int]] = None
 
 
+class GloryHouseMemberWithRole(BaseModel):
+    member_id: int
+    role: str = "miembro"  # lider | colider | miembro | visitante
+
+
 class GloryHouseUpdate(BaseModel):
     code: Optional[str] = None
     name: Optional[str] = None
@@ -945,6 +950,7 @@ class GloryHouseUpdate(BaseModel):
     start_time: Optional[str] = None
     end_time: Optional[str] = None
     base_attendee_ids: Optional[List[int]] = None
+    base_attendees_with_roles: Optional[List[GloryHouseMemberWithRole]] = None
 
 
 class FaroAttendanceReportItem(BaseModel):

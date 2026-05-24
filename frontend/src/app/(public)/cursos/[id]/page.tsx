@@ -124,7 +124,7 @@ export default function CursoDetailPage() {
             </AnimatePresence>
 
             {/* ── HEADER ──────────────────────────────────── */}
-            <header className="relative px-3 md:px-6 lg:px-8 xl:px-12 py-1.5 md:py-1.5">
+            <header className="relative px-3 md:px-6 lg:px-8 xl:px-12 py-6 md:py-10 lg:py-14">
                 <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -211,7 +211,7 @@ export default function CursoDetailPage() {
             </header>
 
             {/* ── SYLLABUS & DETAILS ──────────────────────────────── */}
-            <section className="px-3 md:px-6 lg:px-8 xl:px-12 py-1.5" style={{ background: "var(--faro-surface-container-lowest)" }}>
+            <section className="px-3 md:px-6 lg:px-8 xl:px-12 py-8 md:py-12 lg:py-16" style={{ background: "var(--faro-surface-container-lowest)" }}>
                 <div>
                     <h2 className="text-lg font-bold mb-3" style={{ color: "var(--faro-on-surface)" }}>Acerca de este programa</h2>
                     <p className="text-xl leading-relaxed mb-16" style={{ color: "var(--faro-on-surface-variant)" }}>

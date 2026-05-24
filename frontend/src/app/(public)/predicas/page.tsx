@@ -176,7 +176,7 @@ export default function PredicasPage() {
             </section>
 
             {/* ── GALERÍA DE VÍDEOS ──────────────────────────── */}
-            <section className="py-1.5 px-3 md:px-4 lg:px-8 xl:px-12">
+            <section className="py-8 md:py-12 lg:py-16 px-3 md:px-6 lg:px-8 xl:px-12">
                 {!hasSermons ? (
                     <div className="text-center py-16">
                         <Play size={64} className="mx-auto mb-4 opacity-20" style={{ color: "var(--faro-primary)" }} />

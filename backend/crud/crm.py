@@ -428,21 +428,31 @@ def update_glory_house(db: Session, house_id: int, payload: schemas.GloryHouseUp
     if not house:
         return None
 
-    update_data = payload.model_dump(exclude_unset=True, exclude={"base_attendee_ids"})
+    update_data = payload.model_dump(
+        exclude_unset=True,
+        exclude={"base_attendee_ids", "base_attendees_with_roles"},
+    )
     if "code" in update_data and not str(update_data["code"] or "").strip():
         update_data["code"] = house.code or f"FARO-{house.id}"
     for key, value in update_data.items():
         setattr(house, key, value)
 
-    if payload.base_attendee_ids is not None:
+    if payload.base_attendees_with_roles is not None:
+        db.query(models.GloryHouseMember).filter(
+            models.GloryHouseMember.glory_house_id == house_id
+        ).delete()
+        for item in payload.base_attendees_with_roles:
+            db.add(models.GloryHouseMember(
+                glory_house_id=house_id, member_id=item.member_id, role=item.role
+            ))
+    elif payload.base_attendee_ids is not None:
         db.query(models.GloryHouseMember).filter(
             models.GloryHouseMember.glory_house_id == house_id
         ).delete()
         for member_id in payload.base_attendee_ids:
-            attendee = models.GloryHouseMember(
-                glory_house_id=house_id, member_id=member_id, role="asistente"
-            )
-            db.add(attendee)
+            db.add(models.GloryHouseMember(
+                glory_house_id=house_id, member_id=member_id, role="miembro"
+            ))
 
     db.commit()
     db.refresh(house)
