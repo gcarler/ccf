@@ -1,7 +1,8 @@
 /* FARO DYNAMIC THEMES */
+/* All 3 themes use independent selectors — no overlap, no cascade pollution */
 
 /* 1. TEMA CLARO (Light) */
-:root, .theme-light {
+.theme-light {
   --faro-surface-container-lowest: #ffffff;
   --faro-surface-tint: #2c609d;
   --faro-on-background: #001b3d;
@@ -26,8 +27,8 @@
   --faro-outline: #72777f;
 }
 
-/* 2. TEMA INSTITUCIONAL (Azul actual - Mapeado a .dark) */
-.dark, .theme-institutional {
+/* 2. TEMA INSTITUCIONAL (Azul oscuro) */
+.theme-institutional {
   --faro-surface-container-lowest: #000d2a;
   --faro-surface-tint: #a5c8ff;
   --faro-on-background: #d9e2ff;

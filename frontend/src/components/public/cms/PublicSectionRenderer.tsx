@@ -19,7 +19,7 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
   const title = val(props, "title", "Sin título");
   const body = val(props, "body", "");
   const ctaLabel = val(props, "cta_label", "Explorar");
-  const ctaHref = val(props, "cta_href", "/faro");
+  const ctaHref = val(props, "cta_href", "/");
   const imageUrl = val(props, "image_url", "");
   const imageAlt = val(props, "image_alt", title || "Imagen");
 
@@ -343,7 +343,7 @@ function PopupBlock({ section }: { section: CmsSection }) {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-md bg-white dark:bg-[#111418] rounded-lg p-4 shadow-2xl border border-slate-200 dark:border-white/10"
+            className="relative w-full max-w-md bg-faro-surface-container rounded-lg p-4 shadow-2xl border border-faro-outline-variant/20"
             style={{
               background: "var(--faro-surface-container)",
               color: "var(--faro-on-surface)",
@@ -351,7 +351,7 @@ function PopupBlock({ section }: { section: CmsSection }) {
           >
             <button
               onClick={handleClose}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-faro-surface-container-high transition-colors"
             >
               <X size={20} />
             </button>
@@ -373,7 +373,7 @@ function PopupBlock({ section }: { section: CmsSection }) {
                 </Link>
                 <button
                   onClick={handleClose}
-                  className="w-full py-3 rounded-full text-xs font-bold uppercase tracking-wide hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                  className="w-full py-3 rounded-full text-xs font-bold uppercase tracking-wide hover:bg-faro-surface-container-high transition-colors"
                   style={{ color: "var(--faro-on-surface-variant)" }}
                 >
                   No, gracias

@@ -148,7 +148,7 @@ export default function NosotrosPage() {
                                 <div className="pt-8 flex gap-3">
                                     {(aboutData.stats as Array<{ value: string; label: string; color?: string }>).map((stat, i) => (
                                         <React.Fragment key={stat.label}>
-                                            {i > 0 && <div className="w-px h-8 bg-slate-200 dark:bg-white/10" />}
+                                            {i > 0 && <div className="w-px h-8 bg-faro-outline-variant/50" />}
                                             <div>
                                                 <span className="text-lg font-bold block" style={{ color: stat.color || "var(--faro-primary)" }}>{stat.value}</span>
                                                 <span className="text-[10px] font-semibold uppercase tracking-wide opacity-50">{stat.label}</span>
