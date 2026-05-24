@@ -151,7 +151,7 @@ def public_newsletter_subscribe(
     db.add(subscription)
 
     # Use unified contact tracker
-    result = tracker.record_contact(db, ContactRecord(
+    tracker.record_contact(db, ContactRecord(
         email=email,
         phone=payload.phone,
         first_name=payload.first_name,
