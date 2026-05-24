@@ -39,7 +39,7 @@ export default function DonationDetailPage() {
         <div className="flex h-full flex-col overflow-hidden bg-[#f8fafc] dark:bg-[#0b0d11]">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: "Administracion", icon: LayoutDashboard, href: "/admin" },
+                    { label: "Administracion", icon: LayoutDashboard, href: "/plataforma/admin" },
                     { label: "Donaciones", icon: Heart, href: "/admin/donations" },
                     { label: `#${donationId}`, icon: ReceiptText },
                 ]}

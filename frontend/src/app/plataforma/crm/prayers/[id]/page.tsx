@@ -55,7 +55,7 @@ export default function PrayerDetailPage() {
     return (
         <CrmShell
             breadcrumbs={[
-                { label: "CRM", icon: LayoutDashboard, href: "/crm" },
+                { label: "CRM", icon: LayoutDashboard, href: "/plataforma/crm" },
                 { label: "Intercesion", icon: Heart, href: "/crm/prayers" },
                 { label: prayer.requester_name, icon: User },
             ]}

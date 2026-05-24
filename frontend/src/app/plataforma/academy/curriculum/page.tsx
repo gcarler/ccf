@@ -115,7 +115,7 @@ export default function StudentCurriculum() {
                                 </div>
                             </article>
                         ))}
-                    <Link href="/academy" className="bg-primary/5 rounded-md p-4 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center gap-3 group hover:border-primary/50 hover:bg-primary/10 transition-all cursor-pointer">
+                    <Link href="/plataforma/academy" className="bg-primary/5 rounded-md p-4 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center gap-3 group hover:border-primary/50 hover:bg-primary/10 transition-all cursor-pointer">
                         <div className="text-primary/50 group-hover:text-primary transition-colors">
                             <PlusCircle size={32} />
                         </div>

@@ -607,7 +607,7 @@ export default function MemberDetailPage() {
                             <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm">
                                 <div className="flex items-center justify-between mb-3">
                                     <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Progreso Académico</h3>
-                                    <a href="/academy" className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600 uppercase tracking-wide hover:text-blue-700 transition-all">
+                                    <a href="/plataforma/academy" className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600 uppercase tracking-wide hover:text-blue-700 transition-all">
                                         Ver Academia <ExternalLink size={12} />
                                     </a>
                                 </div>
@@ -616,7 +616,7 @@ export default function MemberDetailPage() {
                                     title="Sin cursos registrados"
                                     description={`${fullName} aún no está inscrito en ningún curso de la Academia CCF.`}
                                     action={
-                                        <a href="/academy" className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all mt-2">
+                                        <a href="/plataforma/academy" className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all mt-2">
                                             <BookOpen size={16} /> Explorar Cursos
                                         </a>
                                     }

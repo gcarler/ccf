@@ -87,7 +87,7 @@ export default function SpiritualLifePage() {
         {
             title: 'Formación',
             items: [
-                { id: 'academy-link',    label: 'Academia CCF',      href: '/academy',                     icon: BookOpen },
+                { id: 'academy-link',    label: 'Academia CCF',      href: '/plataforma/academy',                     icon: BookOpen },
             ]
         }
     ];
@@ -287,7 +287,7 @@ export default function SpiritualLifePage() {
                                     </div>
                                 </Link>
 
-                                <Link href="/academy">
+                                <Link href="/plataforma/academy">
                                     <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-600 to-blue-600 rounded-lg shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all cursor-pointer group">
                                         <div className="size-9 rounded-md bg-white/20 flex items-center justify-center">
                                             <Sparkles size={16} className="text-white" />

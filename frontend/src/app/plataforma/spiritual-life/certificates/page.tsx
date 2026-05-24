@@ -65,7 +65,7 @@ export default function DigitalCertificatesPage() {
                         icon={Award}
                         title="Aún no tienes certificados"
                         description="Cuando completes y apruebes un curso en la Academia CCF, tu certificado digital aparecerá aquí."
-                        onAction={() => window.location.href = '/academy'}
+                        onAction={() => window.location.href = '/plataforma/academy'}
                         actionLabel="Explorar Academia"
                     />
                 ) : (

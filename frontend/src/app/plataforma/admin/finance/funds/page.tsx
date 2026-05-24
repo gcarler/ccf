@@ -138,7 +138,7 @@ export default function FundsPage() {
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: "Administración", icon: LayoutDashboard, href: "/admin" },
+                    { label: "Administración", icon: LayoutDashboard, href: "/plataforma/admin" },
                     { label: "Finanzas", icon: TrendingUp, href: "/admin/finance" },
                     { label: "Fondos", icon: Wallet },
                 ]}

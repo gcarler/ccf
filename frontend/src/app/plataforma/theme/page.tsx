@@ -14,7 +14,7 @@ export default function ThemePage() {
         {
             title: 'Configuración',
             items: [
-                { id: 'settings-general', label: 'General', href: '/settings', icon: Settings },
+                { id: 'settings-general', label: 'General', href: '/plataforma/settings', icon: Settings },
                 { id: 'account-profile', label: 'Mi Perfil', href: '/account', icon: User },
                 { id: 'account-ministry', label: 'Perfil Ministerial', href: '/account/ministry-profile', icon: Crown },
                 { id: 'settings-roles', label: 'Roles de Acceso', href: '/settings/roles', icon: Shield },
@@ -33,7 +33,7 @@ export default function ThemePage() {
                         <h1 className="text-[13px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200">Tema visual</h1>
                     </div>
                     <Link
-                        href="/settings"
+                        href="/plataforma/settings"
                         className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300"
                     >
                         <Settings2 size={12} /> Volver a ajustes

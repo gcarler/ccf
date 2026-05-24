@@ -73,7 +73,7 @@ export default function NewCoursePage() {
             
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'Academia', icon: GraduationCap, href: '/academy' },
+                    { label: 'Academia', icon: GraduationCap, href: '/plataforma/academy' },
                     { label: 'Coordinación', icon: ShieldCheck, href: '/academy/coordination' },
                     { label: 'Nuevo Programa', icon: Plus },
                 ]}

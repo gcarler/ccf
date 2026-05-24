@@ -58,7 +58,7 @@ export default function AcademyStudentsPage() {
         <div className="flex h-full flex-col overflow-hidden bg-[#f8fafc] dark:bg-[#0f1114]">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: "Academia", icon: GraduationCap, href: "/academy" },
+                    { label: "Academia", icon: GraduationCap, href: "/plataforma/academy" },
                     { label: "Estudiantes", icon: UserRound },
                 ]}
                 rightActions={

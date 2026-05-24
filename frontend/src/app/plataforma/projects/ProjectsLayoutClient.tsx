@@ -67,7 +67,7 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
                         id: 'all-projects',
                         label: 'Todos los Proyectos',
                         icon: ChevronLeft,
-                        href: '/projects'
+                        href: '/plataforma/projects'
                     },
                 ]
             },
@@ -93,7 +93,7 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
                 id: 'global',
                 title: 'Global',
                 items: [
-                    { id: 'all-projects', label: 'Todos los Proyectos', icon: LayoutDashboard, href: '/projects' },
+                    { id: 'all-projects', label: 'Todos los Proyectos', icon: LayoutDashboard, href: '/plataforma/projects' },
                     { id: 'my-tasks', label: 'Mis Tareas', icon: CheckCircle2, href: '/tasks' },
                 ]
             },

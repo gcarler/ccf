@@ -23,7 +23,7 @@ const SIDEBAR_SECTIONS = [
     {
         title: 'Gestión',
         items: [
-            { id: 'dashboard', label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+            { id: 'dashboard', label: 'Dashboard', href: '/plataforma/admin', icon: LayoutDashboard },
             { id: 'access', label: 'Acceso', href: '/admin/access', icon: Lock },
             { id: 'users', label: 'Usuarios & Permisos', href: '/admin/users', icon: Shield },
             { id: 'radar', label: 'Radar del Pastor', href: '/admin/dashboard/radar', icon: BarChart3 },

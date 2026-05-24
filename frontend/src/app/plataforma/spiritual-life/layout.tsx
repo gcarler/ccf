@@ -41,7 +41,7 @@ export default function SpiritualLifeLayout({ children }: { children: React.Reac
         {
             title: 'Formación',
             items: [
-                { id: 'sl-academy', label: 'Academia CCF', href: '/academy', icon: GraduationCap },
+                { id: 'sl-academy', label: 'Academia CCF', href: '/plataforma/academy', icon: GraduationCap },
             ]
         }
     ];

@@ -101,7 +101,7 @@ export default function StudentProgressPage() {
 
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'Academia', icon: GraduationCap, href: '/academy' },
+                    { label: 'Academia', icon: GraduationCap, href: '/plataforma/academy' },
                     { label: 'Mi Progreso', icon: BarChart3 },
                 ]}
                 viewType={viewType}

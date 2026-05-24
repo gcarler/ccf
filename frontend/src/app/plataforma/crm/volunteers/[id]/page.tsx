@@ -125,7 +125,7 @@ export default function VolunteerDetailPage() {
     return (
         <CrmShell
             breadcrumbs={[
-                { label: "CRM", icon: LayoutDashboard, href: "/crm" },
+                { label: "CRM", icon: LayoutDashboard, href: "/plataforma/crm" },
                 { label: "Voluntariado", icon: Heart, href: "/crm/volunteers" },
                 { label: volunteer.name, icon: User },
             ]}

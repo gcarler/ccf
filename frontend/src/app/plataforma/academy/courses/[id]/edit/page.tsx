@@ -80,7 +80,7 @@ export default function EditCoursePage() {
 
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'Academia', icon: GraduationCap, href: '/academy' },
+                    { label: 'Academia', icon: GraduationCap, href: '/plataforma/academy' },
                     { label: 'Coordinacion', icon: ShieldCheck, href: '/academy/coordination' },
                     { label: 'Editar Curso', icon: FileText },
                 ]}

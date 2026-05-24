@@ -76,7 +76,7 @@ export default function LeadDetailPage() {
         <div className="flex flex-col h-full">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'CRM', icon: LayoutDashboard, href: '/crm' },
+                    { label: 'CRM', icon: LayoutDashboard, href: '/plataforma/crm' },
                     { label: 'Pipeline', icon: Users, href: '/crm/pipeline' },
                     { label: lead.first_name, icon: User },
                 ]}

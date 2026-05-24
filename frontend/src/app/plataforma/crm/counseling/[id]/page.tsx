@@ -70,7 +70,7 @@ export default function CounselingDetailPage() {
     return (
         <CrmShell
             breadcrumbs={[
-                { label: "CRM", icon: LayoutDashboard, href: "/crm" },
+                { label: "CRM", icon: LayoutDashboard, href: "/plataforma/crm" },
                 { label: "Consejeria", icon: Heart, href: "/crm/counseling" },
                 { label: session.member_name, icon: User },
             ]}

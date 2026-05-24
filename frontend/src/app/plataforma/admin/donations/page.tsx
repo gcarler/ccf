@@ -160,7 +160,7 @@ export default function DonationsManagementPage() {
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: "Administración", icon: LayoutDashboard, href: "/admin" },
+                    { label: "Administración", icon: LayoutDashboard, href: "/plataforma/admin" },
                     { label: "Donaciones y Ofrendas", icon: Heart },
                 ]}
                 rightActions={

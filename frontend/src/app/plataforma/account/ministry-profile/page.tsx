@@ -22,7 +22,7 @@ export default function MinistryProfilePage() {
             items: [
                 { id: 'account-profile', label: 'Mi Perfil', href: '/account', icon: User },
                 { id: 'account-ministry', label: 'Perfil Ministerial', href: '/account/ministry-profile', icon: Crown },
-                { id: 'settings-general', label: 'Configuración', href: '/settings', icon: Settings },
+                { id: 'settings-general', label: 'Configuración', href: '/plataforma/settings', icon: Settings },
             ]
         }
     ];

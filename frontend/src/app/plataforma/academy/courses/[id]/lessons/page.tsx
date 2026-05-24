@@ -131,7 +131,7 @@ export default function LessonsPage() {
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'Academia', icon: GraduationCap, href: '/academy' },
+                    { label: 'Academia', icon: GraduationCap, href: '/plataforma/academy' },
                     { label: course?.title ?? 'Curso', icon: BookOpen, href: `/academy/courses/${courseId}` },
                     { label: 'Lecciones', icon: BookOpen },
                 ]}

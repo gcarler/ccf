@@ -164,7 +164,7 @@ export default function CrmGroupsPage() {
     return (
         <CrmShell
             breadcrumbs={[
-                { label: 'CRM', icon: LayoutDashboard, href: '/crm' },
+                { label: 'CRM', icon: LayoutDashboard, href: '/plataforma/crm' },
                 { label: 'Casas de Bendición', icon: Home },
             ]}
         >

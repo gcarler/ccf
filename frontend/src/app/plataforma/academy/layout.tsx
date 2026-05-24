@@ -21,8 +21,8 @@ const SIDEBAR_SECTIONS = [
     {
         title: 'Principal',
         items: [
-            { id: 'dashboard', label: 'Resumen', href: '/academy', icon: LayoutDashboard },
-            { id: 'courses', label: 'Cursos', href: '/academy', icon: BookOpen },
+            { id: 'dashboard', label: 'Resumen', href: '/plataforma/academy', icon: LayoutDashboard },
+            { id: 'courses', label: 'Cursos', href: '/plataforma/academy', icon: BookOpen },
             { id: 'curriculum', label: 'Plan de Estudio', href: '/academy/curriculum', icon: FileText },
         ]
     },

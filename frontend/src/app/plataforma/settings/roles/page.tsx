@@ -89,7 +89,7 @@ export default function RolesSettingsPage() {
     };
 
     return (
-        <CrmShell breadcrumbs={[{ label: 'Ajustes', icon: Settings, href: '/settings' }, { label: 'Configuración de Roles' }]}>
+        <CrmShell breadcrumbs={[{ label: 'Ajustes', icon: Settings, href: '/plataforma/settings' }, { label: 'Configuración de Roles' }]}>
             <main className="flex-1 overflow-y-auto p-4 lg:p-4">
  <div className="w-full space-y-3">
                     <header className="flex items-center justify-between">

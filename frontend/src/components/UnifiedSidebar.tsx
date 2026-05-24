@@ -46,16 +46,16 @@ export default function UnifiedSidebar({
     // Global items matching the mock structure roughly
     const GLOBAL_MAIN = [
         { id: 'dashboard', label: 'Inicio', href: '/', icon: Home },
-        { id: 'inbox', label: 'Bandeja de Entrada', href: '/inbox', icon: Inbox },
-        { id: 'crm', label: 'CRM / Equipos', href: '/crm', icon: Users },
-        { id: 'academy', label: 'Academia', href: '/academy', icon: GraduationCap },
-        { id: 'projects', label: 'Proyectos', href: '/projects', icon: Layout },
+        { id: 'inbox', label: 'Bandeja de Entrada', href: '/plataforma/inbox', icon: Inbox },
+        { id: 'crm', label: 'CRM / Equipos', href: '/plataforma/crm', icon: Users },
+        { id: 'academy', label: 'Academia', href: '/plataforma/academy', icon: GraduationCap },
+        { id: 'projects', label: 'Proyectos', href: '/plataforma/projects', icon: Layout },
     ];
 
     const GLOBAL_SETTINGS = [
-        { id: 'goals', label: 'Metas', href: '/admin', icon: Target },
-        { id: 'notifications', label: 'Notificaciones', href: '/inbox', icon: Bell },
-        { id: 'settings', label: 'Ajustes', href: '/settings', icon: Settings },
+        { id: 'goals', label: 'Metas', href: '/plataforma/admin', icon: Target },
+        { id: 'notifications', label: 'Notificaciones', href: '/plataforma/inbox', icon: Bell },
+        { id: 'settings', label: 'Ajustes', href: '/plataforma/settings', icon: Settings },
     ];
 
     const renderItem = (item: any, depth = 0, hasChildren = false, isExpanded = false, onToggle?: (e: React.MouseEvent) => void) => {

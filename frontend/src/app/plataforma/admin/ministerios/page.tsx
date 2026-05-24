@@ -117,7 +117,7 @@ export default function MinisteriosPage() {
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'Administración', icon: LayoutDashboard, href: '/admin' },
+                    { label: 'Administración', icon: LayoutDashboard, href: '/plataforma/admin' },
                     { label: 'Ministerios', icon: Church },
                 ]}
                 viewType={viewType}

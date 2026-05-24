@@ -170,7 +170,7 @@ export default function MembersPage() {
     return (
         <CrmShell
             breadcrumbs={[
-                { label: 'CRM', icon: LayoutDashboard, href: '/crm' },
+                { label: 'CRM', icon: LayoutDashboard, href: '/plataforma/crm' },
                 { label: 'Membresía', icon: Users },
             ]}
         >

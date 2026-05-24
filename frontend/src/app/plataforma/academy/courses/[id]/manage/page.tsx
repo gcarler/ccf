@@ -123,7 +123,7 @@ export default function CourseManagementPage() {
 
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'Academia', icon: GraduationCap, href: '/academy' },
+                    { label: 'Academia', icon: GraduationCap, href: '/plataforma/academy' },
                     { label: 'Gestion Operativa', icon: Settings },
                 ]}
                 viewType={viewType}

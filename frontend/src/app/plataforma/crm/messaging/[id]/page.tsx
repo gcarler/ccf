@@ -74,7 +74,7 @@ export default function MessagingDetailPage() {
     return (
         <CrmShell
             breadcrumbs={[
-                { label: "CRM", icon: LayoutDashboard, href: "/crm" },
+                { label: "CRM", icon: LayoutDashboard, href: "/plataforma/crm" },
                 { label: "Mensajeria", icon: MessageSquare, href: "/crm/messaging" },
                 { label: title, icon: Send },
             ]}

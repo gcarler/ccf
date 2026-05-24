@@ -8,7 +8,7 @@ const INBOX_SECTIONS = [
     {
         title: 'Módulos',
         items: [
-            { id: 'inbox-all',      label: 'Todo',      href: '/inbox',           icon: Bell },
+            { id: 'inbox-all',      label: 'Todo',      href: '/plataforma/inbox',           icon: Bell },
             { id: 'inbox-mentions', label: 'Menciones', href: '/inbox#menciones', icon: AtSign },
             { id: 'inbox-tasks',    label: 'Tareas',    href: '/inbox#tareas',    icon: CheckCircle2 },
             { id: 'inbox-ai',       label: 'MESH AI',   href: '/inbox#ai',        icon: Bot },

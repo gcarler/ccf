@@ -20,12 +20,12 @@ export default function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [navItems, setNavItems] = useState([
         { label: 'Inicio', href: '/' },
-        { label: 'Academia', href: '/academy' },
-        { label: 'Proyectos', href: '/projects' },
-        { label: 'Prédicas', href: '/sermons' },
+        { label: 'Academia', href: '/plataforma/academy' },
+        { label: 'Proyectos', href: '/plataforma/projects' },
+        { label: 'Prédicas', href: '/predicas' },
         { label: 'Libros', href: '/books' },
-        { label: 'Testimonios', href: '/testimonials' },
-        { label: 'Eventos', href: '/events' },
+        { label: 'Testimonios', href: '/testimonios' },
+        { label: 'Eventos', href: '/eventos' },
         { label: 'Donaciones', href: '/donate' },
     ]);
     const pathname = usePathname() ?? '/';
@@ -96,7 +96,7 @@ export default function Navbar() {
                     <div className="hidden md:flex items-center gap-2">
                         {isAuthenticated ? (
                             <div className="flex items-center gap-2">
-                                <Link href="/admin" className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/20">
+                                <Link href="/plataforma/admin" className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/20">
                                     <LayoutDashboard size={13} />
                                     Panel
                                 </Link>

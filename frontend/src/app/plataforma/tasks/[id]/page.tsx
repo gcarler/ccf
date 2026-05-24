@@ -70,7 +70,7 @@ export default function TaskDetailPage() {
             <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'Proyectos', icon: LayoutDashboard, href: '/projects' },
+                    { label: 'Proyectos', icon: LayoutDashboard, href: '/plataforma/projects' },
                     { label: 'Tareas', icon: CheckCircle2, href: '/tasks' },
                     { label: `Task-${id}`, icon: CheckCircle2 },
                 ]}
