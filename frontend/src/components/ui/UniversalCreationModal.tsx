@@ -7,7 +7,7 @@ import {
     Plus, User, Calendar, Flag, Tag, Paperclip,
     MessageSquare, ChevronDown, Sparkles, Loader2,
     Table2, Columns, List, ChevronRight, Users,
-    Minus, Flame, Target, MapPin, Clock
+    Minus
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
@@ -16,7 +16,7 @@ import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
 import type { ProjectRecord } from '@/types/projects';
 
-type CreationType = 'task' | 'event' | 'doc' | 'reminder' | 'whiteboard' | 'panel' | 'evangelism_strategy';
+type CreationType = 'task' | 'event' | 'doc' | 'reminder' | 'whiteboard' | 'panel';
 
 interface Props {
     isOpen: boolean;
@@ -28,7 +28,6 @@ interface Props {
 const TABS: { id: CreationType; label: string; icon: React.ElementType; color?: string; activeColor?: string }[] = [
     { id: 'task',       label: 'Tarea',        icon: CheckSquare,    color: 'text-blue-500', activeColor: 'text-blue-600 dark:text-blue-400' },
     { id: 'event',      label: 'Evento',       icon: Calendar,       color: 'text-emerald-500', activeColor: 'text-emerald-600 dark:text-emerald-400' },
-    { id: 'evangelism_strategy', label: 'Estrategia', icon: Sparkles, color: 'text-amber-500', activeColor: 'text-amber-600 dark:text-amber-400' },
     { id: 'doc',        label: 'Documento',    icon: FileText,       color: 'text-indigo-500', activeColor: 'text-indigo-600 dark:text-indigo-400' },
     { id: 'reminder',   label: 'Recordatorio', icon: Bell,           color: 'text-rose-500', activeColor: 'text-rose-600 dark:text-rose-400' },
     { id: 'whiteboard', label: 'Pizarra',      icon: LayoutDashboard,color: 'text-violet-500', activeColor: 'text-violet-600 dark:text-violet-400' },
@@ -88,13 +87,6 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
     const [submitOption, setSubmitOption] = useState<'create' | 'create_and_new'>('create');
     const [eventType, setEventType] = useState('Reunión');
     const [showEventTypeDropdown, setShowEventTypeDropdown] = useState(false);
-    const [strategyType, setStrategyType] = useState('Campaña de Alcance');
-    const [showStrategyTypeDropdown, setShowStrategyTypeDropdown] = useState(false);
-    const [typology, setTypology] = useState('');
-    const [recurrence, setRecurrence] = useState('SEMANAL');
-    const [eventFormat, setEventFormat] = useState('UNICA_LOCACION');
-    const [nicheObjective, setNicheObjective] = useState('');
-    const [phases, setPhases] = useState<{ name: string; type: string; start_date: string; end_date: string }[]>([]);
     const [showTagsDropdown, setShowTagsDropdown] = useState(false);
     const [whiteboardBg, setWhiteboardBg] = useState('grid');
     const [panelLayout, setPanelLayout] = useState('board');
@@ -127,7 +119,6 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
             setDueDate('');
             setTags([]);
             setAssignedToMe(false);
-            setStrategyType('Campaña de Alcance');
             setWhiteboardBg('grid');
             setPanelLayout('board');
             if (initialData?.initialDate) {
@@ -145,12 +136,11 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
             setShowProjectDropdown(false);
             setShowSubmitDropdown(false);
             setShowEventTypeDropdown(false);
-            setShowStrategyTypeDropdown(false);
             setShowTagsDropdown(false);
         };
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-                if (showProjectDropdown || showSubmitDropdown || showEventTypeDropdown || showStrategyTypeDropdown || showTagsDropdown) {
+                if (showProjectDropdown || showSubmitDropdown || showEventTypeDropdown || showTagsDropdown) {
                     closeAllDropdowns();
                 } else {
                     onClose();
@@ -163,7 +153,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
             document.removeEventListener('click', closeAllDropdowns);
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [showProjectDropdown, showSubmitDropdown, showEventTypeDropdown, showStrategyTypeDropdown, showTagsDropdown, onClose]);
+    }, [showProjectDropdown, showSubmitDropdown, showEventTypeDropdown, showTagsDropdown, onClose]);
 
     const fetchProjects = async () => {
         if (!token) return;
@@ -234,25 +224,6 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                     }).catch(() => {});
                 }
                 toast.success('Pizarra inicializada');
-            } else if (type === 'evangelism_strategy') {
-                await apiFetch('/evangelism/strategies', {
-                    method: 'POST', token,
-                    body: {
-                        name: title.trim(),
-                        description: description,
-                        typology: typology || null,
-                        recurrence: typology === 'relacional' ? recurrence : null,
-                        event_format: typology === 'evento_masivo' ? eventFormat : null,
-                        phases: typology === 'evento_masivo' && phases.length > 0 ? phases : null,
-                        niche_objective: typology === 'sectorial' ? nicheObjective : null,
-                        strategy_type: strategyType,
-                        start_date: eventDate ? new Date(eventDate).toISOString() : null,
-                        end_date: eventEndDate ? new Date(eventEndDate).toISOString() : null,
-                        status: 'active'
-                    }
-                });
-                toast.success('Estrategia de evangelismo creada');
-                window.dispatchEvent(new CustomEvent('evangelism-strategy-created'));
             } else if (type === 'panel') {
                 toast.success('Panel creado (Boceto)');
             } else {
@@ -310,7 +281,6 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                 "absolute bottom-0 left-0 right-0 h-[2.5px]",
                                                 tab.id === 'task' && "bg-blue-500",
                                                 tab.id === 'event' && "bg-emerald-500",
-                                                tab.id === 'evangelism_strategy' && "bg-amber-500",
                                                 tab.id === 'doc' && "bg-indigo-500",
                                                 tab.id === 'reminder' && "bg-rose-500",
                                                 tab.id === 'whiteboard' && "bg-violet-500",
@@ -705,203 +675,6 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                                 value={description}
                                                                 onChange={e => setDescription(e.target.value)}
                                                                 placeholder="Añadir descripción o enlace de la reunión" 
-                                                                className="text-[12px] flex-1 min-h-[60px] bg-transparent border border-slate-200 dark:border-white/10 rounded p-2 text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 placeholder:text-slate-400 resize-none"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* ─── ESTRATEGIA EVANGELISMO ─── */}
-                                            {type === 'evangelism_strategy' && (
-                                                <div className="flex flex-col">
-                                                    {/* Typology Selector */}
-                                                    <div className="flex items-center gap-2 px-3 pt-3 pb-2 text-[12px] text-slate-500">
-                                                        <Sparkles size={12} />
-                                                        <span className="font-semibold text-slate-600 dark:text-slate-400">Tipología:</span>
-                                                        <div className="flex gap-1 ml-2">
-                                                            {[
-                                                                { id: 'relacional', label: 'Relacional', icon: Users },
-                                                                { id: 'evento_masivo', label: 'Evento Masivo', icon: Flame },
-                                                                { id: 'sectorial', label: 'Sectorial', icon: Target },
-                                                            ].map(t => (
-                                                                <button
-                                                                    key={t.id}
-                                                                    onClick={() => setTypology(t.id)}
-                                                                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
-                                                                        typology === t.id
-                                                                            ? 'bg-blue-600 text-white shadow-sm'
-                                                                            : 'bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10'
-                                                                    }`}
-                                                                >
-                                                                    {t.label}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Dynamic fields based on typology */}
-                                                    {typology === 'relacional' && (
-                                                        <div className="flex items-center gap-2 px-3 pb-1 text-[12px]">
-                                                            <Clock size={12} className="text-slate-400" />
-                                                            <span className="text-slate-500">Recurrencia:</span>
-                                                            {['SEMANAL', 'QUINCENAL', 'MENSUAL'].map(r => (
-                                                                <button
-                                                                    key={r}
-                                                                    onClick={() => setRecurrence(r)}
-                                                                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
-                                                                        recurrence === r
-                                                                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                                                                            : 'bg-slate-50 dark:bg-white/5 text-slate-400 hover:bg-slate-100'
-                                                                    }`}
-                                                                >
-                                                                    {r}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    )}
-
-                                                    {typology === 'evento_masivo' && (
-                                                        <div className="flex items-center gap-2 px-3 pb-1 text-[12px]">
-                                                            <MapPin size={12} className="text-slate-400" />
-                                                            <span className="text-slate-500">Formato:</span>
-                                                            {[
-                                                                { id: 'UNICA_LOCACION', label: 'Una Ubicación' },
-                                                                { id: 'MULTILOCACION', label: 'Multi-sede' },
-                                                            ].map(f => (
-                                                                <button
-                                                                    key={f.id}
-                                                                    onClick={() => setEventFormat(f.id)}
-                                                                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
-                                                                        eventFormat === f.id
-                                                                            ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
-                                                                            : 'bg-slate-50 dark:bg-white/5 text-slate-400 hover:bg-slate-100'
-                                                                    }`}
-                                                                >
-                                                                    {f.label}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    )}
-
-                                                    {typology === 'evento_masivo' && (
-                                                        <div className="px-3 py-1">
-                                                            <div className="flex items-center justify-between mb-1">
-                                                                <span className="text-[10px] font-semibold text-slate-400">Fases ({phases.length})</span>
-                                                                <button
-                                                                    onClick={() => setPhases(prev => [...prev, { name: '', type: 'preparacion', start_date: '', end_date: '' }])}
-                                                                    className="text-[10px] font-bold text-blue-500 hover:text-blue-600"
-                                                                >
-                                                                    + Fase
-                                                                </button>
-                                                            </div>
-                                                            {phases.map((phase, i) => (
-                                                                <div key={i} className="flex items-center gap-1 mb-1">
-                                                                    <input
-                                                                        type="text"
-                                                                        value={phase.name}
-                                                                        onChange={e => setPhases(prev => prev.map((p, j) => j === i ? { ...p, name: e.target.value } : p))}
-                                                                        placeholder={`Fase ${i + 1}`}
-                                                                        className="flex-1 px-2 py-1 text-[10px] rounded border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-200 focus:border-blue-500 focus:outline-none"
-                                                                    />
-                                                                    <select
-                                                                        value={phase.type}
-                                                                        onChange={e => setPhases(prev => prev.map((p, j) => j === i ? { ...p, type: e.target.value } : p))}
-                                                                        className="px-1 py-1 text-[10px] rounded border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300"
-                                                                    >
-                                                                        <option value="preparacion">Prep.</option>
-                                                                        <option value="impacto">Impacto</option>
-                                                                        <option value="cosecha">Cosecha</option>
-                                                                        <option value="seguimiento">Seg.</option>
-                                                                    </select>
-                                                                    <input
-                                                                        type="date"
-                                                                        value={phase.start_date}
-                                                                        onChange={e => setPhases(prev => prev.map((p, j) => j === i ? { ...p, start_date: e.target.value } : p))}
-                                                                        className="px-1 py-1 text-[10px] rounded border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300"
-                                                                    />
-                                                                    <button
-                                                                        onClick={() => setPhases(prev => prev.filter((_, j) => j !== i))}
-                                                                        className="p-1 text-slate-400 hover:text-red-500"
-                                                                    >
-                                                                        <X size={10} />
-                                                                    </button>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-
-                                                    {typology === 'sectorial' && (
-                                                        <input
-                                                            value={nicheObjective}
-                                                            onChange={e => setNicheObjective(e.target.value)}
-                                                            placeholder="Nicho objetivo (ej: Universidades, Cárceles, Fundaciones)"
-                                                            className="mx-3 mb-1 px-2 py-1 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                                                        />
-                                                    )}
-
-                                                    {/* Strategy type dropdown */}
-                                                    <div className="flex items-center gap-2 px-3 pt-1 pb-1 text-[12px] text-slate-500 relative z-[95]">
-                                                        <div className="relative">
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); setShowStrategyTypeDropdown(!showStrategyTypeDropdown); }}
-                                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
-                                                            >
-                                                                <Sparkles size={12} />
-                                                                {strategyType}
-                                                                <ChevronDown size={11} />
-                                                            </button>
-                                                            {showStrategyTypeDropdown && (
-                                                                <div className="absolute top-full left-0 mt-1 w-44 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-lg z-[9999] py-1">
-                                                                    {['Campaña de Alcance', 'Consolidación', 'Discipulado', 'Evangelismo Personal', 'Jesús Transforma', 'Alcance Carcelario'].map(opt => (
-                                                                        <button
-                                                                            key={opt}
-                                                                            onClick={() => {
-                                                                                setStrategyType(opt);
-                                                                                setShowStrategyTypeDropdown(false);
-                                                                            }}
-                                                                            className="px-3 py-1.5 w-full text-left text-[12px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-slate-300"
-                                                                        >
-                                                                            {opt}
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    <input
-                                                        ref={titleRef as React.RefObject<HTMLInputElement>}
-                                                        value={title}
-                                                        onChange={e => setTitle(e.target.value)}
-                                                        onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSubmit()}
-                                                        placeholder="Nombre de la estrategia..."
-                                                        className="px-3 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none w-full"
-                                                    />
-
-                                                    <div className="px-3 py-3 space-y-2">
-                                                        <div className="flex items-center gap-3 flex-wrap">
-                                                            <Calendar size={14} className="text-slate-400 font-semibold" />
-                                                            <input
-                                                                type="date"
-                                                                value={eventDate}
-                                                                onChange={e => setEventDate(e.target.value)}
-                                                                className="text-[13px] font-semibold bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
-                                                            />
-                                                            <span className="text-slate-400 text-[11px] font-semibold">hasta</span>
-                                                            <input
-                                                                type="date"
-                                                                value={eventEndDate}
-                                                                onChange={e => setEventEndDate(e.target.value)}
-                                                                className="text-[13px] font-semibold bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
-                                                            />
-                                                        </div>
-                                                        <div className="flex items-start gap-3 pt-3">
-                                                            <FileText size={14} className="text-slate-400 mt-1" />
-                                                            <textarea
-                                                                value={description}
-                                                                onChange={e => setDescription(e.target.value)}
-                                                                placeholder="Propósito u objetivos de la estrategia"
                                                                 className="text-[12px] flex-1 min-h-[60px] bg-transparent border border-slate-200 dark:border-white/10 rounded p-2 text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 placeholder:text-slate-400 resize-none"
                                                             />
                                                         </div>

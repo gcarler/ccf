@@ -2,14 +2,15 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
-import { 
-    Flame, 
-    Calendar, 
-    Trash2, 
-    ChevronRight, 
-    Sparkles, 
-    Clock, 
-    CheckCircle2, 
+import StrategyCreationDrawer from '@/components/evangelism/StrategyCreationDrawer';
+import {
+    Flame,
+    Calendar,
+    Trash2,
+    ChevronRight,
+    Sparkles,
+    Clock,
+    CheckCircle2,
     Save
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -17,7 +18,6 @@ import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import Skeleton from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
-import { useCreation } from '@/context/CreationContext';
 import { ViewType } from '@/components/ViewSwitcher';
 import RightPanel from '@/components/ui/RightPanel';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
@@ -37,13 +37,13 @@ export interface EvangelismStrategy {
 
 export default function EvangelismClient() {
     const { token } = useAuth();
-    const { openModal } = useCreation();
     const { openLayer, closeLayer, setRightMode, layers } = useSidebarLayers();
     const [data, setData] = useState<EvangelismStrategy[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewType, setViewType] = useState<ViewType>('table');
     const [search, setSearch] = useState('');
     const [selectedStrategy, setSelectedStrategy] = useState<EvangelismStrategy | null>(null);
+    const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
 
     // Form fields for editing
     const [editName, setEditName] = useState('');
@@ -101,7 +101,7 @@ export default function EvangelismClient() {
     }, [data, search]);
 
     const handleAddItem = () => {
-        openModal('evangelism_strategy');
+        setIsCreateDrawerOpen(true);
     };
 
     const handleSelectStrategy = (strat: EvangelismStrategy) => {
@@ -572,6 +572,13 @@ export default function EvangelismClient() {
                     </div>
                 </RightPanel>
             )}
+
+            {/* ── Strategy Creation Drawer ── */}
+            <StrategyCreationDrawer
+                isOpen={isCreateDrawerOpen}
+                onClose={() => setIsCreateDrawerOpen(false)}
+                onCreated={fetchStrategies}
+            />
         </EvangelismShell>
     );
 }
