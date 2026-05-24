@@ -23,7 +23,7 @@ export default function EmptyState({
         <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center p-4 text-center space-y-6"
+            className="flex flex-col items-center justify-center p-4 text-center space-y-3"
         >
             <div className="size-8 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-300 dark:text-slate-700">
                 <Icon size={40} strokeWidth={1.5} />

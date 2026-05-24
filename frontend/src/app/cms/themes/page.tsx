@@ -102,7 +102,7 @@ export default function CmsThemesPage() {
   };
 
   return (
-    <div className="space-y-6 p-3">
+    <div className="space-y-3 p-3">
       <div className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-3">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">CMS V2</p>

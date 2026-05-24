@@ -297,7 +297,7 @@ export default function AdminContentList() {
                                 ))}
                             </motion.div>
                         ) : (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-1.5 text-center space-y-6">
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-1.5 text-center space-y-3">
                                 <div className="size-10 rounded-lg bg-slate-50 dark:bg-white/5 border-2 border-dashed border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto text-slate-300">
                                     <Sparkles size={40} strokeWidth={1} />
                                 </div>

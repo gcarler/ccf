@@ -117,7 +117,7 @@ export default function SocialMediaSettings() {
         <div className="space-y-4">
             {platformRows.map((row) => (
                 <div key={row.id} className="social-aura bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-3 rounded-lg flex items-center justify-between gap-3" style={{ '--aura-color': row.aura } as any}>
-                    <div className="flex items-center gap-5 min-w-0">
+                    <div className="flex items-center gap-3 min-w-0">
                         <div className={clsx("size-7 rounded-lg flex items-center justify-center bg-slate-50 dark:bg-black/20", row.color)}>
                             <row.icon size={24} />
                         </div>
@@ -156,7 +156,7 @@ export default function SocialMediaSettings() {
     );
 
     const renderBoard = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {groupedRows.map((group) => (
                 <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">

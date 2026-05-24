@@ -55,7 +55,7 @@ export default function WebVitalsAnalyticsPage() {
         watchers={["Frontend", "Platform", "Observability"]}
       />
 
-      <div className="space-y-6 pb-4">
+      <div className="space-y-3 pb-4">
         <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <VitalCard metric="TTFB" unit="ms" summary={summary.TTFB} />
           <VitalCard metric="FCP" unit="ms" summary={summary.FCP} />
@@ -91,7 +91,7 @@ export default function WebVitalsAnalyticsPage() {
                 <tbody>
                   {recent.map((item) => (
                     <tr key={`${item.id}-${item.timestamp}`} className="border-t border-slate-100 dark:border-white/10">
-                      <td className="py-2 font-black text-slate-700 dark:text-slate-200">{item.name}</td>
+                      <td className="py-2 font-bold text-slate-700 dark:text-slate-200">{item.name}</td>
                       <td className="py-2 text-slate-600 dark:text-slate-300">{Math.round(item.value)} ms</td>
                       <td className="py-2 text-slate-500 dark:text-slate-400">{item.path}</td>
                       <td className="max-w-[240px] truncate py-2 text-slate-500 dark:text-slate-400">{item.page}</td>
@@ -118,15 +118,15 @@ function VitalCard({ metric, unit, summary }: { metric: string; unit: string; su
       <dl className="space-y-1">
         <div className="flex items-center justify-between text-sm">
           <dt className="text-slate-500">p50</dt>
-          <dd className="font-black text-slate-800 dark:text-white">{summary?.p50 ?? "-"} {summary?.p50 != null ? unit : ""}</dd>
+          <dd className="font-bold text-slate-800 dark:text-white">{summary?.p50 ?? "-"} {summary?.p50 != null ? unit : ""}</dd>
         </div>
         <div className="flex items-center justify-between text-sm">
           <dt className="text-slate-500">p75</dt>
-          <dd className="font-black text-slate-800 dark:text-white">{summary?.p75 ?? "-"} {summary?.p75 != null ? unit : ""}</dd>
+          <dd className="font-bold text-slate-800 dark:text-white">{summary?.p75 ?? "-"} {summary?.p75 != null ? unit : ""}</dd>
         </div>
         <div className="flex items-center justify-between text-sm">
           <dt className="text-slate-500">ultimo</dt>
-          <dd className="font-black text-slate-800 dark:text-white">{summary?.latest ?? "-"} {summary?.latest != null ? unit : ""}</dd>
+          <dd className="font-bold text-slate-800 dark:text-white">{summary?.latest ?? "-"} {summary?.latest != null ? unit : ""}</dd>
         </div>
       </dl>
     </article>

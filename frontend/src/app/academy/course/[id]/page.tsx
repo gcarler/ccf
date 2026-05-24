@@ -247,7 +247,7 @@ export default function CourseViewPage() {
                                 <tbody>
                                     {course.lessons.map((lesson) => (
                                         <tr key={lesson.id} className="border-t border-slate-100 dark:border-white/5">
-                                            <td className="px-4 py-2 font-black text-slate-400">{lesson.order_index}</td>
+                                            <td className="px-4 py-2 font-bold text-slate-400">{lesson.order_index}</td>
                                             <td className="px-4 py-2 font-bold text-slate-900 dark:text-white">{lesson.title}</td>
                                             <td className="px-4 py-2 text-slate-500">{lesson.content_type || 'video'}</td>
                                             <td className="px-4 py-2 text-slate-500">{lesson.duration_minutes} min</td>

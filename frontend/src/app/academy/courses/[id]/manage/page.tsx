@@ -143,7 +143,7 @@ export default function CourseManagementPage() {
                             <article key={student.id} className="rounded-lg border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
-                                        <h3 className="font-black text-slate-900 dark:text-white">{student.username}</h3>
+                                        <h3 className="font-bold text-slate-900 dark:text-white">{student.username}</h3>
                                         <p className="mt-1 text-sm text-slate-500">{student.email}</p>
                                     </div>
                                     <span className="text-sm font-semibold text-blue-600">{Math.round(student.progress)}%</span>

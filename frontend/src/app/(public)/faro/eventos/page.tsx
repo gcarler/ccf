@@ -158,7 +158,7 @@ export default function EventosPage() {
                             </h2>
                             <div className="flex items-center gap-3">
                                 <button
-                                    className="px-4 py-3 rounded-lg font-black text-sm uppercase tracking-wide text-white transition-all hover:scale-105"
+                                    className="px-4 py-1.5 rounded-md font-black text-sm uppercase tracking-wide text-white transition-all hover:scale-105"
                                     style={{
                                         background:
                                             "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
@@ -221,7 +221,7 @@ export default function EventosPage() {
                                 <button
                                     key={cat}
                                     onClick={() => setActiveFilter(cat)}
-                                    className="w-full px-4 py-3 rounded-lg flex items-center justify-between text-sm font-bold transition-all text-left"
+                                    className="w-full px-4 py-1.5 rounded-md flex items-center justify-between text-sm font-bold transition-all text-left"
                                     style={{
                                         background:
                                             activeFilter === cat
@@ -577,7 +577,7 @@ export default function EventosPage() {
                                 )}
                             </div>
                             <button
-                                className="w-full mt-3 py-3 rounded-lg text-xs font-semibold uppercase tracking-wide border transition-all hover:scale-105"
+                                className="w-full mt-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide border transition-all hover:scale-105"
                                 style={{
                                     borderColor: "var(--faro-primary)",
                                     color: "var(--faro-primary)",

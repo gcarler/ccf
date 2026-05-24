@@ -243,7 +243,7 @@ export default function PublicHomePage() {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.1 * (idx + 1) }}
-                                className="rounded-lg p-4 flex items-center gap-5 transition-all hover:scale-[1.02]"
+                                className="rounded-lg p-4 flex items-center gap-3 transition-all hover:scale-[1.02]"
                                 style={{ background: "var(--faro-surface-container)" }}
                             >
                                 <div

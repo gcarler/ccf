@@ -134,7 +134,7 @@ export default function NewAnnouncementPage() {
                     <section className="p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-xl space-y-3">
                         <h3 className="font-semibold text-slate-400 uppercase tracking-wide">Ajustes de Publicación</h3>
                         
-                        <div className="space-y-6">
+                        <div className="space-y-3">
                             <div className="space-y-2">
                                 <label className="font-semibold text-slate-400 uppercase tracking-wide px-2">Categoría</label>
                                 <select 
@@ -176,7 +176,7 @@ export default function NewAnnouncementPage() {
                         </div>
                     </section>
 
-                    <section className="p-4 bg-slate-900 rounded-lg text-white shadow-2xl space-y-6 relative overflow-hidden group">
+                    <section className="p-4 bg-slate-900 rounded-lg text-white shadow-2xl space-y-3 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-blue-600/20 rounded-full blur-3xl" />
                         <div className="relative z-10 flex flex-col gap-3">
                             <div className="flex items-center gap-3">

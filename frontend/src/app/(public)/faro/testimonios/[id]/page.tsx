@@ -245,7 +245,7 @@ export default function TestimonioDetailPage() {
                                 <>
                                     <button
                                         onClick={() => setShowPrayerForm(false)}
-                                        className="absolute top-6 right-6 size-10 rounded-full flex items-center justify-center transition-all hover:opacity-70"
+                                        className="absolute top-3 right-6 size-10 rounded-full flex items-center justify-center transition-all hover:opacity-70"
                                         style={{ background: "var(--faro-surface-container-high)" }}
                                     >
                                         <X size={18} style={{ color: "var(--faro-on-surface)" }} />

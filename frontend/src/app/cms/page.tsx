@@ -264,7 +264,7 @@ export default function CmsHomePage() {
 
   return (
     <div className="h-full overflow-y-auto bg-slate-50/60 dark:bg-[#141517]">
-      <div className="space-y-6 px-4 py-2 lg:px-3">
+      <div className="space-y-3 px-4 py-2 lg:px-3">
         <AdminHero
           eyebrow="CMS"
           title="Administracion del sitio web"

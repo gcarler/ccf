@@ -104,7 +104,7 @@ export default function FinancesPage() {
         }).catch(console.error).finally(() => setLoading(false));
     }, [token]);
 
-    const summary = funds ?? {
+    const summary = dashboard?.funds ?? {
         ingresos_mes: 0, egresos_mes: 0, balance: 0, reserva: 0, total_historico: 0
     };
 
@@ -120,36 +120,35 @@ export default function FinancesPage() {
         sidebarSections={FINANCE_SECTIONS}
     >
         <div className="h-full overflow-y-auto bg-[#f8fafc] dark:bg-[#1E1F21] font-display scrollbar-thin">
-            <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+            <div className="max-w-7xl mx-auto px-4 py-3 space-y-3">
 
-                {/* Header — Premium */}
-                <div className="flex items-center justify-between mb-8">
+                {/* Header */}
+                <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter italic uppercase">
+                        <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase">
                             Centro Financiero
                         </h1>
-                        <p className="text-[10px] font-semibold uppercase tracking-widest text-blue-600 mt-1">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-600 mt-0.5">
                             Gestión de Recursos Ministeriales
                         </p>
                     </div>
-                </div>
-                        <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-1 text-[11px] font-bold">
-                                {(['Semana', 'Mes', 'Año']).map((p) => (
-                                    <button key={p} className={clsx(
-                                        'px-3 py-1.5 rounded-lg transition-colors',
-                                        p === 'Mes' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200'
-                                    )}>{p}</button>
-                                ))}
-                            </div>
-                            <button className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 transition-all">
-                                <Download size={13} /> Exportar
-                            </button>
-                            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md text-[11px] font-bold shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all">
-                                <Plus size={13} /> Registro
-                            </button>
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-0.5 text-[10px] font-semibold">
+                            {(['Semana', 'Mes', 'Año']).map((p) => (
+                                <button key={p} className={clsx(
+                                    'px-2 py-1 rounded-md transition-colors',
+                                    p === 'Mes' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200'
+                                )}>{p}</button>
+                            ))}
                         </div>
+                        <button className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 transition-all">
+                            <Download size={12} /> Exportar
+                        </button>
+                        <button className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-md text-[10px] font-semibold shadow-sm hover:bg-blue-700 active:scale-95 transition-all">
+                            <Plus size={12} /> Registro
+                        </button>
                     </div>
+                </div>
 
                     {/* 📊 Financial Metrics */}
                     <section className="grid grid-cols-1 md:grid-cols-4 gap-4 relative z-10">
@@ -165,16 +164,16 @@ export default function FinancesPage() {
                     </section>
 
                     {/* 📈 Charts */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 relative z-10">
                         <div className="lg:col-span-2">
                             <DSCard>
-                                <h3 className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-6">Comparativa Mensual de Ingresos</h3>
+                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Comparativa Mensual de Ingresos</h3>
                                 <DSChart type="area" data={dashboard?.monthly_comparison} color="#10b981" height={220} />
                             </DSCard>
                         </div>
                         <div>
                             <DSCard>
-                                <h3 className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-6">Distribución por Categoría</h3>
+                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Distribución por Categoría</h3>
                                 <DSChart type="bar" data={dashboard?.income_by_category} color="#3b82f6" height={220} />
                             </DSCard>
                         </div>

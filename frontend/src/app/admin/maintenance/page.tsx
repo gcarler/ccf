@@ -88,7 +88,7 @@ export default function AdminMaintenancePage() {
         <div className="space-y-4">
             {visibleTasks.map((row, index) => (
                 <div key={row.id || index} className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-center gap-5">
+                    <div className="flex items-center gap-3">
                         <div className={clsx("size-7 rounded-lg flex items-center justify-center", row.priority === 'Alta' ? "bg-rose-50 text-rose-500" : "bg-amber-50 text-amber-500")}>
                             <AlertCircle size={24} />
                         </div>
@@ -129,7 +129,7 @@ export default function AdminMaintenancePage() {
     );
 
     const renderBoard = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {groupedTasks.map((group) => (
                 <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
@@ -230,7 +230,7 @@ export default function AdminMaintenancePage() {
                     ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                         {/* Task List Cinematic */}
-                        <div className="lg:col-span-8 space-y-6">
+                        <div className="lg:col-span-8 space-y-3">
                             <div className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg overflow-hidden shadow-sm shadow-slate-200/50">
                                 <div className="p-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 flex items-center justify-between">
                                     <h3 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-3">
@@ -316,7 +316,7 @@ export default function AdminMaintenancePage() {
                                 </div>
                             </motion.div>
 
-                            <div className="bg-slate-900 p-4 rounded-lg text-white space-y-6 relative overflow-hidden group shadow-2xl">
+                            <div className="bg-slate-900 p-4 rounded-lg text-white space-y-3 relative overflow-hidden group shadow-2xl">
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:rotate-12 transition-transform duration-1000"><Database size={80} /></div>
                                 <h3 className="text-xs font-semibold uppercase tracking-wide relative z-10">Data Integrity</h3>
                                 <p className="text-[13px] text-slate-400 font-medium leading-relaxed relative z-10 italic">

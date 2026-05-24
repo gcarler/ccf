@@ -176,7 +176,7 @@ export default function CoordinationConsole() {
                     )}
 
                     {viewType === 'wiki' && (
-                        <section className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-4 shadow-[var(--shadow-floating)] space-y-6">
+                        <section className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-4 shadow-[var(--shadow-floating)] space-y-3">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight">Manual Operativo de Coordinación</h3>
                                 <DSBadge tone="blue" label="Autosave activo" />
@@ -192,7 +192,7 @@ export default function CoordinationConsole() {
 
                     {(viewType === 'grid' || viewType === 'table' || viewType === 'list') && (
                         <DSCard tone="light" className="shadow-2xl overflow-hidden rounded-lg">
-                            <header className="p-4 border-b border-slate-100 dark:border-white/5 space-y-6">
+                            <header className="p-4 border-b border-slate-100 dark:border-white/5 space-y-3">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div>
                                         <DSBadge tone="blue" label="Gestión de Cohortes" />
@@ -254,7 +254,7 @@ export default function CoordinationConsole() {
                                                 <tr key={course.id} className="group hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-colors">
                                                     <td className="px-4 py-2">
                                                         <div 
-                                                            className="font-black text-slate-900 dark:text-white cursor-pointer group-hover:text-blue-600 transition-colors"
+                                                            className="font-bold text-slate-900 dark:text-white cursor-pointer group-hover:text-blue-600 transition-colors"
                                                             onClick={() => router.push(`/academy/courses/${course.id}`)}
                                                         >
                                                             {course.title}

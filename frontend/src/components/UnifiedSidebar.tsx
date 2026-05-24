@@ -138,7 +138,7 @@ export default function UnifiedSidebar({
                 isMini ? "w-[72px]" : "w-[260px]"
             )}
         >            {/* Toggle Button `< >` positioned absolutely on the right edge */}
-            <div className="absolute right-0 translate-x-1/2 top-6 z-[60]">
+            <div className="absolute right-0 translate-x-1/2 top-3 z-[60]">
                 <button 
                     onClick={toggleSidebar}
                     className="w-6 h-6 rounded-full bg-white dark:bg-[#2a2b2d] border border-slate-200 dark:border-white/10 shadow-sm flex items-center justify-center text-slate-500 hover:text-blue-600 transition-all active:scale-95"

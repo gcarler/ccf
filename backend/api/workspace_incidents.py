@@ -8,25 +8,20 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 
 from backend import models
-from backend.api.workspace_shared import (
-    _append_audit_event,
-    _append_incident_history,
-    _cleanup_incidents,
-    _detect_anomalies,
-    _filter_audit_rows,
-    _incident_daily_trends,
-    _load_incidents,
-    _now_iso,
-    _pct_delta,
-    _period_bounds,
-    _period_incident_stats,
-    _read_audit_events,
-    _read_notifications,
-    _save_incidents,
-    _scan_incidents_from_anomalies,
-    _set_incident_severity,
-    _summarize_incidents,
-)
+from backend.api.workspace_shared import (_append_audit_event,
+                                          _append_incident_history,
+                                          _cleanup_incidents,
+                                          _detect_anomalies,
+                                          _filter_audit_rows,
+                                          _incident_daily_trends,
+                                          _load_incidents, _now_iso,
+                                          _pct_delta, _period_bounds,
+                                          _period_incident_stats,
+                                          _read_audit_events,
+                                          _read_notifications, _save_incidents,
+                                          _scan_incidents_from_anomalies,
+                                          _set_incident_severity,
+                                          _summarize_incidents)
 from backend.auth import require_admin
 from backend.core.rate_limit import rate_limiter
 

@@ -295,7 +295,7 @@ export default function MessagingCampaignCenter() {
                 )}
 
                 {viewType === 'grid' && (
-                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-3">
                     
                     {/* Left Column: Composer */}
                     <div className="lg:col-span-7 space-y-3">

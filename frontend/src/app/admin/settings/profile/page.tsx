@@ -66,7 +66,7 @@ export default function AdminSettingsProfilePage() {
 
             <div className="max-w-2xl mx-auto px-4 py-1.5 space-y-3">
                 {/* Logo Upload */}
-                <div className="flex flex-col items-center gap-5">
+                <div className="flex flex-col items-center gap-3">
                     <div className="relative">
                         <div className="size-10 rounded-lg border-2 border-primary/30 bg-primary/10 flex items-center justify-center shadow-2xl shadow-primary/10 overflow-hidden">
                             <Church size={48} className="text-primary" />

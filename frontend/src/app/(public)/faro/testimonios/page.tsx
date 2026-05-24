@@ -308,7 +308,7 @@ export default function TestimoniosPage() {
                     ) : (
                         <motion.div 
                             layout
-                            className="columns-1 md:columns-2 xl:columns-3 gap-3 space-y-6"
+                            className="columns-1 md:columns-2 xl:columns-3 gap-3 space-y-3"
                         >
                             {filteredTestimonials.map((t, index) => (
                                 <TestimonialCard 

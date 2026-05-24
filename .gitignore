@@ -20,7 +20,6 @@
 .run/
 .run/*.log
 .run/*.pid
-.venv/
 .vscode/
 PLAN_DE_TRABAJO.md
 PLAN_PRODUCCION.md

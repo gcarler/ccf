@@ -100,7 +100,7 @@ export default function AgendaEventDetailPage() {
             ]}
         >
             <div className="h-full overflow-y-auto bg-slate-50 dark:bg-[#141517]">
-                <div className="mx-auto max-w-4xl space-y-6 p-3 p-4">
+                <div className="mx-auto max-w-4xl space-y-3 p-3 p-4">
                     <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
                         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                             <div>

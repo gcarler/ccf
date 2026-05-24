@@ -117,7 +117,7 @@ export default function AdminDashboard() {
                                 ))}
                             </div>
                         </div>
-                        <div className="h-48 flex items-end gap-3 lg:gap-5 pt-10">
+                        <div className="h-48 flex items-end gap-3 lg:gap-3 pt-10">
                             {[40, 65, 30, 85, 70, 55, 100].map((h, i) => (
                                 <div key={i} className="flex-1 flex flex-col items-center gap-4 group/bar">
                                     <motion.div 
@@ -138,7 +138,7 @@ export default function AdminDashboard() {
                     </section>
 
                     {/* Recent Activity List */}
-                    <section className="space-y-6">
+                    <section className="space-y-3">
                         <div className="flex justify-between items-center px-4">
                             <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Actividad Reciente</h3>
                             <button className="font-semibold text-blue-600 uppercase tracking-wide hover:underline">Ver Todo</button>
@@ -263,7 +263,7 @@ export default function AdminDashboard() {
                             <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Próximos Eventos</h4>
                             <Calendar size={18} className="text-slate-300" />
                         </div>
-                        <div className="space-y-6">
+                        <div className="space-y-3">
                             {[
                                 { day: '15', month: 'MAR', title: 'Cierre de Actas Cohorte B', time: '09:00 AM' },
                                 { day: '22', month: 'MAR', title: 'Asamblea de Líderes', time: '06:30 PM' },
@@ -297,7 +297,7 @@ function ModalityCard({ title, stats, icon: Icon, color }: any) {
     const c = colorMap[color];
 
     return (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-6 shadow-sm group hover:shadow-xl transition-all">
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-3 shadow-sm group hover:shadow-xl transition-all">
             <div className="flex justify-between items-start">
                 <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110", c.bg, "dark:bg-white/10", c.text)}>
                     <Icon size={24} />
@@ -347,7 +347,7 @@ function StatCard({ label, value, icon: Icon, trend, color }: any) {
     return (
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
             <div className="absolute top-0 right-0 -mr-6 -mt-3 size-10 bg-slate-50 dark:bg-white/5 rounded-full scale-0 group-hover:scale-100 transition-transform duration-700" />
-            <div className="relative z-10 space-y-6">
+            <div className="relative z-10 space-y-3">
                 <div className="flex justify-between items-center">
                     <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:rotate-12", colors[color])}>
                         <Icon size={28} />

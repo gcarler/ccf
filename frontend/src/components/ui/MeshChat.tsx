@@ -118,7 +118,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                         </header>
 
                         {/* Chat Messages */}
-                        <div className="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-6">
+                        <div className="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-3">
                             {messages.map((msg) => (
                                 <motion.div 
                                     key={msg.id}

@@ -140,7 +140,7 @@ export default function ResourcesLibrary() {
                 </section>
             )}
 
-            <section className="py-2 flex flex-col gap-5 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4">
+            <section className="py-2 flex flex-col gap-3 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111418] p-4">
                  <h2 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">{filteredResources.length} recursos encontrados</h2>
                  {filteredResources.map((resource) => (
                      <ResourceRow key={resource.id} resource={resource} isFavorite={favorites.includes(resource.id)} onToggleFavorite={toggleFavorite} />
@@ -157,7 +157,7 @@ function cleanSnippet(html: string) {
 
 function ResourceRow({ resource, isFavorite, onToggleFavorite }: { resource: ResourceEntry; isFavorite?: boolean; onToggleFavorite: (id: string) => void; }) {
     return (
-        <article className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 hover:border-primary/30 rounded-md p-3 flex items-center gap-5 shadow-xl transition-all">
+        <article className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 hover:border-primary/30 rounded-md p-3 flex items-center gap-3 shadow-xl transition-all">
             <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20 text-primary">
                 {resource.snippet.length > 120 ? <FileText size={28} /> : <BookOpen size={28} />}
             </div>

@@ -115,11 +115,11 @@ export default function ForumThreadDetail() {
                 )}
 
                 {viewType === 'grid' && (
-                    <div className="max-w-5xl mx-auto grid gap-5 md:grid-cols-2">
+                    <div className="max-w-5xl mx-auto grid gap-3 md:grid-cols-2">
                         {replies.map((reply) => (
                             <article key={reply.id} className="rounded-md border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                                 <div className="flex items-center justify-between gap-4">
-                                    <h3 className="font-black text-slate-900 dark:text-white">{reply.author}</h3>
+                                    <h3 className="font-bold text-slate-900 dark:text-white">{reply.author}</h3>
                                     <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{reply.time}</span>
                                 </div>
                                 <p className="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{reply.text}</p>

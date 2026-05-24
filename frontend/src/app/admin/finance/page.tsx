@@ -389,7 +389,7 @@ export default function FinanceAdminPage() {
                         </div>
                     </section>
 
-                    <section className="p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100 dark:border-emerald-900/30 flex items-center gap-5 shadow-sm relative overflow-hidden">
+                    <section className="p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100 dark:border-emerald-900/30 flex items-center gap-3 shadow-sm relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 opacity-10 rotate-12"><ShieldCheck size={80} /></div>
                         <div className="size-7 rounded-lg bg-white dark:bg-white/10 flex items-center justify-center text-emerald-600 shadow-sm relative z-10"><ShieldCheck size={28} /></div>
                         <div className="relative z-10">

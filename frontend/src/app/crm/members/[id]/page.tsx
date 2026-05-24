@@ -384,7 +384,7 @@ export default function MemberDetailPage() {
                 className="relative bg-white dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 p-3 lg:p-4 shadow-xl shadow-slate-200/20 dark:shadow-none overflow-hidden group"
             >
                 <div className="absolute top-0 right-0 w-[500px] h-full bg-gradient-to-l from-blue-600/5 to-transparent pointer-events-none" />
-                <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-5">
+                <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-3">
                     {/* Avatar */}
                     <div className="relative shrink-0">
                         <div className="size-10 lg:size-10 rounded-md bg-gradient-to-tr from-blue-600 to-indigo-700 flex items-center justify-center text-white text-xl font-bold shadow-2xl shadow-blue-500/30 group-hover:scale-105 transition-transform duration-500">
@@ -404,7 +404,7 @@ export default function MemberDetailPage() {
                             <h1 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-white tracking-tighter">{fullName}</h1>
                             <p className="text-sm text-slate-500 font-semibold">{member.church_role}</p>
                         </div>
-                        <div className="flex flex-wrap gap-5 items-center">
+                        <div className="flex flex-wrap gap-3 items-center">
                             {member.email !== '—' && <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm"><Mail size={16} className="text-blue-500" /> {member.email}</span>}
                             {member.phone !== '—' && <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm"><Phone size={16} className="text-emerald-500" /> {member.phone}</span>}
                             {member.address !== '—' && <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm"><MapPin size={16} className="text-rose-500" /> {member.address}</span>}

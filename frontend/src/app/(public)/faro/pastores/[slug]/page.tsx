@@ -105,7 +105,7 @@ export default function PastorProfilePage({ params }: { params: Promise<{ slug: 
                     <div className="md:col-span-1 space-y-3">
                         <div className="bg-faro-surface-container rounded-lg p-4 border border-faro-outline-variant/10">
                             <h3 className="text-xl font-bold text-faro-on-surface mb-3">Información</h3>
-                            <ul className="space-y-6">
+                            <ul className="space-y-3">
                                 <li>
                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-faro-primary mb-1">Rol Ministerial</p>
                                     <p className="text-faro-on-surface font-bold">{pastor.role}</p>

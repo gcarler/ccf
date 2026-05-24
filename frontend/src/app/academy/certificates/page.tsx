@@ -107,7 +107,7 @@ export default function StudentCertificates() {
                                 <h2 className="px-4 text-slate-900 dark:text-white text-base font-bold mb-3 flex items-center gap-3">
                                     <Award className="text-yellow-500" size={24} /> Diplomas destacados
                                 </h2>
-                                <div className="flex overflow-x-auto hide-scrollbar gap-5 px-4 snap-x pb-6">
+                                <div className="flex overflow-x-auto hide-scrollbar gap-3 px-4 snap-x pb-6">
                                     {featured.map((certificate) => {
                                         const enrollment = resolveEnrollment(certificate);
                                         return (

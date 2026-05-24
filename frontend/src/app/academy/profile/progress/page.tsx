@@ -224,7 +224,7 @@ export default function StudentProgressPage() {
                                 progress.map(course => (
                                     <div 
                                         key={course.id} 
-                                        className="bg-white dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg p-4 lg:p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-5 group hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500"
+                                        className="bg-white dark:bg-[#15171c] border border-slate-200 dark:border-white/5 rounded-lg p-4 lg:p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3 group hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500"
                                     >
                                         <div className="flex-1 space-y-4">
                                             <div className="flex items-center gap-3">
@@ -253,7 +253,7 @@ export default function StudentProgressPage() {
                                             </div>
                                         </div>
 
-                                        <div className="w-full lg:w-[400px] flex flex-col md:flex-row items-center gap-5">
+                                        <div className="w-full lg:w-[400px] flex flex-col md:flex-row items-center gap-3">
                                             <div className="flex-1 w-full space-y-4">
                                                 <div className="flex items-center justify-between">
                                                     <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Progreso General</span>
@@ -311,7 +311,7 @@ export default function StudentProgressPage() {
 
 function HeaderStat({ label, value, icon: Icon, color, bg }: any) {
     return (
-        <div className="p-4 bg-white/5 backdrop-blur-2xl rounded-md border border-white/10 flex items-center gap-5 group hover:bg-white/10 transition-all cursor-default">
+        <div className="p-4 bg-white/5 backdrop-blur-2xl rounded-md border border-white/10 flex items-center gap-3 group hover:bg-white/10 transition-all cursor-default">
             <div className={clsx('size-9 rounded-lg flex items-center justify-center shadow-inner transition-transform group-hover:scale-110', bg, color)}>
                 <Icon size={22} strokeWidth={2.5} />
             </div>

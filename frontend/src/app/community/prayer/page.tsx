@@ -90,7 +90,7 @@ export default function PrayerWall() {
             `}</style>
 
             {/* Header Section Cinematic */}
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-5 relative">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-3 relative">
                 <div className="absolute -top-20 -left-20 size-10 bg-primary/5 blur-[100px] rounded-full pointer-events-none" />
                 
                 <motion.div 
@@ -122,7 +122,7 @@ export default function PrayerWall() {
             {/* Content Area */}
             <div className="space-y-4 relative z-10">
                 {/* Tabs Cinematic */}
-                <div className="flex gap-5 border-b border-slate-100 dark:border-white/5 px-4 overflow-x-auto no-scrollbar">
+                <div className="flex gap-3 border-b border-slate-100 dark:border-white/5 px-4 overflow-x-auto no-scrollbar">
                     {tabs.map((tab) => (
                         <button
                             key={tab}
@@ -185,7 +185,7 @@ export default function PrayerWall() {
                                     <div className="absolute top-0 left-0 w-full h-1 shimmer-prayer opacity-0 group-hover:opacity-100 transition-opacity" />
                                     
                                     <div className="flex justify-between items-start relative z-10">
-                                        <div className="flex items-center gap-5">
+                                        <div className="flex items-center gap-3">
                                             <div className="size-7 rounded-lg bg-gradient-to-tr from-slate-100 to-white dark:from-white/10 dark:to-white/5 flex items-center justify-center text-primary border border-white dark:border-white/10 shadow-lg transform group-hover:rotate-6 transition-transform duration-500">
                                                 <UserCircle size={28} strokeWidth={1.5} />
                                             </div>

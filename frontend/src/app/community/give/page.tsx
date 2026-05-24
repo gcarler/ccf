@@ -122,7 +122,7 @@ export default function GivingAndConnection() {
             <div className="relative overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] p-3 md:p-4 group">
                 <div className="absolute top-0 right-0 -mr-16 -mt-16 bg-[hsl(var(--primary)/0.05)] size-10 rounded-full blur-[100px] transition-all duration-1000 group-hover:bg-[hsl(var(--primary)/0.1)]"></div>
                 
-                <div className="relative z-10 flex flex-col md:flex-row gap-5 items-center">
+                <div className="relative z-10 flex flex-col md:flex-row gap-3 items-center">
                     <div className="flex-1 space-y-4">
                         <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-[10px]">
                             <div className="size-2 rounded-full bg-current shadow-[0_0_10px_currentColor]"></div>
@@ -142,7 +142,7 @@ export default function GivingAndConnection() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-start">
                 {/* Donation Form */}
                 <div className="lg:col-span-3 space-y-3">
                     <section className="space-y-3">

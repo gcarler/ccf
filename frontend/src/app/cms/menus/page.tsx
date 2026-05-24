@@ -669,7 +669,7 @@ export default function CmsMenusManagement() {
                 subtitle="Configuración de navegación"
             >
                 {selectedItem && selectedIndex !== null && (
-                    <div className="space-y-6">
+                    <div className="space-y-3">
                         <section className="space-y-4">
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">

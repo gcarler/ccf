@@ -104,9 +104,9 @@ export default function TaskDetailPage() {
                         </section>
                     </div>
 
-                    <aside className="space-y-6">
+                    <aside className="space-y-3">
                         <DSCard>
-                            <div className="space-y-6">
+                            <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                     <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Responsable</span>
                                     <div className="flex items-center gap-2">

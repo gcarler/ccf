@@ -96,7 +96,7 @@ export default function DonationConfig() {
     const renderList = () => (
         <div className="space-y-4">
             {categories.map((cat) => (
-                <div key={cat.id} className="config-aura p-3 bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between gap-5" style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as any}>
+                <div key={cat.id} className="config-aura p-3 bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between gap-3" style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as any}>
                     <div>
                         <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{cat.name}</h3>
                         <p className="mt-1 text-[10px] text-slate-400 font-bold uppercase tracking-wide">{cat.description || 'Fondo ministerial'}</p>
@@ -131,7 +131,7 @@ export default function DonationConfig() {
     );
 
     const renderBoard = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {groupedCategories.map((group) => (
                 <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
@@ -316,7 +316,7 @@ export default function DonationConfig() {
                         <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 group-hover:rotate-6 transition-all duration-1000"><FileText size={200} /></div>
                         
                         <div className="flex flex-col lg:flex-row items-center justify-between gap-3 relative z-10">
-                            <div className="space-y-6 text-center lg:text-left">
+                            <div className="space-y-3 text-center lg:text-left">
                                 <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-full text-[10px] font-semibold uppercase tracking-wide text-slate-500 shadow-sm">
                                     <Zap size={14} className="text-amber-500" fill="currentColor" /> Automatización de Flujo
                                 </div>

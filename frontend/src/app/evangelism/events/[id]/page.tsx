@@ -338,7 +338,7 @@ export default function EventDetailPage() {
     };
 
     if (loading || !event) {
-        return <div className="p-4 text-center animate-pulse font-black text-slate-400">Cargando...</div>;
+        return <div className="p-4 text-center animate-pulse font-bold text-slate-400">Cargando...</div>;
     }
 
     return (
@@ -499,7 +499,7 @@ export default function EventDetailPage() {
                             </div>
 
                             {sessionLoading ? (
-                                <div className="p-4 text-center animate-pulse font-black text-slate-400">Cargando datos de la sesion...</div>
+                                <div className="p-4 text-center animate-pulse font-bold text-slate-400">Cargando datos de la sesion...</div>
                             ) : (
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                     {/* AGENDA PANNEL */}

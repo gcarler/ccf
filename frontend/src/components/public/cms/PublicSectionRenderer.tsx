@@ -282,7 +282,7 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
                   </li>
                 ))}
               </ul>
-              <button className="w-full py-3 rounded-lg font-bold uppercase tracking-wide text-xs transition-opacity hover:opacity-90" style={{ background: index === 1 ? "var(--faro-primary)" : "var(--faro-surface-container-highest)", color: index === 1 ? "var(--faro-on-primary)" : "var(--faro-on-surface)" }}>
+              <button className="w-full py-1.5 rounded-md font-bold uppercase tracking-wide text-xs transition-opacity hover:opacity-90" style={{ background: index === 1 ? "var(--faro-primary)" : "var(--faro-surface-container-highest)", color: index === 1 ? "var(--faro-on-primary)" : "var(--faro-on-surface)" }}>
                 {item.btn || "Seleccionar"}
               </button>
             </article>

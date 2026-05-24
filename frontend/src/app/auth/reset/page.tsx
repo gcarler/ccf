@@ -57,7 +57,7 @@ function ResetPasswordContent() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 px-3">
-            <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl rounded-lg border border-white/10 shadow-2xl p-4 space-y-6">
+            <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl rounded-lg border border-white/10 shadow-2xl p-4 space-y-3">
                 <div>
                     <h1 className="text-xl font-bold tracking-tight">Restablecer contraseña</h1>
                     <p className="text-slate-400 text-sm mt-2">Crea una nueva contraseña segura para tu cuenta.</p>

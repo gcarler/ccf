@@ -5,30 +5,16 @@ import pathlib
 import uuid
 from typing import List, Optional, cast
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    File,
-    Form,
-    HTTPException,
-    Query,
-    UploadFile,
-    status,
-)
+from fastapi import (APIRouter, Depends, File, Form, HTTPException, Query,
+                     UploadFile, status)
 from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import (
-    normalize_role,
-    require_active_user,
-    require_admin,
-    require_coordinator_or_admin,
-    require_staff_or_admin,
-    require_teacher_or_admin,
-    role_in,
-)
+from backend.auth import (normalize_role, require_active_user, require_admin,
+                          require_coordinator_or_admin, require_staff_or_admin,
+                          require_teacher_or_admin, role_in)
 from backend.core.audit import record_admin_action
 from backend.core.config import get_settings
 from backend.core.database import get_db

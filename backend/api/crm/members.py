@@ -5,13 +5,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import (
-    get_current_user,
-    normalize_role,
-    require_active_user,
-    require_admin,
-    require_pastor_or_admin,
-)
+from backend.auth import (get_current_user, normalize_role,
+                          require_active_user, require_admin,
+                          require_pastor_or_admin)
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 

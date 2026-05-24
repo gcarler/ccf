@@ -542,7 +542,7 @@ export default function CmsPagesManagement() {
         fullViewHref={selectedPage ? `/cms/builder?site=${siteKey}&page=${selectedPage.slug}` : undefined}
       >
         {selectedPage && (
-          <div className="space-y-6">
+          <div className="space-y-3">
             <section className="space-y-3">
               <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Configuracion general</label>
               <div className="space-y-4">

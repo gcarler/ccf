@@ -321,7 +321,7 @@ export default function WhiteboardSessionPage() {
                     </div>
                 </main>
 
-                <aside className="w-80 shrink-0 space-y-6 overflow-y-auto border-l border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-[#111418]">
+                <aside className="w-80 shrink-0 space-y-3 overflow-y-auto border-l border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-[#111418]">
                     <section className="space-y-2">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Objetivo</p>
                         <h1 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h1>

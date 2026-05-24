@@ -46,13 +46,13 @@ export default function AcademyClient() {
                     { label: 'Dashboard Inteligente', icon: TrendingUp },
                 ]}
                 rightActions={
-                    <button onClick={() => router.push('/academy/curriculum')} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
+                    <button onClick={() => router.push('/academy/curriculum')} className="px-4 py-2 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
                         Ver Malla Curricular
                     </button>
                 }
             />
 
-            <main className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6">
+            <main className="flex-1 overflow-y-auto p-4 lg:p-3 space-y-3">
                 {/* Metricas Principales */}
                 <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {dashboard?.cards.map((card: any, idx: number) => (
@@ -66,16 +66,16 @@ export default function AcademyClient() {
                     ))}
                 </section>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                     {/* Tendencia de Matriculas */}
                     <div className="lg:col-span-2">
                         <DSCard>
-                            <div className="flex items-center justify-between mb-8">
+                            <div className="flex items-center justify-between mb-3">
                                 <div>
                                     <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Tendencia de Crecimiento</h3>
                                     <p className="text-xl font-bold text-white italic">Inscripciones Mensuales</p>
                                 </div>
-                                <div className="size-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+                                <div className="size-10 rounded-md bg-blue-500/10 flex items-center justify-center text-blue-500">
                                     <TrendingUp size={20} />
                                 </div>
                             </div>
@@ -84,9 +84,9 @@ export default function AcademyClient() {
                     </div>
 
                     {/* Top Cursos */}
-                    <div className="space-y-6">
+                    <div className="space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-6">Cursos Top Performance</h3>
+                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Cursos Top Performance</h3>
                             <div className="space-y-4">
                                 {dashboard?.top_courses.map((course: any, idx: number) => (
                                     <div key={idx} className="flex items-center justify-between group">
@@ -101,8 +101,8 @@ export default function AcademyClient() {
                         </DSCard>
 
                         {/* Optimus Coach Card */}
-                        <div className="p-6 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl text-white space-y-4 shadow-2xl shadow-blue-500/20 border border-white/10 relative overflow-hidden">
-                            <div className="absolute -right-4 -top-4 size-24 bg-white/10 rounded-full blur-3xl" />
+                        <div className="p-3 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl text-white space-y-4 shadow-2xl shadow-blue-500/20 border border-white/10 relative overflow-hidden">
+                            <div className="absolute -right-4 -top-4 size-10 bg-white/10 rounded-full blur-3xl" />
                             <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide relative z-10">
                                 <Sparkles size={14} className="animate-pulse" /> Optimus Intelligence
                             </div>

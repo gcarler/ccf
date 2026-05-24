@@ -62,7 +62,7 @@ export default function EventsPage() {
                 <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-3">
                     <Star size={10} className="inline mr-1.5 text-amber-400" />Eventos Destacados
                 </p>
-                <div className="grid grid-cols-3 gap-5">
+                <div className="grid grid-cols-3 gap-3">
                     {featured.map((ev, i) => (
                         <motion.div key={ev.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
                             className={`h-52 rounded-lg bg-gradient-to-br ${ev.color} relative overflow-hidden cursor-pointer group hover:scale-[1.02] transition-all shadow-2xl`}>
@@ -109,7 +109,7 @@ export default function EventsPage() {
                     const occupation = pct(ev.attendees, ev.capacity);
                     return (
                         <motion.div key={ev.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
-                            className="bg-white/5 hover:bg-white/8 border border-white/5 hover:border-white/10 rounded-lg p-3 flex items-center gap-5 cursor-pointer group transition-all">
+                            className="bg-white/5 hover:bg-white/8 border border-white/5 hover:border-white/10 rounded-lg p-3 flex items-center gap-3 cursor-pointer group transition-all">
                             <div className={`size-7 rounded-lg bg-gradient-to-br ${ev.color} flex items-center justify-center text-white shrink-0`}>
                                 <Calendar size={22} />
                             </div>

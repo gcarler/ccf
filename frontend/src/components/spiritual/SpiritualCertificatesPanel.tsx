@@ -42,7 +42,7 @@ export default function SpiritualCertificatesPanel() {
     }
 
     return (
-        <div className="space-y-6 p-3">
+        <div className="space-y-3 p-3">
             {certificates.length === 0 ? (
                 <div className="text-center py-1.5 bg-slate-50 dark:bg-white/[0.02] rounded-lg border border-dashed border-slate-200 dark:border-white/10">
                     <Award className="mx-auto text-slate-200 dark:text-white/10 mb-4 animate-pulse" size={48} />

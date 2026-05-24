@@ -132,7 +132,7 @@ export default function VolunteerDetailPage() {
         >
             <main className="flex-1 overflow-y-auto p-3 lg:p-4">
                 <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-                    className="max-w-4xl mx-auto space-y-6">
+                    className="max-w-4xl mx-auto space-y-3">
 
                     {/* Hero */}
                     <header className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-sm flex items-center gap-3">
@@ -159,10 +159,10 @@ export default function VolunteerDetailPage() {
                     </header>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                        <div className="lg:col-span-2 space-y-6">
+                        <div className="lg:col-span-2 space-y-3">
                             <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
                                 <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-5">Información del Servidor</p>
-                                <div className="grid grid-cols-2 gap-5">
+                                <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Equipo</p>
                                         <p className="text-sm font-bold text-slate-800 dark:text-white">{volunteer.team || "Sin equipo"}</p>
@@ -186,7 +186,7 @@ export default function VolunteerDetailPage() {
                             </div>
                         </div>
 
-                        <aside className="space-y-6">
+                        <aside className="space-y-3">
                             <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
                                 <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-5">Métricas de Servicio</p>
                                 <div className="space-y-4">

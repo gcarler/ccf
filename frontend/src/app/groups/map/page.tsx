@@ -118,7 +118,7 @@ export default function GroupsMapPage() {
                 )}
 
                 {!loading && !error && geolocated.length > 0 && (
-                    <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                    <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                         {geolocated.map((group) => {
                             const mapUrl = `https://www.google.com/maps?q=${group.latitude},${group.longitude}`;
                             return (

@@ -346,7 +346,7 @@ export default function AccessManagementPage() {
     });
 
     const renderAccessCards = (mode: 'grid' | 'list') => (
-        <div className={clsx(mode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5' : 'space-y-4')}>
+        <div className={clsx(mode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3' : 'space-y-4')}>
             {currentRows.map((row) => {
                 const title = activeTab === 'roles' ? row.name : row.username || row.email;
                 const subtitle = activeTab === 'roles' ? `${row.users_count || 0} usuarios vinculados` : `${row.email || 'Sin email'} · ${row.role || 'Sin rol'}`;
@@ -376,7 +376,7 @@ export default function AccessManagementPage() {
     );
 
     const renderAccessBoard = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {groupedRows.map((group) => (
                 <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
@@ -431,7 +431,7 @@ export default function AccessManagementPage() {
             <main className="flex-1 overflow-y-auto scrollbar-thin p-3 lg:p-4">
                 <div className="max-w-[1400px] mx-auto">
                     {loading ? (
-                        <div className="space-y-6">
+                        <div className="space-y-3">
                             {[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-8 w-full rounded-lg" />)}
                         </div>
                     ) : currentRows.length === 0 ? (
@@ -563,7 +563,7 @@ const LEVEL_LABELS: Record<string, string> = {
 function PermissionRow({ moduleId, label, icon: Icon, color, level, onChange }: any) {
     return (
         <div className="permission-card p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/10 flex items-center justify-between group">
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-3">
                 <div className={clsx("size-7 rounded-[1.25rem] flex items-center justify-center bg-white dark:bg-black/40 shadow-sm border border-slate-100 dark:border-white/5 transition-all group-hover:scale-110 group-hover:rotate-3", color)}>
                     <Icon size={24} strokeWidth={1.5} />
                 </div>

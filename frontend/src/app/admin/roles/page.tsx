@@ -222,7 +222,7 @@ export default function RolesPage() {
                         />
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-3">
                         <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
                             <Shield size={16} className="text-blue-500" />
                             <h4 className="text-sm font-bold text-slate-800">Matriz de Permisos</h4>

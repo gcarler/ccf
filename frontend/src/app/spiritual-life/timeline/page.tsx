@@ -41,7 +41,7 @@ export default function SpiritualTimelinePage() {
 
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-[#0f1012] overflow-y-auto font-display">
-            <div className="max-w-4xl mx-auto w-full p-3 space-y-6 pb-4">
+            <div className="max-w-4xl mx-auto w-full p-3 space-y-3 pb-4">
 
                 {/* Sub-header */}
                 <div className="flex items-center justify-between">

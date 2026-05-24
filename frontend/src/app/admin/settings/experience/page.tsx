@@ -121,7 +121,7 @@ export default function WorkspaceExperienceManager() {
         <div className="space-y-4">
             {featureRows.map((feature) => (
                 <button key={feature.id} onClick={() => toggleFeature(feature.id)} className="w-full text-left bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 flex items-center justify-between gap-3 hover:border-blue-300 transition-all">
-                    <div className="flex items-center gap-5">
+                    <div className="flex items-center gap-3">
                         <div className={clsx("size-7 rounded-lg flex items-center justify-center", feature.enabled ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-400")}>
                             <feature.icon size={24} />
                         </div>
@@ -160,7 +160,7 @@ export default function WorkspaceExperienceManager() {
     );
 
     const renderBoard = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {groupedFeatures.map((group) => (
                 <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
@@ -253,8 +253,8 @@ export default function WorkspaceExperienceManager() {
                                                 : "bg-slate-50 dark:bg-black/20 border-transparent grayscale opacity-60 hover:grayscale-0 hover:opacity-100"
                                         )}
                                     >
-                                        {isEnabled && <div className="absolute top-6 right-6 size-2 rounded-full bg-blue-600 shadow-[0_0_10px_#2563eb]" />}
-                                        <div className="space-y-6">
+                                        {isEnabled && <div className="absolute top-3 right-6 size-2 rounded-full bg-blue-600 shadow-[0_0_10px_#2563eb]" />}
+                                        <div className="space-y-3">
                                             <div className={clsx("size-7 rounded-lg flex items-center justify-center shadow-lg transition-transform group-hover:rotate-12", isEnabled ? "bg-blue-600 text-white" : "bg-white dark:bg-white/10 text-slate-400")}>
                                                 <feature.icon size={24} />
                                             </div>
@@ -278,7 +278,7 @@ export default function WorkspaceExperienceManager() {
                         <div className="p-4 bg-slate-900 rounded-lg text-white shadow-2xl relative overflow-hidden group border border-white/5">
                             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><Palette size={120} /></div>
                             <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
-                                <div className="space-y-6">
+                                <div className="space-y-3">
                                     <h4 className="text-lg font-bold tracking-tight">Personalización de Marca</h4>
                                     <p className="text-slate-400 text-sm font-medium leading-relaxed italic">&ldquo;Configura el ADN visual de la plataforma para que refleje la identidad de Centro Cristiano de Fe.&rdquo;</p>
                                     <div className="flex gap-4">
@@ -288,7 +288,7 @@ export default function WorkspaceExperienceManager() {
                                         <div className="size-10 rounded-full bg-rose-600 cursor-pointer hover:scale-110 transition-all" />
                                     </div>
                                 </div>
-                                <div className="space-y-6 bg-white/5 p-4 rounded-lg border border-white/10 backdrop-blur-md">
+                                <div className="space-y-3 bg-white/5 p-4 rounded-lg border border-white/10 backdrop-blur-md">
                                     <div className="space-y-2">
                                         <label className="text-[9px] font-semibold uppercase text-slate-500 tracking-wide ml-2">Nombre del Workspace</label>
                                         <input type="text" defaultValue="Comunidad Cristiana El Faro" className="w-full bg-black/40 border border-white/10 rounded-lg p-4 text-sm font-bold outline-none focus:border-blue-500 transition-all" />

@@ -160,7 +160,7 @@ export default function ActaManagementPage() {
     );
 
     const renderCourseBoard = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {groupedCourses.map((group) => (
                 <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
@@ -290,9 +290,9 @@ export default function ActaManagementPage() {
                                         </header>
 
                                         <section className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5 space-y-6">
+                                            <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5 space-y-3">
                                                 <h4 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-2"><Zap size={14} className="text-blue-500" /> Requisitos de Aprobación</h4>
-                                                <div className="space-y-6">
+                                                <div className="space-y-3">
                                                     <div className="space-y-2">
                                                         <label className="text-[10px] font-semibold uppercase text-slate-500 ml-2">Nota Mínima</label>
                                                         <div className="relative">
@@ -325,7 +325,7 @@ export default function ActaManagementPage() {
                                             </div>
                                         </section>
 
-                                        <section className="space-y-6">
+                                        <section className="space-y-3">
                                             <div className="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-100 dark:border-amber-900/30 flex items-start gap-3">
                                                 <div className="size-7 rounded-lg bg-white dark:bg-white/5 flex items-center justify-center text-amber-500 shadow-sm shrink-0">
                                                     <AlertTriangle size={24} />
@@ -346,7 +346,7 @@ export default function ActaManagementPage() {
                                         </section>
 
                                         {lastActa && (
-                                            <section className="space-y-6">
+                                            <section className="space-y-3">
                                                 <div className="flex items-center justify-between px-4">
                                                     <h4 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-2"><History size={14} /> Historial de Decisiones</h4>
                                                     <button className="text-[10px] font-bold text-blue-600 flex items-center gap-1">Ver todos <ChevronRight size={12} /></button>

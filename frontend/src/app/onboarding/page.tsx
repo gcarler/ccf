@@ -192,7 +192,7 @@ export default function OnboardingPage() {
 
 function FeatureItem({ icon: Icon, title, desc }: any) {
     return (
-        <div className="flex items-start gap-5 p-3 bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/10 group transition-all hover:border-blue-500/30 hover:shadow-lg">
+        <div className="flex items-start gap-3 p-3 bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/10 group transition-all hover:border-blue-500/30 hover:shadow-lg">
             <div className="size-7 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
                 <Icon size={20} />
             </div>

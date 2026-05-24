@@ -213,7 +213,7 @@ export default function AssessmentPage() {
                             <tbody>
                                 {assessment.questions.map((question: any, index: number) => (
                                     <tr key={question.id} className="border-t border-slate-100 dark:border-white/5">
-                                        <td className="px-4 py-1.5 font-black text-slate-400">{index + 1}</td>
+                                        <td className="px-4 py-1.5 font-bold text-slate-400">{index + 1}</td>
                                         <td className="px-4 py-1.5 font-bold text-slate-800 dark:text-white">{question.question_text}</td>
                                         <td className="px-4 py-1.5 text-slate-500">{question.options.length}</td>
                                         <td className="px-4 py-1.5">

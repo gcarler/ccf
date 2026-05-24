@@ -122,7 +122,7 @@ export default function CourseCatalog({
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex items-center gap-3 overflow-x-auto hide-scrollbar pb-2 px-4">
         <div className="flex gap-3 flex-1">
         <button
@@ -210,7 +210,7 @@ export default function CourseCatalog({
         {resolvedViewType === 'list' && (
         <div className="flex flex-col gap-2 px-4">
           {courses.map((course) => (
-            <div key={course.id} className="glass flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-white/10 transition-colors group">
+            <div key={course.id} className="glass flex items-center gap-4 px-4 py-1.5 rounded-md hover:bg-white/10 transition-colors group">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                 <School size={14} />
               </div>

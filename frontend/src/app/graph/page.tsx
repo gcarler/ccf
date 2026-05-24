@@ -79,7 +79,7 @@ export default function KnowledgeGraphPage() {
         setViewType={setViewType}
         availableViews={["grid", "list", "table"]}
       />
-      <main className="relative flex flex-1 flex-col gap-5 overflow-hidden p-3 p-4">
+      <main className="relative flex flex-1 flex-col gap-3 overflow-hidden p-3 p-4">
         <header className="space-y-2">
           <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Knowledge Graph</h1>
           <p className="max-w-3xl text-sm text-slate-500 dark:text-slate-400">Vista interactiva con pan/zoom, busqueda de nodos y filtros por tipo para insights de CRM, Academy y Projects.</p>
@@ -89,7 +89,7 @@ export default function KnowledgeGraphPage() {
           <section className="space-y-4 overflow-y-auto">
             {filtered.nodes.map((node) => (
               <article key={node.id} className="rounded-lg border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
-                <h3 className="font-black text-slate-900 dark:text-white">{node.label}</h3>
+                <h3 className="font-bold text-slate-900 dark:text-white">{node.label}</h3>
                 <p className="mt-1 text-sm text-slate-500">{node.type}</p>
               </article>
             ))}

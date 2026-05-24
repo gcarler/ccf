@@ -242,7 +242,7 @@ export default function SupportTicketsPage() {
                     </>
                 }
             >
-                <form id="support-ticket-form" onSubmit={handleCreateTicket} className="space-y-6 mt-4">
+                <form id="support-ticket-form" onSubmit={handleCreateTicket} className="space-y-3 mt-4">
                     <div className="space-y-1.5">
                         <label className="font-semibold text-slate-400 uppercase tracking-wide block">Asunto</label>
                         <input

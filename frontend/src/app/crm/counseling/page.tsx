@@ -528,9 +528,9 @@ export default function CounselingPage() {
                             <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-white/5 px-2.5 py-1 rounded-md">{payload.items.length} sesiones</span>
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                             {payload.items.map(session => (
-                                <div key={session.id} onClick={() => openSessionDetail(session)} className="group rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] p-3 hover:border-sky-500/30 hover:shadow-lg hover:shadow-sky-500/5 transition-all flex gap-5 cursor-pointer">
+                                <div key={session.id} onClick={() => openSessionDetail(session)} className="group rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] p-3 hover:border-sky-500/30 hover:shadow-lg hover:shadow-sky-500/5 transition-all flex gap-3 cursor-pointer">
                                     <div className="flex flex-col items-center justify-center min-w-[50px] shrink-0">
                                         <p className="text-base font-bold text-slate-800 dark:text-slate-100 leading-none tracking-tighter">
                                             {new Date(session.scheduled_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: false })}

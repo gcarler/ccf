@@ -789,7 +789,7 @@ export default function CmsTestimonialsPage() {
                 <button
                   onClick={saveSelected}
                   disabled={processing === selected.id}
-                  className="flex items-center justify-center gap-2 w-full py-3 rounded-lg text-[11px] font-semibold uppercase tracking-wide bg-slate-900 text-white dark:bg-white dark:text-slate-900 transition-all active:scale-95 disabled:opacity-60"
+                  className="flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-wide bg-slate-900 text-white dark:bg-white dark:text-slate-900 transition-all active:scale-95 disabled:opacity-60"
                 >
                   <Save size={16} /> Guardar cambios
                 </button>
@@ -797,7 +797,7 @@ export default function CmsTestimonialsPage() {
                   onClick={() => handleToggle(selected)}
                   disabled={processing === selected.id || selected.status === "archived"}
                   className={clsx(
-                    "flex items-center justify-center gap-2 w-full py-3 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg transition-all active:scale-95 disabled:opacity-60",
+                    "flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg transition-all active:scale-95 disabled:opacity-60",
                     selected.published
                       ? "bg-rose-500 text-white shadow-rose-500/20 hover:bg-rose-600"
                       : "bg-emerald-600 text-white shadow-emerald-500/20 hover:bg-emerald-700"
@@ -812,7 +812,7 @@ export default function CmsTestimonialsPage() {
                   onClick={() => toggleArchive(selected)}
                   disabled={processing === selected.id}
                   className={clsx(
-                    "flex items-center justify-center gap-2 w-full py-3 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg transition-all active:scale-95 disabled:opacity-60",
+                    "flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg transition-all active:scale-95 disabled:opacity-60",
                     selected.status === "archived"
                       ? "bg-emerald-600 text-white shadow-emerald-500/20 hover:bg-emerald-700"
                       : "bg-amber-500 text-white shadow-amber-500/20 hover:bg-amber-600"

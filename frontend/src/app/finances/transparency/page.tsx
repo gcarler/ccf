@@ -102,7 +102,7 @@ export default function TransparencyPage() {
                                 <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight uppercase italic">
                                     ¿Donde se invierte tu <span className="text-emerald-500">semilla?</span>
                                 </h2>
-                                <div className="space-y-6">
+                                <div className="space-y-3">
                                     {(data?.distribucion ?? []).map((item, i) => (
                                         <div key={i} className="flex gap-3 group">
                                             <div className="text-lg font-bold text-emerald-500/30 dark:text-emerald-500/20 group-hover:text-emerald-500 transition-colors">{item.pct}%</div>
@@ -118,7 +118,7 @@ export default function TransparencyPage() {
                                 <div className="absolute top-0 right-0 p-4 opacity-10">
                                     <Target size={300} className="text-emerald-500" />
                                 </div>
-                                <div className="relative z-10 text-center space-y-6">
+                                <div className="relative z-10 text-center space-y-3">
                                     <div className="w-24 h-24 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-emerald-500/30">
                                         <BarChart3 size={48} />
                                     </div>

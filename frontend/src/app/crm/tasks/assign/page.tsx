@@ -159,7 +159,7 @@ export default function TaskAssignment() {
             secondaryAction={{ label: 'Actualizar', icon: Clock, onClick: fetchData }}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
             {/* Left Column: Search & List */}
             <div className="lg:col-span-7 space-y-3">
                 <div className="relative group">
@@ -197,7 +197,7 @@ export default function TaskAssignment() {
                                     selectedMemberId === m.id ? "bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-500/20" : "bg-slate-50 dark:bg-white/5 border-transparent hover:border-blue-200"
                                 )}
                             >
-                                <div className="flex items-center gap-5">
+                                <div className="flex items-center gap-3">
                                     <div className={clsx(
                                         "size-9 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm",
                                         selectedMemberId === m.id ? "bg-white/20" : "bg-white dark:bg-white/10 text-blue-600"

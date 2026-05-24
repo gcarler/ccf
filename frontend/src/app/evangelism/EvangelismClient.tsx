@@ -446,7 +446,7 @@ export default function EvangelismClient() {
                             </button>
                         </header>
 
-                        <div className="flex-1 overflow-y-auto p-3 space-y-6 scrollbar-thin">
+                        <div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-thin">
                             {/* Strategy Name */}
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">

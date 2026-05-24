@@ -68,7 +68,7 @@ export default function AccountSettingsPage() {
                                 <div className="flex items-center gap-4">
                                     <tab.icon size={20} className="text-blue-600" />
                                     <div>
-                                        <h3 className="font-black text-slate-900 dark:text-white">{tab.label}</h3>
+                                        <h3 className="font-bold text-slate-900 dark:text-white">{tab.label}</h3>
                                         <p className="mt-1 text-sm text-slate-500">Configurar {tab.label.toLowerCase()}</p>
                                     </div>
                                 </div>

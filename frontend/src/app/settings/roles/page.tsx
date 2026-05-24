@@ -157,7 +157,7 @@ export default function RolesSettingsPage() {
                 }
             >
                 {isEditing && (
-                    <div className="space-y-6 mt-4">
+                    <div className="space-y-3 mt-4">
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 block">Nombre del Rol</label>
                             <input required autoFocus value={isEditing.name} onChange={e => setIsEditing({...isEditing, name: e.target.value})} className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-sm outline-none" />
@@ -197,7 +197,7 @@ export default function RolesSettingsPage() {
                 }
             >
                 {isDeleting && (
-                    <div className="space-y-6 mt-4">
+                    <div className="space-y-3 mt-4">
                         <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 text-red-600 p-4 rounded-md text-sm font-bold">
                             Estás a punto de eliminar el rol &ldquo;{isDeleting.name}&rdquo;.
                             Es obligatorio transferir a las personas que actualmente tienen este rol hacia otro distinto.

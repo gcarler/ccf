@@ -5,7 +5,8 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.schemas.governance import AutomationRuleCreate, AutomationRuleUpdate
+from backend.schemas.governance import (AutomationRuleCreate,
+                                        AutomationRuleUpdate)
 
 
 def get_automation_rules(db: Session, only_active: bool = False):

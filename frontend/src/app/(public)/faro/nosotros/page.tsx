@@ -138,7 +138,7 @@ export default function NosotrosPage() {
                         <h2 className="text-xl md:text-xl font-bold mb-3 leading-tight" style={{ color: "var(--faro-on-background)" }}>
                             {(aboutData?.founder_name as string) || "Nuestros Fundadores"}
                         </h2>
-                        <div className="space-y-6 text-lg leading-relaxed opacity-80" style={{ color: "var(--faro-on-surface-variant)" }}>
+                        <div className="space-y-3 text-lg leading-relaxed opacity-80" style={{ color: "var(--faro-on-surface-variant)" }}>
                             <p>
                                 {(aboutData?.founder_bio as string) || "Nuestros fundadores han dedicado su vida a construir una comunidad vibrante de fe, amor y servicio."}
                             </p>

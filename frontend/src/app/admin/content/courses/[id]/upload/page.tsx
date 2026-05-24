@@ -81,7 +81,7 @@ export default function UploadMaterials() {
                 </section>
 
                 {/* PDF Upload Card */}
-                <section className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-lg p-4 space-y-6 shadow-2xl group hover:border-emerald-500/30 transition-all">
+                <section className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-lg p-4 space-y-3 shadow-2xl group hover:border-emerald-500/30 transition-all">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="size-7 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-lg">
@@ -102,7 +102,7 @@ export default function UploadMaterials() {
                 </section>
 
                 {/* Audio Upload Card */}
-                <section className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-lg p-4 space-y-6 shadow-2xl">
+                <section className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-lg p-4 space-y-3 shadow-2xl">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="size-7 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500 shadow-lg">
@@ -128,7 +128,7 @@ export default function UploadMaterials() {
                 </section>
 
                 {/* Action Section */}
-                <section className="space-y-6 pt-4">
+                <section className="space-y-3 pt-4">
                     <button className="w-full h-8 bg-primary hover:bg-primary-600 text-white font-black rounded-lg shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all text-sm uppercase tracking-wide border border-primary-400/20">
                         Finalizar y Publicar
                     </button>

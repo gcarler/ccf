@@ -45,7 +45,7 @@ function RegisterForm() {
 
     if (status === 'success') {
         return (
-            <div className="flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in zoom-in duration-500">
+            <div className="flex flex-col items-center justify-center text-center space-y-3 animate-in fade-in zoom-in duration-500">
                 <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center shadow-2xl shadow-emerald-500/20">
                     <Check size={48} strokeWidth={3} />
                 </div>
@@ -60,7 +60,7 @@ function RegisterForm() {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <form onSubmit={handleSubmit} className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {!eventId && (
                 <div className="p-4 bg-rose-50 text-rose-600 rounded-lg text-sm font-bold flex items-center gap-3">
                     <ShieldCheck size={20} />

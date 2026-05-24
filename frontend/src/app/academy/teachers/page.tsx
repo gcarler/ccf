@@ -106,7 +106,7 @@ export default function AcademyTeachersPage() {
                                         {(teacher.full_name || teacher.name || "F").slice(0, 2).toUpperCase()}
                                     </div>
                                     <div>
-                                        <h2 className="font-black text-slate-900 dark:text-white">{teacher.full_name || teacher.name || "Facilitador"}</h2>
+                                        <h2 className="font-bold text-slate-900 dark:text-white">{teacher.full_name || teacher.name || "Facilitador"}</h2>
                                         <p className="text-xs font-semibold text-slate-400">{teacher.email || "Sin correo"}</p>
                                     </div>
                                 </div>

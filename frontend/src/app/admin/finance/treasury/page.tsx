@@ -90,7 +90,7 @@ export default function AdminTreasuryPage() {
                     <h3 className="text-xs font-semibold text-white uppercase tracking-wide flex items-center gap-2">
                         <PieChart size={14} className="text-amber-500" /> Estados de Fondos
                     </h3>
-                    <div className="space-y-6">
+                    <div className="space-y-3">
                         {funds.map((fund, i) => (
                             <div key={i} className="space-y-2">
                                 <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide">

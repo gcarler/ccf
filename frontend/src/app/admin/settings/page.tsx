@@ -91,7 +91,7 @@ export default function MinistrySettings() {
 
                 {/* Settings Groups */}
                 {settingsGroups.map((group, idx) => (
-                    <section key={idx} className="space-y-6">
+                    <section key={idx} className="space-y-3">
                         <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-600 ml-1">{group.title}</h3>
                         <div className="space-y-4">
                             {group.items.map((item, iidx) => (

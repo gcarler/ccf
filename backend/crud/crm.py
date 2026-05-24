@@ -11,11 +11,8 @@ from backend import models, schemas
 from backend.core.security import decrypt_data, encrypt_data
 from backend.crud._utils import _utcnow
 from backend.models_crm import EvangelismStrategy
-from backend.schemas.crm import (
-    CrmEventUpdate,
-    EvangelismStrategyCreate,
-    EvangelismStrategyUpdate,
-)
+from backend.schemas.crm import (CrmEventUpdate, EvangelismStrategyCreate,
+                                 EvangelismStrategyUpdate)
 from backend.schemas.legacy import CommunityBoardCardUpdate
 from backend.schemas.notifications import CommunicationLogUpdate
 
@@ -332,10 +329,8 @@ def get_counseling_tickets(
 def create_counseling_ticket(
     db: Session, payload: schemas.CounselingTicketCreate
 ) -> models.CounselingTicket:
-    from backend.crud._utils import (
-        analyze_pastoral_priority,
-        analyze_pastoral_sentiment,
-    )
+    from backend.crud._utils import (analyze_pastoral_priority,
+                                     analyze_pastoral_sentiment)
 
     try:
         data = payload.model_dump()

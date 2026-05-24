@@ -384,7 +384,7 @@ export default function CmsMediaLibrary() {
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center space-y-6 py-1.5">
+            <div className="h-full flex flex-col items-center justify-center text-center space-y-3 py-1.5">
               <div className="size-10 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center">
                 <FileImage size={40} strokeWidth={1} className="text-slate-300" />
               </div>

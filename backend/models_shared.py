@@ -3,25 +3,10 @@ from __future__ import annotations
 import datetime as dt
 import uuid
 
-from sqlalchemy import (
-    JSON,
-    Boolean,
-    Column,
-    Date,
-    DateTime,
-    Float,
-    ForeignKey,
-    Index,
-    Integer,
-    Numeric,
-    PrimaryKeyConstraint,
-    String,
-    Table,
-    Text,
-    UniqueConstraint,
-    cast,
-    func,
-)
+from sqlalchemy import (JSON, Boolean, Column, Date, DateTime, Float,
+                        ForeignKey, Index, Integer, Numeric,
+                        PrimaryKeyConstraint, String, Table, Text,
+                        UniqueConstraint, cast, func)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import backref, relationship
 

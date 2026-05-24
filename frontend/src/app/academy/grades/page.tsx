@@ -96,7 +96,7 @@ export default function StudentGrades() {
                                     <StatusPill label="Estado" value={enrollment.approved ? 'Aprobado' : 'En curso'} highlight={enrollment.approved} />
                                 </div>
                                 <div className="h-px bg-slate-200 dark:bg-white/10"></div>
-                                <div className="flex items-center justify-between text-xs uppercase tracking-wide font-black text-slate-500">
+                                <div className="flex items-center justify-between text-xs uppercase tracking-wide font-bold text-slate-500">
                                     <span>ID inscripcion #{enrollment.id}</span>
                                     <button className="text-primary flex items-center gap-1 hover:translate-x-1 transition-transform">
                                         Ver detalle <ChevronRight size={14} />

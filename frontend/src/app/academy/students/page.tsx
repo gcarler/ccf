@@ -110,7 +110,7 @@ export default function AcademyStudentsPage() {
                                         className="cursor-pointer border-b border-slate-50 transition-colors hover:bg-slate-50 dark:border-white/5 dark:hover:bg-white/[0.03]"
                                         onClick={() => router.push(`/academy/profile?student=${student.id}`)}
                                     >
-                                        <td className="px-4 py-1.5 font-black text-slate-900 dark:text-white">{student.full_name || student.name || "Estudiante"}</td>
+                                        <td className="px-4 py-1.5 font-bold text-slate-900 dark:text-white">{student.full_name || student.name || "Estudiante"}</td>
                                         <td className="px-4 py-1.5 text-slate-500">{student.email || "Sin correo"}</td>
                                         <td className="px-4 py-1.5 text-slate-500">{student.course_count ?? 0}</td>
                                         <td className="px-4 py-1.5 text-slate-500">{student.progress ?? 0}%</td>

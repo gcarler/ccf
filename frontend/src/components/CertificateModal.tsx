@@ -57,7 +57,7 @@ export default function CertificateModal({ certificate, enrollment, userName, on
                 {/* Close Button - Premium Positioning */}
                 <button 
                     onClick={onClose}
-                    className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 text-white backdrop-blur-md rounded-full transition-all z-50 border border-white/10 print:hidden"
+                    className="absolute top-3 right-6 p-3 bg-white/10 hover:bg-white/20 text-white backdrop-blur-md rounded-full transition-all z-50 border border-white/10 print:hidden"
                 >
                     <X size={24} />
                 </button>
@@ -74,7 +74,7 @@ export default function CertificateModal({ certificate, enrollment, userName, on
                         </p>
                     </div>
 
-                    <div className="space-y-6 mb-auto">
+                    <div className="space-y-3 mb-auto">
                         <div className="p-3 bg-white dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5 space-y-4 shadow-sm">
                             <div className="flex items-start gap-3">
                                 <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-md text-blue-600">

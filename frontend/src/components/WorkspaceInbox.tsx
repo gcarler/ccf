@@ -180,7 +180,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                                 </div>
                                             </div>
                                             {!notif.is_read && (
-                                                <div className="absolute right-4 top-6 size-2 bg-blue-600 rounded-full" />
+                                                <div className="absolute right-4 top-3 size-2 bg-blue-600 rounded-full" />
                                             )}
                                         </motion.div>
                                     ))}

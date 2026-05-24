@@ -128,7 +128,7 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
             <main className="flex-1 overflow-y-auto scrollbar-thin p-3 relative">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
                 
-                <div className="max-w-[1400px] mx-auto space-y-6 relative z-10">
+                <div className="max-w-[1400px] mx-auto space-y-3 relative z-10">
                     {/* 📊 Pastoral Metrics */}
                     <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         {dashboard?.cards.map((card: any, idx: number) => (
@@ -143,16 +143,16 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
                     </section>
 
                     {/* 📈 Growth & Distribution */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                         <div className="lg:col-span-2">
                             <DSCard>
-                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-6">Crecimiento de Membresía</h3>
+                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Crecimiento de Membresía</h3>
                                 <DSChart type="area" data={dashboard?.growth_chart} color="#10b981" height={220} />
                             </DSCard>
                         </div>
                         <div>
                             <DSCard>
-                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-6">Pipeline de Consolidación</h3>
+                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Pipeline de Consolidación</h3>
                                 <DSChart type="bar" data={dashboard?.pipeline_distribution} color="#3b82f6" height={220} />
                             </DSCard>
                         </div>

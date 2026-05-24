@@ -233,7 +233,7 @@ export default function LeadDetail() {
                 </section>
 
                 <section className="sticky top-0 z-40 bg-slate-950/70 backdrop-blur-xl px-4 pt-6 border-b border-white/5">
-                    <div className="flex gap-5 justify-center">
+                    <div className="flex gap-3 justify-center">
                         {[
                             { id: 'history', label: 'Historial de Contacto' },
                             { id: 'notes', label: 'Notas e Interacción' },

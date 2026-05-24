@@ -8,6 +8,7 @@ import {
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import { motion, AnimatePresence } from 'framer-motion';
 import { DSMetric } from '@/design/components/DSMetric';
 import { DSChart } from '@/design/components/DSChart';
 import { DSCard } from '@/design/components/DSCard';
@@ -209,7 +210,7 @@ export default function AdminInventoryPage() {
                                                 className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer"
                                             >
                                                 <td className="px-4 py-2">
-                                                    <div className="flex items-center gap-5">
+                                                    <div className="flex items-center gap-3">
                                                         <div className="size-7 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 shadow-inner">
                                                             <Box size={24} />
                                                         </div>
@@ -334,7 +335,7 @@ export default function AdminInventoryPage() {
                     </div>
 
                     {/* Technical Specs Stacked Glass */}
-                    <div className="space-y-6">
+                    <div className="space-y-3">
                         <h4 className="font-semibold text-slate-400 uppercase tracking-wide px-2 flex items-center gap-3">
                             <Cog size={16} className="text-blue-500" /> Especificaciones de Fábrica
                         </h4>
@@ -347,7 +348,7 @@ export default function AdminInventoryPage() {
                     </div>
 
                     {/* Maintenance Log */}
-                    <div className="space-y-6 pt-6 border-t border-slate-100 dark:border-white/5">
+                    <div className="space-y-3 pt-6 border-t border-slate-100 dark:border-white/5">
                         <div className="flex items-center justify-between px-2">
                             <h4 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-3">
                                 <History size={16} className="text-blue-500" /> Registro de Mantenimiento

@@ -229,7 +229,7 @@ export default function IntelligenceConsole() {
                     </section>
 
                     {/* Insights Wall */}
-                    <section className="space-y-6">
+                    <section className="space-y-3">
                         <div className="flex justify-between items-center px-4">
                             <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Intelligent Insights</h3>
                             <button
@@ -289,7 +289,7 @@ export default function IntelligenceConsole() {
                                 <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Estado de la Red</h4>
                                 <BarChart3 size={18} className="text-slate-300" />
                             </div>
-                            <div className="space-y-6">
+                            <div className="space-y-3">
                                 <AgentState label="Optimus Analysis" load={65} status="Online" color="bg-blue-500" />
                                 <AgentState label="Crawler Doctrinal" load={12} status="Idle" color="bg-slate-400" />
                                 <AgentState label="Messenger Bot" load={94} status="Busy" color="bg-amber-500" />

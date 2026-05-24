@@ -35,7 +35,7 @@ export default function NewWhiteboardPage() {
         >
             <div className="mx-auto flex h-full max-w-5xl items-center px-4 py-1.5">
                 <section className="grid w-full grid-cols-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl dark:border-white/10 dark:bg-white/5 lg:grid-cols-[1fr_0.9fr]">
-                    <div className="space-y-6 p-4 lg:p-4">
+                    <div className="space-y-3 p-4 lg:p-4">
                         <div>
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-500">Lienzo colaborativo</p>
                             <h1 className="mt-2 text-lg font-bold tracking-tight text-slate-950 dark:text-white">Crear pizarra</h1>

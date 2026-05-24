@@ -91,8 +91,8 @@ export default function SpiritualMilestones() {
             {milestones.map((m) => {
                 const Icon = iconMap[m.icon?.toLowerCase()] || Award;
                 return (
-                    <div key={m.id} className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 flex items-center justify-between gap-5">
-                        <div className="flex items-center gap-5">
+                    <div key={m.id} className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
                             <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center"><Icon size={24} /></div>
                             <div>
                                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{m.name}</h3>
@@ -132,7 +132,7 @@ export default function SpiritualMilestones() {
     );
 
     const renderBoard = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {groupedMilestones.map((group) => (
                 <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">

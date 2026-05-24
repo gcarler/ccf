@@ -205,7 +205,7 @@ export default function FundsPage() {
                                     </div>
                                 </div>
 
-                                <h3 className="font-black text-slate-900 dark:text-white text-sm leading-tight mb-1">{f.name}</h3>
+                                <h3 className="font-bold text-slate-900 dark:text-white text-sm leading-tight mb-1">{f.name}</h3>
                                 {f.description && (
                                     <p className="text-[11px] text-slate-400 line-clamp-2 mb-3">{f.description}</p>
                                 )}

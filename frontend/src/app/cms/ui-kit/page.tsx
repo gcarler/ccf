@@ -21,10 +21,10 @@ export default function CmsUiKitPage() {
         </div>
 
         {/* --- Buttons --- */}
-        <section className="space-y-6">
+        <section className="space-y-3">
           <DSSectionHeader title="Botones (DSButton)" description="Acciones primarias, secundarias y de variante." />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            <DSCard className="p-3 space-y-6">
+            <DSCard className="p-3 space-y-3">
               <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Variantes</h3>
               <div className="flex flex-wrap gap-4">
                 <DSButton variant="primary">Primary</DSButton>
@@ -32,7 +32,7 @@ export default function CmsUiKitPage() {
                 <DSButton variant="ghost">Ghost</DSButton>
               </div>
             </DSCard>
-            <DSCard className="p-3 space-y-6">
+            <DSCard className="p-3 space-y-3">
               <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Estados adicionales</h3>
               <div className="flex flex-wrap items-center gap-4">
                 <DSButton variant="primary" loading>Cargando</DSButton>
@@ -43,7 +43,7 @@ export default function CmsUiKitPage() {
         </section>
 
         {/* --- Badges --- */}
-        <section className="space-y-6">
+        <section className="space-y-3">
           <DSSectionHeader title="Insignias (DSBadge)" description="Indicadores visuales de estado y categoría." />
           <DSCard className="p-3">
             <div className="flex flex-wrap gap-4">
@@ -57,7 +57,7 @@ export default function CmsUiKitPage() {
         </section>
 
         {/* --- Cards --- */}
-        <section className="space-y-6">
+        <section className="space-y-3">
           <DSSectionHeader title="Tarjetas (DSCard)" description="Contenedores estructurados con hover effects opcionales." />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <DSCard className="p-3">
@@ -83,7 +83,7 @@ export default function CmsUiKitPage() {
         </section>
 
         {/* --- Metrics --- */}
-        <section className="space-y-6">
+        <section className="space-y-3">
           <DSSectionHeader title="Métricas (DSMetric)" description="KPIs para dashboards y estadísticas." />
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <DSMetric label="Total Usuarios" value="1,248" trend="+12" tone="blue" />
@@ -94,7 +94,7 @@ export default function CmsUiKitPage() {
         </section>
 
         {/* --- Toolbar Chips --- */}
-        <section className="space-y-6">
+        <section className="space-y-3">
           <DSSectionHeader title="Filtros (DSToolbarChip)" description="Píldoras para filtrado de datos." />
           <DSCard className="p-3 flex flex-wrap gap-2">
             {[
@@ -114,7 +114,7 @@ export default function CmsUiKitPage() {
         </section>
 
         {/* --- Skeletons --- */}
-        <section className="space-y-6">
+        <section className="space-y-3">
           <DSSectionHeader title="Skeletons (DSSkeleton)" description="Estados de carga para evitar saltos visuales." />
           <DSCard className="p-3 space-y-3">
             <div className="space-y-3">

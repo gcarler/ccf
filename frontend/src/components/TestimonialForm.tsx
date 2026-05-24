@@ -119,7 +119,7 @@ export default function TestimonialForm({ userId, token, onSubmitted }: Testimon
 
       <h3 className="relative z-10 mb-3 text-lg font-bold">Comparte tu experiencia</h3>
 
-      <form onSubmit={handleSubmit} className="relative z-10 space-y-6">
+      <form onSubmit={handleSubmit} className="relative z-10 space-y-3">
         <div>
           <label className="mb-2 block text-sm font-medium">Tu testimonio</label>
           <textarea

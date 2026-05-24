@@ -136,7 +136,7 @@ export default function AdvancedBIReports() {
 
                     {/* Secondary Metrics Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-6 shadow-xl">
+                        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-3 shadow-xl">
                             <div className="flex justify-between items-center">
                                 <div className="size-7 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center">
                                     <Users size={24} />
@@ -165,7 +165,7 @@ export default function AdvancedBIReports() {
                             </div>
                         </div>
 
-                        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-6 shadow-xl">
+                        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-3 shadow-xl">
                             <div className="flex justify-between items-center">
                                 <div className="size-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center">
                                     <Target size={24} />

@@ -192,7 +192,7 @@ export default function CommentModeration() {
                                     <tbody>
                                         {filteredComments.map((comment) => (
                                             <tr key={comment.id} className="border-b border-slate-50 dark:border-white/5">
-                                                <td className="px-3 py-1.5 font-black text-slate-900 dark:text-white">{comment.author}</td>
+                                                <td className="px-3 py-1.5 font-bold text-slate-900 dark:text-white">{comment.author}</td>
                                                 <td className="px-3 py-1.5 text-slate-500">{comment.context}</td>
                                                 <td className="px-3 py-1.5 text-slate-500">{comment.type}</td>
                                                 <td className="px-3 py-1.5 text-slate-400">{new Date(comment.created_at).toLocaleDateString()}</td>
@@ -299,7 +299,7 @@ export default function CommentModeration() {
                                 ))}
                             </motion.div>
                         ) : (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-1.5 text-center space-y-6">
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-1.5 text-center space-y-3">
                                 <div className="size-10 rounded-lg bg-slate-50 dark:bg-white/5 border-2 border-dashed border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto text-slate-200">
                                     <Sparkles size={48} strokeWidth={1} />
                                 </div>

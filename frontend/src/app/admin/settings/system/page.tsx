@@ -693,7 +693,7 @@ export default function SystemSettings() {
                         </div>
                     </section>
 
-                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-6">
+                    <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
                         <div className="flex items-center justify-between gap-3">
                             <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Rollout Segmentado</h3>
                             <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Roles y porcentaje</span>
@@ -1221,7 +1221,7 @@ export default function SystemSettings() {
                             <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Estado del Cluster</h4>
                             <RefreshCw size={18} className="text-slate-300" />
                         </div>
-                        <div className="space-y-6">
+                        <div className="space-y-3">
                             <ClusterNode label="Worker Analysis" status="running" load="12%" />
                             <ClusterNode label="Socket Server" status="running" load="4%" />
                             <ClusterNode label="Media Processor" status="idle" load="0%" />
@@ -1304,7 +1304,7 @@ function ProviderRow({ icon: Icon, name, status, color, detail }: any) {
     };
     return (
         <div className="flex items-center justify-between p-3 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg group hover:border-blue-500/20 transition-all shadow-sm">
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-3">
                 <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110", colors[color])}>
                     <Icon size={24} />
                 </div>
@@ -1361,7 +1361,7 @@ function RolloutControl({ featureId, label, rule, selectedRole, onRoleChange, on
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                    <label className="text-[9px] uppercase font-black text-slate-400 tracking-wide">Rol</label>
+                    <label className="text-[9px] uppercase font-bold text-slate-400 tracking-wide">Rol</label>
                     <select
                         value={selectedRole}
                         onChange={(e) => onRoleChange(e.target.value)}
@@ -1374,7 +1374,7 @@ function RolloutControl({ featureId, label, rule, selectedRole, onRoleChange, on
                     </select>
                 </div>
                 <div className="space-y-1">
-                    <label className="text-[9px] uppercase font-black text-slate-400 tracking-wide">Rollout {percent}%</label>
+                    <label className="text-[9px] uppercase font-bold text-slate-400 tracking-wide">Rollout {percent}%</label>
                     <input
                         type="range" min={0} max={100} value={percent}
                         onChange={(e) => setPercent(Number(e.target.value))}

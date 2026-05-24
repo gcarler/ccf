@@ -94,7 +94,7 @@ export default function AcademyForumPage() {
             />
 
             <main className="flex-1 overflow-y-auto p-4 scrollbar-thin lg:p-4">
-                <div className="mx-auto grid max-w-7xl grid-cols-1 gap-5 lg:grid-cols-12">
+                <div className="mx-auto grid max-w-7xl grid-cols-1 gap-3 lg:grid-cols-12">
                     <aside className="space-y-3 lg:col-span-3">
                         <section className="space-y-3 rounded-md border border-slate-200 bg-white p-4 shadow-xl dark:border-white/10 dark:bg-white/5">
                             <h3 className="px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Categorias</h3>

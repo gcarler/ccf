@@ -39,7 +39,7 @@ export default function ForgotPasswordPage() {
             </div>
 
             <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-3 px-3 py-1.5 lg:grid lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-center">
-                <Link href="/login" className="absolute top-6 left-6 flex items-center gap-2 text-slate-400 hover:text-white transition-colors group">
+                <Link href="/login" className="absolute top-3 left-6 flex items-center gap-2 text-slate-400 hover:text-white transition-colors group">
                     <div className="p-2 rounded-full bg-white/5 border border-white/10 group-hover:bg-white/10 transition-all">
                         <ArrowLeft className="w-4 h-4" />
                     </div>

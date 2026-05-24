@@ -325,7 +325,7 @@ export default function UserDetailPage() {
                     </>
                 }
             >
-                <div className="space-y-6 mt-4">
+                <div className="space-y-3 mt-4">
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 ml-2 block">Escribe la nueva clave</label>
                         <input 

@@ -154,7 +154,7 @@ function AssetCard({ asset, mode, onDelete }: { asset: Asset; mode: "grid" | "li
     if (mode === "list") {
         return (
             <div className="flex items-center justify-between rounded-lg border border-transparent p-3 transition-all hover:border-blue-500/20 hover:bg-slate-50 dark:hover:bg-blue-600/5">
-                <div className="flex items-center gap-5">
+                <div className="flex items-center gap-3">
                     <div className="flex size-7 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm dark:bg-white/10"><Icon size={24} /></div>
                     <div>
                         <p className="text-sm font-semibold uppercase text-slate-800 dark:text-white">{asset.filename}</p>
@@ -191,7 +191,7 @@ function StorageStat({ label, count, size, icon: Icon, color }: any) {
         slate: "bg-slate-50 text-slate-600 dark:bg-slate-900/20",
     };
     return (
-        <div className="space-y-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
+        <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
             <div className={clsx("flex size-7 items-center justify-center rounded-lg", colors[color])}><Icon size={28} /></div>
             <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>

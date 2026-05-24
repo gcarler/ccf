@@ -229,7 +229,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
 
             {/* Content Area */}
             <div className="flex-1 bg-slate-950 relative flex flex-col h-2/3 md:h-full">
-              <div className="absolute top-6 right-6 hidden md:block z-10">
+              <div className="absolute top-3 right-6 hidden md:block z-10">
                 <button onClick={() => setViewingLessonsCourse(null)} className="p-3 bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 rounded-full transition-all shadow-sm">
                   <CloseIcon size={20} />
                 </button>

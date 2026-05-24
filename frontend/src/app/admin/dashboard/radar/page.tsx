@@ -198,7 +198,7 @@ export default function PastorRadarPage() {
                             <GoalItem label="Estudiantes Liderazgo" target={80} current={12} color="bg-amber-500" />
                         </div>
 
-                        <div className="pt-8 border-t border-white/5 space-y-6">
+                        <div className="pt-8 border-t border-white/5 space-y-3">
                             <div className="flex items-center gap-4">
                                 <div className="size-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-xl shadow-indigo-500/20"><Zap size={24} fill="currentColor" /></div>
                                 <div>
@@ -228,7 +228,7 @@ function RadarStat({ label, value, icon: Icon, color, trend, auraColor }: any) {
             style={{ '--aura-color': auraColor } as any}
         >
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-125 transition-transform duration-700"><Icon size={64} /></div>
-            <div className="space-y-6 relative z-10">
+            <div className="space-y-3 relative z-10">
                 <div className="flex justify-between items-center">
                     <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:rotate-12", colorMap[color])}>
                         <Icon size={28} />

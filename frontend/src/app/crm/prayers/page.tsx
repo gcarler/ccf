@@ -221,7 +221,7 @@ export default function PrayerSupportCenter() {
             <section className="p-4 lg:p-3">
                     <div className="bg-gradient-to-br from-rose-600 to-rose-800 rounded-lg p-3 text-white shadow-2xl relative overflow-hidden group border border-white/10">
                         <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform duration-1000"><Flame size={160} /></div>
-                        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-5">
+                        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-3">
                             <div className="space-y-4 flex-1 max-w-2xl">
                                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full text-[10px] font-bold uppercase tracking-wide">
                                     <Sparkles size={14} className="animate-pulse" /> Centro de Intercesión CCF

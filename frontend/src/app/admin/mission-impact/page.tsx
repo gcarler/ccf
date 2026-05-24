@@ -101,7 +101,7 @@ export default function AdminMissionImpactPage() {
         <div className="space-y-4">
             {IMPACT_ITEMS.map((item) => (
                 <div key={item.id} className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-center gap-5">
+                    <div className="flex items-center gap-3">
                         <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
                             <MapPin size={24} />
                         </div>
@@ -142,7 +142,7 @@ export default function AdminMissionImpactPage() {
     );
 
     const renderBoard = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             {groupedItems.map((group) => (
                 <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
@@ -307,7 +307,7 @@ export default function AdminMissionImpactPage() {
                                 </div>
                             </motion.div>
 
-                            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 rounded-lg shadow-sm space-y-6">
+                            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 rounded-lg shadow-sm space-y-3">
                                 <h3 className="text-xs font-semibold uppercase tracking-wide dark:text-white">Acciones de Misión</h3>
                                 <button className="w-full py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-600 dark:text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all border border-slate-200 dark:border-white/10 flex items-center justify-center gap-3 active:scale-95">
                                     <FileText size={16} /> Generar Reporte PDF

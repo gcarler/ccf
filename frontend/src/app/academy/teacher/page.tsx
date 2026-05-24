@@ -163,7 +163,7 @@ export default function TeacherWorkspace() {
                     )}
 
                     {viewType === 'wiki' && (
-                        <section className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-4 shadow-[var(--shadow-floating)] space-y-6">
+                        <section className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-4 shadow-[var(--shadow-floating)] space-y-3">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight">Guía de Evaluación y Rúbricas</h3>
                                 <DSBadge tone="blue" label="Privado Docentes" />
@@ -179,7 +179,7 @@ export default function TeacherWorkspace() {
 
                     {(viewType === 'grid' || viewType === 'table' || viewType === 'list') && (
                         <DSCard tone="light" className="shadow-2xl overflow-hidden rounded-lg">
-                            <header className="p-4 border-b border-slate-100 dark:border-white/5 space-y-6">
+                            <header className="p-4 border-b border-slate-100 dark:border-white/5 space-y-3">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div>
                                         <DSBadge tone="blue" label="Workspace Académico" />
@@ -327,7 +327,7 @@ export default function TeacherWorkspace() {
                                                 {graded.map((submission) => (
                                                     <tr key={submission.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-colors">
                                                         <td className="px-4 py-2">
-                                                            <div className="font-black text-slate-900 dark:text-white uppercase tracking-tight">{submission.student_name}</div>
+                                                            <div className="font-bold text-slate-900 dark:text-white uppercase tracking-tight">{submission.student_name}</div>
                                                             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-1">{submission.lesson_title}</div>
                                                         </td>
                                                         <td className="px-4 py-2">

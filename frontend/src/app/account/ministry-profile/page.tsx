@@ -77,7 +77,7 @@ export default function MinistryProfilePage() {
                         </div>
                     </div>
 
-                    <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-lg space-y-6">
+                    <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-lg space-y-3">
                         <h3 className="text-xl font-bold text-white tracking-tight uppercase italic">Mis <span className="text-amber-500">Logros</span></h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {[
@@ -97,8 +97,8 @@ export default function MinistryProfilePage() {
                     </div>
                 </div>
 
-                <div className="space-y-6">
-                    <div className="bg-gradient-to-br from-amber-500/20 to-primary/20 border border-amber-500/20 p-4 rounded-lg space-y-6">
+                <div className="space-y-3">
+                    <div className="bg-gradient-to-br from-amber-500/20 to-primary/20 border border-amber-500/20 p-4 rounded-lg space-y-3">
                         <div className="flex items-center justify-between">
                             <h3 className="text-xl font-bold text-white tracking-tighter uppercase italic">Nivel <span className="text-amber-500">12</span></h3>
                             <Zap size={24} className="text-amber-500 animate-pulse" />
@@ -117,7 +117,7 @@ export default function MinistryProfilePage() {
                         </p>
                     </div>
 
-                    <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-lg space-y-6">
+                    <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-lg space-y-3">
                         <h3 className="text-xs font-semibold text-white uppercase tracking-wide">Llamados de Servicio</h3>
                         <div className="space-y-4">
                             {[

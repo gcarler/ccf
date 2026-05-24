@@ -211,7 +211,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                 breadcrumbs={[{ label: 'Proyectos', icon: Folder }, { label: 'Centro de Comando', icon: Layers }]}
                 viewType={viewType}
                 setViewType={setViewType}
-                allowedViews={PROJECT_VIEWS}
+                availableViews={PROJECT_VIEWS}
                 onSearch={setSearch}
                 rightActions={
                     <SplitDropdownButton
@@ -225,7 +225,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                 }
             />
 
-            <main className="flex-1 overflow-y-auto scrollbar-thin p-6 space-y-6">
+            <main className="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-3">
                 {/* 📊 Project Metrics */}
                 <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {dashboard?.cards.map((card: any, idx: number) => (
@@ -240,20 +240,20 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                 </section>
 
                 {/* 📈 Charts */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                     <div className="lg:col-span-2">
                         <DSCard>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Carga de Trabajo del Equipo</h3>
+                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Carga de Trabajo del Equipo</h3>
                             <DSChart type="bar" data={dashboard?.workload_distribution} color="#f59e0b" height={220} />
                         </DSCard>
                     </div>
                     <div>
                         <DSCard>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Estado de Tareas</h3>
+                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Estado de Tareas</h3>
                             <div className="space-y-4 pt-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-xs font-bold text-slate-400">Tareas Atrasadas</span>
-                                    <span className="text-sm font-black text-rose-500">{dashboard?.delayed_tasks_count || 0}</span>
+                                    <span className="text-sm font-semibold text-rose-500">{dashboard?.delayed_tasks_count || 0}</span>
                                 </div>
                                 <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
                                     <div className="h-full bg-rose-500" style={{ width: '15%' }} />

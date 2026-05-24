@@ -216,7 +216,7 @@ export default function CrmGroupsPage() {
 
                     {/* Loading */}
                     {loading && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {[...Array(6)].map((_, i) => <div key={i} className="bg-slate-100 dark:bg-white/5 rounded-lg animate-pulse h-52" />)}
                         </div>
                     )}
@@ -237,7 +237,7 @@ export default function CrmGroupsPage() {
 
                     {/* Cards */}
                     {!loading && filtered.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {filtered.map((group, idx) => {
                                 const occupancy = group.capacity ? Math.round((group.members_count || 0) / group.capacity * 100) : 0;
                                 const isActive = !group.status || group.status === 'Activo';

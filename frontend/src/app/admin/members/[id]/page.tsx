@@ -132,10 +132,10 @@ export default function MemberDetailPage() {
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                         {/* Contacto */}
-                        <div className="lg:col-span-2 space-y-6">
+                        <div className="lg:col-span-2 space-y-3">
                             <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm space-y-5">
                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Canales de Comunicación</p>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <InfoRow icon={Phone} label="Teléfono Móvil" value={member.phone} />
                                     <InfoRow icon={Mail} label="Correo Electrónico" value={member.email} />
                                     <InfoRow icon={MapPin} label="Dirección" value={member.address} color="text-rose-500" />
@@ -167,7 +167,7 @@ export default function MemberDetailPage() {
                         </div>
 
                         {/* Info ministerial */}
-                        <aside className="space-y-6">
+                        <aside className="space-y-3">
                             <div className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm space-y-5">
                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Posición Ministerial</p>
                                 <div className="space-y-4">

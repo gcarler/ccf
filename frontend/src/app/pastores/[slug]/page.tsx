@@ -74,7 +74,7 @@ export default function PastorDetailPage() {
 
                                 {/* Blockquote Principal */}
                                 <div className="relative p-4 bg-slate-50 dark:bg-[#13161c] rounded-lg border border-slate-100 dark:border-white/5 mb-3">
-                                    <Quote className="absolute top-6 left-6 text-blue-200 dark:text-blue-500/20" size={40} />
+                                    <Quote className="absolute top-3 left-6 text-blue-200 dark:text-blue-500/20" size={40} />
                                     <p className="relative z-10 text-xl lg:text-lg text-slate-700 dark:text-slate-300 font-medium italic leading-relaxed pt-6">
                                         &ldquo;{pastor.quote}&rdquo;
                                     </p>

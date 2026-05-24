@@ -153,7 +153,7 @@ export default function NewCoursePage() {
                 <aside className="lg:col-span-4 space-y-3">
                     <section className="p-4 bg-slate-900 rounded-lg text-white shadow-2xl space-y-3 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-blue-600/20 rounded-full blur-3xl" />
-                        <div className="relative z-10 space-y-6">
+                        <div className="relative z-10 space-y-3">
                             <h4 className="text-[11px] font-semibold uppercase tracking-wide text-blue-400">Previsualización</h4>
                             <div className="aspect-video rounded-lg bg-white/5 border border-white/10 flex flex-col items-center justify-center gap-4 text-slate-500 hover:text-blue-400 transition-all cursor-pointer group">
                                 <ImageIcon size={40} strokeWidth={1} className="group-hover:scale-110 transition-transform" />
@@ -175,7 +175,7 @@ export default function NewCoursePage() {
                             <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Resumen de Metas</h4>
                             <Settings size={18} className="text-slate-300" />
                         </div>
-                        <div className="space-y-6">
+                        <div className="space-y-3">
                             <GoalRow label="Evaluaciones Requeridas" value="1" />
                             <GoalRow label="Asistencia Mínima" value="80%" />
                             <GoalRow label="Puntaje de Corte" value={`${formData.passing_score}%`} />

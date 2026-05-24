@@ -389,7 +389,7 @@ export default function ConocerAJesusPage() {
                                 </p>
                             </div>
                         ) : (
-                            <form onSubmit={handleSubmit} className="space-y-6">
+                            <form onSubmit={handleSubmit} className="space-y-3">
                                 <div className="grid md:grid-cols-2 gap-3">
                                     {[
                                         { key: "name", label: "Nombre completo", placeholder: "Tu nombre", type: "text" },

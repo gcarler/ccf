@@ -76,7 +76,7 @@ export function PipelineKanbanBoard({ leads, onLeadClick, onDropLead, onNewLead 
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex h-full gap-5 p-4 overflow-x-auto bg-transparent items-start scrollbar-thin pb-12">
+            <div className="flex h-full gap-3 p-4 overflow-x-auto bg-transparent items-start scrollbar-thin pb-12">
                 {PIPELINE_STAGES.map((stage) => (
                     <DroppablePipelineColumn
                         key={stage.value}

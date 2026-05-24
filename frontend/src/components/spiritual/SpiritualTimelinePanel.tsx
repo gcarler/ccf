@@ -50,7 +50,7 @@ export default function SpiritualTimelinePanel() {
         <div className="space-y-3 p-3">
             <div className="relative">
                 {/* Vertical line with glow */}
-                <div className="absolute left-[21px] top-6 bottom-6 w-[2px] bg-slate-200 dark:bg-white/[0.04]">
+                <div className="absolute left-[21px] top-3 bottom-6 w-[2px] bg-slate-200 dark:bg-white/[0.04]">
                     <div className="absolute inset-0 bg-blue-500 blur-[2px] opacity-20" />
                 </div>
 
@@ -75,7 +75,7 @@ export default function SpiritualTimelinePanel() {
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.1, type: 'spring', damping: 20 }}
-                                className="flex items-start gap-5 group"
+                                className="flex items-start gap-3 group"
                             >
                                 <div className={clsx(
                                     'size-6 rounded-lg flex items-center justify-center shrink-0 border-2 relative z-10 transition-all group-hover:scale-110 shadow-lg',

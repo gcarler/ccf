@@ -198,7 +198,7 @@ export default function AnnouncementsAdmin() {
     );
 
     const renderBoard = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {groupedAnnouncements.map((group) => (
                 <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
@@ -382,7 +382,7 @@ export default function AnnouncementsAdmin() {
                                     {/* Empty State / Add Card */}
                                     <div 
                                         onClick={() => router.push('/admin/announcements/new')}
-                                        className="bg-slate-50/50 dark:bg-white/5 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-lg p-4 flex flex-col items-center justify-center text-center space-y-6 hover:border-blue-500/50 hover:bg-blue-50/50 transition-all cursor-pointer group"
+                                        className="bg-slate-50/50 dark:bg-white/5 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-lg p-4 flex flex-col items-center justify-center text-center space-y-3 hover:border-blue-500/50 hover:bg-blue-50/50 transition-all cursor-pointer group"
                                     >
                                         <div className="size-8 rounded-lg bg-white dark:bg-[#0a0f16] shadow-xl flex items-center justify-center text-slate-300 group-hover:text-blue-600 group-hover:scale-110 group-hover:rotate-90 transition-all duration-500">
                                             <Plus size={40} strokeWidth={1.5} />

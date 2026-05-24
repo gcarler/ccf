@@ -224,7 +224,7 @@ export default function DonationsManagementPage() {
                                             <p className="text-sm font-bold text-slate-900 dark:text-white">{d.donor || "Anónimo"}</p>
                                             <p className="font-semibold">#{d.id}</p>
                                         </td>
-                                        <td className="px-3 py-1.5 font-black text-slate-900 dark:text-white">${d.amount?.toLocaleString()}</td>
+                                        <td className="px-3 py-1.5 font-bold text-slate-900 dark:text-white">${d.amount?.toLocaleString()}</td>
                                         <td className="px-3 py-1.5 text-xs text-slate-500">{d.type}</td>
                                         <td className="px-3 py-1.5 text-xs text-slate-400">{d.date ? new Date(d.date).toLocaleDateString("es-ES") : "—"}</td>
                                         <td className="px-3 py-1.5">{statusBadge(d.status)}</td>

@@ -161,7 +161,7 @@ export default function CmsTestimonialDetailPage() {
                             )}
 
                             <DSCard>
-                                <div className="space-y-6 relative">
+                                <div className="space-y-3 relative">
                                     <Quote size={48} className="absolute -top-4 -left-4 text-blue-500/10 -z-0" />
                                     <div className="flex items-center gap-1 mb-2">
                                         {[1, 2, 3, 4, 5].map(star => (
@@ -188,7 +188,7 @@ export default function CmsTestimonialDetailPage() {
                             </DSCard>
                         </div>
 
-                        <aside className="space-y-6">
+                        <aside className="space-y-3">
                             <DSCard>
                                 <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Detalles de Envío</h3>
                                 <div className="space-y-4">

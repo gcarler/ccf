@@ -25,6 +25,7 @@ const nextConfig = {
     typescript: {
         ignoreBuildErrors: true,
     },
+    outputFileTracingRoot: process.env.OUTPUT_FILE_TRACING_ROOT || '/root/ccf/frontend',
     async rewrites() {
         const target = process.env.API_PROXY_TARGET || 'http://backend:8000';
         return [

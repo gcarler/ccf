@@ -81,7 +81,7 @@ export default function AdminCourseContentPage() {
                             </h1>
                         </header>
 
-                        <section className="space-y-6">
+                        <section className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Lecciones y Módulos ({lessons.length})</h3>
                                 <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:border-blue-500 transition-all">
@@ -115,7 +115,7 @@ export default function AdminCourseContentPage() {
                         </section>
                     </div>
 
-                    <aside className="space-y-6">
+                    <aside className="space-y-3">
                         <DSCard>
                             <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-4">Configuración de Obra</h3>
                             <div className="space-y-4">

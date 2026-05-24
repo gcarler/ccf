@@ -147,7 +147,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                             </div>
 
                             {/* Task/Item Bars */}
-                            <div className="relative z-10 p-4 space-y-6">
+                            <div className="relative z-10 p-4 space-y-3">
                                 {items.length === 0 ? (
                                     <div className="absolute inset-0 flex items-center justify-center p-4 opacity-20 select-none grayscale pointer-events-none">
                                         <div className="flex flex-col items-center gap-4">

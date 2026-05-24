@@ -7,19 +7,15 @@ import logging
 from datetime import timedelta
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import (APIRouter, Depends, HTTPException, Request, Response,
+                     status)
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import (
-    create_access_token,
-    create_refresh_token,
-    normalize_role,
-    require_active_user,
-    require_admin,
-)
+from backend.auth import (create_access_token, create_refresh_token,
+                          normalize_role, require_active_user, require_admin)
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.rate_limit import rate_limiter
@@ -42,9 +38,8 @@ def login(
     db: Session = Depends(get_db),
 ):
     """Inicio de sesion ministerial. Soporta Email o Username."""
-    from backend.core.security import (  # Import local para evitar circularidad
-        verify_password,
-    )
+    from backend.core.security import \
+        verify_password  # Import local para evitar circularidad
 
     user = None
     if "@" in form_data.username:

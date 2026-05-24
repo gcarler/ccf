@@ -149,7 +149,7 @@ export default function PredicasPage() {
                                         <Play fill="white" size={32} className="text-white" />
                                     </div>
                                 </div>
-                                <div className="absolute top-6 left-6 bg-faro-primary text-white font-semibold px-3 py-1.5 rounded-full uppercase tracking-wide">Estreno</div>
+                                <div className="absolute top-3 left-6 bg-faro-primary text-white font-semibold px-3 py-1.5 rounded-full uppercase tracking-wide">Estreno</div>
                             </div>
                             <div className="p-4">
                                 <div className="flex items-center gap-4 mb-4 text-[10px] font-semibold uppercase tracking-wide opacity-50">
