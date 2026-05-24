@@ -186,6 +186,20 @@ class ColombianDepartment(Base):
     name = Column(String(50), unique=True, nullable=False)
     code = Column(String(3), unique=True, nullable=False)
     capital = Column(String(100), nullable=False)
+    cities = relationship("ColombianCity", back_populates="department", cascade="all, delete-orphan")
+
+
+class ColombianCity(Base):
+    __tablename__ = "colombian_cities"
+    id = Column(Integer, primary_key=True, index=True)
+    department_id = Column(
+        Integer,
+        ForeignKey("colombian_departments.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name = Column(String(100), nullable=False)
+    department = relationship("ColombianDepartment", back_populates="cities")
 
 
 class Member(Base):

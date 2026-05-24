@@ -289,11 +289,19 @@ class VolunteerShift(VolunteerShiftBase):
     model_config = orm_config
 
 
+class ColombianCity(BaseModel):
+    id: int
+    department_id: int
+    name: str
+    model_config = orm_config
+
+
 class ColombianDepartment(BaseModel):
     id: int
     name: str
     code: str
     capital: str
+    cities: List[ColombianCity] = []
     model_config = orm_config
 
 

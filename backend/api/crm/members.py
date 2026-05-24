@@ -536,7 +536,7 @@ def update_member_ministry(
     return {"id": mm.id, "updated": True}
 
 
-# --- COLOMBIAN DEPARTMENTS ENDPOINT ---
+# --- COLOMBIAN DEPARTMENTS & CITIES ENDPOINTS ---
 
 
 @router.get("/colombian-departments", response_model=List[schemas.ColombianDepartment])
@@ -548,6 +548,28 @@ def list_colombian_departments(
     return (
         db.query(models.ColombianDepartment)
         .order_by(models.ColombianDepartment.name)
+        .all()
+    )
+
+
+@router.get("/colombian-departments/{department_id}/cities", response_model=List[schemas.ColombianCity])
+def list_cities_by_department(
+    department_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Devuelve las ciudades de un departamento específico."""
+    department = (
+        db.query(models.ColombianDepartment)
+        .filter(models.ColombianDepartment.id == department_id)
+        .first()
+    )
+    if not department:
+        raise HTTPException(status_code=404, detail="Departamento no encontrado")
+    return (
+        db.query(models.ColombianCity)
+        .filter(models.ColombianCity.department_id == department_id)
+        .order_by(models.ColombianCity.name)
         .all()
     )
 

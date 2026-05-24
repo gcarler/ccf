@@ -24,7 +24,8 @@ from backend.models_cms import (Announcement, CmsMenu, CmsMenuItem, CmsPage,
                                 PageContentVersion, Testimonial)
 # CRM / Pastoral
 from backend.models_crm import ChatMessage  # noqa: F401
-from backend.models_crm import (AgendaEvent, ColombianDepartment,
+from backend.models_crm import (AgendaEvent, ColombianCity,
+                                ColombianDepartment,
                                 CommunicationLog, CommunityBoardCard,
                                 ConsolidationAssignment, ConsolidationCase,
                                 ConsolidationFollowUpTask,
