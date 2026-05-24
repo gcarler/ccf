@@ -18,12 +18,40 @@ from backend.auth import (create_access_token, create_refresh_token,
                           normalize_role, require_active_user, require_admin)
 from backend.core.config import get_settings
 from backend.core.database import get_db
+from backend.core.permissions import get_user_effective_permissions
 from backend.core.rate_limit import rate_limiter
 
 settings = get_settings()
 log = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Autenticacion"])
+
+
+def _ensure_default_permissions(db: Session, user: models.User) -> None:
+    """Asigna permisos por defecto al usuario según su rol si no tiene."""
+    from backend.core.permissions import DEFAULT_ROLES
+    from backend.models_identity import UserPermission
+
+    existing = db.query(UserPermission).filter(UserPermission.user_id == user.id).first()
+    if existing:
+        return
+
+    role = normalize_role(str(getattr(user, "role", "")))
+    default_perms = {}
+
+    for role_def in DEFAULT_ROLES:
+        if role_def["name"].lower() == role:
+            for p in role_def["permissions"]:
+                default_perms[p] = "allow"
+            break
+
+    # Even if no exact role match, grant basic profile access
+    if not default_perms:
+        default_perms = {"profile:manage": "allow"}
+
+    up = UserPermission(user_id=user.id, permissions=default_perms)
+    db.add(up)
+    db.commit()
 
 
 @router.post(
@@ -191,7 +219,7 @@ def get_sessions(current_user: dict = Depends(require_active_user), db: Session 
     from backend.models_identity import RefreshToken
     sessions = db.query(RefreshToken).filter(
         RefreshToken.user_id == current_user["user_id"],
-        RefreshToken.revoked == False
+        RefreshToken.revoked.is_(False)
     ).order_by(RefreshToken.last_active.desc()).all()
     result = []
     for s in sessions:
@@ -218,7 +246,7 @@ def revoke_session(
     session = db.query(RefreshToken).filter(
         RefreshToken.id == session_id,
         RefreshToken.user_id == current_user["user_id"],
-        RefreshToken.revoked == False
+        RefreshToken.revoked.is_(False)
     ).first()
     if not session:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
@@ -242,6 +270,9 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     user.role = "estudiante"
     created = crud.create_user(db=db, user=user)
 
+    # Asignar permisos por defecto según rol
+    _ensure_default_permissions(db, created)
+
     # Auto-enviar email de verificación post-registro
     try:
         from backend.crud.identity import create_verification_token
@@ -259,9 +290,21 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 @router.get("/me", response_model=schemas.User)
 def get_current_ministerial_user(
     current_user: models.User = Depends(require_active_user),
+    db: Session = Depends(get_db),
 ):
-    """Obtiene el perfil del usuario autenticado."""
+    """Obtiene el perfil del usuario autenticado con sus permisos."""
+    current_user.permissions = get_user_effective_permissions(db, current_user)
     return current_user
+
+
+@router.get("/me/permissions", response_model=dict)
+def get_current_user_permissions(
+    current_user: models.User = Depends(require_active_user),
+    db: Session = Depends(get_db),
+):
+    """Obtiene los permisos efectivos del usuario autenticado."""
+    perms = get_user_effective_permissions(db, current_user)
+    return {"permissions": perms}
 
 
 @router.get("/user-list", response_model=List[schemas.User])
@@ -494,6 +537,9 @@ def google_callback(
         db.add(user)
         db.commit()
         db.refresh(user)
+
+        # Assign default permissions
+        _ensure_default_permissions(db, user)
 
         # Try to create member profile
         try:
