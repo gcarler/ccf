@@ -273,12 +273,18 @@ class Member(Base):
     )
     city = Column(String(100), nullable=True)
 
+    # --- Extra DB columns (not yet in model) ---
+    qr_token = Column(String(100), nullable=True, index=True)
+    birthday = Column(DateTime, nullable=True)
+    role_in_family = Column(String(50), nullable=True)
+
     # --- Management Fields ---
     talents = Column(Text, nullable=True)
     spiritual_gifts = Column(Text, nullable=True)
     pastoral_notes = Column(Text, nullable=True)
 
     created_at = Column(DateTime, default=_utcnow, index=True)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
     user = relationship("User", backref=backref("member_profile", uselist=False))
     family = relationship("Family", back_populates="members")
@@ -718,7 +724,9 @@ class PastoralCallLog(Base):
     outcome = Column(String(120), nullable=False)
     notes = Column(Text, nullable=True)
     duration_seconds = Column(Integer, default=0)
+    prayer_requests = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 
 class MemberMinistry(Base):

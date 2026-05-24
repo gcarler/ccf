@@ -264,10 +264,12 @@ class Announcement(Base):
     content = Column(Text, nullable=False)
     category = Column(String(100), default="General")
     image_url = Column(String(500), nullable=True)
+    is_active = Column(Boolean, default=True)
     is_featured = Column(Boolean, default=False)
     status = Column(String(20), default="published", index=True)
     published_at = Column(DateTime, default=_utcnow)
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 
 class Testimonial(Base):

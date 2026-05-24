@@ -61,6 +61,11 @@ class Settings(BaseSettings):
     # Google OAuth
     google_client_id: str = Field(default="")
     google_client_secret: str = Field(default="")
+
+    # MercadoPago
+    mercadopago_access_token: str = Field(default="")
+    mercadopago_public_key: str = Field(default="")
+
     google_redirect_uri: str = Field(
         default="http://localhost:8000/api/auth/google/callback"
     )

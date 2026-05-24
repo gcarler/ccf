@@ -250,7 +250,9 @@ class GloryHouse(Base):
         Integer, ForeignKey("members.id", ondelete="SET NULL"), nullable=True
     )
 
+    schedule = Column(String(100), nullable=True)  # legacy: "Lunes 19:00-21:00"
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
     leader = relationship("Member", foreign_keys=[leader_id])
     assistant = relationship("Member", foreign_keys=[assistant_id])

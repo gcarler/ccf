@@ -12,7 +12,9 @@ import {
     CheckCircle2,
     Sparkles,
     HandHeart,
-    Lock
+    Lock,
+    Loader2,
+    ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -29,10 +31,27 @@ export default function DonatePage() {
     const [type, setType] = useState('Diezmo');
     const [isCustom, setIsCustom] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [mpLoading, setMpLoading] = useState(false);
     const [completed, setCompleted] = useState(false);
+    const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
 
-    const handleDonation = async (e: React.FormEvent) => {
-        e.preventDefault();
+    // Handle return from MercadoPago (status in URL params)
+    React.useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const status = params.get('status');
+        if (status === 'success') {
+            setCompleted(true);
+            setPaymentStatus('approved');
+        } else if (status === 'failure') {
+            addToast('El pago no pudo completarse. Intenta de nuevo.', 'error');
+        } else if (status === 'pending') {
+            addToast('Tu pago está siendo procesado.', 'warning');
+            setCompleted(true);
+            setPaymentStatus('pending');
+        }
+    }, []);
+
+    const handleManualDonation = async () => {
         setLoading(true);
         try {
             await apiFetch('/donations/', {
@@ -53,19 +72,51 @@ export default function DonatePage() {
         }
     };
 
+    const handleMercadoPago = async () => {
+        setMpLoading(true);
+        try {
+            const pref = await apiFetch<{ id: string; init_point: string }>('/donations/mercadopago/create-preference', {
+                method: 'POST',
+                body: {
+                    amount: parseFloat(amount),
+                    title: type,
+                    donor_name: user?.username || undefined,
+                    email: user?.email || undefined,
+                },
+            });
+            if (pref?.init_point) {
+                window.location.href = pref.init_point;
+            } else {
+                addToast('Error al iniciar pago con MercadoPago', 'error');
+            }
+        } catch (error: any) {
+            const detail = error?.detail?.detail || error?.message;
+            addToast(detail || 'Error al conectar con MercadoPago', 'error');
+        } finally {
+            setMpLoading(false);
+        }
+    };
+
     if (completed) {
+        const isApproved = paymentStatus === 'approved' || !paymentStatus;
         return (
             <div className="min-h-screen bg-white dark:bg-[#1e1f21] flex items-center justify-center p-3">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                     className="max-w-md w-full text-center space-y-3 p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 shadow-2xl"
                 >
-                    <div className="size-10 rounded-full bg-emerald-500 text-white mx-auto flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                        <CheckCircle2 size={48} />
+                    <div className={`size-10 rounded-full mx-auto flex items-center justify-center shadow-lg ${isApproved ? 'bg-emerald-500' : 'bg-amber-500'}`}>
+                        {isApproved ? <CheckCircle2 size={48} /> : <Sparkles size={48} />}
                     </div>
                     <div className="space-y-3">
-                        <h2 className="text-xl font-bold text-slate-800 dark:text-white tracking-tighter">¡Ofrenda Recibida!</h2>
-                        <p className="text-slate-500 dark:text-slate-400 font-medium">Tu generosidad permite que el ministerio siga creciendo y alcanzando más vidas.</p>
+                        <h2 className="text-xl font-bold text-slate-800 dark:text-white tracking-tighter">
+                            {isApproved ? '¡Ofrenda Recibida!' : 'Pago Pendiente'}
+                        </h2>
+                        <p className="text-slate-500 dark:text-slate-400 font-medium">
+                            {isApproved
+                                ? 'Tu generosidad permite que el ministerio siga creciendo y alcanzando más vidas.'
+                                : 'Tu pago está siendo procesado. Te notificaremos cuando se confirme.'}
+                        </p>
                     </div>
                     <div className="py-2 border-y border-slate-200 dark:border-white/10 flex justify-between items-center px-4">
                         <div className="text-left">
@@ -175,13 +226,37 @@ export default function DonatePage() {
                         </div>
                     </div>
 
-                    {/* Submit */}
-                    <button 
-                        onClick={handleDonation}
-                        disabled={loading || !amount || parseFloat(amount) <= 0}
-                        className="w-full py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-bold text-sm uppercase tracking-wide shadow-2xl active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                    {/* Submit — MercadoPago */}
+                    <button
+                        onClick={handleMercadoPago}
+                        disabled={mpLoading || !amount || parseFloat(amount) <= 0}
+                        className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm uppercase tracking-wide shadow-xl shadow-blue-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-blue-700"
                     >
-                        {loading ? <Loader2 size={24} className="animate-spin" /> : <><CreditCard size={20} /> Continuar al Pago</>}
+                        {mpLoading ? (
+                            <><Loader2 size={18} className="animate-spin" /> Conectando...</>
+                        ) : (
+                            <><ExternalLink size={18} /> Pagar con MercadoPago</>
+                        )}
+                    </button>
+
+                    {/* Manual registration (admin only) */}
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-slate-100 dark:border-white/5" />
+                        </div>
+                        <div className="relative flex justify-center">
+                            <span className="bg-white dark:bg-[#1e1f21] px-3 text-[9px] font-bold uppercase tracking-wide text-slate-300">
+                                O registra manualmente
+                            </span>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleManualDonation}
+                        disabled={loading || !amount || parseFloat(amount) <= 0}
+                        className="w-full py-2 bg-slate-100 dark:bg-white/5 text-slate-500 rounded-lg font-bold text-[11px] uppercase tracking-wide active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-white/10"
+                    >
+                        {loading ? <Loader2 size={16} className="animate-spin" /> : <><CreditCard size={16} /> Registrar como recibido</>}
                     </button>
 
                     <div className="flex items-center justify-center gap-4 pt-4 border-t border-slate-50 dark:border-white/5 opacity-40">
@@ -229,6 +304,4 @@ function TypeOption({ active, onClick, icon: Icon, label }: any) {
         </button>
     );
 }
-
-function Loader2({ size, className }: any) { return <Sparkles size={size} className={className} />; } // Simplified fallback
 

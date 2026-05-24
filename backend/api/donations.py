@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
-from typing import List
+from typing import Any, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -11,6 +13,8 @@ from backend import crud, models, schemas
 from backend.auth import require_active_user, require_admin
 from backend.core.database import get_db
 from backend.core.rate_limit import rate_limiter
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/donations", tags=["donations"])
 
@@ -109,3 +113,109 @@ def download_certificate(
         "type": donation.donation_type,
         "verification_url": f"https://ccf.org/verify/don/{donation.id}",
     }
+
+
+# ─── MercadoPago Integration ────────────────────────────────────────────────
+
+
+class CreatePreferenceRequest(BaseModel):
+    amount: float
+    title: str = "Donación"
+    description: Optional[str] = None
+    donor_name: Optional[str] = None
+    email: Optional[str] = None
+
+
+@router.post("/mercadopago/create-preference")
+def mercadopago_create_preference(
+    payload: CreatePreferenceRequest,
+    request: Request,
+):
+    """
+    Crea una preferencia de pago en MercadoPago.
+    Retorna la URL de checkout (init_point) para redirigir al donante.
+    """
+    try:
+        from backend.services.payments import PaymentPreference, create_donation_preference
+
+        pref = PaymentPreference(
+            amount=payload.amount,
+            title=payload.title,
+            description=payload.description,
+            donor_name=payload.donor_name,
+            email=payload.email,
+        )
+        result = create_donation_preference(pref)
+        return {
+            "id": result.get("id"),
+            "init_point": result.get("init_point"),
+            "sandbox_init_point": result.get("sandbox_init_point"),
+        }
+    except RuntimeError as exc:
+        raise HTTPException(status_code=501, detail=str(exc))
+    except Exception as exc:
+        logger.error("Error creating MP preference: %s", exc)
+        raise HTTPException(status_code=500, detail="Error al crear preferencia de pago")
+
+
+@router.post("/mercadopago/webhook")
+async def mercadopago_webhook(request: Request, db: Session = Depends(get_db)):
+    """
+    Webhook para recibir notificaciones de pago de MercadoPago.
+    Configurar en el panel de MercadoPago → Webhooks → URL de notificación.
+
+    Cuando un pago es aprobado, registra la donación en la base de datos.
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+
+    logger.info("Webhook MP recibido: %s", json.dumps(data)[:500])
+
+    try:
+        from backend.services.payments import process_webhook_notification
+
+        result = process_webhook_notification(data)
+        if result and result.status == "approved":
+            # Registrar donación en BD
+            donation = models.Donation(
+                amount=result.amount,
+                donation_type="Diezmo",
+                donor_name=result.donor_name or result.email or "Web - MercadoPago",
+                notes=f"MercadoPago payment #{result.payment_id}",
+            )
+            db.add(donation)
+            db.commit()
+            logger.info(
+                "Donación registrada por webhook MP: payment_id=%s amount=%s",
+                result.payment_id,
+                result.amount,
+            )
+    except Exception as exc:
+        logger.error("Error procesando webhook MP: %s", exc)
+
+    # MercadoPago espera 200 OK siempre (incluso si hay error interno)
+    return {"status": "ok"}
+
+
+@router.get("/mercadopago/payments/{payment_id}")
+def mercadopago_payment_status(payment_id: int):
+    """Consulta el estado de un pago en MercadoPago."""
+    try:
+        from backend.services.payments import get_payment_status
+
+        result = get_payment_status(payment_id)
+        return {
+            "payment_id": result.payment_id,
+            "status": result.status,
+            "status_detail": result.status_detail,
+            "amount": result.amount,
+            "email": result.email,
+            "donor_name": result.donor_name,
+        }
+    except RuntimeError as exc:
+        raise HTTPException(status_code=501, detail=str(exc))
+    except Exception as exc:
+        logger.error("Error consultando pago MP: %s", exc)
+        raise HTTPException(status_code=500, detail="Error al consultar pago")
