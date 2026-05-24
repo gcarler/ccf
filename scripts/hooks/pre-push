@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# Pre-push hook: validaciones rápidas antes de enviar a producción
+set -euo pipefail
+
+VENV="/root/ccf/venv/bin"
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo ""
+echo "🔍 Pre-push: validando cambios antes de enviar a producción..."
+echo ""
+
+# Archivos Python modificados respecto a origin/main
+PY_FILES=$(git diff --name-only origin/main HEAD 2>/dev/null | grep '\.py$' || true)
+
+# ─── 1. SINTAXIS PYTHON ───────────────────────────────────────────────────────
+if [ -n "$PY_FILES" ]; then
+    echo "  [1/3] Sintaxis Python..."
+    SYNTAX_ERRORS=0
+    while IFS= read -r f; do
+        [ -f "$f" ] || continue
+        if ! $VENV/python -m py_compile "$f" 2>/tmp/py_err; then
+            echo -e "  ${RED}✗ Error de sintaxis en: $f${NC}"
+            cat /tmp/py_err | sed 's/^/      /'
+            SYNTAX_ERRORS=1
+        fi
+    done <<< "$PY_FILES"
+    if [ $SYNTAX_ERRORS -eq 0 ]; then
+        echo -e "  ${GREEN}✓ Sintaxis OK${NC}"
+    else
+        echo -e "\n  ${RED}Corrige los errores de sintaxis antes de hacer push.${NC}\n"
+        exit 1
+    fi
+else
+    echo "  [1/3] Sin archivos Python modificados, saltando sintaxis."
+fi
+
+# ─── 2. LINTING RUFF ─────────────────────────────────────────────────────────
+if [ -n "$PY_FILES" ]; then
+    echo "  [2/3] Linting (ruff)..."
+    LINT_FILES=$(echo "$PY_FILES" | tr '\n' ' ')
+    if ! $VENV/ruff check $LINT_FILES --quiet 2>/tmp/ruff_err; then
+        echo -e "  ${YELLOW}⚠ Advertencias de linting:${NC}"
+        cat /tmp/ruff_err | sed 's/^/      /'
+        echo ""
+        echo -e "  ${YELLOW}(Solo advertencia — el push continúa. Revisa los errores.)${NC}"
+    else
+        echo -e "  ${GREEN}✓ Linting OK${NC}"
+    fi
+else
+    echo "  [2/3] Sin archivos Python modificados, saltando linting."
+fi
+
+# ─── 3. BACKEND ARRIBA ───────────────────────────────────────────────────────
+echo "  [3/3] Verificando que el backend sigue online..."
+HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/healthz 2>/dev/null || echo "000")
+if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "204" ]; then
+    echo -e "  ${GREEN}✓ Backend responde OK (HTTP $HTTP_STATUS)${NC}"
+elif [ "$HTTP_STATUS" = "000" ]; then
+    echo -e "  ${YELLOW}⚠ Backend no responde en :8000 — verifica con: pm2 list${NC}"
+else
+    echo -e "  ${YELLOW}⚠ Backend responde HTTP $HTTP_STATUS — revisa pm2 logs ccf-backend-staging${NC}"
+fi
+
+# ─── ARCHIVOS PELIGROSOS ─────────────────────────────────────────────────────
+echo ""
+DANGEROUS=$(git diff --name-only origin/main HEAD 2>/dev/null | grep -E '\.(env|dump|key|pem|secret)$|seaweed_s3\.json|backups/' || true)
+if [ -n "$DANGEROUS" ]; then
+    echo -e "  ${RED}⛔ ALERTA: estos archivos pueden contener datos sensibles:${NC}"
+    echo "$DANGEROUS" | sed 's/^/      /'
+    echo ""
+    echo -e "  ${RED}Cancela con Ctrl+C si no es intencional, o presiona Enter para continuar.${NC}"
+    read -r
+fi
+
+echo ""
+echo -e "  ${GREEN}✓ Validaciones completadas — enviando a producción...${NC}"
+echo ""
