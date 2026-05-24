@@ -968,11 +968,7 @@ export default function CommunityHubPage() {
                 <div className="space-y-4">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Centro Comunitario</p>
-                            <h1 className="text-[26px] md:text-[30px] font-semibold text-[hsl(var(--text-primary))] tracking-tight leading-tight">Tablero maestro tipo ClickUp para la comunidad.</h1>
-                            <p className="text-[hsl(var(--text-secondary))] text-xs md:text-sm font-medium max-w-2xl">
-                                Los mismos patrones visuales del CRM ahora aplicados a notificaciones, cuidado pastoral y generosidad.
-                            </p>
+                            <h1 className="sr-only">Tablero comunitario</h1>
                         </div>
                         <div className="flex flex-wrap gap-2">
                             <button

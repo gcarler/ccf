@@ -13,6 +13,7 @@ class AdminAuditLog(Base):
     severity = Column(String(20), default="info")
     metadata_json = Column("metadata", JSON, default={})
     created_at = Column(DateTime, default=_utcnow, index=True)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 
 class AutomationRule(Base):
