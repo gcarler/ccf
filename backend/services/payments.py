@@ -9,7 +9,6 @@ Uso:
     pref = create_donation_preference(amount=50.0, title="Diezmo", email="donante@ejemplo.com")
     # pref["init_point"] -> URL de checkout
 """
-import json
 import logging
 from dataclasses import dataclass, field
 from typing import Optional
