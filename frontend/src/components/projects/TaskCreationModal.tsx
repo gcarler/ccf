@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { CheckSquare, Type, AlignLeft, Flag, Loader2 } from 'lucide-react';
+import { CheckSquare, Type, AlignLeft, Flag, Loader2, User } from 'lucide-react';
+import UserSelect from '@/components/ui/UserSelect';
 import clsx from 'clsx';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 
@@ -9,7 +10,7 @@ interface Props {
     isOpen: boolean;
     defaultStatus?: string;
     onClose: () => void;
-    onSubmit: (data: { title: string; description: string; priority: string; status: string }) => Promise<void>;
+    onSubmit: (data: { title: string; description: string; priority: string; status: string; assignee_id?: number | null }) => Promise<void>;
 }
 
 const PRIORITIES = [
@@ -23,6 +24,7 @@ export default function TaskCreationModal({ isOpen, defaultStatus = 'todo', onCl
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [priority, setPriority] = useState('normal');
+    const [assigneeId, setAssigneeId] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
 
     // Reset fields when opened
@@ -31,6 +33,7 @@ export default function TaskCreationModal({ isOpen, defaultStatus = 'todo', onCl
             setTitle('');
             setDescription('');
             setPriority('normal');
+            setAssigneeId(null);
             setLoading(false);
         }
     }, [isOpen]);
@@ -40,7 +43,7 @@ export default function TaskCreationModal({ isOpen, defaultStatus = 'todo', onCl
         if (!title.trim()) return;
         setLoading(true);
         try {
-            await onSubmit({ title, description, priority, status: defaultStatus });
+            await onSubmit({ title, description, priority, status: defaultStatus, assignee_id: assigneeId });
             onClose();
         } catch (error) {
             console.error(error);
@@ -116,6 +119,17 @@ export default function TaskCreationModal({ isOpen, defaultStatus = 'todo', onCl
                             </button>
                         ))}
                     </div>
+                </div>
+
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400 flex items-center gap-2">
+                        <User size={12} /> Asignar a
+                    </label>
+                    <UserSelect
+                        value={assigneeId}
+                        onChange={setAssigneeId}
+                        placeholder="Seleccionar responsable"
+                    />
                 </div>
             </form>
         </WorkspaceDrawer>

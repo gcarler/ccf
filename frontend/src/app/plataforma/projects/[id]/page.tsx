@@ -35,6 +35,7 @@ import type { ProjectActivityItem, ProjectMilestoneRecord, ProjectTaskRecord } f
 import type { PhaseDef } from '@/components/projects/ProjectKanbanBoard';
 import { PhaseManagerModal } from '@/components/projects/PhaseManagerModal';
 import { toast } from 'sonner';
+import UserSelect from '@/components/ui/UserSelect';
 
 const PROJECT_DETAIL_VIEWS: ViewType[] = ['dashboard', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
@@ -54,6 +55,7 @@ export default function ProjectDetailPage() {
     const [editTitle, setEditTitle] = useState('');
     const [editDescription, setEditDescription] = useState('');
     const [editStatus, setEditStatus] = useState('');
+    const [editOwnerId, setEditOwnerId] = useState<number | null>(null);
     const [viewType, setViewType] = useState<ViewType>('dashboard');
     const [selectedTask, setSelectedTask] = useState<ProjectTaskRecord | null>(null);
     const [whiteboardOpen, setWhiteboardOpen] = useState(false);
@@ -100,7 +102,7 @@ export default function ProjectDetailPage() {
         if (task) setSelectedTask(task);
     }, [searchParams, tasks]);
 
-    const handleCreateTask = async (data: { title: string; description: string; priority: string; status: string }) => {
+    const handleCreateTask = async (data: { title: string; description: string; priority: string; status: string; assignee_id?: number | null }) => {
         if (!token || !id) return;
         try {
             await apiFetch(`/projects/${id}/tasks`, {
@@ -167,7 +169,7 @@ export default function ProjectDetailPage() {
             await apiFetch(`/projects/${id}`, {
                 method: 'PATCH',
                 token,
-                body: { title: editTitle, description: editDescription, status: editStatus },
+                body: { title: editTitle, description: editDescription, status: editStatus, owner_id: editOwnerId },
             });
             toast.success('Proyecto actualizado');
             setEditingProject(false);
@@ -261,6 +263,7 @@ export default function ProjectDetailPage() {
         setEditTitle(project?.title || '');
         setEditDescription(project?.description || '');
         setEditStatus(project?.status || 'planning');
+        setEditOwnerId(project?.owner_id ?? null);
         setEditingProject(true);
     };
 
@@ -332,6 +335,11 @@ export default function ProjectDetailPage() {
                             <option value="completed">Alcanzado</option>
                             <option value="archived">Archivado</option>
                         </select>
+                        <UserSelect
+                            value={editOwnerId}
+                            onChange={setEditOwnerId}
+                            placeholder="Responsable del proyecto"
+                        />
                         <div className="flex gap-2">
                             <button onClick={handleUpdateProject} className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all">Guardar Cambios</button>
                             <button onClick={() => setEditingProject(false)} className="px-3 py-1.5 bg-slate-200 dark:bg-white/10 rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all">Cancelar</button>

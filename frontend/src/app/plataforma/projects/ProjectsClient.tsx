@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { ViewType } from '@/components/ViewSwitcher';
 import type { ProjectRecord } from '@/types/projects';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
+import UserSelect from '@/components/ui/UserSelect';
 import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/DataTable';
 import { SectionHeader } from '@/components/ui/SectionHeader';
@@ -50,6 +51,9 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
     const [viewType, setViewType] = useState<ViewType>('grid');
     const [search, setSearch] = useState('');
     const [isCreating, setIsCreating] = useState(false);
+    const [newProjectOwner, setNewProjectOwner] = useState<number | null>(null);
+    const [newProjectTitle, setNewProjectTitle] = useState('');
+    const [showCreateForm, setShowCreateForm] = useState(false);
 
     useEffect(() => {
         if (!token) return;
@@ -90,10 +94,13 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                     title: 'Nuevo Proyecto',
                     description: '',
                     color: '#2563eb',
-                    status: 'active'
+                    status: 'active',
+                    owner_id: newProjectOwner,
                 },
             });
             setProjects((prev) => [created, ...prev]);
+            setNewProjectOwner(null);
+            setShowCreateForm(false);
             toast.success('Proyecto creado');
             window.dispatchEvent(new CustomEvent('project-updated'));
             setTimeout(() => router.push(`/projects/${created.id}`), 200);
@@ -214,18 +221,53 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                 availableViews={PROJECT_VIEWS}
                 onSearch={setSearch}
                 rightActions={
-                    <SplitDropdownButton
-                        mainLabel={isCreating ? 'Creando...' : 'Nuevo Proyecto'}
-                        icon={Plus}
-                        onMainClick={handleCreateProject}
-                        options={[
-                            { id: 'whiteboard', label: 'Pizarra', icon: Layers, onClick: () => handleQuickCreate('whiteboard') },
-                        ]}
-                    />
+                    <button
+                        onClick={() => setShowCreateForm(!showCreateForm)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all hover:scale-105 ${
+                            showCreateForm
+                                ? 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300'
+                                : 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                        }`}
+                    >
+                        <Plus size={14} />
+                        {isCreating ? 'Creando...' : 'Nuevo Proyecto'}
+                    </button>
                 }
             />
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-3">
+                {showCreateForm && (
+                    <div className="bg-white dark:bg-white/5 rounded-lg p-4 border border-slate-200 dark:border-white/10 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600">Nuevo Proyecto</h3>
+                        <input
+                            value={newProjectTitle}
+                            onChange={(e) => setNewProjectTitle(e.target.value)}
+                            className="w-full p-2 rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm font-medium"
+                            placeholder="Título del proyecto"
+                        />
+                        <UserSelect
+                            value={newProjectOwner}
+                            onChange={setNewProjectOwner}
+                            placeholder="Asignar responsable del proyecto"
+                        />
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleCreateProject}
+                                disabled={isCreating || !newProjectTitle.trim()}
+                                className="px-3 py-1.5 bg-blue-600 disabled:bg-blue-400 text-white rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all"
+                            >
+                                {isCreating ? 'Creando...' : 'Crear Proyecto'}
+                            </button>
+                            <button
+                                onClick={() => { setShowCreateForm(false); setNewProjectTitle(''); setNewProjectOwner(null); }}
+                                className="px-3 py-1.5 bg-slate-200 dark:bg-white/10 rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* 📊 Project Metrics */}
                 <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {dashboard?.cards.map((card: any, idx: number) => (

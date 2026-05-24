@@ -11,6 +11,7 @@ import {
 import clsx from 'clsx';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
+import UserSelect from '@/components/ui/UserSelect';
 import type { ProjectTaskRecord, TaskSupplyRecord } from '@/types/projects';
 
 // Paleta de colores para etiquetas
@@ -656,9 +657,8 @@ export default function TaskDetailPanel({
         } catch { /* optimistic */ }
     };
 
-    const handleAssigneeToggle = async () => {
+    const handleAssigneeChange = async (newAssigneeId: number | null) => {
         if (!task || !token) return;
-        const newAssigneeId = task.assignee_id ? null : user?.id;
         const updated = { ...task, assignee_id: newAssigneeId as any };
         onUpdate?.(updated);
         try {
@@ -837,16 +837,12 @@ export default function TaskDetailPanel({
                     <section className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.05] space-y-2">
 
                         <MetaRow icon={<UserRound size={13} className="text-slate-400" />} label="Persona asignada">
-                            <button
-                                onClick={handleAssigneeToggle}
-                                title="Click para auto-asignar o liberar"
-                                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] font-medium hover:bg-slate-50 dark:hover:bg-white/[0.04] border border-transparent hover:border-slate-200 dark:hover:border-white/[0.08] transition-all cursor-pointer"
-                            >
-                                <div className={task.assignee_id ? 'size-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold' : 'size-5 rounded-full bg-blue-600/20 border border-blue-300/30 flex items-center justify-center'}>
-                                    {task.assignee_id ? (user?.username?.charAt(0).toUpperCase() || 'U') : <UserRound size={10} className="text-blue-500" />}
-                                </div>
-                                {task.assignee_id ? (user?.id === task.assignee_id ? user?.username || 'Tú' : `Asignado #${task.assignee_id}`) : 'Sin asignar'}
-                            </button>
+                            <UserSelect
+                                value={task.assignee_id ?? null}
+                                onChange={handleAssigneeChange}
+                                placeholder="Sin asignar"
+                                className="min-w-[180px]"
+                            />
                         </MetaRow>
 
                         <MetaRow icon={<CalendarDays size={13} className="text-slate-400" />} label="Fecha límite">
