@@ -180,7 +180,7 @@ export default function EventosPage() {
                         <div className="absolute inset-0 flex items-center justify-center p-4">
                             <div
                                 className="max-w-md rounded-lg p-4 text-center"
-                                style={{ background: "rgba(0,13,42,0.68)", backdropFilter: "blur(12px)" }}
+                                style={{ background: "var(--faro-overlay-bg)", backdropFilter: "blur(12px)" }}
                             >
                                 <p
                                     className="text-[10px] font-semibold uppercase tracking-wide mb-3"
@@ -317,7 +317,7 @@ export default function EventosPage() {
                                         <div
                                             className="absolute top-4 right-4 p-3 rounded-lg text-center min-w-[64px]"
                                             style={{
-                                                background: "rgba(0,13,42,0.8)",
+                                                background: "var(--faro-date-badge-bg)",
                                                 backdropFilter: "blur(12px)",
                                             }}
                                         >
@@ -491,7 +491,7 @@ export default function EventosPage() {
                                     style={
                                         day.n === 24 && !day.prev
                                             ? {
-                                                  background: "rgba(44,96,157,0.2)",
+                                                  background: "var(--faro-card-highlight)",
                                                   border: "2px solid var(--faro-primary)",
                                               }
                                             : day.prev

@@ -211,7 +211,7 @@ export default function CursosPage() {
                                     <span
                                         className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide mb-3"
                                         style={{
-                                            background: "rgba(44,96,157,0.2)",
+                                            background: "var(--faro-card-highlight)",
                                             color: "var(--faro-primary)",
                                             backdropFilter: "blur(8px)"
                                         }}
@@ -409,7 +409,7 @@ export default function CursosPage() {
                 >
                     <div
                         className="absolute top-0 right-0 w-96 h-96 blur-[120px] rounded-full -mr-32 -mt-32 pointer-events-none"
-                        style={{ background: "rgba(44,96,157,0.15)" }}
+                        style={{ background: "var(--faro-card-highlight)" }}
                     />
                     <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
                         <div>

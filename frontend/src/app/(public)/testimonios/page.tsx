@@ -45,7 +45,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
             style={{
                 background: isHighlight ? "var(--faro-primary-container)" : "var(--faro-surface-container-low)",
                 borderColor: isHighlight ? "var(--faro-primary)" : "var(--faro-outline-variant)",
-                boxShadow: isHighlight ? "0 20px 40px rgba(44, 96, 157, 0.15)" : "none"
+                boxShadow: isHighlight ? "0 20px 40px var(--faro-card-highlight)" : "none"
             }}
         >
             {isHighlight && (
@@ -268,8 +268,8 @@ export default function TestimoniosPage() {
                              borderColor: "var(--faro-outline-variant)" 
                          }}>
                         <div className="flex items-center gap-4 hidden md:flex">
-                            <div className="w-12 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 shadow-xl">
-                                <Sparkles size={20} className="text-white" />
+                            <div className="w-12 h-8 rounded-lg flex items-center justify-center" style={{ background: "var(--faro-hero-cta-gradient)", boxShadow: "0 8px 32px var(--faro-hero-cta-shadow)" }}>
+                                <Sparkles size={20} style={{ color: "var(--faro-on-hero)" }} />
                             </div>
                             <div className="mr-4">
                                 <h3 className="font-black" style={{ color: "var(--faro-on-surface)" }}>¿Tienes una historia?</h3>
@@ -277,10 +277,11 @@ export default function TestimoniosPage() {
                         </div>
                         <Link
                             href="/conocer-a-jesus"
-                            className="flex items-center gap-3 px-3 py-3 rounded-full text-xs font-semibold uppercase tracking-wide transition-all hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20 w-full justify-center md:w-auto"
+                            className="flex items-center gap-3 px-3 py-3 rounded-full text-xs font-semibold uppercase tracking-wide transition-all hover:scale-105 w-full justify-center md:w-auto"
                             style={{
                                 background: "var(--faro-primary)",
                                 color: "var(--faro-on-primary)",
+                                boxShadow: isHighlight ? "unset" : undefined
                             }}
                         >
                             Compartir <ArrowRight size={16} />

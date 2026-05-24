@@ -66,24 +66,29 @@ export default function PredicasPage() {
                             className="font-bold tracking-tighter leading-[0.9] mb-3"
                             style={{ 
                                 fontSize: "clamp(3.5rem, 8vw, 7rem)",
-                                color: "white"
+                                color: "var(--faro-on-hero)"
                             }}
                         >
                             {heroTitleLead} <br/>
                             <span className="italic" style={{ color: "var(--faro-primary)" }}>{heroAccent}.</span>
                         </h1>
-                        <p className="text-xl md:text-lg opacity-70 mb-3 leading-relaxed" style={{ color: "white" }}>
+                        <p className="text-xl md:text-lg opacity-70 mb-3 leading-relaxed" style={{ color: "var(--faro-on-hero)" }}>
                             {heroDescription}
                         </p>
                         <div className="flex flex-wrap gap-4">
-                            <button 
-                                className="flex items-center gap-3 px-4 py-2 rounded-lg font-black text-sm uppercase tracking-wide text-white transition-all hover:scale-105 shadow-2xl"
-                                style={{ background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))" }}
+                            <button className="flex items-center gap-3 px-4 py-2 rounded-lg font-black text-sm uppercase tracking-wide transition-all hover:scale-105 shadow-2xl"
+                                style={{ background: "var(--faro-hero-cta-gradient)", color: "var(--faro-on-hero)" }}
                             >
                                 <Play fill="currentColor" size={18} />
                                 Ver ahora
                             </button>
-                            <button className="flex items-center gap-3 px-4 py-2 rounded-lg font-black text-sm uppercase tracking-wide bg-white/10 backdrop-blur-xl border border-white/20 text-white transition-all hover:bg-white/20">
+                            <button className="flex items-center gap-3 px-4 py-2 rounded-lg font-black text-sm uppercase tracking-wide transition-all hover:scale-105"
+                                style={{
+                                    background: "var(--faro-hero-bg-light)",
+                                    backdropFilter: "blur(20px)",
+                                    border: "1px solid var(--faro-hero-border-light)",
+                                    color: "var(--faro-on-hero)",
+                                }}>
                                 <Bookmark size={18} />
                                 Mi lista
                             </button>
@@ -143,10 +148,11 @@ export default function PredicasPage() {
                                     alt="Video thumbnail"
                                     fill
                                 />
-                                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
+                                <div className="absolute inset-0" style={{ background: "var(--faro-overlay-bg)" }} />
                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                                    <div className="w-20 h-20 rounded-lg bg-white/20 backdrop-blur-2xl flex items-center justify-center shadow-2xl">
-                                        <Play fill="white" size={32} className="text-white" />
+                                    <div className="w-20 h-20 rounded-lg backdrop-blur-2xl flex items-center justify-center shadow-2xl"
+                                        style={{ background: "var(--faro-hero-bg-light)" }}>
+                                        <Play size={32} style={{ color: "var(--faro-on-hero)" }} />
                                     </div>
                                 </div>
                                 <div className="absolute top-3 left-6 bg-faro-primary text-white font-semibold px-3 py-1.5 rounded-full uppercase tracking-wide">Estreno</div>
@@ -176,8 +182,8 @@ export default function PredicasPage() {
                                 >
                                     <div className="aspect-video relative">
                                         <Image src={v.thumbnail || v.img || "https://picsum.photos/seed/1493225255756-d9584f8606e9/800/600"} alt="Thumbnail" fill className="object-cover group-hover:scale-105 transition-transform" />
-                                        <div className="absolute inset-0 bg-black/20" />
-                                        <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md text-[10px] px-2 py-1 rounded text-white font-black">{v.duration || "45:00"}</div>
+                                        <div className="absolute inset-0" style={{ background: "var(--faro-overlay-bg)" }} />
+                                        <div className="absolute bottom-4 right-4 text-[10px] px-2 py-1 rounded font-black" style={{ background: "var(--faro-overlay-bg)", color: "var(--faro-on-hero)", backdropFilter: "blur(12px)" }}>{v.duration || "45:00"}</div>
                                     </div>
                                     <div className="p-3">
                                         <h4 className="font-black text-lg mb-2 group-hover:text-faro-primary transition-colors">{v.title}</h4>

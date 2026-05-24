@@ -121,11 +121,11 @@ export default function ConocerAJesusPage() {
                     className="absolute inset-0 pointer-events-none"
                     style={{
                         background:
-                            "radial-gradient(ellipse at 50% 30%, rgba(165,200,255,0.08) 0%, transparent 70%)",
+                            "radial-gradient(ellipse at 50% 30%, var(--faro-glow-subtle) 0%, transparent 70%)",
                     }}
                 />
 
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
@@ -134,9 +134,9 @@ export default function ConocerAJesusPage() {
                     <span
                         className="inline-block px-4 py-1.5 rounded-full border text-xs font-semibold uppercase tracking-wide mb-3"
                         style={{
-                            borderColor: "rgba(165,200,255,0.3)",
-                            color: "rgba(165,200,255,0.9)",
-                            background: "rgba(165,200,255,0.05)",
+                            borderColor: "var(--faro-hero-badge-border)",
+                            color: "var(--faro-hero-badge-color)",
+                            background: "var(--faro-hero-badge-bg)",
                         }}
                     >
                         {heroEyebrow}
@@ -145,7 +145,7 @@ export default function ConocerAJesusPage() {
                         className="font-bold tracking-tight mb-3"
                         style={{
                             fontSize: "clamp(3.5rem, 8vw, 7rem)",
-                            color: "white",
+                            color: "var(--faro-on-hero)",
                             lineHeight: 0.95,
                         }}
                     >
@@ -153,8 +153,7 @@ export default function ConocerAJesusPage() {
                         <span
                             className="italic"
                             style={{
-                                background:
-                                    "linear-gradient(135deg, #a5c8ff 0%, #018abd 100%)",
+                                background: "var(--faro-hero-accent-1)",
                                 WebkitBackgroundClip: "text",
                                 WebkitTextFillColor: "transparent",
                             }}
@@ -165,17 +164,17 @@ export default function ConocerAJesusPage() {
                     </h1>
                     <p
                         className="text-xl md:text-lg max-w-2xl leading-relaxed mb-3"
-                        style={{ color: "rgba(217,226,255,0.7)" }}
+                        style={{ color: "var(--faro-on-hero)", opacity: 0.7 }}
                     >
                         {heroDescription}
                     </p>
                     <a
                         href="#contacto"
-                        className="inline-flex items-center gap-3 px-4 py-2 rounded-full font-black text-sm uppercase tracking-wide text-white transition-all hover:scale-105"
+                        className="inline-flex items-center gap-3 px-4 py-2 rounded-full font-black text-sm uppercase tracking-wide transition-all hover:scale-105"
                         style={{
-                            background:
-                                "linear-gradient(135deg, #018abd 0%, #2c609d 100%)",
-                            boxShadow: "0 12px 40px rgba(1,138,189,0.4)",
+                            background: "var(--faro-hero-cta-gradient)",
+                            color: "var(--faro-on-hero)",
+                            boxShadow: "var(--faro-hero-cta-shadow)",
                         }}
                     >
                         {heroCta}
@@ -365,9 +364,9 @@ export default function ConocerAJesusPage() {
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
                         className="rounded-lg p-4 md:p-4 shadow-xl backdrop-blur-xl"
-                        style={{ 
+                        style={{
                             background: "var(--faro-surface-container)",
-                            border: "1px solid rgba(255,255,255,0.05)"
+                            border: "1px solid var(--faro-outline-variant)"
                         }}
                     >
                         {status === "sent" ? (
@@ -452,7 +451,7 @@ export default function ConocerAJesusPage() {
                                         background:
                                             "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))",
                                         color: "var(--faro-on-primary)",
-                                        boxShadow: "0 8px 24px rgba(44,96,157,0.3)",
+                                        boxShadow: "var(--faro-hero-cta-shadow)",
                                     }}
                                 >
                                     {status === "sending"

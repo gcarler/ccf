@@ -147,12 +147,12 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
             <source src={videoUrl} type="video/mp4" />
           </video>
         )}
-        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0" style={{ background: "var(--faro-overlay-bg)" }} />
         <div className="relative z-10 w-full max-w-4xl">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-white/70">Video Hero</p>
-          <h1 className="mt-3 text-lg md:text-xl font-bold tracking-tight text-white">{title}</h1>
-          <p className="mt-4 text-base md:text-lg text-white/90 max-w-3xl">{body}</p>
-          {ctaHref && <Link href={ctaHref} className="inline-flex mt-3 rounded-full px-3 py-3 text-xs font-bold uppercase tracking-wide text-slate-900 bg-white hover:bg-slate-100 transition-colors">
+          <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "var(--faro-on-primary)" }}>Video Hero</p>
+          <h1 className="mt-3 text-lg md:text-xl font-bold tracking-tight" style={{ color: "var(--faro-on-primary)" }}>{title}</h1>
+          <p className="mt-4 text-base md:text-lg max-w-3xl" style={{ color: "var(--faro-on-primary)" }}>{body}</p>
+          {ctaHref && <Link href={ctaHref} className="inline-flex mt-3 rounded-full px-3 py-3 text-xs font-bold uppercase tracking-wide" style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)", opacity: 0.9 }}>
             {ctaLabel}
           </Link>}
         </div>
@@ -337,7 +337,8 @@ function PopupBlock({ section }: { section: CmsSection }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClose}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 backdrop-blur-sm"
+            style={{ background: "var(--faro-overlay-bg)" }}
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}

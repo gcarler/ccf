@@ -127,7 +127,7 @@ export default function NosotrosPage() {
                         </div>
                         <div 
                             className="absolute -bottom-8 -right-8 w-64 h-48 blur-[100px] -z-10 rounded-full"
-                            style={{ background: "rgba(1, 138, 189, 0.15)" }}
+                            style={{ background: "var(--faro-glow-subtle)" }}
                         />
                     </div>
                     <div className="w-full lg:w-1/2">

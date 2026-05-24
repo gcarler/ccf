@@ -53,6 +53,21 @@
   --faro-cta-shadow: 0 4px 20px rgba(1, 138, 189, 0.5);
   --faro-mobile-nav-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
   --faro-mobile-nav-glow: 0 0 15px rgba(1, 138, 189, 0.3);
+  --faro-on-hero: #ffffff;
+  --faro-hero-overlay: linear-gradient(to bottom, rgba(0,13,42,0.7) 0%, rgba(0,13,42,0.4) 50%, rgba(0,13,42,0.85) 100%);
+  --faro-hero-accent-1: linear-gradient(135deg, #a5c8ff 0%, #018abd 100%);
+  --faro-hero-accent-2: linear-gradient(135deg, #a5c8ff 0%, #2c609d 100%);
+  --faro-hero-badge-bg: rgba(165, 200, 255, 0.05);
+  --faro-hero-badge-border: rgba(165, 200, 255, 0.3);
+  --faro-hero-badge-color: rgba(165, 200, 255, 0.9);
+  --faro-hero-cta-gradient: linear-gradient(135deg, #018abd 0%, #2c609d 100%);
+  --faro-hero-cta-shadow: 0 8px 32px rgba(1, 138, 189, 0.4);
+  --faro-hero-bg-light: rgba(255, 255, 255, 0.08);
+  --faro-hero-border-light: rgba(255, 255, 255, 0.15);
+  --faro-date-badge-bg: rgba(0, 13, 42, 0.8);
+  --faro-card-glass-gradient: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.02) 100%);
+  --faro-card-glass-glow: radial-gradient(circle at 30% 50%, rgba(165,200,255,0.5) 0%, transparent 60%);
+  --faro-card-shadow: 0 32px 64px -16px rgba(0,0,0,0.1);
 }
 
 /* 2. TEMA INSTITUCIONAL (Azul oscuro) — strict monochromatic, single tonal family */
@@ -101,9 +116,25 @@
   --faro-cta-shadow: 0 4px 20px rgba(1, 138, 189, 0.5);
   --faro-mobile-nav-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
   --faro-mobile-nav-glow: 0 0 15px rgba(165, 200, 255, 0.3);
+  --faro-on-hero: #ffffff;
+  --faro-hero-overlay: linear-gradient(to bottom, rgba(0,13,42,0.7) 0%, rgba(0,13,42,0.4) 50%, rgba(0,13,42,0.85) 100%);
+  --faro-hero-accent-1: linear-gradient(135deg, #a5c8ff 0%, #018abd 100%);
+  --faro-hero-accent-2: linear-gradient(135deg, #a5c8ff 0%, #2c609d 100%);
+  --faro-hero-badge-bg: rgba(165, 200, 255, 0.05);
+  --faro-hero-badge-border: rgba(165, 200, 255, 0.3);
+  --faro-hero-badge-color: rgba(165, 200, 255, 0.9);
+  --faro-hero-cta-gradient: linear-gradient(135deg, #018abd 0%, #2c609d 100%);
+  --faro-hero-cta-shadow: 0 8px 32px rgba(1, 138, 189, 0.4);
+  --faro-hero-bg-light: rgba(255, 255, 255, 0.08);
+  --faro-hero-border-light: rgba(255, 255, 255, 0.15);
+  --faro-date-badge-bg: rgba(0, 13, 42, 0.8);
+  --faro-card-glass-gradient: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.02) 100%);
+  --faro-card-glass-glow: radial-gradient(circle at 30% 50%, rgba(165,200,255,0.5) 0%, transparent 60%);
+  --faro-card-shadow: 0 32px 64px -16px rgba(0,0,0,0.1);
 }
 
 /* 3. TEMA OSCURO (Pure Dark) — dark surfaces, ONLY text/icons use high-luminosity */
+
 .theme-dark {
   --faro-surface-container-lowest: #000000;
   --faro-surface-tint: #ffffff;
@@ -146,6 +177,21 @@
   --faro-cta-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   --faro-mobile-nav-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
   --faro-mobile-nav-glow: 0 0 15px rgba(255, 255, 255, 0.15);
+  --faro-on-hero: #ffffff;
+  --faro-hero-overlay: linear-gradient(to bottom, rgba(0,13,42,0.7) 0%, rgba(0,13,42,0.4) 50%, rgba(0,13,42,0.85) 100%);
+  --faro-hero-accent-1: linear-gradient(135deg, #a5c8ff 0%, #018abd 100%);
+  --faro-hero-accent-2: linear-gradient(135deg, #a5c8ff 0%, #2c609d 100%);
+  --faro-hero-badge-bg: rgba(165, 200, 255, 0.05);
+  --faro-hero-badge-border: rgba(165, 200, 255, 0.3);
+  --faro-hero-badge-color: rgba(165, 200, 255, 0.9);
+  --faro-hero-cta-gradient: linear-gradient(135deg, #018abd 0%, #2c609d 100%);
+  --faro-hero-cta-shadow: 0 8px 32px rgba(1, 138, 189, 0.4);
+  --faro-hero-bg-light: rgba(255, 255, 255, 0.08);
+  --faro-hero-border-light: rgba(255, 255, 255, 0.15);
+  --faro-date-badge-bg: rgba(0, 13, 42, 0.8);
+  --faro-card-glass-gradient: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0.08) 100%);
+  --faro-card-glass-glow: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.15) 0%, transparent 60%);
+  --faro-card-shadow: 0 32px 64px -16px rgba(0,0,0,0.3);
 }
 
 /* FARO Public Theme — Utility classes (ALL use --faro-* variables, ZERO hardcoded colors) */

@@ -52,16 +52,14 @@ export default function PublicHomePage() {
                 <div
                     className="absolute inset-0"
                     style={{
-                        background:
-                            "linear-gradient(to bottom, rgba(0,13,42,0.7) 0%, rgba(0,13,42,0.4) 50%, rgba(0,13,42,0.85) 100%)",
+                        background: "var(--faro-hero-overlay)",
                     }}
                 />
                 {/* Beam glow */}
                 <div
                     className="absolute inset-0 pointer-events-none"
                     style={{
-                        background:
-                            "radial-gradient(ellipse at 60% 20%, rgba(1,138,189,0.15) 0%, transparent 60%)",
+                        background: "radial-gradient(ellipse at 60% 20%, var(--faro-glow-subtle) 0%, transparent 60%)",
                     }}
                 />
 
@@ -69,7 +67,7 @@ export default function PublicHomePage() {
                 <div className="relative z-10 text-center w-full px-3 md:px-4 lg:px-8 xl:px-12 pt-24">
                     <span
                         className="inline-block text-xs font-bold uppercase tracking-wide mb-3"
-                        style={{ color: "rgba(165, 200, 255, 0.7)" }}
+                        style={{ color: "var(--faro-hero-badge-color)" }}
                     >
                         {heroEyebrow}
                     </span>
@@ -77,14 +75,13 @@ export default function PublicHomePage() {
                         className="font-bold tracking-tight leading-[0.9] mb-3"
                         style={{
                             fontSize: "clamp(3.5rem, 9vw, 8rem)",
-                            color: "white",
+                            color: "var(--faro-on-hero)",
                         }}
                     >
                         {heroTitleLead}{" "}
                         <span
                             style={{
-                                background:
-                                    "linear-gradient(135deg, #a5c8ff 0%, #018abd 100%)",
+                                background: "var(--faro-hero-accent-1)",
                                 WebkitBackgroundClip: "text",
                                 WebkitTextFillColor: "transparent",
                             }}
@@ -94,8 +91,7 @@ export default function PublicHomePage() {
                         <br />
                         <span
                             style={{
-                                background:
-                                    "linear-gradient(135deg, #a5c8ff 0%, #2c609d 100%)",
+                                background: "var(--faro-hero-accent-2)",
                                 WebkitBackgroundClip: "text",
                                 WebkitTextFillColor: "transparent",
                             }}
@@ -105,7 +101,7 @@ export default function PublicHomePage() {
                     </h1>
                     <p
                         className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-3"
-                        style={{ color: "rgba(217, 226, 255, 0.75)" }}
+                        style={{ color: "var(--faro-on-hero)", opacity: 0.75 }}
                     >
                         {heroDescription}
                     </p>
@@ -114,9 +110,8 @@ export default function PublicHomePage() {
                             href="/conocer-a-jesus"
                             className="group flex items-center gap-3 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide text-white transition-all hover:scale-105"
                             style={{
-                                background:
-                                    "linear-gradient(135deg, #018abd 0%, #2c609d 100%)",
-                                boxShadow: "0 8px 32px rgba(1, 138, 189, 0.4)",
+                                background: "var(--faro-hero-cta-gradient)",
+                                boxShadow: "var(--faro-hero-cta-shadow)",
                             }}
                         >
                             {heroPrimaryCta}
@@ -129,9 +124,9 @@ export default function PublicHomePage() {
                             href="/predicas"
                             className="flex items-center gap-3 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide transition-all hover:scale-105"
                             style={{
-                                background: "rgba(255,255,255,0.08)",
-                                border: "2px solid rgba(255,255,255,0.15)",
-                                color: "white",
+                                background: "var(--faro-hero-bg-light)",
+                                border: "2px solid var(--faro-hero-border-light)",
+                                color: "var(--faro-on-hero)",
                                 backdropFilter: "blur(10px)",
                             }}
                         >
@@ -194,7 +189,7 @@ export default function PublicHomePage() {
                                 className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
                                 style={{
                                     background:
-                                        "radial-gradient(ellipse at 80% 20%, rgba(1, 138, 189, 0.08) 0%, transparent 70%)",
+                                        "radial-gradient(ellipse at 80% 20%, var(--faro-glow-subtle) 0%, transparent 70%)",
                                 }}
                             />
                             <div className="relative z-10">
@@ -382,19 +377,19 @@ export default function PublicHomePage() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
-                    className="max-w-4xl mx-auto rounded-lg p-4 md:p-4 relative overflow-hidden text-center shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] backdrop-blur-2xl"
+                    className="max-w-4xl mx-auto rounded-lg p-4 md:p-4 relative overflow-hidden text-center backdrop-blur-2xl"
                     style={{
-                        background:
-                            "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.02) 100%)",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        backgroundColor: "var(--faro-primary-container)"
+                        background: "var(--faro-card-glass-gradient)",
+                        backgroundColor: "var(--faro-primary-container)",
+                        border: "1px solid var(--faro-glass-border)",
+                        boxShadow: "var(--faro-card-shadow)",
                     }}
                 >
                     <div
                         className="absolute inset-0 opacity-40 pointer-events-none mix-blend-overlay"
                         style={{
                             background:
-                                "radial-gradient(circle at 30% 50%, rgba(165, 200, 255, 0.5) 0%, transparent 60%)",
+                                "radial-gradient(circle at 30% 50%, var(--faro-card-glass-glow) 0%, transparent 60%)",
                         }}
                     />
                     <div className="relative z-10">
@@ -427,7 +422,7 @@ export default function PublicHomePage() {
                                 style={{
                                     background:
                                         "linear-gradient(135deg, var(--faro-primary) 0%, var(--faro-secondary) 100%)",
-                                    boxShadow: "0 8px 24px rgba(44, 96, 157, 0.3)",
+                                    boxShadow: "var(--faro-hero-cta-shadow)",
                                 }}
                             >
                                 Suscribirme
