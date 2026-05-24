@@ -24,7 +24,8 @@ import {
     MoreHorizontal,
     PieChart,
     UserPlus,
-    MessageCircle
+    MessageCircle,
+    Mail
 } from 'lucide-react';
 
 export default function CrmSidebar() {
@@ -146,6 +147,7 @@ export default function CrmSidebar() {
                             {expandedSpaces.includes('ministerio') && (
                                 <div className="ml-6 space-y-0.5 border-l border-white/5 pl-2">
                                     {navItem('/crm/pipeline', <Layers />, 'Consolidación')}
+                                    {navItem('/crm/newsletter-leads', <Mail />, 'Newsletter CRM', 'text-indigo-400')}
                                     {navItem('/crm/counseling', <Heart />, 'Consejería')}
                                     {navItem('/crm/prayers', <MessageCircle />, 'Muro de Oración')}
                                     {navItem('/crm/groups', <HouseIcon />, 'Faros en Casa')}

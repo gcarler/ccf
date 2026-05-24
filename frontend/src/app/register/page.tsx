@@ -73,14 +73,18 @@ export default function RegisterPage() {
                             alignItems: 'center', justifyContent: 'center', margin: '0 auto 32px',
                         }}>
                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgb(1,138,189)" strokeWidth="2.5">
-                                <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                                <rect x="2" y="4" width="20" height="16" rx="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M22 6L12 13 2 6" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                         </div>
                         <h2 style={{ color: 'white', fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.04em', margin: '0 0 16px' }}>
                             ¡Cuenta creada!
                         </h2>
-                        <p style={{ color: 'rgba(221,232,240,0.6)', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: '40px' }}>
-                            Tu acceso ministerial está listo. Ingresa con tus credenciales.
+                        <p style={{ color: 'rgba(221,232,240,0.6)', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: '24px' }}>
+                            Te enviamos un correo de verificación. Revisa tu bandeja de entrada y haz clic en el enlace para activar tu cuenta.
+                        </p>
+                        <p style={{ color: 'rgba(221,232,240,0.4)', fontSize: '0.8rem', lineHeight: 1.5, marginBottom: '40px' }}>
+                            ¿No lo recibiste? Revisa la carpeta de spam o intenta registrarte de nuevo.
                         </p>
                         <Link
                             href="/login"

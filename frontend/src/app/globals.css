@@ -62,6 +62,29 @@
     font-family: var(--font-display);
     -webkit-font-smoothing: antialiased;
   }
+
+  /* ── Plataforma: límite global de tamaño de texto ──
+     Ningún texto dentro de la plataforma puede exceder 1.125rem (text-lg).
+     Páginas públicas NO están afectadas — usan su propio layout sin esta clase. */
+  .workspace-platform {
+    --max-font-size: 1.125rem;
+  }
+  .workspace-platform h1 {
+    font-size: clamp(1rem, var(--max-font-size), var(--max-font-size)) !important;
+  }
+  .workspace-platform h2 {
+    font-size: clamp(0.875rem, 1rem, 1rem) !important;
+  }
+  .workspace-platform h3 {
+    font-size: clamp(0.8125rem, 0.9375rem, 0.9375rem) !important;
+  }
+  .workspace-platform h4 {
+    font-size: clamp(0.75rem, 0.875rem, 0.875rem) !important;
+  }
+  .workspace-platform h5,
+  .workspace-platform h6 {
+    font-size: clamp(0.6875rem, 0.8125rem, 0.8125rem) !important;
+  }
 }
 
 @layer utilities {

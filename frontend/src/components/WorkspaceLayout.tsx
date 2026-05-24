@@ -291,7 +291,7 @@ function WorkspaceLayoutInner({
 
     return (
         <ProtectedRoute allowedRoles={allowedRoles}>
-            <div className="flex flex-col h-screen w-full bg-slate-50 dark:bg-[#111213] overflow-hidden font-display relative transition-colors duration-500">
+            <div className="workspace-platform flex flex-col h-screen w-full bg-slate-50 dark:bg-[#111213] overflow-hidden font-display relative transition-colors duration-500">
 
                 <motion.div
                     className="absolute top-0 left-0 right-0 h-[2px] bg-blue-600 z-[10000]"

@@ -191,7 +191,7 @@ def logout(response: Response):
     dependencies=[Depends(rate_limiter(limit=5, window_seconds=60))],
 )
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    """Registro de nuevos miembros."""
+    """Registro de nuevos miembros. Envía email de verificación automáticamente."""
     db_user = crud.get_user_by_email(db, email=user.email)
     if db_user:
         raise HTTPException(
@@ -199,7 +199,20 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         )
 
     user.role = "estudiante"
-    return crud.create_user(db=db, user=user)
+    created = crud.create_user(db=db, user=user)
+
+    # Auto-enviar email de verificación post-registro
+    try:
+        from backend.crud.identity import create_verification_token
+        from backend.services.email import render_verify_email, send_email
+
+        token_row = create_verification_token(db, created.id)
+        subject, html = render_verify_email(token_row.token)
+        send_email(to=created.email, subject=subject, html=html)
+    except Exception as exc:
+        logger.warning("No se pudo enviar email de verificación: %s", exc)
+
+    return created
 
 
 @router.get("/me", response_model=schemas.User)
