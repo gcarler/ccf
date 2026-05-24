@@ -4,17 +4,12 @@ module.exports = {
     {
       name: "ccf-backend-staging",
       cwd: "/root/ccf",
-      script: "bash",
-      args: "-c PYTHONPATH=. /root/ccf/venv/bin/uvicorn backend.main:app --host 127.0.0.1 --port 8000",
+      script: "./start_backend.sh",
+      interpreter: "bash",
       instances: 1,
       exec_mode: "fork",
       autorestart: true,
       max_memory_restart: "500M",
-      env: {
-        PYTHONPATH: ".",
-        ENV_FILE: "backend/.env",
-        NODE_ENV: "production",
-      },
     },
 
     // ── CCF Frontend ────────────────────────────────────────
