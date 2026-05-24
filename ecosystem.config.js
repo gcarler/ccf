@@ -4,7 +4,7 @@ module.exports = {
     {
       name: "ccf-backend-staging",
       cwd: "/root/ccf",
-      script: "./start_backend.sh",
+      script: "./scripts/start_backend.sh",
       interpreter: "bash",
       instances: 1,
       exec_mode: "fork",
@@ -26,7 +26,7 @@ module.exports = {
     // ── SeaweedFS ───────────────────────────────────────────
     {
       name: "seaweedfs",
-      script: "/root/ccf/start_seaweed.sh",
+      script: "/root/ccf/scripts/start_seaweed.sh",
       interpreter: "bash",
       instances: 1,
       exec_mode: "fork",

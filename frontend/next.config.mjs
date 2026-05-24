@@ -27,6 +27,11 @@ const nextConfig = {
         ignoreBuildErrors: true,
     },
     outputFileTracingRoot: process.env.OUTPUT_FILE_TRACING_ROOT || '/root/ccf/frontend',
+    experimental: {
+        outputFileTracingExcludes: {
+            '*': ['**/@swc/core*', '**/@esbuild/**', '**/terser/**'],
+        },
+    },
     async rewrites() {
         const target = process.env.API_PROXY_TARGET || 'http://backend:8000';
         return [
