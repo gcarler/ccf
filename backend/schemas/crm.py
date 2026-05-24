@@ -191,6 +191,10 @@ class PrayerRequestPublicCreate(BaseModel):
     requester_name: str
     request_text: str
     category: str = "General"
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    landing_page: Optional[str] = None
+    campaign: Optional[str] = None
 
 
 class PrayerRequest(PrayerRequestBase):

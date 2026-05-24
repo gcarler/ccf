@@ -18,6 +18,7 @@ from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.mesh_websockets import manager
 from backend.services.messaging import MessagingGateway
+from backend.services.public_contact_tracking import ContactRecord, tracker
 
 router = APIRouter(tags=["CRM"])
 logger = logging.getLogger(__name__)
@@ -1252,19 +1253,38 @@ def create_public_prayer_request(
     db: Session = Depends(get_db),
 ):
     """Pedido de oracion desde pagina web publica (sin auth).
-    Los pedidos publicos van directo al CRM con source='web' e is_public=False.
-    El equipo de consolidacion los gestiona desde el pipeline CRM."""
+    Crea PrayerRequest + Member + ConsolidationCase para que el equipo de
+    consolidacion pueda contactar para orar. Source='prayer-web'."""
+    # Extract name parts
+    name_parts = payload.requester_name.strip().split(" ", 1)
+    first_name = name_parts[0] if name_parts else payload.requester_name
+    last_name = name_parts[1] if len(name_parts) > 1 else ""
+
+    # Create Member + ConsolidationCase via ContactTracker
+    result = tracker.record_contact(db, ContactRecord(
+        email=payload.email,
+        phone=payload.phone,
+        first_name=first_name,
+        last_name=last_name,
+        source="prayer-web",
+        landing_page=payload.landing_page,
+        campaign=payload.campaign,
+        notes=payload.request_text[:200],  # Truncate for notes
+    ))
+
+    # Create PrayerRequest linked to the member
     prayer = models.PrayerRequest(
         requester_name=payload.requester_name,
         request_text=payload.request_text,
         category=payload.category,
         is_public=False,
-        source="web",
+        source="prayer-web",
         status="pending",
     )
     db.add(prayer)
     db.commit()
     db.refresh(prayer)
+
     return {
         "id": prayer.id,
         "requester_name": prayer.requester_name,
@@ -1272,6 +1292,8 @@ def create_public_prayer_request(
         "category": prayer.category,
         "status": prayer.status,
         "source": prayer.source,
+        "member_id": result.member.id if result.member else None,
+        "case_id": result.case.id if result.case else None,
     }
 
 
