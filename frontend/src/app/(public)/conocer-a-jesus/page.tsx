@@ -186,7 +186,7 @@ export default function ConocerAJesusPage() {
 
             {/* ── INTRO EDITORIAL ─────────────────────────── */}
             <section
-                className="py-1.5 px-3 md:px-4 lg:px-24"
+                className="py-1.5 px-3 md:px-4 lg:px-8 xl:px-12"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
                 <div className="grid md:grid-cols-2 gap-3 items-center">
@@ -266,7 +266,7 @@ export default function ConocerAJesusPage() {
 
             {/* ── TESTIMONIOS RÁPIDOS ──────────────────────── */}
             <section
-                className="py-1.5 px-3 md:px-4 lg:px-24"
+                className="py-1.5 px-3 md:px-4 lg:px-8 xl:px-12"
                 style={{ background: "var(--faro-surface)" }}
             >
                 <div>
@@ -318,7 +318,7 @@ export default function ConocerAJesusPage() {
             {/* ── FORMULARIO DE CONTACTO ───────────────────── */}
             <section
                 id="contacto"
-                className="py-1.5 px-3 md:px-4 lg:px-24"
+                className="py-1.5 px-3 md:px-4 lg:px-8 xl:px-12"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
                 <div className="grid md:grid-cols-2 gap-3 items-start">

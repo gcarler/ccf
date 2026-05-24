@@ -43,7 +43,7 @@ export default function PrivacidadPage() {
   })();
 
   return (
-    <main className="pt-[120px] pb-4 px-3 md:px-4 lg:px-24 bg-faro-surface min-h-screen">
+    <main className="pt-[120px] pb-4 px-3 md:px-4 lg:px-8 xl:px-12 bg-faro-surface min-h-screen">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

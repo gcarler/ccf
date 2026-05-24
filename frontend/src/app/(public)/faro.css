@@ -1,7 +1,16 @@
 /* FARO DYNAMIC THEMES */
 /* All 3 themes use independent selectors — no overlap, no cascade pollution */
 
-/* 1. TEMA CLARO (Light) */
+/* ─── COMPLIANCE: Design System & Theme Enforcement Protocol ────────────────
+ * 1. ZERO hardcoded colors in components — all color values via --faro-* tokens
+ * 2. Components are THEME-AGNOSTIC — no conditional theme logic in JS
+ * 3. Each theme respects its contrast rule:
+ *    .theme-light:   light surfaces, dark text/icons
+ *    .theme-institutional: monochromatic tonal family
+ *    .theme-dark:    dark surfaces, ONLY text/icons may use high-luminosity
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/* 1. TEMA CLARO (Light) — light surfaces, dark text */
 .theme-light {
   --faro-surface-container-lowest: #ffffff;
   --faro-surface-tint: #2c609d;
@@ -25,9 +34,26 @@
   --faro-surface-container: #e9edf6;
   --faro-surface-dim: #d9e2ff;
   --faro-outline: #72777f;
+
+  /* --- Tokens de interfaz (UI elements) --- */
+  --faro-navbar-bg: rgba(255, 255, 255, 0.6);
+  --faro-navbar-bg-scrolled: rgba(248, 249, 255, 0.92);
+  --faro-navbar-border: rgba(165, 200, 255, 0.08);
+  --faro-dropdown-bg: rgba(255, 255, 255, 0.95);
+  --faro-dropdown-border: rgba(194, 199, 207, 0.3);
+  --faro-overlay-bg: rgba(0, 0, 0, 0.5);
+  --faro-glass-bg: rgba(255, 255, 255, 0.7);
+  --faro-glass-border: rgba(44, 96, 157, 0.1);
+  --faro-card-highlight: rgba(44, 96, 157, 0.15);
+  --faro-glow-subtle: rgba(1, 138, 189, 0.08);
+  --faro-glow-intense: rgba(44, 96, 157, 0.3);
+  --faro-mobile-nav-bg: rgba(248, 249, 255, 0.85);
+  --faro-mobile-nav-inactive: rgba(0, 27, 61, 0.5);
+  --faro-cta-gradient: linear-gradient(to right, #004581, #018abd, #004581);
+  --faro-cta-shadow: 0 4px 20px rgba(1, 138, 189, 0.5);
 }
 
-/* 2. TEMA INSTITUCIONAL (Azul oscuro) */
+/* 2. TEMA INSTITUCIONAL (Azul oscuro) — strict monochromatic, single tonal family */
 .theme-institutional {
   --faro-surface-container-lowest: #000d2a;
   --faro-surface-tint: #a5c8ff;
@@ -51,9 +77,26 @@
   --faro-surface-container: #021d4a;
   --faro-surface-dim: #001134;
   --faro-outline: #8c919b;
+
+  /* --- Tokens de interfaz (UI elements) --- */
+  --faro-navbar-bg: rgba(0, 13, 42, 0.6);
+  --faro-navbar-bg-scrolled: rgba(0, 13, 42, 0.92);
+  --faro-navbar-border: rgba(165, 200, 255, 0.08);
+  --faro-dropdown-bg: rgba(10, 22, 48, 0.95);
+  --faro-dropdown-border: rgba(66, 71, 80, 0.5);
+  --faro-overlay-bg: rgba(0, 13, 42, 0.7);
+  --faro-glass-bg: rgba(29, 51, 97, 0.4);
+  --faro-glass-border: rgba(165, 200, 255, 0.1);
+  --faro-card-highlight: rgba(165, 200, 255, 0.15);
+  --faro-glow-subtle: rgba(165, 200, 255, 0.08);
+  --faro-glow-intense: rgba(165, 200, 255, 0.3);
+  --faro-mobile-nav-bg: rgba(0, 17, 52, 0.85);
+  --faro-mobile-nav-inactive: rgba(217, 226, 255, 0.5);
+  --faro-cta-gradient: linear-gradient(to right, #004581, #018abd, #004581);
+  --faro-cta-shadow: 0 4px 20px rgba(1, 138, 189, 0.5);
 }
 
-/* 3. TEMA OSCURO (Pure Dark) */
+/* 3. TEMA OSCURO (Pure Dark) — dark surfaces, ONLY text/icons use high-luminosity */
 .theme-dark {
   --faro-surface-container-lowest: #000000;
   --faro-surface-tint: #ffffff;
@@ -77,49 +120,66 @@
   --faro-surface-container: #121212;
   --faro-surface-dim: #000000;
   --faro-outline: #555555;
+
+  /* --- Tokens de interfaz (UI elements) --- */
+  --faro-navbar-bg: rgba(10, 10, 10, 0.6);
+  --faro-navbar-bg-scrolled: rgba(10, 10, 10, 0.92);
+  --faro-navbar-border: rgba(85, 85, 85, 0.15);
+  --faro-dropdown-bg: rgba(0, 0, 0, 0.95);
+  --faro-dropdown-border: rgba(34, 34, 34, 0.8);
+  --faro-overlay-bg: rgba(0, 0, 0, 0.6);
+  --faro-glass-bg: rgba(0, 0, 0, 0.5);
+  --faro-glass-border: rgba(255, 255, 255, 0.05);
+  --faro-card-highlight: rgba(255, 255, 255, 0.08);
+  --faro-glow-subtle: rgba(255, 255, 255, 0.05);
+  --faro-glow-intense: rgba(255, 255, 255, 0.15);
+  --faro-mobile-nav-bg: rgba(10, 10, 10, 0.85);
+  --faro-mobile-nav-inactive: rgba(238, 238, 238, 0.5);
+  --faro-cta-gradient: linear-gradient(to right, #333333, #555555, #333333);
+  --faro-cta-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
-/* FARO Public Theme Specialized CSS */
+/* FARO Public Theme — Utility classes (ALL use --faro-* variables, ZERO hardcoded colors) */
 .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     vertical-align: middle;
 }
 .faro-glass-nav {
-    background: rgba(255, 255, 255, 0.7);
+    background: var(--faro-glass-bg);
     backdrop-filter: blur(20px);
 }
 .faro-beam-glow {
-    background: radial-gradient(circle at 50% 50%, rgba(44, 96, 157, 0.08) 0%, rgba(248, 249, 255, 0) 70%);
+    background: radial-gradient(circle at 50% 50%, var(--faro-glow-subtle) 0%, transparent 70%);
 }
 .faro-hero-gradient {
-    background: linear-gradient(135deg, #2c609d 0%, #004581 100%);
+    background: linear-gradient(135deg, var(--faro-primary) 0%, var(--faro-primary-container) 100%);
 }
 
-/* Extracted Stitch Specialized Styles */
+/* Extracted Stitch Specialized Styles — all use --faro-* tokens */
 .bg-beam-gradient {
-    background: radial-gradient(circle at 50% 0%, rgba(165, 200, 255, 0.15) 0%, rgba(0, 17, 52, 0) 70%);
+    background: radial-gradient(circle at 50% 0%, var(--faro-glow-subtle) 0%, transparent 70%);
 }
 .text-glow {
-    text-shadow: 0 0 20px rgba(165, 200, 255, 0.4);
+    text-shadow: 0 0 20px var(--faro-glow-intense);
 }
 .glass-nav {
     backdrop-filter: blur(20px);
 }
 .text-gradient-primary {
-    background: linear-gradient(135deg, #a5c8ff 0%, #004581 100%);
+    background: linear-gradient(135deg, var(--faro-primary) 0%, var(--faro-secondary) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 .btn-gradient, .beam-gradient, .primary-gradient, .beam-effect {
-    background: linear-gradient(135deg, #a5c8ff 0%, #004581 100%);
+    background: var(--faro-cta-gradient);
 }
 .glass-card {
-    background: rgba(29, 51, 97, 0.4);
+    background: var(--faro-glass-bg);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(165, 200, 255, 0.1);
+    border: 1px solid var(--faro-glass-border);
 }
 .calendar-day-hover:hover {
-    background: rgba(165, 200, 255, 0.15);
+    background: var(--faro-card-highlight);
 }
 .hide-scrollbar::-webkit-scrollbar {
     display: none;
@@ -133,10 +193,10 @@
     -webkit-backdrop-filter: blur(20px);
 }
 .beam-glow {
-    box-shadow: 0 0 40px rgba(165, 200, 255, 0.15);
+    box-shadow: 0 0 40px var(--faro-glow-intense);
 }
 .bg-light-glow {
-    background: radial-gradient(circle at 50% 50%, rgba(128, 208, 255, 0.08) 0%, rgba(0, 17, 52, 0) 70%);
+    background: radial-gradient(circle at 50% 50%, var(--faro-glow-subtle) 0%, transparent 70%);
 }
 .editorial-grid {
     display: grid;

@@ -66,7 +66,7 @@ export default function PublicHomePage() {
                 />
 
                 {/* Content */}
-                <div className="relative z-10 text-center w-full px-3 md:px-4 lg:px-24 pt-24">
+                <div className="relative z-10 text-center w-full px-3 md:px-4 lg:px-8 xl:px-12 pt-24">
                     <span
                         className="inline-block text-xs font-bold uppercase tracking-wide mb-3"
                         style={{ color: "rgba(165, 200, 255, 0.7)" }}
@@ -157,10 +157,10 @@ export default function PublicHomePage() {
 
             {/* ─── BENTO: Bienvenidos a Casa ────────────────────────── */}
             <section
-                className="py-1.5 px-3 md:px-4 lg:px-24 overflow-hidden"
+                className="py-1.5 px-3 md:px-4 lg:px-8 xl:px-12 overflow-hidden"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
-                <div className="w-full px-3 md:px-4 lg:px-24">
+                <div className="w-full px-3 md:px-6 lg:px-8 xl:px-12">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -276,10 +276,10 @@ export default function PublicHomePage() {
 
             {/* ─── ACTIVIDADES RECIENTES ────────────────────────────── */}
             <section
-                className="py-1.5 px-3 md:px-4 lg:px-24 overflow-hidden"
+                className="py-1.5 px-3 md:px-4 lg:px-8 xl:px-12 overflow-hidden"
                 style={{ background: "var(--faro-surface)" }}
             >
-                <div className="w-full px-3 md:px-4 lg:px-24">
+                <div className="w-full px-3 md:px-6 lg:px-8 xl:px-12">
                     <motion.div
                         initial={{ opacity: 0, x: -30 }}
                         whileInView={{ opacity: 1, x: 0 }}
@@ -375,7 +375,7 @@ export default function PublicHomePage() {
 
             {/* ─── CTA NEWSLETTER ───────────────────────────────────── */}
             <section
-                className="py-1.5 px-3 md:px-4 lg:px-24"
+                className="py-1.5 px-3 md:px-4 lg:px-8 xl:px-12"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
                 <motion.div

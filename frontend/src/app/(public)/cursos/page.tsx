@@ -102,7 +102,7 @@ export default function CursosPage() {
             </AnimatePresence>
 
             {/* ── HERO ──────────────────────────────────── */}
-            <section className="relative h-[560px] flex items-center px-4 md:px-20 overflow-hidden">
+            <section className="relative h-[560px] flex items-center px-4 md:px-8 lg:px-12 overflow-hidden">
                 <div className="absolute inset-0 z-0">
                     <Image
                         src="https://picsum.photos/seed/1481627834876-b7833e8f5570/1920/1080"
@@ -160,7 +160,7 @@ export default function CursosPage() {
             </section>
 
             {/* ── CURSOS BENTO ──────────────────────────── */}
-            <section className="px-4 md:px-20 mt-24">
+            <section className="px-4 md:px-8 lg:px-12 mt-24">
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -307,7 +307,7 @@ export default function CursosPage() {
 
             {/* ── LIBRERÍA ──────────────────────────────── */}
             <section
-                className="px-4 md:px-20 mt-32 py-1.5"
+                className="px-4 md:px-8 lg:px-12 mt-32 py-1.5"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
                 <motion.div 
@@ -396,7 +396,7 @@ export default function CursosPage() {
             </section>
 
             {/* ── CTA ACADEMIA ─────────────────────────── */}
-            <section className="px-4 md:px-20 mt-32">
+            <section className="px-4 md:px-8 lg:px-12 mt-32">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
