@@ -55,7 +55,7 @@ export default function RegisterPage() {
                 <div style={{
                     display: 'flex', width: '100vw', minHeight: '100vh',
                     alignItems: 'center', justifyContent: 'center',
-                    backgroundColor: 'var(--ccf-blue-dark)', fontFamily: "'Inter', sans-serif",
+                    backgroundColor: 'var(--ccf-blue-dark)',
                 }}>
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -123,7 +123,6 @@ export default function RegisterPage() {
                     color: var(--ccf-blue-dark);
                     font-weight: 700;
                     font-size: 1rem;
-                    font-family: 'Inter', sans-serif;
                     transition: all 0.3s ease;
                     box-sizing: border-box;
                 }
@@ -159,7 +158,7 @@ export default function RegisterPage() {
                 }
             `}</style>
 
-            <div style={{ display: 'flex', width: '100vw', minHeight: '100vh', fontFamily: "'Inter', sans-serif" }}>
+            <div style={{ display: 'flex', width: '100vw', minHeight: '100vh' }}>
 
                 {/* ── PANEL IZQUIERDO: IDENTIDAD ── */}
                 <motion.section

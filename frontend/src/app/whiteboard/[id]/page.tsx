@@ -218,7 +218,7 @@ export default function WhiteboardSessionPage() {
             top: 170,
             fontSize: 24,
             fill: "#0f172a",
-            fontFamily: "Arial",
+            fontFamily: "Manrope",
         });
         canvas.add(text);
         canvas.setActiveObject(text);
@@ -362,7 +362,7 @@ function addStarterObjects(canvas: fabric.Canvas) {
         top: 80,
         fontSize: 28,
         fill: "#0f172a",
-        fontFamily: "Arial",
+        fontFamily: "Manrope",
         fontWeight: "bold",
     });
     const box = new fabric.Rect({
@@ -381,7 +381,7 @@ function addStarterObjects(canvas: fabric.Canvas) {
         top: 195,
         fontSize: 18,
         fill: "#1e293b",
-        fontFamily: "Arial",
+        fontFamily: "Manrope",
     });
     canvas.add(title, box, text);
     canvas.renderAll();

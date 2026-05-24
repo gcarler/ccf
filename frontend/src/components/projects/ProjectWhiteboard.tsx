@@ -101,7 +101,7 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
             top: 140,
             fontSize: 24,
             fill: '#0f172a',
-            fontFamily: 'Arial',
+            fontFamily: 'Manrope',
         });
         fabricCanvas.current?.add(text);
         fabricCanvas.current?.setActiveObject(text);
