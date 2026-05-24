@@ -176,37 +176,37 @@ export default function PublicHomePage() {
 
             {/* ─── BENTO: Bienvenidos a Casa ────────────────────────── */}
             <section
-                className="py-1.5 px-3 md:px-4 lg:px-8 xl:px-12 overflow-hidden"
+                className="py-8 md:py-12 px-3 md:px-4 lg:px-8 xl:px-12 overflow-hidden"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
-                <div className="w-full px-3 md:px-6 lg:px-8 xl:px-12">
+                <div className="w-full px-3 md:px-8 lg:px-12 xl:px-16">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true, margin: "-100px" }}
-                        className="mb-3"
+                        className="mb-6"
                     >
                         <span
-                            className="text-xs font-bold uppercase tracking-wide block mb-3"
+                            className="text-xs font-bold uppercase tracking-wide block mb-4"
                             style={{ color: "var(--faro-primary)" }}
                         >
                             Nuestra esencia
                         </span>
                         <h2
-                            className="font-bold text-lg md:text-xl tracking-tight"
+                            className="font-bold text-2xl md:text-3xl tracking-tight"
                             style={{ color: "var(--faro-on-background)" }}
                         >
                             Bienvenidos a Casa
                         </h2>
                     </motion.div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Feature grande */}
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: 0.1 }}
-                            className="md:col-span-2 rounded-lg p-4 flex flex-col justify-between group relative overflow-hidden min-h-[280px]"
+                            className="md:col-span-2 rounded-xl p-6 md:p-8 flex flex-col justify-between group relative overflow-hidden min-h-[320px]"
                             style={{ background: "var(--faro-surface-container)" }}
                         >
                             <div
@@ -258,7 +258,7 @@ export default function PublicHomePage() {
                             <Link
                                 key={title}
                                 href={href}
-                                className="block rounded-lg p-4 flex items-center gap-3 transition-all hover:scale-[1.02]"
+                                className="block rounded-xl p-5 flex items-center gap-4 transition-all hover:scale-[1.02]"
                                 style={{ background: "var(--faro-surface-container)" }}
                             >
                                 <motion.div
@@ -299,15 +299,15 @@ export default function PublicHomePage() {
 
             {/* ─── ACTIVIDADES RECIENTES ────────────────────────────── */}
             <section
-                className="py-1.5 px-3 md:px-4 lg:px-8 xl:px-12 overflow-hidden"
+                className="py-8 md:py-12 px-3 md:px-4 lg:px-8 xl:px-12 overflow-hidden"
                 style={{ background: "var(--faro-surface)" }}
             >
-                <div className="w-full px-3 md:px-6 lg:px-8 xl:px-12">
+                <div className="w-full px-3 md:px-8 lg:px-12 xl:px-16">
                     <motion.div
                         initial={{ opacity: 0, x: -30 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
-                        className="flex justify-between items-end mb-3"
+                        className="flex justify-between items-end mb-6"
                     >
                         <div>
                             <span
@@ -317,7 +317,7 @@ export default function PublicHomePage() {
                                 Actualidad
                             </span>
                             <h2
-                                className="font-bold text-lg md:text-xl tracking-tight"
+                                className="font-bold text-2xl md:text-3xl tracking-tight"
                                 style={{ color: "var(--faro-on-background)" }}
                             >
                                 Actividades Recientes
@@ -339,10 +339,10 @@ export default function PublicHomePage() {
                             Próximamente encontrarás aquí nuestras actividades. Mientras tanto, síguenos en redes sociales.
                         </p>
                     ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {publicEvents.slice(0, 3).map(({ img, tag, date, title, desc }, idx: number) => (
-                            <motion.div 
-                                key={title} 
+                            <motion.div
+                                key={title}
                                 initial={{ opacity: 0, y: 40 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true, margin: "-50px" }}
@@ -350,7 +350,7 @@ export default function PublicHomePage() {
                                 className="group cursor-pointer"
                             >
                                 <div
-                                    className="relative aspect-video rounded-lg overflow-hidden mb-3 shadow-md"
+                                    className="relative aspect-video rounded-lg overflow-hidden mb-4 shadow-md"
                                     style={{ background: "var(--faro-surface-container-high)" }}
                                 >
                                     <Image
@@ -398,14 +398,14 @@ export default function PublicHomePage() {
 
             {/* ─── CTA NEWSLETTER ───────────────────────────────────── */}
             <section
-                className="py-1.5 px-3 md:px-4 lg:px-8 xl:px-12"
+                className="py-8 md:py-12 px-3 md:px-4 lg:px-8 xl:px-12"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
-                    className="max-w-4xl mx-auto rounded-lg p-4 md:p-4 relative overflow-hidden text-center backdrop-blur-2xl"
+                    className="max-w-4xl mx-auto rounded-xl p-8 md:p-10 relative overflow-hidden text-center backdrop-blur-2xl"
                     style={{
                         background: "var(--faro-card-glass-gradient)",
                         backgroundColor: "var(--faro-primary-container)",
