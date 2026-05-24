@@ -783,6 +783,22 @@ class EvangelismStrategy(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
+
+    # Typology: relacional | evento_masivo | sectorial
+    typology = Column(String(50), nullable=True, index=True)
+
+    # ── Relacional (grupos pequeños / células / faro en casa) ──
+    recurrence = Column(String(20), nullable=True)  # SEMANAL | QUINCENAL | MENSUAL
+    day_of_week = Column(String(20), nullable=True)
+    start_time = Column(String(10), nullable=True)
+
+    # ── Evento Masivo ──
+    event_format = Column(String(30), nullable=True)  # UNICA_LOCACION | MULTILOCACION
+    phases = Column(JSON, nullable=True)  # [{name, type, start_date, end_date}]
+
+    # ── Sectorial / Misional ──
+    niche_objective = Column(String(255), nullable=True)
+
     strategy_type = Column(String(100), nullable=True)
     start_date = Column(DateTime, nullable=True)
     end_date = Column(DateTime, nullable=True)

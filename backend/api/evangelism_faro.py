@@ -1125,3 +1125,369 @@ def get_macro_despliegue(
         "total_houses": len(houses),
         "despliegue": despliegue,
     }
+
+
+# ── Sessions & Attendance ──
+
+from datetime import datetime as _datetime
+
+@router.get("/sessions", response_model=List[schemas.GloryHouseSession])
+def list_sessions(
+    strategy_id: Optional[int] = None,
+    house_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """List sessions, optionally filtered by strategy or house."""
+    from backend.models_academy import GloryHouseSession, GloryHouse
+    
+    q = db.query(GloryHouseSession)
+    if strategy_id:
+        q = q.join(GloryHouse, GloryHouse.id == GloryHouseSession.glory_house_id).filter(
+            GloryHouse.evangelism_strategy_id == strategy_id
+        )
+    if house_id:
+        q = q.filter(GloryHouseSession.glory_house_id == house_id)
+    return q.order_by(GloryHouseSession.session_date.desc()).all()
+
+
+@router.post("/sessions", response_model=schemas.GloryHouseSession)
+def create_session(
+    session_data: schemas.GloryHouseSessionCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Create a new session."""
+    from backend.models_academy import GloryHouseSession as SessionModel
+    
+    db_session = SessionModel(
+        glory_house_id=session_data.glory_house_id,
+        season_id=session_data.season_id,
+        session_date=session_data.session_date,
+        topic=session_data.topic,
+        offering_amount=session_data.offering_amount,
+        report_notes=session_data.report_notes,
+        novelty_type=session_data.novelty_type,
+        novelty_detail=session_data.novelty_detail,
+        cancellation_reason=session_data.cancellation_reason,
+        reported_by_member_id=session_data.reported_by_member_id,
+        reported_at=_datetime.utcnow(),
+        status=session_data.status,
+    )
+    db.add(db_session)
+    db.commit()
+    db.refresh(db_session)
+    return db_session
+
+
+@router.get("/sessions/{session_id}", response_model=dict)
+def get_session_detail(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Get session with attendance records."""
+    from backend.models_academy import GloryHouseSession, GloryHouseAttendance, GloryHouse
+    
+    session = (
+        db.query(GloryHouseSession)
+        .options(joinedload(GloryHouseSession.glory_house))
+        .filter(GloryHouseSession.id == session_id)
+        .first()
+    )
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    attendance = db.query(GloryHouseAttendance).filter(
+        GloryHouseAttendance.session_id == session_id
+    ).all()
+    
+    return {
+        "session": session,
+        "attendance": attendance,
+        "glory_house": session.glory_house,
+    }
+
+
+@router.put("/sessions/{session_id}", response_model=schemas.GloryHouseSession)
+def update_session(
+    session_id: int,
+    update: schemas.GloryHouseSessionUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Update session."""
+    from backend.models_academy import GloryHouseSession as SessionModel
+    
+    db_session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
+    if not db_session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    update_data = update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_session, key, value)
+    
+    db_session.reported_at = _datetime.utcnow()
+    db.commit()
+    db.refresh(db_session)
+    return db_session
+
+
+@router.delete("/sessions/{session_id}")
+def delete_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Delete session and its attendance."""
+    from backend.models_academy import GloryHouseSession, GloryHouseAttendance
+    
+    db_session = db.query(GloryHouseSession).filter(GloryHouseSession.id == session_id).first()
+    if not db_session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    db.query(GloryHouseAttendance).filter(
+        GloryHouseAttendance.session_id == session_id
+    ).delete()
+    db.delete(db_session)
+    db.commit()
+    return {"ok": True}
+
+
+# ── Attendance ──
+
+@router.post("/sessions/{session_id}/attendance", response_model=List[schemas.GloryHouseAttendance])
+def submit_attendance(
+    session_id: int,
+    attendance_data: List[schemas.GloryHouseAttendanceCreate],
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Submit attendance for a session. Checks automation triggers."""
+    from backend.models_academy import GloryHouseAttendance, GloryHouseSession, GloryHouse
+    
+    session = db.query(GloryHouseSession).filter(GloryHouseSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    # Delete existing attendance for this session
+    db.query(GloryHouseAttendance).filter(
+        GloryHouseAttendance.session_id == session_id
+    ).delete()
+    
+    submitted = []
+    for att in attendance_data:
+        db_att = GloryHouseAttendance(
+            session_id=session_id,
+            member_id=att.member_id,
+            status=att.status,
+            notes=att.notes,
+        )
+        db.add(db_att)
+        submitted.append(db_att)
+    
+    db.commit()
+    for att in submitted:
+        db.refresh(att)
+    
+    # ── Automation triggers ──
+    _check_absence_trigger(db, session_id)
+    _check_first_time_lead_trigger(db, session_id)
+    
+    return submitted
+
+
+def _check_absence_trigger(db: Session, session_id: int):
+    """If a member has 3 consecutive absences, create N2 task in Consolidation."""
+    from backend.models_academy import (
+        GloryHouseAttendance,
+        GloryHouseSession,
+        GloryHouse,
+    )
+    from backend.models_crm import Member
+    
+    session = db.query(GloryHouseSession).filter(
+        GloryHouseSession.id == session_id
+    ).first()
+    if not session:
+        return
+    
+    house = db.query(GloryHouse).filter(
+        GloryHouse.id == session.glory_house_id
+    ).first()
+    if not house:
+        return
+    
+    # Get last 3 sessions for this house
+    recent_sessions = (
+        db.query(GloryHouseSession)
+        .filter(GloryHouseSession.glory_house_id == house.id)
+        .order_by(GloryHouseSession.session_date.desc())
+        .limit(3)
+        .all()
+    )
+    
+    if len(recent_sessions) < 3:
+        return  # Not enough data
+    
+    # Check attendance for each member in base attendees
+    for base_member in (house.base_attendees or []):
+        member_id = base_member.member_id
+        absent_count = 0
+        for s in recent_sessions:
+            att = (
+                db.query(GloryHouseAttendance)
+                .filter(
+                    GloryHouseAttendance.session_id == s.id,
+                    GloryHouseAttendance.member_id == member_id,
+                    GloryHouseAttendance.status == "absent",
+                )
+                .first()
+            )
+            if att:
+                absent_count += 1
+        
+        if absent_count >= 3:
+            # Create N2 task in Consolidation
+            member = db.query(Member).filter(Member.id == member_id).first()
+            if not member:
+                continue
+            from backend.models_crm import SupportTicket
+            ticket = SupportTicket(
+                member_id=member_id,
+                ticket_type="consolidation",
+                title=f"Inasistencia recurrente: {member.first_name} {member.last_name}",
+                description=f"{member.first_name} {member.last_name} ha faltado 3 sesiones consecutivas en {house.name}. Requiere contacto pastoral.",
+                status="open",
+                priority="high",
+                severity="N2",
+            )
+            db.add(ticket)
+            db.commit()
+
+
+def _check_first_time_lead_trigger(db: Session, session_id: int):
+    """If a first_time attendee is recorded, mark as LEAD_NUEVO in CRM."""
+    from backend.models_academy import GloryHouseAttendance
+    from backend.models_crm import Member
+    
+    first_timers = (
+        db.query(GloryHouseAttendance)
+        .filter(
+            GloryHouseAttendance.session_id == session_id,
+            GloryHouseAttendance.status == "first_time",
+        )
+        .all()
+    )
+    
+    for att in first_timers:
+        member = db.query(Member).filter(Member.id == att.member_id).first()
+        if member and str(getattr(member, "status", "")).lower() not in ("lead", "lead_nuevo"):
+            try:
+                member.status = "lead_nuevo"
+                db.commit()
+            except Exception:
+                pass
+
+
+# ── Dashboard Metrics ──
+
+@router.get("/strategies/{strategy_id}/metrics", response_model=dict)
+def get_strategy_metrics(
+    strategy_id: int,
+    weeks: int = 12,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Weekly metrics for a strategy: attendance, absences, first-timers, groups."""
+    from backend.models_academy import (
+        GloryHouseSession,
+        GloryHouseAttendance,
+        GloryHouse,
+    )
+    from datetime import timedelta
+    
+    # Get all houses for this strategy
+    houses = db.query(GloryHouse).filter(
+        GloryHouse.evangelism_strategy_id == strategy_id
+    ).all()
+    house_ids = [h.id for h in houses]
+    
+    if not house_ids:
+        return {
+            "strategy_id": strategy_id,
+            "weekly": [],
+            "summary": {
+                "total_groups": 0,
+                "total_sessions": 0,
+                "avg_attendance": 0,
+                "total_first_timers": 0,
+                "total_absences": 0,
+            },
+        }
+    
+    cutoff = _datetime.utcnow() - timedelta(weeks=weeks)
+    
+    sessions = (
+        db.query(GloryHouseSession)
+        .filter(
+            GloryHouseSession.glory_house_id.in_(house_ids),
+            GloryHouseSession.session_date >= cutoff.date(),
+        )
+        .order_by(GloryHouseSession.session_date)
+        .all()
+    )
+    
+    weekly = collections.defaultdict(lambda: {
+        "present": 0, "absent": 0, "first_time": 0,
+        "sessions": 0, "offering": 0.0,
+    })
+    
+    for s in sessions:
+        week_key = s.session_date.strftime("%Y-%m-%d")
+        weekly[week_key]["sessions"] += 1
+        
+        if s.offering_amount:
+            weekly[week_key]["offering"] += float(s.offering_amount)
+        
+        atts = db.query(GloryHouseAttendance).filter(
+            GloryHouseAttendance.session_id == s.id
+        ).all()
+        
+        for a in atts:
+            status = str(a.status).lower()
+            if status in ("present",):
+                weekly[week_key]["present"] += 1
+            elif status == "absent":
+                weekly[week_key]["absent"] += 1
+            elif status == "first_time":
+                weekly[week_key]["first_time"] += 1
+    
+    weekly_list = []
+    total_present = 0
+    total_absent = 0
+    total_first = 0
+    
+    for week_key in sorted(weekly.keys()):
+        data = weekly[week_key]
+        total_present += data["present"]
+        total_absent += data["absent"]
+        total_first += data["first_time"]
+        total_att = data["present"] + data["absent"]
+        weekly_list.append({
+            "week": week_key,
+            **data,
+            "attendance_rate": round(data["present"] / total_att * 100, 1) if total_att > 0 else 0,
+        })
+    
+    return {
+        "strategy_id": strategy_id,
+        "weekly": weekly_list,
+        "summary": {
+            "total_groups": len(houses),
+            "total_sessions": len(sessions),
+            "avg_attendance": round(total_present / len(sessions), 1) if sessions else 0,
+            "total_first_timers": total_first,
+            "total_absences": total_absent,
+        },
+    }

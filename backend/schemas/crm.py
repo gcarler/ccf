@@ -642,10 +642,26 @@ class MemberFormation(MemberFormationBase):
 class EvangelismStrategyBase(BaseModel):
     name: str
     description: Optional[str] = None
+    typology: Optional[str] = None  # relacional | evento_masivo | sectorial
+
+    # Relacional
+    recurrence: Optional[str] = None  # SEMANAL | QUINCENAL | MENSUAL
+    day_of_week: Optional[str] = None
+    start_time: Optional[str] = None
+
+    # Evento Masivo
+    event_format: Optional[str] = None  # UNICA_LOCACION | MULTILOCACION
+    phases: Optional[list[dict]] = None
+    phase_count: Optional[int] = None
+
+    # Sectorial
+    niche_objective: Optional[str] = None
+
     strategy_type: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     status: str = "active"
+    group_count: Optional[int] = None
 
 
 class EvangelismStrategyCreate(EvangelismStrategyBase):
@@ -655,6 +671,13 @@ class EvangelismStrategyCreate(EvangelismStrategyBase):
 class EvangelismStrategyUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+    typology: Optional[str] = None
+    recurrence: Optional[str] = None
+    day_of_week: Optional[str] = None
+    start_time: Optional[str] = None
+    event_format: Optional[str] = None
+    phases: Optional[list[dict]] = None
+    niche_objective: Optional[str] = None
     strategy_type: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
@@ -664,6 +687,7 @@ class EvangelismStrategyUpdate(BaseModel):
 class EvangelismStrategy(EvangelismStrategyBase):
     id: int
     created_at: datetime
+    updated_at: Optional[datetime] = None
     model_config = orm_config
 
 
@@ -876,6 +900,7 @@ class GloryHouse(BaseModel):
     leader_id: Optional[int] = None
     assistant_id: Optional[int] = None
     host_id: Optional[int] = None
+    evangelism_strategy_id: Optional[int] = None
     members_count: int
     capacity: int
     status: str
@@ -894,6 +919,7 @@ class GloryHouseCreate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     leader_name: Optional[str] = None
+    evangelism_strategy_id: Optional[int] = None
     leader_id: Optional[int] = None
     assistant_id: Optional[int] = None
     host_id: Optional[int] = None
@@ -1036,4 +1062,59 @@ class PastoralCallLog(BaseModel):
     notes: Optional[str] = None
     duration_seconds: int = 0
     created_at: datetime
+    model_config = orm_config
+
+
+# ── Faro Sessions & Attendance ──
+
+class GloryHouseSessionBase(BaseModel):
+    glory_house_id: int
+    season_id: Optional[int] = None
+    session_date: datetime
+    topic: Optional[str] = None
+    offering_amount: Optional[float] = None
+    report_notes: Optional[str] = None
+    novelty_type: Optional[str] = None
+    novelty_detail: Optional[str] = None
+    cancellation_reason: Optional[str] = None
+    reported_by_member_id: Optional[int] = None
+    status: str = "Realizada"
+
+
+class GloryHouseSessionCreate(GloryHouseSessionBase):
+    pass
+
+
+class GloryHouseSession(GloryHouseSessionBase):
+    id: int
+    reported_at: Optional[datetime] = None
+    created_at: datetime
+    model_config = orm_config
+
+
+class GloryHouseSessionUpdate(BaseModel):
+    session_date: Optional[datetime] = None
+    topic: Optional[str] = None
+    offering_amount: Optional[float] = None
+    report_notes: Optional[str] = None
+    novelty_type: Optional[str] = None
+    novelty_detail: Optional[str] = None
+    cancellation_reason: Optional[str] = None
+    reported_by_member_id: Optional[int] = None
+    status: Optional[str] = None
+
+
+class GloryHouseAttendanceBase(BaseModel):
+    session_id: int
+    member_id: int
+    status: str = "present"  # present | absent | first_time
+    notes: Optional[str] = None
+
+
+class GloryHouseAttendanceCreate(GloryHouseAttendanceBase):
+    pass
+
+
+class GloryHouseAttendance(GloryHouseAttendanceBase):
+    id: int
     model_config = orm_config

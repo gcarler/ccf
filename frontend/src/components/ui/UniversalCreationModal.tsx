@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
     X, CheckSquare, FileText, Bell, LayoutDashboard, Layers,
     Plus, User, Calendar, Flag, Tag, Paperclip,
     MessageSquare, ChevronDown, Sparkles, Loader2,
     Table2, Columns, List, ChevronRight, Users,
-    Minus
+    Minus, Flame, Target, MapPin, Clock
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
@@ -90,6 +90,10 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
     const [showEventTypeDropdown, setShowEventTypeDropdown] = useState(false);
     const [strategyType, setStrategyType] = useState('Campaña de Alcance');
     const [showStrategyTypeDropdown, setShowStrategyTypeDropdown] = useState(false);
+    const [typology, setTypology] = useState('');
+    const [recurrence, setRecurrence] = useState('SEMANAL');
+    const [eventFormat, setEventFormat] = useState('UNICA_LOCACION');
+    const [nicheObjective, setNicheObjective] = useState('');
     const [showTagsDropdown, setShowTagsDropdown] = useState(false);
     const [whiteboardBg, setWhiteboardBg] = useState('grid');
     const [panelLayout, setPanelLayout] = useState('board');
@@ -235,9 +239,13 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                     body: {
                         name: title.trim(),
                         description: description,
+                        typology: typology || null,
+                        recurrence: typology === 'relacional' ? recurrence : null,
+                        event_format: typology === 'evento_masivo' ? eventFormat : null,
+                        niche_objective: typology === 'sectorial' ? nicheObjective : null,
                         strategy_type: strategyType,
-                        start_date: new Date(eventDate).toISOString(),
-                        end_date: new Date(eventEndDate).toISOString(),
+                        start_date: eventDate ? new Date(eventDate).toISOString() : null,
+                        end_date: eventEndDate ? new Date(eventEndDate).toISOString() : null,
                         status: 'active'
                     }
                 });
@@ -705,9 +713,88 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                             {/* ─── ESTRATEGIA EVANGELISMO ─── */}
                                             {type === 'evangelism_strategy' && (
                                                 <div className="flex flex-col">
-                                                    <div className="flex items-center gap-2 px-3 pt-3 pb-2 text-[12px] text-slate-500 relative z-[95]">
+                                                    {/* Typology Selector */}
+                                                    <div className="flex items-center gap-2 px-3 pt-3 pb-2 text-[12px] text-slate-500">
+                                                        <Sparkles size={12} />
+                                                        <span className="font-semibold text-slate-600 dark:text-slate-400">Tipología:</span>
+                                                        <div className="flex gap-1 ml-2">
+                                                            {[
+                                                                { id: 'relacional', label: 'Relacional', icon: Users },
+                                                                { id: 'evento_masivo', label: 'Evento Masivo', icon: Flame },
+                                                                { id: 'sectorial', label: 'Sectorial', icon: Target },
+                                                            ].map(t => (
+                                                                <button
+                                                                    key={t.id}
+                                                                    onClick={() => setTypology(t.id)}
+                                                                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                                                                        typology === t.id
+                                                                            ? 'bg-blue-600 text-white shadow-sm'
+                                                                            : 'bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10'
+                                                                    }`}
+                                                                >
+                                                                    {t.label}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Dynamic fields based on typology */}
+                                                    {typology === 'relacional' && (
+                                                        <div className="flex items-center gap-2 px-3 pb-1 text-[12px]">
+                                                            <Clock size={12} className="text-slate-400" />
+                                                            <span className="text-slate-500">Recurrencia:</span>
+                                                            {['SEMANAL', 'QUINCENAL', 'MENSUAL'].map(r => (
+                                                                <button
+                                                                    key={r}
+                                                                    onClick={() => setRecurrence(r)}
+                                                                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                                                                        recurrence === r
+                                                                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                                                                            : 'bg-slate-50 dark:bg-white/5 text-slate-400 hover:bg-slate-100'
+                                                                    }`}
+                                                                >
+                                                                    {r}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {typology === 'evento_masivo' && (
+                                                        <div className="flex items-center gap-2 px-3 pb-1 text-[12px]">
+                                                            <MapPin size={12} className="text-slate-400" />
+                                                            <span className="text-slate-500">Formato:</span>
+                                                            {[
+                                                                { id: 'UNICA_LOCACION', label: 'Una Ubicación' },
+                                                                { id: 'MULTILOCACION', label: 'Multi-sede' },
+                                                            ].map(f => (
+                                                                <button
+                                                                    key={f.id}
+                                                                    onClick={() => setEventFormat(f.id)}
+                                                                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                                                                        eventFormat === f.id
+                                                                            ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
+                                                                            : 'bg-slate-50 dark:bg-white/5 text-slate-400 hover:bg-slate-100'
+                                                                    }`}
+                                                                >
+                                                                    {f.label}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {typology === 'sectorial' && (
+                                                        <input
+                                                            value={nicheObjective}
+                                                            onChange={e => setNicheObjective(e.target.value)}
+                                                            placeholder="Nicho objetivo (ej: Universidades, Cárceles, Fundaciones)"
+                                                            className="mx-3 mb-1 px-2 py-1 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                                        />
+                                                    )}
+
+                                                    {/* Strategy type dropdown */}
+                                                    <div className="flex items-center gap-2 px-3 pt-1 pb-1 text-[12px] text-slate-500 relative z-[95]">
                                                         <div className="relative">
-                                                            <button 
+                                                            <button
                                                                 onClick={(e) => { e.stopPropagation(); setShowStrategyTypeDropdown(!showStrategyTypeDropdown); }}
                                                                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                                                             >
@@ -717,7 +804,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                             </button>
                                                             {showStrategyTypeDropdown && (
                                                                 <div className="absolute top-full left-0 mt-1 w-44 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-lg z-[9999] py-1">
-                                                                    {['Campaña de Alcance', 'Consolidación', 'Discipulado', 'Evangelismo Personal'].map(opt => (
+                                                                    {['Campaña de Alcance', 'Consolidación', 'Discipulado', 'Evangelismo Personal', 'Jesús Transforma', 'Alcance Carcelario'].map(opt => (
                                                                         <button
                                                                             key={opt}
                                                                             onClick={() => {
@@ -746,26 +833,26 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                                                     <div className="px-3 py-3 space-y-2">
                                                         <div className="flex items-center gap-3 flex-wrap">
                                                             <Calendar size={14} className="text-slate-400 font-semibold" />
-                                                            <input 
+                                                            <input
                                                                 type="date"
                                                                 value={eventDate}
                                                                 onChange={e => setEventDate(e.target.value)}
-                                                                className="text-[13px] font-semibold bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer" 
+                                                                className="text-[13px] font-semibold bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
                                                             />
                                                             <span className="text-slate-400 text-[11px] font-semibold">hasta</span>
-                                                            <input 
+                                                            <input
                                                                 type="date"
                                                                 value={eventEndDate}
                                                                 onChange={e => setEventEndDate(e.target.value)}
-                                                                className="text-[13px] font-semibold bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer" 
+                                                                className="text-[13px] font-semibold bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
                                                             />
                                                         </div>
                                                         <div className="flex items-start gap-3 pt-3">
                                                             <FileText size={14} className="text-slate-400 mt-1" />
-                                                            <textarea 
+                                                            <textarea
                                                                 value={description}
                                                                 onChange={e => setDescription(e.target.value)}
-                                                                placeholder="Propósito u objetivos de la estrategia" 
+                                                                placeholder="Propósito u objetivos de la estrategia"
                                                                 className="text-[12px] flex-1 min-h-[60px] bg-transparent border border-slate-200 dark:border-white/10 rounded p-2 text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 placeholder:text-slate-400 resize-none"
                                                             />
                                                         </div>

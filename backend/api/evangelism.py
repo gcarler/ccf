@@ -1156,16 +1156,30 @@ from backend.schemas.crm import (EvangelismStrategy, EvangelismStrategyCreate,
 def read_evangelism_strategies(
     skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 ):
-    return get_evangelism_strategies(db, skip=skip, limit=limit)
+    from backend.models_academy import GloryHouse
+    strategies = get_evangelism_strategies(db, skip=skip, limit=limit)
+    result = []
+    for s in strategies:
+        obj = EvangelismStrategy.from_orm(s)
+        obj.group_count = db.query(GloryHouse).filter(
+            GloryHouse.evangelism_strategy_id == s.id
+        ).count()
+        result.append(obj)
+    return result
 
 
 @router.get("/strategies/{strategy_id}", response_model=EvangelismStrategy)
 def read_strategy(strategy_id: int, db: Session = Depends(get_db)):
     from backend.models_crm import EvangelismStrategy
+    from backend.models_academy import GloryHouse
     db_obj = db.query(EvangelismStrategy).filter(EvangelismStrategy.id == strategy_id).first()
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
-    return db_obj
+    result = EvangelismStrategy.from_orm(db_obj)
+    result.group_count = db.query(GloryHouse).filter(
+        GloryHouse.evangelism_strategy_id == strategy_id
+    ).count()
+    return result
 
 
 @router.post("/strategies", response_model=EvangelismStrategy)
