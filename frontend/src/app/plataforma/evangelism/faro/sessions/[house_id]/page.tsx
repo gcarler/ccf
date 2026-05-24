@@ -171,28 +171,28 @@ export default function SessionReportPage() {
     };
 
     if (loading) return (
-        <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/evangelism' }, { label: 'Grupos Faro', href: '/evangelism/faro/groups' }, { label: 'Reporte' }]}>
+        <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'Grupos Faro', href: '/plataforma/evangelism/faro/groups' }, { label: 'Reporte' }]}>
             <div className="space-y-3 p-3">{[1, 2, 3].map(i => <div key={i} className="h-16 bg-slate-100 dark:bg-white/5 rounded-lg animate-pulse" />)}</div>
         </EvangelismShell>
     );
 
     if (!house) return (
-        <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/evangelism' }, { label: 'No encontrado' }]}>
+        <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'No encontrado' }]}>
             <div className="flex flex-col items-center justify-center py-16 text-center">
                 <AlertCircle size={48} className="text-slate-300 dark:text-slate-600 mb-4" />
                 <h2 className="text-lg font-bold text-slate-700 dark:text-slate-300">Grupo no encontrado</h2>
-                <button onClick={() => router.push('/evangelism/faro/groups')} className="mt-4 px-4 h-9 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors">Volver</button>
+                <button onClick={() => router.push('/plataforma/evangelism/faro/groups')} className="mt-4 px-4 h-9 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors">Volver</button>
             </div>
         </EvangelismShell>
     );
 
     return (
-        <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/evangelism' }, { label: 'Grupos Faro', href: '/evangelism/faro/groups' }, { label: house.name }, { label: 'Reporte' }]}>
+        <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'Grupos Faro', href: '/plataforma/evangelism/faro/groups' }, { label: house.name }, { label: 'Reporte' }]}>
             <div className="p-4 lg:p-3 space-y-3 max-w-4xl mx-auto animate-fade-in">
                 {/* Header */}
                 <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
-                        <button onClick={() => router.push('/evangelism/faro/groups')} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-white transition-all mt-1"><ArrowLeft size={16} /></button>
+                        <button onClick={() => router.push('/plataforma/evangelism/faro/groups')} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-white transition-all mt-1"><ArrowLeft size={16} /></button>
                         <div>
                             <h1 className="text-xl font-bold text-slate-900 dark:text-white">Reportar Sesión</h1>
                             <p className="text-sm text-slate-400 font-medium">{house.name} · {house.zone || 'Sin zona'}</p>
@@ -291,7 +291,7 @@ export default function SessionReportPage() {
 
                 {/* Submit */}
                 <div className="flex items-center justify-end gap-3 pb-4">
-                    <button onClick={() => router.push('/evangelism/faro/groups')} className="px-4 h-9 rounded-lg border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5">Cancelar</button>
+                    <button onClick={() => router.push('/plataforma/evangelism/faro/groups')} className="px-4 h-9 rounded-lg border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5">Cancelar</button>
                     <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSubmit} disabled={saving} className="inline-flex items-center gap-2 px-6 h-10 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 disabled:opacity-60 shadow-sm">
                         {saving ? <><Clock size={16} className="animate-spin" /> Guardando...</> : <><Save size={16} /> Guardar Reporte</>}
                     </motion.button>

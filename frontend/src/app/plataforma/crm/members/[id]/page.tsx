@@ -11,7 +11,8 @@ import {
     Zap, Sparkles, ChevronRight, CheckCircle2,
     BookOpen, Award, TrendingUp,
     AlertCircle, Plus, ExternalLink, Flame,
-    Search, Check, Loader2
+    Search, Check, Loader2,
+    ChevronDown, Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -192,6 +193,56 @@ function formatCurrency(val?: number | null): string {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
+const ID_TYPES = ['Cédula de Ciudadanía', 'Cédula de Extranjería', 'Pasaporte', 'Tarjeta de Identidad', 'NIT', 'Otro'];
+const MARITAL_STATUSES = ['Soltero(a)', 'Casado(a)', 'Unión Libre', 'Divorciado(a)', 'Viudo(a)', 'Separado(a)'];
+const SEX_OPTIONS = ['Masculino', 'Femenino'];
+const EDUCATION_LEVELS = ['Primaria', 'Secundaria', 'Técnico', 'Tecnólogo', 'Universitario', 'Postgrado', 'Maestría', 'Doctorado'];
+const EDUCATION_STATUSES = ['Cursando', 'Completado', 'Incompleto'];
+const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+const HOUSING_TYPES = ['Propia', 'Arriendo', 'Familiar', 'Otro'];
+const MEMBERSHIP_TYPES = ['Activo', 'Inactivo', 'Transferido', 'Fallecido'];
+const ATTENDANCE_TYPES = ['Regular', 'Constante', 'Irregular', 'Ausente'];
+
+function FormSection({ title, defaultOpen, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
+    const [open, setOpen] = useState(defaultOpen ?? false);
+    return (
+        <div className="border border-slate-100 dark:border-white/10 rounded-lg overflow-hidden">
+            <button type="button" onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-white/5 text-[10px] font-bold uppercase tracking-wide text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+                <span>{title}</span>
+                <ChevronDown size={14} className={clsx("transition-transform", open && "rotate-180")} />
+            </button>
+            <AnimatePresence initial={false}>
+                {open && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="px-3 py-2 space-y-2">
+                        {children}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
+function SelectField({ label, value, onChange, options, placeholder }: { label: string; value: string; onChange: (v: string) => void; options: string[]; placeholder?: string }) {
+    return (
+        <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</label>
+            <select value={value} onChange={e => onChange(e.target.value)} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white">
+                <option value="">{placeholder ?? 'Seleccionar...'}</option>
+                {options.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+        </div>
+    );
+}
+
+function EditField({ label, value, onChange, placeholder, type = 'text' }: { label: string; value: string; onChange: (v: string) => void; placeholder: string; type?: string }) {
+    return (
+        <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</label>
+            <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white" />
+        </div>
+    );
+}
+
 function QuickStat({ label, value, icon: Icon, color }: any) {
     return (
         <div className="px-4 py-2 bg-slate-50 dark:bg-black/20 rounded-lg flex items-center gap-4 border border-slate-100 dark:border-white/5 min-w-[180px]">
@@ -264,6 +315,9 @@ export default function MemberDetailPage() {
         title: 'Asignar Mentoría',
         subtitle: 'Selecciona el mentor que guiará el proceso espiritual de este miembro.',
     });
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [editMember, setEditMember] = useState<any>({});
+    const [isEditSaving, setIsEditSaving] = useState(false);
     
     // Extra data fetched on demand
     const [history, setHistory] = useState<any[]>([]);
@@ -276,26 +330,64 @@ export default function MemberDetailPage() {
             try {
                 await new Promise(r => setTimeout(r, 500));
                 const data = await apiFetch<any>(`/crm/members/${id}`, { token });
-                setMember({
+                const m = {
                     ...data,
-                    first_name: data.first_name ?? 'Sin nombre',
+                    first_name: data.first_name ?? '',
                     last_name: data.last_name ?? '',
-                    email: data.email ?? '—',
-                    phone: data.phone ?? '—',
-                    address: data.address ?? '—',
+                    email: data.email ?? '',
+                    phone: data.phone ?? '',
+                    address: data.address ?? '',
                     joinedAt: data.joinedAt ?? data.created_at ?? null,
                     status: data.status ?? 'Activo',
-                    church_role: data.church_role ?? data.role_in_family ?? 'Miembro',
+                    church_role: data.church_role ?? 'Miembro',
                     xp: data.xp ?? 0,
                     level: data.level ?? 1,
-                    house: data.house ?? '—',
+                    house: data.house ?? '',
                     family: Array.isArray(data.family) ? data.family : [],
                     birthday: data.birthday ?? null,
-                    pastoral_notes: data.pastoral_notes ?? null,
-                    spiritual_gifts: data.spiritual_gifts ?? null,
-                    talents: data.talents ?? null,
+                    pastoral_notes: data.pastoral_notes ?? '',
+                    spiritual_gifts: data.spiritual_gifts ?? '',
+                    talents: data.talents ?? '',
                     baptism_date: data.baptism_date ?? null,
-                });
+                    second_name: data.second_name ?? '',
+                    second_last_name: data.second_last_name ?? '',
+                    id_type: data.id_type ?? '',
+                    id_number: data.id_number ?? '',
+                    birth_country: data.birth_country ?? '',
+                    sex: data.sex ?? '',
+                    marital_status: data.marital_status ?? '',
+                    landline_phone: data.landline_phone ?? '',
+                    other_phone: data.other_phone ?? '',
+                    mobile_phone: data.mobile_phone ?? '',
+                    housing_type: data.housing_type ?? '',
+                    education_level: data.education_level ?? '',
+                    education_status: data.education_status ?? '',
+                    profession: data.profession ?? '',
+                    economic_sector: data.economic_sector ?? '',
+                    blood_type: data.blood_type ?? '',
+                    medical_notes: data.medical_notes ?? '',
+                    membership_type: data.membership_type ?? '',
+                    attendance_type: data.attendance_type ?? '',
+                    group_name: data.group_name ?? '',
+                    campus: data.campus ?? '',
+                    church_join_date: data.church_join_date ?? null,
+                    registration_reason: data.registration_reason ?? '',
+                    unregistration_reason: data.unregistration_reason ?? '',
+                    registration_date: data.registration_date ?? null,
+                    unregistration_date: data.unregistration_date ?? null,
+                    optional_info: data.optional_info ?? '',
+                    responsible_adult_name: data.responsible_adult_name ?? '',
+                    responsible_adult_contact: data.responsible_adult_contact ?? '',
+                    guardian_name: data.guardian_name ?? '',
+                    guardian_contact: data.guardian_contact ?? '',
+                    colombian_department_id: data.colombian_department_id ?? null,
+                    colombian_department: data.colombian_department ?? null,
+                    city: data.city ?? '',
+                    last_group_attendance: data.last_group_attendance ?? null,
+                    last_meeting_attendance: data.last_meeting_attendance ?? null,
+                };
+                setMember(m);
+                setEditMember({ ...m });
             } catch {
                 setMember(null);
             } finally {
@@ -304,6 +396,48 @@ export default function MemberDetailPage() {
         };
         fetchMember();
     }, [id, token]);
+
+    const handleSaveMember = async () => {
+        if (!token) return;
+        setIsEditSaving(true);
+        try {
+            const body: any = {};
+            const fields = [
+                'first_name','last_name','email','phone','church_role','second_name','second_last_name',
+                'id_type','id_number','birth_country','sex','marital_status','birthday',
+                'landline_phone','other_phone','mobile_phone','address','housing_type',
+                'colombian_department_id','city','education_level','education_status','profession','economic_sector',
+                'blood_type','medical_notes','membership_type','attendance_type','group_name','campus',
+                'church_join_date','baptism_date','responsible_adult_name','responsible_adult_contact',
+                'guardian_name','guardian_contact','talents','spiritual_gifts','pastoral_notes',
+                'registration_reason','unregistration_reason','registration_date','unregistration_date',
+                'optional_info','last_group_attendance','last_meeting_attendance',
+            ];
+            const dateFields = ['birthday','church_join_date','baptism_date','registration_date','unregistration_date','last_group_attendance','last_meeting_attendance'];
+            fields.forEach(k => {
+                let val = editMember[k];
+                if (dateFields.includes(k) && !val) val = null;
+                // Only send changed values
+                if (String(val) !== String(member[k])) {
+                    body[k] = val;
+                }
+            });
+            if (body.colombian_department_id === '' || body.colombian_department_id === null) {
+                body.colombian_department_id = null;
+            }
+            const updated = await apiFetch<any>(`/crm/members/${id}`, {
+                method: 'PATCH', token, body,
+            });
+            setMember((prev: any) => ({ ...prev, ...updated }));
+            setEditMember((prev: any) => ({ ...prev, ...updated }));
+            setIsEditOpen(false);
+            toast.success('Miembro actualizado');
+        } catch {
+            toast.error('No se pudo actualizar el miembro');
+        } finally {
+            setIsEditSaving(false);
+        }
+    };
 
     // Fetch history when tab activated
     useEffect(() => {
@@ -370,7 +504,7 @@ export default function MemberDetailPage() {
             ]}
             rightActions={
                 <div className="flex gap-2">
-                    <button title="Editar" className="p-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-blue-600 hover:border-blue-500/30 transition-all"><Edit3 size={16} /></button>
+                    <button title="Editar" onClick={() => setIsEditOpen(true)} className="p-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-blue-600 hover:border-blue-500/30 transition-all"><Edit3 size={16} /></button>
                     <button title="Compartir" className="p-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-blue-600 hover:border-blue-500/30 transition-all"><Share2 size={16} /></button>
                     <button title="Más acciones" className="p-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-blue-600 hover:border-blue-500/30 transition-all"><MoreHorizontal size={16} /></button>
                 </div>
@@ -470,6 +604,61 @@ export default function MemberDetailPage() {
                                     </div>
                                 )}
                             </div>
+
+                            {/* Datos Personales */}
+                            <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Datos Personales</h3>
+                                <InfoGrid items={[
+                                    { label: 'Tipo de ID', value: member.id_type },
+                                    { label: 'Número de ID', value: member.id_number },
+                                    { label: 'Segundo Nombre', value: member.second_name },
+                                    { label: 'Segundo Apellido', value: member.second_last_name },
+                                    { label: 'Estado Civil', value: member.marital_status },
+                                    { label: 'País de Nacimiento', value: member.birth_country },
+                                    { label: 'Sexo', value: member.sex },
+                                    { label: 'Tipo de Membresía', value: member.membership_type },
+                                ]} />
+                            </div>
+
+                            {/* Contacto y Ubicación */}
+                            {(member.landline_phone || member.address || member.city) && (
+                                <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Contacto y Ubicación</h3>
+                                    <InfoGrid items={[
+                                        { label: 'Teléfono Fijo', value: member.landline_phone },
+                                        { label: 'Celular', value: member.mobile_phone },
+                                        { label: 'Otro Teléfono', value: member.other_phone },
+                                        { label: 'Dirección', value: member.address },
+                                        { label: 'Tipo de Vivienda', value: member.housing_type },
+                                        { label: 'Departamento', value: member.colombian_department?.name ?? '' },
+                                        { label: 'Ciudad', value: member.city },
+                                    ]} />
+                                </div>
+                            )}
+
+                            {/* Educación y Profesión */}
+                            {(member.profession || member.education_level) && (
+                                <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Educación y Profesión</h3>
+                                    <InfoGrid items={[
+                                        { label: 'Nivel Educativo', value: member.education_level },
+                                        { label: 'Estado Educativo', value: member.education_status },
+                                        { label: 'Profesión', value: member.profession },
+                                        { label: 'Sector Económico', value: member.economic_sector },
+                                    ]} />
+                                </div>
+                            )}
+
+                            {/* Médico */}
+                            {(member.blood_type || member.medical_notes) && (
+                                <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Información Médica</h3>
+                                    <InfoGrid items={[
+                                        { label: 'Tipo de Sangre', value: member.blood_type },
+                                        { label: 'Notas Médicas', value: member.medical_notes },
+                                    ]} />
+                                </div>
+                            )}
 
                             {/* Núcleo Familiar */}
                             <div className="bg-white dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
@@ -731,6 +920,136 @@ export default function MemberDetailPage() {
                 memberId={id}
                 title={mentorDrawerConfig.title}
             />
+
+            {/* Edit Member Drawer */}
+            <WorkspaceDrawer
+                isOpen={isEditOpen}
+                onClose={() => setIsEditOpen(false)}
+                title="Editar Miembro"
+                subtitle={`Actualizando perfil de ${fullName}`}
+                actions={
+                    <>
+                        <button type="button" onClick={() => setIsEditOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700">Cancelar</button>
+                        <button type="button" onClick={handleSaveMember} disabled={isEditSaving} className="flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700 active:scale-95 disabled:opacity-60">
+                            {isEditSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                            Guardar
+                        </button>
+                    </>
+                }
+            >
+                <div className="space-y-2">
+                    {/* Básicos */}
+                    <div className="rounded-lg overflow-hidden">
+                        <div className="px-3 py-2 space-y-2">
+                            <div className="grid grid-cols-2 gap-3">
+                                <EditField label="Nombre" value={editMember.first_name ?? ''} onChange={v => setEditMember((p: any) => ({...p, first_name: v}))} placeholder="Juan" />
+                                <EditField label="Apellido" value={editMember.last_name ?? ''} onChange={v => setEditMember((p: any) => ({...p, last_name: v}))} placeholder="Pérez" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <EditField label="Segundo Nombre" value={editMember.second_name ?? ''} onChange={v => setEditMember((p: any) => ({...p, second_name: v}))} placeholder="José" />
+                                <EditField label="Segundo Apellido" value={editMember.second_last_name ?? ''} onChange={v => setEditMember((p: any) => ({...p, second_last_name: v}))} placeholder="García" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <EditField label="Correo" type="email" value={editMember.email ?? ''} onChange={v => setEditMember((p: any) => ({...p, email: v}))} placeholder="correo@ejemplo.com" />
+                                <EditField label="Teléfono" value={editMember.phone ?? ''} onChange={v => setEditMember((p: any) => ({...p, phone: v}))} placeholder="+57 300 000 0000" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <SelectField label="Rol" value={editMember.church_role ?? ''} onChange={v => setEditMember((p: any) => ({...p, church_role: v}))} options={['Miembro','Pastor','Líder','Diácono','Ministro de Culto','Apóstol','Profeta','Evangelista','Maestro','Administrador']} />
+                                <SelectField label="Tipo de Membresía" value={editMember.membership_type ?? ''} onChange={v => setEditMember((p: any) => ({...p, membership_type: v}))} options={MEMBERSHIP_TYPES} />
+                            </div>
+                        </div>
+                    </div>
+
+                    <FormSection title="Identificación">
+                        <div className="grid grid-cols-2 gap-3">
+                            <SelectField label="Tipo de ID" value={editMember.id_type ?? ''} onChange={v => setEditMember((p: any) => ({...p, id_type: v}))} options={ID_TYPES} />
+                            <EditField label="Número de ID" value={editMember.id_number ?? ''} onChange={v => setEditMember((p: any) => ({...p, id_number: v}))} placeholder="1234567890" />
+                        </div>
+                    </FormSection>
+
+                    <FormSection title="Información Personal">
+                        <div className="grid grid-cols-2 gap-3">
+                            <SelectField label="Sexo" value={editMember.sex ?? ''} onChange={v => setEditMember((p: any) => ({...p, sex: v}))} options={SEX_OPTIONS} />
+                            <SelectField label="Estado Civil" value={editMember.marital_status ?? ''} onChange={v => setEditMember((p: any) => ({...p, marital_status: v}))} options={MARITAL_STATUSES} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <EditField label="País de Nacimiento" value={editMember.birth_country ?? ''} onChange={v => setEditMember((p: any) => ({...p, birth_country: v}))} placeholder="Colombia" />
+                            <EditField label="Fecha de Nacimiento" type="date" value={editMember.birthday ? editMember.birthday.slice(0,10) : ''} onChange={v => setEditMember((p: any) => ({...p, birthday: v}))} placeholder="" />
+                        </div>
+                    </FormSection>
+
+                    <FormSection title="Contacto y Ubicación">
+                        <div className="grid grid-cols-2 gap-3">
+                            <EditField label="Teléfono Fijo" value={editMember.landline_phone ?? ''} onChange={v => setEditMember((p: any) => ({...p, landline_phone: v}))} placeholder="+57 1 000 0000" />
+                            <EditField label="Otro Teléfono" value={editMember.other_phone ?? ''} onChange={v => setEditMember((p: any) => ({...p, other_phone: v}))} placeholder="+57 300 000 0000" />
+                        </div>
+                        <EditField label="Dirección" value={editMember.address ?? ''} onChange={v => setEditMember((p: any) => ({...p, address: v}))} placeholder="Cra 1 # 2-3, Barrio..." />
+                        <div className="grid grid-cols-2 gap-3">
+                            <SelectField label="Tipo de Vivienda" value={editMember.housing_type ?? ''} onChange={v => setEditMember((p: any) => ({...p, housing_type: v}))} options={HOUSING_TYPES} />
+                            <EditField label="Celular" value={editMember.mobile_phone ?? ''} onChange={v => setEditMember((p: any) => ({...p, mobile_phone: v}))} placeholder="+57 300 000 0000" />
+                        </div>
+                    </FormSection>
+
+                    <FormSection title="Educación y Profesión">
+                        <div className="grid grid-cols-2 gap-3">
+                            <SelectField label="Nivel Educativo" value={editMember.education_level ?? ''} onChange={v => setEditMember((p: any) => ({...p, education_level: v}))} options={EDUCATION_LEVELS} />
+                            <SelectField label="Estado Educativo" value={editMember.education_status ?? ''} onChange={v => setEditMember((p: any) => ({...p, education_status: v}))} options={EDUCATION_STATUSES} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <EditField label="Profesión" value={editMember.profession ?? ''} onChange={v => setEditMember((p: any) => ({...p, profession: v}))} placeholder="Ingeniero, Abogado..." />
+                            <EditField label="Sector Económico" value={editMember.economic_sector ?? ''} onChange={v => setEditMember((p: any) => ({...p, economic_sector: v}))} placeholder="Salud, Educación..." />
+                        </div>
+                    </FormSection>
+
+                    <FormSection title="Información Médica">
+                        <SelectField label="Tipo de Sangre" value={editMember.blood_type ?? ''} onChange={v => setEditMember((p: any) => ({...p, blood_type: v}))} options={BLOOD_TYPES} />
+                        <EditField label="Notas Médicas" value={editMember.medical_notes ?? ''} onChange={v => setEditMember((p: any) => ({...p, medical_notes: v}))} placeholder="Alergias, condiciones..." />
+                    </FormSection>
+
+                    <FormSection title="Información de Iglesia">
+                        <div className="grid grid-cols-2 gap-3">
+                            <SelectField label="Tipo de Asistencia" value={editMember.attendance_type ?? ''} onChange={v => setEditMember((p: any) => ({...p, attendance_type: v}))} options={ATTENDANCE_TYPES} />
+                            <EditField label="Grupo" value={editMember.group_name ?? ''} onChange={v => setEditMember((p: any) => ({...p, group_name: v}))} placeholder="Grupo 1, Casa de Paz..." />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <EditField label="Campus / Sede" value={editMember.campus ?? ''} onChange={v => setEditMember((p: any) => ({...p, campus: v}))} placeholder="Principal, Norte..." />
+                            <EditField label="Fecha de Ingreso" type="date" value={editMember.church_join_date ? editMember.church_join_date.slice(0,10) : ''} onChange={v => setEditMember((p: any) => ({...p, church_join_date: v}))} placeholder="" />
+                        </div>
+                        <EditField label="Fecha de Bautismo" type="date" value={editMember.baptism_date ? editMember.baptism_date.slice(0,10) : ''} onChange={v => setEditMember((p: any) => ({...p, baptism_date: v}))} placeholder="" />
+                    </FormSection>
+
+                    <FormSection title="Información Familiar">
+                        <div className="grid grid-cols-2 gap-3">
+                            <EditField label="Nombre del Responsable" value={editMember.responsible_adult_name ?? ''} onChange={v => setEditMember((p: any) => ({...p, responsible_adult_name: v}))} placeholder="Nombre completo" />
+                            <EditField label="Contacto del Responsable" value={editMember.responsible_adult_contact ?? ''} onChange={v => setEditMember((p: any) => ({...p, responsible_adult_contact: v}))} placeholder="Teléfono" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <EditField label="Nombre del Acudiente" value={editMember.guardian_name ?? ''} onChange={v => setEditMember((p: any) => ({...p, guardian_name: v}))} placeholder="Nombre completo" />
+                            <EditField label="Contacto del Acudiente" value={editMember.guardian_contact ?? ''} onChange={v => setEditMember((p: any) => ({...p, guardian_contact: v}))} placeholder="Teléfono" />
+                        </div>
+                    </FormSection>
+
+                    <FormSection title="Información Espiritual">
+                        <EditField label="Talentos y Habilidades" value={editMember.talents ?? ''} onChange={v => setEditMember((p: any) => ({...p, talents: v}))} placeholder="Canto, enseñanza, liderazgo..." />
+                        <EditField label="Dones Espirituales" value={editMember.spiritual_gifts ?? ''} onChange={v => setEditMember((p: any) => ({...p, spiritual_gifts: v}))} placeholder="Profecía, enseñanza, servicio..." />
+                        <EditField label="Notas Pastorales" value={editMember.pastoral_notes ?? ''} onChange={v => setEditMember((p: any) => ({...p, pastoral_notes: v}))} placeholder="Observaciones pastorales..." />
+                        <div className="grid grid-cols-2 gap-3">
+                            <EditField label="Última Asistencia a Grupo" type="date" value={editMember.last_group_attendance ? editMember.last_group_attendance.slice(0,10) : ''} onChange={v => setEditMember((p: any) => ({...p, last_group_attendance: v}))} placeholder="" />
+                            <EditField label="Última Asistencia a Reunión" type="date" value={editMember.last_meeting_attendance ? editMember.last_meeting_attendance.slice(0,10) : ''} onChange={v => setEditMember((p: any) => ({...p, last_meeting_attendance: v}))} placeholder="" />
+                        </div>
+                    </FormSection>
+
+                    <FormSection title="Información de Registro">
+                        <EditField label="Motivo de Registro" value={editMember.registration_reason ?? ''} onChange={v => setEditMember((p: any) => ({...p, registration_reason: v}))} placeholder="Conversión, transferencia..." />
+                        <EditField label="Motivo de Baja" value={editMember.unregistration_reason ?? ''} onChange={v => setEditMember((p: any) => ({...p, unregistration_reason: v}))} placeholder="Si aplica..." />
+                        <div className="grid grid-cols-2 gap-3">
+                            <EditField label="Fecha de Registro" type="date" value={editMember.registration_date ? editMember.registration_date.slice(0,10) : ''} onChange={v => setEditMember((p: any) => ({...p, registration_date: v}))} placeholder="" />
+                            <EditField label="Fecha de Baja" type="date" value={editMember.unregistration_date ? editMember.unregistration_date.slice(0,10) : ''} onChange={v => setEditMember((p: any) => ({...p, unregistration_date: v}))} placeholder="" />
+                        </div>
+                        <EditField label="Información Opcional" value={editMember.optional_info ?? ''} onChange={v => setEditMember((p: any) => ({...p, optional_info: v}))} placeholder="Notas adicionales..." />
+                    </FormSection>
+                </div>
+            </WorkspaceDrawer>
         </CrmShell>
     );
 }
