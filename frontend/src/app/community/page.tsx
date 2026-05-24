@@ -335,7 +335,7 @@ const summaryIcons: Record<string, LucideIcon> = {
 };
 const viewOptions: Array<{ id: ViewId; label: string; icon: LucideIcon; description: string }> = [
     { id: 'list', label: 'Lista', icon: List, description: 'Vista lineal para priorizar rápidamente' },
-    { id: 'board', label: 'Tablero', icon: KanbanSquare, description: 'Columnas tipo ClickUp' },
+    { id: 'board', label: 'Tablero', icon: KanbanSquare, description: 'Vista de columnas para gestionar estado' },
     { id: 'calendar', label: 'Calendario', icon: Calendar, description: 'Agenda visual' },
     { id: 'gantt', label: 'Gantt', icon: GanttChart, description: 'Dependencias y progreso' },
     { id: 'table', label: 'Tabla', icon: TableIcon, description: 'Datos sin distracciones' }
@@ -1132,7 +1132,7 @@ export default function CommunityHubPage() {
             <section className="space-y-2">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Vista tipo ClickUp</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Vista de tablero</p>
                         <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))]">Tablero operativo</h2>
                         <p className="text-[hsl(var(--text-secondary))] text-sm font-medium">Etapa, prioridad, responsables y comentarios agrupados por columna.</p>
                     </div>

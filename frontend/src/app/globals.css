@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Compact ClickUp-Style Design Tokens */
+/* Compact Design Tokens */
 :root,
 [data-theme="day"] {
   --bg-primary: 0 0% 100%;

@@ -178,7 +178,7 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
 
                                 {/* Drawing Area */}
                                 <main className="flex-1 relative overflow-hidden flex items-center justify-center p-4">
-                                    {/* Toolbar Flotante Estilo ClickUp */}
+                                    {/* Toolbar Flotante */}
                                     <div className="absolute left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-1.5 p-1.5 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)]">
                                         <ToolBtn active={tool === 'select'} onClick={() => { setTool('select'); if (fabricCanvas.current) fabricCanvas.current.isDrawingMode = false; }} icon={MousePointer2} label="Selección" />
                                         <ToolBtn active={tool === 'pencil'} onClick={() => { setTool('pencil'); if (fabricCanvas.current) { fabricCanvas.current.isDrawingMode = true; fabricCanvas.current.freeDrawingBrush = new fabric.PencilBrush(fabricCanvas.current); fabricCanvas.current.freeDrawingBrush.width = 3; fabricCanvas.current.freeDrawingBrush.color = '#2563eb'; } }} icon={Pencil} label="Dibujo" />

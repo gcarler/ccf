@@ -75,7 +75,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
                         className="fixed top-0 right-0 h-screen w-full max-w-[480px] bg-white dark:bg-[#1e1f21] shadow-[-20px_0_60px_rgba(0,0,0,0.1)] border-l border-slate-200 dark:border-white/5 z-[1001] flex flex-col overflow-hidden"
                     >
-                        {/* Header: ClickUp 3.0 Density */}
+                        {/* Header */}
                         <header className="h-8 border-b border-slate-100 dark:border-white/5 flex items-center justify-between px-3 bg-slate-50/50 dark:bg-white/5 shrink-0">
                             <div className="flex items-center gap-3">
                                 <div className="size-8 rounded-md bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">

@@ -623,7 +623,7 @@ export default function PlanificadorPage() {
                         </div>
                     </div>
                 </div>
-{/* ── RIGHT SIDE PANEL (ClickUp Planificador style) ──────────────── */}
+{/* ── RIGHT SIDE PANEL ──────────────── */}
                 <aside className="w-[230px] shrink-0 border-l border-slate-100 dark:border-white/5 flex flex-col overflow-hidden">
                     {/* Panel header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/5 shrink-0">

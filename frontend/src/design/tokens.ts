@@ -33,7 +33,7 @@ export const colors = {
     danger: '#ef4444',
 };
 
-// Compact border radii (ClickUp-style: 4-8px max for most elements)
+// Compact border radii (4-8px max for most elements)
 export const radii = {
     sm: '0.25rem',     // 4px - badges, chips
     md: '0.375rem',    // 6px - buttons, inputs

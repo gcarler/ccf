@@ -90,7 +90,7 @@ export default function CrmSidebar() {
                 </div>
             </div>
 
-            {/* CONTEXT SIDEBAR (ClickUp Navigation) */}
+            {/* CONTEXT SIDEBAR */}
             <aside className="w-[220px] bg-[#2a2e34] border-r border-white/5 flex flex-col text-slate-300 shadow-2xl overflow-hidden font-display">
                 {/* Workspace Switcher */}
                 <div className="p-3 border-b border-white/5 flex items-center justify-between group cursor-pointer hover:bg-white/5 transition-colors m-2 rounded-lg">

@@ -10,10 +10,9 @@ import { useToast } from '@/context/ToastContext';
 import { Plus, Calendar, Check, Users, Link2, QrCode, Download, Pencil, Trash2, MoreVertical } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
+import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import Skeleton from '@/components/ui/Skeleton';
-import AdminHero from '@/components/admin/AdminHero';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
@@ -621,8 +620,6 @@ export default function EventsPage() {
         setAttendedMemberIds((prev) => prev.filter((memberId) => !filteredIds.has(memberId)));
     };
 
-    const heroWatchers = ['Eventos', 'Optimus Brain'];
-
     const getVisualDate = (event: MinistryEvent) => {
         if (event.fixed_date) return event.fixed_date;
         const current = new Date();
@@ -747,52 +744,25 @@ export default function EventsPage() {
 
     if (loading) {
         return (
-            <WorkspaceLayout sidebarTitle="Evangelismo">
+            <EvangelismShell breadcrumbs={[{ label: 'Evangelismo' }, { label: 'Eventos' }]}>
                 <div className="p-4 space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-48 rounded-lg" />)}
                     </div>
                 </div>
-            </WorkspaceLayout>
+            </EvangelismShell>
         );
     }
 
     return (
-        <WorkspaceLayout sidebarTitle="Evangelismo">
-            <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0f1114]">
-                <WorkspaceToolbar
-                    breadcrumbs={[
-                        { label: 'Evangelismo', icon: Users },
-                        { label: 'Eventos', icon: Calendar }
-                    ]}
-                    viewType={viewType}
-                    setViewType={(view) => setViewType(view as ViewType)}
-                    availableViews={ALL_VIEWS}
-                    rightActions={
-                        <SplitDropdownButton
-                            mainLabel="Nuevo"
-                            icon={Plus}
-                            onMainClick={() => setIsCreateDrawerOpen(true)}
-                            options={[
-                                { id: 'event', label: 'Evento', icon: Calendar, onClick: () => setIsCreateDrawerOpen(true) },
-                                { id: 'attendance', label: 'Pasar Asistencia', icon: Check, onClick: () => setViewType('table') }
-                            ]}
-                        />
-                    }
-                />
-                
-                <main className="flex-1 overflow-y-auto p-4 p-4 space-y-3">
-                    <AdminHero
-                        eyebrow="Eventos"
-                        title="Eventos y asistencia"
-                        description="Programa encuentros recurrentes y registra la participación en tiempo real con paneles estilo ClickUp."
-                        tags={['Agenda', 'Asistencia', 'IA']}
-                        watchers={heroWatchers}
-                        primaryAction={{ label: 'Crear evento', icon: Plus, onClick: () => setIsCreateDrawerOpen(true) }}
-                        secondaryAction={{ label: 'Ver calendario', icon: Link2, onClick: () => setViewType('calendar') }}
-                    />
-                    
-                    <div className="space-y-3">
+        <EvangelismShell
+            breadcrumbs={[{ label: 'Evangelismo' }, { label: 'Eventos' }]}
+            viewOptions={ALL_VIEWS}
+            viewType={viewType}
+            onViewChange={(view) => setViewType(view as ViewType)}
+            onAdd={() => setIsCreateDrawerOpen(true)}
+        >
+            <div className="p-4 space-y-3">
             {/* GRID VIEW */}
             {viewType === 'grid' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1025,10 +995,8 @@ export default function EventsPage() {
                 </section>
             )}
             </div>
-            </main>
-            </div>
 
-        {/* â”€â”€â”€ Drawer: Crear Evento â”€â”€â”€ */}
+        {/* â"€â"€â"€ Drawer: Crear Evento â"€â"€â"€ */}
         <WorkspaceDrawer
             isOpen={isCreateDrawerOpen}
             onClose={() => setIsCreateDrawerOpen(false)}
@@ -1686,6 +1654,6 @@ export default function EventsPage() {
                     </div>
                 )}
             </WorkspaceDrawer>
-        </WorkspaceLayout>
+        </EvangelismShell>
     );
 }
