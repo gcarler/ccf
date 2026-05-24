@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { ViewType } from '@/components/ViewSwitcher';
 import { useAuth } from '@/context/AuthContext';
-import { ShieldAlert, Flame, Calendar, Activity, Home, Scan, Plus, UserPlus, Shield, Zap, Users } from 'lucide-react';
+import { ShieldAlert, Flame, Calendar, Scan, Zap } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
@@ -89,20 +89,7 @@ export default function EvangelismShell({
                     icon: Zap,
                 })),
                 { id: 'ev-events', label: 'Eventos', href: '/plataforma/evangelism/events', icon: Calendar },
-                { id: 'ev-faro', label: 'Faro: Panel', href: '/plataforma/evangelism/faro', icon: Activity },
-                { id: 'ev-faro-groups', label: 'Grupos Faro', href: '/plataforma/evangelism/faro/groups', icon: Home },
                 { id: 'ev-scanner', label: 'Escáner ASST', href: '/plataforma/evangelism/scanner', icon: Scan },
-            ],
-        },
-        {
-            title: 'Gestión Faro',
-            items: [
-                { id: 'faro-create', label: 'Crear Nuevo', href: '/plataforma/evangelism/faro/groups?mode=create', icon: Plus },
-                { id: 'faro-leader', label: 'Asignar Líder', href: '/plataforma/evangelism/faro/groups?mode=leader', icon: UserPlus },
-                { id: 'faro-assistant', label: 'Asignar Colíder', href: '/plataforma/evangelism/faro/groups?mode=assistant', icon: Shield },
-                { id: 'faro-host', label: 'Asignar Anfitrión', href: '/plataforma/evangelism/faro/groups?mode=host', icon: Home },
-                { id: 'faro-members', label: 'Asignar Miembros', href: '/plataforma/evangelism/faro/groups?mode=members', icon: Users },
-                { id: 'faro-monitor', label: 'Monitoreo', href: '/plataforma/evangelism/faro/groups?mode=monitor', icon: Activity },
             ],
         },
     ];

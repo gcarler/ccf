@@ -896,7 +896,7 @@ class GloryHouse(BaseModel):
     leader_id: Optional[int] = None
     assistant_id: Optional[int] = None
     host_id: Optional[int] = None
-    evangelism_strategy_id: Optional[int] = None
+    evangelism_strategy_id: int
     members_count: int
     capacity: int
     status: str
@@ -915,7 +915,7 @@ class GloryHouseCreate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     leader_name: Optional[str] = None
-    evangelism_strategy_id: Optional[int] = None
+    evangelism_strategy_id: int
     leader_id: Optional[int] = None
     assistant_id: Optional[int] = None
     host_id: Optional[int] = None

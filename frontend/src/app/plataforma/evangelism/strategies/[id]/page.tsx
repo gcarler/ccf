@@ -7,9 +7,10 @@ import { toast } from 'sonner';
 import {
     ArrowLeft, Flame, Calendar, Clock, CheckCircle2,
     AlertCircle, Sparkles, Save, Trash2, Users,
-    BarChart3, FolderOpen, Plus
+    BarChart3, FolderOpen, Plus, X, Home, UserPlus
 } from 'lucide-react';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
+import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { motion } from 'framer-motion';
 
 interface Strategy {
@@ -18,6 +19,8 @@ interface Strategy {
     description: string;
     typology: string;
     recurrence: string | null;
+    day_of_week: string | null;
+    start_time: string | null;
     event_format: string | null;
     niche_objective: string | null;
     status: 'active' | 'pending' | 'done';
@@ -86,6 +89,23 @@ export default function StrategyDetailPage() {
     const [activeTab, setActiveTab] = useState<TabId>('overview');
     const [groups, setGroups] = useState<StrategyGroup[]>([]);
     const [metrics, setMetrics] = useState<any>(null);
+    const [members, setMembers] = useState<any[]>([]);
+
+    // Group creation drawer
+    const [isGroupDrawerOpen, setIsGroupDrawerOpen] = useState(false);
+    const [groupForm, setGroupForm] = useState({
+        name: '',
+        zone: '',
+        address: '',
+        capacity: 15,
+        day_of_week: '',
+        start_time: '',
+        end_time: '',
+        leader_id: null as number | null,
+        assistant_id: null as number | null,
+        host_id: null as number | null,
+    });
+    const [groupSaving, setGroupSaving] = useState(false);
 
     const fetchStrategy = useCallback(async () => {
         setLoading(true);
@@ -134,6 +154,86 @@ export default function StrategyDetailPage() {
         if (activeTab === 'groups') fetchGroups();
         if (activeTab === 'metrics') fetchMetrics();
     }, [activeTab, fetchGroups, fetchMetrics]);
+
+    // Fetch members for leader/assistant/host dropdowns
+    useEffect(() => {
+        if (isGroupDrawerOpen && members.length === 0) {
+            const token = localStorage.getItem('auth_token') || '';
+            apiFetch<any[]>('/crm/members/', { token }).then(m => setMembers(m || [])).catch(() => {});
+        }
+    }, [isGroupDrawerOpen, members.length]);
+
+    const openGroupDrawer = () => {
+        // Inherit strategy config for relacional typology
+        setGroupForm({
+            name: '',
+            zone: '',
+            address: '',
+            capacity: 15,
+            day_of_week: strategy?.typology === 'relacional' ? strategy.day_of_week || '' : '',
+            start_time: strategy?.typology === 'relacional' ? strategy.start_time || '' : '',
+            end_time: '',
+            leader_id: null,
+            assistant_id: null,
+            host_id: null,
+        });
+        setIsGroupDrawerOpen(true);
+    };
+
+    const handleCreateGroup = async () => {
+        if (!groupForm.name.trim()) {
+            toast.error('El nombre del grupo es obligatorio');
+            return;
+        }
+        setGroupSaving(true);
+        try {
+            const token = localStorage.getItem('auth_token') || '';
+            await apiFetch('/evangelism/glory-houses', {
+                method: 'POST',
+                token,
+                body: {
+                    name: groupForm.name.trim(),
+                    code: null,
+                    zone: groupForm.zone || null,
+                    address: groupForm.address || null,
+                    latitude: null,
+                    longitude: null,
+                    leader_name: null,
+                    leader_id: groupForm.leader_id,
+                    assistant_id: groupForm.assistant_id,
+                    host_id: groupForm.host_id,
+                    evangelism_strategy_id: parseInt(id),
+                    members_count: 0,
+                    capacity: groupForm.capacity,
+                    status: 'active',
+                    day_of_week: groupForm.day_of_week || null,
+                    start_time: groupForm.start_time || null,
+                    end_time: groupForm.end_time || null,
+                },
+            });
+            toast.success('Grupo Faro creado');
+            setIsGroupDrawerOpen(false);
+            fetchGroups();
+            fetchStrategy(); // refresh group_count
+        } catch (e: any) {
+            toast.error('Error al crear: ' + (e.message || 'Intente de nuevo'));
+        } finally {
+            setGroupSaving(false);
+        }
+    };
+
+    const handleDeleteGroup = async (groupId: number, groupName: string) => {
+        if (!window.confirm(`¿Eliminar "${groupName}"? Se borrará todo el historial de asistencia.`)) return;
+        try {
+            const token = localStorage.getItem('auth_token') || '';
+            await apiFetch(`/evangelism/glory-houses/${groupId}`, { method: 'DELETE', token });
+            toast.success('Grupo eliminado');
+            fetchGroups();
+            fetchStrategy();
+        } catch {
+            toast.error('Error al eliminar');
+        }
+    };
 
     const handleSave = async () => {
         if (!strategy) return;
@@ -418,11 +518,18 @@ export default function StrategyDetailPage() {
                 {activeTab === 'groups' && (
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                                Grupos de esta estrategia
-                            </h2>
+                            <div>
+                                <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                                    Grupos de esta estrategia
+                                </h2>
+                                {strategy.typology === 'relacional' && (
+                                    <p className="text-[11px] text-slate-400 mt-0.5">
+                                        Configuración heredada: {strategy.recurrence} · {strategy.day_of_week ? `Día: ${strategy.day_of_week}` : ''} {strategy.start_time ? `Hora: ${strategy.start_time}` : ''}
+                                    </p>
+                                )}
+                            </div>
                             <button
-                                onClick={() => router.push(`/evangelism/faro/groups?strategy=${id}`)}
+                                onClick={openGroupDrawer}
                                 className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors"
                             >
                                 <Plus size={14} />
@@ -431,19 +538,26 @@ export default function StrategyDetailPage() {
                         </div>
                         {groups.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg">
-                                <FolderOpen size={32} className="text-slate-300 dark:text-slate-600 mb-2" />
+                                <Home size={32} className="text-slate-300 dark:text-slate-600 mb-2" />
                                 <p className="text-sm font-medium text-slate-500">Sin grupos aún</p>
-                                <p className="text-xs text-slate-400">Crea grupos para esta estrategia</p>
+                                <p className="text-xs text-slate-400">Crea el primer grupo para esta estrategia</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                 {groups.map(g => (
                                     <div
                                         key={g.id}
-                                        className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4 hover:border-slate-300 dark:hover:border-white/20 transition-colors cursor-pointer"
-                                        onClick={() => router.push(`/evangelism/faro/groups`)}
+                                        className="group bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4 hover:border-slate-300 dark:hover:border-white/20 transition-all cursor-pointer relative"
+                                        onClick={() => router.push(`/plataforma/evangelism/faro/${g.id}`)}
                                     >
-                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">{g.name}</h3>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleDeleteGroup(g.id, g.name); }}
+                                            className="absolute top-2 right-2 p-1 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all"
+                                            title="Eliminar grupo"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white pr-6">{g.name}</h3>
                                         <p className="text-xs text-slate-400 mt-1">{g.zone || 'Sin zona'}</p>
                                         <div className="flex items-center gap-3 mt-3 text-xs text-slate-500">
                                             <span className="flex items-center gap-1">
@@ -566,6 +680,201 @@ export default function StrategyDetailPage() {
                     </div>
                 )}
             </div>
+
+            {/* ── Group Creation Drawer ── */}
+            <WorkspaceDrawer
+                isOpen={isGroupDrawerOpen}
+                onClose={() => setIsGroupDrawerOpen(false)}
+                title="Nuevo Grupo Faro"
+                subtitle={`Estrategia: ${strategy?.name}`}
+                actions={
+                    <>
+                        <button
+                            onClick={() => setIsGroupDrawerOpen(false)}
+                            className="px-4 py-1.5 text-[12px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleCreateGroup}
+                            disabled={groupSaving || !groupForm.name.trim()}
+                            className="px-4 py-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors flex items-center gap-2"
+                        >
+                            {groupSaving ? (
+                                <><Sparkles size={14} className="animate-spin" /> Creando...</>
+                            ) : (
+                                <><Plus size={14} /> Crear Grupo</>
+                            )}
+                        </button>
+                    </>
+                }
+            >
+                <div className="space-y-5">
+                    {/* Strategy config notice */}
+                    {strategy?.typology === 'relacional' && (
+                        <div className="px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-[11px] text-blue-700 dark:text-blue-300">
+                            <p className="font-semibold">Configuración heredada de la estrategia</p>
+                            <p>Recurrencia: {strategy.recurrence} · Día: {strategy.day_of_week} · Hora: {strategy.start_time}</p>
+                        </div>
+                    )}
+
+                    {/* Name */}
+                    <div>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                            Nombre del grupo *
+                        </label>
+                        <input
+                            value={groupForm.name}
+                            onChange={e => setGroupForm(f => ({ ...f, name: e.target.value }))}
+                            placeholder="Ej: Faro Esperanza - Norte"
+                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                        />
+                    </div>
+
+                    {/* Zone */}
+                    <div>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                            Zona / Sector
+                        </label>
+                        <input
+                            value={groupForm.zone}
+                            onChange={e => setGroupForm(f => ({ ...f, zone: e.target.value }))}
+                            placeholder="Ej: Zona Norte, Barrio La Paz"
+                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                        />
+                    </div>
+
+                    {/* Address */}
+                    <div>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                            Dirección
+                        </label>
+                        <input
+                            value={groupForm.address}
+                            onChange={e => setGroupForm(f => ({ ...f, address: e.target.value }))}
+                            placeholder="Dirección completa"
+                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                        />
+                    </div>
+
+                    {/* Capacity */}
+                    <div>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                            Capacidad máxima
+                        </label>
+                        <input
+                            type="number"
+                            value={groupForm.capacity}
+                            onChange={e => setGroupForm(f => ({ ...f, capacity: parseInt(e.target.value) || 15 }))}
+                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                        />
+                    </div>
+
+                    {/* Day & Time */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                                Día de reunión
+                            </label>
+                            <select
+                                value={groupForm.day_of_week}
+                                onChange={e => setGroupForm(f => ({ ...f, day_of_week: e.target.value }))}
+                                className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                            >
+                                <option value="">Sin día fijo</option>
+                                <option value="Domingo">Domingo</option>
+                                <option value="Lunes">Lunes</option>
+                                <option value="Martes">Martes</option>
+                                <option value="Miércoles">Miércoles</option>
+                                <option value="Jueves">Jueves</option>
+                                <option value="Viernes">Viernes</option>
+                                <option value="Sábado">Sábado</option>
+                            </select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                                    Inicio
+                                </label>
+                                <input
+                                    type="time"
+                                    value={groupForm.start_time}
+                                    onChange={e => setGroupForm(f => ({ ...f, start_time: e.target.value }))}
+                                    className="w-full px-2 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                                    Fin
+                                </label>
+                                <input
+                                    type="time"
+                                    value={groupForm.end_time}
+                                    onChange={e => setGroupForm(f => ({ ...f, end_time: e.target.value }))}
+                                    className="w-full px-2 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Leader */}
+                    <div>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                            Líder
+                        </label>
+                        <select
+                            value={groupForm.leader_id || ''}
+                            onChange={e => setGroupForm(f => ({ ...f, leader_id: e.target.value ? parseInt(e.target.value) : null }))}
+                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                        >
+                            <option value="">Sin asignar</option>
+                            {members.map(m => (
+                                <option key={m.id} value={m.id}>
+                                    {m.first_name} {m.last_name} {m.church_role ? `(${m.church_role})` : ''}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Assistant */}
+                    <div>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                            Colíder
+                        </label>
+                        <select
+                            value={groupForm.assistant_id || ''}
+                            onChange={e => setGroupForm(f => ({ ...f, assistant_id: e.target.value ? parseInt(e.target.value) : null }))}
+                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                        >
+                            <option value="">Sin asignar</option>
+                            {members.map(m => (
+                                <option key={m.id} value={m.id}>
+                                    {m.first_name} {m.last_name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Host */}
+                    <div>
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                            Anfitrión
+                        </label>
+                        <select
+                            value={groupForm.host_id || ''}
+                            onChange={e => setGroupForm(f => ({ ...f, host_id: e.target.value ? parseInt(e.target.value) : null }))}
+                            className="w-full px-3 py-2 text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                        >
+                            <option value="">Sin asignar</option>
+                            {members.map(m => (
+                                <option key={m.id} value={m.id}>
+                                    {m.first_name} {m.last_name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+            </WorkspaceDrawer>
         </EvangelismShell>
     );
 }

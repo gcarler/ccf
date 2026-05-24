@@ -232,11 +232,11 @@ class GloryHouse(Base):
     end_time = Column(String(50), nullable=True)  # e.g. "19:00"
     status = Column(String(20), default="Activo", index=True)
 
-    # Link to evangelism strategy
+    # Link to evangelism strategy (required — faro groups must belong to a strategy)
     evangelism_strategy_id = Column(
         Integer,
-        ForeignKey("evangelism_strategies.id", ondelete="SET NULL"),
-        nullable=True,
+        ForeignKey("evangelism_strategies.id", ondelete="CASCADE"),
+        nullable=False,
         index=True,
     )
 
