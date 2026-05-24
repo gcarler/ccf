@@ -192,7 +192,7 @@ export default function CursosPage() {
                             className="md:col-span-8 group relative rounded-lg overflow-hidden min-h-[450px] cursor-pointer"
                             style={{ background: "var(--faro-surface-container-low)" }}
                         >
-                            <Link href={`/faro/cursos/${featuredCourse.id || "1"}`} className="block absolute inset-0 z-20" />
+                            <Link href={`/cursos/${featuredCourse.id || "1"}`} className="block absolute inset-0 z-20" />
                             <Image
                                 src={featuredCourse.imageUrl || "https://picsum.photos/seed/1524178232363-1fb2b075b655/800/600"}
                                 alt={featuredCourse.title}
@@ -253,7 +253,7 @@ export default function CursosPage() {
                     {/* Secondary courses */}
                     <div className="md:col-span-4 flex flex-col gap-3">
                         {secondaryCourses.map((c: CourseItem, i: number) => (
-                            <Link href={`/faro/cursos/${c.id || i}`} key={i} className="block flex-1">
+                            <Link href={`/cursos/${c.id || i}`} key={i} className="block flex-1">
                                 <motion.div
                                     initial={{ opacity: 0, x: 20 }}
                                     whileInView={{ opacity: 1, x: 0 }}

@@ -7,7 +7,6 @@ import { ArrowRight, Play, Calendar, MapPin, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import { useContentBlock } from "@/hooks/useContent";
 import { FARO_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
-import Footer from "@/components/Footer";
 
 export default function PublicHomePage() {
     const { data: heroContent } = useContentBlock("faro_home_hero");
@@ -112,7 +111,7 @@ export default function PublicHomePage() {
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Link
-                            href="/faro/conocer-a-jesus"
+                            href="/conocer-a-jesus"
                             className="group flex items-center gap-3 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide text-white transition-all hover:scale-105"
                             style={{
                                 background:
@@ -127,7 +126,7 @@ export default function PublicHomePage() {
                             />
                         </Link>
                         <Link
-                            href="/faro/predicas"
+                            href="/predicas"
                             className="flex items-center gap-3 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide transition-all hover:scale-105"
                             style={{
                                 background: "rgba(255,255,255,0.08)",
@@ -161,8 +160,8 @@ export default function PublicHomePage() {
                 className="py-1.5 px-3 md:px-4 lg:px-24 overflow-hidden"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
-                <div className="w-full max-w-[1600px] mx-auto px-3 md:px-4 lg:px-24">
-                    <motion.div 
+                <div className="w-full px-3 md:px-4 lg:px-24">
+                    <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true, margin: "-100px" }}
@@ -221,7 +220,7 @@ export default function PublicHomePage() {
                             </div>
                             <div className="relative z-10 mt-3">
                                 <Link
-                                    href="/faro/conocer-a-jesus"
+                                    href="/conocer-a-jesus"
                                     className="inline-flex items-center gap-2 font-bold text-sm uppercase tracking-wide group-hover:gap-4 transition-all"
                                     style={{ color: "var(--faro-primary)" }}
                                 >
@@ -280,8 +279,8 @@ export default function PublicHomePage() {
                 className="py-1.5 px-3 md:px-4 lg:px-24 overflow-hidden"
                 style={{ background: "var(--faro-surface)" }}
             >
-                <div className="w-full max-w-[1600px] mx-auto px-3 md:px-4 lg:px-24">
-                    <motion.div 
+                <div className="w-full px-3 md:px-4 lg:px-24">
+                    <motion.div
                         initial={{ opacity: 0, x: -30 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
@@ -302,7 +301,7 @@ export default function PublicHomePage() {
                             </h2>
                         </div>
                         <Link
-                            href="/faro/eventos"
+                            href="/eventos"
                             className="hidden md:block text-sm font-bold uppercase tracking-wide border-b-2 pb-1 transition-all hover:-translate-y-1"
                             style={{
                                 color: "var(--faro-primary)",
@@ -437,7 +436,6 @@ export default function PublicHomePage() {
                     </div>
                 </motion.div>
             </section>
-            <Footer />
         </main>
     );
 }

@@ -18,7 +18,7 @@ export default function BoletinPage() {
             <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="max-w-2xl mx-auto rounded-lg p-4 md:p-4 relative overflow-hidden text-center shadow-xl border"
+                className="rounded-lg p-4 md:p-4 relative overflow-hidden text-center shadow-xl border"
                 style={{
                     backgroundColor: "var(--faro-primary-container)",
                     borderColor: "var(--faro-outline-variant)"

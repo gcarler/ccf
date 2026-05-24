@@ -129,7 +129,7 @@ export default function ConocerAJesusPage() {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="relative z-10 max-w-4xl mx-auto px-3 md:px-4 pb-4"
+                    className="relative z-10 px-3 md:px-4 pb-4"
                 >
                     <span
                         className="inline-block px-4 py-1.5 rounded-full border text-xs font-semibold uppercase tracking-wide mb-3"
@@ -189,7 +189,7 @@ export default function ConocerAJesusPage() {
                 className="py-1.5 px-3 md:px-4 lg:px-24"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
-                <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-3 items-center">
+                <div className="grid md:grid-cols-2 gap-3 items-center">
                     <motion.div
                         initial={{ opacity: 0, x: -30 }}
                         whileInView={{ opacity: 1, x: 0 }}
@@ -269,7 +269,7 @@ export default function ConocerAJesusPage() {
                 className="py-1.5 px-3 md:px-4 lg:px-24"
                 style={{ background: "var(--faro-surface)" }}
             >
-                <div className="max-w-6xl mx-auto">
+                <div>
                     <h2
                         className="text-xl font-bold mb-3 text-center"
                         style={{ color: "var(--faro-on-background)" }}
@@ -321,7 +321,7 @@ export default function ConocerAJesusPage() {
                 className="py-1.5 px-3 md:px-4 lg:px-24"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
-                <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-3 items-start">
+                <div className="grid md:grid-cols-2 gap-3 items-start">
                     {/* Info lado izq */}
                     <div>
                         <h2

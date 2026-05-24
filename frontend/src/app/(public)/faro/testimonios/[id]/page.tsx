@@ -60,7 +60,7 @@ export default function TestimonioDetailPage() {
                     Parece que la historia que buscas ya no está disponible o el enlace es incorrecto.
                 </p>
                 <button
-                    onClick={() => router.push('/faro/testimonios')}
+                    onClick={() => router.push('/testimonios')}
                     className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold uppercase tracking-wide transition-all hover:-translate-x-2"
                     style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)" }}
                 >
@@ -74,7 +74,7 @@ export default function TestimonioDetailPage() {
 
     return (
         <main className="pt-[120px] pb-4 min-h-screen">
-            <article className="max-w-4xl mx-auto px-3 lg:px-0">
+            <article className="px-3 lg:px-0">
                 {/* ── BACK BUTTON ────────────────────────────────────── */}
                 <motion.div 
                     initial={{ opacity: 0, x: -20 }}
@@ -82,7 +82,7 @@ export default function TestimonioDetailPage() {
                     className="mb-3"
                 >
                     <Link
-                        href="/faro/testimonios"
+                        href="/testimonios"
                         className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide transition-all hover:opacity-70"
                         style={{ color: "var(--faro-primary)" }}
                     >

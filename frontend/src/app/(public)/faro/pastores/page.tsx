@@ -42,12 +42,12 @@ export default function PastoresPage() {
 
     return (
         <main className="pt-[120px] pb-4 px-3 md:px-4 lg:px-24 bg-faro-surface min-h-screen">
-            <div className="max-w-6xl mx-auto">
+            <div>
                 {/* HERO */}
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-20 text-center max-w-3xl mx-auto"
+                    className="mb-20 text-center"
                 >
                     <span className="text-xs font-semibold uppercase tracking-wide mb-3 block text-faro-primary">
                         Liderazgo

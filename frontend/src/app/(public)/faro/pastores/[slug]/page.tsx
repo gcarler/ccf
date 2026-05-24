@@ -46,7 +46,7 @@ export default function PastorProfilePage({ params }: { params: Promise<{ slug: 
                 <div className="absolute inset-0 bg-gradient-to-r from-faro-surface/90 to-transparent" />
                 
                 <div className="absolute inset-0 flex items-end">
-                    <div className="max-w-6xl mx-auto w-full px-3 md:px-4 lg:px-24 pb-4">
+                    <div className="w-full px-3 md:px-4 lg:px-24 pb-4">
                         <Link 
                             href="/faro/pastores" 
                             className="inline-flex items-center gap-2 text-faro-primary font-black text-[10px] uppercase tracking-wide hover:-translate-x-2 transition-transform mb-3 bg-faro-primary-container px-4 py-2 rounded-full"
@@ -81,7 +81,7 @@ export default function PastorProfilePage({ params }: { params: Promise<{ slug: 
 
             {/* CONTENT SECTION */}
             <section className="py-1.5 px-3 md:px-4 lg:px-24">
-                <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-3">
+                <div className="grid md:grid-cols-3 gap-3">
                     <div className="md:col-span-2">
                         <h2 className="text-xl font-bold text-faro-on-surface mb-3">Biografía</h2>
                         <div className="prose prose-lg dark:prose-invert prose-p:text-faro-on-surface-variant prose-p:leading-relaxed">

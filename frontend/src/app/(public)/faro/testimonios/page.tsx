@@ -84,7 +84,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
                     
                     {isLongText && (
                         <Link
-                            href={`/faro/testimonios/${t.id}`}
+                            href={`/testimonios/${t.id}`}
                             className="mt-4 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide transition-all w-fit hover:opacity-70"
                             style={{ color: "var(--faro-primary)" }}
                         >
@@ -243,7 +243,7 @@ export default function TestimoniosPage() {
 
             {/* ── SEARCH & CALL TO ACTION BANNER ────────────────── */}
             <section className="px-3 md:px-4 lg:px-24 mb-16">
-                <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-3">
+                <div className="flex flex-col lg:flex-row gap-3">
                     {/* Search Bar */}
                     <div className="flex-1 rounded-lg p-3 flex items-center gap-4 border transition-all focus-within:shadow-2xl focus-within:-translate-y-1"
                          style={{ 
@@ -276,7 +276,7 @@ export default function TestimoniosPage() {
                             </div>
                         </div>
                         <Link
-                            href="/faro/conocer-a-jesus"
+                            href="/conocer-a-jesus"
                             className="flex items-center gap-3 px-3 py-3 rounded-full text-xs font-semibold uppercase tracking-wide transition-all hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20 w-full justify-center md:w-auto"
                             style={{
                                 background: "var(--faro-primary)",
@@ -290,7 +290,7 @@ export default function TestimoniosPage() {
             </section>
 
             {/* ── MASONRY GRID ───────────────────────────────────── */}
-            <section className="px-3 md:px-4 lg:px-24 max-w-[1400px] mx-auto min-h-[50vh]">
+            <section className="px-3 md:px-4 lg:px-24 min-h-[50vh]">
                 <AnimatePresence mode="popLayout">
                     {filteredTestimonials.length === 0 ? (
                         <motion.div 

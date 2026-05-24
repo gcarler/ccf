@@ -50,7 +50,7 @@ export default function PredicasPage() {
                     <div className="absolute inset-0 bg-gradient-to-r from-faro-surface/60 via-transparent to-transparent" />
                 </div>
 
-                <div className="relative z-10 max-w-6xl mx-auto px-3 md:px-4 lg:px-24 pb-4 w-full">
+                <div className="relative z-10 px-3 md:px-4 lg:px-24 pb-4 w-full">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -121,7 +121,7 @@ export default function PredicasPage() {
 
             {/* ── GALERÍA DE VÍDEOS ──────────────────────────── */}
             <section className="py-1.5 px-3 md:px-4 lg:px-24">
-                <div className="max-w-7xl mx-auto space-y-3">
+                <div className="space-y-3">
                     <div className="flex justify-between items-end">
                         <h2 className="text-lg font-bold" style={{ color: "var(--faro-on-surface)" }}>Nuevos Lanzamientos</h2>
                         <button className="text-xs font-semibold uppercase tracking-wide flex items-center gap-2 opacity-50 hover:opacity-100 transition-opacity">

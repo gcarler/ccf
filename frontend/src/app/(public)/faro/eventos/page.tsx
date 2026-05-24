@@ -76,7 +76,7 @@ export default function EventosPage() {
     ];
 
     return (
-        <main className="pt-[88px] pb-4 px-3 md:px-4 max-w-7xl mx-auto">
+        <main className="pt-[88px] pb-4 px-3 md:px-4">
             <header className="mb-14 pt-12 md:grid md:grid-cols-12 gap-3 items-end">
                 <div className="md:col-span-8">
                     <span

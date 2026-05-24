@@ -63,7 +63,7 @@ export default function CursoDetailPage() {
                     El curso que buscas ya no está disponible o el enlace es incorrecto.
                 </p>
                 <button
-                    onClick={() => router.push('/faro/cursos')}
+                    onClick={() => router.push('/cursos')}
                     className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold uppercase tracking-wide transition-all hover:-translate-x-2"
                     style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)" }}
                 >
@@ -97,13 +97,13 @@ export default function CursoDetailPage() {
 
             {/* ── HEADER ──────────────────────────────────── */}
             <header className="relative px-3 md:px-20 py-1.5 md:py-1.5">
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="max-w-6xl mx-auto mb-3"
+                    className="mb-3"
                 >
                     <Link
-                        href="/faro/cursos"
+                        href="/cursos"
                         className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide transition-all hover:opacity-70"
                         style={{ color: "var(--faro-primary)" }}
                     >
@@ -111,7 +111,7 @@ export default function CursoDetailPage() {
                     </Link>
                 </motion.div>
 
-                <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-3 items-center">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-center">
                     <motion.div 
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -184,7 +184,7 @@ export default function CursoDetailPage() {
 
             {/* ── SYLLABUS & DETAILS ──────────────────────────────── */}
             <section className="px-3 md:px-20 py-1.5" style={{ background: "var(--faro-surface-container-lowest)" }}>
-                <div className="max-w-4xl mx-auto">
+                <div>
                     <h2 className="text-lg font-bold mb-3" style={{ color: "var(--faro-on-surface)" }}>Acerca de este programa</h2>
                     <p className="text-xl leading-relaxed mb-16" style={{ color: "var(--faro-on-surface-variant)" }}>
                         {course.desc}

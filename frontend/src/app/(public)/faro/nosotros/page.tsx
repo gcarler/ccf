@@ -25,11 +25,10 @@ export default function NosotrosPage() {
             {/* ── HERO EDITORIAL ────────────────────────────────── */}
             <section className="relative px-3 md:px-4 lg:px-24 py-1.5 overflow-hidden">
                 <div className="absolute inset-0 bg-light-glow pointer-events-none opacity-50" />
-                <div className="max-w-6xl mx-auto relative z-10">
-                    <motion.div 
+                <div className="relative z-10">
+                    <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="max-w-3xl"
                     >
                         <span 
                             className="text-xs font-semibold uppercase tracking-wide mb-3 block"
@@ -67,11 +66,11 @@ export default function NosotrosPage() {
             </section>
 
             {/* ── VISIÓN Y MISIÓN: BENTO GRID ────────────────────── */}
-            <section 
+            <section
                 className="py-1.5 px-3 md:px-4 lg:px-24"
                 style={{ background: "var(--faro-surface-container-low)" }}
             >
-                <div className="max-w-6xl mx-auto">
+                <div>
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                         <motion.div 
                             initial={{ opacity: 0, x: -20 }}
@@ -115,7 +114,7 @@ export default function NosotrosPage() {
 
             {/* ── FUNDADORES ────────────────────────────────────── */}
             <section className="py-1.5 px-3 md:px-4 lg:px-24">
-                <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-20">
+                <div className="flex flex-col lg:flex-row items-center gap-20">
                     <div className="w-full lg:w-1/2 relative">
                         <div className="relative z-10 aspect-[4/5] rounded-lg overflow-hidden shadow-2xl">
                             <Image
@@ -164,11 +163,11 @@ export default function NosotrosPage() {
             </section>
 
             {/* ── VALORES ───────────────────────────────────────── */}
-            <section 
+            <section
                 className="py-1.5 px-3 md:px-4 lg:px-24"
                 style={{ background: "var(--faro-surface-container-lowest)" }}
             >
-                <div className="max-w-6xl mx-auto">
+                <div>
                     <div className="mb-20 text-center">
                         <h2 className="text-lg font-bold" style={{ color: "var(--faro-on-surface)" }}>Valores que nos Guían</h2>
                         <div 
@@ -197,7 +196,7 @@ export default function NosotrosPage() {
 
             {/* ── QUOTE EDITORIAL ───────────────────────────────── */}
             <section className="py-1.5 px-3 md:px-4 text-center">
-                <div className="max-w-3xl mx-auto">
+                <div>
                     <Quote size={60} className="mx-auto mb-3 opacity-20" style={{ color: "var(--faro-primary)" }} />
                     <blockquote
                         className="text-xl md:text-xl font-bold leading-tight italic mb-3"

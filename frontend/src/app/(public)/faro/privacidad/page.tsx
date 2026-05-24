@@ -47,7 +47,6 @@ export default function PrivacidadPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-4xl mx-auto"
       >
         <h1 className="text-lg md:text-xl font-bold mb-3 text-faro-on-background">
           {cms?.parsed && typeof cms.parsed === "object" && !Array.isArray(cms.parsed)
