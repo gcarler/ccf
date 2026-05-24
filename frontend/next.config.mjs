@@ -5,6 +5,7 @@ const apiProxyTarget =
     (apiBaseUrl ? apiBaseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '') : '');
 
 const nextConfig = {
+    allowedDevOrigins: ['elfarocc.tech', 'www.elfarocc.tech'],
     images: {
         remotePatterns: [
             {
