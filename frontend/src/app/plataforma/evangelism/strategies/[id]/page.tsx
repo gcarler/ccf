@@ -679,19 +679,19 @@ export default function StrategyDetailPage() {
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                     <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4">
                                         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Grupos</p>
-                                        <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{metrics.summary.total_groups}</p>
+                                        <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">{metrics.summary.total_groups}</p>
                                     </div>
                                     <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4">
                                         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Sesiones</p>
-                                        <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{metrics.summary.total_sessions}</p>
+                                        <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">{metrics.summary.total_sessions}</p>
                                     </div>
                                     <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4">
                                         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Primeriza</p>
-                                        <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{metrics.summary.total_first_timers}</p>
+                                        <p className="text-lg font-bold text-green-600 dark:text-green-400 mt-1">{metrics.summary.total_first_timers}</p>
                                     </div>
                                     <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4">
                                         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Inasistencias</p>
-                                        <p className="text-2xl font-bold text-red-500 dark:text-red-400 mt-1">{metrics.summary.total_absences}</p>
+                                        <p className="text-lg font-bold text-red-500 dark:text-red-400 mt-1">{metrics.summary.total_absences}</p>
                                     </div>
                                 </div>
 

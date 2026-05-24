@@ -208,10 +208,10 @@ export default function SessionReportPage() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-4 gap-2">
-                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-center"><p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.present}</p><p className="text-[10px] font-semibold text-green-700 dark:text-green-500">Presentes</p></div>
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-center"><p className="text-2xl font-bold text-red-500 dark:text-red-400">{stats.absent}</p><p className="text-[10px] font-semibold text-red-600 dark:text-red-500">Ausentes</p></div>
-                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-center"><p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.firstTime}</p><p className="text-[10px] font-semibold text-blue-700 dark:text-blue-500">Nuevos</p></div>
-                    <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-center"><p className="text-2xl font-bold text-slate-700 dark:text-slate-300">{stats.total}</p><p className="text-[10px] font-semibold text-slate-500">Total</p></div>
+                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-center"><p className="text-lg font-bold text-green-600 dark:text-green-400">{stats.present}</p><p className="text-[10px] font-semibold text-green-700 dark:text-green-500">Presentes</p></div>
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-center"><p className="text-lg font-bold text-red-500 dark:text-red-400">{stats.absent}</p><p className="text-[10px] font-semibold text-red-600 dark:text-red-500">Ausentes</p></div>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-center"><p className="text-lg font-bold text-blue-600 dark:text-blue-400">{stats.firstTime}</p><p className="text-[10px] font-semibold text-blue-700 dark:text-blue-500">Nuevos</p></div>
+                    <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-center"><p className="text-lg font-bold text-slate-700 dark:text-slate-300">{stats.total}</p><p className="text-[10px] font-semibold text-slate-500">Total</p></div>
                 </div>
 
                 {/* Attendance */}
