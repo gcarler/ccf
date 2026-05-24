@@ -30,6 +30,22 @@ def auth_headers(client, email="admin@example.com", password="secret123"):
     return {"Authorization": f"Bearer {token}"}
 
 
+def seed_strategy(db_session):
+    """Create a Relacional evangelism strategy for test fixtures."""
+    strategy = models.EvangelismStrategy(
+        name="Estrategia Test",
+        typology="relacional",
+        recurrence="SEMANAL",
+        day_of_week="Miercoles",
+        start_time="19:00",
+        status="active",
+    )
+    db_session.add(strategy)
+    db_session.commit()
+    db_session.refresh(strategy)
+    return strategy
+
+
 def seed_user_with_role(db_session, role: str, email: str, password: str = "secret123"):
     user = models.User(
         username=email.split("@")[0],
@@ -363,6 +379,7 @@ def test_crm_counseling_detail_route(client, db_session):
 
 def test_crm_glory_house_detail_route(client, db_session):
     seed_admin(db_session)
+    strategy = seed_strategy(db_session)
     house = models.GloryHouse(
         code="FARO-001",
         name="Casa de Bendicion Sector Sur",
@@ -372,6 +389,7 @@ def test_crm_glory_house_detail_route(client, db_session):
         members_count=15,
         capacity=25,
         status="active",
+        evangelism_strategy_id=strategy.id,
     )
     db_session.add(house)
     db_session.commit()
@@ -415,6 +433,7 @@ def test_faro_weekly_report_records_attendance_absence_and_offering(client, db_s
         start_date=datetime(2026, 5, 1).date(),
         end_date=datetime(2026, 6, 30).date(),
     )
+    strategy = seed_strategy(db_session)
     house = models.GloryHouse(
         code="FARO-010",
         name="Faro Norte",
@@ -423,6 +442,7 @@ def test_faro_weekly_report_records_attendance_absence_and_offering(client, db_s
         assistant_id=2,
         host_id=3,
         status="Activo",
+        evangelism_strategy_id=strategy.id,
     )
     db_session.add_all([leader, assistant, host, attendee, absent, season])
     db_session.commit()
@@ -524,8 +544,10 @@ def test_faro_leader_can_manage_own_house_attendance(client, db_session):
     db_session.refresh(attendee)
     db_session.refresh(season)
 
+    strategy = seed_strategy(db_session)
     house = models.GloryHouse(
-        code="FARO-LDR", name="Faro Lider", leader_id=leader_member.id, status="Activo"
+        code="FARO-LDR", name="Faro Lider", leader_id=leader_member.id, status="Activo",
+        evangelism_strategy_id=strategy.id,
     )
     db_session.add(house)
     db_session.commit()
@@ -593,10 +615,14 @@ def test_faro_leader_cannot_manage_other_house_attendance(client, db_session):
     db_session.refresh(attendee)
     db_session.refresh(season)
 
+    strategy = seed_strategy(db_session)
     my_house = models.GloryHouse(
-        code="FARO-MIO", name="Faro Mio", leader_id=leader_member.id, status="Activo"
+        code="FARO-MIO", name="Faro Mio", leader_id=leader_member.id, status="Activo",
+        evangelism_strategy_id=strategy.id,
     )
-    other_house = models.GloryHouse(code="FARO-OTRO", name="Faro Otro", status="Activo")
+    other_house = models.GloryHouse(code="FARO-OTRO", name="Faro Otro", status="Activo",
+        evangelism_strategy_id=strategy.id,
+    )
     db_session.add_all([my_house, other_house])
     db_session.commit()
     db_session.refresh(other_house)
@@ -647,11 +673,13 @@ def test_faro_assistant_can_update_own_house_attendees_only(client, db_session):
     db_session.refresh(assistant_member)
     db_session.refresh(attendee)
 
+    strategy = seed_strategy(db_session)
     house = models.GloryHouse(
         code="FARO-AST",
         name="Faro Assistant",
         assistant_id=assistant_member.id,
         status="Activo",
+        evangelism_strategy_id=strategy.id,
     )
     db_session.add(house)
     db_session.commit()
