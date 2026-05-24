@@ -174,6 +174,12 @@ def get_glory_house(
             "name": f"{member.first_name} {member.last_name}",
             "role": row.role,
             "church_role": member.church_role,
+            "phone": member.phone,
+            "member": {
+                "first_name": member.first_name,
+                "last_name": member.last_name,
+                "phone": member.phone,
+            },
         }
         for row, member in base_rows
     ]
