@@ -3,6 +3,8 @@ import ProjectsLayoutClient from './ProjectsLayoutClient';
 import { serverApiFetch } from '@/lib/serverApi';
 import type { ProjectRecord } from '@/types/projects';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ProjectsLayout({ children }: { children: React.ReactNode }) {
     let initialProjects: ProjectRecord[] = [];
     
