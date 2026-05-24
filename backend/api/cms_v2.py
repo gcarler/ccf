@@ -28,6 +28,10 @@ ALLOWED_SECTION_TYPES = {
     "team",
     "countdown",
     "pricing",
+    "image_text",
+    "timeline",
+    "icon_grid",
+    "newsletter",
     "popup_banner",
 }
 CMS_EDITOR_ROLES = {"admin", "coordinador", "docente", "pastor"}
