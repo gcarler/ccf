@@ -77,12 +77,16 @@ const TYPOLOGY_COLORS: Record<string, string> = {
     relacional: '#3B82F6',
     evento_masivo: '#F97316',
     sectorial: '#8B5CF6',
+    reunion: '#10B981',
+    cells: '#6366F1',
 };
 
 const TYPOLOGY_LABELS: Record<string, string> = {
     relacional: 'Relacional',
     evento_masivo: 'Evento Masivo',
     sectorial: 'Sectorial',
+    reunion: 'Reunión',
+    cells: 'Células',
 };
 
 const MEMBER_ROLES = [
