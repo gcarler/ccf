@@ -19,6 +19,9 @@ export default function CursoDetailPage() {
     const [loading, setLoading] = useState(true);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
     const [enrolled, setEnrolled] = useState(false);
+    const [showEnrollModal, setShowEnrollModal] = useState(false);
+    const [enrollForm, setEnrollForm] = useState({ fullName: "", email: "", phone: "" });
+    const [enrollSubmitting, setEnrollSubmitting] = useState(false);
 
     useEffect(() => {
         // First try the API
@@ -42,16 +45,32 @@ export default function CursoDetailPage() {
         setTimeout(() => setToastMessage(null), 3000);
     };
 
-    const handleEnroll = async () => {
+    const handleEnroll = () => {
+        if (enrolled) return;
+        setShowEnrollModal(true);
+    };
+
+    const submitEnroll = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setEnrollSubmitting(true);
         try {
             await apiFetch(`/public/courses/${params.id}/enroll`, {
                 method: "POST",
-                body: { course_id: params.id },
+                body: {
+                    full_name: enrollForm.fullName,
+                    email: enrollForm.email,
+                    phone: enrollForm.phone,
+                    landing_page: `/cursos/${params.id}`,
+                },
             });
             setEnrolled(true);
+            setShowEnrollModal(false);
+            setEnrollForm({ fullName: "", email: "", phone: "" });
             toast.success(`Inscrito en "${course?.title}". Revisa tu correo.`);
         } catch {
             toast.error("No se pudo completar la inscripción. Intenta de nuevo.");
+        } finally {
+            setEnrollSubmitting(false);
         }
     };
 
@@ -227,6 +246,84 @@ export default function CursoDetailPage() {
                     )}
                 </div>
             </section>
+
+            {/* ── ENROLLMENT MODAL ────────────────────── */}
+            {showEnrollModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "var(--faro-overlay-bg)", backdropFilter: "blur(8px)" }}>
+                    <div
+                        className="w-full max-w-md rounded-lg p-4 shadow-2xl border"
+                        style={{
+                            background: "var(--faro-surface-container-lowest)",
+                            borderColor: "var(--faro-outline-variant)",
+                        }}
+                    >
+                        <h3 className="text-lg font-bold mb-1" style={{ color: "var(--faro-on-surface)" }}>
+                            Inscribirme en {course?.title}
+                        </h3>
+                        <p className="text-sm mb-3" style={{ color: "var(--faro-on-surface-variant)" }}>
+                            Déjanos tus datos para crear tu acceso al curso.
+                        </p>
+                        <form onSubmit={submitEnroll} className="space-y-3">
+                            <div>
+                                <label className="text-[10px] font-semibold uppercase tracking-wide block mb-1" style={{ color: "var(--faro-on-surface-variant)" }}>
+                                    Nombre completo
+                                </label>
+                                <input
+                                    type="text"
+                                    value={enrollForm.fullName}
+                                    onChange={(e) => setEnrollForm(f => ({ ...f, fullName: e.target.value }))}
+                                    required
+                                    className="w-full rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2"
+                                    style={{ background: "var(--faro-surface)", border: "2px solid var(--faro-outline-variant)", color: "var(--faro-on-surface)" }}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-semibold uppercase tracking-wide block mb-1" style={{ color: "var(--faro-on-surface-variant)" }}>
+                                    Email
+                                </label>
+                                <input
+                                    type="email"
+                                    value={enrollForm.email}
+                                    onChange={(e) => setEnrollForm(f => ({ ...f, email: e.target.value }))}
+                                    required
+                                    className="w-full rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2"
+                                    style={{ background: "var(--faro-surface)", border: "2px solid var(--faro-outline-variant)", color: "var(--faro-on-surface)" }}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-semibold uppercase tracking-wide block mb-1" style={{ color: "var(--faro-on-surface-variant)" }}>
+                                    WhatsApp (opcional)
+                                </label>
+                                <input
+                                    type="tel"
+                                    value={enrollForm.phone}
+                                    onChange={(e) => setEnrollForm(f => ({ ...f, phone: e.target.value }))}
+                                    className="w-full rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2"
+                                    style={{ background: "var(--faro-surface)", border: "2px solid var(--faro-outline-variant)", color: "var(--faro-on-surface)" }}
+                                />
+                            </div>
+                            <div className="flex gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEnrollModal(false)}
+                                    className="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
+                                    style={{ background: "var(--faro-surface-container)", color: "var(--faro-on-surface-variant)" }}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={enrollSubmitting}
+                                    className="flex-1 py-2 rounded-lg text-sm font-bold text-white transition-all disabled:opacity-60"
+                                    style={{ background: "linear-gradient(135deg, var(--faro-primary), var(--faro-secondary))" }}
+                                >
+                                    {enrollSubmitting ? "Inscribiendo..." : "Inscribirme"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </main>
     );
 }

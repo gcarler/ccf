@@ -53,12 +53,19 @@ export default function CursosPage() {
 
     const [wishlist, setWishlist] = useState<string[]>([]);
 
-    const handleAddToCart = (title: string) => {
-        setWishlist((prev) => {
-            if (prev.includes(title)) return prev;
-            return [...prev, title];
-        });
-        showToast(`"${title}" añadido a tu lista de recursos — contáctanos para obtenerlo`);
+    const handleAddToCart = async (title: string) => {
+        if (wishlist.includes(title)) return;
+        try {
+            await apiFetch("/public/wishlist", {
+                method: "POST",
+                body: { title, landing_page: "/cursos" },
+            });
+            setWishlist((prev) => [...prev, title]);
+            showToast(`"${title}" añadido a tu lista — te contactaremos con info`);
+        } catch {
+            showToast(`"${title}" guardado en tu lista`);
+            setWishlist((prev) => [...prev, title]);
+        }
     };
 
     const heroEyebrow = heroContent?.eyebrow || "Formación & Sabiduría";

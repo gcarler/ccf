@@ -1,4 +1,5 @@
 import logging
+import secrets
 from datetime import datetime
 from typing import Any, Optional
 
@@ -196,6 +197,142 @@ def public_newsletter_subscribe(
     return subscription
 
 
+class PublicEnrollCreate(BaseModel):
+    """Datos para inscripción pública a un curso."""
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    landing_page: Optional[str] = None
+    campaign: Optional[str] = None
+
+
+@router.post("/courses/{course_id}/enroll", response_model=dict)
+def public_course_enroll(
+    course_id: int,
+    payload: PublicEnrollCreate,
+    db: Session = Depends(get_db),
+):
+    """
+    Inscripción pública a un curso.
+    Crea User + Member + Enrollment + ConsolidationCase para visibilidad en CRM.
+    """
+    course = (
+        db.query(models.Course)
+        .filter(models.Course.id == course_id, models.Course.is_published == True)
+        .first()
+    )
+    if not course:
+        raise HTTPException(status_code=404, detail="Curso no encontrado")
+
+    email = (payload.email or "").strip().lower()
+    phone = (payload.phone or "").strip()
+
+    # Buscar User existente
+    user = None
+    if email:
+        user = db.query(models.User).filter(models.User.email == email).first()
+
+    if not user:
+        # Crear User para el curso
+        username = email.split("@")[0] if email else f"web_{secrets.token_hex(6)}"
+        # Check username uniqueness
+        existing = db.query(models.User).filter(models.User.username == username).first()
+        if existing:
+            username = f"{username}_{secrets.token_hex(4)}"
+
+        user = models.User(
+            username=username,
+            email=email or f"{secrets.token_hex(8)}@temp.faro",
+            password_hash=secrets.token_hex(32),  # Will set later on real registration
+            role="estudiante",
+            is_active=True,
+            is_email_verified=False,
+        )
+        db.add(user)
+        db.flush()
+
+    # Check if already enrolled
+    existing_enroll = (
+        db.query(models.Enrollment)
+        .filter(
+            models.Enrollment.user_id == user.id,
+            models.Enrollment.course_id == course_id,
+        )
+        .first()
+    )
+    if existing_enroll:
+        return {
+            "status": "already_enrolled",
+            "user_id": user.id,
+            "course_id": course_id,
+            "enrollment_id": existing_enroll.id,
+        }
+
+    # Buscar Member existente
+    member = None
+    if phone:
+        member = (
+            db.query(models.Member)
+            .filter(models.Member.phone == phone)
+            .first()
+        )
+    if not member and email:
+        member = (
+            db.query(models.Member)
+            .filter(models.Member.email == email)
+            .first()
+        )
+
+    if not member and (payload.full_name or email):
+        parts = (payload.full_name or "").strip().split(" ", 1)
+        member = models.Member(
+            first_name=parts[0] if parts else "Visitante",
+            last_name=parts[1] if len(parts) > 1 else "",
+            email=email,
+            phone=phone,
+            spiritual_status="Nuevo",
+            church_role="Visitante",
+        )
+        db.add(member)
+        db.flush()
+
+    # Crear Enrollment
+    enrollment = models.Enrollment(
+        user_id=user.id,
+        course_id=course_id,
+        status="active",
+    )
+    db.add(enrollment)
+
+    # Crear ConsolidationCase para CRM
+    notes_parts = [f"Curso: {course.title}"]
+    if payload.landing_page:
+        notes_parts.append(f"Landing: {payload.landing_page}")
+    if payload.campaign:
+        notes_parts.append(f"Campaign: {payload.campaign}")
+
+    case = models.ConsolidationCase(
+        member_id=member.id if member else 0,
+        stage="new",
+        status="active",
+        source="academy-enrollment",
+        notes="\n".join(notes_parts),
+    )
+    db.add(case)
+
+    db.commit()
+    db.refresh(enrollment)
+
+    return {
+        "status": "enrolled",
+        "user_id": user.id,
+        "course_id": course_id,
+        "enrollment_id": enrollment.id,
+        "member_id": member.id if member else None,
+        "course_title": course.title,
+    }
+
+
 class PublicContactCreate(BaseModel):
     full_name: str
     phone: Optional[str] = None
@@ -256,3 +393,57 @@ def public_contact(payload: PublicContactCreate, db: Session = Depends(get_db)):
     db.commit()
 
     return {"status": "success", "member_id": member.id}
+
+
+class WishlistCreate(BaseModel):
+    """Interés en un libro/recurso de la librería."""
+    title: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    full_name: Optional[str] = None
+    landing_page: Optional[str] = None
+
+
+@router.post("/wishlist", response_model=dict)
+def public_wishlist(payload: WishlistCreate, db: Session = Depends(get_db)):
+    """
+    Cuando un visitante muestra interés en un libro de la librería FARO.
+    Crea ConsolidationCase con source="books-web" para que el equipo CRM contacte.
+    """
+    email = (payload.email or "").strip().lower()
+    phone = (payload.phone or "").strip()
+
+    member = None
+    if phone:
+        member = db.query(models.Member).filter(models.Member.phone == phone).first()
+    if not member and email:
+        member = db.query(models.Member).filter(models.Member.email == email).first()
+
+    if not member and (payload.full_name or email):
+        parts = (payload.full_name or "").strip().split(" ", 1)
+        member = models.Member(
+            first_name=parts[0] if parts else "Visitante",
+            last_name=parts[1] if len(parts) > 1 else "",
+            email=email,
+            phone=phone,
+            spiritual_status="Nuevo",
+            church_role="Visitante",
+        )
+        db.add(member)
+        db.flush()
+
+    case = models.ConsolidationCase(
+        member_id=member.id if member else 0,
+        stage="new",
+        status="active",
+        source="books-web",
+        notes=f"Libro: {payload.title}" + (f"\nLanding: {payload.landing_page}" if payload.landing_page else ""),
+    )
+    db.add(case)
+    db.commit()
+
+    return {
+        "status": "success",
+        "title": payload.title,
+        "member_id": member.id if member else None,
+    }
