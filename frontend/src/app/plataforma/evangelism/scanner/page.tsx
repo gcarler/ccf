@@ -7,7 +7,7 @@ import { apiFetch, ApiError } from '@/lib/http';
 import { toast } from 'sonner';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import AdminHero from '@/components/admin/AdminHero';
-import type { ScanValidationResult } from '@/app/evangelism/types';
+import type { ScanValidationResult } from '@/app/plataforma/evangelism/types';
 
 // Simulating a QR scanner for this environment since camera access might be restricted in some environments
 // or require specific permissions. We provide a premium manual input + auto-scan simulation.

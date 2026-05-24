@@ -26,7 +26,7 @@ import type {
     MinistryEvent,
     RoleDefinition,
     ScanValidationResult,
-} from '@/app/evangelism/types';
+} from '@/app/plataforma/evangelism/types';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 
 const EVENT_TYPE_LABEL: Record<string, string> = {

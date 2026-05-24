@@ -11,15 +11,15 @@ export const FARO_BLOCKS: CmsBlockDefinition[] = [
     key: "faro_nav_items",
     label: "Navegacion FARO",
     description: "Enlaces del navbar publico de FARO.",
-    page: "/faro",
+    page: "/",
     sample: {
       items: [
-        { label: "Sobre Nosotros", href: "/faro/nosotros" },
-        { label: "Testimonios", href: "/faro/testimonios" },
-        { label: "Eventos", href: "/faro/eventos" },
-        { label: "Predicas", href: "/faro/predicas" },
-        { label: "Cursos", href: "/faro/cursos" },
-        { label: "Sedes", href: "/faro/sedes" }
+        { label: "Sobre Nosotros", href: "/nosotros" },
+        { label: "Testimonios", href: "/testimonios" },
+        { label: "Eventos", href: "/eventos" },
+        { label: "Predicas", href: "/predicas" },
+        { label: "Cursos", href: "/cursos" },
+        { label: "Sedes", href: "/sedes" }
       ]
     }
   },
@@ -27,7 +27,7 @@ export const FARO_BLOCKS: CmsBlockDefinition[] = [
     key: "faro_home_hero",
     label: "Inicio hero",
     description: "Copys y CTAs del hero principal.",
-    page: "/faro",
+    page: "/",
     sample: {
       eyebrow: "Comunidad FARO",
       title_lead: "Ilumina tu",
@@ -41,7 +41,7 @@ export const FARO_BLOCKS: CmsBlockDefinition[] = [
     key: "faro_events_hero",
     label: "Eventos hero",
     description: "Titular y texto principal de eventos.",
-    page: "/faro/eventos",
+    page: "/eventos",
     sample: {
       eyebrow: "Calendario de Comunidad",
       title: "Nuestra Agenda",
@@ -52,7 +52,7 @@ export const FARO_BLOCKS: CmsBlockDefinition[] = [
     key: "faro_testimonios_hero",
     label: "Testimonios hero",
     description: "Titular y subtitulo de testimonios.",
-    page: "/faro/testimonios",
+    page: "/testimonios",
     sample: {
       eyebrow: "Impacto Real",
       title_lead: "Historias de",
@@ -64,7 +64,7 @@ export const FARO_BLOCKS: CmsBlockDefinition[] = [
     key: "faro_sermons_hero",
     label: "Predicas hero",
     description: "Mensaje principal de la pagina de predicas.",
-    page: "/faro/predicas",
+    page: "/predicas",
     sample: {
       eyebrow: "Mensaje Destacado",
       title_lead: "Alimento para el",
@@ -76,7 +76,7 @@ export const FARO_BLOCKS: CmsBlockDefinition[] = [
     key: "faro_courses_hero",
     label: "Cursos hero",
     description: "Texto de portada para cursos y libreria.",
-    page: "/faro/cursos",
+    page: "/cursos",
     sample: {
       eyebrow: "Formacion y Sabiduria",
       title_lead: "El Camino",
@@ -88,7 +88,7 @@ export const FARO_BLOCKS: CmsBlockDefinition[] = [
     key: "faro_discover_hero",
     label: "Conocer a Jesus hero",
     description: "Copys del encabezado principal.",
-    page: "/faro/conocer-a-jesus",
+    page: "/conocer-a-jesus",
     sample: {
       eyebrow: "Inicia Tu Camino",
       title_lead: "La Luz que",
@@ -102,7 +102,7 @@ export const FARO_BLOCKS: CmsBlockDefinition[] = [
     key: "faro_about_hero",
     label: "Nosotros hero",
     description: "Mensaje principal de identidad institucional.",
-    page: "/faro/nosotros",
+    page: "/nosotros",
     sample: {
       eyebrow: "Nuestra Identidad",
       title_lead: "Iluminando el",
@@ -114,7 +114,7 @@ export const FARO_BLOCKS: CmsBlockDefinition[] = [
     key: "faro_locations_hero",
     label: "Sedes hero",
     description: "Titulo y buscador para sedes y horarios.",
-    page: "/faro/sedes",
+    page: "/sedes",
     sample: {
       eyebrow: "Nuestra Presencia",
       title: "Nuestras Sedes",
@@ -125,7 +125,7 @@ export const FARO_BLOCKS: CmsBlockDefinition[] = [
     key: "faro_testimonials_feed",
     label: "Testimonios feed",
     description: "Listado moderado de testimonios publicos.",
-    page: "/faro/testimonios",
+    page: "/testimonios",
     sample: [
       {
         id: 1,
@@ -143,7 +143,7 @@ export const FARO_BLOCKS: CmsBlockDefinition[] = [
     key: "faro_announcements_feed",
     label: "Anuncios feed",
     description: "Publicaciones breves de comunicacion oficial.",
-    page: "/community/announcements",
+    page: "/plataforma/community/announcements",
     sample: [
       {
         id: 1,

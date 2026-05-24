@@ -9,14 +9,14 @@ import { useContentBlock } from "@/hooks/useContent";
 import { getCmsPublicMenu } from "@/lib/cms/v2";
 
 const DEFAULT_NAV_LINKS = [
-    { href: "/faro", label: "Inicio" },
-    { href: "/faro/nosotros", label: "Sobre Nosotros" },
-    { href: "/faro/pastores", label: "Pastores" },
-    { href: "/faro/testimonios", label: "Testimonios" },
-    { href: "/faro/eventos", label: "Eventos" },
-    { href: "/faro/predicas", label: "Prédicas" },
-    { href: "/faro/cursos", label: "Cursos" },
-    { href: "/faro/sedes", label: "Sedes" },
+    { href: "/", label: "Inicio" },
+    { href: "/nosotros", label: "Sobre Nosotros" },
+    { href: "/pastores", label: "Pastores" },
+    { href: "/testimonios", label: "Testimonios" },
+    { href: "/eventos", label: "Eventos" },
+    { href: "/predicas", label: "Prédicas" },
+    { href: "/cursos", label: "Cursos" },
+    { href: "/sedes", label: "Sedes" },
 ];
 
 export default function FaroNavbar() {
@@ -29,7 +29,7 @@ export default function FaroNavbar() {
     const logoUrl = themeTokens["--faro-logo-url"] || "";
     const logoName = themeTokens["--faro-logo-name"] || "FARO";
     const ctaLabel = themeTokens["--faro-header-cta-label"] || "Quiero conocer a Jesús";
-    const ctaHref = themeTokens["--faro-header-cta-href"] || "/faro/conocer-a-jesus";
+    const ctaHref = themeTokens["--faro-header-cta-href"] || "/conocer-a-jesus";
 
     // Dinamización vía CMS
     const { data: navContent } = useContentBlock("faro_nav_items");
@@ -98,7 +98,7 @@ export default function FaroNavbar() {
             >
                 <nav className="max-w-[1400px] mx-auto px-3 md:px-4 h-[72px] flex items-center justify-between gap-3">
                     {/* Logo */}
-                    <Link href="/faro" className="flex items-center gap-3 shrink-0">
+                    <Link href="/" className="flex items-center gap-3 shrink-0">
                         {logoUrl ? (
                             <img src={logoUrl} alt={logoName} className="h-8 object-contain" />
                         ) : (
@@ -122,7 +122,7 @@ export default function FaroNavbar() {
                     {/* Desktop Nav */}
                     <div className="hidden lg:flex items-center gap-1 flex-1 justify-center">
                         {navLinks.map(({ href, label, children }: any) => {
-                            const active = pathname === href || (href !== "/faro" && pathname?.startsWith(href)) || (children || []).some((child: any) => pathname === child.href || pathname?.startsWith(child.href));
+                            const active = pathname === href || (href !== "/" && pathname?.startsWith(href)) || (children || []).some((child: any) => pathname === child.href || pathname?.startsWith(child.href));
                             return (
                                 <div key={href} className="relative group">
                                 <Link
@@ -169,7 +169,7 @@ export default function FaroNavbar() {
                     <div className="flex items-center gap-3 shrink-0">
                         {/* Location */}
                         <Link
-                            href="/faro/sedes"
+                            href="/sedes"
                             className="hidden md:flex items-center justify-center w-9 h-9 rounded-full transition-colors"
                             style={{ color: "var(--faro-on-surface-variant)" }}
                             title="Nuestras Sedes"

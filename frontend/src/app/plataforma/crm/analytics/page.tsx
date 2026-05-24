@@ -20,8 +20,8 @@ import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
-import { STAGE_LABEL } from '@/app/crm/pipeline/constants';
-import type { CrmAnalyticsSummary } from '@/app/crm/types';
+import { STAGE_LABEL } from '@/app/plataforma/crm/pipeline/constants';
+import type { CrmAnalyticsSummary } from '@/app/plataforma/crm/types';
 
 const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'];
 const NUMBER_FORMATTER = new Intl.NumberFormat('es-CO');

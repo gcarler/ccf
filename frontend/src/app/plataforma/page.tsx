@@ -10,7 +10,6 @@ import {
   Calendar,
   Sparkles,
   ArrowRight,
-  Shield,
   Loader2,
   CheckCircle2,
   Clock,
@@ -21,7 +20,6 @@ import {
   Star,
   Zap,
   Bot,
-  Feather,
   MessageSquare,
   TrendingUp,
   Activity,
@@ -31,62 +29,30 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 
 const DASHBOARD_SECTIONS = [
     {
         title: 'Favoritos',
         items: [
-            { id: 'dash-home',     label: 'Inicio',        href: '/',         icon: Sparkles },
-            { id: 'dash-tasks',    label: 'Mis Tareas',    href: '/tasks',    icon: Target },
-            { id: 'dash-calendar', label: 'Calendario',    href: '/calendar', icon: Calendar },
+            { id: 'dash-home',     label: 'Inicio',        href: '/plataforma',         icon: Sparkles },
+            { id: 'dash-tasks',    label: 'Mis Tareas',    href: '/plataforma/tasks',    icon: Target },
+            { id: 'dash-calendar', label: 'Calendario',    href: '/plataforma/calendar', icon: Calendar },
         ],
     },
     {
         title: 'Módulos',
         items: [
-            { id: 'dash-crm',      label: 'CRM Pastoral', href: '/crm',      icon: Users },
-            { id: 'dash-academy',  label: 'Academia',      href: '/academy',  icon: BookOpen },
-            { id: 'dash-projects', label: 'Proyectos',     href: '/projects', icon: FolderKanban },
-            { id: 'dash-inbox',    label: 'Bandeja',       href: '/inbox',    icon: Bell },
+            { id: 'dash-crm',      label: 'CRM Pastoral', href: '/plataforma/crm',      icon: Users },
+            { id: 'dash-academy',  label: 'Academia',      href: '/plataforma/academy',  icon: BookOpen },
+            { id: 'dash-projects', label: 'Proyectos',     href: '/plataforma/projects', icon: FolderKanban },
+            { id: 'dash-inbox',    label: 'Bandeja',       href: '/plataforma/inbox',    icon: Bell },
         ],
     },
 ];
 
-export default function HomeRoot() {
-    const { isAuthenticated, user, token } = useAuth();
-    const [loading, setLoading] = useState(true);
-    const [isMounted, setIsMounted] = useState(false);
-
-    useEffect(() => {
-        setIsMounted(true);
-        const t = setTimeout(() => setLoading(false), 600);
-        return () => clearTimeout(t);
-    }, []);
-
-    // Prevent hydration mismatch: render nothing until client mounts
-    if (!isMounted) {
-        return <div className="h-screen w-full bg-[#f8fafc] dark:bg-[#0b0d11]" />;
-    }
-
-    if (loading && isAuthenticated) {
-        return (
-            <div className="h-screen w-full bg-[#f8fafc] dark:bg-[#0b0d11] flex flex-col items-center justify-center gap-4">
-                <div className="relative">
-                    <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full animate-pulse" />
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-600 relative z-10" />
-                </div>
-                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Iniciando Ecosistema...</p>
-            </div>
-        );
-    }
-
-    if (!isAuthenticated) {
-        return <PublicLandingPage />;
-    }
-
+export default function PlataformaHome() {
+    const { user, token } = useAuth();
     return (
         <WorkspaceLayout sidebarTitle="Panel Principal" sidebarSections={DASHBOARD_SECTIONS}>
             <CommandCenterHome user={user} token={token} />
@@ -109,9 +75,9 @@ function CommandCenterHome({ user, token }: any) {
                     apiFetch('/projects/1/tasks', { token }).catch(() => []),
                     apiFetch<any[]>('/agents/insights', { token }).catch(() => [])
                 ]);
-                
+
                 setInsights(Array.isArray(insightRes) ? insightRes : []);
-                
+
                 setStats((metrics as any)?.cards?.length ? metrics : {
                     cards: [
                         { title: 'Progreso Académico', value: '78%', trend: '+12% este mes' },
@@ -120,7 +86,7 @@ function CommandCenterHome({ user, token }: any) {
                         { title: 'Puntos MESH', value: '2,450', trend: '+150 hoy' }
                     ]
                 });
-                
+
                 setTasks(Array.isArray(taskData) && taskData.length ? taskData.slice(0, 4) : [
                     { id: 1, title: 'Revisar lección de Fundamentos I', priority: 'high', project: 'Academia' },
                     { id: 2, title: 'Actualizar pipeline de consolidación', priority: 'medium', project: 'CRM' },
@@ -135,14 +101,12 @@ function CommandCenterHome({ user, token }: any) {
     const [greeting, setGreeting] = useState('Hola');
 
     useEffect(() => {
-        // Client-only: avoids hydration mismatch con new Date()
         const hour = new Date().getHours();
         if (hour < 12) setGreeting('Buenos días');
         else if (hour < 18) setGreeting('Buenas tardes');
         else setGreeting('Buenas noches');
     }, []);
 
-    // Friendly display name: part before @ in username (full_name not in User type)
     const displayName = user?.username?.includes('@')
         ? user.username.split('@')[0]
         : user?.username || 'Miembro';
@@ -190,7 +154,6 @@ function CommandCenterHome({ user, token }: any) {
                     ) : (
                         (stats?.cards || []).map((card: any, idx: number) => (
                             <div key={idx} className="group relative bg-white dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99]">
-                                {/* Top accent bar */}
                                 <div className={clsx(
                                     "absolute top-0 left-0 right-0 h-[3px]",
                                     idx === 0 ? "bg-gradient-to-r from-emerald-400 to-emerald-500" :
@@ -211,7 +174,7 @@ function CommandCenterHome({ user, token }: any) {
                                     <span className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter">{card.value}</span>
                                     <span className={clsx(
                                         "text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5",
-                                        card.trend.includes('-') 
+                                        card.trend.includes('-')
                                             ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400"
                                             : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                                     )}>
@@ -233,7 +196,7 @@ function CommandCenterHome({ user, token }: any) {
                                 <h2 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                                     <Target size={16} className="text-blue-500" /> Foco de Hoy
                                 </h2>
-                                <Link href="/projects" className="text-[10px] font-bold uppercase tracking-wide text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1">
+                                <Link href="/plataforma/projects" className="text-[10px] font-bold uppercase tracking-wide text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1">
                                     Ver Agenda <ChevronRight size={12} />
                                 </Link>
                             </div>
@@ -305,7 +268,7 @@ function CommandCenterHome({ user, token }: any) {
                                     <span className="font-semibold text-slate-600 dark:text-slate-300">65%</span>
                                 </div>
                             </div>
-                            <Link href="/academy" className="shrink-0 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[11px] font-bold hover:bg-slate-800 dark:hover:bg-slate-100 active:scale-95 transition-all flex items-center gap-2">
+                            <Link href="/plataforma/academy" className="shrink-0 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[11px] font-bold hover:bg-slate-800 dark:hover:bg-slate-100 active:scale-95 transition-all flex items-center gap-2">
                                 Continuar <PlayCircle size={14} />
                             </Link>
                         </motion.div>
@@ -325,7 +288,7 @@ function CommandCenterHome({ user, token }: any) {
                                     En línea
                                 </div>
                             </div>
-                            
+
                             <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5 space-y-2 mb-4">
                                 <div className="flex items-center gap-1.5">
                                     <Sparkles size={12} className="text-violet-500" />
@@ -379,74 +342,3 @@ function ActivityItem({ icon: Icon, title, desc, time, color, bg }: any) {
         </div>
     );
 }
-
-// Keep the PublicLandingPage component for unauthenticated users
-function PublicLandingPage() {
-    const linkCards = [
-        {
-            title: 'Página Web',
-            description: 'Explora la experiencia pública y descubre testimonios, eventos y convocatorias.',
-            href: '/faro',
-            label: 'Ir al sitio',
-            icon: Layout
-        },
-        {
-            title: 'CMS de Contenido',
-            description: 'Administra landing, hero y testimonios con un hub curado para comunicación.',
-            href: '/cms',
-            label: 'Entrar al CMS',
-            icon: Feather
-        },
-        {
-            title: 'Plataforma Pastoral',
-            description: 'Accede a CRM, Academia y módulos operativos de la comunidad.',
-            href: '/login',
-            label: 'Ir a la plataforma',
-            icon: Shield
-        }
-    ];
-
-    return (
-        <div className="min-h-screen bg-[#020617] text-slate-200 flex flex-col items-center p-3 lg:p-4 gap-3 font-sans relative overflow-hidden">
-            <div className="absolute inset-0 z-0">
-                <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-soft"></div>
-            </div>
-            <Navbar />
-            <div className="w-full max-w-[1600px] mx-auto space-y-3 text-center relative z-10 mt-3 px-3 lg:px-4">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-full text-[10px] font-bold uppercase tracking-wide mx-auto shadow-lg shadow-blue-500/5">
-                    <Shield size={14} /> MESH Ecosystem v2.1
-                </div>
-                <h1 className="text-xl lg:text-xl font-bold text-white tracking-tighter leading-[1.1]">
-                    Identidad Digital <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">Ministerial.</span>
-                </h1>
-                <p className="text-lg text-slate-400 font-medium max-w-2xl mx-auto">El centro operativo para la formación teológica, gestión pastoral y colaboración de equipos.</p>
-                <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
-                    <Link href="/login" className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-xs uppercase tracking-wide shadow-xl shadow-blue-600/20 hover:bg-blue-500 active:scale-95 transition-all flex items-center justify-center gap-2">
-                        Acceso Interno <ArrowRight size={16} />
-                    </Link>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-20 text-left max-w-[1600px] mx-auto">
-                    {linkCards.map((card) => (
-                        <Link
-                            key={card.href}
-                            href={card.href}
-                            className="p-4 rounded-lg bg-white/5 border border-white/10 hover:border-blue-500/50 hover:bg-white/10 transition-all group"
-                        >
-                            <div className="size-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 mb-3 group-hover:scale-110 transition-transform">
-                                <card.icon size={24} />
-                            </div>
-                            <h3 className="text-lg font-bold text-white mb-2">{card.title}</h3>
-                            <p className="text-sm text-slate-400 leading-relaxed mb-3">{card.description}</p>
-                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-blue-400">
-                                {card.label} <ChevronRight size={14} />
-                            </div>
-                        </Link>
-                    ))}
-                </div>
-            </div>
-            <Footer />
-        </div>
-    );
-}
-

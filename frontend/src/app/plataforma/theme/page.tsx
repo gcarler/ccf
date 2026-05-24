@@ -4,8 +4,8 @@ import React from "react";
 import Link from "next/link";
 import { Palette, Settings2, SunMoon, Settings, User, Crown, Shield } from "lucide-react";
 import WorkspaceLayout from '@/components/WorkspaceLayout';
-import PaletteSelector from "@/app/theme/PaletteSelector";
-import { useTheme } from "@/app/theme/ThemeContext";
+import PaletteSelector from "@/app/plataforma/theme/PaletteSelector";
+import { useTheme } from "@/app/plataforma/theme/ThemeContext";
 
 export default function ThemePage() {
     const { theme } = useTheme();

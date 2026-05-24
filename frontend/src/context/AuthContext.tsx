@@ -33,10 +33,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const redirectByRole = useCallback((role: string) => {
         const normalizedRole = role.toLowerCase();
         if (["admin", "coordinador", "docente"].includes(normalizedRole)) {
-            router.push('/admin');
+            router.push('/plataforma/admin');
             return;
         }
-        router.push('/academy');
+        router.push('/plataforma/academy');
     }, [router]);
 
     const logout = useCallback(() => {
@@ -112,7 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else if (accessToken) {
             // Success login but profile fetch pending/failed - Force entry anyway
             console.warn("[AUTH QUALITY] Login success but profile fetch failed. Forcing entry to admin.");
-            router.push('/admin');
+            router.push('/plataforma/admin');
         }
     }, [fetchUser, redirectByRole, router]);
 

@@ -35,7 +35,7 @@ export default function CmsPreviewPage() {
   const [error, setError] = useState<string | null>(null);
 
   const publicHref = useMemo(() => {
-    const base = siteKey === "faro" ? "/faro" : `/${siteKey}`;
+    const base = siteKey === "faro" ? "/" : `/${siteKey}`;
     return slug ? `${base}/${slug}` : base;
   }, [siteKey, slug]);
 

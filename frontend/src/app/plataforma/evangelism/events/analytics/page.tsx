@@ -7,7 +7,7 @@ import AdminHero from '@/components/admin/AdminHero';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
-import type { GlobalEventAnalyticsData } from '@/app/evangelism/types';
+import type { GlobalEventAnalyticsData } from '@/app/plataforma/evangelism/types';
 
 export default function GlobalEventAnalyticsPage() {
     const { token } = useAuth();

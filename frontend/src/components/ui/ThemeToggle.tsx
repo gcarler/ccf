@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Sun, Moon } from "lucide-react";
-import { useTheme } from "@/app/theme/ThemeContext";
+import { useTheme } from "@/app/plataforma/theme/ThemeContext";
 import Tooltip from "@/components/ui/Tooltip";
 
 interface ThemeToggleProps {

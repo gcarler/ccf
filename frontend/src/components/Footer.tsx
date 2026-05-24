@@ -89,7 +89,7 @@ export default function Footer() {
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-slate-500">
                     <span>&copy; {new Date().getFullYear()} CCF Ministerio. Todos los derechos reservados.</span>
                     <div className="flex items-center gap-3">
-                        <Link href="/faro" className="hover:text-white transition-colors">Sitio público</Link>
+                        <Link href="/" className="hover:text-white transition-colors">Sitio público</Link>
                         <Link href="/login" className="hover:text-white transition-colors">Acceso interno</Link>
                     </div>
                 </div>

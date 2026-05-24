@@ -9,7 +9,7 @@ import { Calendar, MapPin, Users, CheckCircle2, ArrowLeft, Mic, Save, X, Search,
 import { DSCard } from "@/design/components/DSCard";
 import { toast } from "sonner";
 import clsx from "clsx";
-import type { Member } from "@/app/evangelism/types";
+import type { Member } from "@/app/plataforma/evangelism/types";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 
 type MinistryEventDetail = {

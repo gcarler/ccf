@@ -29,9 +29,9 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
                 if (!normalizedAllowedRoles.includes(normalizedUserRole)) {
                     console.warn(`[AUTH QUALITY] Role mismatch: ${normalizedUserRole} not in ${normalizedAllowedRoles}. Redirecting to dashboard.`);
                     if (['admin', 'coordinador', 'docente'].includes(normalizedUserRole)) {
-                        router.push('/admin');
+                        router.push('/plataforma/admin');
                     } else {
-                        router.push('/academy');
+                        router.push('/plataforma/academy');
                     }
                 }
             }

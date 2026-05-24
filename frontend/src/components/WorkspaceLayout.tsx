@@ -63,7 +63,7 @@ function WorkspaceLayoutInner({
 }: any) {
     const { user } = useAuth();
     const pathname = usePathname();
-    const moduleKey = pathname?.split('/')[1] || 'default';
+    const moduleKey = pathname?.split('/')[2] || 'default';
     const [showInbox, setShowInbox] = useState(false);
     const [showChat, setShowChat] = useState(false);
     const [isMounted, setIsReady] = useState(false);
@@ -101,7 +101,7 @@ function WorkspaceLayoutInner({
     }, [closeLayer, moduleKey, openLayer]);
 
     const moduleContext = useMemo(() => {
-        const root = pathname?.split('/')[1] || '';
+        const root = pathname?.split('/')[2] || '';
         return MODULE_CONFIGS[root] || { title: "CCF Platform", sections: [] };
     }, [pathname]);
 
@@ -118,7 +118,7 @@ function WorkspaceLayoutInner({
                 items: Array.isArray(section?.items)
                     ? section.items.filter((item: any) => {
                         const href = String(item?.href || '');
-                        return !href.startsWith('/evangelism');
+                        return !href.startsWith('/plataforma/evangelism');
                     })
                     : section?.items,
             }))

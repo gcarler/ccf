@@ -271,7 +271,7 @@ export default function CmsHomePage() {
           description="Control editorial para paginas, bloques, media, testimonios, eventos y publicacion multisitio."
           tags={["Calidad web", "Publicacion", "FARO"]}
           watchers={["Comunicaciones", "Pastoral", "Web"]}
-          primaryAction={{ label: "Abrir sitio", icon: ExternalLink, onClick: () => window.open("/faro", "_blank") }}
+          primaryAction={{ label: "Abrir sitio", icon: ExternalLink, onClick: () => window.open("/", "_blank") }}
           secondaryAction={canEdit ? { label: "Ir al builder", icon: PanelsTopLeft, onClick: () => router.push("/cms/builder") } : undefined}
         />
 
@@ -432,7 +432,7 @@ export default function CmsHomePage() {
                 { label: "Editar estructura", detail: "Paginas, menus y secciones del builder.", href: "/cms/pages" },
                 { label: "Completar media", detail: "Alt text, etiquetas y archivos reutilizables.", href: "/cms/media" },
                 { label: "Revisar contenido", detail: "Testimonios, bloques en revision y eventos.", href: "/cms/content" },
-                { label: "Publicar", detail: "Aprobar, publicar y revisar el sitio en vivo.", href: "/faro" },
+                { label: "Publicar", detail: "Aprobar, publicar y revisar el sitio en vivo.", href: "/" },
               ].map((step, index) => (
                 <Link
                   key={step.label}

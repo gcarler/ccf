@@ -86,7 +86,7 @@ const PAGE_TEMPLATES: Array<{ key: string; label: string; sections: Array<{ type
           title: "Bienvenido a nuestra comunidad",
           body: "Una casa para crecer en fe y servir con propósito.",
           cta_label: "Conocer más",
-          cta_href: "/faro/nosotros",
+          cta_href: "/nosotros",
         },
       },
       {
@@ -117,7 +117,7 @@ const PAGE_TEMPLATES: Array<{ key: string; label: string; sections: Array<{ type
           title: "Da tu siguiente paso",
           body: "Queremos caminar contigo.",
           cta_label: "Planificar visita",
-          cta_href: "/faro/conocer-a-jesus",
+          cta_href: "/conocer-a-jesus",
         },
       },
     ],
@@ -140,7 +140,7 @@ const SECTION_TEMPLATES: Array<{ label: string; type: string; props_json: Record
       title: "Una comunidad que transforma vidas",
       body: "Conecta con Jesús, crece en discipulado y sirve con propósito.",
       cta_label: "Planifica tu visita",
-      cta_href: "/faro/conocer-a-jesus",
+      cta_href: "/conocer-a-jesus",
     },
   },
   {
@@ -163,7 +163,7 @@ const SECTION_TEMPLATES: Array<{ label: string; type: string; props_json: Record
       title: "¿Listo para dar el siguiente paso?",
       body: "Conoce nuestros próximos eventos y Faros en Casa.",
       cta_label: "Ver eventos",
-      cta_href: "/faro/eventos",
+      cta_href: "/eventos",
     },
   },
   {

@@ -18,7 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import { STAGE_LABEL } from '@/app/crm/pipeline/constants';
+import { STAGE_LABEL } from '@/app/plataforma/crm/pipeline/constants';
 
 interface PipelineLeadSidebarProps {
     lead: any;

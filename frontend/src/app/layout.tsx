@@ -4,7 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ConfigProvider } from "@/context/ConfigContext";
 import { ToastProvider } from "@/context/ToastContext";
-import { ThemeProvider } from "./theme/ThemeContext";
+import { ThemeProvider } from "./plataforma/theme/ThemeContext";
 import "@/lib/fetch-patch";
 import { ClientBootstrap } from "./ClientBootstrap";
 import { Toaster } from "sonner";

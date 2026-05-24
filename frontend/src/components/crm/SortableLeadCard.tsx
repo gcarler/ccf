@@ -10,7 +10,7 @@ import {
     Clock
 } from 'lucide-react';
 import clsx from 'clsx';
-import { SOURCES, STAGE_PROGRESS } from '@/app/crm/pipeline/constants';
+import { SOURCES, STAGE_PROGRESS } from '@/app/plataforma/crm/pipeline/constants';
 
 interface SortableLeadCardProps {
     lead: any;

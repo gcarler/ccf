@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Users, Plus, Calendar, Clock, Heart, Search, MessageSquare, History, Link2, ShieldCheck, CheckCircle2, XCircle, Loader2, ChevronRight, MoreHorizontal, BookOpen } from 'lucide-react';
 import UniversalTableView from '@/components/ui/UniversalTableView';
-import { useTheme } from '@/app/theme/ThemeContext';
+import { useTheme } from '@/app/plataforma/theme/ThemeContext';
 import { apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { useToast } from '@/context/ToastContext';

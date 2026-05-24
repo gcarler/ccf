@@ -14,7 +14,7 @@ import {
 } from '@dnd-kit/core';
 import { DroppablePipelineColumn } from './DroppablePipelineColumn';
 import { SortableLeadCard } from './SortableLeadCard';
-import { PIPELINE_STAGES } from '@/app/crm/pipeline/constants';
+import { PIPELINE_STAGES } from '@/app/plataforma/crm/pipeline/constants';
 
 interface PipelineKanbanBoardProps {
     leads: any[];

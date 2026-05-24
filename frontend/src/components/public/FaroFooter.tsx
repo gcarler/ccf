@@ -24,15 +24,15 @@ export default function FaroFooter() {
                 <div className="space-y-3">
                     <h4 className="text-faro-primary-fixed-dim font-bold uppercase text-xs tracking-wide">Recursos</h4>
                     <ul className="space-y-4">
-                        <li><Link className="text-faro-on-background/60 hover:text-faro-primary-fixed-dim underline-offset-4 hover:underline text-sm font-body" href="/faro/boletin">Newsletter Signup</Link></li>
-                        <li><Link className="text-faro-on-background/60 hover:text-faro-primary-fixed-dim underline-offset-4 hover:underline text-sm font-body" href="/faro/conocer-a-jesus#contacto">Contact Us</Link></li>
+                        <li><Link className="text-faro-on-background/60 hover:text-faro-primary-fixed-dim underline-offset-4 hover:underline text-sm font-body" href="/boletin">Newsletter Signup</Link></li>
+                        <li><Link className="text-faro-on-background/60 hover:text-faro-primary-fixed-dim underline-offset-4 hover:underline text-sm font-body" href="/conocer-a-jesus#contacto">Contact Us</Link></li>
                     </ul>
                 </div>
                 <div className="space-y-3">
                     <h4 className="text-faro-primary-fixed-dim font-bold uppercase text-xs tracking-wide">Legal</h4>
                     <p className="text-faro-on-background/60 text-sm font-body leading-relaxed">© 2024 FARO. The Radiant Guide.</p>
                     <div className="pt-4">
-                        <Link href="/faro/privacidad" className="text-faro-secondary-fixed-dim font-semibold text-xs uppercase tracking-wide hover:text-faro-primary-fixed-dim transition-all">Política de Privacidad</Link>
+                        <Link href="/privacidad" className="text-faro-secondary-fixed-dim font-semibold text-xs uppercase tracking-wide hover:text-faro-primary-fixed-dim transition-all">Política de Privacidad</Link>
                     </div>
                 </div>
             </div>

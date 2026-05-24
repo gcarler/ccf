@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { useTheme, ThemeMode } from '@/app/theme/ThemeContext';
+import { useTheme, ThemeMode } from '@/app/plataforma/theme/ThemeContext';
 
 const themeOptions: { id: ThemeMode; label: string; description: string; swatches: string[] }[] = [
     {

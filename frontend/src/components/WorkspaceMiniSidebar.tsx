@@ -37,22 +37,22 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
     const canAccessEvangelism = role === 'admin' || role === 'pastor';
 
     const primaryItems = [
-        { id: 'dashboard',  icon: LayoutDashboard, href: '/',  label: 'Inicio' },
-        { id: 'projects', icon: Target,       href: '/projects',  label: 'Proyectos' },
-        { id: 'tasks',    icon: Layout,        href: '/tasks',     label: 'Mis Tareas' },
-        { id: 'calendar', icon: CalendarDays,  href: '/calendar',  label: 'Calendario' },
+        { id: 'dashboard',  icon: LayoutDashboard, href: '/plataforma',  label: 'Inicio' },
+        { id: 'projects', icon: Target,       href: '/plataforma/projects',  label: 'Proyectos' },
+        { id: 'tasks',    icon: Layout,        href: '/plataforma/tasks',     label: 'Mis Tareas' },
+        { id: 'calendar', icon: CalendarDays,  href: '/plataforma/calendar',  label: 'Calendario' },
     ];
 
     const moduleItems = [
-        { id: 'academy',       icon: GraduationCap, href: '/academy',        label: 'Academia' },
-        { id: 'crm',           icon: Users,         href: '/crm',            label: 'Consolidación' },
-        { id: 'evangelism',    icon: Flame,         href: '/evangelism',     label: 'Evangelismo' },
-        { id: 'community',     icon: Globe,         href: '/community',      label: 'Comunidad' },
-        { id: 'finances',      icon: DollarSign,    href: '/finances',       label: 'Finanzas' },
-        { id: 'cms',           icon: Globe,         href: '/cms',            label: 'Sitio Web' },
-        { id: 'wiki',          icon: BookOpen,      href: '/wiki',           label: 'Wiki' },
-        { id: 'spiritual-life',icon: Heart,         href: '/spiritual-life', label: 'Vida Espiritual' },
-        { id: 'admin',         icon: Shield,        href: '/admin',          label: 'Admin' },
+        { id: 'academy',       icon: GraduationCap, href: '/plataforma/academy',        label: 'Academia' },
+        { id: 'crm',           icon: Users,         href: '/plataforma/crm',            label: 'Consolidación' },
+        { id: 'evangelism',    icon: Flame,         href: '/plataforma/evangelism',     label: 'Evangelismo' },
+        { id: 'community',     icon: Globe,         href: '/plataforma/community',      label: 'Comunidad' },
+        { id: 'finances',      icon: DollarSign,    href: '/plataforma/finances',       label: 'Finanzas' },
+        { id: 'cms',           icon: Globe,         href: '/plataforma/cms',            label: 'Sitio Web' },
+        { id: 'wiki',          icon: BookOpen,      href: '/plataforma/wiki',           label: 'Wiki' },
+        { id: 'spiritual-life',icon: Heart,         href: '/plataforma/spiritual-life', label: 'Vida Espiritual' },
+        { id: 'admin',         icon: Shield,        href: '/plataforma/admin',          label: 'Admin' },
     ];
 
     const visibleModuleItems = moduleItems.filter((item) => {
@@ -109,12 +109,12 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
             <div className="w-6 h-px bg-slate-100 dark:bg-white/10 my-2" />
 
             {/* Inbox with badge */}
-            <NavItem id="inbox" icon={Inbox} href="/inbox" label="Bandeja" badge={3} />
+            <NavItem id="inbox" icon={Inbox} href="/plataforma/inbox" label="Bandeja" badge={3} />
 
             {/* ── Footer: solo Settings + Collapse (SIN ThemeToggle — ya está en el header) */}
             <div className="mt-auto flex flex-col items-center gap-1 pb-1">
                 <Tooltip content="Ajustes" side="right">
-                    <Link href="/settings">
+                    <Link href="/plataforma/settings">
                         <div className="size-10 rounded-lg flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-black/5 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-300 transition-all duration-200 cursor-pointer">
                             <Settings size={19} />
                         </div>

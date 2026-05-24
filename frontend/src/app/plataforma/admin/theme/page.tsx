@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import PaletteSelector from '@/app/theme/PaletteSelector';
+import PaletteSelector from '@/app/plataforma/theme/PaletteSelector';
 
 export default function ThemeAdminPage() {
     return (
