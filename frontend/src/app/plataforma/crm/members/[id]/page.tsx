@@ -191,6 +191,12 @@ function formatCurrency(val?: number | null): string {
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(val);
 }
 
+function getDeptName(departments: any[], id: number | null | undefined): string {
+    if (!id) return '';
+    const d = departments.find(d => d.id === id);
+    return d ? d.name : String(id);
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 const ID_TYPES = ['Cédula de Ciudadanía', 'Cédula de Extranjería', 'Pasaporte', 'Tarjeta de Identidad', 'NIT', 'Otro'];
@@ -318,6 +324,9 @@ export default function MemberDetailPage() {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [editMember, setEditMember] = useState<any>({});
     const [isEditSaving, setIsEditSaving] = useState(false);
+    const [departments, setDepartments] = useState<any[]>([]);
+    const [editCities, setEditCities] = useState<any[]>([]);
+    const [loadingEditCities, setLoadingEditCities] = useState(false);
     
     // Extra data fetched on demand
     const [history, setHistory] = useState<any[]>([]);
@@ -381,7 +390,6 @@ export default function MemberDetailPage() {
                     guardian_name: data.guardian_name ?? '',
                     guardian_contact: data.guardian_contact ?? '',
                     colombian_department_id: data.colombian_department_id ?? null,
-                    colombian_department: data.colombian_department ?? null,
                     city: data.city ?? '',
                     last_group_attendance: data.last_group_attendance ?? null,
                     last_meeting_attendance: data.last_meeting_attendance ?? null,
@@ -395,7 +403,24 @@ export default function MemberDetailPage() {
             }
         };
         fetchMember();
+        // Load departments for display
+        apiFetch<any[]>('/crm/colombian-departments', { token })
+            .then(setDepartments)
+            .catch(() => {});
     }, [id, token]);
+
+    // Load cities for edit drawer cascade
+    useEffect(() => {
+        if (!token || !editMember.colombian_department_id) {
+            setEditCities([]);
+            return;
+        }
+        setLoadingEditCities(true);
+        apiFetch<any[]>(`/crm/colombian-departments/${editMember.colombian_department_id}/cities`, { token })
+            .then(setEditCities)
+            .catch(() => setEditCities([]))
+            .finally(() => setLoadingEditCities(false));
+    }, [token, editMember.colombian_department_id]);
 
     const handleSaveMember = async () => {
         if (!token) return;
@@ -630,7 +655,7 @@ export default function MemberDetailPage() {
                                         { label: 'Otro Teléfono', value: member.other_phone },
                                         { label: 'Dirección', value: member.address },
                                         { label: 'Tipo de Vivienda', value: member.housing_type },
-                                        { label: 'Departamento', value: member.colombian_department?.name ?? '' },
+                                        { label: 'Departamento', value: getDeptName(departments, member.colombian_department_id) },
                                         { label: 'Ciudad', value: member.city },
                                     ]} />
                                 </div>
@@ -987,6 +1012,22 @@ export default function MemberDetailPage() {
                         <div className="grid grid-cols-2 gap-3">
                             <SelectField label="Tipo de Vivienda" value={editMember.housing_type ?? ''} onChange={v => setEditMember((p: any) => ({...p, housing_type: v}))} options={HOUSING_TYPES} />
                             <EditField label="Celular" value={editMember.mobile_phone ?? ''} onChange={v => setEditMember((p: any) => ({...p, mobile_phone: v}))} placeholder="+57 300 000 0000" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Departamento</label>
+                                <select value={editMember.colombian_department_id ?? ''} onChange={e => setEditMember((p: any) => ({ ...p, colombian_department_id: e.target.value ? Number(e.target.value) : null, city: '' }))} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white">
+                                    <option value="">Seleccionar departamento</option>
+                                    {departments.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Ciudad</label>
+                                <select value={editMember.city ?? ''} onChange={e => setEditMember((p: any) => ({ ...p, city: e.target.value }))} disabled={!editMember.colombian_department_id || loadingEditCities} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-black/20 dark:text-white">
+                                    <option value="">{loadingEditCities ? 'Cargando ciudades...' : 'Seleccionar ciudad'}</option>
+                                    {editCities.map((c: any) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                </select>
+                            </div>
                         </div>
                     </FormSection>
 

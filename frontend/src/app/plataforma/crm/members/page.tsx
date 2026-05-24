@@ -110,10 +110,6 @@ const INITIAL_MEMBER: MemberFormData = {
     optional_info: '', last_group_attendance: '', last_meeting_attendance: '',
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function n(o: any) { return o ?? ''; }
-
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function FormSection({ title, defaultOpen, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {

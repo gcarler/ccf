@@ -14,7 +14,6 @@ import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import Skeleton from '@/components/ui/Skeleton';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
-import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import type {
