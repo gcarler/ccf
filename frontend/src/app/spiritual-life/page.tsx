@@ -97,7 +97,7 @@ export default function SpiritualLifePage() {
 
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-[#111213] overflow-y-auto font-display">
-                <div className="max-w-6xl mx-auto w-full p-4 space-y-3 pb-4">
+                <div className="w-full p-4 md:p-6 space-y-4">
 
                     {/* ── HERO HEADER ─────────────────────────────────────────────── */}
                     <div className="flex items-start justify-between">
