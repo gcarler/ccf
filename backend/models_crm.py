@@ -477,6 +477,7 @@ class Donation(Base):
     id = Column(Integer, primary_key=True, index=True)
     member_id = Column(Integer, ForeignKey("members.id"), nullable=True, index=True)
     amount = Column(Float, nullable=False)
+    currency = Column(String(10), default="COP")
     donation_type = Column(String(50), default="Diezmo")  # Diezmo, Ofrenda, Especial
     status = Column(String(20), default="completed")
     reference_code = Column(String(100), nullable=True)
@@ -484,7 +485,9 @@ class Donation(Base):
     fund_id = Column(Integer, nullable=True)
     person_id = Column(Integer, nullable=True)
     donor_name = Column(String(100), nullable=True)
+    donor_email = Column(String(200), nullable=True)
     created_at = Column(DateTime, default=_utcnow, index=True)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
     member = relationship("Member", back_populates="donations")
 

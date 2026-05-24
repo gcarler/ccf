@@ -370,13 +370,18 @@ class Enrollment(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
     status = Column(String(20), default="active")  # active, completed, dropped
-    progress_percent = Column(Numeric(5, 2), default=0)
-    lessons_completed = Column(JSON, default=[])
+    progress_percent = Column(Float, default=0)
+    final_grade = Column(Float, nullable=True)
+    attendance_percent = Column(Float, default=0)
+    lessons_completed = Column(JSON, nullable=True, default=list)
     approved = Column(Boolean, default=False)
+    acta_closed = Column(Boolean, default=False)
     certificate_issued = Column(Boolean, default=False)
     certificate_code = Column(String(64), nullable=True)
-    access_window_end = Column(DateTime, nullable=True)  # RN-NF-004
-    created_at = Column(DateTime, default=_utcnow)
+    access_window_end = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=_utcnow, nullable=False)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=False)
     student = relationship("User", back_populates="enrollments")
     course = relationship("Course", back_populates="enrollments")
 

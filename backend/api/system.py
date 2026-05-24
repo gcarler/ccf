@@ -171,3 +171,161 @@ async def ai_generate(
 @router.get("/health")
 def get_system_health():
     return {"status": "ok", "version": "3.0.0-PRO"}
+
+
+@router.get("/db/health")
+def get_database_health(db: Session = Depends(get_db)):
+    """Comprehensive database health check.
+
+    Returns connection stats, table sizes, index bloat,
+    cache hit ratio, and slow query detection.
+    """
+    health = {"status": "ok", "checks": {}}
+
+    # 1. Connection count
+    conn_row = db.execute(
+        text("SELECT count(*) FROM pg_stat_activity WHERE datname = current_database()")
+    ).first()
+    health["checks"]["active_connections"] = conn_row[0] if conn_row else 0
+
+    # 2. Database size
+    size_row = db.execute(text("SELECT pg_size_pretty(pg_database_size(current_database()))")).first()
+    health["checks"]["database_size"] = size_row[0] if size_row else "unknown"
+
+    # 3. Cache hit ratio (should be > 0.99 for production)
+    hit_row = db.execute(
+        text(
+            "SELECT round(sum(heap_blks_hit) / nullif(sum(heap_blks_hit) + sum(heap_blks_read), 0), 4) "
+            "FROM pg_statio_user_tables"
+        )
+    ).first()
+    hit_ratio = hit_row[0] if hit_row else None
+    health["checks"]["cache_hit_ratio"] = hit_ratio
+    if hit_ratio and float(hit_ratio) < 0.95:
+        health["status"] = "warning"
+
+    # 4. Table sizes (top 10)
+    size_rows = db.execute(
+        text(
+            "SELECT relname, pg_size_pretty(pg_total_relation_size(oid)) "
+            "FROM pg_class WHERE relkind = 'r' AND relnamespace = 'public'::regnamespace "
+            "ORDER BY pg_total_relation_size(oid) DESC LIMIT 10"
+        )
+    ).fetchall()
+    health["checks"]["largest_tables"] = [
+        {"table": r[0], "size": r[1]} for r in size_rows
+    ]
+
+    # 5. Index usage ratio
+    idx_row = db.execute(
+        text(
+            "SELECT round(100.0 * sum(idx_scan) / nullif(sum(idx_scan) + sum(seq_scan), 0), 2) "
+            "FROM pg_stat_user_tables"
+        )
+    ).first()
+    health["checks"]["index_usage_percent"] = idx_row[0] if idx_row else None
+
+    # 6. Dead tuples (tables that need VACUUM)
+    dead_row = db.execute(
+        text(
+            "SELECT relname, n_dead_tup FROM pg_stat_user_tables "
+            "WHERE n_dead_tup > 1000 ORDER BY n_dead_tup DESC LIMIT 5"
+        )
+    ).fetchall()
+    health["checks"]["tables_needing_vacuum"] = [
+        {"table": r[0], "dead_tuples": r[1]} for r in dead_row
+    ]
+
+    # 7. Materialized view freshness
+    mv_rows = db.execute(
+        text(
+            "SELECT matviewname, "
+            "EXTRACT(EPOCH FROM NOW() - refreshed_at)::int as age_seconds "
+            "FROM pg_matviews m, "
+            "LATERAL (SELECT refreshed_at FROM mv_academy_summary LIMIT 1) v "
+            "WHERE schemaname = 'public' AND matviewname = 'mv_academy_summary'"
+        )
+    ).fetchall()
+    health["checks"]["mv_academy_age_seconds"] = (
+        mv_rows[0][1] if mv_rows else "not refreshed"
+    )
+
+    # 8. Long-running queries (> 30s)
+    slow_row = db.execute(
+        text(
+            "SELECT count(*) FROM pg_stat_activity "
+            "WHERE state = 'active' AND query_start < NOW() - INTERVAL '30 seconds' "
+            "AND query NOT LIKE '%pg_stat_activity%'"
+        )
+    ).first()
+    health["checks"]["long_running_queries"] = slow_row[0] if slow_row else 0
+    if health["checks"]["long_running_queries"] > 0:
+        health["status"] = "warning"
+
+    return health
+
+
+@router.post("/db/maintenance")
+def run_db_maintenance(db: Session = Depends(get_db)):
+    """Run database maintenance operations asynchronously.
+
+    Triggers:
+    1. Refresh all materialized views (CONCURRENTLY)
+    2. VACUUM ANALYZE all tables
+
+    VACUUM runs in background to avoid request timeout.
+    """
+    import subprocess
+    import threading
+
+    def _run_vacuum():
+        """Run VACUUM ANALYZE in background thread."""
+        from backend.core.database import engine
+        try:
+            with engine.connect() as conn:
+                conn = conn.execution_options(isolation_level="AUTOCOMMIT")
+                conn.execute(text("VACUUM ANALYZE;"))
+        except Exception:
+            pass
+
+    # 1. Refresh materialized views (fast, runs inline)
+    try:
+        db.execute(text("SELECT refresh_dashboard_views()"), execution_options={"autocommit": True})
+        refresh_ok = True
+    except Exception:
+        refresh_ok = False
+
+    # 2. Start VACUUM in background (non-blocking)
+    threading.Thread(target=_run_vacuum, daemon=True).start()
+
+    # 3. Report table stats
+    try:
+        rows = db.execute(
+            text(
+                "SELECT relname, n_live_tup, n_dead_tup, last_vacuum, last_analyze "
+                "FROM pg_stat_user_tables WHERE n_dead_tup > 0 "
+                "ORDER BY n_dead_tup DESC LIMIT 10"
+            )
+        ).fetchall()
+        tables_with_dead = [
+            {
+                "table": r[0],
+                "live_tuples": r[1],
+                "dead_tuples": r[2],
+                "last_vacuum": str(r[3]) if r[3] else "never",
+                "last_analyze": str(r[4]) if r[4] else "never",
+            }
+            for r in rows
+        ]
+    except Exception:
+        tables_with_dead = []
+
+    return {
+        "status": "ok",
+        "message": "Maintenance started (VACUUM running in background)",
+        "operations": {
+            "refresh_views": "ok" if refresh_ok else "error",
+            "vacuum_analyze": "started (background)",
+        },
+        "tables_with_dead_tuples": tables_with_dead,
+    }

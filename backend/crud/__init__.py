@@ -190,7 +190,10 @@ from backend.crud.crm_extended import (  # noqa: F401; Positions; Member Positio
     update_role_definition, update_volunteer_skill)
 # Dashboard
 from backend.crud.dashboard import get_dashboard_metrics  # noqa: F401
-from backend.crud.dashboard import (get_pastor_radar, get_pilot_readiness,
+from backend.crud.dashboard import (get_academy_dashboard, get_admin_dashboard,  # noqa: F401
+                                    get_assets_dashboard, get_crm_dashboard,
+                                    get_finance_dashboard, get_pastor_radar,
+                                    get_pilot_readiness, get_projects_dashboard,
                                     search_knowledge_base)
 # Governance
 from backend.crud.governance import create_automation_rule  # noqa: F401
