@@ -67,11 +67,11 @@ export default function DiscoverPage() {
 
             <main className="flex-1 overflow-y-auto p-3 scrollbar-thin">
                 {loading ? (
-                    <div className="space-y-3 max-w-4xl mx-auto">
+ <div className="space-y-3 w-full">
                         {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full rounded-md" />)}
                     </div>
                 ) : (
-                    <div className="max-w-4xl mx-auto grid gap-3">
+ <div className="w-full grid gap-3">
                         {filteredGroups.length === 0 ? (
                             <div className="text-center py-1.5 text-slate-400">
                                 <Search className="mx-auto h-8 w-12 mb-4 opacity-20" />

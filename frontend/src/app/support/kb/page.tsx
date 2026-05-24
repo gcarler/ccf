@@ -48,7 +48,7 @@ export default function SupportKBPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4">
-                <div className="max-w-5xl mx-auto space-y-3">
+ <div className="w-full space-y-3">
                     {/* Categories */}
                     <section>
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-5">Explorar por Categoría</p>

@@ -89,7 +89,7 @@ export default function NewCoursePage() {
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative z-10">
                 {viewType === 'list' && (
-                    <div className="max-w-4xl mx-auto space-y-2">
+ <div className="w-full space-y-2">
                         {[
                             ['Código', formData.code || 'Pendiente'],
                             ['Nombre', formData.title || 'Pendiente'],
@@ -106,7 +106,7 @@ export default function NewCoursePage() {
                 )}
 
                 {viewType === 'table' && (
-                    <div className="max-w-4xl mx-auto overflow-hidden rounded-md border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+ <div className="w-full overflow-hidden rounded-md border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                 <tr><th className="px-4 py-2">Campo</th><th className="px-4 py-2">Valor actual</th></tr>
@@ -133,7 +133,7 @@ export default function NewCoursePage() {
                 {viewType === 'grid' && (
                 <motion.div 
                     variants={containerVariants} initial="hidden" animate="show"
-                    className="max-w-4xl mx-auto space-y-3"
+ className="w-full space-y-3"
                 >
                     <header className="space-y-4">
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/10 rounded-full text-[10px] font-semibold uppercase tracking-wide text-blue-600">

@@ -14,7 +14,7 @@ export default function CmsUiKitPage() {
 
   return (
     <div className="flex flex-col h-full bg-[#f8f9fc] dark:bg-[#0d0e11] overflow-y-auto custom-scrollbar">
-      <div className="p-4 space-y-3 max-w-6xl mx-auto w-full">
+ <div className="p-4 space-y-3 w-full">
         <div>
           <h1 className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight">UI Kit & Design System</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Catálogo de componentes base (&quot;Clean Productivity&quot;) utilizados en la plataforma administrativa.</p>

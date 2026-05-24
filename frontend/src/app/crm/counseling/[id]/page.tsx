@@ -76,7 +76,7 @@ export default function CounselingDetailPage() {
             ]}
         >
             <main className="flex-1 overflow-y-auto p-4 lg:p-4">
-                <div className="max-w-4xl mx-auto space-y-3">
+ <div className="w-full space-y-3">
                     <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">

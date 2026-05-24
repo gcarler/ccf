@@ -69,7 +69,7 @@ export default function AdminCourseContentPage() {
             />
 
             <main className="flex-1 overflow-y-auto p-4 lg:p-4">
-                <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-3">
+ <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-3">
                     <div className="lg:col-span-2 space-y-3">
                         <header className="space-y-4">
                             <div className="flex items-center gap-3">

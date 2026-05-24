@@ -152,7 +152,7 @@ export default function CommentModeration() {
             </div>
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative pb-4">
-                <div className="max-w-5xl mx-auto space-y-3 relative z-10">
+ <div className="w-full space-y-3 relative z-10">
                     
                     {/* Header Cinematic */}
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-4">

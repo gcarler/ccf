@@ -132,7 +132,7 @@ export default function StrategyDetailPage() {
                 { label: strategy?.name || 'Detalle' }
             ]}
         >
-            <div className="p-4 lg:p-3 space-y-3 animate-fade-in max-w-4xl mx-auto">
+ <div className="p-4 lg:p-3 space-y-3 animate-fade-in w-full">
                 {loading ? (
                     <div className="space-y-3">
                         {[1, 2, 3].map(i => (

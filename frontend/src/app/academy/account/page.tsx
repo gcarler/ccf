@@ -70,7 +70,7 @@ export default function AcademyAccountPage() {
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto px-3 py-1.5 space-y-3">
+ <div className="w-full px-3 py-1.5 space-y-3">
                 {/* Stats */}
                 <div className="grid grid-cols-4 gap-3">
                     {stats.map((s, i) => (

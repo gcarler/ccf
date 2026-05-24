@@ -56,7 +56,7 @@ export default function SupportTutorialsPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-3">
-                <div className="max-w-5xl mx-auto grid grid-cols-3 gap-3">
+ <div className="w-full grid grid-cols-3 gap-3">
                     {filtered.map((t, i) => (
                         <motion.div
                             key={t.id}

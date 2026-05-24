@@ -260,7 +260,7 @@ export default function AnnouncementsAdmin() {
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative pb-4">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#3b82f605_0%,_transparent_50%)] pointer-events-none" />
 
-                <div className="max-w-6xl mx-auto space-y-3 relative z-10">
+ <div className="w-full space-y-3 relative z-10">
                     
                     {/* Header Cinematic */}
                     <header className="space-y-4 text-center md:text-left">

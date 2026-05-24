@@ -69,7 +69,7 @@ export default function GlobalEventAnalyticsPage() {
                 watchers={['Sistema Optimus', 'Módulo Analítico']}
             />
             
-            <div className="p-4 lg:p-3 space-y-3 max-w-7xl mx-auto">
+ <div className="p-4 lg:p-3 space-y-3 w-full">
                 
                 {/* FILTROS */}
                 <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-4 shadow-sm flex flex-col md:flex-row gap-4 items-center">

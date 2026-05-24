@@ -102,7 +102,7 @@ export default function MemberDetailPage() {
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-3 lg:p-4">
                 <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-                    className="max-w-5xl mx-auto space-y-3">
+ className="w-full space-y-3">
 
                     {/* Hero */}
                     <header className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-sm flex flex-col md:flex-row md:items-center gap-3 relative overflow-hidden">

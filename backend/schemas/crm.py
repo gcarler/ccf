@@ -289,6 +289,31 @@ class VolunteerShift(VolunteerShiftBase):
     model_config = orm_config
 
 
+class DepartmentTrackingBase(BaseModel):
+    department_name: str = Field(..., max_length=100)
+    fecha: Optional[date] = None
+    estado: Optional[str] = None
+    detalle: Optional[str] = None
+
+
+class DepartmentTrackingCreate(DepartmentTrackingBase):
+    member_id: int
+
+
+class DepartmentTrackingUpdate(BaseModel):
+    fecha: Optional[date] = None
+    estado: Optional[str] = None
+    detalle: Optional[str] = None
+
+
+class DepartmentTracking(DepartmentTrackingBase):
+    id: int
+    member_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    model_config = orm_config
+
+
 class MemberResponse(BaseModel):
     id: int
     first_name: str
@@ -318,6 +343,42 @@ class Member(BaseModel):
     talents: Optional[str] = None
     spiritual_gifts: Optional[str] = None
     pastoral_notes: Optional[str] = None
+    # Nuevos campos desde hoja de miembros
+    id_type: Optional[str] = None
+    id_number: Optional[str] = None
+    second_name: Optional[str] = None
+    second_last_name: Optional[str] = None
+    marital_status: Optional[str] = None
+    birth_country: Optional[str] = None
+    landline_phone: Optional[str] = None
+    other_phone: Optional[str] = None
+    mobile_phone: Optional[str] = None
+    address: Optional[str] = None
+    housing_type: Optional[str] = None
+    education_level: Optional[str] = None
+    education_status: Optional[str] = None
+    profession: Optional[str] = None
+    economic_sector: Optional[str] = None
+    blood_type: Optional[str] = None
+    medical_notes: Optional[str] = None
+    optional_info: Optional[str] = None
+    registration_reason: Optional[str] = None
+    unregistration_reason: Optional[str] = None
+    registration_date: Optional[date] = None
+    unregistration_date: Optional[date] = None
+    responsible_adult_name: Optional[str] = None
+    responsible_adult_contact: Optional[str] = None
+    guardian_name: Optional[str] = None
+    guardian_contact: Optional[str] = None
+    sex: Optional[str] = None
+    last_group_attendance: Optional[date] = None
+    last_meeting_attendance: Optional[date] = None
+    membership_type: Optional[str] = None
+    attendance_type: Optional[str] = None
+    group_name: Optional[str] = None
+    campus: Optional[str] = None
+    church_join_date: Optional[date] = None
+    department_tracking: List[DepartmentTracking] = []
     created_at: datetime
     model_config = orm_config
 
@@ -344,6 +405,41 @@ class MemberCreate(BaseModel):
     talents: Optional[str] = None
     spiritual_gifts: Optional[str] = None
     pastoral_notes: Optional[str] = None
+    # Nuevos campos desde hoja de miembros
+    id_type: Optional[str] = None
+    id_number: Optional[str] = None
+    second_name: Optional[str] = None
+    second_last_name: Optional[str] = None
+    marital_status: Optional[str] = None
+    birth_country: Optional[str] = None
+    landline_phone: Optional[str] = None
+    other_phone: Optional[str] = None
+    mobile_phone: Optional[str] = None
+    address: Optional[str] = None
+    housing_type: Optional[str] = None
+    education_level: Optional[str] = None
+    education_status: Optional[str] = None
+    profession: Optional[str] = None
+    economic_sector: Optional[str] = None
+    blood_type: Optional[str] = None
+    medical_notes: Optional[str] = None
+    optional_info: Optional[str] = None
+    registration_reason: Optional[str] = None
+    unregistration_reason: Optional[str] = None
+    registration_date: Optional[date] = None
+    unregistration_date: Optional[date] = None
+    responsible_adult_name: Optional[str] = None
+    responsible_adult_contact: Optional[str] = None
+    guardian_name: Optional[str] = None
+    guardian_contact: Optional[str] = None
+    sex: Optional[str] = None
+    last_group_attendance: Optional[date] = None
+    last_meeting_attendance: Optional[date] = None
+    membership_type: Optional[str] = None
+    attendance_type: Optional[str] = None
+    group_name: Optional[str] = None
+    campus: Optional[str] = None
+    church_join_date: Optional[date] = None
 
 
 class MemberUpdate(BaseModel):
@@ -357,6 +453,41 @@ class MemberUpdate(BaseModel):
     talents: Optional[str] = None
     spiritual_gifts: Optional[str] = None
     pastoral_notes: Optional[str] = None
+    # Nuevos campos desde hoja de miembros
+    id_type: Optional[str] = None
+    id_number: Optional[str] = None
+    second_name: Optional[str] = None
+    second_last_name: Optional[str] = None
+    marital_status: Optional[str] = None
+    birth_country: Optional[str] = None
+    landline_phone: Optional[str] = None
+    other_phone: Optional[str] = None
+    mobile_phone: Optional[str] = None
+    address: Optional[str] = None
+    housing_type: Optional[str] = None
+    education_level: Optional[str] = None
+    education_status: Optional[str] = None
+    profession: Optional[str] = None
+    economic_sector: Optional[str] = None
+    blood_type: Optional[str] = None
+    medical_notes: Optional[str] = None
+    optional_info: Optional[str] = None
+    registration_reason: Optional[str] = None
+    unregistration_reason: Optional[str] = None
+    registration_date: Optional[date] = None
+    unregistration_date: Optional[date] = None
+    responsible_adult_name: Optional[str] = None
+    responsible_adult_contact: Optional[str] = None
+    guardian_name: Optional[str] = None
+    guardian_contact: Optional[str] = None
+    sex: Optional[str] = None
+    last_group_attendance: Optional[date] = None
+    last_meeting_attendance: Optional[date] = None
+    membership_type: Optional[str] = None
+    attendance_type: Optional[str] = None
+    group_name: Optional[str] = None
+    campus: Optional[str] = None
+    church_join_date: Optional[date] = None
 
 
 class PositionBase(BaseModel):

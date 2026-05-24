@@ -46,7 +46,7 @@ export default function EventsCalendar() {
     const filteredEvents = events.filter(e => activeTab === 'Todos' || e.category === activeTab);
 
     return (
-        <div className="p-4 lg:p-4 space-y-3 max-w-5xl mx-auto animate-in fade-in duration-700">
+ <div className="p-4 lg:p-4 space-y-3 w-full animate-in fade-in duration-700">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div className="space-y-1">
                     <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-bold uppercase tracking-wide text-[10px]">

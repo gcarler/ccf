@@ -56,7 +56,7 @@ export default function WhiteboardPage() {
                     primaryAction={{ label: "Nueva Pizarra", icon: Plus, onClick: () => router.push("/whiteboard/new") }}
                 />
 
-                <div className="max-w-7xl mx-auto space-y-3">
+ <div className="w-full space-y-3">
                     <div className="relative max-w-md">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                         <input

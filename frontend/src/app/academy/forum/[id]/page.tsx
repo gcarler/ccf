@@ -90,7 +90,7 @@ export default function ForumThreadDetail() {
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4">
                 {viewType === 'table' && (
-                    <div className="max-w-5xl mx-auto overflow-hidden rounded-md border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+ <div className="w-full overflow-hidden rounded-md border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                 <tr>
@@ -115,7 +115,7 @@ export default function ForumThreadDetail() {
                 )}
 
                 {viewType === 'grid' && (
-                    <div className="max-w-5xl mx-auto grid gap-3 md:grid-cols-2">
+ <div className="w-full grid gap-3 md:grid-cols-2">
                         {replies.map((reply) => (
                             <article key={reply.id} className="rounded-md border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                                 <div className="flex items-center justify-between gap-4">
@@ -129,7 +129,7 @@ export default function ForumThreadDetail() {
                 )}
 
                 {viewType === 'list' && (
-                <div className="max-w-4xl mx-auto space-y-4">
+ <div className="w-full space-y-4">
                     <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 shadow-xl space-y-3 relative overflow-hidden">
                         <div className="absolute top-0 right-0 -mr-12 -mt-3 size-10 bg-blue-600/5 rounded-full blur-3xl" />
 

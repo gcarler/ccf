@@ -132,7 +132,7 @@ export default function VolunteerDetailPage() {
         >
             <main className="flex-1 overflow-y-auto p-3 lg:p-4">
                 <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-                    className="max-w-4xl mx-auto space-y-3">
+ className="w-full space-y-3">
 
                     {/* Hero */}
                     <header className="bg-white dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 lg:p-4 shadow-sm flex items-center gap-3">

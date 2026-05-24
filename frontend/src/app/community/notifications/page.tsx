@@ -42,7 +42,7 @@ export default function NotificationsCenter() {
     };
 
     return (
-        <div className="p-4 lg:p-4 animate-in fade-in duration-700 max-w-4xl mx-auto">
+ <div className="p-4 lg:p-4 animate-in fade-in duration-700 w-full">
             <header className="flex items-center justify-between mb-3">
                 <div>
                     <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tighter">Centro de Notificaciones</h1>

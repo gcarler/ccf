@@ -116,7 +116,7 @@ export default function NewAssessmentPage() {
             />
 
             <main className="flex-1 overflow-y-auto p-4 lg:p-4">
-                <div className="max-w-4xl mx-auto space-y-3">
+ <div className="w-full space-y-3">
                     <DSCard>
                         <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Configuracion General</h3>
                         <div className="space-y-3">

@@ -376,7 +376,7 @@ export default function MemberDetailPage() {
                 </div>
             }
         >
-        <div className="max-w-[1400px] mx-auto space-y-3 pb-4 p-4 lg:p-4">
+ <div className="w-full space-y-3 pb-4 p-4 lg:p-4">
 
             {/* ── 1. Profile Hero ── */}
             <motion.section

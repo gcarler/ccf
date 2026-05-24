@@ -174,7 +174,7 @@ export default function StudentProgressPage() {
                     variants={containerVariants}
                     initial="hidden"
                     animate="show"
-                    className="max-w-[1400px] mx-auto space-y-3"
+ className="w-full space-y-3"
                 >
                     {/* Hero Section Premium */}
                     <motion.section variants={itemVariants} className="relative rounded-lg bg-[#001b48] overflow-hidden group border border-white/10 shadow-2xl">

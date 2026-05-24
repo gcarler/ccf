@@ -344,7 +344,7 @@ export default function EventDetailPage() {
     return (
         <EvangelismShell breadcrumbs={[{ label: "Evangelismo", href: "/evangelism/events" }, { label: "Eventos", href: "/evangelism/events" }, { label: event.name }]}>
             <main className="flex-1 overflow-y-auto p-4 lg:p-4">
-                <div className="max-w-6xl mx-auto space-y-3">
+ <div className="w-full space-y-3">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>

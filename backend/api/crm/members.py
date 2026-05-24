@@ -536,6 +536,110 @@ def update_member_ministry(
     return {"id": mm.id, "updated": True}
 
 
+# --- DEPARTMENT TRACKING ENDPOINTS ---
+
+
+@router.get("/members/{member_id}/departments", response_model=List[schemas.DepartmentTracking])
+def list_member_departments(
+    member_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Devuelve el seguimiento departamental de un miembro."""
+    return (
+        db.query(models.MemberDepartmentTracking)
+        .filter(models.MemberDepartmentTracking.member_id == member_id)
+        .order_by(models.MemberDepartmentTracking.department_name)
+        .all()
+    )
+
+
+@router.post("/members/{member_id}/departments", response_model=schemas.DepartmentTracking)
+def create_member_department(
+    member_id: int,
+    payload: schemas.DepartmentTrackingCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Registra o actualiza el seguimiento de un departamento para un miembro."""
+    existing = (
+        db.query(models.MemberDepartmentTracking)
+        .filter(
+            models.MemberDepartmentTracking.member_id == member_id,
+            models.MemberDepartmentTracking.department_name == payload.department_name,
+        )
+        .first()
+    )
+    if existing:
+        existing.fecha = payload.fecha
+        existing.estado = payload.estado
+        existing.detalle = payload.detalle
+        db.commit()
+        db.refresh(existing)
+        return existing
+
+    row = models.MemberDepartmentTracking(
+        member_id=member_id,
+        department_name=payload.department_name,
+        fecha=payload.fecha,
+        estado=payload.estado,
+        detalle=payload.detalle,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+@router.patch("/members/{member_id}/departments/{tracking_id}", response_model=schemas.DepartmentTracking)
+def update_member_department(
+    member_id: int,
+    tracking_id: int,
+    payload: schemas.DepartmentTrackingUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Actualiza el seguimiento de un departamento."""
+    row = (
+        db.query(models.MemberDepartmentTracking)
+        .filter(
+            models.MemberDepartmentTracking.id == tracking_id,
+            models.MemberDepartmentTracking.member_id == member_id,
+        )
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Seguimiento no encontrado")
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+@router.delete("/members/{member_id}/departments/{tracking_id}", status_code=204)
+def delete_member_department(
+    member_id: int,
+    tracking_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
+):
+    """Elimina el seguimiento de un departamento."""
+    row = (
+        db.query(models.MemberDepartmentTracking)
+        .filter(
+            models.MemberDepartmentTracking.id == tracking_id,
+            models.MemberDepartmentTracking.member_id == member_id,
+        )
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Seguimiento no encontrado")
+    db.delete(row)
+    db.commit()
+    return None
+
+
 # --- FAMILIES ENDPOINTS ---
 
 

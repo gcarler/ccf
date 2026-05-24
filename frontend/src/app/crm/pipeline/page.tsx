@@ -395,7 +395,7 @@ export default function ConsolidationPipelinePage() {
                                     </div>
                                 </motion.div>
                             ) : viewType === 'wiki' ? (
-                                <motion.div key="wiki" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex-1 p-4 overflow-y-auto space-y-3 max-w-6xl mx-auto">
+ <motion.div key="wiki"initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex-1 p-4 overflow-y-auto space-y-3 w-full">
                                     {/* Wiki Header */}
                                     <div className="flex items-center justify-between">
                                         <div>

@@ -20,6 +20,7 @@ import {
   UserPlus,
   ShieldCheck,
   BarChart3,
+  Trash2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -293,6 +294,25 @@ function FaroGroupsContent() {
     }
   };
 
+  const handleDeleteHouse = async (house: GloryHouse) => {
+    if (!confirm(`¿Está seguro que desea eliminar "${house.name}"?\n\nEsta acción no se puede deshacer.`)) return;
+    try {
+      await apiFetch(`/evangelism/glory-houses/${house.id}`, {
+        method: 'DELETE',
+        token,
+      });
+      setHouses(houses.filter(h => h.id !== house.id));
+      if (selectedHouse?.id === house.id) {
+        setSelectedHouse(null);
+        setIsCreating(false);
+      }
+      toast.success(`Grupo "${house.name}" eliminado`);
+    } catch (error: any) {
+      const msg = error?.message || 'Error al eliminar grupo';
+      toast.error(msg);
+    }
+  };
+
   const handleQuickAssignMember = async (memberId: number) => {
     const houseId = quickAssignmentTargets[memberId];
     if (!houseId) {
@@ -452,52 +472,63 @@ function FaroGroupsContent() {
               filteredHouses.map(h => {
                 const isActive = selectedHouse?.id === h.id;
                 return (
-                  <button
+                  <div
                     key={h.id}
-                    onClick={async () => {
-                      setIsCreating(false);
-                      try {
-                        const detail = await apiFetch<GloryHouse>(
-                          `/evangelism/glory-houses/${h.id}`,
-                          { token }
-                        );
-                        setSelectedHouse(detail);
-                        setFormData(detail);
-                        setSelectedMemberIds(
-                          new Set(
-                            detail.base_attendee_ids ||
-                              detail.base_attendees?.map(m => m.member_id) ||
-                              []
-                          )
-                        );
-                      } catch {
-                        setSelectedHouse(h);
-                        setFormData(h);
-                        setSelectedMemberIds(new Set());
-                      }
-                    }}
-                    className={`w-full text-left px-3 py-2.5 rounded-md border transition-all duration-200 ${
+                    className={`flex items-start gap-1 px-2 py-1.5 rounded-md border transition-all duration-200 ${
                       isActive
                         ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 shadow-sm'
                         : 'bg-transparent border-transparent hover:bg-slate-100 dark:hover:bg-white/5'
                     }`}
                   >
-                    <p
-                      className={`text-xs font-bold truncate leading-tight ${isActive ? 'text-blue-700 dark:text-blue-400' : 'text-slate-800 dark:text-white'}`}
+                    <button
+                      onClick={async () => {
+                        setIsCreating(false);
+                        try {
+                          const detail = await apiFetch<GloryHouse>(
+                            `/evangelism/glory-houses/${h.id}`,
+                            { token }
+                          );
+                          setSelectedHouse(detail);
+                          setFormData(detail);
+                          setSelectedMemberIds(
+                            new Set(
+                              detail.base_attendee_ids ||
+                                detail.base_attendees?.map(m => m.member_id) ||
+                                []
+                            )
+                          );
+                        } catch {
+                          setSelectedHouse(h);
+                          setFormData(h);
+                          setSelectedMemberIds(new Set());
+                        }
+                      }}
+                      className="flex-1 text-left min-w-0"
                     >
-                      {h.name}
-                    </p>
-                    <div className="mt-1 flex items-center justify-between">
-                      <p className="text-[10px] font-medium text-slate-400 truncate">
-                        {h.zone || 'Sin zona'}
+                      <p
+                        className={`text-xs font-bold truncate leading-tight ${isActive ? 'text-blue-700 dark:text-blue-400' : 'text-slate-800 dark:text-white'}`}
+                      >
+                        {h.name}
                       </p>
-                      {h.leader_id && (
-                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-blue-100/50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 shrink-0">
-                          {getMemberName(h.leader_id).split(' ')[0]}
-                        </span>
-                      )}
-                    </div>
-                  </button>
+                      <div className="mt-1 flex items-center justify-between">
+                        <p className="text-[10px] font-medium text-slate-400 truncate">
+                          {h.zone || 'Sin zona'}
+                        </p>
+                        {h.leader_id && (
+                          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-blue-100/50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 shrink-0">
+                            {getMemberName(h.leader_id).split(' ')[0]}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteHouse(h); }}
+                      className="shrink-0 p-1 rounded text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                      title="Eliminar grupo"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 );
               })
             )}
@@ -538,15 +569,26 @@ function FaroGroupsContent() {
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
                 {isCreating ? 'Nuevo Faro' : MODE_CONFIG[mode].title}
               </h2>
-              <button
-                onClick={() => {
-                  setIsCreating(false);
-                  setSelectedHouse(null);
-                }}
-                className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
-              >
-                <X size={15} />
-              </button>
+              <div className="flex items-center gap-1">
+                {!isCreating && selectedHouse && (
+                  <button
+                    onClick={() => handleDeleteHouse(selectedHouse)}
+                    className="size-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
+                    title="Eliminar grupo"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setIsCreating(false);
+                    setSelectedHouse(null);
+                  }}
+                  className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+                >
+                  <X size={15} />
+                </button>
+              </div>
             </div>
 
             {selectedHouse || isCreating ? (

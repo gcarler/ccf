@@ -99,7 +99,7 @@ export default function AdminUsersPage() {
             <main className="flex-1 overflow-y-auto scrollbar-thin p-3 lg:p-4 relative z-10">
                 <motion.div 
                     variants={containerVariants} initial="hidden" animate="show"
-                    className="max-w-[1600px] mx-auto space-y-3"
+ className="w-full space-y-3"
                 >
                     {/* Header */}
                     <motion.div variants={itemVariants} className="space-y-2">

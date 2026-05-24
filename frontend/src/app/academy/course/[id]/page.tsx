@@ -216,7 +216,7 @@ export default function CourseViewPage() {
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f003_0%,_transparent_50%)] pointer-events-none" />
 
                 {viewType === 'list' && (
-                    <section className="max-w-5xl mx-auto p-4 lg:p-4 space-y-4">
+ <section className="w-full p-4 lg:p-4 space-y-4">
                         {course.lessons.map((lesson) => (
                             <button key={lesson.id} onClick={() => setActiveLesson(lesson)} className="w-full rounded-md border border-slate-200 dark:border-white/10 p-4 text-left bg-white dark:bg-white/5 hover:border-blue-300 transition-all">
                                 <div className="flex items-center justify-between gap-4">
@@ -232,7 +232,7 @@ export default function CourseViewPage() {
                 )}
 
                 {viewType === 'table' && (
-                    <section className="max-w-6xl mx-auto p-4 lg:p-4">
+ <section className="w-full p-4 lg:p-4">
                         <div className="overflow-hidden rounded-md border border-slate-200 dark:border-white/10">
                             <table className="w-full text-left">
                                 <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
@@ -261,7 +261,7 @@ export default function CourseViewPage() {
                 )}
 
                 {(viewType === 'board' || viewType === 'kanban') && (
-                    <section className="max-w-6xl mx-auto p-4 lg:p-4 grid gap-4 md:grid-cols-3">
+ <section className="w-full p-4 lg:p-4 grid gap-4 md:grid-cols-3">
                         {['Pendiente', 'En curso', 'Completada'].map((status) => {
                             const lessons = course.lessons.filter((lesson) => (
                                 status === 'Completada' ? lesson.is_completed : status === 'En curso' ? lesson.id === activeLesson?.id && !lesson.is_completed : !lesson.is_completed && lesson.id !== activeLesson?.id
@@ -331,7 +331,7 @@ export default function CourseViewPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="max-w-5xl mx-auto p-4 lg:p-4 lg:pt-8 space-y-3 pb-4"
+ className="w-full p-4 lg:p-4 lg:pt-8 space-y-3 pb-4"
                     >
                         <div className="relative group/player rounded-lg overflow-hidden shadow-[var(--shadow-floating)] border border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-black aspect-video flex items-center justify-center">
                             {(!activeLesson?.content_type || activeLesson.content_type === 'video') && (

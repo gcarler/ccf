@@ -203,7 +203,7 @@ export default function WorkspaceExperienceManager() {
             <main className="flex-1 overflow-y-auto scrollbar-thin p-3 lg:p-4 relative pb-4">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
 
-                <div className="max-w-5xl mx-auto space-y-3 relative z-10">
+ <div className="w-full space-y-3 relative z-10">
                     
                     {/* Header */}
                     <header className="space-y-4">

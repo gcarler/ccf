@@ -40,7 +40,7 @@ export default function GroupsPage() {
     ];
 
     return (
-        <div className="max-w-6xl mx-auto space-y-4 pb-4 animate-in fade-in duration-700">
+ <div className="w-full space-y-4 pb-4 animate-in fade-in duration-700">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-[10px]">

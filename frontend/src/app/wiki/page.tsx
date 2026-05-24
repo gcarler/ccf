@@ -127,7 +127,7 @@ export default function WikiHomePage() {
 
             {/* CONTENT AREA */}
             <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
-                <div className="max-w-7xl mx-auto space-y-3">
+ <div className="w-full space-y-3">
                     {/* Featured Section */}
                     <section>
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">

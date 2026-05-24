@@ -100,7 +100,7 @@ export default function EditCoursePage() {
                         <Loader2 className="animate-spin text-blue-600" size={32} />
                     </div>
                 ) : (
-                    <motion.div variants={containerVariants} initial="hidden" animate="show" className="max-w-4xl mx-auto space-y-3">
+ <motion.div variants={containerVariants} initial="hidden"animate="show"className="w-full space-y-3">
 
                         <motion.header variants={itemVariants} className="space-y-3">
                             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/10 rounded-full text-[10px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">

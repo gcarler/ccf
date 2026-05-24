@@ -162,7 +162,7 @@ export default function StudentProfilePage() {
                 )}
 
                 {viewType === 'grid' && (
-                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-3 relative z-10">
+ <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-3 relative z-10">
                     
                     {/* Left Column: Identity Card */}
                     <aside className="lg:col-span-4 space-y-3">

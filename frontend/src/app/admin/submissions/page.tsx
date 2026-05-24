@@ -72,7 +72,7 @@ export default function SubmissionsPage() {
     if (loading) return <div className="flex justify-center py-1.5"><Loader2 className="animate-spin text-primary w-8 h-8" /></div>;
 
     return (
-        <div className="space-y-3 animate-in fade-in duration-500 max-w-5xl mx-auto">
+ <div className="space-y-3 animate-in fade-in duration-500 w-full">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
                 <div>
                     <h1 className="flex items-center gap-3 text-xl font-bold text-slate-900 dark:text-white tracking-tight">

@@ -292,7 +292,7 @@ export default function CmsTestimonialsPage() {
   })), [filtered]);
 
   const renderTestimonialList = () => (
-    <div className="space-y-3 max-w-5xl mx-auto">
+ <div className="space-y-3 w-full">
       {filtered.map(t => {
         const cfg = EMOTION_CONFIG[t.emotion] ?? defaultEmotion;
         return (

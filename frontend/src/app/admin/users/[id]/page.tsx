@@ -176,7 +176,7 @@ export default function UserDetailPage() {
             />
 
             <main className="flex-1 overflow-y-auto p-3 lg:p-4">
-                <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-3">
+ <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-3">
                     {/* Left Column - Main Info */}
                     <div className="lg:col-span-8 space-y-3">
                         {/* Profile Header */}

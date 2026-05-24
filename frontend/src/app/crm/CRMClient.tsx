@@ -128,7 +128,7 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
             <main className="flex-1 overflow-y-auto scrollbar-thin p-3 relative">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
                 
-                <div className="max-w-[1400px] mx-auto space-y-3 relative z-10">
+ <div className="w-full space-y-3 relative z-10">
                     {/* 📊 Pastoral Metrics */}
                     <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         {dashboard?.cards.map((card: any, idx: number) => (

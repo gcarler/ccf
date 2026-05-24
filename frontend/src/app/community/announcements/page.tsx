@@ -67,7 +67,7 @@ export default function AnnouncementsPage() {
     }, [token]);
 
     return (
-        <div className="max-w-4xl mx-auto space-y-3 pb-4 animate-in fade-in duration-700">
+ <div className="w-full space-y-3 pb-4 animate-in fade-in duration-700">
             <header className="space-y-2">
                 <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-bold uppercase tracking-wide text-[10px]">
                     <div className="size-2 rounded-full bg-current shadow-[0_0_10px_currentColor]"></div>

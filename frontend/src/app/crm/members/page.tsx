@@ -161,7 +161,7 @@ export default function MembersPage() {
                     </div>
                 </div>
 
-                <div className="p-4 lg:p-4 space-y-4 max-w-7xl mx-auto">
+ <div className="p-4 lg:p-4 space-y-4 w-full">
                     {/* Metrics */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {[

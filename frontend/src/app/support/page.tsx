@@ -255,7 +255,7 @@ export default function SupportPage() {
                         <UniversalWikiView moduleName="Soporte" storageKey="wiki_support" />
                     </div>
                 ) : (
-                    <div className="p-3 max-w-4xl mx-auto space-y-3">
+ <div className="p-3 w-full space-y-3">
                         {/* User View */}
                         <section className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg p-4 text-white shadow-xl relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-48 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />

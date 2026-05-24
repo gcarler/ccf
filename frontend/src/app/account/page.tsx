@@ -133,7 +133,7 @@ export default function AccountSettingsPage() {
                 <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 bg-white dark:bg-[#1e1f21] relative">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f003_0%,_transparent_50%)] pointer-events-none" />
                     
-                    <div className="max-w-4xl mx-auto relative z-10">
+ <div className="w-full relative z-10">
                         <AnimatePresence mode="wait">
                             {activeTab === 'profile' && (
                                 <motion.div 

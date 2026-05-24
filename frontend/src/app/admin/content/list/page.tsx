@@ -145,7 +145,7 @@ export default function AdminContentList() {
             </div>
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative pb-4">
-                <div className="max-w-6xl mx-auto space-y-3 relative z-10">
+ <div className="w-full space-y-3 relative z-10">
                     
                     {/* Search Bar Cinematic */}
                     <div className="relative group">

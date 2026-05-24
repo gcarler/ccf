@@ -165,7 +165,7 @@ export default function MessagingCampaignCenter() {
             <div className="flex flex-col h-full bg-slate-50/50 dark:bg-[#1e1f21] overflow-hidden font-display rounded-lg">
                 <div className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4">
                 {viewType === 'list' && (
-                    <div className="max-w-5xl mx-auto space-y-3">
+ <div className="w-full space-y-3">
                         {history.map((item) => (
                             <div 
                                 key={item.id} 
@@ -184,7 +184,7 @@ export default function MessagingCampaignCenter() {
                 )}
 
                 {viewType === 'table' && (
-                    <div className="max-w-6xl mx-auto rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+ <div className="w-full rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 dark:bg-white/5">
                                 <tr>
@@ -215,7 +215,7 @@ export default function MessagingCampaignCenter() {
                 )}
 
                 {(viewType === 'board' || viewType === 'kanban') && (
-                    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4">
+ <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-4">
                         {groupedByChannel.map(col => (
                             <div key={col.key} className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] p-3">
                                 <div className="mb-3 flex items-center justify-between">
@@ -240,7 +240,7 @@ export default function MessagingCampaignCenter() {
                 )}
 
                 {viewType === 'calendar' && (
-                    <div className="max-w-6xl mx-auto space-y-4">
+ <div className="w-full space-y-4">
                         {groupedByDate.map(([label, items]) => (
                             <div key={label} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
                                 <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{label}</p>
@@ -262,7 +262,7 @@ export default function MessagingCampaignCenter() {
                 )}
 
                 {viewType === 'gantt' && (
-                    <div className="max-w-5xl mx-auto rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+ <div className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
                         <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Avance de entrega</p>
                         {history.map((item) => (
                             <div 
@@ -283,7 +283,7 @@ export default function MessagingCampaignCenter() {
                 )}
 
                 {viewType === 'wiki' && (
-                    <div className="max-w-5xl mx-auto rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
+ <div className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 space-y-3">
                         <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Wiki de mensajería</p>
                         <textarea
                             value={wikiNotes}
@@ -295,7 +295,7 @@ export default function MessagingCampaignCenter() {
                 )}
 
                 {viewType === 'grid' && (
-                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-3">
+ <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-3">
                     
                     {/* Left Column: Composer */}
                     <div className="lg:col-span-7 space-y-3">

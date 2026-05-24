@@ -187,7 +187,7 @@ export default function FinanceAdminPage() {
             <main className="flex-1 overflow-y-auto scrollbar-thin p-3 lg:p-4 relative">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f008_0%,_transparent_50%)] pointer-events-none" />
 
-                <div className="max-w-[1400px] mx-auto space-y-3 relative z-10">
+ <div className="w-full space-y-3 relative z-10">
                     <AnimatePresence mode="wait">
                         {loading ? (
                             <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">

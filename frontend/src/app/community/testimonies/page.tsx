@@ -36,7 +36,7 @@ export default function TestimoniesWall() {
     );
 
     return (
-        <div className="p-4 lg:p-4 space-y-3 max-w-5xl mx-auto animate-in fade-in duration-700">
+ <div className="p-4 lg:p-4 space-y-3 w-full animate-in fade-in duration-700">
             {/* Header Section */}
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">

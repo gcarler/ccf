@@ -500,7 +500,7 @@ export default function CmsMenusManagement() {
             </AnimatePresence>
 
             {/* LIST AREA */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-3 max-w-4xl mx-auto w-full">
+ <div className="flex-1 overflow-y-auto custom-scrollbar p-3 w-full">
                 {loading ? (
                     <div className="space-y-4">
                         {[1, 2, 3].map(i => (

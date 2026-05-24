@@ -168,7 +168,7 @@ export default function AssessmentPage() {
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4">
                 {viewType === 'list' && (
-                    <div className="max-w-5xl mx-auto space-y-4">
+ <div className="w-full space-y-4">
                         {assessment.questions.map((question: any, index: number) => (
                             <button
                                 key={question.id}
@@ -200,7 +200,7 @@ export default function AssessmentPage() {
                 )}
 
                 {viewType === 'table' && (
-                    <div className="max-w-5xl mx-auto overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+ <div className="w-full overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:bg-white/5">
                                 <tr>

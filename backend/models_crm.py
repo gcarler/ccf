@@ -180,6 +180,25 @@ class Ministry(Base):
     )
 
 
+class MemberDepartmentTracking(Base):
+    __tablename__ = "member_department_tracking"
+    id = Column(Integer, primary_key=True, index=True)
+    member_id = Column(
+        Integer,
+        ForeignKey("members.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    department_name = Column(String(100), nullable=False)
+    fecha = Column(Date, nullable=True)
+    estado = Column(String(50), nullable=True)
+    detalle = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+    member = relationship("Member", back_populates="department_tracking")
+
+
 class Member(Base):
     __tablename__ = "members"
     id = Column(Integer, primary_key=True, index=True)
@@ -204,14 +223,48 @@ class Member(Base):
     is_baptized = Column(Boolean, default=False, index=True)
     spiritual_status = Column(
         String(50), default="Nuevo", index=True
-    )  # Nuevo, Creyente, DiscÃ­pulo, Servidor
+    )  # Nuevo, Creyente, Discípulo, Servidor
 
-    # --- New Management Fields ---
-    talents = Column(Text, nullable=True)  # Habilidades (MÃºsica, Tech, Cocina, etc)
-    spiritual_gifts = Column(
-        Text, nullable=True
-    )  # Dones (Liderazgo, Misericordia, etc)
-    pastoral_notes = Column(Text, nullable=True)  # Notas internas para el pastor
+    # --- Campos desde hoja de cálculo de miembros ---
+    id_type = Column(String(50), nullable=True)
+    id_number = Column(String(50), nullable=True)
+    second_name = Column(String(100), nullable=True)
+    second_last_name = Column(String(100), nullable=True)
+    marital_status = Column(String(50), nullable=True)
+    birth_country = Column(String(100), nullable=True)
+    landline_phone = Column(String(20), nullable=True)
+    other_phone = Column(String(20), nullable=True)
+    mobile_phone = Column(String(20), nullable=True)
+    address = Column(Text, nullable=True)
+    housing_type = Column(String(50), nullable=True)
+    education_level = Column(String(100), nullable=True)
+    education_status = Column(String(50), nullable=True)
+    profession = Column(String(100), nullable=True)
+    economic_sector = Column(String(100), nullable=True)
+    blood_type = Column(String(10), nullable=True)
+    medical_notes = Column(Text, nullable=True)
+    optional_info = Column(Text, nullable=True)
+    registration_reason = Column(String(100), nullable=True)
+    unregistration_reason = Column(String(100), nullable=True)
+    registration_date = Column(Date, nullable=True)
+    unregistration_date = Column(Date, nullable=True)
+    responsible_adult_name = Column(String(200), nullable=True)
+    responsible_adult_contact = Column(String(100), nullable=True)
+    guardian_name = Column(String(200), nullable=True)
+    guardian_contact = Column(String(100), nullable=True)
+    sex = Column(String(1), nullable=True)
+    last_group_attendance = Column(Date, nullable=True)
+    last_meeting_attendance = Column(Date, nullable=True)
+    membership_type = Column(String(50), nullable=True)
+    attendance_type = Column(String(50), nullable=True)
+    group_name = Column(String(100), nullable=True)
+    campus = Column(String(100), nullable=True)
+    church_join_date = Column(Date, nullable=True)
+
+    # --- Management Fields ---
+    talents = Column(Text, nullable=True)
+    spiritual_gifts = Column(Text, nullable=True)
+    pastoral_notes = Column(Text, nullable=True)
 
     created_at = Column(DateTime, default=_utcnow, index=True)
 
@@ -267,6 +320,9 @@ class Member(Base):
         "ConsolidationInteraction",
         foreign_keys="ConsolidationInteraction.performed_by_member_id",
         back_populates="performed_by_member",
+    )
+    department_tracking = relationship(
+        "MemberDepartmentTracking", back_populates="member", cascade="all, delete-orphan"
     )
 
 

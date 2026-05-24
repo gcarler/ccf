@@ -168,7 +168,7 @@ export default function SupportTicketsPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-3">
-                <div className="max-w-4xl mx-auto space-y-3">
+ <div className="w-full space-y-3">
                     {loading && (
                         <div className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white p-3 text-sm font-bold text-slate-400 dark:border-white/10 dark:bg-[#1a1d27]">
                             <Loader2 size={16} className="animate-spin" /> Cargando tickets...

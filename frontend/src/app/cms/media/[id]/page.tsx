@@ -135,7 +135,7 @@ export default function CmsMediaDetailPage() {
             />
 
             <main className="flex-1 overflow-y-auto p-4 lg:p-4">
-                <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-3">
+ <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div className="space-y-3">
                         <div className="aspect-video rounded-lg bg-slate-900 overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl relative group">
                             {item.mime_type?.startsWith('image/') ? (

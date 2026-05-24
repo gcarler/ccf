@@ -429,7 +429,7 @@ export default function AccessManagementPage() {
             </div>
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-3 lg:p-4">
-                <div className="max-w-[1400px] mx-auto">
+ <div className="w-full">
                     {loading ? (
                         <div className="space-y-3">
                             {[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-8 w-full rounded-lg" />)}

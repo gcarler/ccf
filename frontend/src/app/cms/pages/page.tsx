@@ -195,7 +195,7 @@ export default function CmsPagesManagement() {
   const openPage = (page: CmsPage) => router.push(`/cms/pages/${page.slug}`);
 
   const renderPageList = () => (
-    <div className="space-y-3 max-w-5xl mx-auto">
+ <div className="space-y-3 w-full">
       {visiblePages.map((page, index) => {
         const st = STATUS_CONFIG[page.status] ?? STATUS_CONFIG["draft"];
         return (

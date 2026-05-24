@@ -368,7 +368,7 @@ export default function EvangelismClient() {
 
                         {/* ── LIST VIEW ─────────────────────────────── */}
                         {viewType === 'list' && (
-                            <div className="space-y-4 max-w-4xl mx-auto">
+ <div className="space-y-4 w-full">
                                 {filteredData.map((strategy, idx) => (
                                     <motion.div
                                         key={strategy.id}

@@ -91,7 +91,7 @@ export default function RolesSettingsPage() {
     return (
         <CrmShell breadcrumbs={[{ label: 'Ajustes', icon: Settings, href: '/settings' }, { label: 'Configuración de Roles' }]}>
             <main className="flex-1 overflow-y-auto p-4 lg:p-4">
-                <div className="max-w-4xl mx-auto space-y-3">
+ <div className="w-full space-y-3">
                     <header className="flex items-center justify-between">
                         <div>
                             <h1 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">Ministerios y Tipos de Asistencia</h1>
