@@ -266,13 +266,13 @@ export default function ProjectDetailPage() {
 
     if (loading) return <div className="p-4 text-center animate-pulse font-bold text-slate-400">Recuperando ecosistema de trabajo...</div>;
 
-    const doneCount = tasks.filter(t => t.status === 'done').length;
+    const doneCount = tasks.filter(t => t.status === 'completed').length;
     const progressPercent = tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0;
     const taskCalendarEvents = tasks.map((task) => ({
         id: task.id,
         title: task.title,
         date: (task.due_date || task.start_date || new Date().toISOString()).slice(0, 10),
-        color: task.status === 'done' ? 'emerald' as const : task.priority === 'urgent' ? 'rose' as const : task.status === 'review' ? 'amber' as const : 'blue' as const,
+        color: task.status === 'completed' ? 'emerald' as const : task.priority === 'urgent' ? 'rose' as const : task.status === 'review' ? 'amber' as const : 'blue' as const,
         location: task.description || undefined,
     }));
     const taskGanttItems = tasks.map((task) => ({
@@ -281,8 +281,8 @@ export default function ProjectDetailPage() {
         subtitle: phases.find(p => p.slug === task.status)?.name || task.status,
         start_date: (task.start_date || task.created_at || new Date().toISOString()).slice(0, 10),
         end_date: (task.due_date || task.start_date || task.created_at || new Date().toISOString()).slice(0, 10),
-        color: task.status === 'done' ? 'emerald' as const : task.priority === 'urgent' ? 'rose' as const : 'blue' as const,
-        progress: task.status === 'done' ? 100 : task.status === 'review' ? 75 : task.status === 'in_progress' ? 45 : 10,
+        color: task.status === 'completed' ? 'emerald' as const : task.priority === 'urgent' ? 'rose' as const : 'blue' as const,
+        progress: task.status === 'completed' ? 100 : task.status === 'review' ? 75 : task.status === 'in_progress' ? 45 : 10,
     }));
 
     return (
@@ -358,7 +358,7 @@ export default function ProjectDetailPage() {
                                     <DSMetric label="Actividades" value={String(tasks.length)} trend="Total" tone="blue" />
                                     <DSMetric label="Logradas" value={String(doneCount)} trend={`${progressPercent}%`} tone="emerald" />
                                     <DSMetric label={phases.find(p => p.slug === 'review')?.name || 'En Seguimiento'} value={String(tasks.filter(t => t.status === 'review').length)} trend="Consolidación" tone="amber" />
-                                    <DSMetric label="Por Hacer" value={String(tasks.filter(t => t.status !== 'done').length)} trend="Pendientes" tone="violet" />
+                                    <DSMetric label="Por Hacer" value={String(tasks.filter(t => t.status !== 'completed').length)} trend="Pendientes" tone="violet" />
                                 </section>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -500,7 +500,7 @@ export default function ProjectDetailPage() {
                                                         }}
                                                         className="size-8 rounded-full border-2 flex items-center justify-center hover:scale-110 transition-all"
                                                     >
-                                                        {task.status === 'done' ? (
+                                                        {task.status === 'completed' ? (
                                                             <CheckCircle2 size={18} className="text-emerald-500" />
                                                         ) : task.status === 'review' ? (
                                                             <Clock size={18} className="text-amber-500" />

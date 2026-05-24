@@ -404,7 +404,7 @@ def portfolio_summary(
 ):
     """Resumen de portafolio agrupado por estatus de proyecto."""
     done_case = func.coalesce(func.sum(
-        cast(models.ProjectTask.status == "done", Integer)
+        cast(models.ProjectTask.status == "completed", Integer)
     ), 0).label("completed_tasks")
 
     rows = (

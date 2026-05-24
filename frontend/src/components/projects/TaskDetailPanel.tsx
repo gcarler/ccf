@@ -384,7 +384,7 @@ export default function TaskDetailPanel({
         };
         const activity = findActivity(activities, id);
         if (!activity) return;
-        const newStatus = activity.completed ? 'todo' : 'done';
+        const newStatus = activity.completed ? 'todo' : 'completed';
         setActivities(prev => toggleActivity(prev, id));
         try {
             await apiFetch(`/projects/${task.project_id}/tasks/${task.id}/subtasks/${id}`, {
@@ -505,11 +505,11 @@ export default function TaskDetailPanel({
             setActivities(subs.map((s: any) => ({
                 id: s.id,
                 title: s.title,
-                completed: s.status === 'done',
+                completed: s.status === 'completed',
                 children: (s.subtasks || []).map((ss: any) => ({
                     id: ss.id,
                     title: ss.title,
-                    completed: ss.status === 'done',
+                    completed: ss.status === 'completed',
                 })),
             })));
             setNewActivityTitle('');
@@ -627,7 +627,7 @@ export default function TaskDetailPanel({
     };
 
     // ── Status / Priority / Assignee handlers ──────────────────────
-    const STATUS_CYCLE = ['todo', 'in_progress', 'review', 'done'];
+    const STATUS_CYCLE = ['todo', 'in_progress', 'review', 'completed'];
     const PRIORITY_CYCLE = ['low', 'normal', 'high', 'urgent'];
 
     const handleStatusCycle = async () => {

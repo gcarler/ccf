@@ -43,7 +43,7 @@ const STATUS_OPTIONS = [
     { value: 'pending',     label: 'Pendiente',   dot: 'bg-slate-400',   bg: 'bg-slate-100 dark:bg-white/5',           text: 'text-slate-600 dark:text-slate-300',    border: 'border-slate-200 dark:border-white/10' },
     { value: 'in_progress', label: 'En Progreso', dot: 'bg-blue-500',  bg: 'bg-blue-100 dark:bg-blue-500/20',    text: 'text-blue-700 dark:text-blue-300',  border: 'border-blue-200 dark:border-blue-500/30' },
     { value: 'blocked',     label: 'Bloqueado',   dot: 'bg-rose-500',    bg: 'bg-rose-100 dark:bg-rose-500/20',        text: 'text-rose-700 dark:text-rose-300',      border: 'border-rose-200 dark:border-rose-500/30' },
-    { value: 'done',        label: 'Completado',  dot: 'bg-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-500/20',  text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-500/30' },
+    { value: 'completed',        label: 'Completado',  dot: 'bg-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-500/20',  text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-500/30' },
 ] as const;
 function getStatus(val: string) {
     return STATUS_OPTIONS.find(s => s.value === val) ?? STATUS_OPTIONS[0];
@@ -576,16 +576,16 @@ function TaskRow({
             {/* Checkbox */}
             <div className="w-8 flex-shrink-0 flex items-center justify-center pl-2">
                 <button
-                    onClick={() => onChange({ _status: status === 'done' ? 'todo' : 'done' })}
+                    onClick={() => onChange({ _status: status === 'completed' ? 'todo' : 'completed' })}
                     className={clsx(
                         'size-4 rounded-full border-2 flex items-center justify-center text-[9px] transition-all active:scale-95',
-                        status === 'done'
+                        status === 'completed'
                             ? 'bg-emerald-500 border-emerald-500 text-white'
                             : 'border-slate-300 dark:border-white/20 text-transparent hover:border-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10'
                     )}
-                    aria-label={status === 'done' ? 'Desmarcar tarea' : 'Completar tarea'}
+                    aria-label={status === 'completed' ? 'Desmarcar tarea' : 'Completar tarea'}
                 >
-                    {status === 'done' && <Check size={9} />}
+                    {status === 'completed' && <Check size={9} />}
                 </button>
             </div>
 
@@ -596,7 +596,7 @@ function TaskRow({
             >
                 <span className={clsx(
                     'text-[13px] font-medium truncate transition-colors',
-                    status === 'done'
+                    status === 'completed'
                         ? 'line-through text-slate-400 dark:text-slate-600'
                         : 'text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400'
                 )}>
@@ -815,7 +815,7 @@ function StatusGroup({
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-const STATUS_ORDER = ['in_progress', 'pending', 'todo', 'done', 'blocked'];
+const STATUS_ORDER = ['in_progress', 'pending', 'todo', 'completed', 'blocked'];
 
 export default function ProjectListView({
     tasks: propTasks,

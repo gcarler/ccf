@@ -146,7 +146,7 @@ function NodeCard({ title, icon: Icon, color, tasks }: any) {
             <div className="space-y-2">
                 {tasks.slice(0, 4).map((t: any) => (
                     <div key={t.id} className="flex items-center gap-3 p-2 rounded-md bg-slate-50 dark:bg-black/20 border border-transparent hover:border-slate-200 transition-all cursor-pointer">
-                        <div className={clsx("size-2.5 rounded-full shadow-sm", t.status === 'done' ? "bg-emerald-500" : "bg-blue-500")} />
+                        <div className={clsx("size-2.5 rounded-full shadow-sm", t.status === 'completed' ? "bg-emerald-500" : "bg-blue-500")} />
                         <span className="text-[13px] font-bold text-slate-700 dark:text-slate-300 truncate flex-1 leading-none">{t.title.split('] ')[1] || t.title}</span>
                         <ArrowUpRight size={14} className="text-slate-300" />
                     </div>

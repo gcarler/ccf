@@ -30,7 +30,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
     const [saving, setSaving] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const completedCount = tasks.filter(t => t.status === 'done').length;
+    const completedCount = tasks.filter(t => t.status === 'completed').length;
     const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
     const handleStartAdd = () => {

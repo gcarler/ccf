@@ -193,7 +193,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
         const start = project.created_at || new Date().toISOString();
         const end = project.updated_at || start;
         const tasks = Array.isArray(project.tasks) ? project.tasks : [];
-        const done = tasks.filter((task) => ['done', 'completed'].includes((task.status || '').toLowerCase())).length;
+        const done = tasks.filter((task) => ['completed', 'completed'].includes((task.status || '').toLowerCase())).length;
         return {
             id: project.id,
             title: project.title,
@@ -330,7 +330,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
 function ProjectCard({ project, index }: { project: ProjectRecord; index: number }) {
     const router = useRouter();
     const tasks = Array.isArray(project.tasks) ? project.tasks : [];
-    const completed = tasks.filter(t => ['done', 'completed'].includes((t.status || '').toLowerCase())).length;
+    const completed = tasks.filter(t => ['completed', 'completed'].includes((t.status || '').toLowerCase())).length;
     const inProgress = tasks.filter(t => ['in_progress'].includes((t.status || '').toLowerCase())).length;
     const progress = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
     const color = project.color || '#2563eb';

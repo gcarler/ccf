@@ -55,7 +55,7 @@ export default function ProjectsResponsesPage() {
                 await apiFetch(`/projects/tasks/${item.task_id}`, {
                     method: 'PATCH',
                     token,
-                    body: { status: 'done' },
+                    body: { status: 'completed' },
                 });
             }
             await apiFetch(`/projects/inbox/${item.id}/read`, {

@@ -191,7 +191,7 @@ class Project(ProjectBase):
         instance = super().model_validate(obj, **kwargs)
         # Calculate progress from tasks if not set on model
         if hasattr(obj, "tasks") and obj.tasks:
-            done = sum(1 for t in obj.tasks if getattr(t, "status", "") == "done")
+            done = sum(1 for t in obj.tasks if getattr(t, "status", "") == "completed")
             instance.progress_percent = round((done / len(obj.tasks)) * 100)
         return instance
 

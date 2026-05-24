@@ -31,9 +31,9 @@ export default function ProjectTableView({ tasks }: { tasks: ProjectTaskRecord[]
                                 <div className="flex items-center gap-3">
                                     <div className={clsx(
                                         "size-5 rounded-full flex items-center justify-center border-2",
-                                        task.status === 'done' ? "bg-green-500 border-green-500 text-white" : "border-slate-200 dark:border-white/10"
+                                        task.status === 'completed' ? "bg-green-500 border-green-500 text-white" : "border-slate-200 dark:border-white/10"
                                     )}>
-                                        {task.status === 'done' && <CheckCircle2 size={12} />}
+                                        {task.status === 'completed' && <CheckCircle2 size={12} />}
                                     </div>
                                     <span className="text-[13px] font-bold text-slate-700 dark:text-slate-200">{task.title}</span>
                                 </div>
@@ -41,7 +41,7 @@ export default function ProjectTableView({ tasks }: { tasks: ProjectTaskRecord[]
                             <td className="px-3 py-1.5">
                                 <span className={clsx(
                                     "px-2.5 py-1 rounded-lg text-[9px] font-semibold uppercase tracking-wide border",
-                                    task.status === 'done' ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-blue-50 border-blue-100 text-blue-600"
+                                    task.status === 'completed' ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-blue-50 border-blue-100 text-blue-600"
                                 )}>
                                     {task.status || 'TODO'}
                                 </span>

@@ -13,14 +13,14 @@ import { CheckCircle2, Layout } from 'lucide-react';
 import clsx from 'clsx';
 import Skeleton from '@/components/ui/Skeleton';
 
-const STATUS_FLOW = ['todo', 'in_progress', 'review', 'done'];
+const STATUS_FLOW = ['todo', 'in_progress', 'review', 'completed'];
 const PROJECT_TASK_VIEWS: ViewType[] = ['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 export default function ProjectsTasksPage() {
     const { token } = useAuth();
     const [tasks, setTasks] = useState<ProjectTaskRecord[]>([]);
     const [loading, setLoading] = useState(true);
-    const [status, setStatus] = useState<'all' | 'todo' | 'in_progress' | 'review' | 'done'>('all');
+    const [status, setStatus] = useState<'all' | 'todo' | 'in_progress' | 'review' | 'completed'>('all');
     const [viewType, setViewType] = useState<ViewType>('list');
 
     useEffect(() => {
@@ -52,7 +52,7 @@ export default function ProjectsTasksPage() {
         id: task.id,
         title: task.title,
         date: (task.due_date || task.start_date || new Date().toISOString()).split('T')[0],
-        color: task.status === 'done' ? 'emerald' as const : task.priority === 'high' ? 'rose' as const : 'blue' as const,
+        color: task.status === 'completed' ? 'emerald' as const : task.priority === 'high' ? 'rose' as const : 'blue' as const,
         location: task.status,
     }));
     const ganttItems = filtered.map((task) => ({
@@ -61,8 +61,8 @@ export default function ProjectsTasksPage() {
         subtitle: `${task.status} · ${task.priority || 'normal'}`,
         start_date: task.start_date || task.due_date || new Date().toISOString(),
         end_date: task.due_date || task.start_date || new Date().toISOString(),
-        color: task.status === 'done' ? 'emerald' as const : task.priority === 'high' ? 'rose' as const : 'blue' as const,
-        progress: task.status === 'done' ? 100 : task.status === 'review' ? 75 : task.status === 'in_progress' ? 50 : 20,
+        color: task.status === 'completed' ? 'emerald' as const : task.priority === 'high' ? 'rose' as const : 'blue' as const,
+        progress: task.status === 'completed' ? 100 : task.status === 'review' ? 75 : task.status === 'in_progress' ? 50 : 20,
     }));
 
     const moveForward = async (task: ProjectTaskRecord) => {
@@ -91,7 +91,7 @@ export default function ProjectsTasksPage() {
             />
 
             <div className="px-3 py-3 border-b border-slate-200 dark:border-white/10 flex flex-wrap gap-2">
-                {['all', 'todo', 'in_progress', 'review', 'done'].map((value) => (
+                {['all', 'todo', 'in_progress', 'review', 'completed'].map((value) => (
                     <button
                         key={value}
                         onClick={() => setStatus(value as any)}

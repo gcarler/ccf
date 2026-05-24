@@ -42,7 +42,7 @@ const STATUS_OPTIONS = [
     { value:'pending',     label:'Pendiente',   dot:'bg-slate-400',   bg:'bg-slate-100 dark:bg-white/5',          text:'text-slate-600 dark:text-slate-300',    border:'border-slate-200 dark:border-white/10' },
     { value:'in_progress', label:'En Progreso', dot:'bg-blue-500',  bg:'bg-blue-100 dark:bg-blue-500/20',   text:'text-blue-700 dark:text-blue-300',  border:'border-blue-200 dark:border-blue-500/30' },
     { value:'blocked',     label:'Bloqueado',   dot:'bg-rose-500',    bg:'bg-rose-100 dark:bg-rose-500/20',       text:'text-rose-700 dark:text-rose-300',      border:'border-rose-200 dark:border-rose-500/30' },
-    { value:'done',        label:'Completado',  dot:'bg-emerald-500', bg:'bg-emerald-100 dark:bg-emerald-500/20', text:'text-emerald-700 dark:text-emerald-300', border:'border-emerald-200 dark:border-emerald-500/30' },
+    { value:'completed',        label:'Completado',  dot:'bg-emerald-500', bg:'bg-emerald-100 dark:bg-emerald-500/20', text:'text-emerald-700 dark:text-emerald-300', border:'border-emerald-200 dark:border-emerald-500/30' },
 ] as const;
 function getStatus(val: string) { return STATUS_OPTIONS.find(s => s.value === val) ?? STATUS_OPTIONS[0]; }
 
@@ -976,14 +976,14 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                                     {/* Title */}
                                                     <td className="px-4 py-2.5 border-r border-slate-100 dark:border-white/5 overflow-hidden" style={{ width: '380px' }}>
                                                         <div className="flex items-center gap-2.5">
-                                                            <div onClick={e => { e.stopPropagation(); applyChange(Number(t.id), 'status', t.status === 'done' ? 'todo' : 'done'); }}>
-                                                                {t.status === 'done'
+                                                            <div onClick={e => { e.stopPropagation(); applyChange(Number(t.id), 'status', t.status === 'completed' ? 'todo' : 'completed'); }}>
+                                                                {t.status === 'completed'
                                                                     ? <CheckCircle2 size={15} className="text-emerald-500 shrink-0 hover:text-emerald-400 transition-colors" />
                                                                     : <Circle size={15} className="text-slate-300 dark:text-white/20 shrink-0 group-hover:text-blue-400 transition-colors" />}
                                                             </div>
                                                             <span className={clsx(
                                                                 'text-[13px] font-medium truncate',
-                                                                t.status === 'done'
+                                                                t.status === 'completed'
                                                                     ? 'text-slate-400 line-through'
                                                                     : 'text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400'
                                                             )}>

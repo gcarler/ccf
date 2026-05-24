@@ -137,7 +137,7 @@ def create_default_phases(db: Session, project_id: int):
         {"name": "Por Hacer", "slug": "todo", "color": "#94a3b8"},
         {"name": "En Curso", "slug": "in_progress", "color": "#3b82f6"},
         {"name": "Revisión", "slug": "review", "color": "#f59e0b"},
-        {"name": "Completado", "slug": "done", "color": "#10b981"},
+        {"name": "Completado", "slug": "completed", "color": "#10b981"},
     ]
     return set_project_phases(db, project_id, defaults)
 
@@ -566,7 +566,7 @@ def get_workload_summary(db: Session):
             models.ProjectTask.assignee_id,
             sa_func.count(models.ProjectTask.id),
             sa_func.sum(
-                sa_func.case((models.ProjectTask.status == "done", 1), else_=0)
+                sa_func.case((models.ProjectTask.status == "completed", 1), else_=0)
             ),
         )
         .filter(models.ProjectTask.assignee_id.isnot(None))

@@ -77,7 +77,7 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
                 items: tasks.length > 0 ? tasks.map((t: any) => ({
                     id: `task-${t.id}`,
                     label: t.title,
-                    icon: t.status === 'done' ? CheckCircle2 : Circle,
+                    icon: t.status === 'completed' ? CheckCircle2 : Circle,
                     href: `/projects/${projectId}?task=${t.id}`,
                     onClick: () => {
                         // Aquí en el futuro podemos abrir el RightPanel con el detalle de la tarea

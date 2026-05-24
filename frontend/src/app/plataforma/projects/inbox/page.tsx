@@ -59,7 +59,7 @@ export default function ProjectsInboxPage() {
                 await apiFetch(`/projects/tasks/${msg.task_id}`, {
                     method: 'PATCH',
                     token,
-                    body: { status: 'done' }
+                    body: { status: 'completed' }
                 });
             }
             await apiFetch(`/projects/inbox/${msg.id}/read`, {
