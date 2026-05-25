@@ -57,7 +57,7 @@ export default function GlobalEventAnalyticsPage() {
         <EvangelismShell
             breadcrumbs={[
                 { label: 'Evangelismo', icon: Users },
-                { label: 'Eventos', href: '/evangelism/events', icon: Calendar },
+                { label: 'Eventos', href: '/plataforma/evangelism/events', icon: Calendar },
                 { label: 'Dashboard Eventos', icon: BarChart3 }
             ]}
         >

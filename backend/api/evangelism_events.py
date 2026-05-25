@@ -18,7 +18,7 @@ from backend.api.evangelism_shared import (ABSENTEES_PREVIEW_LIMIT,
                                            get_expected_members_for_event,
                                            normalize_role_scope_payload,
                                            parse_session_date, utc_now)
-from backend.auth import (normalize_role, require_module_access,
+from backend.auth import (normalize_role, require_active_user, require_module_access,
                           require_pastor_or_admin)
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
@@ -851,7 +851,11 @@ def get_events_dashboard_stats(
 
 
 @router.get("/events/{event_id}/analytics")
-def get_event_analytics(event_id: int, db: Session = Depends(get_db)):
+def get_event_analytics(
+    event_id: int,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
     event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
@@ -913,6 +917,7 @@ def fast_checkin_visitor(
     session_date: str,
     visitor: VisitorCreate,
     db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
 ):
     event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not event:

@@ -1283,11 +1283,20 @@ def submit_attendance(
     
     submitted = []
     for att in attendance_data:
+        # Map schema fields (status/notes) to model fields (attended/absence_reason)
+        is_attended = att.status in ("present", "first_time")
+        absence_reason = None
+        absence_reason_detail = None
+        if att.status == "absent":
+            absence_reason = att.notes if att.notes else "sin_especificar"
+            absence_reason_detail = att.notes
+
         db_att = GloryHouseAttendance(
             session_id=session_id,
             member_id=att.member_id,
-            status=att.status,
-            notes=att.notes,
+            attended=is_attended,
+            absence_reason=absence_reason,
+            absence_reason_detail=absence_reason_detail,
         )
         db.add(db_att)
         submitted.append(db_att)

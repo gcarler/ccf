@@ -342,7 +342,7 @@ export default function EventDetailPage() {
     }
 
     return (
-        <EvangelismShell breadcrumbs={[{ label: "Evangelismo", href: "/evangelism/events" }, { label: "Eventos", href: "/evangelism/events" }, { label: event.name }]}>
+        <EvangelismShell breadcrumbs={[{ label: "Evangelismo", href: "/plataforma/evangelism/events" }, { label: "Eventos", href: "/plataforma/evangelism/events" }, { label: event.name }]}>
             <main className="flex-1 overflow-y-auto p-4 lg:p-4">
  <div className="w-full space-y-3">
                     {/* Header */}
@@ -400,7 +400,7 @@ export default function EventDetailPage() {
                             <div className="space-y-3">
                                 <DSCard>
                                     <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-4">Acciones</h3>
-                                    <button onClick={() => router.push('/evangelism/events')} className="w-full py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-md font-bold flex items-center justify-center gap-2">
+                                    <button onClick={() => router.push('/plataforma/evangelism/events')} className="w-full py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-md font-bold flex items-center justify-center gap-2">
                                         <ArrowLeft size={16}/> Volver a Eventos
                                     </button>
                                 </DSCard>

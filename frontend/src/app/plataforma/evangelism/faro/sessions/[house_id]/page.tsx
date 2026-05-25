@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
 import {
     ArrowLeft, Calendar, Users, CheckCircle2, XCircle, UserPlus,
     Save, DollarSign, FileText, Clock, Plus, Search,
@@ -58,19 +59,10 @@ export default function SessionReportPage() {
     const [newGuests, setNewGuests] = useState<NewGuest[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
 
-    function useAuth() {
-        const [authToken, setAuthToken] = useState<string | null>(null);
-        useEffect(() => {
-            setAuthToken(localStorage.getItem('auth_token'));
-        }, []);
-        return { token: authToken };
-    }
-
     const fetchHouse = useCallback(async () => {
         setLoading(true);
         try {
-            const localToken = localStorage.getItem('auth_token') || '';
-            const data = await apiFetch<GloryHouse>(`/evangelism/glory-houses/${houseId}`, { token: localToken });
+            const data = await apiFetch<GloryHouse>(`/evangelism/glory-houses/${houseId}`, { token: token || '' });
             setHouse(data);
 
             const ppl: SessionPerson[] = [];
@@ -131,10 +123,9 @@ export default function SessionReportPage() {
     const handleSubmit = async () => {
         if (!house) return;
         setSaving(true);
-        const localToken = localStorage.getItem('auth_token') || '';
         try {
             const sessionData = await apiFetch<any>('/evangelism/sessions', {
-                method: 'POST', token: localToken,
+                method: 'POST', token: token || '',
                 body: {
                     glory_house_id: parseInt(houseId),
                     session_date: new Date(sessionDate).toISOString(),

@@ -369,13 +369,13 @@ export default function FaroDetailPage() {
     ];
 
     if (loading) return (
-        <EvangelismShell breadcrumbs={[{ label: 'Faro en Casa', href: '/evangelism/faro', icon: Home }, { label: '...', icon: Home }]}>
+        <EvangelismShell breadcrumbs={[{ label: 'Faro en Casa', href: '/plataforma/evangelism/faro', icon: Home }, { label: '...', icon: Home }]}>
             <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin text-blue-500" size={40} /></div>
         </EvangelismShell>
     );
 
     if (!house) return (
-        <EvangelismShell breadcrumbs={[{ label: 'Faro en Casa', href: '/evangelism/faro', icon: Home }]}>
+        <EvangelismShell breadcrumbs={[{ label: 'Faro en Casa', href: '/plataforma/evangelism/faro', icon: Home }]}>
             <div className="p-4 text-center text-slate-400">Faro no encontrado.</div>
         </EvangelismShell>
     );
@@ -388,7 +388,7 @@ export default function FaroDetailPage() {
 
     return (
         <EvangelismShell breadcrumbs={[
-            { label: 'Faro en Casa', href: '/evangelism/faro', icon: Home },
+            { label: 'Faro en Casa', href: '/plataforma/evangelism/faro', icon: Home },
             { label: house.name, icon: Home }
         ]}>
             <main className="flex-1 overflow-y-auto">
