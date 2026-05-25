@@ -563,6 +563,23 @@ def list_faro_sessions(
     if glory_house_id:
         query = query.filter(models.GloryHouseSession.glory_house_id == glory_house_id)
     sessions = query.order_by(models.GloryHouseSession.session_date.desc()).all()
+
+    # Single query: get attendance counts for all sessions at once
+    if sessions:
+        session_ids = [s.id for s in sessions]
+        from sqlalchemy import func
+        att_counts = dict(
+            db.query(
+                models.GloryHouseAttendance.session_id,
+                func.count(models.GloryHouseAttendance.id),
+            )
+            .filter(models.GloryHouseAttendance.session_id.in_(session_ids))
+            .group_by(models.GloryHouseAttendance.session_id)
+            .all()
+        )
+    else:
+        att_counts = {}
+
     return [
         {
             "id": session.id,
@@ -574,9 +591,7 @@ def list_faro_sessions(
             "season_name": session.season.name if session.season else None,
             "session_date": session.session_date.isoformat(),
             "status": session.status,
-            "attendance_count": db.query(models.GloryHouseAttendance)
-            .filter(models.GloryHouseAttendance.session_id == session.id)
-            .count(),
+            "attendance_count": att_counts.get(session.id, 0),
         }
         for session in sessions
     ]
@@ -619,12 +634,25 @@ def list_my_pending_faro_sessions(
     )
 
     items = []
-    for session in sessions:
-        attendance_count = (
-            db.query(models.GloryHouseAttendance)
-            .filter(models.GloryHouseAttendance.session_id == session.id)
-            .count()
+
+    # Single query: get attendance counts for all sessions at once
+    if sessions:
+        session_ids = [s.id for s in sessions]
+        from sqlalchemy import func
+        att_counts = dict(
+            db.query(
+                models.GloryHouseAttendance.session_id,
+                func.count(models.GloryHouseAttendance.id),
+            )
+            .filter(models.GloryHouseAttendance.session_id.in_(session_ids))
+            .group_by(models.GloryHouseAttendance.session_id)
+            .all()
         )
+    else:
+        att_counts = {}
+
+    for session in sessions:
+        attendance_count = att_counts.get(session.id, 0)
         expected_count = len(faro_expected_member_rows(db, session.glory_house_id))
         needs_report = (
             session.status in {"Programada", "Pendiente", "No reportada"}
@@ -1442,7 +1470,7 @@ def get_strategy_metrics(
         }
     
     cutoff = _datetime.utcnow() - timedelta(weeks=weeks)
-    
+
     sessions = (
         db.query(GloryHouseSession)
         .filter(
@@ -1452,31 +1480,52 @@ def get_strategy_metrics(
         .order_by(GloryHouseSession.session_date)
         .all()
     )
-    
+
+    if not sessions:
+        return {
+            "strategy_id": strategy_id,
+            "weekly": [],
+            "summary": {
+                "total_groups": len(houses),
+                "total_sessions": 0,
+                "avg_attendance": 0,
+                "total_first_timers": 0,
+                "total_absences": 0,
+            },
+        }
+
+    session_ids = [s.id for s in sessions]
+
+    # Single query: load ALL attendance for all sessions at once
+    all_attendance = (
+        db.query(GloryHouseAttendance)
+        .filter(GloryHouseAttendance.session_id.in_(session_ids))
+        .all()
+    )
+
+    # Group attendance by session_id in memory
+    att_by_session = collections.defaultdict(list)
+    for a in all_attendance:
+        att_by_session[a.session_id].append(a)
+
     weekly = collections.defaultdict(lambda: {
         "present": 0, "absent": 0, "first_time": 0,
         "sessions": 0, "offering": 0.0,
     })
-    
+
     for s in sessions:
         week_key = s.session_date.strftime("%Y-%m-%d")
         weekly[week_key]["sessions"] += 1
-        
+
         if s.offering_amount:
             weekly[week_key]["offering"] += float(s.offering_amount)
-        
-        atts = db.query(GloryHouseAttendance).filter(
-            GloryHouseAttendance.session_id == s.id
-        ).all()
-        
-        for a in atts:
-            status = str(a.status).lower()
-            if status in ("present",):
+
+        for a in att_by_session.get(s.id, []):
+            # Map model fields: attended (bool), absence_reason
+            if a.attended:
                 weekly[week_key]["present"] += 1
-            elif status == "absent":
+            elif a.absence_reason:
                 weekly[week_key]["absent"] += 1
-            elif status == "first_time":
-                weekly[week_key]["first_time"] += 1
     
     weekly_list = []
     total_present = 0

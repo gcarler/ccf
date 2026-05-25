@@ -193,7 +193,7 @@ export default function StrategyDetailPage() {
         try {
             const all = await apiFetch<StrategyGroup[]>('/evangelism/glory-houses', { token });
             setGroups((all || []).filter(g => (g as any).evangelism_strategy_id === parseInt(id)));
-        } catch { /* ignore */ }
+        } catch { toast.error('Error al cargar grupos'); }
     }, [id]);
 
     const fetchMetrics = useCallback(async () => {
@@ -201,7 +201,7 @@ export default function StrategyDetailPage() {
         try {
             const m = await apiFetch<any>(`/evangelism/strategies/${id}/metrics`, { token });
             setMetrics(m);
-        } catch { /* ignore */ }
+        } catch { toast.error('Error al cargar métricas'); }
     }, [id]);
 
     const fetchSessions = useCallback(async () => {
@@ -210,7 +210,7 @@ export default function StrategyDetailPage() {
         try {
             const data = await apiFetch<SessionRow[]>(`/evangelism/sessions?strategy_id=${id}`, { token });
             setSessions(data || []);
-        } catch { /* ignore */ } finally {
+        } catch { toast.error('Error al cargar sesiones'); } finally {
             setSessionsLoading(false);
         }
     }, [id]);
@@ -224,7 +224,7 @@ export default function StrategyDetailPage() {
     useEffect(() => {
         if (isGroupDrawerOpen && members.length === 0) {
             const token = localStorage.getItem('ccf_token') || '';
-            apiFetch<any[]>('/crm/members/', { token }).then(m => setMembers(m || [])).catch(() => {});
+            apiFetch<any[]>('/crm/members/', { token }).then(m => setMembers(m || [])).catch(() => toast.error('Error al cargar miembros'));
         }
     }, [isGroupDrawerOpen, members.length]);
 
@@ -291,7 +291,7 @@ export default function StrategyDetailPage() {
             try {
                 const m = await apiFetch<any[]>('/crm/members/', { token });
                 setAllMembers(m || []);
-            } catch { /* ignore */ }
+            } catch { toast.error('Error al cargar miembros'); }
         }
         try {
             const house = await apiFetch<any>(`/evangelism/glory-houses/${group.id}`, { token });

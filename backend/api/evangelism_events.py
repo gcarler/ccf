@@ -805,47 +805,71 @@ def get_events_dashboard_stats(
     _user: models.User = Depends(require_pastor_or_admin),
 ):
     events = db.query(models.CrmEvent).all()
-    stats = []
+    if not events:
+        return []
 
-    for event in events:
-        latest_attendance = (
-            db.query(models.EventAttendance)
-            .filter(models.EventAttendance.event_id == event.id)
-            .order_by(models.EventAttendance.session_date.desc())
-            .first()
+    event_ids = [e.id for e in events]
+
+    # Single query: get latest session date per event
+    from sqlalchemy import func
+    latest_dates = dict(
+        db.query(
+            models.EventAttendance.event_id,
+            func.max(models.EventAttendance.session_date),
         )
-        if latest_attendance:
-            day = latest_attendance.session_date
-            attendances = (
-                db.query(models.EventAttendance)
-                .filter(
-                    models.EventAttendance.event_id == event.id,
-                    models.EventAttendance.session_date == day,
-                )
-                .all()
+        .filter(models.EventAttendance.event_id.in_(event_ids))
+        .group_by(models.EventAttendance.event_id)
+        .all()
+    )
+
+    # Single query: get attendance count per event per latest date
+    latest_pairs = [(eid, dt) for eid, dt in latest_dates.items()]
+    attendance_counts = {}
+    if latest_pairs:
+        from sqlalchemy import tuple_
+        counts = (
+            db.query(
+                models.EventAttendance.event_id,
+                models.EventAttendance.session_date,
+                func.count(models.EventAttendance.id),
             )
-            attended = len(attendances)
+            .filter(
+                tuple_(
+                    models.EventAttendance.event_id,
+                    models.EventAttendance.session_date,
+                ).in_(latest_pairs)
+            )
+            .group_by(
+                models.EventAttendance.event_id,
+                models.EventAttendance.session_date,
+            )
+            .all()
+        )
+        for event_id, session_date, cnt in counts:
+            attendance_counts[(event_id, session_date)] = cnt
+
+    stats = []
+    for event in events:
+        latest_date = latest_dates.get(event.id)
+        if latest_date:
+            attended = attendance_counts.get((event.id, latest_date), 0)
             expected = len(get_expected_members_for_event(db, event))
             rate = round((attended / expected) * 100, 1) if expected > 0 else 0
-            stats.append(
-                {
-                    "event_id": event.id,
-                    "latest_session": day.isoformat(),
-                    "attended": attended,
-                    "expected": expected,
-                    "rate": rate,
-                }
-            )
+            stats.append({
+                "event_id": event.id,
+                "latest_session": latest_date.isoformat(),
+                "attended": attended,
+                "expected": expected,
+                "rate": rate,
+            })
         else:
-            stats.append(
-                {
-                    "event_id": event.id,
-                    "latest_session": None,
-                    "attended": 0,
-                    "expected": 0,
-                    "rate": 0,
-                }
-            )
+            stats.append({
+                "event_id": event.id,
+                "latest_session": None,
+                "attended": 0,
+                "expected": 0,
+                "rate": 0,
+            })
 
     return stats
 

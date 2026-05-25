@@ -7,9 +7,8 @@ import { apiFetch, ApiError } from '@/lib/http';
 import { Home, Plus, CheckCircle2, Loader2, ChevronRight, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
+import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
-import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import Skeleton from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
 import { DSMetric, DSCard, DSBadge } from '@/design';
@@ -135,47 +134,26 @@ export default function FaroPage() {
 
     if (loading) {
         return (
-            <WorkspaceLayout sidebarTitle="Evangelismo" allowedRoles={['admin', 'pastor', 'lider', 'staff']}>
+            <EvangelismShell>
                 <div className="p-4 space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                         {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 rounded-lg" />)}
                     </div>
                     <Skeleton className="h-[400px] rounded-lg" />
                 </div>
-            </WorkspaceLayout>
+            </EvangelismShell>
         );
     }
 
     return (
-        <WorkspaceLayout allowedRoles={['admin', 'pastor', 'lider', 'staff']}>
-            <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0f1114]">
-                <WorkspaceToolbar
-                    breadcrumbs={[
-                        { label: 'Evangelismo', icon: Home },
-                        { label: 'Faro en Casa', icon: Home }
-                    ]}
-                    rightActions={
-                        <div className="flex gap-2 items-center">
-                            {activeSeason && isPrivileged && (
-                                <button disabled={loading} onClick={() => setShowNewSession(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
-                                    <Plus size={14} /> Registrar Sesión
-                                </button>
-                            )}
-                            {isPrivileged && (
-                                <button disabled={loading} onClick={() => setShowNewSeason(true)} className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:bg-slate-50 dark:hover:bg-white/10 active:scale-95 transition-all">
-                                    <Plus size={14} /> Nueva Temporada
-                                </button>
-                            )}
-                        </div>
-                    }
-                />
-                <main className="flex-1 overflow-y-auto p-4 p-4 space-y-3">
-                    {/* Page Header Area */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Evangelismo · Estrategia</p>
-                            <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Faro en Casa</h1>
-                            {activeSeason
+        <EvangelismShell>
+            <div className="p-4 space-y-3">
+                {/* Page Header Area */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Evangelismo · Estrategia</p>
+                        <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Faro en Casa</h1>
+                        {activeSeason
                                 ? <p className="text-slate-500 dark:text-slate-400 text-sm font-medium flex items-center gap-1.5 mt-2">
                                     <span className="inline-block size-2 rounded-full bg-emerald-500" />
                                     Temporada activa: <strong className="text-slate-700 dark:text-slate-200">{activeSeason.name}</strong>
@@ -304,8 +282,7 @@ export default function FaroPage() {
                             </section>
                         )}
                     </div>
-                </main>
-            </div>
+                </div>
 
             {/* NEW SEASON DRAWER */}
             <WorkspaceDrawer
@@ -400,7 +377,7 @@ export default function FaroPage() {
                     </div>
                 </div>
             </WorkspaceDrawer>
-        </WorkspaceLayout>
+        </EvangelismShell>
     );
 }
 
