@@ -498,7 +498,7 @@ export default function StrategyDetailPage() {
             { label: 'Estrategias', href: '/plataforma/evangelism' },
             { label: strategy.name }
         ]}>
-            <div className="p-4 lg:p-3 space-y-3 animate-fade-in max-w-5xl mx-auto">
+            <div className="p-4 lg:p-3 space-y-3 animate-fade-in px-3 md:px-6 lg:px-8 xl:px-12">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
