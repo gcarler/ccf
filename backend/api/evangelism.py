@@ -1170,9 +1170,9 @@ def read_evangelism_strategies(
 
 @router.get("/strategies/{strategy_id}", response_model=EvangelismStrategy)
 def read_strategy(strategy_id: int, db: Session = Depends(get_db)):
-    from backend.models_crm import EvangelismStrategy
+    from backend.models_crm import EvangelismStrategy as StrategyModel
     from backend.models_academy import GloryHouse
-    db_obj = db.query(EvangelismStrategy).filter(EvangelismStrategy.id == strategy_id).first()
+    db_obj = db.query(StrategyModel).filter(StrategyModel.id == strategy_id).first()
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
     result = EvangelismStrategy.model_validate(db_obj)
