@@ -7,36 +7,47 @@ import { useRouter } from 'next/navigation';
 interface ProtectedRouteProps {
     children: React.ReactNode;
     allowedRoles?: string[];
+    allowedPermissions?: string[];
     requireVerifiedEmail?: boolean;
 }
 
-export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-    const { user, isAuthenticated, loading } = useAuth();
+export default function ProtectedRoute({ children, allowedRoles, allowedPermissions }: ProtectedRouteProps) {
+    const { user, isAuthenticated, loading, hasPermission } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
         // QUALITY LOG: Trace why a redirect might happen
         const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('ccf_token');
-        
+
         if (!loading) {
             if (!isAuthenticated && !hasToken) {
                 console.warn("[AUTH QUALITY] No user and no token found. Redirecting to login.");
                 router.push('/login');
-            } else if (isAuthenticated && allowedRoles && user) {
-                const normalizedUserRole = user.role.toLowerCase();
-                const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase());
-                
-                if (!normalizedAllowedRoles.includes(normalizedUserRole)) {
-                    console.warn(`[AUTH QUALITY] Role mismatch: ${normalizedUserRole} not in ${normalizedAllowedRoles}. Redirecting to dashboard.`);
-                    if (['admin', 'coordinador', 'docente'].includes(normalizedUserRole)) {
-                        router.push('/plataforma/admin');
-                    } else {
+            } else if (isAuthenticated && user) {
+                if (allowedRoles) {
+                    const normalizedUserRole = user.role.toLowerCase();
+                    const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase());
+
+                    if (!normalizedAllowedRoles.includes(normalizedUserRole)) {
+                        console.warn(`[AUTH QUALITY] Role mismatch: ${normalizedUserRole} not in ${normalizedAllowedRoles}. Redirecting to dashboard.`);
+                        if (['admin', 'coordinador', 'docente'].includes(normalizedUserRole)) {
+                            router.push('/plataforma/admin');
+                        } else {
+                            router.push('/plataforma/academy');
+                        }
+                        return;
+                    }
+                }
+                if (allowedPermissions) {
+                    const hasAny = allowedPermissions.some(p => hasPermission(p));
+                    if (!hasAny) {
+                        console.warn(`[AUTH QUALITY] No required permissions ${allowedPermissions}. Redirecting.`);
                         router.push('/plataforma/academy');
                     }
                 }
             }
         }
-    }, [isAuthenticated, loading, user, allowedRoles, router]);
+    }, [isAuthenticated, loading, user, allowedRoles, allowedPermissions, hasPermission, router]);
 
     if (loading) {
         return (
@@ -54,6 +65,10 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     }
 
     if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+        return null;
+    }
+
+    if (allowedPermissions && user && !allowedPermissions.some(p => hasPermission(p))) {
         return null;
     }
 

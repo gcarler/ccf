@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import require_active_user, require_staff_or_admin
+from backend.auth import require_module_access, require_staff_or_admin
 from backend.core.database import get_db
 from backend.mesh_websockets import manager
 
@@ -44,7 +44,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
 @router.get("/messaging/presence/{room}")
 async def get_room_presence(
-    room: str, current_user: models.User = Depends(require_active_user)
+    room: str, current_user: models.User = Depends(require_module_access("messaging", "read"))
 ):
     return {"room": room, "clients": manager.list_room(room)}
 
@@ -52,7 +52,7 @@ async def get_room_presence(
 @router.post("/messaging/notifications")
 async def send_notification(
     payload: NotificationPayload,
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("messaging", "read")),
 ):
     await manager.broadcast_event(
         {"event": payload.event, "body": payload.body}, room=payload.room
@@ -64,7 +64,7 @@ async def send_notification(
 def get_notifications(
     limit: int = 20,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("messaging", "read")),
 ):
     return crud.get_user_notifications(
         db, user_id=int(getattr(current_user, "id", 0)), limit=limit
@@ -77,7 +77,7 @@ def get_notifications(
 def update_notification(
     notification_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("messaging", "read")),
 ):
     updated = crud.mark_notification_as_read(db, notification_id=notification_id)
     if not updated:
@@ -88,7 +88,7 @@ def update_notification(
 @router.post("/messaging/notifications/mark-all-read")
 def mark_all_read(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("messaging", "read")),
 ):
     crud.mark_all_notifications_read(db, user_id=int(getattr(current_user, "id", 0)))
     return {"status": "success"}

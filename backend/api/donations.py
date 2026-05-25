@@ -11,7 +11,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import require_active_user, require_admin
+from backend.auth import require_admin, require_module_access
 from backend.core.database import get_db
 from backend.core.rate_limit import rate_limiter
 
@@ -28,7 +28,7 @@ router = APIRouter(prefix="/donations", tags=["donations"])
 def create_donation(
     payload: schemas.DonationCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
     created = crud.create_donation(db, payload)
     return created

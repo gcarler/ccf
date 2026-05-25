@@ -12,7 +12,7 @@ from sqlalchemy import cast, func, Integer, text
 from sqlalchemy.orm import Session, selectinload
 
 from backend import crud, models, schemas
-from backend.auth import (normalize_role, require_active_user,
+from backend.auth import (normalize_role, require_module_access,
                           require_staff_or_admin)
 from backend.core.audit import record_admin_action
 from backend.core.config import get_settings
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 @router.get("/tasks", response_model=List[schemas.ProjectTask])
 def list_all_my_tasks(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Obtiene todas las tareas asignadas al usuario actual de todos los proyectos."""
     tasks = (
@@ -228,7 +228,7 @@ def list_projects(
 def create_project(
     project: schemas.ProjectCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     db_project = models.Project(**project.model_dump())
     db.add(db_project)
@@ -258,7 +258,7 @@ def create_project(
 def list_project_phases(
     project_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Lista las fases (columnas del kanban) de un proyecto."""
     _ensure_project(db, project_id)
@@ -270,7 +270,7 @@ def set_project_phases(
     project_id: int,
     phases: List[schemas.ProjectPhaseInput],
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Reemplaza todas las fases del proyecto (reordenar / renombrar / agregar / eliminar).
     El orden en el array define el order_index de cada fase.
@@ -322,7 +322,7 @@ def list_all_comments(
     project_id: Optional[int] = None,
     task_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Lista todos los comentarios de proyectos con filtros opcionales."""
     q = db.query(models.ProjectComment)
@@ -366,7 +366,7 @@ def create_project_task(
     project_id: int,
     task: schemas.ProjectTaskCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     _ensure_project(db, project_id)
     max_order = (
@@ -400,7 +400,7 @@ def create_project_task(
 @router.get("/summary", response_model=List[schemas.ProjectPortfolioSummaryRow])
 def portfolio_summary(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Resumen de portafolio agrupado por estatus de proyecto."""
     done_case = func.coalesce(func.sum(
@@ -436,7 +436,7 @@ def portfolio_summary(
 @router.get("/workload", response_model=List[schemas.ProjectWorkloadSummaryRow])
 def workload_summary(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Resumen de carga de trabajo por persona."""
     review_case = func.coalesce(func.sum(
@@ -485,7 +485,7 @@ def list_activities(
     limit: int = Query(20, le=200),
     project_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Feed de actividad global de proyectos."""
     q = db.query(models.ProjectActivityLog).order_by(
@@ -518,7 +518,7 @@ def list_activities(
 def get_task(
     task_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Obtiene una tarea por ID."""
     task = _ensure_task(db, task_id)
@@ -531,7 +531,7 @@ def update_task(
     task_id: int,
     payload: schemas.ProjectTaskUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Actualiza una tarea usando ruta plana (sin project_id)."""
     task = _ensure_task(db, task_id)
@@ -552,7 +552,7 @@ def update_task(
 def list_inbox(
     limit: int = Query(50, le=200),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Bandeja de entrada: tareas recién asignadas y comentarios no leídos."""
     inbox_items: list[schemas.ProjectInboxItem] = []
@@ -605,7 +605,7 @@ def list_inbox(
 def mark_inbox_read(
     item_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Marca un item del inbox como leído."""
     state = (
@@ -634,7 +634,7 @@ def mark_inbox_read(
 def get_project(
     project_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     p = _ensure_project(db, project_id)
     _normalize_dates(p)
@@ -666,7 +666,7 @@ def update_project_wiki(
     project_id: int,
     payload: schemas.ProjectDocumentUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     _ensure_project(db, project_id)  # Validates project exists
     doc = (
@@ -710,7 +710,7 @@ def update_project_wiki(
 def get_project_whiteboard(
     project_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     _ensure_project(db, project_id)
     board = (
@@ -726,7 +726,7 @@ def update_project_whiteboard(
     project_id: int,
     payload: schemas.ProjectWhiteboardUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     _ensure_project(db, project_id)
     board = (
@@ -766,7 +766,7 @@ async def upload_task_attachment(
     task_id: int,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     task = _ensure_task_in_project(db, project_id, task_id)
     filename = sanitize_filename(file.filename or "file")
@@ -803,7 +803,7 @@ def update_project_task(
     task_id: int,
     payload: schemas.ProjectTaskUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Actualiza una tarea con auditoría ministerial automática."""
     task = _ensure_task_in_project(db, project_id, task_id)
@@ -824,7 +824,7 @@ def list_task_supplies(
     project_id: int,
     task_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Lista los insumos de una tarea."""
     _ensure_task_in_project(db, project_id, task_id)
@@ -846,7 +846,7 @@ def create_task_supply(
     task_id: int,
     payload: schemas.TaskSupplyCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Crea un insumo requerido para una tarea."""
     task = _ensure_task_in_project(db, project_id, task_id)
@@ -875,7 +875,7 @@ def update_task_supply(
     supply_id: int,
     payload: schemas.TaskSupplyUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Actualiza nombre, cantidad o estado de un insumo."""
     task = _ensure_task_in_project(db, project_id, task_id)
@@ -902,7 +902,7 @@ def delete_task_supply(
     task_id: int,
     supply_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Elimina un insumo de una tarea."""
     task = _ensure_task_in_project(db, project_id, task_id)
@@ -933,7 +933,7 @@ def create_subtask(
     task_id: int,
     subtask: schemas.ProjectTaskCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Crea una subtarea (nivel 2 o 3) bajo una tarea existente."""
     _ensure_project(db, project_id)
@@ -972,7 +972,7 @@ def update_subtask(
     subtask_id: int,
     payload: schemas.ProjectTaskUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Actualiza una subtarea."""
     _ensure_project(db, project_id)
@@ -994,7 +994,7 @@ def delete_subtask(
     task_id: int,
     subtask_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Elimina una subtarea."""
     _ensure_project(db, project_id)
@@ -1014,7 +1014,7 @@ def delete_subtask(
 def create_comment(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Crea un comentario usando project_id en el body (ruta legacy)."""
     project_id = payload.get("project_id")
@@ -1060,7 +1060,7 @@ def create_project_comment(
     project_id: int,
     payload: schemas.ProjectCommentCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Crea un comentario en un proyecto."""
     _ensure_project(db, project_id)
@@ -1099,7 +1099,7 @@ def update_project_comment(
     comment_id: int,
     payload: schemas.ProjectCommentUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Actualiza un comentario (contenido o estado de resolución)."""
     comment = (
@@ -1137,7 +1137,7 @@ def list_project_tasks(
     project_id: int,
     status_filter: Optional[str] = Query(None, alias="status"),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Lista todas las tareas de un proyecto."""
     _ensure_project(db, project_id)
@@ -1184,7 +1184,7 @@ def update_project(
     project_id: int,
     payload: schemas.ProjectUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Actualiza los metadatos de un proyecto."""
     project = _ensure_project(db, project_id)
@@ -1216,7 +1216,7 @@ def delete_project_task(
     project_id: int,
     task_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Elimina una tarea de un proyecto."""
     _ensure_project(db, project_id)
@@ -1230,7 +1230,7 @@ def delete_project_task(
 def delete_project_comment(
     comment_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Elimina un comentario."""
     comment = (
@@ -1252,7 +1252,7 @@ def delete_project_comment(
 def list_project_milestones(
     project_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Lista los hitos de un proyecto."""
     _ensure_project(db, project_id)
@@ -1276,7 +1276,7 @@ def create_project_milestone(
     project_id: int,
     payload: schemas.ProjectMilestoneBase,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Crea un hito en un proyecto."""
     _ensure_project(db, project_id)
@@ -1304,7 +1304,7 @@ def update_project_milestone(
     milestone_id: int,
     payload: schemas.ProjectMilestoneUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Actualiza un hito y registra cambios relevantes en la bitacora."""
     _ensure_project(db, project_id)

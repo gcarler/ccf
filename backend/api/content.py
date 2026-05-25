@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import require_active_user
+from backend.auth import require_module_access
 from backend.core.database import get_db
 
 router = APIRouter(prefix="/content", tags=["content"])
@@ -133,7 +133,7 @@ def _workflow_to_schema(item: models.ContentPublication) -> schemas.ContentWorkf
 def list_content_blocks(
     limit: int = 200,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     return crud.list_page_contents(db, limit=limit)
 
@@ -151,7 +151,7 @@ def put_content_block(
     page_key: str,
     payload: schemas.PageContentUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     parsed = _parse_content_payload(page_key, payload)
     _validate_content_shape(page_key, parsed)
@@ -175,7 +175,7 @@ def patch_content_block(
     page_key: str,
     payload: schemas.PageContentUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     parsed = _parse_content_payload(page_key, payload)
     _validate_content_shape(page_key, parsed)
@@ -199,7 +199,7 @@ def post_content_block(
     page_key: str,
     payload: schemas.PageContentUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     parsed = _parse_content_payload(page_key, payload)
     _validate_content_shape(page_key, parsed)
@@ -222,7 +222,7 @@ def post_content_block(
 def get_content_versions(
     page_key: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     return crud.get_page_content_versions(db, page_key)
 
@@ -234,7 +234,7 @@ def rollback_content_version(
     page_key: str,
     version_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     row = crud.restore_page_content_version(db, page_key, version_id)
     if not row:
@@ -257,7 +257,7 @@ def rollback_content_version(
 def get_content_workflow(
     page_key: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     row = crud.get_or_create_content_publication(db, page_key)
     return _workflow_to_schema(row)
@@ -268,7 +268,7 @@ def patch_content_workflow(
     page_key: str,
     payload: schemas.ContentWorkflowUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     workflow = crud.get_or_create_content_publication(db, page_key)
     previous_status = workflow.status
@@ -315,7 +315,7 @@ def patch_content_workflow(
 @router.get("/metrics/overview", response_model=schemas.CmsMetrics)
 def get_content_metrics(
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     publications = crud.list_content_publications(db)
     status_counter = {

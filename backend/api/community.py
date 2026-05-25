@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import require_active_user
+from backend.auth import require_module_access
 from backend.core.database import get_db
 
 router = APIRouter(prefix="/community", tags=["community"])
@@ -64,7 +64,7 @@ def list_community_glory_houses(db: Session = Depends(get_db)):
 def create_community_glory_house(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("community", "edit")),
 ):
     """Crea una nueva casa de gloria desde la vista comunitaria."""
     house = models.GloryHouse(

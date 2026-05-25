@@ -12,8 +12,9 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import (normalize_role, require_active_user, require_admin,
-                          require_coordinator_or_admin, require_staff_or_admin,
+from backend.auth import (normalize_role, require_admin,
+                          require_coordinator_or_admin, require_module_access,
+                          require_staff_or_admin,
                           require_teacher_or_admin, role_in)
 from backend.core.audit import record_admin_action
 from backend.core.config import get_settings
@@ -100,7 +101,7 @@ def submit_assessment_direct(
     assessment_id: int,
     payload: schemas.AssessmentAttemptSubmit,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     """Envia una evaluación directamente con respuestas detalladas o puntaje."""
     # Encontrar la inscripción del usuario para este curso/evaluación
@@ -149,7 +150,7 @@ def submit_assessment_direct(
 def read_lesson_progress(
     lesson_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     progress = crud.get_lesson_progress(
         db, user_id=current_user.id, lesson_id=lesson_id
@@ -173,7 +174,7 @@ def update_lesson_progress(
     lesson_id: int,
     payload: ProgressUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     return crud.update_lesson_progress(
         db,
@@ -243,7 +244,7 @@ def record_bulk_attendance(
 def request_certificate(
     enrollment_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     try:
         return crud.issue_certificate(db, enrollment_id=enrollment_id)
@@ -317,7 +318,7 @@ def read_last_formal_acta(course_id: int, db: Session = Depends(get_db)):
 def create_enrollment(
     enrollment: schemas.EnrollmentCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     user_id = int(getattr(current_user, "id", 0))
     if (
@@ -343,7 +344,7 @@ def create_enrollment(
 def check_in_attendance(
     enrollment_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     enrollment = crud.get_enrollment(db, enrollment_id)
     if not enrollment or int(getattr(enrollment, "user_id", 0)) != int(
@@ -362,7 +363,7 @@ def submit_assessment(
     assessment_id: int,
     payload: schemas.AssessmentAttemptSubmit,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     enrollment = crud.get_enrollment(db, enrollment_id)
     assessment = crud.get_assessment(db, assessment_id)
@@ -391,7 +392,7 @@ def submit_assessment(
 @router.get("/me/certificates", response_model=List[schemas.Certificate])
 def read_my_certificates(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     """Obtiene certificados del usuario actual (IDOR protegido)."""
     return crud.get_certificates_by_user(db, current_user.id)
@@ -400,7 +401,7 @@ def read_my_certificates(
 @router.get("/me/enrollments", response_model=List[schemas.Enrollment])
 def read_my_enrollments(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     """Obtiene inscripciones del usuario actual (IDOR protegido)."""
     return crud.get_enrollments_by_user(db, current_user.id)
@@ -431,7 +432,7 @@ def list_all_enrollments(
 def get_user_enrollments(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     """Obtiene las inscripciones de un usuario especifico."""
     enrollments = (
@@ -521,7 +522,7 @@ async def submit_assignment_file(
     comment: Optional[str] = Form(None),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     enrollment = crud.get_enrollment(db, enrollment_id)
     if not enrollment:
@@ -620,7 +621,7 @@ def sync_certificates(
 @router.get("/me/profile", response_model=schemas.AcademyStudentProfile)
 def get_my_academy_profile(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     user_id = int(current_user.id)
     db_user = crud.get_user(db, user_id) or current_user
@@ -656,7 +657,7 @@ def get_my_academy_profile(
 def get_user_course_progress(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     """Devuelve el progreso agregado por curso para un usuario."""
     current_id = int(getattr(current_user, "id", 0))
@@ -849,7 +850,7 @@ def create_academy_account(
 @router.get("/forum/threads", response_model=List[schemas.ForumThread])
 def get_forum_threads(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     return crud.get_forum_threads(db)
 
@@ -858,7 +859,7 @@ def get_forum_threads(
 def create_thread(
     thread: schemas.ForumThreadBase,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     thread_data = schemas.ForumThreadCreate(
         **thread.model_dump(), author_id=current_user.id
@@ -872,7 +873,7 @@ def create_thread(
 @router.get("/schedule", response_model=list)
 def get_academy_schedule(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("academy", "study")),
 ):
     """
     Retorna el cronograma de cursos activos para el panel de academia.

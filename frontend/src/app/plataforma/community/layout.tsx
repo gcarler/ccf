@@ -43,9 +43,10 @@ export default function CommunityLayout({ children }: { children: React.ReactNod
     ];
 
     return (
-        <WorkspaceLayout 
-            sidebarTitle="Comunidad" 
+        <WorkspaceLayout
+            sidebarTitle="Comunidad"
             sidebarSections={sidebarSections}
+            allowedPermissions={['community:read']}
         >
             {children}
         </WorkspaceLayout>

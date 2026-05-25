@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import normalize_role, require_active_user
+from backend.auth import normalize_role, require_module_access
 from backend.core.database import get_db
 
 router = APIRouter(prefix="/cms/v2", tags=["cms_v2"])
@@ -109,7 +109,7 @@ def _snapshot_section_read(
 def list_sites(
     only_active: bool = Query(default=False),
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     return crud.list_cms_sites(db, only_active=only_active)
 
@@ -118,7 +118,7 @@ def list_sites(
 def create_site(
     payload: schemas.CmsSiteCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
     if not payload.site_key.strip():
@@ -134,7 +134,7 @@ def create_site(
 def get_site(
     site_key: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     return _get_site_or_404(db, site_key)
 
@@ -144,7 +144,7 @@ def patch_site(
     site_key: str,
     payload: schemas.CmsSiteUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
     row = _get_site_or_404(db, site_key)
@@ -155,7 +155,7 @@ def patch_site(
 def delete_site(
     site_key: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     """Desactiva un sitio CMS sin eliminar su contenido."""
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
@@ -168,7 +168,7 @@ def delete_site(
 def list_themes(
     site_key: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_site_or_404(db, site_key)
     return crud.list_cms_themes(db, site.id)
@@ -181,7 +181,7 @@ def create_theme(
     site_key: str,
     payload: schemas.CmsThemeCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     if payload.is_active:
@@ -202,7 +202,7 @@ def patch_theme(
     theme_id: int,
     payload: schemas.CmsThemeUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     if payload.is_active:
@@ -225,7 +225,7 @@ def activate_theme(
     site_key: str,
     theme_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
     site = _get_site_or_404(db, site_key)
@@ -240,7 +240,7 @@ def delete_theme(
     site_key: str,
     theme_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     """Archiva un tema CMS sin eliminar su historial."""
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
@@ -256,7 +256,7 @@ def delete_theme(
 def list_menus(
     site_key: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_site_or_404(db, site_key)
     return crud.list_cms_menus(db, site.id)
@@ -269,7 +269,7 @@ def create_menu(
     site_key: str,
     payload: schemas.CmsMenuCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
@@ -283,7 +283,7 @@ def get_menu(
     site_key: str,
     menu_key: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_site_or_404(db, site_key)
     return _get_menu_or_404(db, site.id, menu_key)
@@ -295,7 +295,7 @@ def patch_menu(
     menu_key: str,
     payload: schemas.CmsMenuUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
@@ -308,7 +308,7 @@ def delete_menu(
     site_key: str,
     menu_key: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     """Desactiva un menu CMS sin eliminarlo."""
     _assert_role(current_user, CMS_EDITOR_ROLES)
@@ -325,7 +325,7 @@ def list_menu_items(
     site_key: str,
     menu_key: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_site_or_404(db, site_key)
     menu = _get_menu_or_404(db, site.id, menu_key)
@@ -342,7 +342,7 @@ def create_menu_item(
     menu_key: str,
     payload: schemas.CmsMenuItemCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
@@ -360,7 +360,7 @@ def patch_menu_item(
     item_id: int,
     payload: schemas.CmsMenuItemUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
@@ -377,7 +377,7 @@ def delete_menu_item(
     menu_key: str,
     item_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     """Oculta un item de menu sin eliminarlo."""
     _assert_role(current_user, CMS_EDITOR_ROLES)
@@ -398,7 +398,7 @@ def reorder_menu_items(
     menu_key: str,
     payload: schemas.CmsMenuItemReorderPayload,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
@@ -410,7 +410,7 @@ def reorder_menu_items(
 def list_pages(
     site_key: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_site_or_404(db, site_key)
     return crud.list_cms_pages(db, site.id)
@@ -423,7 +423,7 @@ def create_page(
     site_key: str,
     payload: schemas.CmsPageCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     if payload.status.strip().lower() != "draft":
@@ -442,7 +442,7 @@ def get_page(
     site_key: str,
     slug: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_site_or_404(db, site_key)
     return _get_page_or_404(db, site.id, slug)
@@ -454,7 +454,7 @@ def patch_page(
     slug: str,
     payload: schemas.CmsPageUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     if payload.status is not None:
@@ -471,7 +471,7 @@ def delete_page(
     site_key: str,
     slug: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
@@ -487,7 +487,7 @@ def list_sections(
     site_key: str,
     slug: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_site_or_404(db, site_key)
     page = _get_page_or_404(db, site.id, slug)
@@ -504,7 +504,7 @@ def create_section(
     slug: str,
     payload: schemas.CmsSectionCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     if payload.type not in ALLOWED_SECTION_TYPES:
@@ -527,7 +527,7 @@ def patch_section(
     section_id: int,
     payload: schemas.CmsSectionUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     if payload.type is not None and payload.type not in ALLOWED_SECTION_TYPES:
@@ -550,7 +550,7 @@ def delete_section(
     slug: str,
     section_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
@@ -570,7 +570,7 @@ def reorder_sections(
     slug: str,
     payload: schemas.CmsSectionReorderPayload,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
@@ -586,7 +586,7 @@ def list_versions(
     site_key: str,
     slug: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_site_or_404(db, site_key)
     page = _get_page_or_404(db, site.id, slug)
@@ -602,7 +602,7 @@ def list_publish_log(
     slug: str,
     limit: int = Query(default=50, ge=1, le=200),
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_site_or_404(db, site_key)
     page = _get_page_or_404(db, site.id, slug)
@@ -616,7 +616,7 @@ def preview_page(
     site_key: str,
     slug: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_site_or_404(db, site_key)
@@ -646,7 +646,7 @@ def rollback_page(
     slug: str,
     version_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
     site = _get_site_or_404(db, site_key)
@@ -665,7 +665,7 @@ def workflow_page(
     slug: str,
     payload: schemas.CmsWorkflowAction,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     action = payload.action.strip().lower()
     if action in {"approve", "publish", "archive"}:

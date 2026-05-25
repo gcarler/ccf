@@ -5,9 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import (get_current_user, normalize_role,
-                          require_active_user, require_admin,
-                          require_pastor_or_admin)
+from backend.auth import (get_current_user, normalize_role, require_admin,
+                          require_module_access, require_pastor_or_admin)
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 
@@ -40,7 +39,7 @@ def create_member(
 @router.get("/members/me", response_model=dict)
 def get_my_crm_card(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Devuelve la tarjeta de miembro del usuario actual vinculada por user_id."""
     member = (
@@ -97,7 +96,7 @@ def list_all_member_donations(
 def get_member(
     member_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Obtiene el detalle de un miembro con validacion de propiedad (IDOR)."""
     member = db.query(models.Member).filter(models.Member.id == member_id).first()
@@ -542,7 +541,7 @@ def update_member_ministry(
 @router.get("/colombian-departments", response_model=List[schemas.ColombianDepartment])
 def list_colombian_departments(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Devuelve la lista de los 32 departamentos de Colombia + Bogotá D.C."""
     return (
@@ -556,7 +555,7 @@ def list_colombian_departments(
 def list_cities_by_department(
     department_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Devuelve las ciudades de un departamento específico."""
     department = (

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
-from backend.auth import require_active_user
+from backend.auth import require_module_access
 from backend.core.database import get_db
 
 router = APIRouter(prefix="/agenda", tags=["agenda"])
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/agenda", tags=["agenda"])
 @router.get("/events", response_model=List[schemas.AgendaEvent])
 def list_agenda_events(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("spiritual_life", "read")),
 ):
     return (
         db.query(models.AgendaEvent)
@@ -28,7 +28,7 @@ def list_agenda_events(
 def create_agenda_event(
     payload: schemas.AgendaEventCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("spiritual_life", "read")),
 ):
     agenda_event = models.AgendaEvent(
         title=payload.title,
@@ -49,7 +49,7 @@ def create_agenda_event(
 def get_agenda_event(
     event_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("spiritual_life", "read")),
 ):
     agenda_event = (
         db.query(models.AgendaEvent).filter(models.AgendaEvent.id == event_id).first()
@@ -64,7 +64,7 @@ def update_agenda_event(
     event_id: int,
     payload: schemas.AgendaEventCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("spiritual_life", "read")),
 ):
     agenda_event = (
         db.query(models.AgendaEvent).filter(models.AgendaEvent.id == event_id).first()
@@ -87,7 +87,7 @@ def update_agenda_event(
 def delete_agenda_event(
     event_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("spiritual_life", "read")),
 ):
     agenda_event = (
         db.query(models.AgendaEvent).filter(models.AgendaEvent.id == event_id).first()

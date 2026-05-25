@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import crud, models
-from backend.auth import require_active_user, require_admin
+from backend.auth import require_admin, require_module_access
 from backend.core.database import get_db
 
 router = APIRouter(prefix="/finance", tags=["Finance"])
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/finance", tags=["Finance"])
 @router.get("/summary")
 def get_finance_summary(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
     """Resumen financiero para el dashboard de administración."""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -46,7 +46,7 @@ def get_finance_summary(
 @router.get("/funds")
 def get_ministerial_funds(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
     """Resumen de fondos en tiempo real calculado desde donations."""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -88,7 +88,7 @@ def get_transactions(
     limit: int = Query(50, le=200),
     tipo: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
     """Historial de transacciones reales desde la tabla donations."""
     q = db.query(models.Donation).order_by(models.Donation.created_at.desc())

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Dict, Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -35,6 +35,7 @@ class User(UserBase):
     is_active: bool = True
     is_email_verified: bool = False
     created_at: datetime
+    permissions: Optional[Dict[str, str]] = None
     model_config = orm_config
 
 

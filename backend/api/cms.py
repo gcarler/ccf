@@ -10,7 +10,7 @@ from fastapi import (APIRouter, Depends, File, Form, HTTPException, Query,
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import require_active_user
+from backend.auth import require_module_access
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.uploads import sanitize_filename, save_upload
@@ -40,7 +40,7 @@ def list_cms_testimonials(db: Session = Depends(get_db)):
 def create_cms_testimonial(
     payload: schemas.TestimonialCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     if not payload.author_id:
         payload.author_id = current_user.id
@@ -50,7 +50,7 @@ def create_cms_testimonial(
 @router.get("/admin/testimonials", response_model=list[schemas.TestimonialRead])
 def list_admin_testimonials(
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     return crud.list_testimonials(db)
 
@@ -74,7 +74,7 @@ def get_cms_testimonial(
 def get_admin_testimonial(
     testimonial_id: int,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     row = crud.get_testimonial(db, testimonial_id)
     if not row:
@@ -89,7 +89,7 @@ def patch_admin_testimonial(
     testimonial_id: int,
     payload: schemas.TestimonialUpdate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     row = crud.get_testimonial(db, testimonial_id)
     if not row:
@@ -101,7 +101,7 @@ def patch_admin_testimonial(
 def delete_admin_testimonial(
     testimonial_id: int,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     row = crud.get_testimonial(db, testimonial_id)
     if not row:
@@ -123,7 +123,7 @@ def list_cms_announcements(db: Session = Depends(get_db)):
 def create_cms_announcement(
     payload: schemas.AnnouncementCreate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     return crud.create_announcement(db, payload)
 
@@ -131,7 +131,7 @@ def create_cms_announcement(
 @router.get("/admin/announcements", response_model=list[schemas.AnnouncementRead])
 def list_admin_announcements(
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     return crud.list_announcements(db)
 
@@ -160,7 +160,7 @@ def get_cms_announcement(
 def get_admin_announcement(
     announcement_id: int,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     row = crud.get_announcement(db, announcement_id)
     if not row:
@@ -175,7 +175,7 @@ def patch_admin_announcement(
     announcement_id: int,
     payload: schemas.AnnouncementUpdate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     row = crud.get_announcement(db, announcement_id)
     if not row:
@@ -187,7 +187,7 @@ def patch_admin_announcement(
 def delete_admin_announcement(
     announcement_id: int,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     row = crud.get_announcement(db, announcement_id)
     if not row:
@@ -205,7 +205,7 @@ def list_cms_media(
     limit: int = Query(default=250, ge=1, le=500),
     include_archived: bool = Query(default=False),
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     return crud.list_cms_media_items(
         db, query=query, section=section, limit=limit, include_archived=include_archived
@@ -216,7 +216,7 @@ def list_cms_media(
 def create_cms_media(
     payload: schemas.CmsMediaCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     return crud.create_cms_media_item(
         db,
@@ -236,7 +236,7 @@ def create_cms_media(
 def get_cms_media(
     item_id: int,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     row = (
         db.query(models.CmsMediaItem).filter(models.CmsMediaItem.id == item_id).first()
@@ -251,7 +251,7 @@ def patch_cms_media(
     item_id: int,
     payload: schemas.CmsMediaUpdate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     row = crud.update_cms_media_item(
         db,
@@ -274,7 +274,7 @@ def patch_cms_media(
 def delete_cms_media(
     item_id: int,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     ok = crud.delete_cms_media_item(db, item_id)
     if not ok:
@@ -288,7 +288,7 @@ async def upload_cms_media(
     alt_text: str = Form(default=""),
     tags: str = Form(default=""),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     original_name = sanitize_filename(file.filename or "asset.bin")
     unique_name = f"cms_{uuid.uuid4().hex}_{original_name}"
@@ -319,7 +319,7 @@ async def upload_cms_media(
 @router.get("/cms/metrics", response_model=schemas.CmsMetrics)
 def get_cms_metrics(
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     publications = crud.list_content_publications(db)
     status_counter = {
@@ -369,7 +369,7 @@ def get_cms_metrics(
 def list_cms_pages(
     limit: int = 200,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     return crud.list_page_contents(db, limit=limit)
 
@@ -378,7 +378,7 @@ def list_cms_pages(
 def get_cms_page(
     page_key: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     return crud.get_or_create_page_content(db, page_key)
 
@@ -387,7 +387,7 @@ def get_cms_page(
 def create_cms_page(
     payload: dict[str, Any],
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     title = str(payload.get("title") or "").strip()
     if not title:
@@ -411,7 +411,7 @@ def patch_cms_page(
     page_key: str,
     payload: schemas.PageContentUpdate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_active_user),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
     return crud.update_page_content(db, page_key, payload)
 
@@ -420,7 +420,7 @@ def patch_cms_page(
 def delete_cms_page(
     page_key: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     crud.update_content_publication(
         db,

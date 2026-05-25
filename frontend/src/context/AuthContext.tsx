@@ -11,6 +11,7 @@ interface AuthContextType {
         email: string;
         role: string;
         is_email_verified?: boolean;
+        permissions?: Record<string, string>;
     } | null;
     token: string | null;
     login: (token?: string, refreshToken?: string) => Promise<void>;
@@ -18,6 +19,8 @@ interface AuthContextType {
     refresh: () => Promise<void>;
     isAuthenticated: boolean;
     loading: boolean;
+    hasModuleAccess: (module: string, minLevel?: string) => boolean;
+    hasPermission: (perm: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -69,6 +72,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 cache: 'no-store',
                 token: activeToken
             });
+            // Fetch permissions separately if not included in userData
+            if (!userData.permissions) {
+                try {
+                    const permData = await apiFetch<any>('/auth/me/permissions', {
+                        cache: 'no-store',
+                        token: activeToken
+                    });
+                    userData.permissions = permData.permissions;
+                } catch {
+                    // Permissions not critical — user can still navigate
+                    userData.permissions = {};
+                }
+            }
             setUser(userData);
             setToken(activeToken);
             if (typeof window !== 'undefined' && tokenValue) {
@@ -120,8 +136,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await fetchUser();
     }, [fetchUser]);
 
+    const hasModuleAccess = useCallback((module: string, minLevel: string = 'read'): boolean => {
+        if (!user?.permissions) return false;
+        // Admin always has access
+        if (user.role === 'admin') return true;
+        const permKey = `${module}:${minLevel}`;
+        if (user.permissions[permKey] === 'allow') return true;
+        // Hierarchy: manage → edit → read
+        if (minLevel === 'read') {
+            if (user.permissions[`${module}:edit`] === 'allow') return true;
+            if (user.permissions[`${module}:manage`] === 'allow') return true;
+        }
+        if (minLevel === 'edit') {
+            if (user.permissions[`${module}:manage`] === 'allow') return true;
+        }
+        return false;
+    }, [user]);
+
+    const hasPermission = useCallback((perm: string): boolean => {
+        if (!user?.permissions) return false;
+        if (user.role === 'admin') return true;
+        return user.permissions[perm] === 'allow';
+    }, [user]);
+
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, refresh, isAuthenticated: !!token, loading }}>
+        <AuthContext.Provider value={{ user, token, login, logout, refresh, isAuthenticated: !!token, loading, hasModuleAccess, hasPermission }}>
             {children}
         </AuthContext.Provider>
     );

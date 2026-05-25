@@ -31,6 +31,7 @@ export default function WorkspaceLayout({
     sidebarTitle: manualTitle,
     sidebarSections: manualSections,
     allowedRoles,
+    allowedPermissions,
     depth = 1,
     onBack,
     customSidebar,
@@ -41,6 +42,7 @@ export default function WorkspaceLayout({
             manualTitle={manualTitle}
             manualSections={manualSections}
             allowedRoles={allowedRoles}
+            allowedPermissions={allowedPermissions}
             depth={depth}
             onBack={onBack}
             customSidebar={customSidebar}
@@ -56,12 +58,12 @@ export default function WorkspaceLayout({
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function WorkspaceLayoutInner({
     children, manualTitle, manualSections,
-    allowedRoles, depth, onBack, customSidebar,
+    allowedRoles, allowedPermissions, depth, onBack, customSidebar,
     // Toolbar props
     breadcrumbs, viewType, setViewType, availableViews,
     rightActions, leftActions, onSearch, onFilter, onColumns, onGroup, onMore, onAdd, onAddOption
 }: any) {
-    const { user } = useAuth();
+    const { user, hasModuleAccess } = useAuth();
     const pathname = usePathname();
     const moduleKey = pathname?.split('/')[2] || 'default';
     const [showInbox, setShowInbox] = useState(false);
@@ -107,10 +109,17 @@ function WorkspaceLayoutInner({
 
     const displayTitle = manualTitle || moduleContext.title;
     const displaySections = manualSections || moduleContext.sections;
-    const role = (user?.role || '').toLowerCase();
-    const canAccessEvangelism = role === 'admin' || role === 'pastor';
+    // Module prefix → permission mapping for sidebar section filtering
+    const MODULE_PATH_PERM_MAP: Record<string, string> = {
+        '/plataforma/evangelism': 'evangelism',
+        '/plataforma/crm': 'crm',
+        '/plataforma/finances': 'finance',
+        '/plataforma/cms': 'cms',
+        '/plataforma/community': 'community',
+        '/plataforma/spiritual-life': 'spiritual_life',
+        '/plataforma/wiki': 'cms',
+    };
     const filteredDisplaySections = useMemo(() => {
-        if (canAccessEvangelism) return displaySections;
         if (!Array.isArray(displaySections)) return displaySections;
         return displaySections
             .map((section: any) => ({
@@ -118,12 +127,17 @@ function WorkspaceLayoutInner({
                 items: Array.isArray(section?.items)
                     ? section.items.filter((item: any) => {
                         const href = String(item?.href || '');
-                        return !href.startsWith('/plataforma/evangelism');
+                        for (const [prefix, permModule] of Object.entries(MODULE_PATH_PERM_MAP)) {
+                            if (href.startsWith(prefix)) {
+                                return hasModuleAccess(permModule, 'read');
+                            }
+                        }
+                        return true;
                     })
                     : section?.items,
             }))
             .filter((section: any) => !Array.isArray(section?.items) || section.items.length > 0);
-    }, [canAccessEvangelism, displaySections]);
+    }, [displaySections, hasModuleAccess]);
 
     const cycleS2 = useCallback(() => {
         if (layers.S2) closeLayer('S2');
@@ -290,7 +304,7 @@ function WorkspaceLayoutInner({
     );
 
     return (
-        <ProtectedRoute allowedRoles={allowedRoles}>
+        <ProtectedRoute allowedRoles={allowedRoles} allowedPermissions={allowedPermissions}>
             <div className="workspace-platform flex flex-col h-screen w-full bg-slate-50 dark:bg-[#111213] overflow-hidden font-display relative transition-colors duration-500">
 
                 <motion.div

@@ -47,7 +47,7 @@ export default function SpiritualLifeLayout({ children }: { children: React.Reac
     ];
 
     return (
-        <WorkspaceLayout sidebarTitle="Vida Espiritual" sidebarSections={SPIRITUAL_SECTIONS}>
+        <WorkspaceLayout sidebarTitle="Vida Espiritual" sidebarSections={SPIRITUAL_SECTIONS} allowedPermissions={['spiritual_life:read']}>
             {children}
         </WorkspaceLayout>
     );

@@ -25,7 +25,7 @@ const GROUP_SECTIONS = [
 
 export default function GroupsLayout({ children }: { children: React.ReactNode }) {
     return (
-        <WorkspaceLayout sidebarTitle="Casas de Bendición" sidebarSections={GROUP_SECTIONS}>
+        <WorkspaceLayout sidebarTitle="Casas de Bendición" sidebarSections={GROUP_SECTIONS} allowedPermissions={['community:read']}>
             {children}
         </WorkspaceLayout>
     );

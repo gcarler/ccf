@@ -19,7 +19,7 @@ const INBOX_SECTIONS = [
 
 export default function InboxLayout({ children }: { children: React.ReactNode }) {
     return (
-        <WorkspaceLayout sidebarTitle="Bandeja de Entrada" sidebarSections={INBOX_SECTIONS}>
+        <WorkspaceLayout sidebarTitle="Bandeja de Entrada" sidebarSections={INBOX_SECTIONS} allowedPermissions={['messaging:read']}>
             {children}
         </WorkspaceLayout>
     );

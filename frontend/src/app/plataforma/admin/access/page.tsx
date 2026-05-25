@@ -43,6 +43,9 @@ const MODULES = [
     { id: 'finance', label: 'Finanzas', icon: Lock, color: 'text-amber-500' },
     { id: 'cms', label: 'Sitio Web', icon: Layout, color: 'text-purple-500' },
     { id: 'messaging', label: 'Mensajería', icon: Edit3, color: 'text-cyan-500' },
+    { id: 'evangelism', label: 'Evangelismo', icon: Users, color: 'text-orange-500' },
+    { id: 'community', label: 'Comunidad', icon: Users, color: 'text-teal-500' },
+    { id: 'spiritual_life', label: 'Vida Espiritual', icon: BookOpen, color: 'text-rose-500' },
 ];
 
 // Maps UI level names → backend level names and vice versa
@@ -66,6 +69,9 @@ const PERMISSION_SCOPE: Record<string, Record<string, string[]>> = {
     cms:      { read: ['cms:read'], edit: ['cms:read', 'cms:edit'], manage: ['cms:read', 'cms:edit', 'cms:manage'] },
     academy:  { read: ['academy:read'], study: ['academy:read', 'academy:study'], edit: ['academy:read', 'academy:study', 'academy:edit'], manage: ['academy:read', 'academy:study', 'academy:edit', 'academy:manage'] },
     messaging: { read: ['messaging:read'], edit: ['messaging:read', 'messaging:edit'] },
+    evangelism: { read: ['evangelism:read'], edit: ['evangelism:read', 'evangelism:edit'], manage: ['evangelism:read', 'evangelism:edit', 'evangelism:manage'] },
+    community: { read: ['community:read'], edit: ['community:read', 'community:edit'], manage: ['community:read', 'community:edit', 'community:manage'] },
+    spiritual_life: { read: ['spiritual_life:read'], edit: ['spiritual_life:read', 'spiritual_life:edit'], manage: ['spiritual_life:read', 'spiritual_life:edit', 'spiritual_life:manage'] },
 };
 
 /** Convert any permission format (array of strings, flat dict, module dict) to module→UI-level map */

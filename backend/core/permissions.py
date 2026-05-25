@@ -136,6 +136,42 @@ PERMISSIONS: Dict[str, Dict[str, str]] = {
         "label": "Academia: gestor",
         "description": "Gestionar cursos, lecciones y calificaciones",
     },
+    "evangelism:read": {
+        "label": "Evangelismo: lector",
+        "description": "Ver estrategias y campañas de evangelismo",
+    },
+    "evangelism:edit": {
+        "label": "Evangelismo: editor",
+        "description": "Crear y editar estrategias de evangelismo",
+    },
+    "evangelism:manage": {
+        "label": "Evangelismo: gestor",
+        "description": "Gestionar evangelismo, campañas y salidas",
+    },
+    "community:read": {
+        "label": "Comunidad: lector",
+        "description": "Ver grupos y actividades comunitarias",
+    },
+    "community:edit": {
+        "label": "Comunidad: editor",
+        "description": "Crear y editar grupos y eventos comunitarios",
+    },
+    "community:manage": {
+        "label": "Comunidad: gestor",
+        "description": "Gestionar la comunidad, grupos y células",
+    },
+    "spiritual_life:read": {
+        "label": "Vida Espiritual: lector",
+        "description": "Ver contenido y recursos espirituales",
+    },
+    "spiritual_life:edit": {
+        "label": "Vida Espiritual: editor",
+        "description": "Crear y editar contenido espiritual",
+    },
+    "spiritual_life:manage": {
+        "label": "Vida Espiritual: gestor",
+        "description": "Gestionar el módulo de vida espiritual",
+    },
 }
 
 # ── Permission expansion helpers (must be before DEFAULT_ROLES) ────────
@@ -166,6 +202,9 @@ MODULE_PERMISSION_MAP: Dict[str, Dict[str, str]] = {
         "manage": "academy:manage",
     },
     "messaging": {"read": "messaging:read", "edit": "messaging:edit"},
+    "evangelism": {"read": "evangelism:read", "edit": "evangelism:edit", "manage": "evangelism:manage"},
+    "community": {"read": "community:read", "edit": "community:edit", "manage": "community:manage"},
+    "spiritual_life": {"read": "spiritual_life:read", "edit": "spiritual_life:edit", "manage": "spiritual_life:manage"},
 }
 
 
@@ -248,6 +287,14 @@ DEFAULT_ROLES: List[Dict[str, Any]] = [
         ],
     },
     {
+        "name": "Estudiante",
+        "label": "Estudiante",
+        "permissions": [
+            *expand_module_permissions("academy", "study"),
+            "profile:manage",
+        ],
+    },
+    {
         "name": "Aspirante",
         "label": "Aspirante",
         "permissions": [
@@ -289,6 +336,69 @@ def get_all_permissions() -> Dict[str, Dict[str, str]]:
 
 def get_default_roles() -> List[Dict[str, Any]]:
     return list(DEFAULT_ROLES)
+
+
+def get_user_effective_permissions(db: Session, user) -> dict:
+    """Compute effective permissions for a user.
+
+    Resolution order: admin bypass → Role model → UserPermission override.
+    Returns a dict of {permission_key: "allow"}.
+    """
+    role = normalize_role(getattr(user, "role", ""))
+
+    # Admin bypass: full access
+    if role == "admin":
+        perms = {}
+        for p_key in PERMISSIONS:
+            perms[p_key] = "allow"
+        return perms
+
+    user_perms: dict = {}
+
+    # 1. Role-based permissions from Role model
+    if getattr(user, "user_role_obj", None):
+        role_perms = getattr(user.user_role_obj, "permissions", None) or {}
+        if isinstance(role_perms, dict):
+            for k in role_perms:
+                user_perms[k] = "allow"
+        elif isinstance(role_perms, (list, set)):
+            for k in role_perms:
+                user_perms[k] = "allow"
+
+    # 2. Per-user permission overrides
+    if getattr(user, "permissions_override", None):
+        override = getattr(user.permissions_override, "permissions", None) or {}
+        if isinstance(override, dict):
+            for k, v in override.items():
+                user_perms[k] = v if isinstance(v, str) else "allow"
+
+    # 3. Fallback: legacy role string
+    if not user_perms:
+        for role_def in DEFAULT_ROLES:
+            if role_def["name"].lower() == role:
+                for p in role_def["permissions"]:
+                    user_perms[p] = "allow"
+                break
+
+    return user_perms
+
+
+def require_module_access(module: str, min_level: str = "read"):
+    """Factory: return a FastAPI dependency that checks module-level access.
+
+    Usage: require_module_access("crm", "read") or require_module_access("projects", "edit")
+    Maps to the appropriate permission key via MODULE_PERMISSION_MAP.
+    """
+    module_map = MODULE_PERMISSION_MAP.get(module)
+    if not module_map:
+        raise ValueError(f"Unknown module: {module}")
+
+    # Resolve the actual permission key for the given level
+    perm_key = module_map.get(min_level)
+    if not perm_key:
+        raise ValueError(f"Unknown permission level '{min_level}' for module '{module}'")
+
+    return require_permission(perm_key)
 
 
 # ── JWT token creation ─────────────────────────────────────────────────

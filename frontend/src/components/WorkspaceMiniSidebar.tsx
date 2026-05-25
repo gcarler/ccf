@@ -30,11 +30,9 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void }) {
     const pathname = usePathname();
-    const { user } = useAuth();
+    const { user, hasModuleAccess } = useAuth();
     const { openModal } = useCreation();
     const { resetSidebarStack } = useSidebarLayers();
-    const role = (user?.role || '').toLowerCase();
-    const canAccessEvangelism = role === 'admin' || role === 'pastor';
 
     const primaryItems = [
         { id: 'dashboard',  icon: LayoutDashboard, href: '/plataforma',  label: 'Inicio' },
@@ -55,9 +53,23 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
         { id: 'admin',         icon: Shield,        href: '/plataforma/admin',          label: 'Admin' },
     ];
 
+    // Module ID to permission mapping for sidebar filtering
+    const MODULE_PERM_MAP: Record<string, string> = {
+        academy: 'academy',
+        crm: 'crm',
+        evangelism: 'evangelism',
+        community: 'community',
+        finances: 'finance',
+        cms: 'cms',
+        'spiritual-life': 'spiritual_life',
+        admin: 'admin',
+    };
+
     const visibleModuleItems = moduleItems.filter((item) => {
-        if (item.id === 'evangelism') return canAccessEvangelism;
-        return true;
+        if (item.id === 'admin') return user?.role === 'admin';
+        const permModule = MODULE_PERM_MAP[item.id];
+        if (!permModule) return true;
+        return hasModuleAccess(permModule, 'read');
     });
 
     const NavItem = ({ id, icon: Icon, href, label, badge }: any) => {

@@ -18,7 +18,7 @@ from backend.api.evangelism_shared import (ABSENTEES_PREVIEW_LIMIT,
                                            get_expected_members_for_event,
                                            normalize_role_scope_payload,
                                            parse_session_date, utc_now)
-from backend.auth import (normalize_role, require_active_user,
+from backend.auth import (normalize_role, require_module_access,
                           require_pastor_or_admin)
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
@@ -221,7 +221,7 @@ def get_event_attendance_report(
 def get_member_attendance_history(
     member_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("evangelism", "read")),
 ):
     member = db.query(models.Member).filter(models.Member.id == member_id).first()
     if not member:

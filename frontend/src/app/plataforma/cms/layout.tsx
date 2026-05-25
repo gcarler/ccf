@@ -6,7 +6,7 @@ import { CmsModuleNav } from "@/components/cms/CmsModuleNav";
 
 export default function CmsLayout({ children }: { children: React.ReactNode }) {
   return (
-    <WorkspaceLayout>
+    <WorkspaceLayout allowedPermissions={['cms:read']}>
       <div className="flex h-full flex-col">
         <CmsModuleNav />
         <div className="flex-1 overflow-hidden">{children}</div>

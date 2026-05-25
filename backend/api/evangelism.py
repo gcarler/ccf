@@ -15,8 +15,8 @@ from backend.api.evangelism_shared import (_channel_label,
                                            _resolve_campaign_members,
                                            _serialize_crm_task,
                                            _serialize_message_group, utc_now)
-from backend.auth import (normalize_role, require_active_user, require_admin,
-                          require_pastor_or_admin)
+from backend.auth import (normalize_role, require_admin,
+                          require_module_access, require_pastor_or_admin)
 from backend.core.database import get_db
 from backend.mesh_websockets import manager
 
@@ -674,7 +674,7 @@ def list_crm_tasks(
 def list_my_crm_tasks(
     status: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_module_access("evangelism", "read")),
 ):
     _warn_deprecated_crm_alias("/api/evangelism/tasks/mine", "/api/crm/tasks/mine")
     try:

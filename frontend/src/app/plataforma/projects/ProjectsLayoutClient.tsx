@@ -111,7 +111,7 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
     }
 
     return (
-        <WorkspaceLayout sidebarTitle={currentProject ? currentProject.title : "Proyectos CCF"} sidebarSections={projectSections}>
+        <WorkspaceLayout sidebarTitle={currentProject ? currentProject.title : "Proyectos CCF"} sidebarSections={projectSections} allowedPermissions={['projects:read']}>
             {children}
         </WorkspaceLayout>
     );
