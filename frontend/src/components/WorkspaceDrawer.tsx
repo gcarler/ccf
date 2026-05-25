@@ -78,13 +78,13 @@ export default function WorkspaceDrawer({
                             </div>
                         </header>
                                 {/* Drawer Body */}
-                                <main className="flex-1 overflow-y-auto scrollbar-thin p-4">
+                                <main className="flex-1 overflow-y-auto scrollbar-thin p-6">
                                     {children}
                                 </main>
 
                                 {/* Drawer Footer */}
                                 {actions && (
-                                    <footer className="p-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-end gap-4 bg-slate-50/50 dark:bg-white/5">
+                                    <footer className="px-6 py-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-end gap-4 bg-slate-50/50 dark:bg-white/5">
                                         {actions}
                                     </footer>
                                 )}
