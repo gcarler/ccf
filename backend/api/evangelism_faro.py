@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import collections
+from datetime import datetime as _datetime
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -1171,8 +1172,6 @@ def get_macro_despliegue(
 
 # ── Sessions & Attendance ──
 
-from datetime import datetime as _datetime
-
 @router.get("/sessions", response_model=List[schemas.GloryHouseSession])
 def list_sessions(
     strategy_id: Optional[int] = None,
@@ -1343,7 +1342,7 @@ def submit_attendance(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Submit attendance for a session. Checks automation triggers."""
-    from backend.models_academy import GloryHouseAttendance, GloryHouseSession, GloryHouse
+    from backend.models_academy import GloryHouseAttendance, GloryHouseSession
     
     session = db.query(GloryHouseSession).filter(GloryHouseSession.id == session_id).first()
     if not session:
