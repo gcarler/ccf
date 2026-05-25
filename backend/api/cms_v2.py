@@ -14,6 +14,7 @@ from backend.core.database import get_db
 router = APIRouter(prefix="/cms/v2", tags=["cms_v2"])
 
 ALLOWED_SECTION_TYPES = {
+    # Existing 19
     "hero",
     "video_hero",
     "rich_text",
@@ -33,6 +34,18 @@ ALLOWED_SECTION_TYPES = {
     "icon_grid",
     "newsletter",
     "popup_banner",
+    # New 11
+    "button",
+    "toc",
+    "divider",
+    "collapsible",
+    "social_links",
+    "spacer",
+    "calendar",
+    "map",
+    "document_upload",
+    "content_blocks",
+    "accordion",
 }
 CMS_EDITOR_ROLES = {"admin", "coordinador", "docente", "pastor"}
 CMS_PUBLISHER_ROLES = {"admin", "coordinador", "pastor"}

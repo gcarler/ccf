@@ -689,7 +689,7 @@ export default function StrategyDetailPage() {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <span className="text-xs font-bold text-slate-700 dark:text-white">
-                                                    {new Date(s.session_date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
+                                                    {new Date(s.session_date.split('T')[0] + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
                                                 </span>
                                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                                                     {s.status}
@@ -970,7 +970,7 @@ export default function StrategyDetailPage() {
             {/* ── Attendance Drawer ── */}
             <WorkspaceDrawer isOpen={isAttendanceDrawerOpen} onClose={() => setIsAttendanceDrawerOpen(false)}
                 title="Registrar Asistencia"
-                subtitle={attendanceSession ? new Date(attendanceSession.session_date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : ''}
+                subtitle={attendanceSession ? new Date(attendanceSession.session_date.split('T')[0] + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : ''}
                 actions={<>
                     <button onClick={() => setIsAttendanceDrawerOpen(false)}
                         className="px-4 py-1.5 text-[12px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-colors">Cancelar</button>

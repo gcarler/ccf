@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { CmsSection } from "@/types/cms-v2";
-import { X, Star, ChevronDown, ChevronUp, Send } from "lucide-react";
+import { X, Star, ChevronDown, ChevronUp, Send, Calendar, MapPin, Upload, ChevronRight, Plus, Minus, FileText, CheckCircle2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 function val(props: Record<string, unknown>, key: string, fallback = "") {
@@ -976,6 +976,353 @@ function PopupBlock({ section }: { section: CmsSection }) {
   );
 }
 
+// ─── Button Row ────────────────────────────────────────────────────────────────
+
+function ButtonSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const buttons = (Array.isArray(props.buttons) ? props.buttons : [{ label: "Click", href: "/" }]) as Array<{ label: string; href: string; variant?: string; size?: string; icon?: string }>;
+  const align = val(props, "align", "center");
+  const gap = val(props, "gap", "4");
+
+  const sizeClasses: Record<string, string> = { sm: "text-xs px-3 py-1.5", md: "text-sm px-4 py-2", lg: "text-base px-6 py-3" };
+  const variantBg: Record<string, string> = { primary: "var(--faro-primary)", outline: "transparent", ghost: "transparent" };
+  const variantBorder: Record<string, string> = { primary: "var(--faro-primary)", outline: "var(--faro-outline-variant)", ghost: "transparent" };
+  const variantColor: Record<string, string> = { primary: "var(--faro-on-primary)", outline: "var(--faro-on-surface)", ghost: "var(--faro-primary)" };
+
+  return (
+    <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
+      <div className={`flex flex-wrap gap-${gap} ${align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start"}`}>
+        {buttons.map((btn, i) => (
+          <Link
+            key={i}
+            href={btn.href || "#"}
+            className={`rounded-lg font-semibold transition-all hover:scale-105 ${sizeClasses[btn.size || "md"]}`}
+            style={{
+              background: variantBg[btn.variant || "primary"],
+              border: `2px solid ${variantBorder[btn.variant || "primary"]}`,
+              color: variantColor[btn.variant || "primary"],
+            }}
+          >
+            {btn.label}
+            {btn.icon && <ChevronRight size={16} className="inline ml-1" />}
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─── TOC ───────────────────────────────────────────────────────────────────────
+
+function TocSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "En esta página");
+  const items = asItems(props).filter(Boolean);
+  return (
+    <section className="py-6 md:py-8 px-3 md:px-6 lg:px-8 xl:px-12">
+      <div className="max-w-2xl rounded-lg p-4 border" style={{ background: "var(--faro-surface-container)", borderColor: "var(--faro-outline-variant)" }}>
+        <h3 className="text-sm font-bold uppercase tracking-wide mb-3" style={{ color: "var(--faro-primary)" }}>{title}</h3>
+        <nav>
+          <ol className="space-y-2">
+            {items.map((item, i) => (
+              <li key={i}>
+                <a href={val(item, "href", "#")} className="flex items-center gap-2 text-sm font-medium hover:underline" style={{ color: "var(--faro-on-surface)" }}>
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: "var(--faro-primary-container)", color: "var(--faro-primary)" }}>{i + 1}</span>
+                  {val(item, "label", `Sección ${i + 1}`)}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      </div>
+    </section>
+  );
+}
+
+// ─── Divider ───────────────────────────────────────────────────────────────────
+
+function DividerSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const style = val(props, "style", "solid");
+  const marginY = val(props, "margin_top", "8");
+  const width = val(props, "width", "full");
+
+  const styleClass = style === "dashed" ? "border-dashed" : style === "dotted" ? "border-dotted" : "border-solid";
+  const widthClass = width === "full" ? "w-full" : width === "narrow" ? "w-1/3" : "w-2/3";
+
+  return (
+    <section className={`py-${marginY} px-3 md:px-6 lg:px-8 xl:px-12`}>
+      <hr className={`${styleClass} border-t-2 mx-auto ${widthClass}`} style={{ borderColor: "var(--faro-outline-variant)" }} />
+    </section>
+  );
+}
+
+// ─── Collapsible ───────────────────────────────────────────────────────────────
+
+function CollapsibleSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "Información");
+  const defaultOpen = props.default_open === true;
+  const contentHtml = val(props, "content_html", "");
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <section className="py-4 md:py-6 px-3 md:px-6 lg:px-8 xl:px-12">
+      <div className="rounded-lg border" style={{ background: "var(--faro-surface-container)", borderColor: "var(--faro-outline-variant)" }}>
+        <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-4 text-left" style={{ color: "var(--faro-on-surface)" }}>
+          <span className="font-bold text-lg">{title}</span>
+          <ChevronDown size={20} className={`transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
+        </button>
+        <AnimatePresence>
+          {open && (
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+              <div className="px-4 pb-4" style={{ color: "var(--faro-on-surface-variant)" }} dangerouslySetInnerHTML={{ __html: contentHtml }} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </section>
+  );
+}
+
+// ─── Social Links ──────────────────────────────────────────────────────────────
+
+function SocialLinksSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "Síguenos");
+  const links = asItems(props).filter(Boolean);
+  const layout = val(props, "layout", "row");
+  const showLabels = props.show_labels !== false;
+  const iconSize = parseInt(val(props, "icon_size", "24"));
+
+  const platformIcons: Record<string, React.ReactNode> = {
+    facebook: <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" /></svg>,
+    instagram: <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5" /><circle cx="12" cy="12" r="5" /><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" /></svg>,
+    youtube: <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 00-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 00-1.94 2A29 29 0 001 11.75a29 29 0 00.46 5.33A2.78 2.78 0 003.4 19.1c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 001.94-2 29 29 0 00.46-5.25 29 29 0 00-.46-5.43z" /><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="white" /></svg>,
+    tiktok: <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.46V13a8.28 8.28 0 005.58 2.15V11.7a4.83 4.83 0 01-3.77-1.78V6.69h3.77z" /></svg>,
+    whatsapp: <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" /><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>,
+    twitter: <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>,
+  };
+
+  const containerClass = layout === "row" ? "flex flex-wrap gap-4" : layout === "grid" ? "grid grid-cols-2 md:grid-cols-4 gap-4" : "space-y-3";
+
+  return (
+    <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
+      <h3 className="text-lg font-bold mb-4" style={{ color: "var(--faro-on-surface)" }}>{title}</h3>
+      <div className={containerClass}>
+        {links.map((link, i) => {
+          const platform = val(link, "platform", "").toLowerCase();
+          const url = val(link, "url", "#");
+          const label = val(link, "label", platform);
+          return (
+            <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 rounded-lg border transition-all hover:scale-105" style={{ background: "var(--faro-surface)", borderColor: "var(--faro-outline-variant)", color: "var(--faro-on-surface)" }}>
+              <span style={{ color: "var(--faro-primary)" }}>{platformIcons[platform] || <Star size={iconSize} />}</span>
+              {showLabels && <span className="text-sm font-medium">{label}</span>}
+            </a>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ─── Spacer ────────────────────────────────────────────────────────────────────
+
+function SpacerSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const height = parseInt(val(props, "height", "32"));
+  return <div style={{ height: `${height}px` }} />;
+}
+
+// ─── Calendar ──────────────────────────────────────────────────────────────────
+
+function CalendarSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "Próximos Eventos");
+  const items = asItems(props).filter(Boolean);
+  const showTime = props.show_time !== false;
+  const showLocation = props.show_location !== false;
+
+  return (
+    <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
+      <h3 className="text-lg font-bold mb-6" style={{ color: "var(--faro-on-surface)" }}>{title}</h3>
+      <div className="space-y-3">
+        {items.length === 0 && <p className="text-sm opacity-60" style={{ color: "var(--faro-on-surface-variant)" }}>No hay eventos configurados.</p>}
+        {items.map((item, i) => (
+          <div key={i} className="flex items-start gap-4 p-4 rounded-lg border" style={{ background: "var(--faro-surface)", borderColor: "var(--faro-outline-variant)" }}>
+            <div className="w-12 h-12 rounded-lg flex flex-col items-center justify-center shrink-0" style={{ background: "var(--faro-primary-container)", color: "var(--faro-primary)" }}>
+              <Calendar size={18} />
+            </div>
+            <div className="flex-1">
+              <p className="font-bold" style={{ color: "var(--faro-on-surface)" }}>{val(item, "title", "Evento")}</p>
+              <div className="flex flex-wrap gap-3 text-xs mt-1" style={{ color: "var(--faro-on-surface-variant)" }}>
+                {showTime && val(item, "date") && <span>{val(item, "date")}{showTime && val(item, "time") ? ` · ${val(item, "time")}` : ""}</span>}
+                {showLocation && val(item, "location") && <span>{val(item, "location")}</span>}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─── Map ───────────────────────────────────────────────────────────────────────
+
+function MapSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "Encuéntranos");
+  const embedUrl = val(props, "embed_url", "");
+  const address = val(props, "address", "");
+  const height = parseInt(val(props, "height", "400"));
+  const showDirections = props.show_directions_link !== false;
+
+  return (
+    <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
+      <h3 className="text-lg font-bold mb-4" style={{ color: "var(--faro-on-surface)" }}>{title}</h3>
+      {embedUrl ? (
+        <div className="rounded-lg overflow-hidden border" style={{ borderColor: "var(--faro-outline-variant)" }}>
+          <iframe src={embedUrl} width="100%" height={height} style={{ border: 0 }} allowFullScreen loading="lazy" />
+        </div>
+      ) : (
+        <div className="rounded-lg border p-8 text-center" style={{ background: "var(--faro-surface-container)", borderColor: "var(--faro-outline-variant)", height: `${height}px` }}>
+          <MapPin size={48} className="mx-auto mb-3 opacity-30" style={{ color: "var(--faro-primary)" }} />
+          <p className="text-lg font-medium mb-2" style={{ color: "var(--faro-on-surface)" }}>{address || "Sin dirección configurada"}</p>
+          {showDirections && address && (
+            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold" style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)" }}>
+              <MapPin size={16} /> Ver en Google Maps
+            </a>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ─── Document Upload ───────────────────────────────────────────────────────────
+
+function DocumentUploadSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "Subir Documento");
+  const description = val(props, "description", "");
+  const acceptedTypes = val(props, "accepted_types", ".pdf,.doc,.docx,.jpg,.png");
+  const maxSize = val(props, "max_size_mb", "10");
+  const [selected, setSelected] = useState<string | null>(null);
+  const [uploaded, setUploaded] = useState(false);
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > parseInt(maxSize) * 1024 * 1024) {
+        alert(`El archivo excede ${maxSize}MB`);
+        return;
+      }
+      setSelected(file.name);
+    }
+  };
+
+  if (uploaded) return (
+    <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
+      <div className="rounded-lg p-6 text-center" style={{ background: "var(--faro-primary-container)" }}>
+        <CheckCircle2 size={48} className="mx-auto mb-3" style={{ color: "var(--faro-primary)" }} />
+        <p className="text-lg font-bold" style={{ color: "var(--faro-on-primary)" }}>{val(props, "success_message", "Documento enviado correctamente")}</p>
+      </div>
+    </section>
+  );
+
+  return (
+    <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
+      <div className="max-w-xl mx-auto rounded-lg border-2 border-dashed p-8 text-center transition-all hover:border-faro-primary/50" style={{ borderColor: "var(--faro-outline-variant)", background: "var(--faro-surface-container)" }}>
+        <FileText size={48} className="mx-auto mb-3 opacity-30" style={{ color: "var(--faro-primary)" }} />
+        <h3 className="text-lg font-bold mb-2" style={{ color: "var(--faro-on-surface)" }}>{title}</h3>
+        {description && <p className="text-sm mb-4" style={{ color: "var(--faro-on-surface-variant)" }}>{description}</p>}
+        <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer hover:scale-105 transition-all" style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)" }}>
+          <Upload size={16} /> Seleccionar archivo
+          <input type="file" accept={acceptedTypes} onChange={handleFile} className="hidden" />
+        </label>
+        {selected && (
+          <div className="mt-3 text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>
+            <span className="font-medium">{selected}</span>
+            <button onClick={() => setUploaded(true)} className="ml-3 px-3 py-1 rounded bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600">Enviar</button>
+          </div>
+        )}
+        <p className="text-xs mt-3 opacity-50" style={{ color: "var(--faro-on-surface-variant)" }}>Máx: {maxSize}MB · Tipos: {acceptedTypes}</p>
+      </div>
+    </section>
+  );
+}
+
+// ─── Content Blocks ────────────────────────────────────────────────────────────
+
+function ContentBlocksSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const columns = parseInt(val(props, "columns", "2"));
+  const blocks = asItems(props).filter(Boolean);
+  const colClass = columns === 3 ? "md:grid-cols-3" : columns === 4 ? "md:grid-cols-4" : "md:grid-cols-2";
+
+  return (
+    <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
+      <div className={`grid grid-cols-1 ${colClass} gap-6`}>
+        {blocks.map((block, i) => {
+          const type = val(block, "type", "text");
+          if (type === "text") return <div key={i} dangerouslySetInnerHTML={{ __html: val(block, "content", "") }} />;
+          if (type === "image") return (
+            <div key={i} className="rounded-lg overflow-hidden">
+              <img src={val(block, "image_url", "")} alt={val(block, "alt", "")} className="w-full h-auto" />
+              {val(block, "caption") && <p className="text-xs mt-1 opacity-60 text-center">{val(block, "caption")}</p>}
+            </div>
+          );
+          if (type === "quote") return (
+            <blockquote key={i} className="p-4 rounded-lg border-l-4 italic" style={{ borderColor: "var(--faro-primary)", background: "var(--faro-surface-container)" }}>
+              <p className="text-lg" style={{ color: "var(--faro-on-surface)" }}>{val(block, "text", "")}</p>
+              {val(block, "author") && <p className="text-sm mt-2 font-semibold" style={{ color: "var(--faro-primary)" }}>— {val(block, "author")}</p>}
+            </blockquote>
+          );
+          if (type === "divider") return <hr key={i} className="col-span-full" style={{ borderColor: "var(--faro-outline-variant)" }} />;
+          if (type === "spacer") return <div key={i} style={{ height: `${parseInt(val(block, "height", "32"))}px` }} />;
+          return null;
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ─── Accordion ─────────────────────────────────────────────────────────────────
+
+function AccordionSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "");
+  const subtitle = val(props, "subtitle", "");
+  const items = asItems(props).filter(Boolean);
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
+
+  return (
+    <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
+      {title && <h3 className="text-lg font-bold mb-2" style={{ color: "var(--faro-on-surface)" }}>{title}</h3>}
+      {subtitle && <p className="text-sm mb-6" style={{ color: "var(--faro-on-surface-variant)" }}>{subtitle}</p>}
+      <div className="space-y-2">
+        {items.map((item, i) => (
+          <div key={i} className="rounded-lg border overflow-hidden" style={{ background: "var(--faro-surface)", borderColor: "var(--faro-outline-variant)" }}>
+            <button onClick={() => setOpenIdx(openIdx === i ? null : i)} className="w-full flex items-center justify-between p-4 text-left" style={{ color: "var(--faro-on-surface)" }}>
+              <span className="font-semibold">{val(item, "question", `Pregunta ${i + 1}`)}</span>
+              <ChevronDown size={18} className={`transition-transform duration-300 ${openIdx === i ? "rotate-180" : ""}`} />
+            </button>
+            <AnimatePresence>
+              {openIdx === i && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                  <div className="px-4 pb-4 text-sm leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>
+                    {val(item, "answer", "")}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ─── Main Dispatcher ───────────────────────────────────────────────────────────
 
 export default function PublicSectionRenderer({ section }: { section: CmsSection }) {
@@ -999,6 +1346,18 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
     case "icon_grid":        return <IconGridSection section={section} />;
     case "newsletter":       return <NewsletterSection section={section} />;
     case "popup_banner":     return <PopupBlock section={section} />;
+    // New 11
+    case "button":           return <ButtonSection section={section} />;
+    case "toc":              return <TocSection section={section} />;
+    case "divider":          return <DividerSection section={section} />;
+    case "collapsible":      return <CollapsibleSection section={section} />;
+    case "social_links":     return <SocialLinksSection section={section} />;
+    case "spacer":           return <SpacerSection section={section} />;
+    case "calendar":         return <CalendarSection section={section} />;
+    case "map":              return <MapSection section={section} />;
+    case "document_upload":  return <DocumentUploadSection section={section} />;
+    case "content_blocks":   return <ContentBlocksSection section={section} />;
+    case "accordion":        return <AccordionSection section={section} />;
     default:                 return <RichTextSection section={section} />;
   }
 }

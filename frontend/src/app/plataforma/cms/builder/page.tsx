@@ -26,7 +26,10 @@ const SECTION_TYPES = [
   "hero", "video_hero", "rich_text", "rich_text_columns",
   "cards", "cta_banner", "gallery", "faq", "embed",
   "testimonials", "stats", "team", "countdown", "pricing",
-  "image_text", "timeline", "icon_grid", "newsletter", "popup_banner"
+  "image_text", "timeline", "icon_grid", "newsletter", "popup_banner",
+  // New
+  "button", "toc", "divider", "collapsible", "social_links",
+  "spacer", "calendar", "map", "document_upload", "content_blocks", "accordion"
 ];
 
 const SECTION_TYPE_COLORS: Record<string, string> = {
@@ -49,6 +52,17 @@ const SECTION_TYPE_COLORS: Record<string, string> = {
   icon_grid:         "bg-yellow-600",
   newsletter:        "bg-blue-500",
   popup_banner:      "bg-fuchsia-500",
+  button:            "bg-indigo-500",
+  toc:               "bg-zinc-500",
+  divider:           "bg-gray-400",
+  collapsible:       "bg-purple-500",
+  social_links:      "bg-sky-500",
+  spacer:            "bg-stone-400",
+  calendar:          "bg-blue-400",
+  map:               "bg-green-500",
+  document_upload:   "bg-amber-600",
+  content_blocks:    "bg-pink-400",
+  accordion:         "bg-teal-500",
 };
 
 const SECTION_TYPE_LABEL: Record<string, string> = {
@@ -71,6 +85,17 @@ const SECTION_TYPE_LABEL: Record<string, string> = {
   icon_grid:         "Grid de Iconos",
   newsletter:        "Suscripción Email",
   popup_banner:      "Pop-up Promocional",
+  button:            "Botones",
+  toc:               "Índice / Tabla de Contenidos",
+  divider:           "Divisor / Separador",
+  collapsible:       "Grupo Ocultable",
+  social_links:      "Redes Sociales",
+  spacer:            "Espaciador",
+  calendar:          "Calendario",
+  map:               "Mapa",
+  document_upload:   "Cargar Documentos",
+  content_blocks:    "Bloques de Contenido",
+  accordion:         "Acordeón",
 };
 
 interface CmsMediaItem {
