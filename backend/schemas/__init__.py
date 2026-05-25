@@ -122,7 +122,8 @@ from backend.schemas.governance import (AdminAuditLog, AutomationRuleCreate,
 # ── Identity & Auth ──────────────────────────────────────────────────────────
 from backend.schemas.identity import (RefreshTokenRequest, Role, RoleBase,
                                       RoleCreate, Token, TokenUser, User,
-                                      UserBase, UserCreate, UserUpdate)
+                                      UserBase, UserCreate, UserSelfUpdate,
+                                      UserUpdate)
 # ── Legacy / Misc ────────────────────────────────────────────────────────────
 from backend.schemas.legacy import (CommunityBoardCard,
                                     CommunityBoardCardCreate,

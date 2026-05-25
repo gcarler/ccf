@@ -9,6 +9,7 @@ import { PREMIUM_COURSES, CourseItem } from "@/lib/data/cursos";
 import { ArrowLeft, CheckCircle2, Clock, User, BookOpen, Share2 } from "lucide-react";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
+import { FAROHeader, FAROFooter } from "@/components/public/FAROShared";
 
 export default function CursoDetailPage() {
     const params = useParams();
@@ -102,7 +103,9 @@ export default function CursoDetailPage() {
     }
 
     return (
-        <main className="pt-[88px] pb-4 min-h-screen overflow-hidden">
+        <div className="min-h-screen flex flex-col" style={{ background: "var(--faro-background)", color: "var(--faro-on-background)" }}>
+            <FAROHeader />
+
             {/* ── TOAST NOTIFICATION ────────────────────── */}
             <AnimatePresence>
                 {toastMessage && (
@@ -324,6 +327,8 @@ export default function CursoDetailPage() {
                     </div>
                 </div>
             )}
-        </main>
+
+            <FAROFooter />
+        </div>
     );
 }

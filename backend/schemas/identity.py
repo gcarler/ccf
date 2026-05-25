@@ -29,6 +29,16 @@ class UserUpdate(BaseModel):
     xp: Optional[int] = None
 
 
+class UserSelfUpdate(BaseModel):
+    """Schema para que un usuario edite su propio perfil.
+    No permite cambiar role, role_id, is_active ni xp.
+    """
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    current_password: Optional[str] = None
+    new_password: Optional[str] = Field(default=None, min_length=8)
+
+
 class User(UserBase):
     id: int
     xp: int = 0

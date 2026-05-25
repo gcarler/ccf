@@ -4,6 +4,7 @@ import PublicSectionRenderer from "@/components/public/cms/PublicSectionRenderer
 import { Metadata } from "next";
 import { getCmsPublicPage } from "@/lib/cms/v2";
 import { CmsPublicPage } from "@/types/cms-v2";
+import { FAROHeader, FAROFooter } from "@/components/public/FAROShared";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string[] }> }): Promise<Metadata> {
   const resolvedParams = await params;
@@ -51,10 +52,14 @@ export default async function FaroDynamicPage({ params }: { params: Promise<{ sl
   }
 
   return (
-    <main className="px-3 md:px-4 lg:px-8 xl:px-12 py-28 space-y-3" style={{ background: "var(--faro-background)", color: "var(--faro-on-background)" }}>
-      {page.sections.filter((section) => section.is_visible).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((section) => (
-        <PublicSectionRenderer key={section.id} section={section} />
-      ))}
-    </main>
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--faro-background)", color: "var(--faro-on-background)" }}>
+      <FAROHeader />
+      <main className="flex-1 px-3 md:px-6 lg:px-8 xl:px-12 py-8 md:py-12 lg:py-16 space-y-8">
+        {page.sections.filter((section) => section.is_visible).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((section) => (
+          <PublicSectionRenderer key={section.id} section={section} />
+        ))}
+      </main>
+      <FAROFooter />
+    </div>
   );
 }

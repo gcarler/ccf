@@ -7,6 +7,7 @@ import { ArrowLeft, Quote, Share2, Heart, Send, CheckCircle2, Loader2, X, Headph
 import { motion, AnimatePresence } from "framer-motion";
 import { Testimonial } from "@/lib/data/testimonios";
 import { apiFetch } from "@/lib/http";
+import { FAROHeader, FAROFooter } from "@/components/public/FAROShared";
 
 function getTestimonialMediaUrl(t: Testimonial): string {
     if (t.media_type === "image") return t.image_url || t.media_url || "";
@@ -45,35 +46,45 @@ export default function TestimonioDetailPage() {
 
     if (loading) {
         return (
-            <main className="pt-[120px] pb-4 min-h-screen flex items-center justify-center">
-                <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--faro-primary) transparent transparent transparent" }} />
-            </main>
+            <div className="min-h-screen flex flex-col" style={{ background: "var(--faro-background)" }}>
+                <FAROHeader />
+                <main className="pt-[120px] pb-4 min-h-screen flex items-center justify-center">
+                    <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--faro-primary) transparent transparent transparent" }} />
+                </main>
+                <FAROFooter />
+            </div>
         );
     }
 
     if (!testimonial) {
         return (
-            <main className="pt-[120px] pb-4 min-h-[70vh] flex flex-col items-center justify-center text-center px-3">
-                <Quote size={80} className="mb-3 opacity-20" style={{ color: "var(--faro-primary)" }} />
-                <h1 className="text-lg font-bold mb-4" style={{ color: "var(--faro-on-background)" }}>Testimonio no encontrado</h1>
-                <p className="text-xl mb-3 opacity-70 max-w-lg" style={{ color: "var(--faro-on-surface-variant)" }}>
-                    Parece que la historia que buscas ya no está disponible o el enlace es incorrecto.
-                </p>
-                <button
-                    onClick={() => router.push('/testimonios')}
-                    className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold uppercase tracking-wide transition-all hover:-translate-x-2"
-                    style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)" }}
-                >
-                    <ArrowLeft size={16} /> Ver más testimonios
-                </button>
-            </main>
+            <div className="min-h-screen flex flex-col" style={{ background: "var(--faro-background)" }}>
+                <FAROHeader />
+                <main className="pt-[120px] pb-4 min-h-[70vh] flex flex-col items-center justify-center text-center px-3">
+                    <Quote size={80} className="mb-3 opacity-20" style={{ color: "var(--faro-primary)" }} />
+                    <h1 className="text-lg font-bold mb-4" style={{ color: "var(--faro-on-background)" }}>Testimonio no encontrado</h1>
+                    <p className="text-xl mb-3 opacity-70 max-w-lg" style={{ color: "var(--faro-on-surface-variant)" }}>
+                        Parece que la historia que buscas ya no está disponible o el enlace es incorrecto.
+                    </p>
+                    <button
+                        onClick={() => router.push('/testimonios')}
+                        className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold uppercase tracking-wide transition-all hover:-translate-x-2"
+                        style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)" }}
+                    >
+                        <ArrowLeft size={16} /> Ver más testimonios
+                    </button>
+                </main>
+                <FAROFooter />
+            </div>
         );
     }
 
     const mediaUrl = getTestimonialMediaUrl(testimonial);
 
     return (
-        <main className="pt-[120px] pb-4 min-h-screen">
+        <div className="min-h-screen flex flex-col" style={{ background: "var(--faro-background)", color: "var(--faro-on-background)" }}>
+            <FAROHeader />
+            <main className="pt-[120px] pb-4 min-h-screen">
             <article className="px-3 lg:px-0">
                 {/* ── BACK BUTTON ────────────────────────────────────── */}
                 <motion.div 
@@ -315,6 +326,8 @@ export default function TestimonioDetailPage() {
                     )}
                 </AnimatePresence>
             </article>
-        </main>
+            </main>
+            <FAROFooter />
+        </div>
     );
 }

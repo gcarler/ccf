@@ -14,20 +14,26 @@ import type { ViewType } from '@/components/ViewSwitcher';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
+import { apiFetch } from '@/lib/http';
 
 export default function AccountSettingsPage() {
-    const { user, logout } = useAuth();
+    const { user, logout, refresh } = useAuth();
     const { addToast } = useToast();
     const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'appearance' | 'notifications'>('profile');
     const [isSaving, setIsSaving] = useState(false);
     const [viewType, setViewType] = useState<ViewType>('grid');
-    const formData = {
+    const [formValues, setFormValues] = useState({
         username: user?.username || '',
         email: user?.email || '',
         firstName: '',
         lastName: '',
-        phone: ''
-    };
+        phone: '',
+    });
+    const [passwordForm, setPasswordForm] = useState({
+        current: '',
+        newPass: '',
+        confirm: '',
+    });
 
     const tabs = [
         { id: 'profile', label: 'Mi Perfil', icon: UserCircle },
@@ -38,10 +44,24 @@ export default function AccountSettingsPage() {
 
     const handleSave = async () => {
         setIsSaving(true);
-        setTimeout(() => {
-            addToast("Preferencias guardadas exitosamente", "success");
+        try {
+            const body: Record<string, string> = {};
+            if (formValues.username !== user?.username) body.username = formValues.username;
+            if (formValues.email !== user?.email) body.email = formValues.email;
+            if (Object.keys(body).length === 0) {
+                addToast("No hay cambios para guardar", "info");
+                setIsSaving(false);
+                return;
+            }
+            await apiFetch('/auth/me', { method: 'PATCH', body });
+            await refresh();
+            addToast("Perfil actualizado exitosamente", "success");
+        } catch (err: any) {
+            const detail = err?.detail || err?.message || "Error al actualizar perfil";
+            addToast(typeof detail === 'string' ? detail : "Error al actualizar perfil", "error");
+        } finally {
             setIsSaving(false);
-        }, 8000); // Artificial delay for shimmer effect
+        }
     };
 
     const sidebarSections = [
@@ -173,13 +193,38 @@ export default function AccountSettingsPage() {
                                         </div>
                                     </section>
 
+                                    {!user?.is_email_verified && (
+                                        <div className="flex items-center justify-between gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 rounded-lg">
+                                            <div className="flex items-center gap-2 text-sm font-medium text-amber-800 dark:text-amber-300">
+                                                <Shield size={16} />
+                                                <span>Correo no verificado — algunas funciones pueden estar limitadas</span>
+                                            </div>
+                                            <button
+                                                onClick={async () => {
+                                                    try {
+                                                        await apiFetch('/auth/send-verification-email', {
+                                                            method: 'POST',
+                                                            body: { email: user?.email },
+                                                        });
+                                                        addToast("Correo de verificación enviado", "success");
+                                                    } catch {
+                                                        addToast("Error al enviar verificación", "error");
+                                                    }
+                                                }}
+                                                className="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400 hover:text-amber-900 shrink-0"
+                                            >
+                                                Reenviar
+                                            </button>
+                                        </div>
+                                    )}
+
                                     <section className="space-y-3">
                                         <h4 className="font-semibold text-slate-400 uppercase tracking-wide px-4">Información Personal</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            <InputField label="Nombre de Usuario" icon={User} value={formData.username} />
-                                            <InputField label="Correo Electrónico" icon={Mail} value={formData.email} />
-                                            <InputField label="Nombre Completo" value={formData.firstName} placeholder="Ingresa tu nombre..." />
-                                            <InputField label="Teléfono de Contacto" icon={Smartphone} value={formData.phone} placeholder="+1 234 567 890" />
+                                            <InputField label="Nombre de Usuario" icon={User} value={formValues.username} onChange={(v: string) => setFormValues(f => ({...f, username: v}))} />
+                                            <InputField label="Correo Electrónico" icon={Mail} value={formValues.email} onChange={(v: string) => setFormValues(f => ({...f, email: v}))} />
+                                            <InputField label="Nombre Completo" value={formValues.firstName} placeholder="Ingresa tu nombre..." onChange={(v: string) => setFormValues(f => ({...f, firstName: v}))} />
+                                            <InputField label="Teléfono de Contacto" icon={Smartphone} value={formValues.phone} placeholder="+1 234 567 890" onChange={(v: string) => setFormValues(f => ({...f, phone: v}))} />
                                         </div>
                                     </section>
 
@@ -208,11 +253,48 @@ export default function AccountSettingsPage() {
                                             <h3 className="text-lg font-bold tracking-tighter">Cambiar Contraseña</h3>
                                         </div>
                                         <div className="space-y-3">
-                                            <InputField type="password" label="Contraseña Actual" placeholder="••••••••" />
+                                            <InputField type="password" label="Contraseña Actual" placeholder="••••••••" value={passwordForm.current} onChange={(v: string) => setPasswordForm(p => ({...p, current: v}))} />
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                <InputField type="password" label="Nueva Contraseña" placeholder="Mínimo 8 caracteres" />
-                                                <InputField type="password" label="Confirmar Nueva" placeholder="Repite la contraseña" />
+                                                <InputField type="password" label="Nueva Contraseña" placeholder="Mínimo 8 caracteres" value={passwordForm.newPass} onChange={(v: string) => setPasswordForm(p => ({...p, newPass: v}))} />
+                                                <InputField type="password" label="Confirmar Nueva" placeholder="Repite la contraseña" value={passwordForm.confirm} onChange={(v: string) => setPasswordForm(p => ({...p, confirm: v}))} />
                                             </div>
+                                            <button
+                                                onClick={async () => {
+                                                    if (!passwordForm.current || !passwordForm.newPass) {
+                                                        addToast("Completa todos los campos de contraseña", "error");
+                                                        return;
+                                                    }
+                                                    if (passwordForm.newPass !== passwordForm.confirm) {
+                                                        addToast("Las contraseñas no coinciden", "error");
+                                                        return;
+                                                    }
+                                                    if (passwordForm.newPass.length < 8) {
+                                                        addToast("La contraseña debe tener al menos 8 caracteres", "error");
+                                                        return;
+                                                    }
+                                                    setIsSaving(true);
+                                                    try {
+                                                        await apiFetch('/auth/me', {
+                                                            method: 'PATCH',
+                                                            body: {
+                                                                current_password: passwordForm.current,
+                                                                new_password: passwordForm.newPass,
+                                                            },
+                                                        });
+                                                        setPasswordForm({ current: '', newPass: '', confirm: '' });
+                                                        addToast("Contraseña actualizada exitosamente", "success");
+                                                    } catch (err: any) {
+                                                        const detail = err?.detail || err?.message || "Error al cambiar contraseña";
+                                                        addToast(typeof detail === 'string' ? detail : "Error al cambiar contraseña", "error");
+                                                    } finally {
+                                                        setIsSaving(false);
+                                                    }
+                                                }}
+                                                disabled={isSaving}
+                                                className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
+                                            >
+                                                {isSaving ? 'Guardando...' : 'Cambiar Contraseña'}
+                                            </button>
                                         </div>
                                     </div>
 
@@ -267,14 +349,15 @@ export default function AccountSettingsPage() {
     );
 }
 
-function InputField({ label, icon: Icon, value, placeholder, type = "text" }: any) {
+function InputField({ label, icon: Icon, value, placeholder, type = "text", onChange }: any) {
     return (
         <div className="space-y-3">
             <label className="font-semibold text-slate-400 uppercase tracking-wide ml-2 leading-none block">{label}</label>
             <div className="relative group">
                 {Icon && <Icon className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />}
                 <input
-                    type={type} defaultValue={value} placeholder={placeholder}
+                    type={type} value={value} placeholder={placeholder}
+                    onChange={(e) => onChange?.(e.target.value)}
                     className={clsx(
                         "w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-lg py-1.5 pr-6 text-sm font-bold text-slate-700 dark:text-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 focus:bg-white dark:focus:bg-black/60 outline-none transition-all",
                         Icon ? "pl-14" : "pl-6"

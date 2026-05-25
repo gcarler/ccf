@@ -69,9 +69,10 @@ export default function AcademyLayout({ children }: { children: React.ReactNode 
     };
 
     return (
-        <WorkspaceLayout 
-            sidebarTitle={getSidebarTitle()} 
+        <WorkspaceLayout
+            sidebarTitle={getSidebarTitle()}
             sidebarSections={SIDEBAR_SECTIONS}
+            allowedPermissions={['academy:read', 'academy:study', 'academy:edit', 'academy:manage']}
         >
             <div className="bg-white dark:bg-[#1e1f21] h-full overflow-hidden">
                 {children}
