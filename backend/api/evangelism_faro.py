@@ -775,7 +775,11 @@ def create_faro_session(
         db.add(session)
         created_sessions.append(session)
 
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     for s in created_sessions:
         db.refresh(s)
 
@@ -1001,7 +1005,11 @@ def add_faro_attendance(
     )
     session.reported_at = utc_now()
 
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     return {"status": "success", "processed": processed, "session_id": session_id}
 
 
@@ -1362,13 +1370,15 @@ def submit_attendance(
             attended=is_attended,
             absence_reason=absence_reason,
             absence_reason_detail=absence_reason_detail,
-            status=att.status,
-            notes=att.notes,
         )
         db.add(db_att)
         submitted.append(db_att)
-    
-    db.commit()
+
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     for att in submitted:
         db.refresh(att)
     

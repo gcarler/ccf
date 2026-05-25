@@ -1194,7 +1194,11 @@ def create_strategy(
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
-    result = create_evangelism_strategy(db=db, strategy=strategy)
+    try:
+        result = create_evangelism_strategy(db=db, strategy=strategy)
+    except Exception:
+        db.rollback()
+        raise
     # ── Phase scheduling trigger ──
     if strategy.typology == "evento_masivo" and strategy.phases:
         _project_phases_as_tasks(db, result.id, result.name, strategy.phases, strategy.start_date)
@@ -1208,9 +1212,13 @@ def update_strategy(
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
-    db_obj = update_evangelism_strategy(
-        db=db, strategy_id=strategy_id, strategy=strategy
-    )
+    try:
+        db_obj = update_evangelism_strategy(
+            db=db, strategy_id=strategy_id, strategy=strategy
+        )
+    except Exception:
+        db.rollback()
+        raise
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
     # ── Phase scheduling trigger ──
