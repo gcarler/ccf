@@ -214,11 +214,14 @@ def logout(response: Response):
 
 
 @router.get("/sessions")
-def get_sessions(current_user: dict = Depends(require_active_user), db: Session = Depends(get_db)):
+def get_sessions(
+    current_user: models.User = Depends(require_active_user),
+    db: Session = Depends(get_db)
+):
     """Lista las sesiones activas del usuario autenticado."""
     from backend.models_identity import RefreshToken
     sessions = db.query(RefreshToken).filter(
-        RefreshToken.user_id == current_user["user_id"],
+        RefreshToken.user_id == current_user.id,
         RefreshToken.revoked.is_(False)
     ).order_by(RefreshToken.last_active.desc()).all()
     result = []
@@ -238,14 +241,14 @@ def get_sessions(current_user: dict = Depends(require_active_user), db: Session 
 @router.post("/sessions/{session_id}/revoke", status_code=204)
 def revoke_session(
     session_id: int,
-    current_user: dict = Depends(require_active_user),
+    current_user: models.User = Depends(require_active_user),
     db: Session = Depends(get_db)
 ):
     """Revoca una sesión específica del usuario autenticado."""
     from backend.models_identity import RefreshToken
     session = db.query(RefreshToken).filter(
         RefreshToken.id == session_id,
-        RefreshToken.user_id == current_user["user_id"],
+        RefreshToken.user_id == current_user.id,
         RefreshToken.revoked.is_(False)
     ).first()
     if not session:
@@ -295,6 +298,65 @@ def get_current_ministerial_user(
     """Obtiene el perfil del usuario autenticado con sus permisos."""
     current_user.permissions = get_user_effective_permissions(db, current_user)
     return current_user
+
+
+@router.patch("/me", response_model=schemas.User)
+def update_current_user(
+    payload: schemas.UserSelfUpdate,
+    current_user: models.User = Depends(require_active_user),
+    db: Session = Depends(get_db),
+):
+    """Actualiza el perfil del usuario autenticado (username, email, password)."""
+    from backend.core.security import verify_password
+
+    # If changing email, check not taken
+    if payload.email is not None and payload.email != current_user.email:
+        existing = crud.get_user_by_email(db, payload.email)
+        if existing:
+            raise HTTPException(
+                status_code=400,
+                detail="El correo ya está registrado en el ministerio",
+            )
+
+    # If changing username, check not taken
+    if payload.username is not None and payload.username != current_user.username:
+        existing = crud.get_user_by_username(db, payload.username)
+        if existing:
+            raise HTTPException(
+                status_code=400,
+                detail="El nombre de usuario ya está en uso",
+            )
+
+    # Password change requires current_password
+    if payload.new_password:
+        if not payload.current_password:
+            raise HTTPException(
+                status_code=400,
+                detail="Se requiere la contraseña actual para cambiarla",
+            )
+        if not verify_password(payload.current_password, current_user.password_hash):
+            raise HTTPException(
+                status_code=403,
+                detail="La contraseña actual es incorrecta",
+            )
+
+    # Build update data
+    update_data: dict = {}
+    if payload.username is not None:
+        update_data["username"] = payload.username
+    if payload.email is not None:
+        update_data["email"] = payload.email
+        # Changing email invalidates verification
+        if payload.email != current_user.email:
+            update_data["is_email_verified"] = False
+    if payload.new_password:
+        update_data["password"] = payload.new_password
+
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No hay campos para actualizar")
+
+    user = crud.update_user(db, current_user.id, schemas.UserUpdate(**update_data))
+    return user
 
 
 @router.get("/me/permissions", response_model=dict)
