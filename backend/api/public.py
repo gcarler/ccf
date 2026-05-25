@@ -1,14 +1,17 @@
 import logging
+import os
 import secrets
+import uuid
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from pydantic import BaseModel
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
+from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.services.public_contact_tracking import ContactRecord, tracker
 
@@ -376,4 +379,73 @@ def public_wishlist(payload: WishlistCreate, db: Session = Depends(get_db)):
         "status": "success",
         "title": payload.title,
         "member_id": result.member.id if result.member else None,
+    }
+
+
+# ── Document Upload ─────────────────────────────────────────────────────────────
+
+ALLOWED_DOC_TYPES = {
+    ".pdf": "application/pdf",
+    ".doc": "application/msword",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".gif": "image/gif",
+    ".xls": "application/vnd.ms-excel",
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".txt": "text/plain",
+    ".csv": "text/csv",
+}
+MAX_DOC_SIZE = 20 * 1024 * 1024  # 20MB
+
+
+@router.post("/documents", response_model=dict, status_code=201)
+async def upload_public_document(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Sube un documento público (PDF, imagen, documento).
+    Guarda en uploads/ con nombre único y registra en cms_media_items.
+    """
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in ALLOWED_DOC_TYPES:
+        raise HTTPException(status_code=400, detail=f"Tipo no permitido: {ext}")
+
+    contents = await file.read()
+    if len(contents) > MAX_DOC_SIZE:
+        raise HTTPException(status_code=400, detail="Archivo muy grande (max 20MB)")
+
+    settings = get_settings()
+    uploads_dir = settings.uploads_dir
+    os.makedirs(uploads_dir, exist_ok=True)
+
+    unique_name = f"doc_{uuid.uuid4().hex[:8]}_{file.filename}"
+    file_path = os.path.join(uploads_dir, unique_name)
+    with open(file_path, "wb") as f:
+        f.write(contents)
+
+    file_size = len(contents)
+    mime_type = ALLOWED_DOC_TYPES.get(ext, file.content_type or "application/octet-stream")
+
+    # Register in cms_media_items
+    media = models.CmsMediaItem(
+        url=f"/uploads/{unique_name}",
+        filename=unique_name,
+        mime_type=mime_type,
+        file_size=file_size,
+        alt_text=file.filename,
+        section="public_documents",
+    )
+    db.add(media)
+    db.commit()
+    db.refresh(media)
+
+    return {
+        "id": media.id,
+        "url": media.url,
+        "filename": file.filename,
+        "size": file_size,
+        "mime_type": mime_type,
     }

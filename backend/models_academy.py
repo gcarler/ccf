@@ -368,6 +368,8 @@ class GloryHouseAttendance(Base):
     absence_reason = Column(String(50), nullable=True, index=True)
     absence_reason_detail = Column(Text, nullable=True)
     scanned_at = Column(DateTime, default=_utcnow, index=True)
+    status = Column(String(20), default="present")  # present | absent | first_time
+    notes = Column(Text, nullable=True)
 
     session = relationship("GloryHouseSession")
     member = relationship("Member")

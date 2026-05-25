@@ -1220,9 +1220,10 @@ def get_session_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    """Get session with attendance records."""
-    from backend.models_academy import GloryHouseSession, GloryHouseAttendance, GloryHouse
-    
+    """Get session with attendance records including member names."""
+    from backend.models_academy import GloryHouseSession, GloryHouseAttendance, GloryHouseMember
+    from backend.models_crm import Member
+
     session = (
         db.query(GloryHouseSession)
         .options(joinedload(GloryHouseSession.glory_house))
@@ -1231,15 +1232,51 @@ def get_session_detail(
     )
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    
-    attendance = db.query(GloryHouseAttendance).filter(
+
+    attendance_rows = db.query(GloryHouseAttendance).filter(
         GloryHouseAttendance.session_id == session_id
     ).all()
-    
+
+    # Build member name lookup for this session's glory_house
+    member_map: dict[int, str] = {}
+    house_members = db.query(GloryHouseMember).filter(
+        GloryHouseMember.glory_house_id == session.glory_house_id
+    ).all()
+    for hm in house_members:
+        m = db.query(Member).filter(Member.id == hm.member_id).first()
+        if m:
+            member_map[hm.member_id] = f"{m.first_name} {m.last_name}".strip()
+
+    attendance_list = []
+    for a in attendance_rows:
+        status = a.status if a.status else ("present" if a.attended else "absent")
+        attendance_list.append({
+            "id": a.id,
+            "session_id": a.session_id,
+            "member_id": a.member_id,
+            "member_name": member_map.get(a.member_id, f"Miembro {a.member_id}"),
+            "status": status,
+            "notes": a.notes,
+            "attended": a.attended,
+        })
+
+    gh = session.glory_house
     return {
-        "session": session,
-        "attendance": attendance,
-        "glory_house": session.glory_house,
+        "session": {
+            "id": session.id,
+            "glory_house_id": session.glory_house_id,
+            "session_date": session.session_date.isoformat() if session.session_date else None,
+            "topic": session.topic,
+            "offering_amount": float(session.offering_amount) if session.offering_amount else None,
+            "status": session.status,
+            "report_notes": session.report_notes,
+        },
+        "attendance": attendance_list,
+        "glory_house": {
+            "id": gh.id,
+            "name": gh.name,
+            "leader_name": gh.leader_name,
+        } if gh else None,
     }
 
 
@@ -1325,6 +1362,8 @@ def submit_attendance(
             attended=is_attended,
             absence_reason=absence_reason,
             absence_reason_detail=absence_reason_detail,
+            status=att.status,
+            notes=att.notes,
         )
         db.add(db_att)
         submitted.append(db_att)

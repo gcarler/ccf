@@ -1206,18 +1206,41 @@ function DocumentUploadSection({ section }: { section: CmsSection }) {
   const title = val(props, "title", "Subir Documento");
   const description = val(props, "description", "");
   const acceptedTypes = val(props, "accepted_types", ".pdf,.doc,.docx,.jpg,.png");
-  const maxSize = val(props, "max_size_mb", "10");
-  const [selected, setSelected] = useState<string | null>(null);
+  const maxSize = parseInt(val(props, "max_size_mb", "10"));
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > parseInt(maxSize) * 1024 * 1024) {
-        alert(`El archivo excede ${maxSize}MB`);
+      if (file.size > maxSize * 1024 * 1024) {
+        setError(`El archivo excede ${maxSize}MB`);
         return;
       }
-      setSelected(file.name);
+      setSelectedFile(file);
+      setError(null);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      const res = await fetch("/api/public/documents", { method: "POST", body: formData });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Error al subir");
+      }
+      setUploaded(true);
+    } catch (err: any) {
+      setError(err.message || "Error al subir el documento");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -1236,14 +1259,18 @@ function DocumentUploadSection({ section }: { section: CmsSection }) {
         <FileText size={48} className="mx-auto mb-3 opacity-30" style={{ color: "var(--faro-primary)" }} />
         <h3 className="text-lg font-bold mb-2" style={{ color: "var(--faro-on-surface)" }}>{title}</h3>
         {description && <p className="text-sm mb-4" style={{ color: "var(--faro-on-surface-variant)" }}>{description}</p>}
+        {error && <p className="text-sm mb-3 text-red-500 font-semibold">{error}</p>}
         <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer hover:scale-105 transition-all" style={{ background: "var(--faro-primary)", color: "var(--faro-on-primary)" }}>
           <Upload size={16} /> Seleccionar archivo
           <input type="file" accept={acceptedTypes} onChange={handleFile} className="hidden" />
         </label>
-        {selected && (
+        {selectedFile && (
           <div className="mt-3 text-sm" style={{ color: "var(--faro-on-surface-variant)" }}>
-            <span className="font-medium">{selected}</span>
-            <button onClick={() => setUploaded(true)} className="ml-3 px-3 py-1 rounded bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600">Enviar</button>
+            <span className="font-medium">{selectedFile.name}</span>
+            <span className="mx-2 opacity-50">({(selectedFile.size / 1024).toFixed(0)}KB)</span>
+            <button onClick={handleUpload} disabled={uploading} className="ml-3 px-3 py-1 rounded bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 disabled:opacity-50">
+              {uploading ? "Subiendo..." : "Enviar"}
+            </button>
           </div>
         )}
         <p className="text-xs mt-3 opacity-50" style={{ color: "var(--faro-on-surface-variant)" }}>Máx: {maxSize}MB · Tipos: {acceptedTypes}</p>
