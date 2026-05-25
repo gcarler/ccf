@@ -142,7 +142,7 @@ export default function SessionReportPage() {
             }));
 
             await apiFetch(`/evangelism/sessions/${sessionId}/attendance`, {
-                method: 'POST', token: localToken, body: attPayload,
+                method: 'POST', token: token, body: attPayload,
             });
 
             toast.success(`Reporte: ${stats.present} presentes, ${stats.absent} ausentes, ${stats.firstTime} nuevos`);

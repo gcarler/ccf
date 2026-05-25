@@ -5,7 +5,7 @@ module.exports = {
       cwd: "/root/ccf",
       script: "/root/ccf/venv/bin/uvicorn",
       interpreter: "/root/ccf/venv/bin/python3",
-      args: "backend.main:app --host 0.0.0.0 --port 8000 --reload",
+      args: "backend.main:app --host 0.0.0.0 --port 8000",
     },
     {
       name: "ccf-frontend-staging",

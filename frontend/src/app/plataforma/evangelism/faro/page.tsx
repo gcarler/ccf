@@ -134,7 +134,7 @@ export default function FaroPage() {
 
     if (loading) {
         return (
-            <EvangelismShell>
+            <EvangelismShell breadcrumbs={[]}>
                 <div className="p-4 space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                         {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 rounded-lg" />)}
@@ -146,7 +146,7 @@ export default function FaroPage() {
     }
 
     return (
-        <EvangelismShell>
+        <EvangelismShell breadcrumbs={[]}>
             <div className="p-4 space-y-3">
                 {/* Page Header Area */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

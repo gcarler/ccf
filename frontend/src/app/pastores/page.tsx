@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronRight, Heart } from 'lucide-react';
-import { FaroNavbar, FaroFooter } from '@/components/public/FAROShared';
+import { FAROHeader, FAROFooter } from '@/components/public/FAROShared';
 import RichText from "@/components/public/RichText";
 import { useContentBlock } from '@/hooks/useContent';
 import { PASTORS } from '@/data/pastors';

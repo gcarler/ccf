@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import RichText from "@/components/public/RichText";
 import { useContentBlock } from "@/hooks/useContent";
-import { FaroNavbar, FaroFooter } from "@/components/public/FAROShared";
+import { FAROHeader, FAROFooter } from "@/components/public/FAROShared";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
 

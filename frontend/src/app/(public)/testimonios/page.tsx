@@ -280,7 +280,7 @@ export default function TestimoniosPage() {
                             style={{
                                 background: "var(--faro-primary)",
                                 color: "var(--faro-on-primary)",
-                                boxShadow: isHighlight ? "unset" : undefined
+                                boxShadow: undefined
                             }}
                         >
                             Compartir <ArrowRight size={16} />

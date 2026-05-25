@@ -26,7 +26,7 @@ function AuthCallbackContent() {
             return;
         }
 
-        login(token, refresh);
+        login(token, refresh ?? undefined);
         setStatus('Autenticación exitosa. Redirigiendo...');
     }, [searchParams, router, login]);
 

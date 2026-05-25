@@ -55,13 +55,13 @@ export default function CursoDetailPage() {
         e.preventDefault();
         setEnrollSubmitting(true);
         try {
-            await apiFetch(`/public/courses/${params.id}/enroll`, {
+            await apiFetch(`/public/courses/${id}/enroll`, {
                 method: "POST",
                 body: {
                     full_name: enrollForm.fullName,
                     email: enrollForm.email,
                     phone: enrollForm.phone,
-                    landing_page: `/cursos/${params.id}`,
+                    landing_page: `/cursos/${id}`,
                 },
             });
             setEnrolled(true);

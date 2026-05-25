@@ -228,6 +228,8 @@ class CmsSection(Base):
     sort_order = Column(Integer, default=0)
     is_visible = Column(Boolean, default=True, index=True)
     status = Column(String(20), default="active", index=True)
+    is_global = Column(Boolean, default=False, server_default="0")
+    global_key = Column(String(120), nullable=True, unique=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
@@ -254,6 +256,16 @@ class CmsPublishLog(Base):
     to_status = Column(String(30), nullable=True)
     actor_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     metadata_json = Column(JSON, default={})
+    created_at = Column(DateTime, default=_utcnow, index=True)
+
+
+class CmsPageView(Base):
+    __tablename__ = "cms_page_views"
+    id = Column(Integer, primary_key=True, index=True)
+    page_id = Column(Integer, ForeignKey("cms_pages.id", ondelete="CASCADE"), nullable=False, index=True)
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    referrer = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=_utcnow, index=True)
 
 

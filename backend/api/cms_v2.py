@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
-from typing import Any
+from typing import Any, List
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -522,6 +522,14 @@ def create_section(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     if payload.type not in ALLOWED_SECTION_TYPES:
         raise HTTPException(status_code=422, detail="unsupported section type")
+    # Validate props against section type schema
+    from backend.schemas.cms_v2_sections import validate_section_props
+    try:
+        props = payload.props_json or {}
+        validated_props = validate_section_props(payload.type, props)
+        payload.props_json = validated_props
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     payload.status = (payload.status or "active").strip().lower()
     if payload.status not in {"active", "archived"}:
         raise HTTPException(status_code=422, detail="unsupported section status")
@@ -812,3 +820,183 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
             schemas.CmsSectionRead.model_validate(section) for section in sections
         ],
     )
+
+
+# ── GLOBAL BLOCKS (Phase 3) ────────────────────────────────────────────────────
+
+@router.get("/global-blocks", response_model=List[schemas.CmsSectionRead])
+def list_global_blocks(
+    site_key: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    site = _get_site_or_404(db, site_key)
+    blocks = (
+        db.query(models.CmsSection)
+        .join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id)
+        .filter(
+            models.CmsPage.site_id == site.id,
+            models.CmsSection.is_global == True,
+            models.CmsSection.is_visible == True,
+        )
+        .order_by(models.CmsSection.global_key)
+        .all()
+    )
+    return [schemas.CmsSectionRead.model_validate(b) for b in blocks]
+
+
+@router.post("/global-blocks", response_model=schemas.CmsSectionRead, status_code=201)
+def create_global_block(
+    site_key: str,
+    payload: schemas.CmsSectionCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    if payload.type not in ALLOWED_SECTION_TYPES:
+        raise HTTPException(status_code=422, detail="unsupported section type")
+    from backend.schemas.cms_v2_sections import validate_section_props
+    try:
+        validated_props = validate_section_props(payload.type, payload.props_json or {})
+        payload.props_json = validated_props
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    site = _get_site_or_404(db, site_key)
+    page = db.query(models.CmsPage).filter(
+        models.CmsPage.site_id == site.id,
+        models.CmsPage.slug == "_global_blocks",
+    ).first()
+    if not page:
+        page = models.CmsPage(
+            site_id=site.id, slug="_global_blocks", title="Global Blocks", status="draft",
+        )
+        db.add(page)
+        db.flush()
+    payload.is_global = True
+    payload.section_key = payload.section_key or f"global_{uuid.uuid4().hex[:8]}"
+    block = crud.create_cms_section(db, page.id, payload)
+    db.commit()
+    db.refresh(block)
+    return schemas.CmsSectionRead.model_validate(block)
+
+
+@router.patch("/global-blocks/{section_id}", response_model=schemas.CmsSectionRead)
+def patch_global_block(
+    site_key: str, section_id: int, payload: schemas.CmsSectionUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    block = db.query(models.CmsSection).filter(
+        models.CmsSection.id == section_id, models.CmsSection.is_global == True,
+    ).first()
+    if not block:
+        raise HTTPException(status_code=404, detail="Global block not found")
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        if hasattr(block, key):
+            setattr(block, key, value)
+    db.commit()
+    db.refresh(block)
+    return schemas.CmsSectionRead.model_validate(block)
+
+
+@router.delete("/global-blocks/{section_id}", response_model=dict)
+def delete_global_block(
+    site_key: str, section_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    block = db.query(models.CmsSection).filter(
+        models.CmsSection.id == section_id, models.CmsSection.is_global == True,
+    ).first()
+    if not block:
+        raise HTTPException(status_code=404, detail="Global block not found")
+    db.delete(block)
+    db.commit()
+    return {"ok": True, "deleted": section_id}
+
+
+# ── PAGE VIEWS TRACKING (Phase 6 Analytics) ────────────────────────────────────
+
+@router.post("/track/{page_key}", response_model=dict)
+def track_page_view(page_key: str, request: Request, db: Session = Depends(get_db)):
+    """Track a page view for analytics."""
+    try:
+        page = db.query(models.CmsPage).join(models.CmsSite).filter(
+            models.CmsPage.slug == page_key,
+        ).first()
+        if page:
+            db.add(models.CmsPageView(
+                page_id=page.id,
+                ip_address=request.client.host if request.client else None,
+                user_agent=request.headers.get("user-agent", ""),
+                referrer=request.headers.get("referer", ""),
+            ))
+            db.commit()
+    except Exception:
+        pass
+    return {"ok": True}
+
+
+@router.get("/analytics/{page_key}", response_model=dict)
+def get_page_analytics(
+    page_key: str, days: int = Query(30, le=365),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    """Get page view analytics."""
+    from datetime import timedelta
+    from sqlalchemy import func
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    page = db.query(models.CmsPage).join(models.CmsSite).filter(
+        models.CmsPage.slug == page_key,
+    ).first()
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    total = (
+        db.query(func.count(models.CmsPageView.id))
+        .filter(models.CmsPageView.page_id == page.id, models.CmsPageView.created_at >= cutoff)
+        .scalar() or 0
+    )
+    daily = (
+        db.query(
+            func.date(models.CmsPageView.created_at).label("date"),
+            func.count(models.CmsPageView.id).label("views"),
+        )
+        .filter(models.CmsPageView.page_id == page.id, models.CmsPageView.created_at >= cutoff)
+        .group_by(func.date(models.CmsPageView.created_at))
+        .order_by(func.date(models.CmsPageView.created_at))
+        .all()
+    )
+    return {"page_key": page_key, "total_views": total, "days": days,
+            "daily_views": [{"date": str(d), "views": v} for d, v in daily]}
+
+
+# ── SCHEDULED PUBLISHING (Phase 4) ─────────────────────────────────────────────
+
+@router.post("/pages/{page_id}/schedule", response_model=dict)
+def schedule_page_publish(
+    site_key: str, page_id: int, payload: Dict[str, Any],
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    """Schedule a page for future publication."""
+    _assert_role(current_user, CMS_PUBLISHER_ROLES)
+    scheduled_at = payload.get("scheduled_at")
+    if not scheduled_at:
+        raise HTTPException(status_code=400, detail="scheduled_at is required")
+    try:
+        dt = datetime.fromisoformat(scheduled_at.replace("Z", "+00:00"))
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid datetime format")
+    page = db.query(models.CmsPage).filter(models.CmsPage.id == page_id).first()
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    page.status = "scheduled"
+    seo = page.seo_json or {}
+    seo["_scheduled_at"] = scheduled_at
+    page.seo_json = seo
+    db.commit()
+    return {"ok": True, "scheduled_at": scheduled_at}

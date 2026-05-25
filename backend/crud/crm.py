@@ -437,6 +437,7 @@ def update_glory_house(db: Session, house_id: int, payload: schemas.GloryHouseUp
     for key, value in update_data.items():
         setattr(house, key, value)
 
+    members_updated = False
     if payload.base_attendees_with_roles is not None:
         db.query(models.GloryHouseMember).filter(
             models.GloryHouseMember.glory_house_id == house_id
@@ -445,6 +446,7 @@ def update_glory_house(db: Session, house_id: int, payload: schemas.GloryHouseUp
             db.add(models.GloryHouseMember(
                 glory_house_id=house_id, member_id=item.member_id, role=item.role
             ))
+        members_updated = True
     elif payload.base_attendee_ids is not None:
         db.query(models.GloryHouseMember).filter(
             models.GloryHouseMember.glory_house_id == house_id
@@ -453,6 +455,13 @@ def update_glory_house(db: Session, house_id: int, payload: schemas.GloryHouseUp
             db.add(models.GloryHouseMember(
                 glory_house_id=house_id, member_id=member_id, role="miembro"
             ))
+        members_updated = True
+
+    db.flush()
+    if members_updated:
+        house.members_count = db.query(models.GloryHouseMember).filter(
+            models.GloryHouseMember.glory_house_id == house_id
+        ).count()
 
     db.commit()
     db.refresh(house)

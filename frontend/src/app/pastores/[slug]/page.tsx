@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Quote, BookOpen } from 'lucide-react';
-import { FaroNavbar, FaroFooter } from '@/components/public/FAROShared';
+import { FAROHeader, FAROFooter } from '@/components/public/FAROShared';
 import { useContentBlock } from '@/hooks/useContent';
 import { PASTORS } from '@/data/pastors';
 
