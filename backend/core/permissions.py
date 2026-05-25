@@ -580,7 +580,7 @@ def require_permission(permission: str):
             "pastor",
         }:
             return current_user
-        if permission.startswith("projects:") and role in {"coordinador", "pastor"}:
+        if permission.startswith("projects:") and role in {"coordinador", "docente", "pastor"}:
             return current_user
 
         raise HTTPException(
