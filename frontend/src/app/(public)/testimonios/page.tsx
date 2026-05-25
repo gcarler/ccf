@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { Quote, ArrowRight, Sparkles, Search, Users, Headphones, ImageIcon, PlayCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import RichText from "@/components/public/RichText";
 import { useContentBlock } from "@/hooks/useContent";
 import { apiFetch } from "@/lib/http";
 import { Testimonial } from "@/lib/data/testimonios";
@@ -232,12 +233,10 @@ export default function TestimoniosPage() {
                             {heroTitleAccent}.
                         </span>
                     </h1>
-                    <p
+                    <RichText
+                        html={heroDescription}
                         className="text-xl md:text-lg max-w-2xl mx-auto leading-relaxed"
-                        style={{ color: "var(--faro-on-surface-variant)" }}
-                    >
-                        {heroDescription}
-                    </p>
+                    />
                 </motion.div>
             </header>
 

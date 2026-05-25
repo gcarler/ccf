@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronRight, Heart } from 'lucide-react';
 import { FaroNavbar, FaroFooter } from '@/components/public/FAROShared';
+import RichText from "@/components/public/RichText";
 import { useContentBlock } from '@/hooks/useContent';
 import { PASTORS } from '@/data/pastors';
 
@@ -49,9 +50,7 @@ export default function PastoresIndexPage() {
                     <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white mb-3">
                         {heroTitle}
                     </h1>
-                    <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto font-medium">
-                        {heroDescription}
-                    </p>
+                    <RichText html={heroDescription} className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto font-medium" />
                 </div>
 
                 <div className="max-w-7xl mx-auto px-3 md:px-6 lg:px-8 xl:px-12 pb-16">

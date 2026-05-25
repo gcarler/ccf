@@ -1154,7 +1154,9 @@ from backend.schemas.crm import (EvangelismStrategy, EvangelismStrategyCreate,
 
 @router.get("/strategies", response_model=List[EvangelismStrategy])
 def read_evangelism_strategies(
-    skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
+    skip: int = 0, limit: int = 100,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
 ):
     from backend.models_academy import GloryHouse
     strategies = get_evangelism_strategies(db, skip=skip, limit=limit)
@@ -1169,7 +1171,11 @@ def read_evangelism_strategies(
 
 
 @router.get("/strategies/{strategy_id}", response_model=EvangelismStrategy)
-def read_strategy(strategy_id: int, db: Session = Depends(get_db)):
+def read_strategy(
+    strategy_id: int,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
     from backend.models_crm import EvangelismStrategy as StrategyModel
     from backend.models_academy import GloryHouse
     db_obj = db.query(StrategyModel).filter(StrategyModel.id == strategy_id).first()
@@ -1183,7 +1189,11 @@ def read_strategy(strategy_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/strategies", response_model=EvangelismStrategy)
-def create_strategy(strategy: EvangelismStrategyCreate, db: Session = Depends(get_db)):
+def create_strategy(
+    strategy: EvangelismStrategyCreate,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
     result = create_evangelism_strategy(db=db, strategy=strategy)
     # ── Phase scheduling trigger ──
     if strategy.typology == "evento_masivo" and strategy.phases:
@@ -1193,7 +1203,10 @@ def create_strategy(strategy: EvangelismStrategyCreate, db: Session = Depends(ge
 
 @router.put("/strategies/{strategy_id}", response_model=EvangelismStrategy)
 def update_strategy(
-    strategy_id: int, strategy: EvangelismStrategyUpdate, db: Session = Depends(get_db)
+    strategy_id: int,
+    strategy: EvangelismStrategyUpdate,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
 ):
     db_obj = update_evangelism_strategy(
         db=db, strategy_id=strategy_id, strategy=strategy
@@ -1256,7 +1269,11 @@ def _project_phases_as_tasks(db, strategy_id: int, strategy_name: str, phases: l
 
 
 @router.delete("/strategies/{strategy_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_strategy(strategy_id: int, db: Session = Depends(get_db)):
+def delete_strategy(
+    strategy_id: int,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
     db_obj = delete_evangelism_strategy(db=db, strategy_id=strategy_id)
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")

@@ -3,6 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { useContentBlock } from "@/hooks/useContent";
+import RichText from "@/components/public/RichText";
 
 const DEFAULT_SECTIONS = [
   {
@@ -59,7 +60,7 @@ export default function PrivacidadPage() {
               <h2 className="text-lg font-bold text-faro-on-surface mt-3 mb-4">
                 {section.title}
               </h2>
-              <p>{section.body}</p>
+              <RichText html={section.body || ""} />
             </div>
           ))}
         </div>

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useContentBlock } from "@/hooks/useContent";
+import RichText from "@/components/public/RichText";
 import { motion, AnimatePresence } from "framer-motion";
 import { PREMIUM_COURSES, PREMIUM_BOOKS, CourseItem, BookItem } from "@/lib/data/cursos";
 import { ShoppingBag, ArrowRight, Clock, User, CheckCircle2 } from "lucide-react";
@@ -163,12 +164,7 @@ export default function CursosPage() {
                             {heroAccent}.
                         </span>
                     </h1>
-                    <p
-                        className="text-xl max-w-xl leading-relaxed"
-                        style={{ color: "var(--faro-on-surface-variant)" }}
-                    >
-                        {heroDescription}
-                    </p>
+                    <RichText html={heroDescription} className="text-xl max-w-xl leading-relaxed" />
                 </motion.div>
             </section>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -21,6 +21,7 @@ export default function AccountSettingsPage() {
     const { addToast } = useToast();
     const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'appearance' | 'notifications'>('profile');
     const [isSaving, setIsSaving] = useState(false);
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [viewType, setViewType] = useState<ViewType>('grid');
     const [formValues, setFormValues] = useState({
         username: user?.username || '',
@@ -34,6 +35,15 @@ export default function AccountSettingsPage() {
         newPass: '',
         confirm: '',
     });
+
+    // Sync form values when user data loads/changes
+    useEffect(() => {
+        setFormValues(f => ({
+            ...f,
+            username: user?.username ?? f.username,
+            email: user?.email ?? f.email,
+        }));
+    }, [user?.username, user?.email]);
 
     const tabs = [
         { id: 'profile', label: 'Mi Perfil', icon: UserCircle },
@@ -57,8 +67,9 @@ export default function AccountSettingsPage() {
             await refresh();
             addToast("Perfil actualizado exitosamente", "success");
         } catch (err: any) {
-            const detail = err?.detail || err?.message || "Error al actualizar perfil";
-            addToast(typeof detail === 'string' ? detail : "Error al actualizar perfil", "error");
+            const serverMsg = (err as any)?.detail?.detail;
+            const msg = typeof serverMsg === 'string' ? serverMsg : err?.message || "Error al actualizar perfil";
+            addToast(msg, "error");
         } finally {
             setIsSaving(false);
         }
@@ -204,7 +215,7 @@ export default function AccountSettingsPage() {
                                                     try {
                                                         await apiFetch('/auth/send-verification-email', {
                                                             method: 'POST',
-                                                            body: { email: user?.email },
+                                                            query: { email: user?.email ?? '' },
                                                         });
                                                         addToast("Correo de verificación enviado", "success");
                                                     } catch {
@@ -272,7 +283,7 @@ export default function AccountSettingsPage() {
                                                         addToast("La contraseña debe tener al menos 8 caracteres", "error");
                                                         return;
                                                     }
-                                                    setIsSaving(true);
+                                                    setIsChangingPassword(true);
                                                     try {
                                                         await apiFetch('/auth/me', {
                                                             method: 'PATCH',
@@ -284,16 +295,17 @@ export default function AccountSettingsPage() {
                                                         setPasswordForm({ current: '', newPass: '', confirm: '' });
                                                         addToast("Contraseña actualizada exitosamente", "success");
                                                     } catch (err: any) {
-                                                        const detail = err?.detail || err?.message || "Error al cambiar contraseña";
-                                                        addToast(typeof detail === 'string' ? detail : "Error al cambiar contraseña", "error");
+                                                        const serverMsg = (err as any)?.detail?.detail;
+                                                        const msg = typeof serverMsg === 'string' ? serverMsg : err?.message || "Error al cambiar contraseña";
+                                                        addToast(msg, "error");
                                                     } finally {
-                                                        setIsSaving(false);
+                                                        setIsChangingPassword(false);
                                                     }
                                                 }}
-                                                disabled={isSaving}
+                                                disabled={isChangingPassword}
                                                 className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
                                             >
-                                                {isSaving ? 'Guardando...' : 'Cambiar Contraseña'}
+                                                {isChangingPassword ? 'Guardando...' : 'Cambiar Contraseña'}
                                             </button>
                                         </div>
                                     </div>

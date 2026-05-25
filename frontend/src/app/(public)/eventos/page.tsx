@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 
 import Image from "next/image";
 import { Bell, ChevronLeft, ChevronRight, MapPin, Star, CalendarDays } from "lucide-react";
+import RichText from "@/components/public/RichText";
 import { useContentBlock } from "@/hooks/useContent";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
@@ -123,7 +124,7 @@ export default function EventosPage() {
                     </h1>
                 </div>
                 <div className="md:col-span-4 mt-3 md:mt-0">
-                    <p style={{ color: "var(--faro-on-surface-variant)" }}>{heroDescription}</p>
+                    <RichText html={heroDescription} />
                 </div>
             </header>
 

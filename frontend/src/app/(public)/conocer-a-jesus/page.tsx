@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 
 import { ArrowRight, Clock, Mail, Heart, Star, Shield } from "lucide-react";
 import { useContentBlock } from "@/hooks/useContent";
+import RichText from "@/components/public/RichText";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/http";
@@ -161,12 +162,7 @@ export default function ConocerAJesusPage() {
                         </span>{" "}
                         {heroTitleTail}
                     </h1>
-                    <p
-                        className="text-xl md:text-lg max-w-2xl leading-relaxed mb-3"
-                        style={{ color: "var(--faro-on-hero)", opacity: 0.7 }}
-                    >
-                        {heroDescription}
-                    </p>
+                    <RichText html={heroDescription} className="text-xl md:text-lg max-w-2xl leading-relaxed mb-3" />
                     <a
                         href="#contacto"
                         className="inline-flex items-center gap-3 px-4 py-2 rounded-full font-black text-sm uppercase tracking-wide transition-all hover:scale-105"

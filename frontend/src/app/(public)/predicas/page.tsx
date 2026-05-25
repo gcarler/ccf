@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, Bookmark, Play } from "lucide-react";
+import RichText from "@/components/public/RichText";
 import { useContentBlock } from "@/hooks/useContent";
 
 export default function PredicasPage() {
@@ -111,9 +112,7 @@ export default function PredicasPage() {
                             {heroTitleLead} <br/>
                             <span className="italic" style={{ color: "var(--faro-primary)" }}>{heroAccent}.</span>
                         </h1>
-                        <p className="text-xl md:text-lg opacity-70 mb-3 leading-relaxed" style={{ color: "var(--faro-on-hero)" }}>
-                            {heroDescription}
-                        </p>
+                        <RichText html={heroDescription} className="text-xl md:text-lg opacity-70 mb-3 leading-relaxed" />
                         <div className="flex flex-wrap gap-4">
                             <Link
                                 href={hasSermons && featuredSermon?.slug ? `/predicas/${featuredSermon.slug}` : "#"}

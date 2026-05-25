@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Search, Phone, Clock, Calendar, Navigation, Plus, Minus, Home } from "lucide-react";
+import RichText from "@/components/public/RichText";
 import { useContentBlock } from "@/hooks/useContent";
 
 interface LocationItem {

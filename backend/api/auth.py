@@ -344,10 +344,10 @@ def update_current_user(
     update_data: dict = {}
     if payload.username is not None:
         update_data["username"] = payload.username
+    email_changed = payload.email is not None and payload.email != current_user.email
     if payload.email is not None:
         update_data["email"] = payload.email
-        # Changing email invalidates verification
-        if payload.email != current_user.email:
+        if email_changed:
             update_data["is_email_verified"] = False
     if payload.new_password:
         update_data["password"] = payload.new_password
@@ -356,6 +356,18 @@ def update_current_user(
         raise HTTPException(status_code=400, detail="No hay campos para actualizar")
 
     user = crud.update_user(db, current_user.id, schemas.UserUpdate(**update_data))
+
+    # Auto-send verification email if email changed
+    if email_changed:
+        try:
+            from backend.crud.identity import create_verification_token
+            from backend.services.email import render_verify_email, send_email
+            token_row = create_verification_token(db, user.id)
+            subject, html = render_verify_email(token_row.token)
+            send_email(to=user.email, subject=subject, html=html)
+        except Exception as exc:
+            log.warning("No se pudo enviar email de verificación tras cambio de email: %s", exc)
+
     return user
 
 

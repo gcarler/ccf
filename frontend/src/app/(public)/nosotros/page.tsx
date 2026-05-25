@@ -6,6 +6,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { Target, Sparkles, Quote } from "lucide-react";
 import { useContentBlock } from "@/hooks/useContent";
+import RichText from "@/components/public/RichText";
 
 export default function NosotrosPage() {
     const { data: heroContent } = useContentBlock("faro_about_hero");
@@ -55,12 +56,7 @@ export default function NosotrosPage() {
                                 {heroTitleAccent}.
                             </span>
                         </h1>
-                        <p 
-                            className="text-xl md:text-lg leading-relaxed opacity-80"
-                            style={{ color: "var(--faro-on-surface-variant)" }}
-                        >
-                            {heroDescription}
-                        </p>
+                        <RichText html={heroDescription} className="text-xl md:text-lg leading-relaxed opacity-80" />
                     </motion.div>
                 </div>
             </section>

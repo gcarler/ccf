@@ -569,7 +569,10 @@ def sync_event_assignments(
 
 
 @router.get("/roles")
-def get_roles(db: Session = Depends(get_db)):
+def get_roles(
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_active_user),
+):
     return (
         db.query(models.RoleDefinition)
         .order_by(
@@ -683,7 +686,10 @@ def delete_role(
 
 @router.put("/events/{event_id}/audience")
 def update_event_audience(
-    event_id: int, payload: EventAudienceUpdate, db: Session = Depends(get_db)
+    event_id: int,
+    payload: EventAudienceUpdate,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
 ):
     event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not event:
@@ -794,7 +800,10 @@ def get_global_event_analytics(
 
 
 @router.get("/events/dashboard-stats")
-def get_events_dashboard_stats(db: Session = Depends(get_db)):
+def get_events_dashboard_stats(
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
     events = db.query(models.CrmEvent).all()
     stats = []
 

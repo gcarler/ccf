@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import RichText from "@/components/public/RichText";
 import { useContentBlock } from "@/hooks/useContent";
 import { FaroNavbar, FaroFooter } from "@/components/public/FAROShared";
 import { apiFetch } from "@/lib/http";
@@ -54,9 +55,7 @@ export default function BoletinPage() {
                         <h1 className="font-black text-3xl md:text-4xl lg:text-5xl tracking-tight mb-4" style={{ color: "var(--faro-on-background)" }}>
                             {title}
                         </h1>
-                        <p className="text-lg md:text-xl mb-8 max-w-xl mx-auto leading-relaxed" style={{ color: "var(--faro-on-surface-variant)" }}>
-                            {description}
-                        </p>
+                        <RichText html={description} className="text-lg md:text-xl mb-8 max-w-xl mx-auto leading-relaxed" />
                         {status === "sent" ? (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9 }}
