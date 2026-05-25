@@ -167,6 +167,9 @@ export default function StrategyDetailPage() {
     const [attendanceSaving, setAttendanceSaving] = useState(false);
     const [isAttendanceDrawerOpen, setIsAttendanceDrawerOpen] = useState(false);
 
+    // Session menu
+    const [sessionMenuId, setSessionMenuId] = useState<number | null>(null);
+
     const fetchStrategy = useCallback(async () => {
         setLoading(true);
         try {
@@ -379,18 +382,18 @@ export default function StrategyDetailPage() {
             // Get house members to build attendance list
             const house = await apiFetch<any>(`/evangelism/glory-houses/${session.glory_house_id}`, { token });
             const existing = await apiFetch<any>(`/evangelism/sessions/${session.id}`, { token }).catch(() => null);
-            const existingMap: Record<number, string> = {};
+            const existingMap: Record<number, { status: string; notes: string }> = {};
             if (existing?.attendance) {
                 for (const a of existing.attendance) {
-                    existingMap[a.member_id] = a.status;
+                    existingMap[a.member_id] = { status: a.status, notes: a.notes || '' };
                 }
             }
             const memberList = house?.base_attendees?.map((a: any) => ({
                 member_id: a.member_id,
                 name: a.name || `${a.member?.first_name || ''} ${a.member?.last_name || ''}`.trim(),
                 role: a.role || 'miembro',
-                status: (existingMap[a.member_id] as any) || 'present',
-                notes: '',
+                status: (existingMap[a.member_id]?.status as any) || 'present',
+                notes: existingMap[a.member_id]?.notes || '',
             })) || [];
             setAttendanceMembers(memberList);
         } catch { setAttendanceMembers([]); }
@@ -416,6 +419,19 @@ export default function StrategyDetailPage() {
         } catch (e: any) {
             toast.error('Error: ' + (e.message || 'Intente de nuevo'));
         } finally { setAttendanceSaving(false); }
+    };
+
+    const handleDeleteSession = async (sessionId: number) => {
+        if (!confirm('¿Eliminar esta sesión y su asistencia?')) return;
+        try {
+            const token = localStorage.getItem('ccf_token') || '';
+            await apiFetch(`/evangelism/sessions/${sessionId}`, { method: 'DELETE', token });
+            toast.success('Sesión eliminada');
+            fetchSessions();
+        } catch (e: any) {
+            toast.error('Error: ' + (e.message || 'Intente de nuevo'));
+        }
+        setSessionMenuId(null);
     };
 
     const handleSave = async () => {
