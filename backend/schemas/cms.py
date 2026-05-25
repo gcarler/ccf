@@ -266,6 +266,8 @@ class CmsSectionCreate(BaseModel):
     sort_order: int = 0
     is_visible: bool = True
     status: str = "active"
+    is_global: bool = False
+    global_key: Optional[str] = None
 
 
 class CmsSectionUpdate(BaseModel):
@@ -274,6 +276,8 @@ class CmsSectionUpdate(BaseModel):
     sort_order: Optional[int] = None
     is_visible: Optional[bool] = None
     status: Optional[str] = None
+    is_global: Optional[bool] = None
+    global_key: Optional[str] = None
 
 
 class CmsSectionReorderItem(BaseModel):
@@ -294,6 +298,8 @@ class CmsSectionRead(BaseModel):
     sort_order: int
     is_visible: bool
     status: str = "active"
+    is_global: bool = False
+    global_key: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     model_config = orm_config

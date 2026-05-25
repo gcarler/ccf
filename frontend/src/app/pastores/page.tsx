@@ -40,7 +40,7 @@ export default function PastoresIndexPage() {
 
     return (
         <div className="min-h-screen bg-[#f8fafc] dark:bg-[#0b0d11] selection:bg-blue-500/30 selection:text-blue-900">
-            <FaroNavbar />
+            <FAROHeader />
 
             <main className="pt-24 pb-4">
                 <div className="max-w-7xl mx-auto px-3 md:px-6 lg:px-8 xl:px-12 mb-20 text-center relative z-10 py-8">
@@ -95,7 +95,7 @@ export default function PastoresIndexPage() {
                 </div>
             </main>
 
-            <FaroFooter />
+            <FAROFooter />
         </div>
     );
 }

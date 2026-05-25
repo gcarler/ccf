@@ -37,7 +37,7 @@ export default function BoletinPage() {
 
     return (
         <div className="min-h-screen flex flex-col bg-faro-surface">
-            <FaroNavbar />
+            <FAROHeader />
             <main className="flex-1 flex items-center justify-center px-3 md:px-6 lg:px-8 xl:px-12 py-8 md:py-12 lg:py-16">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
@@ -93,7 +93,7 @@ export default function BoletinPage() {
                     </div>
                 </motion.div>
             </main>
-            <FaroFooter />
+            <FAROFooter />
         </div>
     );
 }

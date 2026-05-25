@@ -1,7 +1,7 @@
 import uuid
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -19,11 +19,14 @@ router = APIRouter(tags=["CRM"])
 @router.get("/members", response_model=List[schemas.Member])
 def list_members(
     search: Optional[str] = None,
+    role: Optional[str] = None,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    """Lista miembros con tipado estricto y busqueda optimizada."""
-    return crud.search_members(db, search=search)
+    """Lista miembros con tipado estricto, busqueda optimizada y paginacion."""
+    return crud.search_members(db, search=search, role=role, skip=skip, limit=limit)
 
 
 @router.post("/members/", response_model=schemas.Member)
@@ -59,6 +62,114 @@ def get_my_crm_card(
         "last_name": "Usuario",
         "church_role": current_user.role,
         "qr_code": f"CCF-USR-{current_user.id}-{uuid.uuid4().hex[:6]}",
+    }
+
+
+@router.get("/members/me/profile", response_model=dict)
+def get_my_ministry_profile(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
+):
+    """Perfil ministerial completo del usuario autenticado: datos del miembro, oficios, habilidades, badges y nivel."""
+    member = (
+        db.query(models.Member).filter(models.Member.user_id == current_user.id).first()
+    )
+
+    # ── Positions (Oficios Eclesiásticos) ──────────────────────────
+    positions = []
+    if member:
+        member_positions = (
+            db.query(models.MemberPosition, models.Position)
+            .join(models.Position, models.Position.id == models.MemberPosition.position_id)
+            .filter(models.MemberPosition.member_id == member.id)
+            .order_by(models.MemberPosition.is_active.desc(), models.MemberPosition.start_date.desc())
+            .all()
+        )
+        for mp, pos in member_positions:
+            positions.append({
+                "id": mp.id,
+                "position_name": pos.name,
+                "category": pos.category,
+                "is_active": mp.is_active,
+                "start_date": mp.start_date.isoformat() if mp.start_date else None,
+                "end_date": mp.end_date.isoformat() if mp.end_date else None,
+            })
+
+    # ── Skills (Habilidades) ──────────────────────────────────────
+    skills = []
+    if member:
+        skills = sorted(
+            row.name
+            for row in (
+                db.query(models.VolunteerSkill)
+                .join(
+                    models.member_volunteer_skills,
+                    models.member_volunteer_skills.c.skill_id == models.VolunteerSkill.id,
+                )
+                .filter(models.member_volunteer_skills.c.member_id == member.id)
+                .all()
+            )
+            if row.name
+        )
+
+    # ── Badges (Logros) ────────────────────────────────────────────
+    badges = []
+    user_badges = (
+        db.query(models.UserBadge)
+        .filter(models.UserBadge.user_id == current_user.id)
+        .all()
+    )
+    for ub in user_badges:
+        badge = db.query(models.Badge).filter(models.Badge.id == ub.badge_id).first()
+        if badge:
+            badges.append({
+                "id": badge.id,
+                "name": badge.name,
+                "description": badge.description,
+                "icon_key": badge.icon_key,
+                "xp_reward": badge.xp_reward,
+                "earned_at": ub.earned_at.isoformat() if ub.earned_at else None,
+            })
+
+    # ── Level & XP ─────────────────────────────────────────────────
+    level_info = {"title": None, "min_xp": 0, "next_title": None, "next_min_xp": None}
+    if current_user.current_level_id:
+        current_level = (
+            db.query(models.Level)
+            .filter(models.Level.id == current_user.current_level_id)
+            .first()
+        )
+        if current_level:
+            next_level = (
+                db.query(models.Level)
+                .filter(models.Level.min_xp > current_level.min_xp)
+                .order_by(models.Level.min_xp.asc())
+                .first()
+            )
+            level_info = {
+                "title": current_level.title,
+                "min_xp": current_level.min_xp,
+                "icon_key": current_level.icon_key,
+                "next_title": next_level.title if next_level else None,
+                "next_min_xp": next_level.min_xp if next_level else None,
+            }
+
+    return {
+        "member": {
+            "id": member.id if member else None,
+            "first_name": member.first_name if member else current_user.username,
+            "last_name": member.last_name if member else "",
+            "church_role": member.church_role if member else current_user.role,
+            "spiritual_status": member.spiritual_status if member else None,
+            "registration_date": (
+                member.registration_date.isoformat() if member and member.registration_date else None
+            ),
+        },
+        "positions": positions,
+        "skills": skills,
+        "badges": badges,
+        "xp": current_user.xp or 0,
+        "level": level_info,
     }
 
 

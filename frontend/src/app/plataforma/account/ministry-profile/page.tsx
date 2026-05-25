@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Award,
     Crown,
@@ -11,11 +11,89 @@ import {
     Edit3,
     Heart,
     User,
-    Settings
+    Settings,
+    Loader2,
+    AlertCircle
 } from 'lucide-react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
+import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/http';
+
+interface Position {
+    id: number;
+    position_name: string;
+    category: string | null;
+    is_active: boolean;
+    start_date: string | null;
+    end_date: string | null;
+}
+
+interface Badge {
+    id: number;
+    name: string;
+    description: string | null;
+    icon_key: string;
+    xp_reward: number;
+    earned_at: string | null;
+}
+
+interface MemberInfo {
+    id: number | null;
+    first_name: string;
+    last_name: string;
+    church_role: string | null;
+    spiritual_status: string | null;
+    registration_date: string | null;
+}
+
+interface LevelInfo {
+    title: string | null;
+    min_xp: number;
+    icon_key: string | null;
+    next_title: string | null;
+    next_min_xp: number | null;
+}
+
+interface ProfileData {
+    member: MemberInfo;
+    positions: Position[];
+    skills: string[];
+    badges: Badge[];
+    xp: number;
+    level: LevelInfo;
+}
+
+const BADGE_ICONS: Record<string, React.ComponentType<any>> = {
+    star: Star,
+    heart: Heart,
+    shield: Shield,
+    award: Award,
+    crown: Crown,
+    zap: Zap,
+};
+
+function badgeIcon(iconKey: string | null) {
+    const key = iconKey?.toLowerCase() || '';
+    return BADGE_ICONS[key] || Award;
+}
 
 export default function MinistryProfilePage() {
+    const { token } = useAuth();
+    const [profile, setProfile] = useState<ProfileData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!token) return;
+        apiFetch<ProfileData>('/crm/members/me/profile', { token })
+            .then(data => setProfile(data))
+            .catch(err => {
+                const msg = (err as any)?.detail?.detail || 'No se pudo cargar el perfil ministerial';
+                setError(msg);
+            })
+            .finally(() => setLoading(false));
+    }, [token]);
+
     const sidebarSections = [
         {
             title: 'Cuenta',
@@ -26,6 +104,44 @@ export default function MinistryProfilePage() {
             ]
         }
     ];
+
+    if (loading) {
+        return (
+            <WorkspaceLayout sidebarTitle="Cuenta" sidebarSections={sidebarSections}>
+                <div className="p-4 flex items-center justify-center min-h-[60vh]">
+                    <Loader2 className="animate-spin text-amber-500" size={32} />
+                </div>
+            </WorkspaceLayout>
+        );
+    }
+
+    if (error || !profile) {
+        return (
+            <WorkspaceLayout sidebarTitle="Cuenta" sidebarSections={sidebarSections}>
+                <div className="p-4 flex flex-col items-center justify-center min-h-[60vh] gap-3">
+                    <AlertCircle size={40} className="text-amber-500/60" />
+                    <p className="text-muted-foreground text-sm text-center">{error || 'Perfil no disponible'}</p>
+                </div>
+            </WorkspaceLayout>
+        );
+    }
+
+    const { member, positions, skills, badges, xp, level } = profile;
+    const initials = (member.first_name?.[0] || '').toUpperCase();
+    const fullName = `${member.first_name || ''} ${member.last_name || ''}`.trim() || 'Miembro';
+    const statusLabel = member.spiritual_status || member.church_role || 'Miembro';
+    const sinceYear = member.registration_date
+        ? new Date(member.registration_date).getFullYear()
+        : null;
+
+    // XP progress
+    const xpCurrent = xp;
+    const xpMin = level.min_xp || 0;
+    const xpMax = level.next_min_xp || xpMin + 1000;
+    const xpProgress = xpMax > xpMin ? Math.min((xpCurrent - xpMin) / (xpMax - xpMin) * 100, 100) : 0;
+    const xpRemaining = xpMax - xpCurrent;
+    const levelTitle = level.title || '—';
+    const nextLevelTitle = level.next_title || 'Siguiente nivel';
 
     return (
         <WorkspaceLayout sidebarTitle="Cuenta" sidebarSections={sidebarSections}>
@@ -52,13 +168,14 @@ export default function MinistryProfilePage() {
                 <div className="lg:col-span-2 space-y-3">
                     <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-lg space-y-3">
                         <div className="flex items-center gap-3">
-                            <div className="w-24 h-24 bg-gradient-to-br from-amber-500 to-primary rounded-lg flex items-center justify-center text-white text-lg font-bold shadow-2xl">
-                                R
+                            <div className="w-24 h-24 bg-gradient-to-br from-amber-500 to-primary rounded-lg flex items-center justify-center text-white text-3xl font-bold shadow-2xl">
+                                {initials || '?'}
                             </div>
                             <div className="space-y-1">
-                                <h2 className="text-xl font-bold text-white tracking-tight uppercase italic">Ricardo <span className="text-amber-500">Gomez</span></h2>
+                                <h2 className="text-xl font-bold text-white tracking-tight uppercase italic">{fullName}</h2>
                                 <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">
-                                    <Shield size={12} className="text-amber-500" /> Miembro Activo <span className="opacity-20">•</span> Desde 2022
+                                    <Shield size={12} className="text-amber-500" /> {statusLabel}
+                                    {sinceYear && <><span className="opacity-20">•</span> Desde {sinceYear}</>}
                                 </div>
                             </div>
                         </div>
@@ -69,10 +186,12 @@ export default function MinistryProfilePage() {
                                     <Crown size={14} className="text-amber-500" /> Oficios Eclesiásticos
                                 </h3>
                                 <div className="space-y-2">
-                                    {['Evangelista', 'Líder de Faro en Casa'].map((office, i) => (
-                                        <div key={i} className="flex items-center gap-3 bg-white/5 p-3 rounded-md border border-white/5">
+                                    {positions.length === 0 ? (
+                                        <p className="text-[10px] text-muted-foreground italic">Sin oficios registrados</p>
+                                    ) : positions.filter(p => p.is_active).map((pos) => (
+                                        <div key={pos.id} className="flex items-center gap-3 bg-white/5 p-3 rounded-md border border-white/5">
                                             <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_10px_#f59e0b]" />
-                                            <span className="text-sm font-bold text-white uppercase tracking-tight">{office}</span>
+                                            <span className="text-sm font-bold text-white uppercase tracking-tight">{pos.position_name}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -82,7 +201,9 @@ export default function MinistryProfilePage() {
                                     <Zap size={14} className="text-amber-500" /> Mis Dones y Habilidades
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {['Edición Video', 'Diseño Gráfico', 'Intercesión', 'Enseñanza', 'Fotografía'].map((skill, i) => (
+                                    {skills.length === 0 ? (
+                                        <p className="text-[10px] text-muted-foreground italic">Sin habilidades registradas</p>
+                                    ) : skills.map((skill, i) => (
                                         <span key={i} className="px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold text-muted-foreground border border-white/5 uppercase tracking-wider">
                                             {skill}
                                         </span>
@@ -95,19 +216,19 @@ export default function MinistryProfilePage() {
                     <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-lg space-y-3">
                         <h3 className="text-xl font-bold text-white tracking-tight uppercase italic">Mis <span className="text-amber-500">Logros</span></h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {[
-                                { label: 'Fundamentos', icon: Star, color: 'text-blue-400' },
-                                { label: 'Consolidador', icon: Heart, color: 'text-rose-400' },
-                                { label: 'Líder 1', icon: Shield, color: 'text-emerald-400' },
-                                { label: 'Maestro', icon: Award, color: 'text-sky-400' },
-                            ].map((badge, i) => (
-                                <div key={i} className="bg-white/5 p-3 rounded-lg flex flex-col items-center gap-3 text-center group hover:bg-white/10 transition-all border border-white/5">
-                                    <div className={`w-12 h-8 bg-white/5 rounded-lg flex items-center justify-center ${badge.color} group-hover:scale-110 transition-transform`}>
-                                        <badge.icon size={24} />
+                            {badges.length === 0 ? (
+                                <p className="col-span-full text-[10px] text-muted-foreground italic">Aún no has obtenido insignias</p>
+                            ) : badges.map((badge) => {
+                                const Icon = badgeIcon(badge.icon_key);
+                                return (
+                                    <div key={badge.id} className="bg-white/5 p-3 rounded-lg flex flex-col items-center gap-3 text-center group hover:bg-white/10 transition-all border border-white/5">
+                                        <div className="w-12 h-8 bg-white/5 rounded-lg flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+                                            <Icon size={24} />
+                                        </div>
+                                        <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">{badge.name}</span>
                                     </div>
-                                    <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">{badge.label}</span>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
@@ -115,21 +236,23 @@ export default function MinistryProfilePage() {
                 <div className="space-y-3">
                     <div className="bg-gradient-to-br from-amber-500/20 to-primary/20 border border-amber-500/20 p-4 rounded-lg space-y-3">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-xl font-bold text-white tracking-tighter uppercase italic">Nivel <span className="text-amber-500">12</span></h3>
+                            <h3 className="text-xl font-bold text-white tracking-tighter uppercase italic">Nivel <span className="text-amber-500">{levelTitle}</span></h3>
                             <Zap size={24} className="text-amber-500 animate-pulse" />
                         </div>
                         <div className="space-y-2">
                             <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide">
                                 <span className="text-white/60">Experiencia Ministerial</span>
-                                <span className="text-white">850 / 1000 XP</span>
+                                <span className="text-white">{xpCurrent} / {xpMax} XP</span>
                             </div>
                             <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                                <div className="h-full bg-amber-500 transition-all duration-1000 shadow-[0_0_15px_rgba(245,158,11,0.5)]" style={{ width: '85%' }} />
+                                <div className="h-full bg-amber-500 transition-all duration-1000 shadow-[0_0_15px_rgba(245,158,11,0.5)]" style={{ width: `${Math.round(xpProgress)}%` }} />
                             </div>
                         </div>
-                        <p className="text-[10px] text-muted-foreground font-medium leading-relaxed italic">
-                            &quot;Te faltan 150 XP para alcanzar el nivel de Lider de Proyecto.&quot;
-                        </p>
+                        {xpRemaining > 0 && (
+                            <p className="text-[10px] text-muted-foreground font-medium leading-relaxed italic">
+                                &quot;Te faltan {xpRemaining} XP para alcanzar el nivel de {nextLevelTitle}.&quot;
+                            </p>
+                        )}
                     </div>
 
                     <div className="bg-[#1e1f21] border border-white/5 p-4 rounded-lg space-y-3">
@@ -155,4 +278,3 @@ export default function MinistryProfilePage() {
         </WorkspaceLayout>
     );
 }
-
