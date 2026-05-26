@@ -10,7 +10,7 @@ from backend import crud, models, schemas
 from backend.api.evangelism_events import router as events_router
 from backend.api.evangelism_faro import router as faro_router
 from backend.api.evangelism_shared import utc_now
-from backend.auth import (normalize_role, require_admin,
+from backend.auth import (normalize_role, require_active_user, require_admin,
                           require_module_access, require_pastor_or_admin)
 from backend.core.database import get_db
 from backend.crud.crm import (create_evangelism_strategy,
@@ -1028,13 +1028,8 @@ def update_crm_settings(
 def validate_scanner_token(
     token: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_active_user),
 ):
-    """Valida un cÃ³digo QR de asistencia con check de integridad."""
-    if normalize_role(str(current_user.role)) not in {"admin", "pastor"}:
-        raise HTTPException(
-            status_code=403, detail="Permisos insuficientes. Se requiere: crm:manage"
-        )
     # Formato: CCF-MBR-{id}-{secret}
     if not token.startswith("CCF-MBR-"):
         raise HTTPException(status_code=400, detail="Formato de cÃ³digo invÃ¡lido")

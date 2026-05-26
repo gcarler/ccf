@@ -26,6 +26,38 @@ from backend.core.database import get_db
 router = APIRouter()
 
 
+# ── Permission helpers ──
+
+def _is_event_admin_or_pastor(user: models.User) -> bool:
+    """Check if user is admin or pastor."""
+    role = normalize_role(str(user.role))
+    return role in {"admin", "pastor"}
+
+
+def _is_event_assignee(db: Session, user: models.User, event_id: int) -> bool:
+    """Check if user is assigned to this event (MC, preacher, offering, etc.)."""
+    member = db.query(models.Member).filter(models.Member.user_id == user.id).first()
+    if not member:
+        return False
+    assignment = db.query(models.EventAssignment).filter(
+        models.EventAssignment.event_id == event_id,
+        models.EventAssignment.member_id == member.id,
+    ).first()
+    return assignment is not None
+
+
+def _require_event_access(db: Session, user: models.User, event_id: int):
+    """Allow admin/pastor OR event assignees to access event data."""
+    if _is_event_admin_or_pastor(user):
+        return
+    if _is_event_assignee(db, user, event_id):
+        return
+    raise HTTPException(
+        status_code=403,
+        detail="Permisos insuficientes. Solo admin, pastor o asignados al evento."
+    )
+
+
 @router.get("/events/", response_model=List[schemas.CrmEvent])
 def list_events(
     skip: int = 0,
@@ -131,8 +163,9 @@ def delete_event(
 def get_event_detail(
     event_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _require_event_access(db, current_user, event_id)
     event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
@@ -168,8 +201,9 @@ def get_event_detail(
 def get_event_attendance_report(
     event_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _require_event_access(db, current_user, event_id)
     event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
@@ -280,8 +314,9 @@ def get_member_attendance_history(
 def register_attendance(
     payload: schemas.EventAttendanceCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _require_event_access(db, current_user, payload.event_id)
     return crud.create_event_attendance(db, payload)
 
 
@@ -289,9 +324,11 @@ def register_attendance(
 def register_bulk_attendance(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_active_user),
 ):
     event_id = payload.get("event_id")
+    if event_id:
+        _require_event_access(db, current_user, event_id)
     member_ids = payload.get("member_ids", [])
     try:
         session_date = parse_session_date(
@@ -438,8 +475,9 @@ def get_event_session_detail(
     event_id: int,
     session_date: datetime.date,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _require_event_access(db, current_user, event_id)
     event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
@@ -941,8 +979,9 @@ def fast_checkin_visitor(
     session_date: str,
     visitor: VisitorCreate,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_active_user),
 ):
+    _require_event_access(db, current_user, event_id)
     event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
@@ -1003,6 +1042,28 @@ def fast_checkin_visitor(
             attended=True,
         )
     )
+
+    # Create CRM follow-up records for new visitors
+    if not already_exists:
+        # ConsolidationCase for follow-up tracking
+        case = models.ConsolidationCase(
+            member_id=new_visitor.id,
+            stage="new",
+            status="active",
+            source="evangelism_event",
+        )
+        db.add(case)
+
+        # Pipeline lead for pastoral follow-up
+        lead = models.ConsolidationPipeline(
+            first_name=new_visitor.first_name,
+            last_name=new_visitor.last_name,
+            phone=new_visitor.phone or "",
+            source="evangelism_event",
+            stage="new",
+            notes=f"Registrado como visitante en evento {event.name or event_id}",
+        )
+        db.add(lead)
     db.commit()
 
     message = (

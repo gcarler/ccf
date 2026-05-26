@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import EvangelismShell from "@/components/evangelism/EvangelismShell";
-import { Calendar, MapPin, Users, CheckCircle2, ArrowLeft, Mic, Save, X, Search, Download } from "lucide-react";
+import { Calendar, MapPin, Users, CheckCircle2, ArrowLeft, Mic, Save, X, Search, Download, UserPlus } from "lucide-react";
 import { DSCard } from "@/design/components/DSCard";
 import { toast } from "sonner";
 import clsx from "clsx";
@@ -488,6 +488,12 @@ export default function EventDetailPage() {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4">
+                                    <button
+                                        onClick={() => setIsVisitorModalOpen(true)}
+                                        className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-emerald-500/30 hover:scale-105 transition-all flex items-center gap-2"
+                                    >
+                                        <UserPlus size={16}/> Registrar Visitante
+                                    </button>
                                     <button 
                                         onClick={saveSession}
                                         disabled={savingSession || !sessionDate}

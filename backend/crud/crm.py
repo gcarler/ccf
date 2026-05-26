@@ -405,8 +405,9 @@ def create_glory_house(db: Session, payload: schemas.GloryHouseCreate):
             .strip()
             .upper()
             .replace(" ", "-")
-        )
-        data["code"] = f"{base}-{_utcnow().strftime('%Y%m%d%H%M%S')}"
+        )[:12]  # truncate to leave room for suffix
+        suffix = _utcnow().strftime('%m%d%H%M')  # 8 chars
+        data["code"] = f"{base}-{suffix}"[:30]
     if not str(data.get("name") or "").strip():
         fallback_name = str(data.get("address") or data["code"]).strip()
         data["name"] = f"Faro pendiente - {fallback_name}"
