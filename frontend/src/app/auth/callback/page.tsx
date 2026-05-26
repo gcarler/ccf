@@ -12,13 +12,13 @@ function AuthCallbackContent() {
     const [status, setStatus] = useState('Procesando autenticación...');
 
     useEffect(() => {
-        if (!searchParams) {
-            setStatus('Error: No hay parámetros de autenticación');
-            setTimeout(() => router.push('/login'), 3000);
-            return;
-        }
-        const token = searchParams.get('token');
-        const refresh = searchParams.get('refresh');
+        // Backend redirects with fragment (#token=...&refresh=...)
+        // useSearchParams only reads query params, so we must parse the hash manually
+        const hash = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
+        const hashParams = new URLSearchParams(hash);
+
+        const token = hashParams.get('token') || searchParams?.get('token');
+        const refresh = hashParams.get('refresh') || searchParams?.get('refresh');
 
         if (!token) {
             setStatus('Error: No se recibió token de autenticación');
