@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
+import ViewSwitcher, { ViewType } from '@/components/ViewSwitcher';
+import { useViewType, MINIMAL_VIEWS } from '@/hooks/useViewType';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Users,
@@ -157,6 +159,7 @@ function MemberField({ label, value, onChange, placeholder, type = 'text', requi
 export default function MembersPage() {
     const { token } = useAuth();
     const router = useRouter();
+    const { viewType, setViewType } = useViewType('crm_members', 'grid');
     const [members, setMembers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -338,13 +341,49 @@ export default function MembersPage() {
                                 <button key={role.id} onClick={() => setRoleFilter(role.name)} className={clsx("px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide whitespace-nowrap transition-all shrink-0 snap-start", roleFilter === role.name ? "bg-slate-800 text-white dark:bg-white dark:text-slate-900 shadow-md" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10")}>{role.name}</button>
                             ))}
                         </div>
+                        <div className="ml-auto"><ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={MINIMAL_VIEWS} /></div>
                     </div>
 
                     {/* Members List */}
                     {loading ? (
                         <div className="text-center py-1.5 animate-pulse font-bold uppercase tracking-wide text-slate-400">Sincronizando base de datos...</div>
+                    ) : viewType === 'list' ? (
+                        <div className="space-y-1">
+                            {filteredMembers.map(m => (
+                                <div key={m.id} onClick={() => router.push(`/plataforma/crm/members/${m.id}`)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-all">
+                                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400 font-bold text-xs">
+                                        {m.first_name[0]}{m.last_name[0]}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{m.first_name} {m.last_name}</p>
+                                        <p className="text-xs text-slate-400">{m.church_role || 'Miembro'}{m.email ? ` · ${m.email}` : ''}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : viewType === 'table' ? (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-xs">
+                                <thead><tr className="border-b border-slate-200 dark:border-white/10 text-slate-500">
+                                    <th className="text-left py-2 px-3 font-semibold">Nombre</th>
+                                    <th className="text-left py-2 px-3 font-semibold">Rol</th>
+                                    <th className="text-left py-2 px-3 font-semibold">Email</th>
+                                    <th className="text-left py-2 px-3 font-semibold">Teléfono</th>
+                                </tr></thead>
+                                <tbody>
+                                    {filteredMembers.map(m => (
+                                        <tr key={m.id} onClick={() => router.push(`/plataforma/crm/members/${m.id}`)} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors">
+                                            <td className="py-2 px-3 font-medium text-slate-900 dark:text-white">{m.first_name} {m.last_name}</td>
+                                            <td className="py-2 px-3"><span className={clsx("px-1.5 py-0.5 rounded text-[10px] font-bold", getRoleColor(m.church_role || ''))}>{m.church_role || 'Miembro'}</span></td>
+                                            <td className="py-2 px-3 text-slate-400">{m.email || '—'}</td>
+                                            <td className="py-2 px-3 text-slate-400">{m.phone || '—'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <AnimatePresence>
                                 {filteredMembers.map(member => (
                                     <motion.div key={member.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.2 }}>
