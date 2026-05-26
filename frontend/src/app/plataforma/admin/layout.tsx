@@ -78,10 +78,11 @@ export default function AdminLayout({
     };
 
     return (
-        <WorkspaceLayout 
-            sidebarTitle={getSidebarTitle()} 
+        <WorkspaceLayout
+            sidebarTitle={getSidebarTitle()}
             sidebarSections={SIDEBAR_SECTIONS}
             allowedRoles={['admin', 'coordinador', 'docente']}
+            allowedPermissions={['system:config']}
         >
             <div className="h-full w-full">
                 {children}

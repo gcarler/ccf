@@ -8,7 +8,7 @@ import MeshChat from '@/components/ui/MeshChat';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Tooltip from '@/components/ui/Tooltip';
 import { useAuth } from '@/context/AuthContext';
-import { Bell, Bot, ChevronLeft, ChevronRight, Maximize2, Minimize2 } from 'lucide-react';
+import { Bell, Bot, ChevronLeft, ChevronRight, LogOut, Maximize2, Minimize2 } from 'lucide-react';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
@@ -63,7 +63,7 @@ function WorkspaceLayoutInner({
     breadcrumbs, viewType, setViewType, availableViews,
     rightActions, leftActions, onSearch, onFilter, onColumns, onGroup, onMore, onAdd, onAddOption
 }: any) {
-    const { user, hasModuleAccess } = useAuth();
+    const { user, hasModuleAccess, logout } = useAuth();
     const pathname = usePathname();
     const moduleKey = pathname?.split('/')[2] || 'default';
     const [showInbox, setShowInbox] = useState(false);
@@ -371,6 +371,13 @@ function WorkspaceLayoutInner({
                                 </div>
                             </div>
                             {defaultRightActions}
+                            <button
+                                onClick={logout}
+                                className="p-1.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-all text-slate-400 hover:text-red-500"
+                                title="Cerrar sesión"
+                            >
+                                <LogOut size={14} />
+                            </button>
                         </header>
                     )}
                 </div>

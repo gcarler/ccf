@@ -29,7 +29,10 @@ def get_member_donations(db: Session, member_id: int):
 
 
 def create_member(db: Session, payload: schemas.MemberCreate):
-    row = models.Member(**payload.model_dump())
+    import uuid
+    data = payload.model_dump()
+    data.setdefault("qr_token", uuid.uuid4().hex[:16].upper())
+    row = models.Member(**data)
     db.add(row)
     db.commit()
     db.refresh(row)

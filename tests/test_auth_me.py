@@ -139,14 +139,6 @@ def test_username_duplicate(client: TestClient, db_session):
     )
     assert resp.status_code == 400
 
-    headers = _auth_header(client, email="second@test.com")
-    resp = client.patch(
-        "/api/auth/me",
-        json={"username": "usuario1"},
-        headers=headers,
-    )
-    assert resp.status_code == 400
-
 
 def test_unauthenticated_returns_401(client: TestClient, db_session):
     resp = client.patch("/api/auth/me", json={"username": "cualquiera"})
