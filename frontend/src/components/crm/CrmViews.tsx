@@ -1,12 +1,19 @@
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import { 
-    Heart, Mail, Phone, Star, GraduationCap, ChevronRight, 
+import {
+    Heart, Mail, Phone, Star, GraduationCap, ChevronRight,
     Calendar
 } from 'lucide-react';
+import { AgGridReact } from 'ag-grid-react';
+import { AllCommunityModule, ModuleRegistry, themeQuartz, ColDef } from 'ag-grid-community';
+
+ModuleRegistry.registerModules([AllCommunityModule]);
+
+const _lightTheme = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 44, headerHeight: 36, backgroundColor: '#ffffff', foregroundColor: '#1e293b', borderColor: '#e2e8f0', oddRowBackgroundColor: '#f8fafc', headerBackgroundColor: '#f1f5f9', headerTextColor: '#475569', selectedRowBackgroundColor: '#eef2ff', accentColor: '#6366f1', cellHorizontalPaddingScale: 1 });
+const _darkTheme  = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 44, headerHeight: 36, backgroundColor: 'rgb(15 23 42)', foregroundColor: '#e2e8f0', borderColor: 'rgba(255,255,255,0.08)', oddRowBackgroundColor: 'rgba(255,255,255,0.02)', headerBackgroundColor: 'rgba(255,255,255,0.04)', headerTextColor: '#94a3b8', selectedRowBackgroundColor: 'rgba(99,102,241,0.15)', accentColor: '#6366f1', cellHorizontalPaddingScale: 1 });
 
 interface Member {
     id: number;
@@ -106,75 +113,90 @@ interface TableProps extends CrmViewProps {
 }
 
 export function CrmTableView({ members, onSelect, isList = false }: TableProps) {
+    const gridRef = useRef<AgGridReact>(null);
+    const [isDark, setIsDark] = useState(false);
+
+    useEffect(() => {
+        const check = () => setIsDark(document.documentElement.classList.contains('dark'));
+        check();
+        const obs = new MutationObserver(check);
+        obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        return () => obs.disconnect();
+    }, []);
+
+    const colDefs = useMemo<ColDef[]>(() => {
+        const cols: ColDef[] = [
+            {
+                headerName: 'Miembro', flex: 2, minWidth: 180,
+                cellRenderer: ({ data }: any) => {
+                    const initials = `${data?.first_name?.[0] ?? ''}${data?.last_name?.[0] ?? ''}`;
+                    return (
+                        <div className="flex items-center gap-3 h-full">
+                            <div className="size-8 rounded-md bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/20 text-blue-600 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                                {initials}
+                            </div>
+                            <div>
+                                <div className="text-[13px] font-bold text-slate-900 dark:text-white leading-tight">{data?.first_name} {data?.last_name}</div>
+                                <div className="text-[10px] font-bold text-slate-400">ID: #{data?.id}</div>
+                            </div>
+                        </div>
+                    );
+                },
+            },
+            {
+                headerName: 'Contacto', flex: 2, minWidth: 160,
+                cellRenderer: ({ data }: any) => (
+                    <div className="flex flex-col justify-center gap-0.5 h-full">
+                        <div className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1"><Mail size={11} /> {data?.email || '—'}</div>
+                        <div className="text-xs text-slate-400 flex items-center gap-1"><Phone size={11} /> {data?.phone || '—'}</div>
+                    </div>
+                ),
+            },
+            {
+                field: 'church_role', headerName: 'Rol', width: 140,
+                cellRenderer: ({ value }: any) => {
+                    const isLeader = String(value ?? '').toLowerCase().includes('líder') || String(value ?? '').toLowerCase().includes('lider');
+                    return <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${isLeader ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' : 'bg-blue-50 text-blue-600 dark:bg-blue-900/30'}`}>{value || 'Miembro'}</span>;
+                },
+            },
+        ];
+
+        if (!isList) {
+            cols.splice(2, 0, {
+                field: 'spiritual_status', headerName: 'Estado Espiritual', width: 160,
+                cellRenderer: ({ value }: any) => (
+                    <span className="px-2.5 py-0.5 bg-slate-100 dark:bg-white/10 rounded-lg text-[10px] font-bold uppercase text-slate-500 tracking-wider">
+                        {value || 'Nuevo'}
+                    </span>
+                ),
+            });
+            cols.push({
+                headerName: 'Salud', width: 100,
+                cellRenderer: ({ data }: any) => (
+                    <div className="flex items-center gap-1 text-blue-600 font-bold text-xs">
+                        <Heart size={13} fill="currentColor" />
+                        {Math.round((data?.spiritual_health || 0.8) * 100)}%
+                    </div>
+                ),
+            });
+        }
+
+        return cols;
+    }, [isList]);
+
     return (
-        <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg overflow-hidden shadow-sm animate-fade-in">
-            <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                    <thead className="bg-slate-50 dark:bg-black/20 border-b border-slate-200 dark:border-white/10 text-[10px] uppercase font-bold tracking-wide text-slate-400">
-                        <tr>
-                            <th className="px-4 py-2">Usuario</th>
-                            <th className="px-4 py-2">Contacto</th>
-                            {!isList && <th className="px-4 py-2">Estatus Espritual</th>}
-                            <th className="px-4 py-2">Rol</th>
-                            {!isList && <th className="px-4 py-2 text-right">Métricas</th>}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                        {members.map((m, idx) => (
-                            <motion.tr 
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: idx * 0.01 }}
-                                key={m.id} 
-                                onClick={() => onSelect?.(m)}
-                                className="group hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors"
-                            >
-                                <td className="px-4 py-2">
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-8 rounded-md bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/20 text-blue-600 flex items-center justify-center font-bold text-sm group-hover:scale-110 transition-transform">
-                                            {(m.first_name?.[0] || '')}{(m.last_name?.[0] || '')}
-                                        </div>
-                                        <div>
-                                            <div className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
-                                                {m.first_name} {m.last_name}
-                                            </div>
-                                            <div className="text-[10px] font-bold text-slate-400">ID: #{m.id}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-4 py-2">
-                                    <div className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1"><Mail size={12}/> {m.email || '—'}</div>
-                                    <div className="text-xs text-slate-400 flex items-center gap-1 mt-1"><Phone size={12}/> {m.phone || '—'}</div>
-                                </td>
-                                {!isList && (
-                                    <td className="px-4 py-2">
-                                        <span className="px-2.5 py-1 bg-slate-100 dark:bg-white/10 rounded-lg text-[10px] font-bold uppercase text-slate-500 tracking-wider">
-                                            {m.spiritual_status || 'Nuevo'}
-                                        </span>
-                                    </td>
-                                )}
-                                <td className="px-4 py-2">
-                                    <span className={clsx(
-                                        "px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider",
-                                        m.church_role?.toLowerCase().includes('líder') 
-                                            ? "bg-orange-100 text-orange-600 dark:bg-orange-900/30"
-                                            : "bg-blue-50 text-blue-600 dark:bg-blue-900/30"
-                                    )}>
-                                        {m.church_role || 'Miembro'}
-                                    </span>
-                                </td>
-                                {!isList && (
-                                    <td className="px-4 py-2 text-right">
-                                        <div className="flex items-center justify-end gap-3 text-xs font-bold text-slate-500">
-                                            <div className="flex items-center gap-1 text-blue-600"><Heart size={14} fill="currentColor" /> {Math.round((m.spiritual_health || 0.8) * 100)}%</div>
-                                        </div>
-                                    </td>
-                                )}
-                            </motion.tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+        <div className="rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm animate-fade-in" style={{ height: Math.min(Math.max(members.length * 44 + 40, 200), 700) }}>
+            <AgGridReact
+                ref={gridRef}
+                theme={isDark ? _darkTheme : _lightTheme}
+                rowData={members}
+                columnDefs={colDefs}
+                defaultColDef={{ resizable: true, sortable: true, filter: true }}
+                getRowId={(p) => String(p.data.id)}
+                onRowClicked={(e) => onSelect?.(e.data)}
+                rowStyle={{ cursor: 'pointer' }}
+                suppressCellFocus
+            />
         </div>
     );
 }

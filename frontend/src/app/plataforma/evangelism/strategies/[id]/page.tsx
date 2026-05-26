@@ -474,13 +474,16 @@ export default function StrategyDetailPage() {
 
     const handleDelete = async () => {
         if (!strategy) return;
-        if (!window.confirm('¿Está seguro de eliminar esta estrategia?')) return;
+        if (!window.confirm(`¿Está seguro de eliminar "${strategy.name}"? Se borrarán todos sus grupos, sesiones y registros de asistencia.`)) return;
         try {
             await apiFetch(`/evangelism/strategies/${id}`, { method: 'DELETE', token });
             toast.success('Estrategia eliminada');
             window.dispatchEvent(new CustomEvent('evangelism-strategy-created'));
             router.push('/plataforma/evangelism');
-        } catch { toast.error('Error al eliminar'); }
+        } catch (e: any) {
+            console.error('[StrategyDetail] Delete error:', e);
+            toast.error('Error al eliminar: ' + (e?.message || 'Intente de nuevo'));
+        }
     };
 
     const formatDate = (dateStr: string | null | undefined) => {

@@ -578,6 +578,7 @@ def require_permission(permission: str):
             "coordinador",
             "docente",
             "pastor",
+            "estudiante",
         }:
             return current_user
         if permission.startswith("projects:") and role in {"coordinador", "docente", "pastor"}:
