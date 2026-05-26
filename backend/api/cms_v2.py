@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import os
 import re
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
@@ -989,7 +990,7 @@ def schedule_page_publish(
     if not scheduled_at:
         raise HTTPException(status_code=400, detail="scheduled_at is required")
     try:
-        dt = datetime.fromisoformat(scheduled_at.replace("Z", "+00:00"))
+        datetime.fromisoformat(scheduled_at.replace("Z", "+00:00"))
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid datetime format")
     page = db.query(models.CmsPage).filter(models.CmsPage.id == page_id).first()
