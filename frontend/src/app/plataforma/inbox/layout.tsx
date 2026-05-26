@@ -2,6 +2,7 @@
 
 
 import WorkspaceLayout from '@/components/WorkspaceLayout';
+import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
 import { Bell, AtSign, CheckCircle2, Bot, MessageSquare } from 'lucide-react';
 
 const INBOX_SECTIONS = [
@@ -19,9 +20,11 @@ const INBOX_SECTIONS = [
 
 export default function InboxLayout({ children }: { children: React.ReactNode }) {
     return (
-        <WorkspaceLayout sidebarTitle="Bandeja de Entrada" sidebarSections={INBOX_SECTIONS} allowedPermissions={['messaging:read']}>
-            {children}
-        </WorkspaceLayout>
+        <ModuleErrorBoundary moduleName="Bandeja de Entrada">
+            <WorkspaceLayout sidebarTitle="Bandeja de Entrada" sidebarSections={INBOX_SECTIONS} allowedPermissions={['messaging:read']}>
+                {children}
+            </WorkspaceLayout>
+        </ModuleErrorBoundary>
     );
 }
 

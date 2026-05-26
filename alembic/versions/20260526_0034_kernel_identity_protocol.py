@@ -1,7 +1,7 @@
 """0034_kernel_identity_protocol
 
 Revision ID: 20260526_0034_kernel_identity
-Revises: 20260525_0033
+Revises: 20260525_0035
 Create Date: 2026-05-26
 
 Kernel CCF — Protocolo de Identidad y Roles (3 dimensiones + estado vital).
@@ -22,7 +22,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "20260526_0034_kernel_identity"
-down_revision: Union[str, None] = "20260525_0033"
+down_revision: Union[str, None] = "20260525_0035"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

@@ -1,6 +1,7 @@
 "use client";
 
 import WorkspaceLayout from '@/components/WorkspaceLayout';
+import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
 import { Heart, Calendar, Award, GraduationCap } from 'lucide-react';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import SpiritualTimelinePanel from '@/components/spiritual/SpiritualTimelinePanel';
@@ -47,9 +48,11 @@ export default function SpiritualLifeLayout({ children }: { children: React.Reac
     ];
 
     return (
-        <WorkspaceLayout sidebarTitle="Vida Espiritual" sidebarSections={SPIRITUAL_SECTIONS} allowedPermissions={['spiritual_life:read']}>
-            {children}
-        </WorkspaceLayout>
+        <ModuleErrorBoundary moduleName="Vida Espiritual">
+            <WorkspaceLayout sidebarTitle="Vida Espiritual" sidebarSections={SPIRITUAL_SECTIONS} allowedPermissions={['spiritual_life:read']}>
+                {children}
+            </WorkspaceLayout>
+        </ModuleErrorBoundary>
     );
 }
 

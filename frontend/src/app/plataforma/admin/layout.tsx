@@ -3,6 +3,7 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
+import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
 import {
     LayoutDashboard,
     Users,
@@ -78,16 +79,18 @@ export default function AdminLayout({
     };
 
     return (
-        <WorkspaceLayout
-            sidebarTitle={getSidebarTitle()}
-            sidebarSections={SIDEBAR_SECTIONS}
-            allowedRoles={['admin', 'coordinador', 'docente']}
-            allowedPermissions={['system:config']}
-        >
-            <div className="h-full w-full">
-                {children}
-            </div>
-        </WorkspaceLayout>
+        <ModuleErrorBoundary moduleName="Administración">
+            <WorkspaceLayout
+                sidebarTitle={getSidebarTitle()}
+                sidebarSections={SIDEBAR_SECTIONS}
+                allowedRoles={['admin', 'coordinador', 'docente']}
+                allowedPermissions={['system:config']}
+            >
+                <div className="h-full w-full">
+                    {children}
+                </div>
+            </WorkspaceLayout>
+        </ModuleErrorBoundary>
     );
 }
 

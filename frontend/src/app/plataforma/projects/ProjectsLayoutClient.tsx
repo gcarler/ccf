@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
+import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
 import { LayoutDashboard, CheckCircle2, Home, Circle, ChevronLeft } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
@@ -111,8 +112,10 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
     }
 
     return (
-        <WorkspaceLayout sidebarTitle={currentProject ? currentProject.title : "Proyectos CCF"} sidebarSections={projectSections} allowedPermissions={['projects:read']}>
-            {children}
-        </WorkspaceLayout>
+        <ModuleErrorBoundary moduleName="Proyectos">
+            <WorkspaceLayout sidebarTitle={currentProject ? currentProject.title : "Proyectos CCF"} sidebarSections={projectSections} allowedPermissions={['projects:read']}>
+                {children}
+            </WorkspaceLayout>
+        </ModuleErrorBoundary>
     );
 }

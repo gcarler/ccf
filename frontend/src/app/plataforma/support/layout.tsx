@@ -2,6 +2,7 @@
 
 import React from 'react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
+import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
 import { 
     HelpCircle, 
     Book, 
@@ -41,14 +42,16 @@ export default function SupportLayout({
     children: React.ReactNode;
 }) {
     return (
-        <WorkspaceLayout 
-            sidebarTitle="Soporte / Ayuda" 
-            sidebarSections={SIDEBAR_SECTIONS}
-        >
-            <div className="bg-[#f8f9fb] dark:bg-[#020617] min-h-full">
-                {children}
-            </div>
-        </WorkspaceLayout>
+        <ModuleErrorBoundary moduleName="Soporte">
+            <WorkspaceLayout
+                sidebarTitle="Soporte / Ayuda"
+                sidebarSections={SIDEBAR_SECTIONS}
+            >
+                <div className="bg-[#f8f9fb] dark:bg-[#020617] min-h-full">
+                    {children}
+                </div>
+            </WorkspaceLayout>
+        </ModuleErrorBoundary>
     );
 }
 

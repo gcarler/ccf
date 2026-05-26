@@ -66,3 +66,6 @@ from backend.models_kernel import (ActivityStatus, MinistryOffice, ChurchRole,
     PlatformRole)  # noqa: F401
 from backend.models_kernel import (UserMinistry, UserRoleAssignment,
     UserRoleHistory, PlatformRoleDefinition, UserPlatformRole)  # noqa: F401
+
+# Knowledge Base
+from backend.services.knowledge_base import AgentKnowledgeBase  # noqa: F401

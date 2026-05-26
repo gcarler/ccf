@@ -49,8 +49,14 @@ def upgrade() -> None:
             "is_active", sa.Boolean(),
             nullable=False, server_default="true",
         ),
-        sa.Column("created_by", sa.Integer(), sa.ForeignKey("agents.id"), nullable=True),
-        sa.Column("updated_by", sa.Integer(), sa.ForeignKey("agents.id"), nullable=True),
+        sa.Column(
+            "created_by", sa.Integer(),
+            sa.ForeignKey("agents.id"), nullable=True,
+        ),
+        sa.Column(
+            "updated_by", sa.Integer(),
+            sa.ForeignKey("agents.id"), nullable=True,
+        ),
         sa.Index("ix_agents_code", "code"),
         sa.Index("ix_agents_email", "email"),
         sa.Index("ix_agents_phone", "phone"),
@@ -63,7 +69,11 @@ def upgrade() -> None:
     op.create_table(
         "agent_auth",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("agent_id", sa.Integer(), sa.ForeignKey("agents.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "agent_id", sa.Integer(),
+            sa.ForeignKey("agents.id", ondelete="CASCADE"),
+            nullable=False,
+            ),
         sa.Column("username", sa.String(50), unique=True, nullable=False),
         sa.Column("password_hash", sa.String(255), nullable=True),
         sa.Column("provider", sa.String(30), server_default="local"),
@@ -80,13 +90,20 @@ def upgrade() -> None:
     op.create_table(
         "agent_contact",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("agent_id", sa.Integer(), sa.ForeignKey("agents.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "agent_id", sa.Integer(),
+            sa.ForeignKey("agents.id", ondelete="CASCADE"),
+            nullable=False,
+            ),
         sa.Column("type", sa.String(20), nullable=False),
         sa.Column("value", sa.String(500), nullable=False),
         sa.Column("is_primary", sa.Boolean(), server_default="false"),
         sa.Column("is_active", sa.Boolean(), server_default="true"),
         sa.Column("created_at", sa.DateTime(), nullable=True),
-        sa.Column("created_by", sa.Integer(), sa.ForeignKey("agents.id"), nullable=True),
+        sa.Column(
+            "created_by", sa.Integer(),
+            sa.ForeignKey("agents.id"), nullable=True,
+        ),
         sa.Index("ix_agent_contact_agent", "agent_id"),
         sa.Index("ix_agent_contact_type", "type"),
     )
@@ -95,7 +112,11 @@ def upgrade() -> None:
     op.create_table(
         "agent_roles",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("agent_id", sa.Integer(), sa.ForeignKey("agents.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "agent_id", sa.Integer(),
+            sa.ForeignKey("agents.id", ondelete="CASCADE"),
+            nullable=False,
+            ),
         sa.Column("role_type", sa.String(30), nullable=False),
         sa.Column("role_value", sa.String(50), nullable=False),
         sa.Column("context_id", sa.Integer(), nullable=True),
@@ -103,7 +124,10 @@ def upgrade() -> None:
         sa.Column("started_at", sa.DateTime(), nullable=True),
         sa.Column("ended_at", sa.DateTime(), nullable=True),
         sa.Column("is_primary", sa.Boolean(), server_default="false"),
-        sa.Column("created_by", sa.Integer(), sa.ForeignKey("agents.id"), nullable=True),
+        sa.Column(
+            "created_by", sa.Integer(),
+            sa.ForeignKey("agents.id"), nullable=True,
+        ),
         sa.Index("ix_agent_roles_agent", "agent_id"),
         sa.Index("ix_agent_roles_type", "role_type"),
         sa.Index("ix_agent_roles_value", "role_value"),
@@ -114,7 +138,11 @@ def upgrade() -> None:
     op.create_table(
         "agent_activities",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("agent_id", sa.Integer(), sa.ForeignKey("agents.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "agent_id", sa.Integer(),
+            sa.ForeignKey("agents.id", ondelete="CASCADE"),
+            nullable=False,
+            ),
         sa.Column("activity_type", sa.String(40), nullable=False),
         sa.Column("source_type", sa.String(30), nullable=False),
         sa.Column("source_id", sa.Integer(), nullable=True),
@@ -126,7 +154,10 @@ def upgrade() -> None:
         sa.Index("ix_agent_activities_type", "activity_type"),
         sa.Index("ix_agent_activities_source_type", "source_type"),
         sa.Index("ix_agent_activities_occurred", "occurred_at"),
-        sa.Index("ix_agent_activities_lookup", "agent_id", "activity_type", "occurred_at"),
+        sa.Index(
+            "ix_agent_activities_lookup",
+            "agent_id", "activity_type", "occurred_at",
+        ),
         sa.Index("ix_agent_activities_source", "source_type", "source_id"),
     )
 
@@ -134,20 +165,36 @@ def upgrade() -> None:
     op.create_table(
         "agent_families",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("agent_id", sa.Integer(), sa.ForeignKey("agents.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("related_agent_id", sa.Integer(), sa.ForeignKey("agents.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "agent_id", sa.Integer(),
+            sa.ForeignKey("agents.id", ondelete="CASCADE"),
+            nullable=False,
+            ),
+        sa.Column(
+            "related_agent_id", sa.Integer(),
+            sa.ForeignKey("agents.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("relationship", sa.String(30), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Index("ix_agent_families_agent", "agent_id"),
         sa.Index("ix_agent_families_related", "related_agent_id"),
-        sa.UniqueConstraint("agent_id", "related_agent_id", "relationship", name="uq_family_relationship"),
+        sa.UniqueConstraint(
+            "agent_id", "related_agent_id",
+            "relationship",
+            name="uq_family_relationship",
+        ),
     )
 
     # ── agent_journey ──
     op.create_table(
         "agent_journey",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("agent_id", sa.Integer(), sa.ForeignKey("agents.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "agent_id", sa.Integer(),
+            sa.ForeignKey("agents.id", ondelete="CASCADE"),
+            nullable=False,
+            ),
         sa.Column("from_stage", sa.String(30), nullable=True),
         sa.Column("to_stage", sa.String(30), nullable=False),
         sa.Column("reason", sa.String(100), nullable=True),
@@ -162,7 +209,11 @@ def upgrade() -> None:
     op.create_table(
         "agent_permissions",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("agent_id", sa.Integer(), sa.ForeignKey("agents.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "agent_id", sa.Integer(),
+            sa.ForeignKey("agents.id", ondelete="CASCADE"),
+            nullable=False,
+            ),
         sa.Column("permission", sa.String(50), nullable=False),
         sa.Column("granted_via", sa.String(50), nullable=True),
         sa.Column("granted_at", sa.DateTime(), nullable=True),
@@ -200,19 +251,50 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column("title", sa.String(200), nullable=False),
         sa.Column("description", sa.Text(), nullable=False, server_default=""),
-        sa.Column("insight_type", sa.String(50), nullable=False, server_default="observation"),
+        sa.Column(
+            "insight_type", sa.String(50), nullable=False,
+            server_default="observation",
+        ),
         sa.Column("confidence", sa.Integer(), nullable=False, server_default="50"),
         sa.Column("source_agent", sa.String(100), nullable=True),
         sa.Column("payload", sa.JSON(), nullable=True),
         sa.Column("metadata", sa.JSON(), nullable=True),
         sa.Column("acknowledged", sa.Boolean(), nullable=False, server_default="false"),
         sa.Column("acknowledged_at", sa.DateTime(), nullable=True),
-        sa.Column("acknowledged_by", sa.Integer(), sa.ForeignKey("users.id"), nullable=True),
+        sa.Column(
+            "acknowledged_by", sa.Integer(),
+            sa.ForeignKey("users.id"), nullable=True,
+        ),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Index("ix_agent_insights_id", "id"),
         sa.Index("ix_agent_insights_type", "insight_type"),
         sa.Index("ix_agent_insights_ack", "acknowledged"),
         sa.Index("ix_agent_insights_created", "created_at"),
+    )
+
+    # ── agent_knowledge_base ──
+    op.create_table(
+        "agent_knowledge_base",
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("title", sa.String(300), nullable=False),
+        sa.Column("content", sa.Text(), nullable=False),
+        sa.Column("summary", sa.String(500), nullable=True),
+        sa.Column("category", sa.String(50), nullable=False),
+        sa.Column("source_module", sa.String(50), nullable=False),
+        sa.Column("source_id", sa.Integer(), nullable=True),
+        sa.Column("source_url", sa.String(500), nullable=True),
+        sa.Column("relevance_score", sa.Float(), nullable=True),
+        sa.Column("is_active", sa.Boolean(), server_default="true"),
+        sa.Column("created_at", sa.DateTime(), nullable=True),
+        sa.Column("updated_at", sa.DateTime(), nullable=True),
+        sa.Column(
+            "indexed_by", sa.Integer(),
+            sa.ForeignKey("agents.id"), nullable=True,
+        ),
+        sa.Index("ix_kb_category", "category"),
+        sa.Index("ix_kb_source", "source_module"),
+        sa.Index("ix_kb_active", "is_active"),
+        sa.Index("ix_kb_created", "created_at"),
     )
 
     # ── Seed: agente Optimus ──
@@ -245,6 +327,7 @@ def _seed_optimus_agent(bind):
 
 
 def downgrade() -> None:
+    op.drop_table("agent_knowledge_base")
     op.drop_table("agent_insights")
     op.drop_table("agent_tasks")
     op.drop_table("agent_permissions")

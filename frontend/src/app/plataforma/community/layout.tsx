@@ -2,6 +2,7 @@
 
 import React from 'react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
+import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
 import { 
     Bell, 
     Calendar, 
@@ -43,13 +44,15 @@ export default function CommunityLayout({ children }: { children: React.ReactNod
     ];
 
     return (
-        <WorkspaceLayout
-            sidebarTitle="Comunidad"
-            sidebarSections={sidebarSections}
-            allowedPermissions={['community:read']}
-        >
-            {children}
-        </WorkspaceLayout>
+        <ModuleErrorBoundary moduleName="Comunidad">
+            <WorkspaceLayout
+                sidebarTitle="Comunidad"
+                sidebarSections={sidebarSections}
+                allowedPermissions={['community:read']}
+            >
+                {children}
+            </WorkspaceLayout>
+        </ModuleErrorBoundary>
     );
 }
 

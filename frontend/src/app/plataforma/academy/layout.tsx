@@ -3,6 +3,7 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
+import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
 import { 
     LayoutDashboard, 
     BookOpen, 
@@ -69,15 +70,17 @@ export default function AcademyLayout({ children }: { children: React.ReactNode 
     };
 
     return (
-        <WorkspaceLayout
-            sidebarTitle={getSidebarTitle()}
-            sidebarSections={SIDEBAR_SECTIONS}
-            allowedPermissions={['academy:read', 'academy:study', 'academy:edit', 'academy:manage']}
-        >
-            <div className="bg-white dark:bg-[#1e1f21] h-full overflow-hidden">
-                {children}
-            </div>
-        </WorkspaceLayout>
+        <ModuleErrorBoundary moduleName="Academia">
+            <WorkspaceLayout
+                sidebarTitle={getSidebarTitle()}
+                sidebarSections={SIDEBAR_SECTIONS}
+                allowedPermissions={['academy:read', 'academy:study', 'academy:edit', 'academy:manage']}
+            >
+                <div className="bg-white dark:bg-[#1e1f21] h-full overflow-hidden">
+                    {children}
+                </div>
+            </WorkspaceLayout>
+        </ModuleErrorBoundary>
     );
 }
 

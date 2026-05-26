@@ -360,32 +360,19 @@ def get_pilot_readiness(db: Session) -> schemas.PilotReadiness:
 
 
 def search_knowledge_base(db: Session, query: str):
-    if not query:
-        return []
-    mock_docs = [
+    """Búsqueda real en la Knowledge Base (full-text search)."""
+    from backend.services.knowledge_base import search_knowledge_base_real
+
+    results = search_knowledge_base_real(db, query, top_k=5)
+    # Convert ORM objects to dicts for backwards compatibility
+    return [
         {
-            "title": "Protocolo de Consolidación Ministerial",
-            "content": "Lineamientos para la bienvenida de nuevos miembros y seguimiento pastoral en las primeras 48 horas tras su primera visita.",
-            "category": "Operaciones",
-            "relevance": 0.98,
-        },
-        {
-            "title": "Manual de Liderazgo: Casas de Gloria",
-            "content": "Principios bíblicos para la gestión de grupos pequeños, resolución de conflictos y multiplicación celular en zonas urbanas.",
-            "category": "Liderazgo",
-            "relevance": 0.85,
-        },
-        {
-            "title": "Directiva de Seguridad Digital y Auditoría",
-            "content": "Normativas para el manejo de datos sensibles de la congregación, protección de privacidad y registro exhaustivo de acciones administrativas.",
-            "category": "Seguridad",
-            "relevance": 0.72,
-        },
-        {
-            "title": "Reglamento Académico MESH",
-            "content": "Estatutos para la formación teológica formal y no formal, criterios de evaluación y requisitos para la certificación ministerial.",
-            "category": "Educación",
-            "relevance": 0.65,
-        },
+            "title": r.title,
+            "content": r.content,
+            "category": r.category,
+            "relevance": r.relevance_score,
+            "source_module": r.source_module,
+            "source_id": r.source_id,
+        }
+        for r in results
     ]
-    return mock_docs

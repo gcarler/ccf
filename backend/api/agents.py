@@ -28,7 +28,7 @@ def analytics_summary(
     )
     unread_insights = (
         db.query(models.AgentInsight)
-        .filter(models.AgentInsight.acknowledged == False)
+        .filter(~models.AgentInsight.acknowledged)
         .count()
     )
 
@@ -218,7 +218,7 @@ def ask_optimus(
         return {"answer": insight.payload, "sources": sources}
     except MemoryError:
         raise
-    except Exception as e:
+    except Exception:
         # Fallback to basic KB retrieval if AI fails or is not configured
         if kb_results:
             return {
@@ -354,7 +354,7 @@ def transition_stage(agent_id: int, data: StageTransition, db=Depends(get_db), c
 # These are called from existing registration/member creation endpoints
 # to ensure a canonical Agent is created alongside User/Member records.
 
-from backend.models_agents import Agent as AgentModel, AgentAuth as AgentModelAuth
+from backend.models_agents import AgentAuth as AgentModelAuth
 
 
 def sync_member_to_agent(db: Session, member) -> int:
@@ -443,5 +443,78 @@ def sync_user_to_agent(db: Session, user) -> int:
             role_type="platform",
             role_value=user.role,
         ))
-    
+
     return agent.id
+
+
+# ── Knowledge Base Endpoints ──
+from backend.services.knowledge_base import (
+    KnowledgeIndexer, AgentKnowledgeBase,
+)
+from sqlalchemy import func
+
+
+class KBRebuildResponse(BaseModel):
+    status: str
+    stats: dict
+
+
+@router.post("/kb/rebuild", response_model=KBRebuildResponse)
+def rebuild_knowledge_base(
+    db=Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    """Reconstruye la Knowledge Base desde cero."""
+    indexer = KnowledgeIndexer(db)
+    stats = indexer.rebuild_all()
+    return KBRebuildResponse(status="ok", stats=stats)
+
+
+@router.get("/kb/search")
+def search_kb(
+    q: str,
+    category: Optional[str] = None,
+    limit: int = 10,
+    db=Depends(get_db),
+    _user: models.User = Depends(require_active_user),
+):
+    """Busca en la Knowledge Base."""
+    from backend.services.knowledge_base import search_knowledge_base_real
+
+    results = search_knowledge_base_real(
+        db, q, top_k=limit, category=category,
+    )
+    return [
+        {
+            "id": r.id,
+            "title": r.title,
+            "content": r.content[:500],
+            "summary": r.summary,
+            "category": r.category,
+            "source_module": r.source_module,
+            "source_id": r.source_id,
+            "relevance": r.relevance_score,
+        }
+        for r in results
+    ]
+
+
+@router.get("/kb/stats")
+def kb_stats(
+    db=Depends(get_db),
+    _user: models.User = Depends(require_active_user),
+):
+    """Estadísticas de la Knowledge Base."""
+    total = db.query(AgentKnowledgeBase).count()
+    active = db.query(AgentKnowledgeBase).filter(
+        AgentKnowledgeBase.is_active == True,
+    ).count()
+    by_category = {}
+    for cat, cnt in db.query(
+        AgentKnowledgeBase.category,
+        func.count(AgentKnowledgeBase.id),
+    ).filter(
+        AgentKnowledgeBase.is_active == True,
+    ).group_by(AgentKnowledgeBase.category).all():
+        by_category[cat] = cnt
+    return {"total": total, "active": active, "by_category": by_category}

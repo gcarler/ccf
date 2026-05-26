@@ -3,6 +3,7 @@
 import React from 'react';
 import { Home, MapPin, TrendingUp, History } from 'lucide-react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
+import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
 
 const GROUP_SECTIONS = [
     {
@@ -25,8 +26,10 @@ const GROUP_SECTIONS = [
 
 export default function GroupsLayout({ children }: { children: React.ReactNode }) {
     return (
-        <WorkspaceLayout sidebarTitle="Casas de Bendición" sidebarSections={GROUP_SECTIONS} allowedPermissions={['community:read']}>
-            {children}
-        </WorkspaceLayout>
+        <ModuleErrorBoundary moduleName="Grupos">
+            <WorkspaceLayout sidebarTitle="Casas de Bendición" sidebarSections={GROUP_SECTIONS} allowedPermissions={['community:read']}>
+                {children}
+            </WorkspaceLayout>
+        </ModuleErrorBoundary>
     );
 }
