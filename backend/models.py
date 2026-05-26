@@ -10,7 +10,7 @@ from backend.models_academy import (Assessment, AssessmentAttempt,
                                     GloryHouseAttendance, GloryHouseMember,
                                     GloryHouseSession, Lesson, LessonProgress,
                                     Resource)
-from backend.models_agents import AgentInsight, AgentTask  # noqa: F401
+
 # Assets / Agents / Governance / Ops
 from backend.models_assets import (AssetItem, InventoryItem,  # noqa: F401
                                    MaintenanceLog)
@@ -55,3 +55,7 @@ from backend.models_projects import (Project, ProjectAttachment,
                                      ProjectInboxState, ProjectMilestone,
                                      ProjectPhase, ProjectTask,
                                      ProjectWhiteboard, TaskSupply)
+
+# Agent identity models (canonical person)
+from backend.models_agents import (Agent, AgentAuth, AgentContact, AgentRole,
+    AgentActivity, AgentFamily, AgentJourney, AgentPermission)

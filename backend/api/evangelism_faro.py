@@ -1461,6 +1461,8 @@ def submit_attendance(
             attended=is_attended,
             absence_reason=absence_reason,
             absence_reason_detail=absence_reason_detail,
+            status=att.status,
+            notes=att.notes,
         )
         db.add(db_att)
         submitted.append(db_att)

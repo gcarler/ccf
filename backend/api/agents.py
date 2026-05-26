@@ -230,3 +230,120 @@ def ask_optimus(
             "answer": "Lo siento, el motor neuronal MESH no est?? disponible en este momento y no encontr?? informaci??n en la base de datos local. ??Te gustar??a que notifique a un administrador?",
             "sources": [],
         }
+
+
+# ── Agent Identity API (Canonical Person Model) ──
+from typing import List as TypingList
+
+from sqlalchemy import or_
+from backend.models_agents import (Agent as AgentModel, AgentActivity,
+                                    AgentJourney, AgentRole)
+from backend.schemas.agents import (AgentCreate, AgentProfileResponse,
+                                     AgentResponse, AgentRoleCreate,
+                                     AgentRoleResponse, AgentSearchResult,
+                                     AgentTimelineItem, AgentUpdate,
+                                     StageTransition)
+
+
+def _generate_agent_code(db) -> str:
+    count = db.query(AgentModel).count()
+    return f"CCF-AGENT-{count + 1:05d}"
+
+
+@router.get("/search", response_model=TypingList[AgentSearchResult])
+def search_agents(
+    q: str,
+    limit: int = 20,
+    db=Depends(get_db),
+    _user: models.User = Depends(require_active_user),
+):
+    term = f"%{q}%"
+    agents = db.query(AgentModel).filter(
+        or_(AgentModel.first_name.ilike(term), AgentModel.last_name.ilike(term),
+            AgentModel.email.ilike(term), AgentModel.phone.ilike(term)),
+        AgentModel.is_active == True,
+    ).order_by(AgentModel.first_name).limit(limit).all()
+    return agents
+
+
+@router.get("/profile/{agent_id}", response_model=AgentProfileResponse)
+def get_agent_profile(
+    agent_id: int,
+    limit: int = 50,
+    db=Depends(get_db),
+    _user: models.User = Depends(require_active_user),
+):
+    agent = db.query(AgentModel).filter(AgentModel.id == agent_id).first()
+    if not agent:
+        raise HTTPException(404, "Agent not found")
+    roles = db.query(AgentRole).filter(AgentRole.agent_id == agent_id, AgentRole.ended_at == None).all()
+    activities = db.query(AgentActivity).filter(AgentActivity.agent_id == agent_id).order_by(AgentActivity.occurred_at.desc()).limit(limit).all()
+    total = db.query(AgentActivity).filter(AgentActivity.agent_id == agent_id).count()
+    return AgentProfileResponse(
+        agent=agent, roles=roles,
+        activities=[AgentTimelineItem(activity_type=a.activity_type, source_type=a.source_type, source_id=a.source_id, status=a.status, notes=a.notes, occurred_at=a.occurred_at) for a in activities],
+        total_activities=total,
+    )
+
+
+@router.get("/timeline/{agent_id}", response_model=TypingList[AgentTimelineItem])
+def get_agent_timeline(agent_id: int, limit: int = 100, db=Depends(get_db), _user: models.User = Depends(require_active_user)):
+    activities = db.query(AgentActivity).filter(AgentActivity.agent_id == agent_id).order_by(AgentActivity.occurred_at.desc()).limit(limit).all()
+    return [AgentTimelineItem(activity_type=a.activity_type, source_type=a.source_type, source_id=a.source_id, status=a.status, notes=a.notes, occurred_at=a.occurred_at) for a in activities]
+
+
+@router.get("/roles/{agent_id}", response_model=TypingList[AgentRoleResponse])
+def get_agent_roles(agent_id: int, active_only: bool = True, db=Depends(get_db), _user: models.User = Depends(require_active_user)):
+    query = db.query(AgentRole).filter(AgentRole.agent_id == agent_id)
+    if active_only:
+        query = query.filter(AgentRole.ended_at == None)
+    return query.order_by(AgentRole.started_at.desc()).all()
+
+
+@router.post("/roles/{agent_id}", response_model=AgentRoleResponse)
+def add_agent_role(agent_id: int, role: AgentRoleCreate, db=Depends(get_db), current_user: models.User = Depends(require_active_user)):
+    agent = db.query(AgentModel).filter(AgentModel.id == agent_id).first()
+    if not agent:
+        raise HTTPException(404, "Agent not found")
+    new_role = AgentRole(agent_id=agent_id, role_type=role.role_type, role_value=role.role_value, context_id=role.context_id, context_type=role.context_type, is_primary=role.is_primary, created_by=current_user.id)
+    db.add(new_role)
+    db.commit()
+    db.refresh(new_role)
+    return new_role
+
+
+@router.post("", response_model=AgentResponse)
+def create_agent(data: AgentCreate, db=Depends(get_db), current_user: models.User = Depends(require_admin)):
+    code = _generate_agent_code(db)
+    agent = AgentModel(code=code, first_name=data.first_name, last_name=data.last_name, email=data.email, phone=data.phone, avatar_url=data.avatar_url, spiritual_stage=data.spiritual_stage, created_by=current_user.id)
+    db.add(agent)
+    db.commit()
+    db.refresh(agent)
+    return agent
+
+
+@router.put("/{agent_id}", response_model=AgentResponse)
+def update_agent(agent_id: int, data: AgentUpdate, db=Depends(get_db), current_user: models.User = Depends(require_active_user)):
+    agent = db.query(AgentModel).filter(AgentModel.id == agent_id).first()
+    if not agent:
+        raise HTTPException(404, "Agent not found")
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(agent, field, value)
+    agent.updated_by = current_user.id
+    db.commit()
+    db.refresh(agent)
+    return agent
+
+
+@router.put("/{agent_id}/stage", response_model=dict)
+def transition_stage(agent_id: int, data: StageTransition, db=Depends(get_db), current_user: models.User = Depends(require_active_user)):
+    agent = db.query(AgentModel).filter(AgentModel.id == agent_id).first()
+    if not agent:
+        raise HTTPException(404, "Agent not found")
+    from_stage = agent.spiritual_stage
+    agent.spiritual_stage = data.to_stage
+    agent.updated_by = current_user.id
+    journey = AgentJourney(agent_id=agent_id, from_stage=from_stage, to_stage=data.to_stage, reason=data.reason, triggered_by="manual", triggered_by_id=current_user.id)
+    db.add(journey)
+    db.commit()
+    return {"from": from_stage, "to": data.to_stage, "agent_id": agent_id}

@@ -138,7 +138,7 @@ def test_domain_modules_expose_only_expected_canonical_prefixes():
         "backend.api.cms": ("/api/cms/", "/api/admin/"),
         "backend.api.cms_v2": ("/api/cms/v2/",),
         "backend.api.content": ("/api/content",),
-        "backend.api.agents": ("/api/agents/",),
+        "backend.api.agents": ("/api/agents",),
         "backend.api.assets": ("/api/assets",),
         "backend.api.spiritual_life": ("/api/spiritual-life/",),
         "backend.api.community": ("/api/community/",),
