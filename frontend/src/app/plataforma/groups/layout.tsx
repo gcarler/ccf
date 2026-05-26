@@ -9,16 +9,16 @@ const GROUP_SECTIONS = [
         id: 'overview',
         label: 'General',
         items: [
-            { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/groups' },
-            { id: 'map', label: 'Mapa de Casas', icon: MapPin, href: '/groups/map' },
+            { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/plataforma/groups' },
+            { id: 'map', label: 'Mapa de Casas', icon: MapPin, href: '/plataforma/groups/map' },
         ]
     },
     {
         id: 'analytics',
         label: 'Análisis',
         items: [
-            { id: 'growth', label: 'Crecimiento', icon: TrendingUp, href: '/groups/analytics' },
-            { id: 'history', label: 'Historial', icon: History, href: '/groups/history' },
+            { id: 'growth', label: 'Crecimiento', icon: TrendingUp, href: '/plataforma/groups/analytics' },
+            { id: 'history', label: 'Historial', icon: History, href: '/plataforma/groups/history' },
         ]
     }
 ];

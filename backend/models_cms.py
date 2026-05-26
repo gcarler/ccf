@@ -271,6 +271,20 @@ class CmsPageView(Base):
     created_at = Column(DateTime, default=_utcnow, index=True)
 
 
+class AirTableView(Base):
+    """Saved AirTable views with schema, filters, grouping, and conditional format."""
+    __tablename__ = "airtable_views"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(200), nullable=False)
+    schema_json = Column(JSON, default={})
+    filters_json = Column(JSON, default=[])
+    grouping_json = Column(JSON, default=[])
+    conditional_format_json = Column(JSON, default=[])
+    created_at = Column(DateTime, default=_utcnow, index=True)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+
 class Announcement(Base):
     __tablename__ = "announcements"
     id = Column(Integer, primary_key=True, index=True)

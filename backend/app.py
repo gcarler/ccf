@@ -13,7 +13,7 @@ from backend.api import (academy, admin, agenda, agents, analytics, assets,
                          auth, cms, cms_v2, community, content, crm, dashboard,
                          donations, evangelism, finance, governance, graph,
                          messaging, prayer, projects, public, spiritual_life,
-                         support, system, workspace)
+                         support, system, tables, workspace)
 from backend.core.config import get_settings
 from backend.core.logging import request_id_middleware
 from backend.core.security_headers import mount_security_headers
@@ -53,6 +53,7 @@ ROUTER_REGISTRY = [
     (prayer.router, "/api/prayer", ["prayer"]),
     (analytics.router, "/api", ["analytics"]),
     (dashboard.router, "/api", ["dashboard"]),
+    (tables.router, "/api", ["tables"]),
 ]
 
 

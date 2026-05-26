@@ -13,11 +13,11 @@ export default function SpiritualLifeLayout({ children }: { children: React.Reac
         {
             title: 'Mi Caminar',
             items: [
-                { id: 'sl-home',  label: 'Panel Espiritual',  href: '/spiritual-life', icon: Heart },
+                { id: 'sl-home',  label: 'Panel Espiritual',  href: '/plataforma/spiritual-life', icon: Heart },
                 { 
                     id: 'sl-tl',    
                     label: 'Línea de Tiempo',   
-                    href: '/spiritual-life/timeline',     
+                    href: '/plataforma/spiritual-life/timeline',
                     icon: Calendar,
                     onClick: () => pushSidebarPanel({
                         id: 'spiritual-timeline',
@@ -28,7 +28,7 @@ export default function SpiritualLifeLayout({ children }: { children: React.Reac
                 { 
                     id: 'sl-certs', 
                     label: 'Mis Certificados',  
-                    href: '/spiritual-life/certificates', 
+                    href: '/plataforma/spiritual-life/certificates',
                     icon: Award,
                     onClick: () => pushSidebarPanel({
                         id: 'spiritual-certs',

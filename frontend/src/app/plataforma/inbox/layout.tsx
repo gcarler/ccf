@@ -9,10 +9,10 @@ const INBOX_SECTIONS = [
         title: 'Módulos',
         items: [
             { id: 'inbox-all',      label: 'Todo',      href: '/plataforma/inbox',           icon: Bell },
-            { id: 'inbox-mentions', label: 'Menciones', href: '/inbox#menciones', icon: AtSign },
-            { id: 'inbox-tasks',    label: 'Tareas',    href: '/inbox#tareas',    icon: CheckCircle2 },
-            { id: 'inbox-ai',       label: 'MESH AI',   href: '/inbox#ai',        icon: Bot },
-            { id: 'inbox-messages', label: 'Mensajes',  href: '/inbox/messages',  icon: MessageSquare },
+            { id: 'inbox-mentions', label: 'Menciones', href: '/plataforma/inbox#menciones', icon: AtSign },
+            { id: 'inbox-tasks',    label: 'Tareas',    href: '/plataforma/inbox#tareas',    icon: CheckCircle2 },
+            { id: 'inbox-ai',       label: 'MESH AI',   href: '/plataforma/inbox#ai',        icon: Bot },
+            { id: 'inbox-messages', label: 'Mensajes',  href: '/plataforma/inbox/messages',  icon: MessageSquare },
         ],
     },
 ];
