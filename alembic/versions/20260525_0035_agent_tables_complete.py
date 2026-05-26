@@ -297,6 +297,44 @@ def upgrade() -> None:
         sa.Index("ix_kb_created", "created_at"),
     )
 
+    # ── agent_conversations ──
+    op.create_table(
+        "agent_conversations",
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column(
+            "user_id", sa.Integer(),
+            sa.ForeignKey("users.id"), nullable=False,
+        ),
+        sa.Column("title", sa.String(300), nullable=True),
+        sa.Column(
+            "agent_name", sa.String(100),
+            nullable=False, server_default="Optimus",
+        ),
+        sa.Column("is_active", sa.Boolean(), server_default="true"),
+        sa.Column("created_at", sa.DateTime(), nullable=True),
+        sa.Column("updated_at", sa.DateTime(), nullable=True),
+        sa.Index("ix_conv_user", "user_id", "created_at"),
+        sa.Index("ix_conv_active", "user_id", "is_active"),
+    )
+
+    # ── agent_messages ──
+    op.create_table(
+        "agent_messages",
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column(
+            "conversation_id", sa.Integer(),
+            sa.ForeignKey(
+                "agent_conversations.id", ondelete="CASCADE",
+            ),
+            nullable=False,
+        ),
+        sa.Column("role", sa.String(20), nullable=False),
+        sa.Column("content", sa.Text(), nullable=False),
+        sa.Column("tools_used_json", sa.Text(), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=True),
+        sa.Index("ix_msg_conv", "conversation_id", "created_at"),
+    )
+
     # ── Seed: agente Optimus ──
     _seed_optimus_agent(bind)
 
@@ -327,6 +365,8 @@ def _seed_optimus_agent(bind):
 
 
 def downgrade() -> None:
+    op.drop_table("agent_messages")
+    op.drop_table("agent_conversations")
     op.drop_table("agent_knowledge_base")
     op.drop_table("agent_insights")
     op.drop_table("agent_tasks")

@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 log = logging.getLogger(__name__)
 
@@ -327,7 +327,6 @@ class AcademyGetStats(AgentTool):
     def execute(self, **kwargs) -> Dict[str, Any]:
         from backend import models
         from backend.core.database import SessionLocal
-        from sqlalchemy import func
 
         db = SessionLocal()
         try:
@@ -423,7 +422,6 @@ class ProjectsGetStats(AgentTool):
     def execute(self, **kwargs) -> Dict[str, Any]:
         from backend import models
         from backend.core.database import SessionLocal
-        from sqlalchemy import func
 
         db = SessionLocal()
         try:

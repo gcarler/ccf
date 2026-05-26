@@ -17,6 +17,7 @@ import Skeleton from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
 import ViewSwitcher, { ViewType } from '@/components/ViewSwitcher';
 import { useViewType, OPERATIONAL_VIEWS } from '@/hooks/useViewType';
+import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
 import { motion } from 'framer-motion';
 
 export interface EvangelismStrategy {
@@ -112,14 +113,15 @@ export default function EvangelismClient() {
     };
 
     return (
-        <EvangelismShell
-            breadcrumbs={[
-                { label: 'Evangelismo', icon: Flame },
-                { label: 'Estrategias' }
-            ]}
-            viewOptions={OPERATIONAL_VIEWS}
-            viewType={viewType}
-            onViewChange={setViewType}
+        <ModuleErrorBoundary moduleName="Evangelismo">
+            <EvangelismShell
+                breadcrumbs={[
+                    { label: 'Evangelismo', icon: Flame },
+                    { label: 'Estrategias' }
+                ]}
+                viewOptions={OPERATIONAL_VIEWS}
+                viewType={viewType}
+                onViewChange={setViewType}
             onSearch={setSearch}
             onAdd={handleAddItem}
         >
@@ -355,5 +357,6 @@ export default function EvangelismClient() {
                 onCreated={fetchStrategies}
             />
         </EvangelismShell>
+        </ModuleErrorBoundary>
     );
 }

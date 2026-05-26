@@ -69,3 +69,8 @@ from backend.models_kernel import (UserMinistry, UserRoleAssignment,
 
 # Knowledge Base
 from backend.services.knowledge_base import AgentKnowledgeBase  # noqa: F401
+
+# Conversation Memory
+from backend.services.conversation_memory import (  # noqa: F401
+    AgentConversation, AgentMessage,
+)

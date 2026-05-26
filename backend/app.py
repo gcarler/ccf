@@ -77,6 +77,15 @@ async def lifespan(_: FastAPI):
 
             Base.metadata.create_all(bind=engine)
             logger.info("ORM tables verified/created.")
+
+            # Register all agent tools
+            try:
+                from backend.services.tool_registry import register_all_tools
+                registry = register_all_tools()
+                logger.info("Agent tools registered: %d tools", registry.count)
+            except Exception as exc:
+                logger.warning("Tool registration failed: %s", exc)
+
             break
         except Exception as exc:
             if attempt < 5:

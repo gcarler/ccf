@@ -518,3 +518,62 @@ def kb_stats(
     ).group_by(AgentKnowledgeBase.category).all():
         by_category[cat] = cnt
     return {"total": total, "active": active, "by_category": by_category}
+
+
+# ── Conversation Endpoints ──
+from backend.services.conversation_memory import (
+    create_conversation, get_user_conversations,
+    get_conversation_messages, delete_conversation,
+)
+
+
+class ConversationCreate(BaseModel):
+    title: Optional[str] = None
+    agent_name: str = "Optimus"
+
+
+@router.post("/conversations")
+def create_conv(
+    data: ConversationCreate,
+    db=Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Crea una nueva conversación."""
+    conv_id = create_conversation(
+        current_user.id, title=data.title, agent_name=data.agent_name,
+    )
+    return {"id": conv_id, "title": data.title or data.agent_name}
+
+
+@router.get("/conversations")
+def list_convs(
+    limit: int = 20,
+    db=Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Lista conversaciones del usuario."""
+    return get_user_conversations(current_user.id, limit=limit)
+
+
+@router.get("/conversations/{conv_id}/messages")
+def get_conv_messages(
+    conv_id: int,
+    limit: int = 50,
+    db=Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Obtiene mensajes de una conversación."""
+    return get_conversation_messages(conv_id, limit=limit)
+
+
+@router.delete("/conversations/{conv_id}")
+def delete_conv(
+    conv_id: int,
+    db=Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Elimina una conversación."""
+    success = delete_conversation(conv_id, current_user.id)
+    if not success:
+        raise HTTPException(404, "Conversation not found")
+    return {"status": "ok"}
