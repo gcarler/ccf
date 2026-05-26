@@ -12,6 +12,11 @@ import {
 } from 'lucide-react';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import ViewSwitcher, { ViewType } from '@/components/ViewSwitcher';
+import { useViewType, FULL_VIEWS } from '@/hooks/useViewType';
+import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
+import UniversalGanttView from '@/components/ui/UniversalGanttView';
+import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { motion } from 'framer-motion';
 
 interface Strategy {
@@ -125,6 +130,7 @@ export default function StrategyDetailPage() {
     const [editStartDate, setEditStartDate] = useState('');
     const [editEndDate, setEditEndDate] = useState('');
     const [activeTab, setActiveTab] = useState<TabId>('overview');
+    const { viewType, setViewType } = useViewType(`strategy_${id}`, 'dashboard');
     const [groups, setGroups] = useState<StrategyGroup[]>([]);
     const [metrics, setMetrics] = useState<any>(null);
     const [members, setMembers] = useState<any[]>([]);
@@ -567,9 +573,170 @@ export default function StrategyDetailPage() {
                             <tab.icon size={14} />{tab.label}
                         </button>
                     ))}
+                    <div className="flex-1" />
+                    <ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={FULL_VIEWS} />
                 </div>
 
-                {/* ── Overview ── */}
+                {/* ── View: Calendar ── */}
+                {viewType === 'calendar' && (
+                    <UniversalCalendarView
+                        title={`Sesiones — ${strategy.name}`}
+                        events={sessions.map(s => ({
+                            id: String(s.id), title: s.topic || `Sesión #${s.id}`,
+                            date: s.session_date,
+                            color: s.status === 'Realizada' ? '#10B981' : '#3B82F6',
+                            subtitle: groupName(s.glory_house_id),
+                        }))}
+                    />
+                )}
+
+                {/* ── View: Gantt ── */}
+                {viewType === 'gantt' && (
+                    <UniversalGanttView moduleName="Evangelismo"
+                        items={[
+                            ...groups.map(g => ({
+                                id: String(g.id), name: g.name,
+                                start: new Date().toISOString(), end: new Date(Date.now() + 30 * 86400000).toISOString(),
+                                progress: Math.min(g.members_count * 20, 100), status: 'active' as const,
+                                color: '#3B82F6', subtitle: `${g.members_count} miembros`,
+                            })),
+                            ...sessions.map(s => ({
+                                id: `s-${s.id}`, name: s.topic || `Sesión #${s.id}`,
+                                start: s.session_date, end: s.session_date,
+                                progress: s.status === 'Realizada' ? 100 : 0,
+                                status: s.status === 'Realizada' ? 'done' as const : 'todo' as const,
+                                color: s.status === 'Realizada' ? '#10B981' : '#3B82F6',
+                                subtitle: groupName(s.glory_house_id),
+                            })),
+                        ]}
+                    />
+                )}
+
+                {/* ── View: Wiki ── */}
+                {viewType === 'wiki' && (
+                    <UniversalWikiView moduleName="evangelism" storageKey={`strategy_${id}`} />
+                )}
+
+                {/* ── View: Kanban ── */}
+                {viewType === 'kanban' && (
+                    <div className="flex gap-3 overflow-x-auto pb-4">
+                        {['Pendiente', 'Programada', 'Realizada'].map(label => {
+                            const colors: Record<string, string> = { 'Pendiente': '#F59E0B', 'Programada': '#3B82F6', 'Realizada': '#10B981' };
+                            const filtered = sessions.filter(s => s.status === label);
+                            return (
+                                <div key={label} className="min-w-[280px] w-[280px] shrink-0">
+                                    <div className="rounded-lg p-3 mb-2 text-xs font-bold uppercase" style={{ background: `${colors[label]}15`, color: colors[label] }}>
+                                        {label} ({filtered.length})
+                                    </div>
+                                    <div className="space-y-2">
+                                        {filtered.map(s => (
+                                            <div key={s.id} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1a1b1e] p-3">
+                                                <p className="text-sm font-semibold text-slate-900 dark:text-white">{s.topic || `Sesión #${s.id}`}</p>
+                                                <p className="text-xs text-slate-400 mt-1">{groupName(s.glory_house_id)}</p>
+                                                <p className="text-xs text-slate-500 mt-1">{formatDate(s.session_date)}</p>
+                                            </div>
+                                        ))}
+                                        {filtered.length === 0 && <p className="text-xs text-slate-400 p-3">Sin sesiones</p>}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {/* ── View: Table ── */}
+                {viewType === 'table' && (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                            <thead><tr className="border-b border-slate-200 dark:border-white/10 text-slate-500">
+                                <th className="text-left py-2 px-3 font-semibold">Tipo</th>
+                                <th className="text-left py-2 px-3 font-semibold">Nombre</th>
+                                <th className="text-left py-2 px-3 font-semibold">Fecha</th>
+                                <th className="text-left py-2 px-3 font-semibold">Estado</th>
+                                <th className="text-left py-2 px-3 font-semibold">Miembros</th>
+                            </tr></thead>
+                            <tbody>
+                                {groups.map(g => (
+                                    <tr key={`g-${g.id}`} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5">
+                                        <td className="py-2 px-3"><span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">Grupo</span></td>
+                                        <td className="py-2 px-3 font-medium text-slate-900 dark:text-white">{g.name}</td>
+                                        <td className="py-2 px-3 text-slate-400">—</td>
+                                        <td className="py-2 px-3 text-slate-400">Activo</td>
+                                        <td className="py-2 px-3 text-slate-400">{g.members_count}</td>
+                                    </tr>
+                                ))}
+                                {sessions.map(s => (
+                                    <tr key={`s-${s.id}`} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5">
+                                        <td className="py-2 px-3"><span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Sesión</span></td>
+                                        <td className="py-2 px-3 font-medium text-slate-900 dark:text-white">{s.topic || `Sesión #${s.id}`}</td>
+                                        <td className="py-2 px-3 text-slate-400">{formatDate(s.session_date)}</td>
+                                        <td className="py-2 px-3"><span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: s.status === 'Realizada' ? '#10B98120' : '#3B82F620', color: s.status === 'Realizada' ? '#10B981' : '#3B82F6' }}>{s.status}</span></td>
+                                        <td className="py-2 px-3 text-slate-400">—</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── View: List ── */}
+                {viewType === 'list' && (
+                    <div className="space-y-1">
+                        {groups.map(g => (
+                            <div key={`g-${g.id}`} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
+                                <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0"><Users size={14} className="text-purple-600 dark:text-purple-400" /></div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{g.name}</p>
+                                    <p className="text-xs text-slate-400">{g.members_count} miembros{g.zone ? ` · ${g.zone}` : ''}</p>
+                                </div>
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">Grupo</span>
+                            </div>
+                        ))}
+                        {sessions.map(s => (
+                            <div key={`s-${s.id}`} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
+                                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0"><Calendar size={14} className="text-blue-600 dark:text-blue-400" /></div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{s.topic || `Sesión #${s.id}`}</p>
+                                    <p className="text-xs text-slate-400">{groupName(s.glory_house_id)} · {formatDate(s.session_date)}</p>
+                                </div>
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: s.status === 'Realizada' ? '#10B98120' : '#3B82F620', color: s.status === 'Realizada' ? '#10B981' : '#3B82F6' }}>{s.status}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* ── View: Grid ── */}
+                {viewType === 'grid' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {groups.map(g => (
+                            <div key={`g-${g.id}`} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1a1b1e] p-4 hover:shadow-md transition-shadow">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center"><Users size={12} className="text-purple-600 dark:text-purple-400" /></div>
+                                    <span className="text-xs font-bold text-purple-600 dark:text-purple-400">GRUPO</span>
+                                </div>
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">{g.name}</h3>
+                                <p className="text-xs text-slate-400 mt-1">{g.zone || 'Sin zona'}</p>
+                                <span className="text-xs font-medium text-slate-500 mt-3 block">{g.members_count} miembros</span>
+                            </div>
+                        ))}
+                        {sessions.map(s => (
+                            <div key={`s-${s.id}`} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1a1b1e] p-4 hover:shadow-md transition-shadow">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"><Calendar size={12} className="text-blue-600 dark:text-blue-400" /></div>
+                                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400">SESIÓN</span>
+                                </div>
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">{s.topic || `Sesión #${s.id}`}</h3>
+                                <p className="text-xs text-slate-400 mt-1">{groupName(s.glory_house_id)}</p>
+                                <div className="flex items-center justify-between mt-3">
+                                    <span className="text-xs text-slate-500">{formatDate(s.session_date)}</span>
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: s.status === 'Realizada' ? '#10B98120' : '#3B82F620', color: s.status === 'Realizada' ? '#10B981' : '#3B82F6' }}>{s.status}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* ── Dashboard view: show tabs ── */}
                 {activeTab === 'overview' && (
                     <div className="bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-4">
                         <div>

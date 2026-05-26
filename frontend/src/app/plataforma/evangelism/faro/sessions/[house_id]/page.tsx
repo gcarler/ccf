@@ -145,6 +145,22 @@ export default function SessionReportPage() {
                 method: 'POST', token: token, body: attPayload,
             });
 
+            // Register new guests as Members
+            for (const guest of newGuests) {
+                if (guest.firstName.trim() || guest.lastName.trim()) {
+                    await apiFetch('/evangelism/faro/visitors', {
+                        method: 'POST', token: token,
+                        body: {
+                            first_name: guest.firstName.trim(),
+                            last_name: guest.lastName.trim(),
+                            phone: guest.phone.trim() || null,
+                            glory_house_id: parseInt(houseId),
+                            session_id: sessionId,
+                        },
+                    });
+                }
+            }
+
             toast.success(`Reporte: ${stats.present} presentes, ${stats.absent} ausentes, ${stats.firstTime} nuevos`);
             router.push(`/evangelism/faro/groups`);
         } catch (error: any) {

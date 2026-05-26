@@ -5,12 +5,13 @@ from datetime import datetime as _datetime
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 
 from backend import crud, models, schemas
 from backend.api.evangelism_shared import (faro_expected_member_rows,
                                            faro_member_payload, utc_now)
-from backend.auth import (get_current_user, normalize_role,
+from backend.auth import (get_current_user, normalize_role, require_active_user,
                           require_pastor_or_admin)
 from backend.core.database import get_db
 
@@ -1168,6 +1169,97 @@ def get_macro_despliegue(
         "total_houses": len(houses),
         "despliegue": despliegue,
     }
+
+
+# ── FARO Visitor Registration (new guests from session reports) ──
+
+class FaroVisitorCreate(BaseModel):
+    first_name: str
+    last_name: str
+    phone: Optional[str] = None
+    glory_house_id: int
+    session_id: Optional[int] = None
+
+
+@router.post("/faro/visitors", response_model=dict)
+def register_faro_visitor(
+    visitor: FaroVisitorCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
+    """Register a new guest from a Faro session report as a Member + CRM lead."""
+    # Check user is leader/assistant of the glory house
+    house = db.query(models.GloryHouse).filter(
+        models.GloryHouse.id == visitor.glory_house_id
+    ).first()
+    if not house:
+        raise HTTPException(status_code=404, detail="Grupo no encontrado")
+
+    member = _get_member_for_user(db, current_user.id)
+    if member and member.id not in {house.leader_id, house.assistant_id, house.host_id}:
+        raise HTTPException(status_code=403, detail="Solo el líder o asistente puede registrar visitantes")
+
+    # Find existing member by phone
+    existing = None
+    if visitor.phone:
+        existing = db.query(models.Member).filter(
+            models.Member.phone == visitor.phone
+        ).first()
+
+    if existing:
+        return {"status": "duplicate", "member_id": existing.id}
+
+    # Create new member
+    role_name = "Visitante Faro"
+    role = db.query(models.RoleDefinition).filter(
+        models.RoleDefinition.name == role_name
+    ).first()
+    if not role:
+        role = models.RoleDefinition(name=role_name, is_system_locked=True)
+        db.add(role)
+        db.commit()
+        db.refresh(role)
+
+    new_member = models.Member(
+        first_name=visitor.first_name,
+        last_name=visitor.last_name,
+        phone=visitor.phone,
+        church_role=role_name,
+        spiritual_status="Nuevo",
+    )
+    db.add(new_member)
+    db.commit()
+    db.refresh(new_member)
+
+    # Link to glory house
+    db.add(models.GloryHouseMember(
+        glory_house_id=visitor.glory_house_id,
+        member_id=new_member.id,
+        role="visitante",
+    ))
+
+    # CRM follow-up
+    case = models.ConsolidationCase(
+        member_id=new_member.id,
+        stage="new",
+        status="active",
+        source="faro_session",
+    )
+    db.add(case)
+
+    lead = models.ConsolidationPipeline(
+        first_name=new_member.first_name,
+        last_name=new_member.last_name,
+        phone=new_member.phone or "",
+        source="faro_session",
+        stage="new",
+        notes=f"Registrado como invitado en sesión de Faro en Casa (grupo {house.name or visitor.glory_house_id})",
+    )
+    db.add(lead)
+
+    db.commit()
+
+    return {"status": "created", "member_id": new_member.id}
 
 
 # ── Sessions & Attendance ──
