@@ -9,7 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.auth import require_active_user
+from backend.auth import require_active_user, require_admin
 from backend.core.database import get_db
 
 router = APIRouter()
@@ -209,7 +209,10 @@ def get_system_health():
 
 
 @router.get("/db/health")
-def get_database_health(db: Session = Depends(get_db)):
+def get_database_health(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
     """Comprehensive database health check.
 
     Returns connection stats, table sizes, index bloat,
@@ -301,7 +304,10 @@ def get_database_health(db: Session = Depends(get_db)):
 
 
 @router.post("/db/maintenance")
-def run_db_maintenance(db: Session = Depends(get_db)):
+def run_db_maintenance(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
     """Run database maintenance operations asynchronously.
 
     Triggers:

@@ -87,6 +87,12 @@ def login(
             detail="Credenciales ministeriales incorrectas",
         )
 
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Cuenta desactivada. Contacta al administrador.",
+        )
+
     ip_address = request.client.host if request.client else None
     user_agent = request.headers.get("user-agent")
 

@@ -266,93 +266,6 @@ export default function AirTable<T extends Record<string, any>>({
   const [copiedCell, setCopiedCell] = useState<{ rowId: string; colId: string; value: any } | null>(null);
   const [isFocused, setIsFocused] = useState(false);
 
-  // ── Keyboard Navigation ──
-  const gridRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!editingCell && !isFocused) return;
-
-      const visibleCols = table.getVisibleFlatColumns().filter(c => c.id !== "__select");
-      const visibleRows = rows;
-      if (!visibleCols.length || !visibleRows.length) return;
-
-      const currentRowIdx = visibleRows.findIndex(r => r.id === editingCell?.rowId);
-      const currentColIdx = visibleCols.findIndex(c => c.id === editingCell?.colId);
-
-      if (currentRowIdx === -1 || currentColIdx === -1) return;
-
-      let nextRow = currentRowIdx;
-      let nextCol = currentColIdx;
-
-      if (e.key === "ArrowDown" || (e.key === "Enter" && !editingCell)) {
-        e.preventDefault();
-        nextRow = Math.min(currentRowIdx + 1, visibleRows.length - 1);
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        nextRow = Math.max(currentRowIdx - 1, 0);
-      } else if (e.key === "ArrowRight" || (e.key === "Tab" && !e.shiftKey)) {
-        if (e.key === "Tab") e.preventDefault();
-        nextCol = Math.min(currentColIdx + 1, visibleCols.length - 1);
-        if (nextCol > currentColIdx && e.key === "ArrowRight") {
-          setEditingCell({ rowId: visibleRows[currentRowIdx].id, colId: visibleCols[nextCol].id });
-          return;
-        }
-      } else if (e.key === "ArrowLeft" || (e.key === "Tab" && e.shiftKey)) {
-        if (e.key === "Tab") e.preventDefault();
-        nextCol = Math.max(currentColIdx - 1, 0);
-      } else if (e.key === "Delete" || e.key === "Backspace") {
-        if (!editingCell) {
-          e.preventDefault();
-          onChange?.(visibleRows[currentRowIdx].id, visibleCols[currentColIdx].id, null);
-          return;
-        }
-      } else if (e.key === "c" && (e.metaKey || e.ctrlKey) && editingCell) {
-        const val = (visibleRows[currentRowIdx].original as any)[visibleCols[currentColIdx].id];
-        setCopiedCell({ rowId: editingCell.rowId, colId: editingCell.colId, value: val });
-      } else if (e.key === "v" && (e.metaKey || e.ctrlKey) && editingCell && copiedCell) {
-        onChange?.(editingCell.rowId, editingCell.colId, copiedCell.value);
-      } else {
-        return;
-      }
-
-      if (nextRow !== currentRowIdx || nextCol !== currentColIdx) {
-        setEditingCell({
-          rowId: visibleRows[nextRow].id,
-          colId: visibleCols[nextCol].id,
-        });
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editingCell, isFocused, rows, table, onChange, copiedCell]);
-
-  // ── Export CSV ──
-  const handleExportCSV = useCallback(() => {
-    const visibleCols = table.getVisibleFlatColumns().filter(c => c.id !== "__select");
-    const headers = visibleCols.map(c => (c.columnDef.header as string) || c.id);
-    const csvRows = [headers.join(",")];
-
-    for (const row of rows) {
-      const values = visibleCols.map(col => {
-        const val = (row.original as any)[col.id];
-        if (val === null || val === undefined) return "";
-        const str = String(val).replace(/"/g, '""');
-        return str.includes(",") || str.includes("\n") ? `"${str}"` : str;
-      });
-      csvRows.push(values.join(","));
-    }
-
-    const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${storageKey || "table"}_${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  }, [rows, table, storageKey]);
-
   // ── Load saved prefs ──
   useEffect(() => {
     if (!storageKey) return;
@@ -472,6 +385,93 @@ export default function AirTable<T extends Record<string, any>>({
   const totalSize = virtualizer.getTotalSize();
   const paddingTop = virtualRows.length > 0 ? virtualRows[0].start : 0;
   const paddingBottom = virtualRows.length > 0 ? totalSize - virtualRows[virtualRows.length - 1].end : 0;
+
+  // ── Keyboard Navigation ──
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!editingCell && !isFocused) return;
+
+      const visibleCols = table.getVisibleFlatColumns().filter(c => c.id !== "__select");
+      const visibleRows = rows;
+      if (!visibleCols.length || !visibleRows.length) return;
+
+      const currentRowIdx = visibleRows.findIndex(r => r.id === editingCell?.rowId);
+      const currentColIdx = visibleCols.findIndex(c => c.id === editingCell?.colId);
+
+      if (currentRowIdx === -1 || currentColIdx === -1) return;
+
+      let nextRow = currentRowIdx;
+      let nextCol = currentColIdx;
+
+      if (e.key === "ArrowDown" || (e.key === "Enter" && !editingCell)) {
+        e.preventDefault();
+        nextRow = Math.min(currentRowIdx + 1, visibleRows.length - 1);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        nextRow = Math.max(currentRowIdx - 1, 0);
+      } else if (e.key === "ArrowRight" || (e.key === "Tab" && !e.shiftKey)) {
+        if (e.key === "Tab") e.preventDefault();
+        nextCol = Math.min(currentColIdx + 1, visibleCols.length - 1);
+        if (nextCol > currentColIdx && e.key === "ArrowRight") {
+          setEditingCell({ rowId: visibleRows[currentRowIdx].id, colId: visibleCols[nextCol].id });
+          return;
+        }
+      } else if (e.key === "ArrowLeft" || (e.key === "Tab" && e.shiftKey)) {
+        if (e.key === "Tab") e.preventDefault();
+        nextCol = Math.max(currentColIdx - 1, 0);
+      } else if (e.key === "Delete" || e.key === "Backspace") {
+        if (!editingCell) {
+          e.preventDefault();
+          onChange?.(visibleRows[currentRowIdx].id, visibleCols[currentColIdx].id, null);
+          return;
+        }
+      } else if (e.key === "c" && (e.metaKey || e.ctrlKey) && editingCell) {
+        const val = (visibleRows[currentRowIdx].original as any)[visibleCols[currentColIdx].id];
+        setCopiedCell({ rowId: editingCell.rowId, colId: editingCell.colId, value: val });
+      } else if (e.key === "v" && (e.metaKey || e.ctrlKey) && editingCell && copiedCell) {
+        onChange?.(editingCell.rowId, editingCell.colId, copiedCell.value);
+      } else {
+        return;
+      }
+
+      if (nextRow !== currentRowIdx || nextCol !== currentColIdx) {
+        setEditingCell({
+          rowId: visibleRows[nextRow].id,
+          colId: visibleCols[nextCol].id,
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [editingCell, isFocused, rows, table, onChange, copiedCell]);
+
+  // ── Export CSV ──
+  const handleExportCSV = useCallback(() => {
+    const visibleCols = table.getVisibleFlatColumns().filter(c => c.id !== "__select");
+    const headers = visibleCols.map(c => (c.columnDef.header as string) || c.id);
+    const csvRows = [headers.join(",")];
+
+    for (const row of rows) {
+      const values = visibleCols.map(col => {
+        const val = (row.original as any)[col.id];
+        if (val === null || val === undefined) return "";
+        const str = String(val).replace(/"/g, '""');
+        return str.includes(",") || str.includes("\n") ? `"${str}"` : str;
+      });
+      csvRows.push(values.join(","));
+    }
+
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${storageKey || "table"}_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [rows, table, storageKey]);
 
   // ── Undo/Redo ──
   const handleUndo = useCallback(() => {

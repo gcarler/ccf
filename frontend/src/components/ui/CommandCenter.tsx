@@ -50,15 +50,15 @@ export function CommandCenter() {
     };
 
     const defaultCommands = useMemo<CommandItem[]>(() => ([
-        { id: "crm", label: "CRM Pastoral", icon: Users, shortcut: "G C", group: "Acceso Rápido", action: () => router.push('/crm') },
-        { id: "projects", label: "Gestión de Proyectos", icon: Layers, shortcut: "G P", group: "Acceso Rápido", action: () => router.push('/projects') },
-        { id: "academy", label: "Academia Faro", icon: GraduationCap, shortcut: "G A", group: "Acceso Rápido", action: () => router.push('/academy') },
-        { id: "cms", label: "Panel CMS", icon: Globe, group: "Acceso Rápido", action: () => router.push('/cms') },
+        { id: "crm", label: "CRM Pastoral", icon: Users, shortcut: "G C", group: "Acceso Rápido", action: () => router.push('/plataforma/crm') },
+        { id: "projects", label: "Gestión de Proyectos", icon: Layers, shortcut: "G P", group: "Acceso Rápido", action: () => router.push('/plataforma/projects') },
+        { id: "academy", label: "Academia Faro", icon: GraduationCap, shortcut: "G A", group: "Acceso Rápido", action: () => router.push('/plataforma/academy') },
+        { id: "cms", label: "Panel CMS", icon: Globe, group: "Acceso Rápido", action: () => router.push('/plataforma/cms') },
         { id: "new-task", label: "Nueva Tarea...", icon: Plus, shortcut: "N T", group: "Acciones", action: () => openModal('task') },
-        { id: "new-member", label: "Registrar Miembro...", icon: Plus, shortcut: "N M", group: "Acciones", action: () => router.push('/crm/members') },
-        { id: "send-message", label: "Enviar Mensaje...", icon: MessageSquare, group: "Acciones", action: () => router.push('/crm/messaging') },
-        { id: "account-settings", label: "Configuración de Cuenta", icon: Settings, group: "Soporte y Ajustes", action: () => router.push('/account') },
-        { id: "help-center", label: "Centro de Ayuda", icon: LifeBuoy, group: "Soporte y Ajustes", action: () => router.push('/support') },
+        { id: "new-member", label: "Registrar Miembro...", icon: Plus, shortcut: "N M", group: "Acciones", action: () => router.push('/plataforma/crm/members') },
+        { id: "send-message", label: "Enviar Mensaje...", icon: MessageSquare, group: "Acciones", action: () => router.push('/plataforma/crm/messaging') },
+        { id: "account-settings", label: "Configuración de Cuenta", icon: Settings, group: "Soporte y Ajustes", action: () => router.push('/plataforma/account') },
+        { id: "help-center", label: "Centro de Ayuda", icon: LifeBuoy, group: "Soporte y Ajustes", action: () => router.push('/plataforma/support') },
         { id: "shortcuts", label: "Atajos de Teclado", icon: Zap, group: "Soporte y Ajustes", action: () => setShowShortcuts(true) },
     ]), [openModal, router]);
 

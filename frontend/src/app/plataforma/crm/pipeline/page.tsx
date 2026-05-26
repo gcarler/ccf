@@ -241,7 +241,7 @@ export default function ConsolidationPipelinePage() {
                         handleUpdateStage(leadId, newStage);
                         setSelectedLead((prev: any) => ({ ...prev, stage: newStage }));
                     }}
-                    onViewFullProfile={(id) => router.push(`/crm/contacts/${id}`)}
+                    onViewFullProfile={(id) => router.push(`/plataforma/crm/contacts/${id}`)}
                 />
             )
         });

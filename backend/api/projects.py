@@ -183,6 +183,7 @@ def list_projects(
     status_filter: Optional[str] = Query(None, alias="status"),
     owner_id: Optional[int] = None,
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     query = db.query(models.Project).options(
         selectinload(models.Project.tasks).selectinload(models.ProjectTask.attachments),
@@ -652,7 +653,11 @@ def get_project(
 
 
 @router.get("/{project_id}/wiki", response_model=Optional[schemas.ProjectDocument])
-def get_project_wiki(project_id: int, db: Session = Depends(get_db)):
+def get_project_wiki(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
     doc = (
         db.query(models.ProjectDocument)
         .filter(models.ProjectDocument.project_id == project_id)

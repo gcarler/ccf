@@ -24,7 +24,7 @@ async function _refreshSession(): Promise<string | null> {
 
   _refreshPromise = (async () => {
     if (typeof window === "undefined") return null;
-    const refreshToken = localStorage.getItem("ccf_refresh_token");
+    const refreshToken = sessionStorage.getItem("ccf_refresh_token");
     if (!refreshToken) return null;
 
     try {
@@ -38,8 +38,8 @@ async function _refreshSession(): Promise<string | null> {
       if (!res.ok) return null;
       const data = await res.json();
       if (data.access_token) {
-        localStorage.setItem("ccf_token", data.access_token);
-        if (data.refresh_token) localStorage.setItem("ccf_refresh_token", data.refresh_token);
+        sessionStorage.setItem("ccf_token", data.access_token);
+        if (data.refresh_token) sessionStorage.setItem("ccf_refresh_token", data.refresh_token);
         return data.access_token as string;
       }
       return null;
@@ -94,10 +94,10 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}, _
 
   const init: RequestInit = { method, headers: finalHeaders, cache, credentials: credentials ?? "include" };
 
-  // AUTO-INJECT TOKEN FROM LOCALSTORAGE
+  // AUTO-INJECT TOKEN FROM SESSIONSTORAGE
   let activeToken = token;
   if (!activeToken && typeof window !== 'undefined') {
-    activeToken = localStorage.getItem('ccf_token');
+    activeToken = sessionStorage.getItem('ccf_token');
   }
 
   if (activeToken) {
@@ -160,8 +160,8 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}, _
         return apiFetch<T>(path, { ...options, token: newToken }, true);
       }
       // Refresh failed — session is truly expired.
-      localStorage.removeItem("ccf_token");
-      localStorage.removeItem("ccf_refresh_token");
+      sessionStorage.removeItem("ccf_token");
+      sessionStorage.removeItem("ccf_refresh_token");
       window.location.href = "/login?expired=true";
     }
 

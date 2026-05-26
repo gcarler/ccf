@@ -169,7 +169,7 @@ export default function MessagingCampaignCenter() {
                         {history.map((item) => (
                             <div 
                                 key={item.id} 
-                                onClick={() => router.push(`/crm/messaging/${item.id}`)}
+                                onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
                                 className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 flex items-center justify-between hover:border-blue-500/30 transition-all cursor-pointer group"
                             >
                                 <div>
@@ -199,7 +199,7 @@ export default function MessagingCampaignCenter() {
                                 {history.map((item) => (
                                     <tr 
                                         key={item.id} 
-                                        onClick={() => router.push(`/crm/messaging/${item.id}`)}
+                                        onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
                                         className="border-t border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer transition-colors"
                                     >
                                         <td className="px-4 py-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">{item.name}</td>
@@ -226,7 +226,7 @@ export default function MessagingCampaignCenter() {
                                     {col.items.map((item: any) => (
                                         <div 
                                             key={item.id} 
-                                            onClick={() => router.push(`/crm/messaging/${item.id}`)}
+                                            onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
                                             className="rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3 hover:border-blue-500/30 transition-all cursor-pointer"
                                         >
                                             <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{item.name}</p>
@@ -248,7 +248,7 @@ export default function MessagingCampaignCenter() {
                                     {items.map((item: any) => (
                                         <div 
                                             key={item.id} 
-                                            onClick={() => router.push(`/crm/messaging/${item.id}`)}
+                                            onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
                                             className="rounded-md border border-slate-200 dark:border-white/10 p-3 hover:border-blue-500/30 transition-all cursor-pointer bg-white dark:bg-white/5"
                                         >
                                             <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{item.name}</p>
@@ -267,7 +267,7 @@ export default function MessagingCampaignCenter() {
                         {history.map((item) => (
                             <div 
                                 key={item.id} 
-                                onClick={() => router.push(`/crm/messaging/${item.id}`)}
+                                onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
                                         className="space-y-1 cursor-pointer group p-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md transition-all"
                             >
                                 <div className="flex items-center justify-between text-[11px]">
@@ -403,7 +403,7 @@ export default function MessagingCampaignCenter() {
                                 {history.map((item) => (
                                     <div 
                                         key={item.id} 
-                                        onClick={() => router.push(`/crm/messaging/${item.id}`)}
+                                        onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
                                         className="flex items-center justify-between group cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 p-2 rounded-lg transition-all"
                                     >
                                         <div className="flex items-center gap-4">

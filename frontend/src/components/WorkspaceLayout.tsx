@@ -68,8 +68,7 @@ function WorkspaceLayoutInner({
     const moduleKey = pathname?.split('/')[2] || 'default';
     const [showInbox, setShowInbox] = useState(false);
     const [showChat, setShowChat] = useState(false);
-    const [isMounted, setIsReady] = useState(false);
-    const [mountAttempted, setMountAttempted] = useState(false);
+    const [isMounted, setIsReady] = useState(true);
     const [isFocusMode, setIsFocusMode] = useState(false);
     const { isModalOpen, closeModal, defaultType } = useCreation();
     const previousLayerStateRef = useRef<{ s1: boolean; s2: boolean } | null>(null);
@@ -79,17 +78,6 @@ function WorkspaceLayoutInner({
 
     // S1 visibility is controlled by layers.S1 (always true, but kept in sync)
     const s1Visible = layers.S1;
-
-    // ── Fallback mount timer: ensures isMounted eventually becomes true ──
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (!isMounted) {
-                console.warn('[WorkspaceLayout] Fallback mount timer fired — isMounted not set by main effect');
-                setIsReady(true);
-            }
-        }, 2000);
-        return () => clearTimeout(timer);
-    }, [isMounted]);
 
     useEffect(() => {
         const savedS1 = localStorage.getItem('workspace:s1') !== 'hidden';

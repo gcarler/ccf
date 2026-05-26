@@ -176,6 +176,10 @@ export default function StrategyDetailPage() {
     // Session menu
     const [sessionMenuId, setSessionMenuId] = useState<number | null>(null);
     const [sessionGroupFilter, setSessionGroupFilter] = useState<number | 'all'>('all');
+
+    // Visitor search (in attendance drawer)
+    const [showVisitorSearch, setShowVisitorSearch] = useState(false);
+    const [visitorSearch, setVisitorSearch] = useState('');
     useEffect(() => {
         if (sessionMenuId === null) return;
         const close = () => setSessionMenuId(null);
@@ -390,7 +394,15 @@ export default function StrategyDetailPage() {
     const openAttendanceDrawer = async (session: SessionRow) => {
         setAttendanceSession(session);
         setIsAttendanceDrawerOpen(true);
+        setShowVisitorSearch(false);
+        setVisitorSearch('');
         const token = localStorage.getItem('ccf_token') || '';
+        // Pre-load all members for visitor search if not already loaded
+        if (allMembers.length === 0) {
+            apiFetch<any[]>('/crm/members?limit=1000', { token }).then(res => {
+                if (Array.isArray(res)) setAllMembers(res);
+            }).catch(() => {});
+        }
         try {
             // Get house members to build attendance list
             const house = await apiFetch<any>(`/evangelism/glory-houses/${session.glory_house_id}`, { token });
@@ -1198,7 +1210,7 @@ export default function StrategyDetailPage() {
                     </button>
                 </>}>
                 <div className="space-y-3">
-                    {attendanceMembers.length === 0 ? (
+                    {attendanceMembers.length === 0 && !showVisitorSearch ? (
                         <div className="text-center py-8">
                             <Users size={32} className="text-slate-300 mx-auto mb-2" />
                             <p className="text-xs text-slate-400">Este grupo no tiene miembros asignados</p>
@@ -1206,18 +1218,23 @@ export default function StrategyDetailPage() {
                         </div>
                     ) : (
                         <>
-                            <div className="flex items-center gap-2 text-[11px] text-slate-400 mb-1">
-                                <span>{attendanceMembers.filter(m => m.status === 'present').length} presentes</span>
-                                <span>·</span>
-                                <span>{attendanceMembers.filter(m => m.status === 'absent').length} ausentes</span>
-                                <span>·</span>
-                                <span>{attendanceMembers.filter(m => m.status === 'first_time').length} primera vez</span>
-                            </div>
+                            {attendanceMembers.length > 0 && (
+                                <div className="flex items-center gap-2 text-[11px] text-slate-400 mb-1">
+                                    <span>{attendanceMembers.filter(m => m.status === 'present').length} presentes</span>
+                                    <span>·</span>
+                                    <span>{attendanceMembers.filter(m => m.status === 'absent').length} ausentes</span>
+                                    <span>·</span>
+                                    <span className="text-blue-500">{attendanceMembers.filter(m => m.status === 'first_time').length} primera vez</span>
+                                </div>
+                            )}
                             <div className="space-y-2">
                                 {attendanceMembers.map((m, i) => (
-                                    <div key={m.member_id} className="flex items-center gap-3 px-3 py-2.5 bg-slate-50 dark:bg-white/5 rounded-lg">
+                                    <div key={m.member_id} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg ${m.status === 'first_time' ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' : 'bg-slate-50 dark:bg-white/5'}`}>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{m.name}</p>
+                                            <div className="flex items-center gap-1.5">
+                                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{m.name}</p>
+                                                {m.status === 'first_time' && <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-blue-500 text-white">1ª vez</span>}
+                                            </div>
                                             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${ROLE_COLORS[m.role] || ROLE_COLORS.miembro}`}>
                                                 {MEMBER_ROLES.find(r => r.value === m.role)?.label || m.role}
                                             </span>
@@ -1234,12 +1251,83 @@ export default function StrategyDetailPage() {
                                                     {opt.label}
                                                 </button>
                                             ))}
+                                            {m.role === 'visitante' && (
+                                                <button onClick={() => setAttendanceMembers(prev => prev.filter((_, j) => j !== i))}
+                                                    className="w-7 h-7 ml-1 flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 transition-colors">
+                                                    <X size={12} />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </>
                     )}
+
+                    {/* Agregar visitante */}
+                    <div className="pt-2 border-t border-slate-200 dark:border-white/10">
+                        {!showVisitorSearch ? (
+                            <button onClick={() => setShowVisitorSearch(true)}
+                                className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-dashed border-slate-300 dark:border-white/20 text-xs text-slate-500 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-700 dark:hover:text-blue-400 transition-colors">
+                                <UserPlus size={14} />Agregar visitante (1ª vez)
+                            </button>
+                        ) : (
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <div className="relative flex-1">
+                                        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input
+                                            autoFocus
+                                            value={visitorSearch}
+                                            onChange={e => setVisitorSearch(e.target.value)}
+                                            placeholder="Buscar miembro por nombre..."
+                                            className="w-full pl-8 pr-3 py-2 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                        />
+                                    </div>
+                                    <button onClick={() => { setShowVisitorSearch(false); setVisitorSearch(''); }}
+                                        className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10">
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                                {visitorSearch.trim().length >= 2 && (
+                                    <div className="max-h-40 overflow-y-auto space-y-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1e1f21] p-1">
+                                        {allMembers
+                                            .filter(m => {
+                                                const name = `${m.first_name} ${m.last_name}`.toLowerCase();
+                                                return name.includes(visitorSearch.toLowerCase()) &&
+                                                    !attendanceMembers.find(a => a.member_id === m.id);
+                                            })
+                                            .slice(0, 8)
+                                            .map(m => (
+                                                <button key={m.id}
+                                                    onClick={() => {
+                                                        setAttendanceMembers(prev => [...prev, {
+                                                            member_id: m.id,
+                                                            name: `${m.first_name} ${m.last_name}`.trim(),
+                                                            role: 'visitante',
+                                                            status: 'first_time',
+                                                            notes: '',
+                                                        }]);
+                                                        setVisitorSearch('');
+                                                        setShowVisitorSearch(false);
+                                                    }}
+                                                    className="w-full text-left px-3 py-2 rounded-md text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2 transition-colors">
+                                                    <UserPlus size={12} className="text-blue-500 shrink-0" />
+                                                    <span className="font-medium">{m.first_name} {m.last_name}</span>
+                                                    {m.church_role && <span className="text-slate-400 text-[10px]">({m.church_role})</span>}
+                                                </button>
+                                            ))}
+                                        {allMembers.filter(m => {
+                                            const name = `${m.first_name} ${m.last_name}`.toLowerCase();
+                                            return name.includes(visitorSearch.toLowerCase()) && !attendanceMembers.find(a => a.member_id === m.id);
+                                        }).length === 0 && (
+                                            <p className="text-center py-3 text-xs text-slate-400">No se encontraron miembros</p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </WorkspaceDrawer>
         </EvangelismShell>

@@ -208,7 +208,7 @@ export default function ContactsPage() {
                     ) : ['list', 'grid'].includes(viewType) ? filtered.map(lead => (
                         <div
                             key={lead.id}
-                            onClick={() => router.push(`/crm/contacts/${lead.id}`)}
+                            onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)}
                             className="bg-white dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-md p-3 hover:border-blue-300 dark:hover:border-blue-700 transition-all group cursor-pointer shadow-sm hover:shadow-xl"
                         >
                             <div className="flex justify-between items-start mb-4">
@@ -271,7 +271,7 @@ export default function ContactsPage() {
                                     </div>
                                     <div className="space-y-2">
                                         {(groupedByStage[stage] ?? []).map(lead => (
-                                            <button key={lead.id} onClick={() => router.push(`/crm/contacts/${lead.id}`)} className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
+                                            <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
                                                 <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{lead.first_name} {lead.last_name}</p>
                                                 <p className="text-[10px] text-slate-400">{lead.phone || 'Sin teléfono'}</p>
                                             </button>
@@ -295,7 +295,7 @@ export default function ContactsPage() {
                                     <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{payload.label}</p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {payload.items.map(lead => (
-                                            <button key={lead.id} onClick={() => router.push(`/crm/contacts/${lead.id}`)} className="rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
+                                            <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
                                                 <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{lead.first_name} {lead.last_name}</p>
                                                 <p className="text-[10px] text-slate-400">{STAGE_LABELS[lead.stage] || lead.stage}</p>
                                             </button>
@@ -333,7 +333,7 @@ export default function ContactsPage() {
                                 </thead>
                                 <tbody>
                                     {filtered.map(lead => (
-                                        <tr key={lead.id} onClick={() => router.push(`/crm/contacts/${lead.id}`)} className="cursor-pointer border-t border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02]">
+                                        <tr key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="cursor-pointer border-t border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02]">
                                             <td className="px-4 py-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">{lead.first_name} {lead.last_name}</td>
                                             <td className="px-4 py-1.5 text-xs text-slate-500">{lead.source || 'Sin fuente'}</td>
                                             <td className="px-4 py-1.5 text-xs text-slate-500">{lead.phone || 'Sin telefono'}</td>

@@ -317,7 +317,7 @@ export default function CrmTasksPage() {
                         ) : tasks.map(task => (
                             <div
                                 key={task.id}
-                                onClick={() => router.push(`/crm/tasks/${task.id}`)}
+                                onClick={() => router.push(`/plataforma/crm/tasks/${task.id}`)}
                                 className="flex items-center gap-4 p-4 bg-white dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer group"
                             >
                                 <button
@@ -363,7 +363,7 @@ export default function CrmTasksPage() {
                                     return (
                                         <tr
                                             key={task.id}
-                                            onClick={() => router.push(`/crm/tasks/${task.id}`)}
+                                            onClick={() => router.push(`/plataforma/crm/tasks/${task.id}`)}
                                             className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer transition-colors"
                                         >
                                             <td className="py-1.5 px-3 text-xs font-bold text-slate-800 dark:text-white max-w-[250px] truncate">{task.title}</td>

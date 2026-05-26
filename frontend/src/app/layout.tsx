@@ -5,7 +5,6 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ConfigProvider } from "@/context/ConfigContext";
 import { ToastProvider } from "@/context/ToastContext";
 import { ThemeProvider } from "./plataforma/theme/ThemeContext";
-import "@/lib/fetch-patch";
 import { ClientBootstrap } from "./ClientBootstrap";
 import { Toaster } from "sonner";
 import { CommandCenter } from "@/components/ui/CommandCenter";

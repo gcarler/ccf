@@ -59,3 +59,9 @@ from backend.models_projects import (Project, ProjectAttachment,
 # Agent identity models (canonical person)
 from backend.models_agents import (Agent, AgentAuth, AgentContact, AgentRole,
     AgentActivity, AgentFamily, AgentJourney, AgentPermission)
+
+# Kernel — Protocolo de Identidad y Roles
+from backend.models_kernel import (ActivityStatus, MinistryOffice, ChurchRole,
+    PlatformRole)  # noqa: F401
+from backend.models_kernel import (UserMinistry, UserRoleAssignment,
+    UserRoleHistory, PlatformRoleDefinition, UserPlatformRole)  # noqa: F401

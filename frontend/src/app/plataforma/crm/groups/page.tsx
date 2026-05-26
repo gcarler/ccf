@@ -247,7 +247,7 @@ export default function CrmGroupsPage() {
                                         initial={{ opacity: 0, y: 16 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: idx * 0.04 }}
-                                        onClick={() => router.push(`/crm/groups/${group.id}`)}
+                                        onClick={() => router.push(`/plataforma/crm/groups/${group.id}`)}
                                         className="group bg-white dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
                                     >
                                         {/* Card top accent */}
