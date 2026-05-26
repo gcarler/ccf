@@ -17,6 +17,7 @@ const VIEW_LABEL: Record<ViewType, string> = {
   gantt: "Gantt",
   calendar: "Calendario",
   wiki: "Wiki",
+  airtable: "Airtable",
 };
 
 type CalendarEvents = React.ComponentProps<typeof UniversalCalendarView>["events"];

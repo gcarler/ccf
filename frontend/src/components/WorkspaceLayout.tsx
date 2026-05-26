@@ -69,6 +69,7 @@ function WorkspaceLayoutInner({
     const [showInbox, setShowInbox] = useState(false);
     const [showChat, setShowChat] = useState(false);
     const [isMounted, setIsReady] = useState(false);
+    const [mountAttempted, setMountAttempted] = useState(false);
     const [isFocusMode, setIsFocusMode] = useState(false);
     const { isModalOpen, closeModal, defaultType } = useCreation();
     const previousLayerStateRef = useRef<{ s1: boolean; s2: boolean } | null>(null);
@@ -78,6 +79,17 @@ function WorkspaceLayoutInner({
 
     // S1 visibility is controlled by layers.S1 (always true, but kept in sync)
     const s1Visible = layers.S1;
+
+    // ── Fallback mount timer: ensures isMounted eventually becomes true ──
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (!isMounted) {
+                console.warn('[WorkspaceLayout] Fallback mount timer fired — isMounted not set by main effect');
+                setIsReady(true);
+            }
+        }, 2000);
+        return () => clearTimeout(timer);
+    }, [isMounted]);
 
     useEffect(() => {
         const savedS1 = localStorage.getItem('workspace:s1') !== 'hidden';
@@ -256,7 +268,16 @@ function WorkspaceLayoutInner({
     const isMiniSidebar = layers.S2 && s2WidthNum <= snapThreshold;
     const currentS2Width = layers.S2 ? `${s2WidthNum}px` : '0px';
 
-    if (!isMounted) return <div className="h-screen w-full bg-white dark:bg-[#111213]" />;
+    if (!isMounted) return (
+        <div className="h-screen w-full bg-white dark:bg-[#111213] flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+                <div className="size-8 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-xs">
+                    CCF
+                </div>
+                <div className="size-1.5 rounded-full bg-blue-500 animate-pulse" />
+            </div>
+        </div>
+    );
 
     const displayName = user?.username?.includes('@')
         ? user.username.split('@')[0]

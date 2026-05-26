@@ -6,7 +6,9 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
 import ViewSwitcher, { ViewType } from '@/components/ViewSwitcher';
-import { useViewType, MINIMAL_VIEWS } from '@/hooks/useViewType';
+import { useViewType, FULL_VIEWS } from '@/hooks/useViewType';
+import AirTableView, { AirTableColumn } from '@/components/ui/AirTableView';
+import { useAirTable } from '@/hooks/useAirTable';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Users,
@@ -341,7 +343,7 @@ export default function MembersPage() {
                                 <button key={role.id} onClick={() => setRoleFilter(role.name)} className={clsx("px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide whitespace-nowrap transition-all shrink-0 snap-start", roleFilter === role.name ? "bg-slate-800 text-white dark:bg-white dark:text-slate-900 shadow-md" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10")}>{role.name}</button>
                             ))}
                         </div>
-                        <div className="ml-auto"><ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={MINIMAL_VIEWS} /></div>
+                        <div className="ml-auto"><ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={FULL_VIEWS} /></div>
                     </div>
 
                     {/* Members List */}
@@ -382,6 +384,21 @@ export default function MembersPage() {
                                 </tbody>
                             </table>
                         </div>
+                    ) : viewType === 'airtable' ? (
+                        <AirTableView
+                            data={filteredMembers}
+                            idAccessor="id"
+                            storageKey="crm_members"
+                            columns={[
+                                { id: 'first_name', name: 'Nombre', type: 'text' },
+                                { id: 'last_name', name: 'Apellido', type: 'text' },
+                                { id: 'church_role', name: 'Rol', type: 'select', options: roles.map(r => ({ label: r.name, value: r.name, color: r.color })) },
+                                { id: 'email', name: 'Email', type: 'email' },
+                                { id: 'phone', name: 'Teléfono', type: 'phone' },
+                                { id: 'membership_type', name: 'Membresía', type: 'select', options: [{ label: 'Activo', value: 'Activo' }, { label: 'Inactivo', value: 'Inactivo' }] },
+                                { id: 'spiritual_health', name: 'Salud Espiritual', type: 'progress' },
+                            ]}
+                        />
                     ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <AnimatePresence>

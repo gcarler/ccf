@@ -24,7 +24,7 @@ export function useViewType(key: string, fallback: ViewType = "table") {
 }
 
 // View presets
-export const FULL_VIEWS: ViewType[] = ["dashboard", "table", "list", "grid", "board", "kanban", "calendar", "gantt", "wiki"];
-export const OPERATIONAL_VIEWS: ViewType[] = ["table", "list", "grid", "board", "kanban"];
+export const FULL_VIEWS: ViewType[] = ["dashboard", "table", "airtable", "list", "grid", "board", "kanban", "calendar", "gantt", "wiki"];
+export const OPERATIONAL_VIEWS: ViewType[] = ["table", "airtable", "list", "grid", "board", "kanban"];
 export const TEMPORAL_VIEWS: ViewType[] = ["calendar", "gantt", "table", "list"];
 export const MINIMAL_VIEWS: ViewType[] = ["table", "list", "grid"];
