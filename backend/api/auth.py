@@ -99,24 +99,22 @@ def login(
         db, int(user.id), ip_address=ip_address, user_agent=user_agent
     )
 
-    # Access Token Cookie
+    # Access Token Cookie (session-only: expires on browser close)
     response.set_cookie(
         key=settings.access_token_cookie_name,
         value=access_token,
         httponly=True,
         secure=settings.access_token_cookie_secure,
         samesite="lax",
-        max_age=settings.access_token_expire_minutes * 60,
     )
 
-    # Refresh Token Cookie
+    # Refresh Token Cookie (session-only: expires on browser close)
     response.set_cookie(
         key=settings.refresh_token_cookie_name,
         value=refresh_token,
         httponly=True,
         secure=settings.access_token_cookie_secure,
         samesite="lax",
-        max_age=settings.refresh_token_expire_days * 24 * 3600,
     )
 
     return {
@@ -173,14 +171,13 @@ def refresh_access_token(
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
     )
 
-    # Actualizar cookies
+    # Actualizar cookies (session-only)
     response.set_cookie(
         key=settings.access_token_cookie_name,
         value=new_access_token,
         httponly=True,
         secure=settings.access_token_cookie_secure,
         samesite="lax",
-        max_age=settings.access_token_expire_minutes * 60,
     )
     response.set_cookie(
         key=settings.refresh_token_cookie_name,
@@ -188,7 +185,6 @@ def refresh_access_token(
         httponly=True,
         secure=settings.access_token_cookie_secure,
         samesite="lax",
-        max_age=settings.refresh_token_expire_days * 24 * 3600,
     )
 
     return {
