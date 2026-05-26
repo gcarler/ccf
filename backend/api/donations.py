@@ -58,6 +58,8 @@ def donations_summary(
     current_user: models.User = Depends(require_admin),
 ):
     """Resumen mensual de donaciones calculado desde la base de datos."""
+    from datetime import timezone as dt_timezone
+    now = datetime.now(dt_timezone.utc)
     monthly = (
         db.query(
             func.extract("month", models.Donation.created_at).label("month_num"),
@@ -65,9 +67,7 @@ def donations_summary(
         )
         .filter(
             models.Donation.created_at
-            >= datetime(timezone.utc).replace(
-                year=datetime.now(timezone.utc).year, month=1, day=1, tzinfo=None
-            )
+            >= now.replace(year=now.year, month=1, day=1, tzinfo=None)
         )
         .group_by("month_num")
         .order_by("month_num")

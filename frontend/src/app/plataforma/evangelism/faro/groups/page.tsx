@@ -21,10 +21,16 @@ import {
   ShieldCheck,
   BarChart3,
   Trash2,
+  List,
+  LayoutGrid,
+  Columns3,
+  Table2,
+  ChevronRight,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { parseAndValidateTime } from '@/lib/time';
+import type { ViewType } from '@/components/ViewSwitcher';
 
 
 
@@ -142,6 +148,7 @@ function FaroGroupsContent() {
   const [summary, setSummary] = useState<AssignmentSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewType, setViewType] = useState<ViewType>('list');
   const [mode, setMode] = useState<Mode>('create');
 
   const [selectedHouse, setSelectedHouse] = useState<GloryHouse | null>(null);
@@ -419,6 +426,250 @@ function FaroGroupsContent() {
 
   const showPanel = selectedHouse !== null || isCreating || mode === 'members';
 
+  // ── View Components ────────────────────────────────────────────────
+
+  function ListView({ houses: items }: { houses: GloryHouse[] }) {
+    return (
+      <div className="flex-1 overflow-y-auto p-4">
+        {items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-2">
+            <Search size={32} className="opacity-40" />
+            <p className="text-sm font-medium">No hay grupos que coincidan</p>
+          </div>
+        ) : (
+          <div className="space-y-1 max-w-3xl">
+            {items.map(h => (
+              <button
+                key={h.id}
+                onClick={async () => {
+                  setIsCreating(false);
+                  try {
+                    const detail = await apiFetch<GloryHouse>(`/evangelism/glory-houses/${h.id}`, { token });
+                    setSelectedHouse(detail);
+                    setFormData(detail);
+                    setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.member_id) || []));
+                  } catch {
+                    setSelectedHouse(h); setFormData(h); setSelectedMemberIds(new Set());
+                  }
+                }}
+                className="w-full text-left flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-600 transition-all group"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white truncate">{h.name}</span>
+                    {h.code && <span className="text-[10px] font-mono text-slate-400">{h.code}</span>}
+                  </div>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                    {h.zone && <span><MapPin size={11} className="inline mr-1" />{h.zone}</span>}
+                    {h.leader_id ? (
+                      <span><Users size={11} className="inline mr-1" />{getMemberName(h.leader_id)}</span>
+                    ) : (
+                      <span className="text-amber-500 font-semibold">Sin líder</span>
+                    )}
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${h.status === 'Activo' ? 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-500/10' : 'text-slate-400 bg-slate-100 dark:bg-white/5'}`}>
+                      {h.status}
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-500 transition-colors shrink-0" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function GridView({ houses: items }: { houses: GloryHouse[] }) {
+    return (
+      <div className="flex-1 overflow-y-auto p-4">
+        {items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-2">
+            <Search size={32} className="opacity-40" />
+            <p className="text-sm font-medium">No hay grupos que coincidan</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {items.map(h => (
+              <button
+                key={h.id}
+                onClick={async () => {
+                  setIsCreating(false);
+                  try {
+                    const detail = await apiFetch<GloryHouse>(`/evangelism/glory-houses/${h.id}`, { token });
+                    setSelectedHouse(detail); setFormData(detail);
+                    setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.member_id) || []));
+                  } catch {
+                    setSelectedHouse(h); setFormData(h); setSelectedMemberIds(new Set());
+                  }
+                }}
+                className="text-left w-full bg-white dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 p-4 hover:border-blue-300 dark:hover:border-blue-600 transition-all hover:shadow-md space-y-3"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{h.name}</p>
+                    {h.code && <p className="text-[10px] font-mono text-slate-400">{h.code}</p>}
+                  </div>
+                  <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold ${h.status === 'Activo' ? 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-500/10' : 'text-slate-400 bg-slate-100 dark:bg-white/5'}`}>
+                    {h.status}
+                  </span>
+                </div>
+                <div className="space-y-1.5 text-xs text-slate-500">
+                  {h.zone && <p><MapPin size={12} className="inline mr-1.5" />{h.zone}</p>}
+                  <p><Users size={12} className="inline mr-1.5" />{h.leader_id ? getMemberName(h.leader_id) : <span className="text-amber-500 font-semibold">Sin líder</span>}</p>
+                  {h.address && <p className="truncate opacity-60">{h.address}</p>}
+                </div>
+                <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-white/5">
+                  <span className="text-[10px] text-slate-400">Cap. {h.capacity || '—'}</span>
+                  {h.day_of_week && <span className="text-[10px] text-slate-400">{h.day_of_week}</span>}
+                  {h.start_time && <span className="text-[10px] text-slate-400">{h.start_time}</span>}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function KanbanView({ houses: items }: { houses: GloryHouse[] }) {
+    const zones = useMemo(() => {
+      const map = new Map<string, GloryHouse[]>();
+      items.forEach(h => {
+        const z = h.zone || 'Sin zona';
+        if (!map.has(z)) map.set(z, []);
+        map.get(z)!.push(h);
+      });
+      return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+    }, [items]);
+
+    return (
+      <div className="flex-1 overflow-x-auto p-4">
+        {zones.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-2">
+            <Search size={32} className="opacity-40" />
+            <p className="text-sm font-medium">No hay grupos que coincidan</p>
+          </div>
+        ) : (
+          <div className="flex gap-4 h-full min-h-[400px]">
+            {zones.map(([zone, zoneHouses]) => (
+              <div key={zone} className="flex-shrink-0 w-72 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 flex flex-col">
+                <div className="px-3 py-2 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">{zone}</span>
+                  <span className="text-[10px] font-semibold text-slate-400 bg-slate-200 dark:bg-white/10 px-2 py-0.5 rounded-full">{zoneHouses.length}</span>
+                </div>
+                <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                  {zoneHouses.map(h => (
+                    <button
+                      key={h.id}
+                      onClick={async () => {
+                        setIsCreating(false);
+                        try {
+                          const detail = await apiFetch<GloryHouse>(`/evangelism/glory-houses/${h.id}`, { token });
+                          setSelectedHouse(detail); setFormData(detail);
+                          setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.member_id) || []));
+                        } catch {
+                          setSelectedHouse(h); setFormData(h); setSelectedMemberIds(new Set());
+                        }
+                      }}
+                      className="text-left w-full bg-white dark:bg-white/10 rounded-lg border border-slate-200 dark:border-white/5 p-3 hover:border-blue-300 dark:hover:border-blue-500 transition-all space-y-2"
+                    >
+                      <div className="flex items-start justify-between gap-1">
+                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{h.name}</p>
+                        <span className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-semibold ${h.status === 'Activo' ? 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-500/10' : 'text-slate-400 bg-slate-100 dark:bg-white/5'}`}>
+                          {h.status}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-500 space-y-1">
+                        <p><Users size={10} className="inline mr-1" />{h.leader_id ? getMemberName(h.leader_id) : <span className="text-amber-500">Sin líder</span>}</p>
+                        {h.address && <p className="truncate opacity-60">{h.address}</p>}
+                      </div>
+                      <div className="flex items-center gap-2 text-[9px] text-slate-400">
+                        <span>Cap. {h.capacity || '—'}</span>
+                        {h.day_of_week && <span>{h.day_of_week}</span>}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function TableView({ houses: items }: { houses: GloryHouse[] }) {
+    return (
+      <div className="flex-1 overflow-auto p-4">
+        {items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-2">
+            <Search size={32} className="opacity-40" />
+            <p className="text-sm font-medium">No hay grupos que coincidan</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-white/10">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
+                  <th className="text-left px-4 py-2.5 font-semibold text-slate-500 uppercase tracking-wider">Nombre</th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-slate-500 uppercase tracking-wider">Código</th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-slate-500 uppercase tracking-wider">Zona</th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-slate-500 uppercase tracking-wider">Líder</th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-slate-500 uppercase tracking-wider">Dirección</th>
+                  <th className="text-center px-4 py-2.5 font-semibold text-slate-500 uppercase tracking-wider">Cap.</th>
+                  <th className="text-center px-4 py-2.5 font-semibold text-slate-500 uppercase tracking-wider">Día</th>
+                  <th className="text-center px-4 py-2.5 font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
+                  <th className="text-right px-4 py-2.5 font-semibold text-slate-500 uppercase tracking-wider">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map(h => (
+                  <tr
+                    key={h.id}
+                    onClick={async () => {
+                      setIsCreating(false);
+                      try {
+                        const detail = await apiFetch<GloryHouse>(`/evangelism/glory-houses/${h.id}`, { token });
+                        setSelectedHouse(detail); setFormData(detail);
+                        setSelectedMemberIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.member_id) || []));
+                      } catch {
+                        setSelectedHouse(h); setFormData(h); setSelectedMemberIds(new Set());
+                      }
+                    }}
+                    className="border-b border-slate-100 dark:border-white/5 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-colors cursor-pointer"
+                  >
+                    <td className="px-4 py-2.5 font-medium text-slate-900 dark:text-white whitespace-nowrap">{h.name}</td>
+                    <td className="px-4 py-2.5 text-slate-500 font-mono">{h.code || '—'}</td>
+                    <td className="px-4 py-2.5 text-slate-500">{h.zone || '—'}</td>
+                    <td className="px-4 py-2.5 text-slate-500">{h.leader_id ? getMemberName(h.leader_id) : <span className="text-amber-500 font-semibold">Sin líder</span>}</td>
+                    <td className="px-4 py-2.5 text-slate-400 max-w-[200px] truncate">{h.address || '—'}</td>
+                    <td className="px-4 py-2.5 text-center text-slate-500">{h.capacity || '—'}</td>
+                    <td className="px-4 py-2.5 text-center text-slate-500">{h.day_of_week || '—'}</td>
+                    <td className="px-4 py-2.5 text-center">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${h.status === 'Activo' ? 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-500/10' : 'text-slate-400 bg-slate-100 dark:bg-white/5'}`}>
+                        {h.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-right">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteHouse(h); }}
+                        className="p-1 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                        title="Eliminar"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // PUSH LIST TO SIDEBAR 2
   useEffect(() => {
     pushSidebarPanel({
@@ -560,7 +811,10 @@ function FaroGroupsContent() {
         { label: 'Faro en Casa', href: '/plataforma/evangelism/faro', icon: Home },
         { label: 'Grupos', icon: Home },
       ]}
-      viewType="wiki"
+      viewType={viewType}
+      onViewChange={setViewType}
+      viewOptions={['list', 'kanban', 'grid', 'table']}
+      onSearch={setSearchQuery}
     >
       <div className="flex h-full p-4 lg:p-4 bg-slate-50/50 dark:bg-[#252528]/50">
         {/* Detail/Edit Panel */}
