@@ -234,7 +234,8 @@ def ask_optimus(
 
 # ── Agent Identity API (Canonical Person Model) ──
 from typing import List as TypingList
-
+from sqlalchemy.orm import Session
+from backend.models import User
 from sqlalchemy import or_
 from backend.models_agents import (Agent as AgentModel, AgentActivity,
                                     AgentJourney, AgentRole)
