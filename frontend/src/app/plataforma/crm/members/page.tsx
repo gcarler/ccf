@@ -7,8 +7,8 @@ import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
 import ViewSwitcher, { ViewType } from '@/components/ViewSwitcher';
 import { useViewType, FULL_VIEWS } from '@/hooks/useViewType';
-import AirTableView, { AirTableColumn } from '@/components/ui/AirTableView';
-import { useAirTable } from '@/hooks/useAirTable';
+import TableView, { TableColumn } from '@/components/ui/TableView';
+import { useTableView } from '@/hooks/useTableView';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Users,
@@ -364,28 +364,7 @@ export default function MembersPage() {
                             ))}
                         </div>
                     ) : viewType === 'table' ? (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-xs">
-                                <thead><tr className="border-b border-slate-200 dark:border-white/10 text-slate-500">
-                                    <th className="text-left py-2 px-3 font-semibold">Nombre</th>
-                                    <th className="text-left py-2 px-3 font-semibold">Rol</th>
-                                    <th className="text-left py-2 px-3 font-semibold">Email</th>
-                                    <th className="text-left py-2 px-3 font-semibold">Teléfono</th>
-                                </tr></thead>
-                                <tbody>
-                                    {filteredMembers.map(m => (
-                                        <tr key={m.id} onClick={() => router.push(`/plataforma/crm/members/${m.id}`)} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors">
-                                            <td className="py-2 px-3 font-medium text-slate-900 dark:text-white">{m.first_name} {m.last_name}</td>
-                                            <td className="py-2 px-3"><span className={clsx("px-1.5 py-0.5 rounded text-[10px] font-bold", getRoleColor(m.church_role || ''))}>{m.church_role || 'Miembro'}</span></td>
-                                            <td className="py-2 px-3 text-slate-400">{m.email || '—'}</td>
-                                            <td className="py-2 px-3 text-slate-400">{m.phone || '—'}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : viewType === 'airtable' ? (
-                        <AirTableView
+                        <TableView
                             data={filteredMembers}
                             idAccessor="id"
                             storageKey="crm_members"

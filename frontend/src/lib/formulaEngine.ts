@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Simple formula engine for AirTable cells.
+ * Simple formula engine for table cells.
  * Supports: SUM, AVG, COUNT, MIN, MAX, CONCAT, IF, TODAY, NOW, LEN, UPPER, LOWER, ROUND
  * Cell references: {columnName}
  *

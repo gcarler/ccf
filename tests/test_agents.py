@@ -20,7 +20,7 @@ def test_agent_task_crud(db_session):
 def test_agent_insight(db_session):
     insight = crud.create_agent_insight(
         db_session,
-        schemas.AgentInsightCreate(title="Alert", insight_type="anomaly", payload="{}"),
+        schemas.AgentInsightCreate(title="Alert", insight_type="anomaly", payload={}),
     )
     assert insight.acknowledged is False
 

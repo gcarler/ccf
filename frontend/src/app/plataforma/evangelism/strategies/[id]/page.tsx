@@ -200,7 +200,8 @@ export default function StrategyDetailPage() {
             setEditStatus(result.status || 'pending');
             setEditStartDate(result.start_date ? result.start_date.substring(0, 10) : '');
             setEditEndDate(result.end_date ? result.end_date.substring(0, 10) : '');
-        } catch {
+        } catch (e: any) {
+            console.error('[StrategyDetail] fetch error:', e);
             toast.error('Error al cargar la estrategia');
         } finally {
             setLoading(false);
@@ -464,7 +465,10 @@ export default function StrategyDetailPage() {
             toast.success('Estrategia actualizada');
             window.dispatchEvent(new CustomEvent('evangelism-strategy-created'));
             fetchStrategy();
-        } catch { toast.error('Error al guardar'); }
+        } catch (e: any) {
+            console.error('[StrategyDetail] Save error:', e);
+            toast.error('Error al guardar: ' + (e?.message || 'Error desconocido'));
+        }
         finally { setSaving(false); }
     };
 

@@ -54,11 +54,11 @@ def set_user_activity_status(
         from backend.models_governance import AdminAuditLog
 
         audit = AdminAuditLog(
-            user_id=changed_by_id or user_id,
-            action_type="user_deactivated",
-            target_type="user",
-            target_id=user_id,
-            details={
+            actor_user_id=changed_by_id,
+            action="user_deactivated",
+            resource_type="user",
+            resource_id=user_id,
+            metadata_json={
                 "reason": "Estado vital cambiado a INACTIVO",
                 "changed_by": changed_by_id,
             },

@@ -103,12 +103,12 @@ def _resolve_kernel_permissions(db: Session, user_id: int) -> Set[str]:
 def _resolve_legacy_permissions(db: Session, user) -> Set[str]:
     """Resuelve permisos desde el sistema legacy (roles strings + Role model)."""
     from backend.core.permissions import (DEFAULT_ROLES,
-                                          get_user_effective_permission)
+                                          get_user_effective_permissions)
 
     result: Set[str] = set()
 
     # Intentar con el sistema legacy completo
-    legacy = get_user_effective_permission(db, user)
+    legacy = get_user_effective_permissions(db, user)
     for perm_key, value in legacy.items():
         if value == "allow":
             result.add(perm_key)
