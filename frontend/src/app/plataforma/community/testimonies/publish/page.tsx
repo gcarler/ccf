@@ -41,7 +41,7 @@ export default function PublishTestimony() {
             });
 
             addToast('¡Gracias por compartir tu historia! Será revisada por moderación.', 'success');
-            router.push('/community/testimonies');
+            router.push('/plataforma/community/testimonies');
         } catch (err: any) {
             addToast(err?.detail?.message || 'Error al publicar el testimonio', 'error');
         } finally {

@@ -134,8 +134,8 @@ export default function SupportPage() {
     const supportBaseCommands = useMemo(() => [
         { id: 'support-new-ticket', label: 'Crear ticket de soporte', description: 'Reportar incidente o duda', group: 'Soporte', action: () => setIsCreateDrawerOpen(true) },
         { id: 'support-view-table', label: 'Vista tabla', description: 'Gestionar tickets en lista', group: 'Soporte', action: () => setViewType('table') },
-        { id: 'support-go-faq', label: 'Ver base de conocimiento', description: 'Guías y manuales', group: 'Soporte', action: () => router.push('/support#faq') },
-        { id: 'support-dashboard', label: 'Volver al dashboard', group: 'Soporte', action: () => router.push('/support') },
+        { id: 'support-go-faq', label: 'Ver base de conocimiento', description: 'Guías y manuales', group: 'Soporte', action: () => router.push('/plataforma/support#faq') },
+        { id: 'support-dashboard', label: 'Volver al dashboard', group: 'Soporte', action: () => router.push('/plataforma/support') },
     ], [router]);
 
     const supportTicketCommands = useMemo(() => filteredTickets.slice(0, 6).map((ticket) => ({

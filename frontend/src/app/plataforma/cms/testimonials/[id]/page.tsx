@@ -97,8 +97,8 @@ export default function CmsTestimonialDetailPage() {
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'CMS', icon: Layout, href: '/cms' },
-                    { label: 'Testimonios', icon: Quote, href: '/cms/testimonials' },
+                    { label: 'CMS', icon: Layout, href: '/plataforma/cms' },
+                    { label: 'Testimonios', icon: Quote, href: '/plataforma/cms/testimonials' },
                     { label: testimonial.author_name, icon: User },
                 ]}
             />

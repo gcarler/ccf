@@ -79,9 +79,9 @@ export default function SpiritualLifePage() {
         {
             title: 'Mi Caminar',
             items: [
-                { id: 'spiritual-home',  label: 'Panel Espiritual',  href: '/spiritual-life',              icon: Heart },
-                { id: 'spiritual-tl',    label: 'Línea de Tiempo',   href: '/spiritual-life/timeline',     icon: Calendar },
-                { id: 'spiritual-certs', label: 'Mis Certificados',  href: '/spiritual-life/certificates', icon: Award },
+                { id: 'spiritual-home',  label: 'Panel Espiritual',  href: '/plataforma/spiritual-life',              icon: Heart },
+                { id: 'spiritual-tl',    label: 'Línea de Tiempo',   href: '/plataforma/spiritual-life/timeline',     icon: Calendar },
+                { id: 'spiritual-certs', label: 'Mis Certificados',  href: '/plataforma/spiritual-life/certificates', icon: Award },
             ]
         },
         {

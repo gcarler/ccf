@@ -114,7 +114,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
 
     const handleQuickCreate = (type: string) => {
         if (type === 'whiteboard') {
-            router.push('/whiteboard/new');
+            router.push('/plataforma/whiteboard/new');
             return;
         }
         handleCreateProject();

@@ -70,7 +70,7 @@ export default function WikiHomePage() {
         {
             title: 'Wiki',
             items: [
-                { id: 'wiki-home', label: 'Inicio', href: '/wiki', icon: BookOpen },
+                { id: 'wiki-home', label: 'Inicio', href: '/plataforma/wiki', icon: BookOpen },
             ]
         }
     ];

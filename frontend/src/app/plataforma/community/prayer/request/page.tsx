@@ -62,7 +62,7 @@ export default function PrayerRequestForm() {
                 });
                 addToast('Tu petición de oración ha sido compartida en el muro.', 'success');
             }
-            router.push('/community/prayer');
+            router.push('/plataforma/community/prayer');
         } catch (error) {
             console.error('prayer request error', error);
             addToast('No pudimos registrar tu petición.', 'error');

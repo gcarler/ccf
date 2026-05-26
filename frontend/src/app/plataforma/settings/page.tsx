@@ -64,7 +64,7 @@ export default function SettingsPage() {
                 { id: 'account-ministry', label: 'Perfil Ministerial', href: '/plataforma/account/ministry-profile', icon: Crown },
                 { id: 'settings-roles', label: 'Roles de Acceso', href: '/plataforma/settings/roles', icon: Shield },
                 { id: 'settings-sessions', label: 'Sesiones', href: '/plataforma/admin/settings/sessions', icon: MonitorIcon },
-                { id: 'theme-visual', label: 'Tema Visual', href: '/theme', icon: Palette },
+                { id: 'theme-visual', label: 'Tema Visual', href: '/plataforma/theme', icon: Palette },
             ]
         }
     ];
@@ -104,7 +104,7 @@ export default function SettingsPage() {
                         </span>
                     </div>
                     <button
-                        onClick={() => router.push('/account')}
+                        onClick={() => router.push('/plataforma/account')}
                         className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 hover:text-blue-600 border border-slate-200 dark:border-white/10 rounded-md hover:border-blue-500/50 transition-all"
                     >
                         Editar

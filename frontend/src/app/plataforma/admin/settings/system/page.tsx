@@ -595,7 +595,7 @@ export default function SystemSettings() {
             sidebarTitle="Ajustes del Sistema"
             parentTitle="Panel de Control"
             depth={2}
-            onBack={() => router.push('/admin')}
+            onBack={() => router.push('/plataforma/admin')}
             customSidebar={settingsSidebar}
         >
             <AdminShell

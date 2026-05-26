@@ -47,10 +47,10 @@ export default function TransparencyPage() {
         {
             title: 'Finanzas',
             items: [
-                { id: 'finances-dashboard', label: 'Dashboard Financiero', href: '/finances', icon: BarChart3 },
-                { id: 'finances-ingresos', label: 'Ingresos', href: '/finances/ingresos', icon: TrendingUp },
-                { id: 'finances-egresos', label: 'Egresos', href: '/finances/egresos', icon: TrendingDown },
-                { id: 'finances-transparency', label: 'Transparencia', href: '/finances/transparency', icon: HeartHandshake },
+                { id: 'finances-dashboard', label: 'Dashboard Financiero', href: '/plataforma/finances', icon: BarChart3 },
+                { id: 'finances-ingresos', label: 'Ingresos', href: '/plataforma/finances/ingresos', icon: TrendingUp },
+                { id: 'finances-egresos', label: 'Egresos', href: '/plataforma/finances/egresos', icon: TrendingDown },
+                { id: 'finances-transparency', label: 'Transparencia', href: '/plataforma/finances/transparency', icon: HeartHandshake },
             ]
         }
     ];

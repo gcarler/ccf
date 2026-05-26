@@ -23,7 +23,8 @@ import {
   ChevronDown, ChevronRight, GripVertical, Plus, Search,
   Filter, Columns, Settings, Undo2, Redo2, Trash2, Copy,
   MoreHorizontal, X, ChevronLeft, ChevronRight as ChevronRightIcon,
-  ArrowUpDown, ArrowUp, ArrowDown, GripHorizontal,
+  ArrowUpDown, ArrowUp, ArrowDown, GripHorizontal, Download,
+  Keyboard, ClipboardPaste,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
@@ -262,6 +263,95 @@ export default function AirTable<T extends Record<string, any>>({
   const [history, setHistory] = useState<{ rowId: string; colId: string; oldValue: any }[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [showColumnConfig, setShowColumnConfig] = useState(false);
+  const [copiedCell, setCopiedCell] = useState<{ rowId: string; colId: string; value: any } | null>(null);
+  const [isFocused, setIsFocused] = useState(false);
+
+  // ── Keyboard Navigation ──
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!editingCell && !isFocused) return;
+
+      const visibleCols = table.getVisibleFlatColumns().filter(c => c.id !== "__select");
+      const visibleRows = rows;
+      if (!visibleCols.length || !visibleRows.length) return;
+
+      const currentRowIdx = visibleRows.findIndex(r => r.id === editingCell?.rowId);
+      const currentColIdx = visibleCols.findIndex(c => c.id === editingCell?.colId);
+
+      if (currentRowIdx === -1 || currentColIdx === -1) return;
+
+      let nextRow = currentRowIdx;
+      let nextCol = currentColIdx;
+
+      if (e.key === "ArrowDown" || (e.key === "Enter" && !editingCell)) {
+        e.preventDefault();
+        nextRow = Math.min(currentRowIdx + 1, visibleRows.length - 1);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        nextRow = Math.max(currentRowIdx - 1, 0);
+      } else if (e.key === "ArrowRight" || (e.key === "Tab" && !e.shiftKey)) {
+        if (e.key === "Tab") e.preventDefault();
+        nextCol = Math.min(currentColIdx + 1, visibleCols.length - 1);
+        if (nextCol > currentColIdx && e.key === "ArrowRight") {
+          setEditingCell({ rowId: visibleRows[currentRowIdx].id, colId: visibleCols[nextCol].id });
+          return;
+        }
+      } else if (e.key === "ArrowLeft" || (e.key === "Tab" && e.shiftKey)) {
+        if (e.key === "Tab") e.preventDefault();
+        nextCol = Math.max(currentColIdx - 1, 0);
+      } else if (e.key === "Delete" || e.key === "Backspace") {
+        if (!editingCell) {
+          e.preventDefault();
+          onChange?.(visibleRows[currentRowIdx].id, visibleCols[currentColIdx].id, null);
+          return;
+        }
+      } else if (e.key === "c" && (e.metaKey || e.ctrlKey) && editingCell) {
+        const val = (visibleRows[currentRowIdx].original as any)[visibleCols[currentColIdx].id];
+        setCopiedCell({ rowId: editingCell.rowId, colId: editingCell.colId, value: val });
+      } else if (e.key === "v" && (e.metaKey || e.ctrlKey) && editingCell && copiedCell) {
+        onChange?.(editingCell.rowId, editingCell.colId, copiedCell.value);
+      } else {
+        return;
+      }
+
+      if (nextRow !== currentRowIdx || nextCol !== currentColIdx) {
+        setEditingCell({
+          rowId: visibleRows[nextRow].id,
+          colId: visibleCols[nextCol].id,
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [editingCell, isFocused, rows, table, onChange, copiedCell]);
+
+  // ── Export CSV ──
+  const handleExportCSV = useCallback(() => {
+    const visibleCols = table.getVisibleFlatColumns().filter(c => c.id !== "__select");
+    const headers = visibleCols.map(c => (c.columnDef.header as string) || c.id);
+    const csvRows = [headers.join(",")];
+
+    for (const row of rows) {
+      const values = visibleCols.map(col => {
+        const val = (row.original as any)[col.id];
+        if (val === null || val === undefined) return "";
+        const str = String(val).replace(/"/g, '""');
+        return str.includes(",") || str.includes("\n") ? `"${str}"` : str;
+      });
+      csvRows.push(values.join(","));
+    }
+
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${storageKey || "table"}_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [rows, table, storageKey]);
 
   // ── Load saved prefs ──
   useEffect(() => {
@@ -447,6 +537,22 @@ export default function AirTable<T extends Record<string, any>>({
           </button>
         )}
 
+        <div className="h-4 w-px bg-slate-200 dark:bg-white/10" />
+
+        <button onClick={handleExportCSV} className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500" title="Exportar CSV">
+          <Download size={12} /> CSV
+        </button>
+
+        <button onClick={() => setIsFocused(!isFocused)} className={clsx("p-1.5 rounded", isFocused ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300" : "hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500")} title="Navegación por teclado">
+          <Keyboard size={14} />
+        </button>
+
+        {copiedCell && (
+          <span className="text-[10px] text-slate-400 flex items-center gap-1">
+            <ClipboardPaste size={10} /> Celda copiada
+          </span>
+        )}
+
         <div className="flex-1" />
         <span className="text-[10px] text-slate-400 font-medium">{rows.length} filas</span>
       </div>
@@ -478,21 +584,31 @@ export default function AirTable<T extends Record<string, any>>({
           <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-[#141517]">
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th key={header.id} colSpan={header.colSpan} className={clsx("relative px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-200 dark:border-white/10 select-none", header.column.getCanSort() && "cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5")}>
-                    <div className="flex items-center gap-1" onClick={header.column.getToggleSortingHandler()}>
-                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                      {{ asc: <ArrowUp size={10} />, desc: <ArrowDown size={10} /> }[header.column.getIsSorted() as string] ?? null}
-                    </div>
-                    {header.column.getCanResize() && (
-                      <div
-                        onMouseDown={header.getResizeHandler()}
-                        onTouchStart={header.getResizeHandler()}
-                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500/30 transition-colors"
-                      />
-                    )}
-                  </th>
-                ))}
+                {headerGroup.headers.map((header, headerIdx) => {
+                  const isFrozen = headerIdx === 0;
+                  const frozenWidth = headerGroup.headers.slice(0, headerIdx).reduce((sum, h) => sum + h.getSize(), 0);
+                  return (
+                    <th
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      className={clsx("relative px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-200 dark:border-white/10 select-none", header.column.getCanSort() && "cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5", isFrozen && "sticky left-0 z-[10] bg-slate-50 dark:bg-[#141517] shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)] dark:shadow-[2px_0_4px_-1px_rgba(0,0,0,0.3)]")}
+                      style={{ ...(isFrozen ? { left: `${frozenWidth}px` } : {}) }}
+                    >
+                      <div className="flex items-center gap-1" onClick={header.column.getToggleSortingHandler()}>
+                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.column.getIsSorted() === "asc" && <ArrowUp size={10} />}
+                        {header.column.getIsSorted() === "desc" && <ArrowDown size={10} />}
+                      </div>
+                      {header.column.getCanResize() && (
+                        <div
+                          onMouseDown={header.getResizeHandler()}
+                          onTouchStart={header.getResizeHandler()}
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500/30 transition-colors z-20"
+                        />
+                      )}
+                    </th>
+                  );
+                })}
               </tr>
             ))}
           </thead>
@@ -502,13 +618,20 @@ export default function AirTable<T extends Record<string, any>>({
               const row = rows[virtualRow.index] as Row<T>;
               return (
                 <tr key={row.id} className={clsx("border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors", row.getIsSelected() && "bg-blue-50 dark:bg-blue-900/10")}>
-                  {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} className="px-2 py-1 text-sm" style={{ width: cell.column.getSize() }}
-                      onClick={() => { if (cell.column.id !== "__select") setEditingCell({ rowId: row.id, colId: cell.column.id }); }}
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
+                  {row.getVisibleCells().map((cell, cellIdx) => {
+                    const isFrozen = cellIdx === 0;
+                    const frozenWidth = row.getVisibleCells().slice(0, cellIdx).reduce((sum, c) => sum + c.column.getSize(), 0);
+                    return (
+                      <td
+                        key={cell.id}
+                        className={clsx("px-2 py-1 text-sm", isFrozen && "sticky left-0 z-[5] bg-white dark:bg-[#1a1b1e] shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)] dark:shadow-[2px_0_4px_-1px_rgba(0,0,0,0.3)]")}
+                        style={{ width: cell.column.getSize(), minWidth: cell.column.getSize(), ...(isFrozen ? { left: `${frozenWidth}px` } : {}) }}
+                        onClick={() => { if (cell.column.id !== "__select") setEditingCell({ rowId: row.id, colId: cell.column.id }); }}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    );
+                  })}
                 </tr>
               );
             })}

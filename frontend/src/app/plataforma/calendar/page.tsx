@@ -666,7 +666,7 @@ export default function PlanificadorPage() {
                                         Limpiar filtros
                                     </button>
                                     <button
-                                        onClick={() => router.push('/agenda/events')}
+                                        onClick={() => router.push('/plataforma/agenda/events')}
                                         className="rounded-md bg-blue-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-blue-700"
                                     >
                                         Agenda simple

@@ -76,7 +76,7 @@ export default function KnowledgeGraphPage() {
     {
       title: 'Análisis',
       items: [
-        { id: 'graph-knowledge', label: 'Knowledge Graph', href: '/graph', icon: Network },
+        { id: 'graph-knowledge', label: 'Knowledge Graph', href: '/plataforma/graph', icon: Network },
       ]
     }
   ];

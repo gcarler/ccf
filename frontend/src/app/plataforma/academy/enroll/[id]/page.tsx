@@ -35,7 +35,7 @@ export default function EnrollmentWizard() {
                 setCourse(data);
             } catch {
                 addToast("Curso no encontrado", "error");
-                router.push('/academy');
+                router.push('/plataforma/academy');
             } finally {
                 setLoading(false);
             }
@@ -240,7 +240,7 @@ export default function EnrollmentWizard() {
                                     Tu inscripción a <span className="font-semibold">{course.title}</span> ha sido procesada con éxito.
                                 </p>
                                 <button
-                                    onClick={() => router.push('/academy')}
+                                    onClick={() => router.push('/plataforma/academy')}
                                     className="w-full py-2 rounded-lg bg-[hsl(var(--text-primary))] text-[hsl(var(--bg-primary))] font-semibold uppercase tracking-wide text-xs hover:opacity-90 active:scale-95 transition-all shadow-xl"
                                 >
                                     Ir a mi Academia

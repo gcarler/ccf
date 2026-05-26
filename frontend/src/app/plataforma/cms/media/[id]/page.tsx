@@ -118,8 +118,8 @@ export default function CmsMediaDetailPage() {
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'CMS', icon: Layout, href: '/cms' },
-                    { label: 'Media', icon: ImageIcon, href: '/cms/media' },
+                    { label: 'CMS', icon: Layout, href: '/plataforma/cms' },
+                    { label: 'Media', icon: ImageIcon, href: '/plataforma/cms/media' },
                     { label: item.filename, icon: Info },
                 ]}
                 rightActions={

@@ -139,7 +139,7 @@ export default function RolesPage() {
     const groupedPerms = getGroupedPermissions();
 
     return (
-        <AdminShell breadcrumbs={[{ label: 'Administración', href: '/plataforma/admin' }, { label: 'Roles', href: '/admin/roles' }]}>
+        <AdminShell breadcrumbs={[{ label: 'Administración', href: '/plataforma/admin' }, { label: 'Roles', href: '/plataforma/admin/roles' }]}>
             <AdminHero 
                 title="Gestión de Roles"
                 description="Configura los permisos granulares (RBAC) para el sistema"

@@ -87,8 +87,8 @@ export default function FinancesPage() {
         {
             title: 'Reportes',
             items: [
-                { id: 'finances', label: 'Resumen', href: '/finances', icon: BarChart3 },
-                { id: 'transparency', label: 'Transparencia', href: '/finances/transparency', icon: Landmark },
+                { id: 'finances', label: 'Resumen', href: '/plataforma/finances', icon: BarChart3 },
+                { id: 'transparency', label: 'Transparencia', href: '/plataforma/finances/transparency', icon: Landmark },
             ],
         },
     ]), []);

@@ -57,7 +57,7 @@ export default function WikiDocEditPage() {
         {
             title: 'Wiki',
             items: [
-                { id: 'wiki-home', label: 'Inicio', href: '/wiki', icon: BookOpen },
+                { id: 'wiki-home', label: 'Inicio', href: '/plataforma/wiki', icon: BookOpen },
             ]
         }
     ];
@@ -69,7 +69,7 @@ export default function WikiDocEditPage() {
             <header className="h-8 px-3 border-b border-slate-100 dark:border-white/5 flex items-center justify-between shrink-0 bg-white/80 dark:bg-[#141517]/80 backdrop-blur-md sticky top-0 z-10">
                 <div className="flex items-center gap-4">
                     <button 
-                        onClick={() => router.push('/wiki')}
+                        onClick={() => router.push('/plataforma/wiki')}
                         className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400 transition-all"
                     >
                         <ChevronLeft size={20} />

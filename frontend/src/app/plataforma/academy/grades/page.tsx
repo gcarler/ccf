@@ -35,7 +35,7 @@ export default function StudentGrades() {
                 description="Consolida tus promedios por nivel: Fundamentos, Intermedio y Avanzado."
                 tags={['Promedio', 'Asistencia', 'Logros']}
                 watchers={['Equipo Academico', 'Optimus Brain']}
-                primaryAction={{ label: 'Configurar alertas', icon: Bell, onClick: () => router.push('/account') }}
+                primaryAction={{ label: 'Configurar alertas', icon: Bell, onClick: () => router.push('/plataforma/account') }}
             />
 
             <section className="relative overflow-hidden rounded-lg bg-primary p-4 text-white shadow-2xl shadow-primary/30 border border-white/10">

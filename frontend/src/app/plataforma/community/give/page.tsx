@@ -99,7 +99,7 @@ export default function GivingAndConnection() {
                     <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        onClick={() => router.push('/community/testimonies/publish')}
+                        onClick={() => router.push('/plataforma/community/testimonies/publish')}
                         className="w-full flex items-center justify-center gap-3 bg-[hsl(var(--primary))] text-white font-semibold uppercase tracking-wide text-xs py-2 rounded-lg shadow-xl shadow-primary/20 transition-all"
                     >
                         <Send size={18} />

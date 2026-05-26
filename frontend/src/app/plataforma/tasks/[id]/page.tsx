@@ -60,7 +60,7 @@ export default function TaskDetailPage() {
         {
             title: 'Tareas',
             items: [
-                { id: 'tasks-list', label: 'Mis Tareas', href: '/tasks', icon: LayoutDashboard },
+                { id: 'tasks-list', label: 'Mis Tareas', href: '/plataforma/tasks', icon: LayoutDashboard },
             ]
         }
     ];
@@ -71,7 +71,7 @@ export default function TaskDetailPage() {
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Proyectos', icon: LayoutDashboard, href: '/plataforma/projects' },
-                    { label: 'Tareas', icon: CheckCircle2, href: '/tasks' },
+                    { label: 'Tareas', icon: CheckCircle2, href: '/plataforma/tasks' },
                     { label: `Task-${id}`, icon: CheckCircle2 },
                 ]}
                 rightActions={

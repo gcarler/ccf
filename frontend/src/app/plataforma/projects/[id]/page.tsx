@@ -184,7 +184,7 @@ export default function ProjectDetailPage() {
         try {
             await apiFetch(`/projects/${id}`, { method: 'DELETE', token });
             toast.success('Proyecto eliminado');
-            router.push('/projects');
+            router.push('/plataforma/projects');
         } catch (err) {
             toast.error('Error al eliminar proyecto');
         }

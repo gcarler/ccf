@@ -296,7 +296,7 @@ export default function StudentProgressPage() {
                                     <div className="max-w-md mx-auto space-y-4">
                                         <h3 className="text-lg font-bold text-slate-800 dark:text-white">Aún no tienes progreso registrado</h3>
                                         <p className="text-slate-500 font-medium">Inscríbete en un curso de nuestro catálogo para comenzar tu formación espiritual hoy mismo.</p>
-                                        <button onClick={() => router.push('/academy')} className="mt-3 px-3 py-2 bg-blue-600 text-white rounded-md font-black text-xs uppercase tracking-wide shadow-2xl shadow-blue-500/30 hover:scale-105 transition-all">Explorar Catálogo</button>
+                                        <button onClick={() => router.push('/plataforma/academy')} className="mt-3 px-3 py-2 bg-blue-600 text-white rounded-md font-black text-xs uppercase tracking-wide shadow-2xl shadow-blue-500/30 hover:scale-105 transition-all">Explorar Catálogo</button>
                                     </div>
                                 </div>
                             )}

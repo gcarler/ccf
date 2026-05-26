@@ -173,7 +173,7 @@ export default function OnboardingPage() {
                             <div className="flex gap-4">
                                 <button onClick={prevStep} className="px-4 py-2 border-2 border-slate-100 dark:border-white/5 rounded-lg font-black text-xs uppercase tracking-wide text-slate-400 hover:text-slate-600 transition-all">Atrás</button>
                                 <button 
-                                    onClick={() => router.push('/academy')}
+                                    onClick={() => router.push('/plataforma/academy')}
                                     className="flex-1 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-black text-sm uppercase tracking-wide shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3"
                                 >
                                     ¡Listo para empezar! <CheckCircle2 size={18} />

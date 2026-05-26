@@ -236,63 +236,63 @@ const featureCards = [
         title: 'Notificaciones',
         description: 'Resumen inteligente de lo que está pasando en tus equipos y ministerios.',
         icon: Bell,
-        href: '/community/notifications',
+        href: '/plataforma/community/notifications',
         tone: 'from-primary/15 to-primary/5'
     },
     {
         title: 'Anuncios',
         description: 'Mensajes oficiales del equipo pastoral y de comunicaciones.',
         icon: Megaphone,
-        href: '/community/announcements',
+        href: '/plataforma/community/announcements',
         tone: 'from-amber-200/40 to-amber-50/30'
     },
     {
         title: 'Mensajes',
         description: 'Chats privados y grupos para coordinar iniciativas.',
         icon: MessageSquare,
-        href: '/community/messages',
+        href: '/plataforma/community/messages',
         tone: 'from-emerald-200/40 to-emerald-50/30'
     },
     {
         title: 'Eventos',
         description: 'Calendario vivo con reuniones, ensayos y experiencias.',
         icon: Calendar,
-        href: '/community/events',
+        href: '/plataforma/community/events',
         tone: 'from-blue-200/40 to-blue-50/30'
     },
     {
         title: 'Ofrendas & generosidad',
         description: 'Facilita ofrendas especiales y campañas solidarias.',
         icon: HeartHandshake,
-        href: '/community/give',
+        href: '/plataforma/community/give',
         tone: 'from-rose-200/40 to-rose-50/30'
     },
     {
         title: 'Muro de oración',
         description: 'Comparte peticiones y celebra respuestas en comunidad.',
         icon: Heart,
-        href: '/community/prayer',
+        href: '/plataforma/community/prayer',
         tone: 'from-sky-200/40 to-sky-50/30'
     },
     {
         title: 'Testimonios',
         description: 'Historias reales que inspiran y fortalecen la fe.',
         icon: Star,
-        href: '/community/testimonies',
+        href: '/plataforma/community/testimonies',
         tone: 'from-yellow-200/40 to-yellow-50/30'
     },
     {
         title: 'Grupos pequeños',
         description: 'Encuentra tu círculo y mantente conectado entre semana.',
         icon: Users,
-        href: '/community/groups',
+        href: '/plataforma/community/groups',
         tone: 'from-slate-200/40 to-slate-50/30'
     },
     {
         title: 'Descubrir',
         description: 'Explora nuevos ministerios, serving teams y oportunidades.',
         icon: Search,
-        href: '/community/discover',
+        href: '/plataforma/community/discover',
         tone: 'from-indigo-200/40 to-indigo-50/30'
     }
 ];

@@ -121,7 +121,7 @@ export default function CourseViewPage() {
         pushSidebarPanel({
             id: `course-curriculum-${course.id}`,
             title: course.title,
-            onBack: () => router.push('/academy'),
+            onBack: () => router.push('/plataforma/academy'),
             content: (
                 <div className="flex flex-col h-full bg-white dark:bg-transparent">
                     <div className="p-4 space-y-4">
@@ -207,7 +207,7 @@ export default function CourseViewPage() {
                         <Tooltip content="Compartir curso"><button className="p-2 text-slate-400 hover:text-blue-600 transition-colors"><Share2 size={18} /></button></Tooltip>
                         <Tooltip content="Ayuda"><button className="p-2 text-slate-400 hover:text-blue-600 transition-colors"><HelpCircle size={18} /></button></Tooltip>
                         <div className="w-[1px] h-4 bg-slate-200 dark:bg-white/10 mx-2" />
-                        <button onClick={() => router.push('/academy')} className="flex items-center gap-2 px-4 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 rounded-md text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 transition-all active:scale-95">Salir</button>
+                        <button onClick={() => router.push('/plataforma/academy')} className="flex items-center gap-2 px-4 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 rounded-md text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 transition-all active:scale-95">Salir</button>
                     </div>
                 }
             />

@@ -125,7 +125,7 @@ export default function AssessmentPage() {
                         </div>
                         <div className="space-y-3">
                             <button
-                                onClick={() => router.push('/academy')}
+                                onClick={() => router.push('/plataforma/academy')}
                                 className="w-full py-1.5 bg-blue-600 text-white rounded-lg font-black text-sm uppercase tracking-wide shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
                             >
                                 Volver a la Academia
