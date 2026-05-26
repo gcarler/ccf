@@ -44,10 +44,10 @@ export default function WorkspaceDrawer({
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed top-0 right-0 h-screen w-full max-w-[600px] lg:max-w-[800px] bg-white dark:bg-[#1e1f21] shadow-[var(--shadow-floating)] z-[1001] border-l border-slate-200 dark:border-white/10 flex flex-col focus:outline-none"
+                        className="fixed top-0 right-0 h-screen w-full max-w-[600px] lg:max-w-[800px] bg-white dark:bg-[#1e1f21] shadow-[var(--shadow-floating)] z-[1001] border-l border-slate-200 dark:border-white/10 flex flex-col focus:outline-none overflow-hidden"
                         >
                         {/* Drawer Header */}
-                        <header className="h-8 flex items-center justify-between px-3 border-b border-slate-100 dark:border-white/5 shrink-0 bg-slate-50/50 dark:bg-white/5">
+                        <header className="h-14 flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-white/10 shrink-0 bg-slate-50/50 dark:bg-white/5">
                             <div className="flex items-center gap-4 overflow-hidden">
                                 <Dialog.Close asChild>
                                     <button className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-md transition-colors text-slate-500">
@@ -78,13 +78,13 @@ export default function WorkspaceDrawer({
                             </div>
                         </header>
                                 {/* Drawer Body */}
-                                <main className="flex-1 overflow-y-auto scrollbar-thin px-6 py-4 pl-8">
+                                <main className="flex-1 overflow-y-auto scrollbar-thin px-8 py-5">
                                     {children}
                                 </main>
 
                                 {/* Drawer Footer */}
                                 {actions && (
-                                    <footer className="px-6 pl-8 py-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-end gap-4 bg-slate-50/50 dark:bg-white/5">
+                                    <footer className="px-8 py-5 border-t border-slate-200 dark:border-white/10 flex items-center justify-end gap-4 bg-slate-50/50 dark:bg-white/5">
                                         {actions}
                                     </footer>
                                 )}
