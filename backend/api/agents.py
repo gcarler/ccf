@@ -347,3 +347,100 @@ def transition_stage(agent_id: int, data: StageTransition, db=Depends(get_db), c
     db.add(journey)
     db.commit()
     return {"from": from_stage, "to": data.to_stage, "agent_id": agent_id}
+
+
+# ── Dual Write Hooks (Phase 2) ──
+# These are called from existing registration/member creation endpoints
+# to ensure a canonical Agent is created alongside User/Member records.
+
+from backend.models_agents import Agent as AgentModel, AgentAuth as AgentModelAuth
+
+
+def sync_member_to_agent(db: Session, member) -> int:
+    """Create an Agent from a Member if one doesn't exist yet."""
+    if member.user_id:
+        existing = db.query(AgentModel).filter(
+            or_(
+                AgentModel.email == member.email,
+                AgentModel.phone == member.phone,
+            )
+        ).first()
+    else:
+        existing = db.query(AgentModel).filter(
+            or_(
+                AgentModel.email == member.email,
+                AgentModel.phone == member.phone,
+            )
+        ).first()
+    
+    if existing:
+        return existing.id
+    
+    agent = AgentModel(
+        code=_generate_agent_code(db),
+        first_name=member.first_name,
+        last_name=member.last_name,
+        email=member.email,
+        phone=member.phone,
+        spiritual_stage="visitor" if (member.church_role or "").lower().startswith("visitante") else "believer",
+    )
+    db.add(agent)
+    db.flush()
+    
+    # Link Member to Agent via user_id (if Member has a User, link through that)
+    if member.user_id:
+        user = db.query(User).filter(User.id == member.user_id).first()
+        if user:
+            auth = AgentModelAuth(
+                agent_id=agent.id,
+                username=user.username,
+                provider="local",
+            )
+            db.add(auth)
+    
+    # Create AgentRole for church role
+    if member.church_role:
+        db.add(AgentRole(
+            agent_id=agent.id,
+            role_type="church",
+            role_value=member.church_role,
+        ))
+    
+    return agent.id
+
+
+def sync_user_to_agent(db: Session, user) -> int:
+    """Create an Agent from a User if one doesn't exist yet."""
+    existing = db.query(AgentModel).filter(
+        or_(AgentModel.email == user.email)
+    ).first()
+    
+    if existing:
+        return existing.id
+    
+    agent = AgentModel(
+        code=_generate_agent_code(db),
+        first_name=user.username.split("@")[0] if "@" in user.email else user.username,
+        last_name="",
+        email=user.email,
+        spiritual_stage="visitor",
+    )
+    db.add(agent)
+    db.flush()
+    
+    db.add(AgentModelAuth(
+        agent_id=agent.id,
+        username=user.username,
+        password_hash=user.password_hash if hasattr(user, 'password_hash') else None,
+        provider="local",
+    ))
+    
+    # Platform role
+    if user.role:
+        db.add(AgentRole(
+            agent_id=agent.id,
+            role_type="platform",
+            role_value=user.role,
+        ))
+    
+    return agent.id

@@ -9,6 +9,8 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import ViewSwitcher, { ViewType } from '@/components/ViewSwitcher';
+import { useViewType, MINIMAL_VIEWS } from '@/hooks/useViewType';
 import Skeleton from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
 import { DSMetric, DSCard, DSBadge } from '@/design';
@@ -39,6 +41,7 @@ const PERIODICITY_LABEL: Record<string, string> = { SEMANAL: 'Semanal', MENSUAL:
 export default function FaroPage() {
     const { token, user } = useAuth();
     const router = useRouter();
+    const { viewType, setViewType } = useViewType('evangelism_faro', 'grid');
     const [seasons, setSeasons] = useState<FaroSeason[]>([]);
     const [houses, setHouses] = useState<GloryHouse[]>([]);
     const [analytics, setAnalytics] = useState<FaroAnalytics | null>(null);
@@ -165,6 +168,11 @@ export default function FaroPage() {
                                   </p>
                             }
                         </div>
+                    </div>
+
+                    {/* View Switcher */}
+                    <div className="flex items-center gap-2 mt-2 mb-4">
+                        <ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={MINIMAL_VIEWS} />
                     </div>
 
                     {/* KPIs */}

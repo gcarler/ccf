@@ -3,6 +3,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
+import ViewSwitcher, { ViewType } from "@/components/ViewSwitcher";
+import { useViewType, MINIMAL_VIEWS } from "@/hooks/useViewType";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { GraduationCap, Search, UserRound, BookOpen, BarChart3 } from "lucide-react";
@@ -21,6 +23,7 @@ type StudentRow = {
 export default function AcademyStudentsPage() {
     const router = useRouter();
     const { token } = useAuth();
+    const { viewType, setViewType } = useViewType('academy_students', 'table');
     const [students, setStudents] = useState<StudentRow[]>([]);
     const [query, setQuery] = useState("");
     const [loading, setLoading] = useState(true);
@@ -62,9 +65,12 @@ export default function AcademyStudentsPage() {
                     { label: "Estudiantes", icon: UserRound },
                 ]}
                 rightActions={
-                    <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                        {filtered.length} activos
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                            {filtered.length} activos
+                        </span>
+                        <ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={MINIMAL_VIEWS} />
+                    </div>
                 }
             />
 
@@ -93,6 +99,42 @@ export default function AcademyStudentsPage() {
                     </header>
 
                     <div className="overflow-x-auto">
+                        {viewType === 'list' ? (
+                            <div className="space-y-1">
+                                {filtered.map(s => (
+                                    <div key={s.id} onClick={() => router.push(`/academy/profile?student=${s.id}`)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-all">
+                                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400 font-bold text-xs">
+                                            {(s.full_name || s.name || 'E')[0]}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{s.full_name || s.name || "Estudiante"}</p>
+                                            <p className="text-xs text-slate-400">{s.email || 'Sin correo'}</p>
+                                        </div>
+                                        <span className="text-xs text-slate-500">{s.course_count ?? 0} cursos</span>
+                                        <span className="text-xs text-slate-500 w-16">{s.progress ?? 0}%</span>
+                                    </div>
+                                ))}
+                                {!loading && filtered.length === 0 && (
+                                    <div className="py-8 text-center text-sm font-semibold text-slate-400">No hay estudiantes registrados.</div>
+                                )}
+                            </div>
+                        ) : viewType === 'grid' ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-3">
+                                {filtered.map(s => (
+                                    <div key={s.id} onClick={() => router.push(`/academy/profile?student=${s.id}`)} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1a1b1e] p-4 hover:shadow-md cursor-pointer transition-all">
+                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">{s.full_name || s.name || "Estudiante"}</h3>
+                                        <p className="text-xs text-slate-400 mt-1">{s.email || 'Sin correo'}</p>
+                                        <div className="flex items-center justify-between mt-3">
+                                            <span className="text-xs text-slate-500">{s.course_count ?? 0} cursos</span>
+                                            <span className="text-xs text-slate-500">{s.progress ?? 0}% progreso</span>
+                                        </div>
+                                    </div>
+                                ))}
+                                {!loading && filtered.length === 0 && (
+                                    <div className="col-span-full py-8 text-center text-sm font-semibold text-slate-400">No hay estudiantes registrados.</div>
+                                )}
+                            </div>
+                        ) : (
                         <table className="min-w-full text-sm">
                             <thead>
                                 <tr className="border-b border-slate-100 text-left text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:border-white/10">
@@ -137,6 +179,7 @@ export default function AcademyStudentsPage() {
                                 )}
                             </tbody>
                         </table>
+                        )}
                     </div>
                 </section>
             </main>

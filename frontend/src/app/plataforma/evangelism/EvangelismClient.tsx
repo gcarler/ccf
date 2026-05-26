@@ -15,7 +15,8 @@ import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import Skeleton from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
-import { ViewType } from '@/components/ViewSwitcher';
+import ViewSwitcher, { ViewType } from '@/components/ViewSwitcher';
+import { useViewType, OPERATIONAL_VIEWS } from '@/hooks/useViewType';
 import { motion } from 'framer-motion';
 
 export interface EvangelismStrategy {
@@ -33,9 +34,9 @@ export interface EvangelismStrategy {
 export default function EvangelismClient() {
     const { token } = useAuth();
     const router = useRouter();
+    const { viewType, setViewType } = useViewType('evangelism_dashboard', 'table');
     const [data, setData] = useState<EvangelismStrategy[]>([]);
     const [loading, setLoading] = useState(true);
-    const [viewType, setViewType] = useState<ViewType>('table');
     const [search, setSearch] = useState('');
     const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
 
@@ -116,7 +117,7 @@ export default function EvangelismClient() {
                 { label: 'Evangelismo', icon: Flame },
                 { label: 'Estrategias' }
             ]}
-            viewOptions={['table', 'board', 'list']}
+            viewOptions={OPERATIONAL_VIEWS}
             viewType={viewType}
             onViewChange={setViewType}
             onSearch={setSearch}
