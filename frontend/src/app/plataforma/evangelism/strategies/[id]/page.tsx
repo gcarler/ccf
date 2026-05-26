@@ -584,8 +584,8 @@ export default function StrategyDetailPage() {
                         events={sessions.map(s => ({
                             id: String(s.id), title: s.topic || `Sesión #${s.id}`,
                             date: s.session_date,
-                            color: s.status === 'Realizada' ? '#10B981' : '#3B82F6',
-                            subtitle: groupName(s.glory_house_id),
+                            color: s.status === 'Realizada' ? 'emerald' : 'blue' as const,
+                            location: groupName(s.glory_house_id),
                         }))}
                     />
                 )}
@@ -595,17 +595,16 @@ export default function StrategyDetailPage() {
                     <UniversalGanttView moduleName="Evangelismo"
                         items={[
                             ...groups.map(g => ({
-                                id: String(g.id), name: g.name,
-                                start: new Date().toISOString(), end: new Date(Date.now() + 30 * 86400000).toISOString(),
-                                progress: Math.min(g.members_count * 20, 100), status: 'active' as const,
-                                color: '#3B82F6', subtitle: `${g.members_count} miembros`,
+                                id: String(g.id), name: g.name, title: g.name,
+                                start_date: new Date().toISOString(), end_date: new Date(Date.now() + 30 * 86400000).toISOString(),
+                                progress: Math.min(g.members_count * 20, 100),
+                                color: 'blue' as const, subtitle: `${g.members_count} miembros`,
                             })),
                             ...sessions.map(s => ({
-                                id: `s-${s.id}`, name: s.topic || `Sesión #${s.id}`,
-                                start: s.session_date, end: s.session_date,
+                                id: `s-${s.id}`, title: s.topic || `Sesión #${s.id}`,
+                                start_date: s.session_date, end_date: s.session_date,
                                 progress: s.status === 'Realizada' ? 100 : 0,
-                                status: s.status === 'Realizada' ? 'done' as const : 'todo' as const,
-                                color: s.status === 'Realizada' ? '#10B981' : '#3B82F6',
+                                color: s.status === 'Realizada' ? 'emerald' as const : 'blue' as const,
                                 subtitle: groupName(s.glory_house_id),
                             })),
                         ]}
