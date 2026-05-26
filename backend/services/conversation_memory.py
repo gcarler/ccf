@@ -11,7 +11,10 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import (
+    Boolean, Column, DateTime, ForeignKey,
+    Index, Integer, String, Text,
+)
 from sqlalchemy.orm import relationship
 
 from backend.core.database import Base, SessionLocal
@@ -98,7 +101,7 @@ def get_user_conversations(
     try:
         convs = db.query(AgentConversation).filter(
             AgentConversation.user_id == user_id,
-            AgentConversation.is_active == True,
+            AgentConversation.is_active,
         ).order_by(
             AgentConversation.updated_at.desc(),
         ).limit(limit).all()
@@ -157,7 +160,10 @@ def save_conversation_turn(
             conversation_id=conversation_id,
             role=role,
             content=content,
-            tools_used=json.dumps(tools_used, ensure_ascii=False) if tools_used else None,
+            tools_used=(
+            json.dumps(tools_used, ensure_ascii=False)
+            if tools_used else None
+        ),
         )
         db.add(msg)
 

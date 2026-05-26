@@ -76,7 +76,7 @@ class KnowledgeIndexer:
         from backend import models
 
         courses = self.db.query(models.Course).filter(
-            models.Course.is_active == True,
+            models.Course.is_active,
         ).all()
         count = 0
         for c in courses:
@@ -104,7 +104,7 @@ class KnowledgeIndexer:
         from backend import models
 
         strategies = self.db.query(models.EvangelismStrategy).filter(
-            models.EvangelismStrategy.is_active == True,
+            models.EvangelismStrategy.is_active,
         ).all()
         count = 0
         for s in strategies:
@@ -162,7 +162,7 @@ class KnowledgeIndexer:
         for role, cnt in self.db.query(
             models.Member.church_role, func.count(models.Member.id),
         ).filter(
-            models.Member.church_role != None,
+            models.Member.church_role.isnot(None),
         ).group_by(models.Member.church_role).all():
             by_role[role] = cnt
 
@@ -186,7 +186,7 @@ class KnowledgeIndexer:
         from backend import models
 
         variables = self.db.query(models.SystemVariable).filter(
-            models.SystemVariable.is_active == True,
+            models.SystemVariable.is_active,
         ).all()
         count = 0
         for v in variables:
@@ -242,7 +242,7 @@ def search_knowledge_base_real(
         return []
 
     q = db.query(AgentKnowledgeBase).filter(
-        AgentKnowledgeBase.is_active == True,
+        AgentKnowledgeBase.is_active,
     )
 
     # Filtro por categoría si se especifica

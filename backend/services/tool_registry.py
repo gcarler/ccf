@@ -289,7 +289,7 @@ class AcademySearchCourse(AgentTool):
         try:
             term = f"%{query}%"
             courses = db.query(models.Course).filter(
-                models.Course.is_active == True,
+                models.Course.is_active,
             ).filter(
                 models.Course.title.ilike(term)
                 | (models.Course.description or "").ilike(term),
@@ -331,7 +331,7 @@ class AcademyGetStats(AgentTool):
         db = SessionLocal()
         try:
             courses = db.query(models.Course).filter(
-                models.Course.is_active == True,
+                models.Course.is_active,
             ).count()
             enrollments = db.query(models.Enrollment).count()
             certificates = db.query(models.Certificate).count()
@@ -472,7 +472,7 @@ class AnalyticsGetRadar(AgentTool):
                     models.Project.status == "active",
                 ).count(),
                 "courses": db.query(models.Course).filter(
-                    models.Course.is_active == True,
+                    models.Course.is_active,
                 ).count(),
             }
         finally:

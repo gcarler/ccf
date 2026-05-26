@@ -277,7 +277,7 @@ def get_agent_profile(
     agent = db.query(AgentModel).filter(AgentModel.id == agent_id).first()
     if not agent:
         raise HTTPException(404, "Agent not found")
-    roles = db.query(AgentRole).filter(AgentRole.agent_id == agent_id, AgentRole.ended_at == None).all()
+    roles = db.query(AgentRole).filter(AgentRole.agent_id == agent_id, AgentRole.ended_at.is_(None)).all()
     activities = db.query(AgentActivity).filter(AgentActivity.agent_id == agent_id).order_by(AgentActivity.occurred_at.desc()).limit(limit).all()
     total = db.query(AgentActivity).filter(AgentActivity.agent_id == agent_id).count()
     return AgentProfileResponse(
@@ -297,7 +297,7 @@ def get_agent_timeline(agent_id: int, limit: int = 100, db=Depends(get_db), _use
 def get_agent_roles(agent_id: int, active_only: bool = True, db=Depends(get_db), _user: models.User = Depends(require_active_user)):
     query = db.query(AgentRole).filter(AgentRole.agent_id == agent_id)
     if active_only:
-        query = query.filter(AgentRole.ended_at == None)
+        query = query.filter(AgentRole.ended_at.is_(None))
     return query.order_by(AgentRole.started_at.desc()).all()
 
 
@@ -586,17 +586,7 @@ import asyncio
 
 async def _event_generator(user_id: int):
     """Genera eventos SSE para el usuario."""
-    from backend.services.event_consumers import _event_registry
-    from backend.core.events import DomainEvent, event_bus
-
-    # Subscribe to event bus if available
-    event_types = [
-        "member_registered", "enrollment_created",
-        "task_overdue", "member_status_changed",
-    ]
-
     while True:
-        # Poll for new events (simplified SSE)
         await asyncio.sleep(2)
         yield ": heartbeat\n\n"
 
