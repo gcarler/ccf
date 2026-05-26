@@ -25,7 +25,7 @@ from backend.core.permissions import require_active_user
 log = logging.getLogger(__name__)
 
 settings = get_settings()
-router = APIRouter(prefix="/api/kernel", tags=["Kernel Identidad"])
+router = APIRouter(prefix="/kernel", tags=["Kernel Identidad"])
 
 
 # ──────────────────────────────────────────────
