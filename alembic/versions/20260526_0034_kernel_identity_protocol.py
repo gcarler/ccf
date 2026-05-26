@@ -41,14 +41,6 @@ CHURCH_ROLE_VALUES = (
 PLATFORM_ROLE_VALUES = ("ADMINISTRADOR", "GESTOR", "EDITOR", "LECTOR")
 
 
-def _create_enums(bind):
-    for name, values in [
-        ("activity_status", ACTIVITY_STATUS_VALUES),
-        ("ministry_office", MINISTRY_OFFICE_VALUES),
-        ("church_role", CHURCH_ROLE_VALUES),
-        ("platform_role", PLATFORM_ROLE_VALUES),
-    ]:
-        sa.Enum(*values, name=name).create(bind)
 
 
 def _drop_enums(bind):
@@ -56,12 +48,31 @@ def _drop_enums(bind):
         "activity_status", "ministry_office",
         "church_role", "platform_role",
     ]:
-        sa.Enum(name=name).drop(bind, checkfirst=True)
+        sa.Enum(name=name, create_type=False).drop(bind, checkfirst=True)
 
 
 def upgrade() -> None:
     bind = op.get_bind()
-    _create_enums(bind)
+
+    # Create enums with IF NOT EXISTS (raw SQL to avoid duplicate)
+    bind.execute(sa.text("""
+        DO $$ BEGIN
+            CREATE TYPE activity_status AS ENUM ('ACTIVO', 'INACTIVO');
+        EXCEPTION WHEN duplicate_object THEN null;
+        END $$;
+        DO $$ BEGIN
+            CREATE TYPE ministry_office AS ENUM ('APOSTOL', 'PROFETA', 'EVANGELISTA', 'PASTOR', 'MAESTRO');
+        EXCEPTION WHEN duplicate_object THEN null;
+        END $$;
+        DO $$ BEGIN
+            CREATE TYPE church_role AS ENUM ('LIDER', 'SERVIDOR', 'MIEMBRO_BAUTIZADO', 'SIMPATIZANTE', 'VISITANTE_SERVICIO', 'VISITANTE_EVANGELISMO', 'VISITANTE_ONLINE');
+        EXCEPTION WHEN duplicate_object THEN null;
+        END $$;
+        DO $$ BEGIN
+            CREATE TYPE platform_role AS ENUM ('ADMINISTRADOR', 'GESTOR', 'EDITOR', 'LECTOR');
+        EXCEPTION WHEN duplicate_object THEN null;
+        END $$;
+    """))
 
     # ── Tabla: user_ministries (Dimensión A) ──
     op.create_table(
@@ -74,7 +85,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "ministry",
-            sa.Enum(*MINISTRY_OFFICE_VALUES, name="ministry_office"),
+            sa.Enum(*MINISTRY_OFFICE_VALUES, name="ministry_office", create_type=False),
             nullable=False, index=True,
         ),
         sa.Column("is_primary", sa.Boolean(), default=False),
@@ -101,7 +112,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "church_role",
-            sa.Enum(*CHURCH_ROLE_VALUES, name="church_role"),
+            sa.Enum(*CHURCH_ROLE_VALUES, name="church_role", create_type=False),
             nullable=False, index=True,
         ),
         sa.Column("assigned_at", sa.DateTime(), nullable=True),
@@ -123,12 +134,12 @@ def upgrade() -> None:
         ),
         sa.Column(
             "from_role",
-            sa.Enum(*CHURCH_ROLE_VALUES, name="church_role"),
+            sa.Enum(*CHURCH_ROLE_VALUES, name="church_role", create_type=False),
             nullable=True,
         ),
         sa.Column(
             "to_role",
-            sa.Enum(*CHURCH_ROLE_VALUES, name="church_role"),
+            sa.Enum(*CHURCH_ROLE_VALUES, name="church_role", create_type=False),
             nullable=False,
         ),
         sa.Column("reason", sa.String(200), nullable=True),
@@ -146,7 +157,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column(
             "role",
-            sa.Enum(*PLATFORM_ROLE_VALUES, name="platform_role"),
+            sa.Enum(*PLATFORM_ROLE_VALUES, name="platform_role", create_type=False),
             unique=True, nullable=False, index=True,
         ),
         sa.Column("permissions", sa.JSON(), nullable=False),

@@ -131,7 +131,7 @@ class AgentJourney(Base):
     reason = Column(String(100), nullable=True)
     triggered_by = Column(String(30), nullable=True)
     triggered_by_id = Column(Integer, nullable=True)
-    journey_data = Column("metadata", JSON, nullable=True)
+    journey_data = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     agent = relationship("Agent", back_populates="journey_entries", foreign_keys=[agent_id])
 
@@ -147,3 +147,47 @@ class AgentPermission(Base):
     granted_at = Column(DateTime, default=_utcnow)
     expires_at = Column(DateTime, nullable=True)
     agent = relationship("Agent", back_populates="permissions", foreign_keys=[agent_id])
+
+
+class AgentTask(Base):
+    """Tarea asignada a un agente (o creada por un agente)."""
+    __tablename__ = "agent_tasks"
+    __table_args__ = (
+        Index("ix_agent_tasks_status", "status", "priority"),
+        Index("ix_agent_tasks_assigned", "assigned_to"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=False, server_default="")
+    priority = Column(String(20), nullable=False, server_default="medium", index=True)
+    status = Column(String(20), nullable=False, server_default="pending", index=True)
+    source = Column(String(50), nullable=True)
+    assigned_to = Column(String(100), nullable=True)
+    agent_type = Column(String(50), nullable=True)
+    task_data = Column("metadata", JSON, nullable=True)
+    created_at = Column(DateTime, default=_utcnow, index=True)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+
+class AgentInsight(Base):
+    """Insight generado por un agente (análisis, detección, recomendación)."""
+    __tablename__ = "agent_insights"
+    __table_args__ = (
+        Index("ix_agent_insights_type", "insight_type"),
+        Index("ix_agent_insights_ack", "acknowledged"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=False, server_default="")
+    insight_type = Column(String(50), nullable=False, server_default="observation", index=True)
+    confidence = Column(Integer, nullable=False, server_default="50")
+    source_agent = Column(String(100), nullable=True)
+    insight_payload = Column("payload", JSON, nullable=True)
+    insight_data = Column("metadata", JSON, nullable=True)
+    acknowledged = Column(Boolean, nullable=False, server_default="false", index=True)
+    acknowledged_at = Column(DateTime, nullable=True)
+    acknowledged_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=_utcnow, index=True)

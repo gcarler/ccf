@@ -123,6 +123,7 @@ class AgentTaskCreate(BaseModel):
     description: str = ""
     priority: str = "medium"
     status: str = "pending"
+    source: Optional[str] = None
     assigned_to: Optional[str] = None
     agent_type: Optional[str] = None
     metadata: Optional[dict] = None
@@ -139,6 +140,9 @@ class AgentTaskUpdate(BaseModel):
 
 class AgentTask(AgentTaskCreate):
     id: int
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
     model_config = {"from_attributes": True}
 
 
@@ -148,9 +152,13 @@ class AgentInsightCreate(BaseModel):
     insight_type: str = "observation"
     confidence: float = 0.5
     source_agent: Optional[str] = None
+    payload: Optional[dict] = None
     metadata: Optional[dict] = None
 
 
 class AgentInsight(AgentInsightCreate):
     id: int
+    acknowledged: bool = False
+    acknowledged_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
     model_config = {"from_attributes": True}

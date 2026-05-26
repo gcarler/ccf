@@ -17,6 +17,7 @@ import UniversalCreationModal from '@/components/ui/UniversalCreationModal';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
 
 // â”€â”€ Layer Context (importamos el provider aquÃ­) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

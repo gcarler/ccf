@@ -12,6 +12,9 @@ def create_agent_task(db: Session, payload: schemas.AgentTaskCreate):
         priority=payload.priority,
         source=payload.source,
         status="pending",
+        assigned_to=payload.assigned_to,
+        agent_type=payload.agent_type,
+        task_data=payload.metadata,
     )
     db.add(row)
     db.commit()
@@ -31,7 +34,10 @@ def update_agent_task(db: Session, task_id: int, payload: schemas.AgentTaskUpdat
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
-        setattr(row, key, value)
+        if key == "metadata":
+            setattr(row, "task_data", value)
+        else:
+            setattr(row, key, value)
     db.commit()
     db.refresh(row)
     return row
@@ -41,7 +47,11 @@ def create_agent_insight(db: Session, payload: schemas.AgentInsightCreate):
     row = models.AgentInsight(
         title=payload.title,
         insight_type=payload.insight_type,
-        payload=payload.payload,
+        description=payload.description,
+        confidence=int(payload.confidence * 100),
+        source_agent=payload.source_agent,
+        insight_payload=payload.payload,
+        insight_data=payload.metadata,
         acknowledged=False,
     )
     db.add(row)

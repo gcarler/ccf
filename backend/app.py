@@ -17,6 +17,7 @@ from backend.api import (academy, admin, agenda, agents, analytics, assets,
 from backend.core.config import get_settings
 from backend.core.logging import request_id_middleware
 from backend.core.security_headers import mount_security_headers
+from backend.middleware.module_isolation import register_module_isolation
 
 logging.basicConfig(
     level=logging.INFO
@@ -121,6 +122,9 @@ mount_security_headers(app)
 
 # Request ID tracking — every request gets a unique ID
 app.middleware("http")(request_id_middleware)
+
+# Module isolation — if a module fails, it doesn't take down the whole server
+register_module_isolation(app)
 
 
 @app.middleware("http")

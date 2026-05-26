@@ -58,7 +58,8 @@ from backend.models_projects import (Project, ProjectAttachment,
 
 # Agent identity models (canonical person)
 from backend.models_agents import (Agent, AgentAuth, AgentContact, AgentRole,
-    AgentActivity, AgentFamily, AgentJourney, AgentPermission)
+    AgentActivity, AgentFamily, AgentJourney, AgentPermission, AgentTask,
+    AgentInsight)
 
 # Kernel — Protocolo de Identidad y Roles
 from backend.models_kernel import (ActivityStatus, MinistryOffice, ChurchRole,

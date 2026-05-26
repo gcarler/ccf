@@ -207,6 +207,47 @@ def get_system_health():
     return {"status": "ok", "version": "3.0.0-PRO"}
 
 
+@router.get("/health/modules")
+def get_module_health():
+    """Health check por módulo — muestra qué módulos están operativos."""
+    from backend.middleware.module_isolation import get_module_health
+    from backend.core.database import engine
+    from sqlalchemy import text
+
+    modules = get_module_health()
+
+    # Check database connectivity
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        db_status = "ok"
+    except Exception as e:
+        db_status = f"error: {str(e)[:100]}"
+
+    modules["database"] = {"status": db_status, "failures": 0, "last_failure": 0}
+
+    # List all registered modules
+    known_modules = [
+        "evangelism", "crm", "academy", "projects", "agents",
+        "admin", "finance", "donations", "governance", "messaging",
+        "support", "spiritual_life", "graph", "community", "prayer",
+        "analytics", "dashboard", "tables", "system", "auth",
+        "kernel", "agenda", "public", "workspace",
+    ]
+    for mod in known_modules:
+        if mod not in modules:
+            modules[mod] = {"status": "healthy", "failures": 0, "last_failure": 0}
+
+    total_healthy = sum(1 for m in modules.values() if m.get("status") in ("healthy", "closed", "ok"))
+    total_modules = len(modules)
+
+    return {
+        "status": "ok" if total_healthy == total_modules else "degraded",
+        "modules": modules,
+        "summary": f"{total_healthy}/{total_modules} modules healthy",
+    }
+
+
 @router.get("/db/health")
 def get_database_health(
     db: Session = Depends(get_db),
