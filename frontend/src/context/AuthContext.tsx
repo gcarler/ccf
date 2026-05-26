@@ -50,8 +50,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         setToken(null);
         setUser(null);
-        router.push('/login');
-    }, [router]);
+        window.location.href = '/login';
+    }, []);
 
     const fetchUser = useCallback(async (tokenValue?: string) => {
         const activeToken = tokenValue || (typeof window !== 'undefined' ? sessionStorage.getItem('ccf_token') : null);
@@ -96,9 +96,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Only clear session on explicit 401 (not network errors)
             const status = (error as any).status;
             if (status === 401) {
-                if (typeof window !== 'undefined') sessionStorage.removeItem('ccf_token');
+                if (typeof window !== 'undefined') {
+                    sessionStorage.removeItem('ccf_token');
+                    sessionStorage.removeItem('ccf_refresh_token');
+                }
                 setUser(null);
                 setToken(null);
+                if (typeof window !== 'undefined') {
+                    window.location.href = '/login?expired=1';
+                }
             }
             // For status === 0 (network error/timeout): keep the token,
             // don't log out — the user may just be offline temporarily.
