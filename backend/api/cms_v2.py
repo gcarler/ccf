@@ -1001,3 +1001,73 @@ def schedule_page_publish(
     page.seo_json = seo
     db.commit()
     return {"ok": True, "scheduled_at": scheduled_at}
+
+
+# ── IMAGE OPTIMIZATION (Phase 7) ───────────────────────────────────────────────
+
+@router.get("/images/{media_id}/resize", response_model=dict)
+def get_resized_image(
+    media_id: int,
+    width: int = Query(800, le=2400),
+    height: Optional[int] = None,
+    quality: int = Query(80, le=100),
+    db: Session = Depends(get_db),
+):
+    """Get a resized version of an uploaded image. Returns base64 or URL."""
+    media = db.query(models.CmsMediaItem).filter(
+        models.CmsMediaItem.id == media_id,
+    ).first()
+    if not media:
+        raise HTTPException(status_code=404, detail="Media not found")
+    # For now return the original URL with resize params
+    return {"url": media.url, "width": width, "height": height, "quality": quality}
+
+
+@router.post("/images/optimize", response_model=dict)
+async def optimize_uploaded_image(
+    media_id: int,
+    max_width: int = Query(1920),
+    quality: int = Query(80),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    """Optimize an uploaded image by resizing and reducing quality."""
+    from PIL import Image
+    from backend.core.config import get_settings
+    
+    media = db.query(models.CmsMediaItem).filter(
+        models.CmsMediaItem.id == media_id,
+    ).first()
+    if not media:
+        raise HTTPException(status_code=404, detail="Media not found")
+    
+    settings = get_settings()
+    orig_path = os.path.join(settings.uploads_dir, media.filename)
+    if not os.path.exists(orig_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    img = Image.open(orig_path)
+    # Convert to RGB if necessary (for PNG with transparency)
+    if img.mode in ("RGBA", "P"):
+        img = img.convert("RGB")
+    
+    # Resize if larger than max_width
+    if img.width > max_width:
+        ratio = max_width / img.width
+        new_height = int(img.height * ratio)
+        img = img.resize((max_width, new_height), Image.LANCZOS)
+    
+    # Save optimized
+    opt_filename = f"opt_{media.filename.rsplit('.', 1)[0]}_{max_width}w.jpg"
+    opt_path = os.path.join(settings.uploads_dir, opt_filename)
+    img.save(opt_path, "JPEG", quality=quality, optimize=True)
+    
+    opt_size = os.path.getsize(opt_path)
+    orig_size = os.path.getsize(orig_path)
+    
+    return {
+        "original_size": orig_size,
+        "optimized_size": opt_size,
+        "savings_pct": round((1 - opt_size / orig_size) * 100, 1),
+        "url": f"/uploads/{opt_filename}",
+    }

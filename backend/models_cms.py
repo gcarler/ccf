@@ -179,6 +179,7 @@ class CmsPage(Base):
         ),
         nullable=True,
     )
+    locale = Column(String(5), default="es", server_default="es", index=True)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
@@ -230,6 +231,7 @@ class CmsSection(Base):
     status = Column(String(20), default="active", index=True)
     is_global = Column(Boolean, default=False, server_default="0")
     global_key = Column(String(120), nullable=True, unique=True, index=True)
+    locale = Column(String(5), default="es", server_default="es", index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
