@@ -316,7 +316,7 @@ export default function VolunteersPage() {
                                                 initial={{ opacity: 0, y: 12 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: idx * 0.03 }}
-                                                onClick={() => router.push(`/crm/volunteers/${v.id}`)}
+                                                onClick={() => router.push(`/plataforma/crm/volunteers/${v.id}`)}
                                                 className="group bg-white dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 cursor-pointer overflow-hidden"
                                             >
                                                 <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r ${getTeamColor(team)} opacity-0 group-hover:opacity-100 transition-opacity`} />

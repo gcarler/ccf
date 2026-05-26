@@ -61,15 +61,65 @@ export default function ProtectedRoute({ children, allowedRoles, allowedPermissi
     }
 
     if (!isAuthenticated) {
-        return null;
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-[#111213]">
+                <div className="flex flex-col items-center gap-4 max-w-md text-center px-6">
+                    <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                    </div>
+                    <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">Acceso Restringido</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Debes iniciar sesión para acceder a esta sección.</p>
+                    <a href="/login" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-xl transition-all no-underline">
+                        Ir al Login
+                    </a>
+                </div>
+            </div>
+        );
     }
 
     if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-        return null;
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-[#111213]">
+                <div className="flex flex-col items-center gap-4 max-w-md text-center px-6">
+                    <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="15" y1="9" x2="9" y2="15"/>
+                            <line x1="9" y1="9" x2="15" y2="15"/>
+                        </svg>
+                    </div>
+                    <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">Sin Permisos</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Este módulo requiere rol pastoral o administrativo.</p>
+                    <a href="/plataforma/admin" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-xl transition-all no-underline">
+                        Volver al Inicio
+                    </a>
+                </div>
+            </div>
+        );
     }
 
     if (allowedPermissions && user && !allowedPermissions.some(p => hasPermission(p))) {
-        return null;
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-[#111213]">
+                <div className="flex flex-col items-center gap-4 max-w-md text-center px-6">
+                    <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="15" y1="9" x2="9" y2="15"/>
+                            <line x1="9" y1="9" x2="15" y2="15"/>
+                        </svg>
+                    </div>
+                    <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">Permiso Denegado</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">No tienes los permisos necesarios para acceder a esta sección.</p>
+                    <a href="/plataforma/admin" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-xl transition-all no-underline">
+                        Volver al Inicio
+                    </a>
+                </div>
+            </div>
+        );
     }
 
     return <>{children}</>;

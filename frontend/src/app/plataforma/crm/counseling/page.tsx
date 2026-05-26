@@ -185,7 +185,7 @@ export default function CounselingPage() {
             tags={['Consejería', 'Seguimiento', 'IA']}
             watchers={heroWatchers}
             primaryAction={{ label: 'Agendar sesión', icon: Plus, onClick: () => setIsDrawerOpen(true) }}
-            secondaryAction={{ label: 'Ver políticas', icon: Link2, onClick: () => router.push('/privacy') }}
+            secondaryAction={{ label: 'Ver políticas', icon: Link2, onClick: () => router.push('/plataforma/privacy') }}
         />
 
         {/* Filters Global */}

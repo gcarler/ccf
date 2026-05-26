@@ -8,7 +8,9 @@ module.exports = {
       interpreter: "none",
       exec_mode: "fork",
       autorestart: true,
-      max_restarts: 5,
+      max_restarts: 10,
+      min_uptime: "30s",
+      kill_timeout: 30000,
     },
     {
       name: "ccf-frontend-staging",

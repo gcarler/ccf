@@ -261,7 +261,7 @@ export default function NewsletterLeadsPage() {
                         filteredLeads.map(lead => (
                             <div
                                 key={lead.case_id}
-                                onClick={() => router.push(`/crm/contacts/${lead.case_id}`)}
+                                onClick={() => router.push(`/plataforma/crm/contacts/${lead.case_id}`)}
                                 className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md p-4 hover:border-blue-300 dark:hover:border-blue-700 transition-all group cursor-pointer shadow-sm hover:shadow-md"
                             >
                                 <div className="flex items-start justify-between mb-2">
@@ -316,7 +316,7 @@ export default function NewsletterLeadsPage() {
                                     {filteredLeads.map(lead => (
                                         <tr
                                             key={lead.case_id}
-                                            onClick={() => router.push(`/crm/contacts/${lead.case_id}`)}
+                                            onClick={() => router.push(`/plataforma/crm/contacts/${lead.case_id}`)}
                                             className="cursor-pointer border-t border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02]"
                                         >
                                             <td className="px-4 py-2 text-sm font-bold text-slate-800 dark:text-slate-100">
@@ -364,7 +364,7 @@ export default function NewsletterLeadsPage() {
                                             {items.map(lead => (
                                                 <button
                                                     key={lead.case_id}
-                                                    onClick={() => router.push(`/crm/contacts/${lead.case_id}`)}
+                                                    onClick={() => router.push(`/plataforma/crm/contacts/${lead.case_id}`)}
                                                     className="rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all"
                                                 >
                                                     <p className="text-sm font-bold text-slate-800 dark:text-slate-100">

@@ -100,7 +100,7 @@ export default function VolunteerDetailPage() {
         try {
             await apiFetch(`/crm/volunteers/${id}`, { method: "DELETE", token });
             toast.success("Servidor eliminado");
-            router.push("/crm/volunteers");
+            router.push("/plataforma/crm/volunteers");
         } catch {
             toast.error("Error al eliminar");
             setDeleting(false);

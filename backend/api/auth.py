@@ -18,7 +18,7 @@ from backend.auth import (create_access_token, create_refresh_token,
                           normalize_role, require_active_user, require_admin)
 from backend.core.config import get_settings
 from backend.core.database import get_db
-from backend.core.permissions import get_user_effective_permissions
+from backend.core.permissions import get_user_effective_permissions, record_session
 from backend.core.rate_limit import rate_limiter
 
 settings = get_settings()
@@ -105,6 +105,8 @@ def login(
         db, int(user.id), ip_address=ip_address, user_agent=user_agent
     )
 
+    record_session(int(user.id), access_token)
+
     # Access Token Cookie (session-only: expires on browser close)
     response.set_cookie(
         key=settings.access_token_cookie_name,
@@ -177,6 +179,8 @@ def refresh_access_token(
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
     )
 
+    record_session(int(user.id), new_access_token)
+
     # Actualizar cookies (session-only)
     response.set_cookie(
         key=settings.access_token_cookie_name,
@@ -201,8 +205,17 @@ def refresh_access_token(
 
 
 @router.post("/logout", status_code=204)
-def logout(response: Response):
-    """Cierra sesión eliminando las cookies de acceso y refresco."""
+def logout(
+    response: Response,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Cierra sesión eliminando las cookies y revocando el refresh token."""
+    # Revoke refresh token if present in cookie
+    refresh_token_cookie = request.cookies.get(settings.refresh_token_cookie_name)
+    if refresh_token_cookie:
+        crud.revoke_refresh_token(db, refresh_token_cookie)
+
     response.delete_cookie(
         key=settings.access_token_cookie_name,
         httponly=True,
@@ -654,11 +667,11 @@ def google_callback(
     )
     refresh_token = create_refresh_token(db, int(user.id))
 
-    # 5. Redirect to frontend with tokens
+    # 5. Redirect to frontend with tokens (fragment to avoid server logs)
     frontend_url = settings.frontend_url.rstrip("/")
     redirect_target = (
         f"{frontend_url}/auth/callback"
-        f"?token={access_token}"
+        f"#token={access_token}"
         f"&refresh={refresh_token}"
     )
     return RedirectResponse(url=redirect_target)

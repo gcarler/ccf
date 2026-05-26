@@ -208,7 +208,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                 toast.success('Evento creado');
             } else if (type === 'doc') {
                 // Endpoint referencial, depende de los docs del sistema
-                await apiFetch('/cms/pages', {
+                await apiFetch('/plataforma/cms/pages', {
                     method: 'POST', token,
                     body: { title: title.trim(), content: description || ' ' }
                 }).catch(() => {});

@@ -161,7 +161,7 @@ export default function PrayerSupportCenter() {
     ], [updateRequestStatus]);
 
     const handleOpenRequest = (req: any) => {
-        router.push(`/crm/prayers/${req.id}`);
+        router.push(`/plataforma/crm/prayers/${req.id}`);
     };
 
     // Dynamic stats

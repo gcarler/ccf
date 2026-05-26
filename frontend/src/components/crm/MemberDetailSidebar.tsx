@@ -344,7 +344,7 @@ export default function MemberDetailSidebar({ member: initialMember, onUpdate, o
                     {modalTab === 'tasks' && (
                         <motion.div key="tasks" initial={{opacity:0, scale:0.98}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.98}} className="space-y-3">
                             <h3 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-3"><ListTodo className="text-blue-600" size={16} /> Tareas de Seguimiento</h3>
-                            <button onClick={() => router.push('/crm/tasks/assign')} className="w-full py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-[10px] font-bold uppercase tracking-wide border border-dashed border-blue-200 dark:border-blue-800 flex items-center justify-center gap-2">
+                            <button onClick={() => router.push('/plataforma/crm/tasks/assign')} className="w-full py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-[10px] font-bold uppercase tracking-wide border border-dashed border-blue-200 dark:border-blue-800 flex items-center justify-center gap-2">
                                 <Plus size={14}/> Nueva Tarea
                             </button>
                             

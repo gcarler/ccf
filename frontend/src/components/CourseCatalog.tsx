@@ -114,9 +114,9 @@ export default function CourseCatalog({
 
   const handleEnrollClick = (courseId: number) => {
     if (enrolledCourseIds.includes(courseId)) {
-      router.push(`/academy/course/${courseId}`);
+      router.push(`/plataforma/academy/course/${courseId}`);
     } else {
-      router.push(`/academy/enroll/${courseId}`);
+      router.push(`/plataforma/academy/enroll/${courseId}`);
     }
   };
 
