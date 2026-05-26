@@ -30,13 +30,13 @@ class Agent(Base):
     updated_by = Column(Integer, ForeignKey("agents.id"), nullable=True)
 
     auth_credentials = relationship("AgentAuth", back_populates="agent", cascade="all, delete-orphan")
-    contacts = relationship("AgentContact", back_populates="agent", cascade="all, delete-orphan")
-    roles = relationship("AgentRole", back_populates="agent", cascade="all, delete-orphan")
-    activities = relationship("AgentActivity", back_populates="agent", cascade="all, delete-orphan")
+    contacts = relationship("AgentContact", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentContact.agent_id")
+    roles = relationship("AgentRole", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentRole.agent_id")
+    activities = relationship("AgentActivity", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentActivity.agent_id")
     families_as_agent = relationship("AgentFamily", cascade="all, delete-orphan", foreign_keys="AgentFamily.agent_id")
     families_as_related = relationship("AgentFamily", cascade="all, delete-orphan", foreign_keys="AgentFamily.related_agent_id")
-    journey_entries = relationship("AgentJourney", back_populates="agent", cascade="all, delete-orphan")
-    permissions = relationship("AgentPermission", back_populates="agent", cascade="all, delete-orphan")
+    journey_entries = relationship("AgentJourney", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentJourney.agent_id")
+    permissions = relationship("AgentPermission", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentPermission.agent_id")
 
     @property
     def full_name(self):
@@ -56,7 +56,7 @@ class AgentAuth(Base):
     is_email_verified = Column(Boolean, default=False)
     created_at = Column(DateTime, default=_utcnow)
     last_login_at = Column(DateTime, nullable=True)
-    agent = relationship("Agent", back_populates="auth_credentials")
+    agent = relationship("Agent", back_populates="auth_credentials", foreign_keys=[agent_id])
 
 
 class AgentContact(Base):
@@ -70,7 +70,7 @@ class AgentContact(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
     created_by = Column(Integer, ForeignKey("agents.id"), nullable=True)
-    agent = relationship("Agent", back_populates="contacts")
+    agent = relationship("Agent", back_populates="contacts", foreign_keys=[agent_id])
 
 
 class AgentRole(Base):
@@ -87,7 +87,7 @@ class AgentRole(Base):
     ended_at = Column(DateTime, nullable=True)
     is_primary = Column(Boolean, default=False)
     created_by = Column(Integer, ForeignKey("agents.id"), nullable=True)
-    agent = relationship("Agent", back_populates="roles")
+    agent = relationship("Agent", back_populates="roles", foreign_keys=[agent_id])
 
 
 class AgentActivity(Base):
@@ -106,7 +106,7 @@ class AgentActivity(Base):
     notes = Column(Text, nullable=True)
     occurred_at = Column(DateTime, nullable=False, default=_utcnow, index=True)
     created_at = Column(DateTime, default=_utcnow)
-    agent = relationship("Agent", back_populates="activities")
+    agent = relationship("Agent", back_populates="activities", foreign_keys=[agent_id])
 
 
 class AgentFamily(Base):
@@ -133,7 +133,7 @@ class AgentJourney(Base):
     triggered_by_id = Column(Integer, nullable=True)
     journey_data = Column("metadata", JSON, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    agent = relationship("Agent", back_populates="journey_entries")
+    agent = relationship("Agent", back_populates="journey_entries", foreign_keys=[agent_id])
 
 
 class AgentPermission(Base):
@@ -146,4 +146,4 @@ class AgentPermission(Base):
     granted_via = Column(String(50), nullable=True)
     granted_at = Column(DateTime, default=_utcnow)
     expires_at = Column(DateTime, nullable=True)
-    agent = relationship("Agent", back_populates="permissions")
+    agent = relationship("Agent", back_populates="permissions", foreign_keys=[agent_id])
