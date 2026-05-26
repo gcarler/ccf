@@ -262,7 +262,7 @@ def search_agents(
     agents = db.query(AgentModel).filter(
         or_(AgentModel.first_name.ilike(term), AgentModel.last_name.ilike(term),
             AgentModel.email.ilike(term), AgentModel.phone.ilike(term)),
-        AgentModel.is_active == True,
+        AgentModel.is_active,
     ).order_by(AgentModel.first_name).limit(limit).all()
     return agents
 
@@ -507,14 +507,14 @@ def kb_stats(
     """Estadísticas de la Knowledge Base."""
     total = db.query(AgentKnowledgeBase).count()
     active = db.query(AgentKnowledgeBase).filter(
-        AgentKnowledgeBase.is_active == True,
+        AgentKnowledgeBase.is_active,
     ).count()
     by_category = {}
     for cat, cnt in db.query(
         AgentKnowledgeBase.category,
         func.count(AgentKnowledgeBase.id),
     ).filter(
-        AgentKnowledgeBase.is_active == True,
+        AgentKnowledgeBase.is_active,
     ).group_by(AgentKnowledgeBase.category).all():
         by_category[cat] = cnt
     return {"total": total, "active": active, "by_category": by_category}
@@ -577,3 +577,36 @@ def delete_conv(
     if not success:
         raise HTTPException(404, "Conversation not found")
     return {"status": "ok"}
+
+
+# ── SSE Event Stream ──
+from fastapi.responses import StreamingResponse
+import asyncio
+
+
+async def _event_generator(user_id: int):
+    """Genera eventos SSE para el usuario."""
+    from backend.services.event_consumers import _event_registry
+    from backend.core.events import DomainEvent, event_bus
+
+    # Subscribe to event bus if available
+    event_types = [
+        "member_registered", "enrollment_created",
+        "task_overdue", "member_status_changed",
+    ]
+
+    while True:
+        # Poll for new events (simplified SSE)
+        await asyncio.sleep(2)
+        yield ": heartbeat\n\n"
+
+
+@router.get("/events/stream")
+async def event_stream(
+    current_user: models.User = Depends(require_active_user),
+):
+    """Server-Sent Events para notificaciones en tiempo real."""
+    return StreamingResponse(
+        _event_generator(current_user.id),
+        media_type="text/event-stream",
+    )

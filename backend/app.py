@@ -86,6 +86,27 @@ async def lifespan(_: FastAPI):
             except Exception as exc:
                 logger.warning("Tool registration failed: %s", exc)
 
+            # Register event consumers
+            try:
+                from backend.services.event_consumers import register_all_consumers
+                consumers = register_all_consumers()
+                logger.info("Event consumers registered: %d handlers", len(consumers))
+            except Exception as exc:
+                logger.warning("Event consumer registration failed: %s", exc)
+
+            # Rebuild knowledge base
+            try:
+                from backend.core.database import SessionLocal
+                from backend.services.knowledge_base import KnowledgeIndexer
+                db = SessionLocal()
+                indexer = KnowledgeIndexer(db)
+                stats = indexer.rebuild_all()
+                db.commit()
+                logger.info("Knowledge base rebuilt: %s", stats)
+                db.close()
+            except Exception as exc:
+                logger.warning("KB rebuild failed: %s", exc)
+
             break
         except Exception as exc:
             if attempt < 5:
