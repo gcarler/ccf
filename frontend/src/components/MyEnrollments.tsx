@@ -94,7 +94,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
           apiFetch(`/academy/enrollments/${item.id}/check-in`, {
             method: "POST",
             token,
-          }).catch(() => {});
+          }).catch((err) => { console.error('[MyEnrollments] Failed to check-in:', err); });
         }
       });
 

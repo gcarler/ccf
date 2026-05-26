@@ -407,7 +407,7 @@ export default function MemberDetailPage() {
         // Load departments for display
         apiFetch<any[]>('/crm/colombian-departments', { token })
             .then(setDepartments)
-            .catch(() => {});
+            .catch((err) => { console.error('[MemberDetailPage] Failed to load departments:', err); toast.error('Error al cargar departamentos'); });
     }, [id, token]);
 
     // Load cities for edit drawer cascade

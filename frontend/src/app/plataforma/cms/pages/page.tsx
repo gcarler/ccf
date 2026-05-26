@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import { Archive, Calendar, FileText, Globe, Plus, RotateCcw, Search, Zap, PenTool, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import SidePanel from "@/components/ui/SidePanel";
@@ -60,6 +61,7 @@ export default function CmsPagesManagement() {
       setPages(nextPages || []);
     } catch (error) {
       console.error("Error fetching pages:", error);
+      toast.error("Error al cargar páginas");
       setPages([]);
     } finally {
       setLoading(false);
@@ -118,6 +120,7 @@ export default function CmsPagesManagement() {
       await fetchPages(siteKey);
     } catch (error) {
       console.error("Error creating page:", error);
+      toast.error("Error al crear página");
     }
   };
 
@@ -131,6 +134,7 @@ export default function CmsPagesManagement() {
       await fetchPages(siteKey);
     } catch (error) {
       console.error("Error archiving page:", error);
+      toast.error("Error al archivar página");
     }
   };
 
@@ -144,6 +148,7 @@ export default function CmsPagesManagement() {
       await fetchPages(siteKey);
     } catch (error) {
       console.error("Error restoring page:", error);
+      toast.error("Error al restaurar página");
     }
   };
 
@@ -160,6 +165,7 @@ export default function CmsPagesManagement() {
       await fetchPages(siteKey);
     } catch (error) {
       console.error("Error archiving selected pages:", error);
+      toast.error("Error al archivar páginas seleccionadas");
     }
   };
 
@@ -181,6 +187,7 @@ export default function CmsPagesManagement() {
       await fetchPages(siteKey);
     } catch (error) {
       console.error("Error updating page:", error);
+      toast.error("Error al actualizar página");
     }
   };
 

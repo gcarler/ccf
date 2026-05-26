@@ -255,14 +255,14 @@ export default function FaroDetailPage() {
                         : 'Realizada';
                 setReportStatus(nextStatus);
             })
-            .catch(() => {})
+            .catch((err) => { console.error('[FaroDetailPage] Failed to load attendance data:', err); toast.error('Error al cargar datos de asistencia'); })
             .finally(() => setLoadingAtt(false));
     }, [activeSession, token]);
 
     // Load members for selector
     useEffect(() => {
         if (!token || !showAddAttendee) return;
-        apiFetch<Member[]>('/crm/members', { token }).then(setMembers).catch(() => {});
+        apiFetch<Member[]>('/crm/members', { token }).then(setMembers).catch((err) => { console.error('[FaroDetailPage] Failed to load members:', err); toast.error('Error al cargar miembros'); });
     }, [showAddAttendee, token]);
 
     const filteredMembers = useMemo(() => {

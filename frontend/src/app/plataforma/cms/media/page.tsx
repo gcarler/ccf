@@ -9,6 +9,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import clsx from "clsx";
 import ViewSwitcher, { ViewType } from "@/components/ViewSwitcher";
 import UniversalCalendarView from "@/components/ui/UniversalCalendarView";
@@ -124,6 +125,7 @@ export default function CmsMediaLibrary() {
       await fetchMedia();
     } catch (err) {
       console.error("Upload error", err);
+      toast.error("Error al subir archivo");
     } finally {
       setUploading(false);
     }
@@ -171,6 +173,7 @@ export default function CmsMediaLibrary() {
       setTagsText(tags.join(", "));
     } catch (err) {
       console.error("Save media metadata error", err);
+      toast.error("Error al guardar metadatos");
     } finally {
       setMetadataSaving(false);
     }
@@ -188,6 +191,7 @@ export default function CmsMediaLibrary() {
       if (selectedItem?.id === item.id) setSelectedItem(prev => prev ? { ...prev, ...updated, status: nextStatus } : prev);
     } catch (err) {
       console.error("Archive media error", err);
+      toast.error("Error al archivar medio");
     } finally {
       setDeletingId(null);
     }

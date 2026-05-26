@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Archive, Link2, Plus, RotateCcw, X,
@@ -117,6 +118,7 @@ export default function CmsMenusManagement() {
             }
         } catch (error) {
             console.error("Error fetching CMS sites:", error);
+            toast.error("Error al cargar sitios CMS");
         }
     };
 
@@ -140,6 +142,7 @@ export default function CmsMenusManagement() {
             }
         } catch (error) {
             console.error("Error fetching CMS menus:", error);
+            toast.error("Error al cargar menús CMS");
             setMenus([]);
             setMenuKey("");
             setNavConfig({ items: [] });
@@ -173,6 +176,7 @@ export default function CmsMenusManagement() {
         } catch (error) {
             if (!(error instanceof ApiError && error.status === 404)) {
                 console.error("Error fetching nav:", error);
+                toast.error("Error al cargar items del menú");
             }
             setNavConfig({ items: [] });
         } finally {
@@ -195,6 +199,7 @@ export default function CmsMenusManagement() {
             setNavConfig({ items: [] });
         } catch (error) {
             console.error("Error creating menu:", error);
+            toast.error("Error al crear menú");
         }
     };
 
@@ -205,6 +210,7 @@ export default function CmsMenusManagement() {
             setMenus((prev) => prev.map((menu) => menu.id === updated.id ? updated : menu));
         } catch (error) {
             console.error("Error updating CMS menu:", error);
+            toast.error("Error al actualizar menú");
         }
     };
 
@@ -231,6 +237,7 @@ export default function CmsMenusManagement() {
             fetchNav();
         } catch (error) {
             console.error('Error creating menu item:', error);
+            toast.error('Error al crear item del menú');
         }
     };
 
@@ -247,6 +254,7 @@ export default function CmsMenusManagement() {
             fetchNav();
         } catch (error) {
             console.error('Error updating menu item visibility:', error);
+            toast.error('Error al actualizar visibilidad');
         }
         if (selectedIndex === index) {
             setSelectedItem(null);
@@ -277,6 +285,7 @@ export default function CmsMenusManagement() {
             fetchNav();
         } catch (error) {
             console.error('Error updating menu item:', error);
+            toast.error('Error al actualizar item');
         }
     };
 
@@ -300,6 +309,7 @@ export default function CmsMenusManagement() {
             fetchNav();
         } catch (error) {
             console.error('Error reordering menu items:', error);
+            toast.error('Error al reordenar items');
         }
     };
 
@@ -317,6 +327,7 @@ export default function CmsMenusManagement() {
             fetchNav();
         } catch (error) {
             console.error('Error applying menu reorder:', error);
+            toast.error('Error al aplicar reorden');
         }
     };
 

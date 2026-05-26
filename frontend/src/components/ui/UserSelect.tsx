@@ -35,7 +35,7 @@ export default function UserSelect({
         if (!token || users.length > 0) return;
         apiFetch<UserOption[]>("/auth/user-list", { token })
             .then(setUsers)
-            .catch(() => {});
+            .catch((err) => { console.error('[UserSelect] Failed to load users:', err); });
     }, [token, users.length]);
 
     useEffect(() => {

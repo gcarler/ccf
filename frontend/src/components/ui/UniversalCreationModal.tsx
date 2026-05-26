@@ -211,7 +211,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                 await apiFetch('/plataforma/cms/pages', {
                     method: 'POST', token,
                     body: { title: title.trim(), content: description || ' ' }
-                }).catch(() => {});
+                }).catch((err) => { console.error('[UniversalCreationModal] Failed to create document:', err); toast.error('Error al crear documento'); });
                 toast.success('Documento creado');
             } else if (type === 'reminder') {
                 // Usando logs o un endpoint si existe, o simularlo:
@@ -221,7 +221,7 @@ export default function UniversalCreationModal({ isOpen, onClose, initialType = 
                     await apiFetch(`/projects/${selectedProjectId}/whiteboard`, {
                         method: 'POST', token,
                         body: { title: title.trim(), elements_json: '[]' }
-                    }).catch(() => {});
+                    }).catch((err) => { console.error('[UniversalCreationModal] Failed to create whiteboard:', err); toast.error('Error al crear pizarra'); });
                 }
                 toast.success('Pizarra inicializada');
             } else if (type === 'panel') {

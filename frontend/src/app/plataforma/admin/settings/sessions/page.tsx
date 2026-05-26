@@ -18,13 +18,12 @@ interface Session {
 }
 
 export default function AdminSettingsSessionsPage() {
-    const { user } = useAuth();
+    const { user, token } = useAuth();
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
     const [revoking, setRevokeing] = useState<number | null>(null);
 
     const fetchSessions = async () => {
-        const token = localStorage.getItem('ccf_token') || '';
         try {
             const data = await apiFetch<Session[]>('/auth/sessions', { token });
             // Mark the most recently active session as current
@@ -50,7 +49,6 @@ export default function AdminSettingsSessionsPage() {
 
     const handleRevoke = async (sessionId: number) => {
         setRevokeing(sessionId);
-        const token = localStorage.getItem('ccf_token') || '';
         try {
             await apiFetch(`/auth/sessions/${sessionId}/revoke`, { method: 'POST', token });
             toast.success('Sesión revocada');
@@ -64,7 +62,6 @@ export default function AdminSettingsSessionsPage() {
 
     const handleRevokeAll = async () => {
         if (!window.confirm('¿Revocar todas las demás sesiones? Esto cerrará todos los demás dispositivos.')) return;
-        const token = localStorage.getItem('ccf_token') || '';
         try {
             const nonCurrent = sessions.filter(s => !s.is_current);
             for (const s of nonCurrent) {
