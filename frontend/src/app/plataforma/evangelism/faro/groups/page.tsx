@@ -21,10 +21,6 @@ import {
   ShieldCheck,
   BarChart3,
   Trash2,
-  List,
-  LayoutGrid,
-  Columns3,
-  Table2,
   ChevronRight,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -190,7 +186,7 @@ function FaroGroupsContent() {
     setLoading(true);
     Promise.all([
       apiFetch<GloryHouse[]>('/evangelism/glory-houses', { token }),
-      apiFetch<Member[]>('/crm/members/', { token }),
+      apiFetch<Member[]>('/crm/members', { token }),
       apiFetch<AssignmentSummary>('/evangelism/faro/assignment-summary', {
         token,
       }).catch(() => null),
@@ -1327,15 +1323,12 @@ function FaroGroupsContent() {
             )}
           </div>
         ) : (
-          <div className="flex-1 bg-white/50 dark:bg-[#252528]/50 rounded-lg border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center justify-center animate-in fade-in duration-500 shadow-sm">
-            <div className="size-8 rounded-md bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-3 shadow-inner">
-              <Home size={32} className="text-slate-400" />
-            </div>
-            <h2 className="text-base font-bold text-slate-800 dark:text-white tracking-tight mb-2">Espacio de Trabajo Faro</h2>
-            <p className="text-sm text-slate-500 font-medium max-w-sm text-center">
-              Selecciona un grupo en el menú izquierdo para ver sus detalles, o crea uno nuevo para comenzar a gestionar tu equipo.
-            </p>
-          </div>
+          <>
+            {viewType === 'list' && <ListView houses={filteredHouses} />}
+            {viewType === 'grid' && <GridView houses={filteredHouses} />}
+            {viewType === 'kanban' && <KanbanView houses={filteredHouses} />}
+            {viewType === 'table' && <TableView houses={filteredHouses} />}
+          </>
         )}
       </div>
     </EvangelismShell>

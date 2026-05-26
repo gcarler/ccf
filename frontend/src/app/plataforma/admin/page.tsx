@@ -153,7 +153,7 @@ export default function AdminDashboardPage() {
                             {pendingTestimonials > 0 && (
                                 <AdminTaskRow
                                     task={{ title: 'Moderador de Testimonios', description: `Hay ${pendingTestimonials} nuevos milagros esperando aprobación.`, priority: 'medium', status: 'Pendiente', is_special: true }}
-                                    onOpen={() => window.location.href = '/admin/cms'}
+                                    onOpen={() => window.location.href = '/plataforma/admin/cms'}
                                     index={100}
                                 />
                             )}

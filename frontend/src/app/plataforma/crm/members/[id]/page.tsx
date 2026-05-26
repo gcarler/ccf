@@ -505,7 +505,7 @@ export default function MemberDetailPage() {
                 <p className="text-base font-bold text-slate-600 dark:text-slate-300">Miembro no encontrado</p>
                 <p className="text-sm text-slate-400 mt-1">El expediente #{id} no existe o no tienes acceso.</p>
             </div>
-            <button onClick={() => router.push('/crm/members')} className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all">
+            <button onClick={() => router.push('/plataforma/crm/members')} className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all">
                 <ArrowLeft size={16} /> Volver a Miembros
             </button>
         </div>
@@ -525,7 +525,7 @@ export default function MemberDetailPage() {
     return (
         <CrmShell
             breadcrumbs={[
-                { label: 'Miembros', icon: Users, href: '/crm/members' },
+                { label: 'Miembros', icon: Users, href: '/plataforma/crm/members' },
                 { label: fullName, icon: User }
             ]}
             rightActions={

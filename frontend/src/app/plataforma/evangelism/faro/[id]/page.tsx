@@ -262,7 +262,7 @@ export default function FaroDetailPage() {
     // Load members for selector
     useEffect(() => {
         if (!token || !showAddAttendee) return;
-        apiFetch<Member[]>('/crm/members/', { token }).then(setMembers).catch(() => {});
+        apiFetch<Member[]>('/crm/members', { token }).then(setMembers).catch(() => {});
     }, [showAddAttendee, token]);
 
     const filteredMembers = useMemo(() => {
@@ -305,7 +305,7 @@ export default function FaroDetailPage() {
         }
         setCreatingMember(true);
         try {
-            const res = await apiFetch<Member>('/crm/members/', {
+            const res = await apiFetch<Member>('/crm/members', {
                 method: 'POST',
                 token,
                 body: { ...newMemberForm, church_role: 'Visitante Faro en Casa' }

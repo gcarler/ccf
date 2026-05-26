@@ -170,7 +170,7 @@ export default function IntelligenceConsole() {
                 tags={['Optimus v2.1', 'Neural Core', 'Active']}
                 watchers={['Tech Lead', 'Dirección Académica']}
                 primaryAction={{ label: 'Entrenar Modelo', icon: Zap, onClick: handleTrainModel }}
-                secondaryAction={{ label: 'Ver Logs', icon: Terminal, onClick: () => router.push('/admin/audit') }}
+                secondaryAction={{ label: 'Ver Logs', icon: Terminal, onClick: () => router.push('/plataforma/admin/audit') }}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 pb-4">

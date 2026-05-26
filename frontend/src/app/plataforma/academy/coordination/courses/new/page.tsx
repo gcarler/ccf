@@ -50,7 +50,7 @@ export default function NewCoursePage() {
                 body: JSON.stringify(formData)
             });
             toast.success('¡Programa creado con éxito!');
-            router.push('/academy/coordination');
+            router.push('/plataforma/academy/coordination');
         } catch (err) {
             console.error(err);
             toast.error('Error al crear el curso');
@@ -74,7 +74,7 @@ export default function NewCoursePage() {
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Academia', icon: GraduationCap, href: '/plataforma/academy' },
-                    { label: 'Coordinación', icon: ShieldCheck, href: '/academy/coordination' },
+                    { label: 'Coordinación', icon: ShieldCheck, href: '/plataforma/academy/coordination' },
                     { label: 'Nuevo Programa', icon: Plus },
                 ]}
                 viewType={viewType}

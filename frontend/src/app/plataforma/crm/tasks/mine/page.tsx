@@ -127,7 +127,7 @@ export default function MyTasks() {
             description="Gestiona tus compromisos pastorales, visitas y llamadas con el respaldo de Optimus Brain."
             tags={['Enfoque', 'Consolidación', 'Fidelidad']}
             watchers={['Equipo de Consolidación', 'Optimus Brain']}
-            primaryAction={{ label: 'Asignar nuevas', icon: Plus, onClick: () => router.push('/crm/tasks/assign') }}
+            primaryAction={{ label: 'Asignar nuevas', icon: Plus, onClick: () => router.push('/plataforma/crm/tasks/assign') }}
             secondaryAction={{ label: 'Refrescar', icon: Clock, onClick: fetchTasks }}
         />
 

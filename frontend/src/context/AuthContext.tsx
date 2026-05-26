@@ -45,8 +45,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const logout = useCallback(() => {
         void apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
         if (typeof window !== 'undefined') {
-            localStorage.removeItem('ccf_token');
-            localStorage.removeItem('ccf_refresh_token');
+            sessionStorage.removeItem('ccf_token');
+            sessionStorage.removeItem('ccf_refresh_token');
         }
         setToken(null);
         setUser(null);
@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, [router]);
 
     const fetchUser = useCallback(async (tokenValue?: string) => {
-        const activeToken = tokenValue || (typeof window !== 'undefined' ? localStorage.getItem('ccf_token') : null);
+        const activeToken = tokenValue || (typeof window !== 'undefined' ? sessionStorage.getItem('ccf_token') : null);
 
         if (!activeToken) {
             setLoading(false);
@@ -88,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(userData);
             setToken(activeToken);
             if (typeof window !== 'undefined' && tokenValue) {
-                localStorage.setItem('ccf_token', tokenValue);
+                sessionStorage.setItem('ccf_token', tokenValue);
             }
             return userData;
         } catch (error) {
@@ -96,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Only clear session on explicit 401 (not network errors)
             const status = (error as any).status;
             if (status === 401) {
-                if (typeof window !== 'undefined') localStorage.removeItem('ccf_token');
+                if (typeof window !== 'undefined') sessionStorage.removeItem('ccf_token');
                 setUser(null);
                 setToken(null);
             }
@@ -116,11 +116,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const login = useCallback(async (accessToken?: string, refreshToken?: string) => {
         setLoading(true);
         if (accessToken && typeof window !== 'undefined') {
-            localStorage.setItem('ccf_token', accessToken);
+            sessionStorage.setItem('ccf_token', accessToken);
             setToken(accessToken);
         }
         if (refreshToken && typeof window !== 'undefined') {
-            localStorage.setItem('ccf_refresh_token', refreshToken);
+            sessionStorage.setItem('ccf_refresh_token', refreshToken);
         }
         const userData = await fetchUser(accessToken);
         if (userData?.role) {

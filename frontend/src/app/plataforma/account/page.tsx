@@ -79,8 +79,8 @@ export default function AccountSettingsPage() {
         {
             title: 'Cuenta',
             items: [
-                { id: 'account-profile', label: 'Mi Perfil', href: '/account', icon: User },
-                { id: 'account-ministry', label: 'Perfil Ministerial', href: '/account/ministry-profile', icon: Crown },
+                { id: 'account-profile', label: 'Mi Perfil', href: '/plataforma/account', icon: User },
+                { id: 'account-ministry', label: 'Perfil Ministerial', href: '/plataforma/account/ministry-profile', icon: Crown },
                 { id: 'settings-general', label: 'Configuración', href: '/plataforma/settings', icon: SettingsIcon },
             ]
         }

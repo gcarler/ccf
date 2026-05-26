@@ -185,7 +185,7 @@ export default function LeadDetail() {
                 description="Historia, notas y próximos pasos para este contacto."
                 tags={[`Etapa: ${STAGE_LABELS[lead?.stage] ?? '...'}`, `Origen: ${lead?.source ?? '...'}`]}
                 watchers={heroWatchers}
-                primaryAction={{ label: 'Ver pipeline', icon: Link2, onClick: () => router.push('/crm/pipeline') }}
+                primaryAction={{ label: 'Ver pipeline', icon: Link2, onClick: () => router.push('/plataforma/crm/pipeline') }}
                 secondaryAction={{ label: 'Registrar llamada', icon: Plus, onClick: () => setIsCallDrawerOpen(true) }}
             />
 

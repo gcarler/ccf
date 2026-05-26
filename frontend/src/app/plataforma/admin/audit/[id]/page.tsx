@@ -64,7 +64,7 @@ export default function AuditDetailPage() {
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Administración', icon: LayoutDashboard, href: '/plataforma/admin' },
-                    { label: 'Auditoría', icon: ShieldAlert, href: '/admin/audit' },
+                    { label: 'Auditoría', icon: ShieldAlert, href: '/plataforma/admin/audit' },
                     { label: `LOG-${id}`, icon: Activity },
                 ]}
             />

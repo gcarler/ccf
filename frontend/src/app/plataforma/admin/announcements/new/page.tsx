@@ -44,7 +44,7 @@ export default function NewAnnouncementPage() {
                 body: { ...formData, status: 'published' }
             });
             addToast('Anuncio publicado correctamente', 'success');
-            router.push('/admin/announcements');
+            router.push('/plataforma/admin/announcements');
         } catch {
             addToast('Error al publicar el anuncio', 'error');
         } finally {
@@ -65,7 +65,7 @@ export default function NewAnnouncementPage() {
                 body: { ...formData, status: 'draft' }
             });
             addToast('Borrador guardado en CMS', 'success');
-            router.push('/admin/announcements');
+            router.push('/plataforma/admin/announcements');
         } catch {
             addToast('Error al guardar el borrador', 'error');
         } finally {

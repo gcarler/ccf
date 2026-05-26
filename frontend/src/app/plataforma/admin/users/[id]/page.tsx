@@ -153,7 +153,7 @@ export default function UserDetailPage() {
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Administración', icon: LayoutDashboard, href: '/plataforma/admin' },
-                    { label: 'Usuarios', icon: User, href: '/admin/users' },
+                    { label: 'Usuarios', icon: User, href: '/plataforma/admin/users' },
                     { label: user.username, icon: User },
                 ]}
                 rightActions={

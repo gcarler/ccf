@@ -15,10 +15,10 @@ export default function ThemePage() {
             title: 'Configuración',
             items: [
                 { id: 'settings-general', label: 'General', href: '/plataforma/settings', icon: Settings },
-                { id: 'account-profile', label: 'Mi Perfil', href: '/account', icon: User },
-                { id: 'account-ministry', label: 'Perfil Ministerial', href: '/account/ministry-profile', icon: Crown },
-                { id: 'settings-roles', label: 'Roles de Acceso', href: '/settings/roles', icon: Shield },
-                { id: 'theme-visual', label: 'Tema Visual', href: '/theme', icon: Palette },
+                { id: 'account-profile', label: 'Mi Perfil', href: '/plataforma/account', icon: User },
+                { id: 'account-ministry', label: 'Perfil Ministerial', href: '/plataforma/account/ministry-profile', icon: Crown },
+                { id: 'settings-roles', label: 'Roles de Acceso', href: '/plataforma/settings/roles', icon: Shield },
+                { id: 'theme-visual', label: 'Tema Visual', href: '/plataforma/theme', icon: Palette },
             ]
         }
     ];

@@ -673,7 +673,7 @@ export default function PlanificadorPage() {
                                     </button>
                                     {canAccessEvangelism && (
                                         <button
-                                            onClick={() => router.push('/evangelism/events')}
+                                            onClick={() => router.push('/plataforma/evangelism/events')}
                                             className="rounded-md bg-emerald-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-emerald-700"
                                         >
                                             Evangelismo

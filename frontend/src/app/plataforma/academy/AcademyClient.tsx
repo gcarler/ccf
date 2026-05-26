@@ -46,7 +46,7 @@ export default function AcademyClient() {
                     { label: 'Dashboard Inteligente', icon: TrendingUp },
                 ]}
                 rightActions={
-                    <button onClick={() => router.push('/academy/curriculum')} className="px-4 py-2 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
+                    <button onClick={() => router.push('/plataforma/academy/curriculum')} className="px-4 py-2 bg-blue-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
                         Ver Malla Curricular
                     </button>
                 }

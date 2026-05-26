@@ -77,7 +77,7 @@ export default function LeadDetailPage() {
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'CRM', icon: LayoutDashboard, href: '/plataforma/crm' },
-                    { label: 'Pipeline', icon: Users, href: '/crm/pipeline' },
+                    { label: 'Pipeline', icon: Users, href: '/plataforma/crm/pipeline' },
                     { label: lead.first_name, icon: User },
                 ]}
             />

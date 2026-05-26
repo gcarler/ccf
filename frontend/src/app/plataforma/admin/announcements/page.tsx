@@ -249,7 +249,7 @@ export default function AnnouncementsAdmin() {
                 availableViews={ANNOUNCEMENT_VIEWS}
                 rightActions={
                     <button 
-                        onClick={() => router.push('/admin/announcements/new')}
+                        onClick={() => router.push('/plataforma/admin/announcements/new')}
                         className="flex items-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all hover:bg-blue-700"
                     >
                         <Plus size={18} /> Nuevo Comunicado
@@ -381,7 +381,7 @@ export default function AnnouncementsAdmin() {
 
                                     {/* Empty State / Add Card */}
                                     <div 
-                                        onClick={() => router.push('/admin/announcements/new')}
+                                        onClick={() => router.push('/plataforma/admin/announcements/new')}
                                         className="bg-slate-50/50 dark:bg-white/5 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-lg p-4 flex flex-col items-center justify-center text-center space-y-3 hover:border-blue-500/50 hover:bg-blue-50/50 transition-all cursor-pointer group"
                                     >
                                         <div className="size-8 rounded-lg bg-white dark:bg-[#0a0f16] shadow-xl flex items-center justify-center text-slate-300 group-hover:text-blue-600 group-hover:scale-110 group-hover:rotate-90 transition-all duration-500">

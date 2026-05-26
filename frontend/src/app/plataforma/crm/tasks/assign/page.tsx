@@ -155,7 +155,7 @@ export default function TaskAssignment() {
             description="Distribuye la carga ministerial entre tus líderes y asegura que nadie se quede sin cuidado."
             tags={['Liderazgo', 'Orden', 'Optimus Brain']}
             watchers={['Pastores CCF', 'Optimus Brain']}
-            primaryAction={{ label: 'Pipeline Global', icon: Link2, onClick: () => router.push('/crm/pipeline') }}
+            primaryAction={{ label: 'Pipeline Global', icon: Link2, onClick: () => router.push('/plataforma/crm/pipeline') }}
             secondaryAction={{ label: 'Actualizar', icon: Clock, onClick: fetchData }}
         />
 

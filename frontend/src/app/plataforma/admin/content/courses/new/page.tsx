@@ -47,7 +47,7 @@ export default function NewCoursePage() {
                 body: formData
             });
             addToast('Curso creado con éxito', 'success');
-            router.push('/admin/content/list');
+            router.push('/plataforma/admin/content/list');
         } catch (err) {
             addToast('Error al crear el curso', 'error');
         } finally {

@@ -114,6 +114,41 @@ def get_global_calendar(
                 "href": f"/projects/{t.project_id}",
             }
         )
+
+    # Birthday events from members
+    from sqlalchemy import func as sqlfunc
+    today = datetime.now(timezone.utc).date()
+    try:
+        members = db.query(models.Member).filter(
+            models.Member.birthday.isnot(None),
+            sqlfunc.extract("month", models.Member.birthday) >= 1,
+        ).all()
+    except Exception:
+        members = []
+
+    for m in members:
+        if not m.birthday:
+            continue
+        try:
+            bday = m.birthday
+            if isinstance(bday, str):
+                bday = datetime.fromisoformat(bday).date()
+            # Show birthday on the current-year date
+            event_date = bday.replace(year=today.year)
+            age = today.year - bday.year
+            events.append({
+                "id": f"birthday-{m.id}",
+                "title": f"🎂 {m.first_name} {m.last_name or ''} — {age} años".strip(),
+                "start": event_date.isoformat(),
+                "end": None,
+                "type": "reminder",
+                "color": "purple",
+                "allDay": True,
+                "href": f"/crm/members/{m.id}",
+            })
+        except Exception:
+            continue
+
     return events
 
 

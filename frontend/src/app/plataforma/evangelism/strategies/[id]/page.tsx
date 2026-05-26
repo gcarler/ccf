@@ -234,7 +234,7 @@ export default function StrategyDetailPage() {
     useEffect(() => {
         if (isGroupDrawerOpen && members.length === 0) {
             const token = localStorage.getItem('ccf_token') || '';
-            apiFetch<any[]>('/crm/members/', { token }).then(m => setMembers(m || [])).catch(() => toast.error('Error al cargar miembros'));
+            apiFetch<any[]>('/crm/members', { token }).then(m => setMembers(m || [])).catch(() => toast.error('Error al cargar miembros'));
         }
     }, [isGroupDrawerOpen, members.length]);
 
@@ -299,7 +299,7 @@ export default function StrategyDetailPage() {
         const token = localStorage.getItem('ccf_token') || '';
         if (allMembers.length === 0) {
             try {
-                const m = await apiFetch<any[]>('/crm/members/', { token });
+                const m = await apiFetch<any[]>('/crm/members', { token });
                 setAllMembers(m || []);
             } catch { toast.error('Error al cargar miembros'); }
         }

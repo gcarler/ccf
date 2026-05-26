@@ -113,14 +113,14 @@ export default function CRMClient({ initialMembers = [] }: CrmClientProps) {
                 <SplitDropdownButton
                     mainLabel="Nuevo"
                     icon={UserPlus}
-                    onMainClick={() => router.push('/crm/members')}
+                    onMainClick={() => router.push('/plataforma/crm/members')}
                     options={[
-                        { id: 'member', label: 'Miembro', icon: User, onClick: () => router.push('/crm/members') },
-                        { id: 'family', label: 'Familia', icon: FamilyIcon, onClick: () => router.push('/crm/members') },
-                        { id: 'appointment', label: 'Cita', icon: Calendar, onClick: () => router.push('/crm/counseling') },
-                        { id: 'call', label: 'Llamada', icon: Phone, onClick: () => router.push('/crm/pipeline') },
-                        { id: 'mail', label: 'Email', icon: Mail, onClick: () => router.push('/crm/pipeline') },
-                        { id: 'sms', label: 'SMS', icon: MessageCircle, onClick: () => router.push('/crm/pipeline') }
+                        { id: 'member', label: 'Miembro', icon: User, onClick: () => router.push('/plataforma/crm/members') },
+                        { id: 'family', label: 'Familia', icon: FamilyIcon, onClick: () => router.push('/plataforma/crm/members') },
+                        { id: 'appointment', label: 'Cita', icon: Calendar, onClick: () => router.push('/plataforma/crm/counseling') },
+                        { id: 'call', label: 'Llamada', icon: Phone, onClick: () => router.push('/plataforma/crm/pipeline') },
+                        { id: 'mail', label: 'Email', icon: Mail, onClick: () => router.push('/plataforma/crm/pipeline') },
+                        { id: 'sms', label: 'SMS', icon: MessageCircle, onClick: () => router.push('/plataforma/crm/pipeline') }
                     ]}
                 />
             }

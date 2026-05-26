@@ -111,7 +111,7 @@ export default function CoordinationConsole() {
                     rightActions={
                         <div className="flex items-center gap-3">
                             <button 
-                                onClick={() => router.push('/academy/coordination/courses/new')}
+                                onClick={() => router.push('/plataforma/academy/coordination/courses/new')}
                                 className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all"
                             >
                                 <Plus size={14} /> Nuevo Programa
@@ -305,7 +305,7 @@ export default function CoordinationConsole() {
                                         icon={GraduationCap}
                                         title="No se encontraron programas"
                                         description="Ajusta los filtros o crea un nuevo programa académico para comenzar."
-                                        onAction={() => router.push('/academy/coordination/courses/new')}
+                                        onAction={() => router.push('/plataforma/academy/coordination/courses/new')}
                                         actionLabel="Nuevo Programa"
                                     />
                                 </div>

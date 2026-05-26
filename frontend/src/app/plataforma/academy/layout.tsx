@@ -23,35 +23,35 @@ const SIDEBAR_SECTIONS = [
         items: [
             { id: 'dashboard', label: 'Resumen', href: '/plataforma/academy', icon: LayoutDashboard },
             { id: 'courses', label: 'Cursos', href: '/plataforma/academy', icon: BookOpen },
-            { id: 'curriculum', label: 'Plan de Estudio', href: '/academy/curriculum', icon: FileText },
+            { id: 'curriculum', label: 'Plan de Estudio', href: '/plataforma/academy/curriculum', icon: FileText },
         ]
     },
     {
         title: 'Mi Progreso',
         items: [
-            { id: 'grades', label: 'Calificaciones', href: '/academy/grades', icon: BarChart3 },
-            { id: 'certificates', label: 'Certificados', href: '/academy/certificates', icon: FileCheck },
+            { id: 'grades', label: 'Calificaciones', href: '/plataforma/academy/grades', icon: BarChart3 },
+            { id: 'certificates', label: 'Certificados', href: '/plataforma/academy/certificates', icon: FileCheck },
         ]
     },
     {
         title: 'Recursos',
         items: [
-            { id: 'resources', label: 'Materiales', href: '/academy/resources', icon: FolderOpen },
-            { id: 'schedule', label: 'Horarios', href: '/academy/schedule', icon: Calendar },
-            { id: 'forum', label: 'Foro Estudiantil', href: '/academy/forum', icon: MessagesSquare },
+            { id: 'resources', label: 'Materiales', href: '/plataforma/academy/resources', icon: FolderOpen },
+            { id: 'schedule', label: 'Horarios', href: '/plataforma/academy/schedule', icon: Calendar },
+            { id: 'forum', label: 'Foro Estudiantil', href: '/plataforma/academy/forum', icon: MessagesSquare },
         ]
     },
     {
         title: 'Personal',
         items: [
-            { id: 'profile', label: 'Mi Perfil', href: '/academy/profile', icon: UserCircle },
+            { id: 'profile', label: 'Mi Perfil', href: '/plataforma/academy/profile', icon: UserCircle },
         ]
     },
     {
         title: 'Equipo Académico',
         items: [
-            { id: 'teacher', label: 'Panel Docente', href: '/academy/teacher', icon: GraduationCap },
-            { id: 'coordination', label: 'Coordinación', href: '/academy/coordination', icon: ShieldCheck },
+            { id: 'teacher', label: 'Panel Docente', href: '/plataforma/academy/teacher', icon: GraduationCap },
+            { id: 'coordination', label: 'Coordinación', href: '/plataforma/academy/coordination', icon: ShieldCheck },
         ]
     }
 ];
@@ -61,7 +61,7 @@ export default function AcademyLayout({ children }: { children: React.ReactNode 
 
     const getSidebarTitle = () => {
         if (!pathname) return 'Academia Faro';
-        if (pathname === '/academy') return 'Academia Faro';
+        if (pathname === '/plataforma/academy') return 'Academia Faro';
         if (pathname.includes('/course/')) return 'Currículo del Curso';
         const segments = pathname.split('/');
         const last = segments[segments.length - 1];

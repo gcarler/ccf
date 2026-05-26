@@ -60,9 +60,9 @@ export default function SettingsPage() {
             title: 'Configuración',
             items: [
                 { id: 'settings-general', label: 'General', href: '/plataforma/settings', icon: Settings },
-                { id: 'account-profile', label: 'Mi Perfil', href: '/account', icon: User },
-                { id: 'account-ministry', label: 'Perfil Ministerial', href: '/account/ministry-profile', icon: Crown },
-                { id: 'settings-roles', label: 'Roles de Acceso', href: '/settings/roles', icon: Shield },
+                { id: 'account-profile', label: 'Mi Perfil', href: '/plataforma/account', icon: User },
+                { id: 'account-ministry', label: 'Perfil Ministerial', href: '/plataforma/account/ministry-profile', icon: Crown },
+                { id: 'settings-roles', label: 'Roles de Acceso', href: '/plataforma/settings/roles', icon: Shield },
                 { id: 'settings-sessions', label: 'Sesiones', href: '/plataforma/admin/settings/sessions', icon: MonitorIcon },
                 { id: 'theme-visual', label: 'Tema Visual', href: '/theme', icon: Palette },
             ]

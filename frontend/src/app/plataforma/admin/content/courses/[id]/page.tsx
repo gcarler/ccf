@@ -53,7 +53,7 @@ export default function AdminCourseContentPage() {
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'Contenidos', icon: BookOpen, href: '/admin/content/list' },
+                    { label: 'Contenidos', icon: BookOpen, href: '/plataforma/admin/content/list' },
                     { label: course?.title || 'Curso', icon: FileText },
                 ]}
                 rightActions={

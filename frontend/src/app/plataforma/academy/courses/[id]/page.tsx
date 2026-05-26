@@ -82,7 +82,7 @@ export default function CourseCoordinationPage() {
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Academia', icon: GraduationCap },
-                    { label: 'Coordinación', icon: ShieldCheck, href: '/academy/coordination' },
+                    { label: 'Coordinación', icon: ShieldCheck, href: '/plataforma/academy/coordination' },
                     { label: course.title, icon: BookOpen },
                 ]}
                 rightActions={

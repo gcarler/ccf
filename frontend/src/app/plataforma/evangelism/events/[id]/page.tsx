@@ -217,7 +217,7 @@ export default function EventDetailPage() {
 
     useEffect(() => {
         if (activeTab === 'session' && token) {
-            apiFetch<Member[]>('/crm/members/', { token }).then(setMembers).catch(console.error);
+            apiFetch<Member[]>('/crm/members', { token }).then(setMembers).catch(console.error);
         }
     }, [activeTab, token]);
 

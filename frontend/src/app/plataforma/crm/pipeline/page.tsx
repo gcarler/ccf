@@ -299,8 +299,8 @@ export default function ConsolidationPipelinePage() {
                     onMainClick={() => setIsNewLeadDrawerOpen(true)}
                     options={[
                         { id: 'lead', label: 'Nuevo Prospecto', icon: UserPlus, onClick: () => setIsNewLeadDrawerOpen(true) },
-                        { id: 'call', label: 'Registrar Llamada', icon: Phone, onClick: () => router.push('/crm/tasks/assign') },
-                        { id: 'mail', label: 'Enviar Email', icon: Mail, onClick: () => router.push('/crm/messaging') }
+                        { id: 'call', label: 'Registrar Llamada', icon: Phone, onClick: () => router.push('/plataforma/crm/tasks/assign') },
+                        { id: 'mail', label: 'Enviar Email', icon: Mail, onClick: () => router.push('/plataforma/crm/messaging') }
                     ]}
                 />
             }

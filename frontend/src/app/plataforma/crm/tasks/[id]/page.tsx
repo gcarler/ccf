@@ -57,7 +57,7 @@ export default function CrmTaskDetailPage() {
         <CrmShell
             breadcrumbs={[
                 { label: 'CRM', icon: LayoutDashboard, href: '/plataforma/crm' },
-                { label: 'Tareas de Consolidación', icon: CheckCircle2, href: '/crm/tasks' },
+                { label: 'Tareas de Consolidación', icon: CheckCircle2, href: '/plataforma/crm/tasks' },
                 { label: `TASK-${id}`, icon: CheckCircle2 },
             ]}
         >

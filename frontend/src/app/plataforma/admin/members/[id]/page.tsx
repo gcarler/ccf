@@ -88,7 +88,7 @@ export default function MemberDetailPage() {
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Administración', icon: LayoutDashboard, href: '/plataforma/admin' },
-                    { label: 'Membresía', icon: User, href: '/admin/members' },
+                    { label: 'Membresía', icon: User, href: '/plataforma/admin/members' },
                     { label: `${member.first_name} ${member.last_name}`, icon: User },
                 ]}
                 rightActions={

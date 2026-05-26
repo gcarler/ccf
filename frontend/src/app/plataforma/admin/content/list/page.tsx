@@ -128,7 +128,7 @@ export default function AdminContentList() {
                 onSearch={setSearchQuery}
                 rightActions={
                     <button 
-                        onClick={() => router.push('/admin/content/courses/new')}
+                        onClick={() => router.push('/plataforma/admin/content/courses/new')}
                         className="flex items-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all hover:bg-blue-700"
                     >
                         <Plus size={18} /> Crear Nuevo

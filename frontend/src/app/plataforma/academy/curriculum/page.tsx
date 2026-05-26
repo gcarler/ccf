@@ -47,8 +47,8 @@ export default function StudentCurriculum() {
                 description="Administra tus rutas según el nivel de formación (fundamentos, intermedio, avanzado)."
                 tags={['Fundamentos', 'Intermedio', 'Avanzado']}
                 watchers={['Coordinación Académica', 'Optimus Brain']}
-                primaryAction={{ label: 'Editar plan', icon: LinkIcon, onClick: () => router.push('/academy/coordination') }}
-                secondaryAction={{ label: 'Ver cronograma', icon: Calendar, onClick: () => router.push('/academy/schedule') }}
+                primaryAction={{ label: 'Editar plan', icon: LinkIcon, onClick: () => router.push('/plataforma/academy/coordination') }}
+                secondaryAction={{ label: 'Ver cronograma', icon: Calendar, onClick: () => router.push('/plataforma/academy/schedule') }}
             />
             <div className="rounded-md border border-slate-200 dark:border-white/5 bg-white dark:bg-[#111418] shadow-xl overflow-hidden">
                 <div className="flex overflow-x-auto hide-scrollbar gap-3 p-4 border-b border-slate-100 dark:border-white/5">

@@ -57,7 +57,7 @@ export default function EditCoursePage() {
                 method: 'PATCH', token, body: form,
             });
             toast.success('Curso actualizado correctamente');
-            router.push('/academy/coordination');
+            router.push('/plataforma/academy/coordination');
         } catch {
             toast.error('Error al guardar cambios');
         } finally {
@@ -81,7 +81,7 @@ export default function EditCoursePage() {
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Academia', icon: GraduationCap, href: '/plataforma/academy' },
-                    { label: 'Coordinacion', icon: ShieldCheck, href: '/academy/coordination' },
+                    { label: 'Coordinacion', icon: ShieldCheck, href: '/plataforma/academy/coordination' },
                     { label: 'Editar Curso', icon: FileText },
                 ]}
                 viewType={viewType}

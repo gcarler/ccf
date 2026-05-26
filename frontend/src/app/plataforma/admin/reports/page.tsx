@@ -68,7 +68,7 @@ export default function AdvancedBIReports() {
                 tags={['BI Core', 'Machine Learning', 'Real-time']}
                 watchers={['Dirección General', 'Comité Académico']}
                 primaryAction={{ label: 'Exportar Reporte Full', icon: Download, onClick: () => window.print() }}
-                secondaryAction={{ label: 'Configurar Alertas', icon: Zap, onClick: () => router.push('/admin/settings/system') }}
+                secondaryAction={{ label: 'Configurar Alertas', icon: Zap, onClick: () => router.push('/plataforma/admin/settings/system') }}
             />
 
             {/* Sub-navigation Tabs */}

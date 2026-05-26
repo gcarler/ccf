@@ -234,7 +234,7 @@ export default function ContactsPage() {
                             </div>
                             <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/5">
                                 <button
-                                    onClick={e => { e.stopPropagation(); router.push('/crm/pipeline'); }}
+                                    onClick={e => { e.stopPropagation(); router.push('/plataforma/crm/pipeline'); }}
                                     className="text-blue-600 text-[10px] font-bold uppercase tracking-wide flex items-center gap-2 hover:text-blue-700 transition-colors"
                                 >
                                     <div className="size-5 rounded-lg bg-blue-600/10 flex items-center justify-center">

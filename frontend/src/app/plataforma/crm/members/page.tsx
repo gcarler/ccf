@@ -348,7 +348,7 @@ export default function MembersPage() {
                             <AnimatePresence>
                                 {filteredMembers.map(member => (
                                     <motion.div key={member.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.2 }}>
-                                        <div onClick={() => router.push(`/crm/members/${member.id}`)} className="group p-3 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/5 rounded-md hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 transition-all cursor-pointer flex items-center justify-between">
+                                        <div onClick={() => router.push(`/plataforma/crm/members/${member.id}`)} className="group p-3 bg-white dark:bg-[#1e1f21] border border-slate-200 dark:border-white/5 rounded-md hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 transition-all cursor-pointer flex items-center justify-between">
                                             <div className="flex items-center gap-4">
                                                 <div className="relative">
                                                     <div className="size-9 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-white/5 dark:to-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold text-sm">
