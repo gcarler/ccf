@@ -11,9 +11,10 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.api import (academy, admin, agenda, agents, analytics, assets,
                          auth, chat, cms, cms_v2, community, content, crm,
-                         dashboard, donations, evangelism, finance, governance,
-                         graph, kernel, messaging, prayer, projects, public,
-                         spiritual_life, support, system, tables, workspace)
+                         crm_core, dashboard, donations, evangelism, finance,
+                         governance, graph, kernel, messaging, prayer, projects,
+                         proyectos, public, spiritual_life, support, system,
+                         tables, workspace)
 from backend.core.config import get_settings
 from backend.core.logging import request_id_middleware
 from backend.core.security_headers import mount_security_headers
@@ -31,8 +32,10 @@ ROUTER_REGISTRY = [
     (kernel.router, "/api", ["kernel"]),
     (agenda.router, "/api", ["agenda"]),
     (projects.router, "/api/projects", ["projects"]),
+    (proyectos.router, "/api/proyectos", ["proyectos"]),
     (academy.router, "/api/academy", ["academy"]),
     (crm.router, "/api/crm", ["crm"]),
+    (crm_core.router, "/api", ["CRM Core"]),
     (evangelism.router, "/api/evangelism", ["evangelism"]),
     (public.router, "/api/public", ["public"]),
     (workspace.router, "/api/workspace", ["workspace"]),

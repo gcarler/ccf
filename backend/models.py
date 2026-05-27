@@ -47,12 +47,17 @@ from backend.models_identity import (  # noqa: F401
     UserUIPreference, VerificationToken)
 from backend.models_ops import SocialChannel  # noqa: F401
 from backend.models_ops import ChurchLocation, SystemVariable  # noqa: F401
-# Projects
+# Projects (legacy — convive con el nuevo módulo)
 from backend.models_projects import ProjectActivityLog  # noqa: F401
 from backend.models_projects import (  # noqa: F401
     Project, ProjectAttachment, ProjectComment, ProjectDocument,
     ProjectInboxState, ProjectMilestone, ProjectPhase, ProjectTask,
     ProjectWhiteboard, TaskSupply)
+
+# Projects (nuevo diseño)
+from backend.models_proyectos import (  # noqa: F401
+    ComentarioTarea, DependenciaTarea, DocumentoProyecto,
+    EquipoProyecto, Proyecto, TareaProyecto)
 
 # Agent identity models (canonical person)
 from backend.models_agents import (  # noqa: F401
@@ -83,4 +88,10 @@ from backend.services.knowledge_base import AgentKnowledgeBase  # noqa: F401
 # Conversation Memory
 from backend.services.conversation_memory import (  # noqa: F401
     AgentConversation, AgentMessage,
+)
+
+# CRM Core 2.0 — Pipeline, Casos, Interacciones
+from backend.models_crm_core import (  # noqa: F401
+    CasoCRM, EtapaPipeline, InteraccionCRM, PipelineCRM,
+    PlantillaMensaje, TareaCRM,
 )

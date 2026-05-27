@@ -2,9 +2,9 @@
 
 from backend.api import (academy, admin, agenda, agents, analytics, assets,
                          auth, chat, cms, cms_v2, community, content, crm,
-                         dashboard, donations, evangelism, finance, governance,
-                         graph, kernel, messaging, prayer, projects, public,
-                         spiritual_life, support, system, workspace)
+                         crm_core, dashboard, donations, evangelism, finance, governance,
+                         graph, kernel, messaging, prayer, projects, proyectos,
+                         public, spiritual_life, support, system, workspace)
 
 __all__ = [
     "academy",
@@ -30,6 +30,7 @@ __all__ = [
     "messaging",
     "prayer",
     "projects",
+    "proyectos",
     "public",
     "spiritual_life",
     "support",
