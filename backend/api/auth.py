@@ -7,8 +7,6 @@ import logging
 from datetime import timedelta
 from typing import List
 
-logger = logging.getLogger(__name__)
-
 from fastapi import (APIRouter, Depends, HTTPException, Request, Response,
                      status)
 from fastapi.responses import RedirectResponse
