@@ -69,6 +69,12 @@ export const MODULE_CONFIGS: Record<string, any> = {
             href: '/plataforma/projects/automations',
             icon: Zap,
           },
+          {
+            id: 'projects-messages',
+            label: 'Mensajes',
+            href: '/plataforma/messages',
+            icon: MessageCircle,
+          },
         ],
       },
     ],

@@ -26,6 +26,7 @@ import TaskDetailPanel from '@/components/projects/TaskDetailPanel';
 import ProjectActivityFeed from '@/components/projects/ProjectActivityFeed';
 import ProjectWikiEditor from '@/components/projects/ProjectWikiEditor';
 import ProjectWhiteboard from '@/components/projects/ProjectWhiteboard';
+import ProjectChatPanel from '@/components/projects/ProjectChatPanel';
 import { DSCard } from '@/design/components/DSCard';
 import { DSBadge } from '@/design/components/DSBadge';
 import { DSMetric } from '@/design/components/DSMetric';
@@ -37,7 +38,7 @@ import { PhaseManagerModal } from '@/components/projects/PhaseManagerModal';
 import { toast } from 'sonner';
 import UserSelect from '@/components/ui/UserSelect';
 
-const PROJECT_DETAIL_VIEWS: ViewType[] = ['dashboard', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
+const PROJECT_DETAIL_VIEWS: ViewType[] = ['dashboard', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki', 'chat'];
 
 export default function ProjectDetailPage() {
     const params = useParams();
@@ -590,6 +591,10 @@ export default function ProjectDetailPage() {
 
                         {viewType === 'wiki' && (
                             <ProjectWikiEditor project_id={Number(project?.id || id)} />
+                        )}
+
+                        {viewType === 'chat' && (
+                            <ProjectChatPanel projectId={Number(project?.id || id)} />
                         )}
                     </>
                 )}

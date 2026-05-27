@@ -17,7 +17,40 @@ class ChatMessage(Base):
     sender_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     room_id = Column(String(100), nullable=True, index=True)
     content = Column(Text, nullable=False)
+    is_read = Column(Boolean, default=False, index=True)
     created_at = Column(DateTime, default=_utcnow, index=True)
+
+
+class Conversation(Base):
+    __tablename__ = "conversations"
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime, default=_utcnow, index=True)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    last_message_content = Column(Text, nullable=True)
+    last_message_at = Column(DateTime, nullable=True, index=True)
+    last_sender_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+
+class ConversationParticipant(Base):
+    __tablename__ = "conversation_participants"
+    __table_args__ = (
+        UniqueConstraint("conversation_id", "user_id", name="uq_conversation_user"),
+    )
+    id = Column(Integer, primary_key=True, index=True)
+    conversation_id = Column(
+        Integer, ForeignKey("conversations.id", ondelete="CASCADE"),
+        nullable=False, index=True,
+    )
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False, index=True,
+    )
+    last_read_at = Column(DateTime, nullable=True)
+    is_archived = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=_utcnow)
+
+    conversation = relationship("Conversation", backref="participants")
+    user = relationship("User")
 
 
 class AgendaEvent(Base):
@@ -123,8 +156,8 @@ class EventAttendance(Base):
 class CounselingTicket(Base):
     __tablename__ = "counseling_tickets"
     id = Column(Integer, primary_key=True, index=True)
-    persona_id = Column(
-        UUID(as_uuid=True),
+    member_id = Column(
+        Integer,
         ForeignKey("personas.id"),
         nullable=False,
         index=True,
@@ -142,8 +175,16 @@ class CounselingTicket(Base):
     sentiment_label = Column(String(20), nullable=True)  # POSITIVE, NEUTRAL, NEGATIVE
     created_at = Column(DateTime, default=_utcnow, index=True)
 
-    persona = relationship("Persona")
+    persona = relationship("Persona", foreign_keys=[member_id])
     pastor = relationship("User")
+
+    @property
+    def persona_id(self):
+        return self.member_id
+
+    @persona_id.setter
+    def persona_id(self, value):
+        self.member_id = value
 
 
 class PrayerRequest(Base):
@@ -207,7 +248,7 @@ class ColombianCity(Base):
 
 class Persona(Base):
     __tablename__ = "personas"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, unique=True, index=True)
     family_id = Column(Integer, ForeignKey("families.id", ondelete="SET NULL"), nullable=True, index=True)
     sede_id = Column(Integer, ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
@@ -224,7 +265,7 @@ class Persona(Base):
     is_baptized = Column(Boolean, default=False, index=True)
     fecha_bautismo = Column(Date, nullable=True)
     spiritual_status = Column(String(50), default="Nuevo", index=True)
-    estado_vital = Column(String(50), nullable=True)
+    estado_vital = Column(String(50), nullable=True, default="ACTIVO")
     ministerio = Column(String(100), nullable=True)
     permiso_plataforma = Column(String(50), nullable=True)
     id_type = Column(String(50), nullable=True)

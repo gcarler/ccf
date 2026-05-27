@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend import models
+from backend.models_shared import _utcnow
 
 # ── Inline Schemas ────────────────────────────────────────────────────────
 
@@ -746,3 +747,118 @@ def delete_chat_message(db: Session, message_id: int) -> bool:
     db.delete(row)
     db.commit()
     return True
+
+
+# ── Conversations (DMs) ──────────────────────────────────────────────
+
+
+def create_conversation(db: Session, participant_ids: list[int]) -> models.Conversation:
+    conv = models.Conversation()
+    db.add(conv)
+    db.flush()
+    for uid in participant_ids:
+        cp = models.ConversationParticipant(conversation_id=conv.id, user_id=uid)
+        db.add(cp)
+    db.commit()
+    db.refresh(conv)
+    return conv
+
+
+def get_user_conversations(db: Session, user_id: int) -> list[models.Conversation]:
+    return (
+        db.query(models.Conversation)
+        .join(models.ConversationParticipant)
+        .filter(
+            models.ConversationParticipant.user_id == user_id,
+            models.ConversationParticipant.is_archived == False,
+        )
+        .order_by(models.Conversation.last_message_at.desc().nullslast())
+        .all()
+    )
+
+
+def get_conversation(db: Session, conversation_id: int) -> Optional[models.Conversation]:
+    return (
+        db.query(models.Conversation)
+        .filter(models.Conversation.id == conversation_id)
+        .first()
+    )
+
+
+def get_conversation_messages(
+    db: Session,
+    conversation_id: int,
+    limit: int = 50,
+    before_id: Optional[int] = None,
+) -> list[models.ChatMessage]:
+    q = db.query(models.ChatMessage).filter(
+        models.ChatMessage.room_id == f"dm_{conversation_id}"
+    )
+    if before_id:
+        q = q.filter(models.ChatMessage.id < before_id)
+    return q.order_by(models.ChatMessage.created_at.desc()).limit(limit).all()
+
+
+def create_direct_message(
+    db: Session, conversation_id: int, sender_id: int, content: str
+) -> models.ChatMessage:
+    msg = models.ChatMessage(
+        sender_id=sender_id,
+        room_id=f"dm_{conversation_id}",
+        content=content,
+    )
+    db.add(msg)
+    conv = get_conversation(db, conversation_id)
+    if conv:
+        conv.last_message_content = content
+        conv.last_message_at = _utcnow()
+        conv.last_sender_id = sender_id
+    db.commit()
+    db.refresh(msg)
+    return msg
+
+
+def mark_conversation_read(
+    db: Session, conversation_id: int, user_id: int
+) -> None:
+    cp = (
+        db.query(models.ConversationParticipant)
+        .filter(
+            models.ConversationParticipant.conversation_id == conversation_id,
+            models.ConversationParticipant.user_id == user_id,
+        )
+        .first()
+    )
+    if cp:
+        cp.last_read_at = _utcnow()
+    else:
+        cp = models.ConversationParticipant(
+            conversation_id=conversation_id,
+            user_id=user_id,
+            last_read_at=_utcnow(),
+        )
+        db.add(cp)
+    db.commit()
+
+
+def get_unread_count_for_conversation(
+    db: Session, conversation_id: int, user_id: int
+) -> int:
+    cp = (
+        db.query(models.ConversationParticipant)
+        .filter(
+            models.ConversationParticipant.conversation_id == conversation_id,
+            models.ConversationParticipant.user_id == user_id,
+        )
+        .first()
+    )
+    since = (cp.last_read_at if cp and cp.last_read_at else _utcnow())
+    return (
+        db.query(models.ChatMessage)
+        .filter(
+            models.ChatMessage.room_id == f"dm_{conversation_id}",
+            models.ChatMessage.sender_id != user_id,
+            models.ChatMessage.created_at > since,
+        )
+        .count()
+    )

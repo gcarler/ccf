@@ -31,6 +31,7 @@ from backend.models_crm import (  # noqa: F401
     CommunicationLog, CommunityBoardCard,
     ConsolidationAssignment, ConsolidationCase,
     ConsolidationInteraction, ConsolidationTask,
+    Conversation, ConversationParticipant,
     CounselingTicket, CrmAutomation,
     CrmEvent, CrmTask, Donation, DonationCategory, EventAssignment,
     EventAttendance, EvangelismStrategy, Fund, MemberMinistry,

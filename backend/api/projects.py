@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -16,6 +17,7 @@ from backend.auth import (normalize_role, require_module_access,
                           require_staff_or_admin)
 from backend.core.audit import record_admin_action
 from backend.core.config import get_settings
+from backend.mesh_websockets import manager
 from backend.core.database import get_db
 from backend.core.uploads import sanitize_filename, save_upload
 
@@ -1248,6 +1250,125 @@ def delete_project_comment(
     db.delete(comment)
     db.commit()
     return {"ok": True, "deleted": comment_id}
+
+
+# ── PROJECT CHAT ─────────────────────────────────────────────────────
+
+
+@router.get("/{project_id}/messages", response_model=List[schemas.ProjectMessageItem])
+def list_project_messages(
+    project_id: int,
+    limit: int = Query(50, le=200),
+    before: Optional[int] = Query(None, alias="before"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """List project chat messages, newest first, with cursor pagination."""
+    _ensure_project(db, project_id)
+    room = f"project_{project_id}"
+    q = db.query(models.ChatMessage).filter(models.ChatMessage.room_id == room)
+    if before:
+        q = q.filter(models.ChatMessage.id < before)
+    rows = q.order_by(models.ChatMessage.created_at.desc()).limit(limit).all()
+    sender_ids = {r.sender_id for r in rows}
+    users_map = {}
+    if sender_ids:
+        users = (
+            db.query(models.User)
+            .filter(models.User.id.in_(sender_ids))
+            .all()
+        )
+        users_map = {u.id: u.username for u in users}
+    return [
+        schemas.ProjectMessageItem(
+            id=r.id,
+            sender_id=r.sender_id,
+            sender_name=users_map.get(r.sender_id, "Usuario"),
+            content=r.content,
+            created_at=r.created_at,
+            is_read=r.is_read,
+        )
+        for r in rows
+    ]
+
+
+@router.post(
+    "/{project_id}/messages",
+    response_model=schemas.ProjectMessageItem,
+    status_code=status.HTTP_201_CREATED,
+)
+def send_project_message(
+    project_id: int,
+    payload: schemas.ProjectMessageCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Send a message to the project chat room."""
+    _ensure_project(db, project_id)
+    msg = models.ChatMessage(
+        sender_id=current_user.id,
+        room_id=f"project_{project_id}",
+        content=payload.content,
+    )
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    # Broadcast via WebSocket (safe no-op if no event loop available)
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.ensure_future(
+                manager.broadcast_event(
+                    {
+                        "event": "project_message",
+                        "project_id": project_id,
+                        "message": {
+                            "id": msg.id,
+                            "sender_id": msg.sender_id,
+                            "sender_name": getattr(current_user, "username", "Usuario"),
+                            "content": msg.content,
+                            "created_at": str(msg.created_at),
+                        },
+                    },
+                    room=f"project_{project_id}",
+                )
+            )
+    except RuntimeError:
+        pass
+
+
+
+    return schemas.ProjectMessageItem(
+        id=msg.id,
+        sender_id=msg.sender_id,
+        sender_name=getattr(current_user, "username", "Usuario"),
+        content=msg.content,
+        created_at=msg.created_at,
+    )
+
+
+@router.delete("/{project_id}/messages/{message_id}")
+def delete_project_message(
+    project_id: int,
+    message_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Delete a chat message (own message or admin)."""
+    msg = (
+        db.query(models.ChatMessage)
+        .filter(models.ChatMessage.id == message_id)
+        .first()
+    )
+    if not msg:
+        raise HTTPException(404, detail="Message not found")
+    if msg.sender_id != current_user.id:
+        role = normalize_role(getattr(current_user, "role", ""))
+        if role not in ("admin", "pastor", "coordinador"):
+            raise HTTPException(403, detail="Cannot delete another user's message")
+    db.delete(msg)
+    db.commit()
+    return {"ok": True}
 
 
 # ── MILESTONES ─────────────────────────────────────────────────────────────────

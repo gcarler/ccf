@@ -6,6 +6,7 @@ captura y se retorna un 500 con detalle del módulo, sin tumbar todo el servidor
 """
 import logging
 import time
+import traceback
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -70,8 +71,9 @@ async def module_isolation_middleware(request: Request, call_next):
     except Exception as e:
         circuit["failures"] += 1
         circuit["last_failure"] = time.time()
-        
-        logger.error(f"[{module}] Request failed ({circuit['failures']}/{CIRCUIT_THRESHOLD}): {e}")
+
+        tb_str = traceback.format_exc()
+        logger.error(f"[{module}] Request failed ({circuit['failures']}/{CIRCUIT_THRESHOLD}): {e}\n{tb_str}")
         
         # Abrir circuito si supera el threshold
         if circuit["failures"] >= CIRCUIT_THRESHOLD:

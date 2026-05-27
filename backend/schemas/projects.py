@@ -146,7 +146,7 @@ class ProjectMilestoneBase(BaseModel):
     title: str
     description: Optional[str] = None
     target_date: Optional[datetime] = None
-    is_completed: bool = False
+    is_completed: Optional[bool] = False
 
 
 class ProjectMilestoneUpdate(BaseModel):
@@ -299,3 +299,17 @@ class ProjectWorkloadSummaryRow(BaseModel):
 
 # Resolve forward references for ProjectTask.subtasks
 ProjectTask.model_rebuild()
+
+
+class ProjectMessageCreate(BaseModel):
+    content: str
+
+
+class ProjectMessageItem(BaseModel):
+    id: int
+    sender_id: int
+    sender_name: str = ""
+    content: str
+    created_at: datetime
+    is_read: bool = False
+    model_config = orm_config

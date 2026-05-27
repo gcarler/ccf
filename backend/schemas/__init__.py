@@ -163,6 +163,7 @@ from backend.schemas.projects import (InboxReadToggle, Project,
                                       ProjectDocumentUpdate, ProjectInboxItem,
                                       ProjectMilestone, ProjectMilestoneBase,
                                       ProjectMilestoneUpdate,
+                                      ProjectMessageCreate, ProjectMessageItem,
                                       ProjectPhaseInput, ProjectPhaseSchema,
                                       ProjectPortfolioSummaryRow, ProjectTask,
                                       ProjectTaskBase, ProjectTaskCreate,
@@ -172,3 +173,8 @@ from backend.schemas.projects import (InboxReadToggle, Project,
                                       ProjectWorkloadSummaryRow, TaskSupply,
                                       TaskSupplyBase, TaskSupplyCreate,
                                       TaskSupplyUpdate)
+
+# ── Chat / Direct Messages ───────────────────────────────────────────
+from backend.schemas.chat import (ConversationCreate, ConversationRead,
+                                  ConversationParticipantRead,
+                                  DirectMessageCreate, DirectMessageItem)
