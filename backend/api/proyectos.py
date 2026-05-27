@@ -9,20 +9,17 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
 from backend.models_proyectos import (ComentarioTarea, DependenciaTarea,
-                                       DocumentoProyecto, EquipoProyecto,
-                                       Proyecto, TareaProyecto)
+                                       EquipoProyecto, Proyecto, TareaProyecto)
 from backend.schemas.proyectos import (
     ComentarioTareaCreate, ComentarioTareaSchema, DependenciaTareaCreate,
-    DependenciaTareaSchema, DocumentoCreate, DocumentoSchema,
-    EquipoProyectoCreate, EquipoProyectoSchema, ProyectoCreate, ProyectoSchema,
+    DependenciaTareaSchema, EquipoProyectoCreate, EquipoProyectoSchema,
+    ProyectoCreate, ProyectoSchema,
     ProyectoUpdate, TareaProyectoCreate, TareaProyectoSchema,
     TareaProyectoUpdate)
 
@@ -125,7 +122,7 @@ def listar_equipo(
     _get_proyecto_o_404(proyecto_id, db)  # validate exists
     return db.query(EquipoProyecto).filter(
         EquipoProyecto.proyecto_id == uuid.UUID(proyecto_id),
-        EquipoProyecto.es_historico == False,
+        EquipoProyecto.es_historico.is_(False),
     ).all()
 
 
@@ -155,7 +152,7 @@ def remover_miembro(
     miembro = db.query(EquipoProyecto).filter(
         EquipoProyecto.proyecto_id == uuid.UUID(proyecto_id),
         EquipoProyecto.persona_id == persona_id,
-        EquipoProyecto.es_historico == False,
+        EquipoProyecto.es_historico.is_(False),
     ).first()
     if not miembro:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Miembro no encontrado en el equipo")
