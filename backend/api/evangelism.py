@@ -10,12 +10,11 @@ from backend import crud, models, schemas
 from backend.api.evangelism_events import router as events_router
 from backend.api.evangelism_grupos import router as grupos_router
 from backend.api.evangelism_shared import utc_now
-from backend.auth import (normalize_role, require_active_user, require_admin,
+from backend.auth import (require_active_user, require_admin,
                           require_module_access, require_pastor_or_admin)
 from backend.core.database import get_db
 from backend.crud.crm import (create_evangelism_strategy,
                               delete_evangelism_strategy,
-                              get_evangelism_strategies,
                               update_evangelism_strategy)
 from backend.schemas.crm import (EvangelismStrategy, EvangelismStrategyCreate,
                                  EvangelismStrategyUpdate)
@@ -1071,9 +1070,7 @@ def crm_analytics(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     _warn_deprecated_crm_alias("/api/evangelism/analytics", "/api/crm/analytics")
-    """MÃ©tricas agregadas del CRM para el dashboard de analÃ­ticas."""
-    from sqlalchemy import func as sqlfunc
-
+    """Métricas agregadas del CRM para el dashboard de analíticas."""
     total_members = db.query(models.Persona).count()
     active_members = (
         db.query(models.Persona)

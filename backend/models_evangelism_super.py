@@ -15,11 +15,9 @@ Modelos originales (todos reemplazados):
 from __future__ import annotations
 
 import enum
-import datetime as dt
-import uuid as _uuid
 
 from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey, Integer,
-                        String, Text, DDL, event)
+                        String)
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
