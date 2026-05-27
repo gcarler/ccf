@@ -1,23 +1,18 @@
-import collections
 import logging
 import uuid
-from uuid import UUID
 from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.api.crm._shared import (_persona_full_name, _serialize_case,
                                      _serialize_message_group, _serialize_task,
                                      utc_now)
-from backend.auth import (get_current_user, normalize_role, require_active_user,
-                          require_module_access, require_pastor_or_admin)
-from backend.core.audit import record_admin_action
+from backend.auth import (normalize_role, require_active_user,
+                          require_pastor_or_admin)
 from backend.core.database import get_db
-from backend.mesh_websockets import manager
 from backend.services.messaging import MessagingGateway
 from backend.services.public_contact_tracking import ContactRecord, tracker
 
@@ -1442,11 +1437,11 @@ def list_volunteers(
 
 @router.get("/volunteers/{persona_id}", response_model=dict)
 def get_volunteer_detail(
-    persona_id: UUID,
+    persona_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Volunteer not found")
     shifts = (
@@ -1493,12 +1488,12 @@ def get_volunteer_detail(
 
 @router.patch("/volunteers/{persona_id}", response_model=dict)
 def update_volunteer(
-    persona_id: UUID,
+    persona_id: int,
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Volunteer not found")
     allowed = {"church_role", "first_name", "last_name", "phone", "email"}
@@ -1516,12 +1511,12 @@ def update_volunteer(
 
 @router.delete("/volunteers/{persona_id}", status_code=204)
 def delete_volunteer(
-    persona_id: UUID,
+    persona_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Soft-delete: desactiva turnos de voluntario y marca persona como INACTIVA."""
-    persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Volunteer not found")
     # Cancelar turnos futuros del voluntario (datos satélite, no Persona)
@@ -1686,10 +1681,10 @@ def export_newsletter_leads_csv(
     for case in cases:
         persona = case.persona
         rows.append({
-            "first_name": member.first_name if member else "",
-            "last_name": member.last_name if member else "",
-            "email": member.email if member else "",
-            "phone": member.phone if member else "",
+            "first_name": persona.first_name if persona else "",
+            "last_name": persona.last_name if persona else "",
+            "email": persona.email if persona else "",
+            "phone": persona.phone if persona else "",
             "source": case.source,
             "stage": case.stage,
             "notes": case.notes or "",

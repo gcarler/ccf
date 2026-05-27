@@ -902,7 +902,7 @@ def mark_notification_as_read(db: Session, notification_id: int):
 def mark_all_notifications_read(db: Session, user_id: int):
     db.query(models.Notification).filter(
         models.Notification.user_id == user_id,
-        models.Notification.is_read == False,
+        models.Notification.is_read.is_(False),
     ).update({models.Notification.is_read: True})
     db.commit()
 

@@ -1,12 +1,11 @@
 import uuid
 from typing import List, Optional
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.auth import (get_current_user, normalize_role, require_admin,
+from backend.auth import (normalize_role, require_admin,
                           require_module_access, require_pastor_or_admin)
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
@@ -236,7 +235,7 @@ def list_all_member_donations(
 
 @router.get("/members/{persona_id}", response_model=schemas.Persona)
 def get_persona(
-    persona_id: UUID,
+    persona_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
@@ -263,7 +262,7 @@ def get_persona(
 
 @router.patch("/members/{persona_id}", response_model=schemas.Persona)
 def update_persona(
-    persona_id: UUID,
+    persona_id: int,
     payload: schemas.PersonaUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -286,7 +285,7 @@ def update_persona(
 
 @router.delete("/members/{persona_id}", status_code=204)
 def delete_persona(
-    persona_id: UUID,
+    persona_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
@@ -306,7 +305,7 @@ def delete_persona(
     "/members/{persona_id}/communications", response_model=List[schemas.CommunicationLog]
 )
 def get_persona_communications(
-    persona_id: UUID,
+    persona_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -319,7 +318,7 @@ def get_persona_communications(
 
 @router.get("/members/{persona_id}/donations", response_model=List[schemas.Donation])
 def list_persona_donations(
-    persona_id: UUID,
+    persona_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -328,7 +327,7 @@ def list_persona_donations(
 
 @router.get("/members/{persona_id}/timeline", response_model=List[dict])
 def get_persona_growth_timeline(
-    persona_id: UUID,
+    persona_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -338,7 +337,7 @@ def get_persona_growth_timeline(
 
 @router.get("/members/{persona_id}/ministries", response_model=List[dict])
 def get_persona_ministries(
-    persona_id: UUID,
+    persona_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -380,7 +379,7 @@ def get_persona_ministries(
 
 @router.get("/members/{persona_id}/consolidation", response_model=dict)
 def get_persona_consolidation_profile(
-    persona_id: UUID,
+    persona_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -539,7 +538,7 @@ def update_position(
 
 @router.post("/members/{persona_id}/positions", response_model=dict)
 def assign_persona_position(
-    persona_id: UUID,
+    persona_id: int,
     payload: schemas.MemberPositionCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -590,7 +589,7 @@ def assign_persona_position(
     "/members/{persona_id}/positions/{member_position_id}", response_model=dict
 )
 def update_persona_position(
-    persona_id: UUID,
+    persona_id: int,
     member_position_id: int,
     payload: schemas.MemberPositionUpdate,
     db: Session = Depends(get_db),
@@ -615,7 +614,7 @@ def update_persona_position(
 
 @router.post("/members/{persona_id}/ministries", response_model=dict)
 def assign_persona_ministry(
-    persona_id: UUID,
+    persona_id: int,
     payload: schemas.MemberMinistryCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -651,7 +650,7 @@ def assign_persona_ministry(
 
 @router.patch("/members/{persona_id}/ministries/{mm_id}", response_model=dict)
 def update_persona_ministry(
-    persona_id: UUID,
+    persona_id: int,
     mm_id: int,
     payload: schemas.MemberMinistryUpdate,
     db: Session = Depends(get_db),
