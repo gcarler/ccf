@@ -834,12 +834,11 @@ export default function StrategyDetailPage() {
                                 <select value={editType} onChange={e => setEditType(e.target.value)}
                                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none transition-colors">
                                     <option value="">General</option>
-                                    <option value="Campaña de Alcance">Campaña de Alcance</option>
-                                    <option value="Consolidación">Consolidación</option>
-                                    <option value="Discipulado">Discipulado</option>
-                                    <option value="Evangelismo Personal">Evangelismo Personal</option>
-                                    <option value="Jesús Transforma">Jesús Transforma</option>
-                                    <option value="Alcance Carcelario">Alcance Carcelario</option>
+                                    <option value="Geográfica">Geográfica</option>
+                                    <option value="Temática">Temática</option>
+                                    <option value="Sectorial">Sectorial</option>
+                                    <option value="Poblacional">Poblacional</option>
+                                    <option value="Servicios (Cultos)">Servicios (Cultos)</option>
                                 </select>
                             </div>
                             <div>

@@ -31,7 +31,7 @@ export default function StrategyCreationDrawer({
     const [eventFormat, setEventFormat] = useState('UNICA_LOCACION');
     const [nicheObjective, setNicheObjective] = useState('');
     const [phases, setPhases] = useState<{ name: string; type: string; start_date: string; end_date: string }[]>([]);
-    const [strategyType, setStrategyType] = useState('Campaña de Alcance');
+    const [strategyType, setStrategyType] = useState('Geográfica');
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
     const [endDate, setEndDate] = useState('');
 
@@ -43,7 +43,7 @@ export default function StrategyCreationDrawer({
         setEventFormat('UNICA_LOCACION');
         setNicheObjective('');
         setPhases([]);
-        setStrategyType('Campaña de Alcance');
+        setStrategyType('Geográfica');
         setStartDate(new Date().toISOString().split('T')[0]);
         setEndDate('');
     };
@@ -98,12 +98,11 @@ export default function StrategyCreationDrawer({
     };
 
     const strategyTypes = [
-        'Campaña de Alcance',
-        'Consolidación',
-        'Discipulado',
-        'Evangelismo Personal',
-        'Jesús Transforma',
-        'Alcance Carcelario',
+        'Geográfica',
+        'Temática',
+        'Sectorial',
+        'Poblacional',
+        'Servicios (Cultos)',
     ];
 
     return (
