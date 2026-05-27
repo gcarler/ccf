@@ -1,4 +1,6 @@
 from backend.models_shared import *
+from sqlalchemy.dialects.postgresql import UUID
+
 from backend.models_shared import _utcnow
 
 
@@ -212,7 +214,7 @@ class Family(Base):
     name = Column(String(100), nullable=False)
     address = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    members = relationship("Member", back_populates="family")
+    members = relationship("Persona", back_populates="family")
 
 
 class GloryHouse(Base):
@@ -232,6 +234,9 @@ class GloryHouse(Base):
     end_time = Column(String(50), nullable=True)  # e.g. "19:00"
     status = Column(String(20), default="Activo", index=True)
 
+    # MULTI-TENANT: Sede a la que pertenece este grupo
+    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=True, index=True)
+
     # Link to evangelism strategy (required — faro groups must belong to a strategy)
     evangelism_strategy_id = Column(
         Integer,
@@ -240,23 +245,23 @@ class GloryHouse(Base):
         index=True,
     )
 
-    leader_id = Column(
-        Integer, ForeignKey("members.id", ondelete="SET NULL"), nullable=True
+    leader_persona_id = Column(
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
     )
-    assistant_id = Column(
-        Integer, ForeignKey("members.id", ondelete="SET NULL"), nullable=True
+    assistant_persona_id = Column(
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
     )
-    host_id = Column(
-        Integer, ForeignKey("members.id", ondelete="SET NULL"), nullable=True
+    host_persona_id = Column(
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
     )
 
     schedule = Column(String(100), nullable=True)  # legacy: "Lunes 19:00-21:00"
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-    leader = relationship("Member", foreign_keys=[leader_id])
-    assistant = relationship("Member", foreign_keys=[assistant_id])
-    host = relationship("Member", foreign_keys=[host_id])
+    leader = relationship("Persona", foreign_keys=[leader_persona_id])
+    assistant = relationship("Persona", foreign_keys=[assistant_persona_id])
+    host = relationship("Persona", foreign_keys=[host_persona_id])
 
     base_attendees = relationship(
         "GloryHouseMember", back_populates="glory_house", cascade="all, delete-orphan"
@@ -272,9 +277,9 @@ class GloryHouseMember(Base):
         nullable=False,
         index=True,
     )
-    member_id = Column(
-        Integer,
-        ForeignKey("members.id", ondelete="CASCADE"),
+    persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -291,7 +296,7 @@ class GloryHouseMember(Base):
     activo = Column(Boolean, default=True, index=True)
 
     glory_house = relationship("GloryHouse", back_populates="base_attendees")
-    member = relationship("Member")
+    persona = relationship("Persona")
 
 
 class FaroSeason(Base):
@@ -340,9 +345,9 @@ class GloryHouseSession(Base):
     novelty_type = Column(String(50), nullable=True)
     novelty_detail = Column(Text, nullable=True)
     cancellation_reason = Column(Text, nullable=True)
-    reported_by_member_id = Column(
-        Integer,
-        ForeignKey("members.id", ondelete="SET NULL"),
+    reported_by_persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
@@ -351,7 +356,7 @@ class GloryHouseSession(Base):
 
     glory_house = relationship("GloryHouse")
     season = relationship("FaroSeason")
-    reported_by_member = relationship("Member")
+    reported_by_persona = relationship("Persona")
 
 
 class GloryHouseAttendance(Base):
@@ -359,7 +364,7 @@ class GloryHouseAttendance(Base):
 
     __tablename__ = "glory_house_attendance"
     __table_args__ = (
-        UniqueConstraint("session_id", "member_id", name="uq_faro_attendance"),
+        UniqueConstraint("session_id", "persona_id", name="uq_faro_attendance"),
     )
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(
@@ -368,9 +373,9 @@ class GloryHouseAttendance(Base):
         nullable=False,
         index=True,
     )
-    member_id = Column(
-        Integer,
-        ForeignKey("members.id", ondelete="CASCADE"),
+    persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -382,17 +387,25 @@ class GloryHouseAttendance(Base):
     notes = Column(Text, nullable=True)
 
     # --- Nuevos campos (refactor evangelismo) ---
-    estado = Column(String(20), default="presente", index=True)  # EstadoAsistenciaEnum values
+    estado = Column(String(20), default="ASISTIO", index=True)  # EstadoAsistenciaEnum
     es_primera_vez = Column(Boolean, default=False, index=True)
     requiere_seguimiento = Column(Boolean, default=False, index=True)
+    motivo_excusa_id = Column(
+        Integer,
+        ForeignKey("motivos_excusa.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    detalle_excusa = Column(String, nullable=True)
 
     session = relationship("GloryHouseSession")
-    member = relationship("Member")
+    persona = relationship("Persona")
     seguimientos = relationship(
         "RegistroSeguimiento",
         back_populates="asistencia",
         cascade="all, delete-orphan",
     )
+    motivo_excusa = relationship("MotivoExcusa")
 
 
 class Enrollment(Base):

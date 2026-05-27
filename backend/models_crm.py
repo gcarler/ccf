@@ -82,9 +82,9 @@ class EventAssignment(Base):
         index=True,
     )
     session_date = Column(Date, nullable=False, index=True)
-    member_id = Column(
-        Integer,
-        ForeignKey("members.id", ondelete="CASCADE"),
+    persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -92,14 +92,14 @@ class EventAssignment(Base):
     created_at = Column(DateTime, default=_utcnow)
 
     event = relationship("CrmEvent", back_populates="assignments")
-    member = relationship("Member")
+    persona = relationship("Persona")
 
 
 class EventAttendance(Base):
     __tablename__ = "event_attendances"
     __table_args__ = (
         UniqueConstraint(
-            "event_id", "session_date", "member_id", name="uq_event_attendance"
+            "event_id", "session_date", "persona_id", name="uq_event_attendance"
         ),
     )
     id = Column(Integer, primary_key=True, index=True)
@@ -112,9 +112,9 @@ class EventAttendance(Base):
     session_date = Column(
         Date, nullable=False, index=True, default=lambda: _utcnow().date()
     )
-    member_id = Column(
-        Integer,
-        ForeignKey("members.id", ondelete="CASCADE"),
+    persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -128,13 +128,18 @@ class EventAttendance(Base):
     attended = Column(Boolean, default=True)
 
     event = relationship("CrmEvent", back_populates="attendances")
-    member = relationship("Member")
+    persona = relationship("Persona")
 
 
 class CounselingTicket(Base):
     __tablename__ = "counseling_tickets"
     id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(Integer, ForeignKey("members.id"), nullable=False, index=True)
+    persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id"),
+        nullable=False,
+        index=True,
+    )
     pastor_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     subject = Column(String(200), nullable=False)
     notes = Column(Text, nullable=True)
@@ -148,7 +153,7 @@ class CounselingTicket(Base):
     sentiment_label = Column(String(20), nullable=True)  # POSITIVE, NEUTRAL, NEGATIVE
     created_at = Column(DateTime, default=_utcnow, index=True)
 
-    member = relationship("Member")
+    persona = relationship("Persona")
     pastor = relationship("User")
 
 
@@ -171,14 +176,18 @@ class Ministry(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), unique=True, index=True, nullable=False)
     description = Column(Text, nullable=True)
-    leader_id = Column(Integer, ForeignKey("members.id"), nullable=True)
+    leader_persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id"),
+        nullable=True,
+    )
     created_at = Column(DateTime, default=_utcnow)
 
     members = relationship(
-        "Member",
+        "Persona",
         secondary="member_ministries",
         back_populates="ministries",
-        overlaps="member,members,ministries,ministry",
+        overlaps="persona,personas,ministries,ministry",
     )
 
 
@@ -379,13 +388,13 @@ class MemberPosition(Base):
     __tablename__ = "member_positions"
     __table_args__ = (
         UniqueConstraint(
-            "member_id", "position_id", "start_date", name="uq_member_position_history"
+            "persona_id", "position_id", "start_date", name="uq_member_position_history"
         ),
     )
     id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(
-        Integer,
-        ForeignKey("members.id", ondelete="CASCADE"),
+    persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -401,16 +410,16 @@ class MemberPosition(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow, index=True)
 
-    member = relationship("Member", back_populates="positions")
+    persona = relationship("Persona", back_populates="positions")
     position = relationship("Position", back_populates="member_positions")
 
 
 class ConsolidationCase(Base):
     __tablename__ = "consolidation_cases"
     id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(
-        Integer,
-        ForeignKey("members.id", ondelete="CASCADE"),
+    persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -419,15 +428,15 @@ class ConsolidationCase(Base):
     source = Column(String(100), nullable=True)
     last_contact_at = Column(DateTime, nullable=True, index=True)
     next_contact_at = Column(DateTime, nullable=True, index=True)
-    assigned_pastor_id = Column(
-        Integer,
-        ForeignKey("members.id", ondelete="SET NULL"),
+    assigned_pastor_persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    assigned_leader_id = Column(
-        Integer,
-        ForeignKey("members.id", ondelete="SET NULL"),
+    assigned_leader_persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
@@ -435,17 +444,17 @@ class ConsolidationCase(Base):
     created_at = Column(DateTime, default=_utcnow, index=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, index=True)
 
-    member = relationship(
-        "Member", foreign_keys=[member_id], back_populates="consolidation_cases"
+    persona = relationship(
+        "Persona", foreign_keys=[persona_id], back_populates="consolidation_cases"
     )
     assigned_pastor = relationship(
-        "Member",
-        foreign_keys=[assigned_pastor_id],
+        "Persona",
+        foreign_keys=[assigned_pastor_persona_id],
         back_populates="consolidated_cases_as_pastor",
     )
     assigned_leader = relationship(
-        "Member",
-        foreign_keys=[assigned_leader_id],
+        "Persona",
+        foreign_keys=[assigned_leader_persona_id],
         back_populates="consolidated_cases_as_leader",
     )
     assignments = relationship(
@@ -468,15 +477,15 @@ class ConsolidationAssignment(Base):
         nullable=False,
         index=True,
     )
-    assigned_by_member_id = Column(
-        Integer,
-        ForeignKey("members.id", ondelete="CASCADE"),
+    assigned_by_persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
-    assigned_to_member_id = Column(
-        Integer,
-        ForeignKey("members.id", ondelete="CASCADE"),
+    assigned_to_persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -488,14 +497,14 @@ class ConsolidationAssignment(Base):
     created_at = Column(DateTime, default=_utcnow, index=True)
 
     case = relationship("ConsolidationCase", back_populates="assignments")
-    assigned_by_member = relationship(
-        "Member",
-        foreign_keys=[assigned_by_member_id],
+    assigned_by_persona = relationship(
+        "Persona",
+        foreign_keys=[assigned_by_persona_id],
         back_populates="consolidation_assignments_sent",
     )
-    assigned_to_member = relationship(
-        "Member",
-        foreign_keys=[assigned_to_member_id],
+    assigned_to_persona = relationship(
+        "Persona",
+        foreign_keys=[assigned_to_persona_id],
         back_populates="consolidation_assignments_received",
     )
     follow_up_tasks = relationship(
@@ -514,9 +523,9 @@ class ConsolidationInteraction(Base):
         nullable=False,
         index=True,
     )
-    performed_by_member_id = Column(
-        Integer,
-        ForeignKey("members.id", ondelete="CASCADE"),
+    performed_by_persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -528,9 +537,9 @@ class ConsolidationInteraction(Base):
     created_at = Column(DateTime, default=_utcnow, index=True)
 
     case = relationship("ConsolidationCase", back_populates="interactions")
-    performed_by_member = relationship(
-        "Member",
-        foreign_keys=[performed_by_member_id],
+    performed_by_persona = relationship(
+        "Persona",
+        foreign_keys=[performed_by_persona_id],
         back_populates="consolidation_interactions",
     )
 
@@ -566,7 +575,12 @@ class ConsolidationFollowUpTask(Base):
 class Donation(Base):
     __tablename__ = "donations"
     id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(Integer, ForeignKey("members.id"), nullable=True, index=True)
+    persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id"),
+        nullable=True,
+        index=True,
+    )
     amount = Column(Float, nullable=False)
     currency = Column(String(10), default="COP")
     donation_type = Column(String(50), default="Diezmo")  # Diezmo, Ofrenda, Especial
@@ -580,7 +594,7 @@ class Donation(Base):
     created_at = Column(DateTime, default=_utcnow, index=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-    member = relationship("Member", back_populates="donations")
+    persona = relationship("Persona", back_populates="donations")
 
 
 class DonationCategory(Base):
@@ -598,7 +612,12 @@ class CrmTask(Base):
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     category = Column(String(100), default="Pastoral", nullable=True, index=True)
-    member_id = Column(Integer, ForeignKey("members.id"), nullable=True, index=True)
+    persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id"),
+        nullable=True,
+        index=True,
+    )
     lead_id = Column(
         Integer, ForeignKey("consolidation_pipeline.id"), nullable=True, index=True
     )
@@ -608,7 +627,7 @@ class CrmTask(Base):
     priority = Column(String(20), default="medium")
     created_at = Column(DateTime, default=_utcnow, index=True)
 
-    member = relationship("Member", back_populates="tasks")
+    persona = relationship("Persona", back_populates="tasks")
     lead = relationship("ConsolidationPipeline")
     assignee = relationship("User")
 
@@ -616,7 +635,12 @@ class CrmTask(Base):
 class VolunteerShift(Base):
     __tablename__ = "volunteer_shifts"
     id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(Integer, ForeignKey("members.id"), nullable=False, index=True)
+    persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id"),
+        nullable=False,
+        index=True,
+    )
     role_name = Column(String(100), nullable=False)
     team_name = Column(String(100), nullable=False)
     shift_start = Column(DateTime, nullable=False)
@@ -625,7 +649,7 @@ class VolunteerShift(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
 
-    member = relationship("Member", back_populates="volunteer_shifts")
+    persona = relationship("Persona", back_populates="volunteer_shifts")
 
 
 class VolunteerSkill(Base):
@@ -639,9 +663,9 @@ member_volunteer_skills = Table(
     "member_volunteer_skills",
     Base.metadata,
     Column(
-        "member_id",
-        Integer,
-        ForeignKey("members.id", ondelete="CASCADE"),
+        "persona_id",
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="CASCADE"),
         primary_key=True,
     ),
     Column(
@@ -656,9 +680,9 @@ member_volunteer_skills = Table(
 class CommunicationLog(Base):
     __tablename__ = "communication_logs"
     id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(
-        Integer,
-        ForeignKey("members.id", ondelete="CASCADE"),
+    persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -672,7 +696,7 @@ class CommunicationLog(Base):
     is_read = Column(Boolean, default=False, index=True)
     created_at = Column(DateTime, default=_utcnow, index=True)
 
-    member = relationship("Member", back_populates="communication_logs")
+    persona = relationship("Persona", back_populates="communication_logs")
     leader = relationship("User")
 
 
@@ -715,9 +739,9 @@ class RoleDefinition(Base):
 class MemberRole(Base):
     __tablename__ = "member_roles"
     id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(
-        Integer,
-        ForeignKey("members.id", ondelete="CASCADE"),
+    persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -729,7 +753,7 @@ class MemberRole(Base):
     )
     created_at = Column(DateTime, default=_utcnow)
 
-    member = relationship("Member")
+    persona = relationship("Persona")
     role = relationship("RoleDefinition")
 
 
@@ -749,16 +773,16 @@ class PastoralCallLog(Base):
 
 
 class MemberMinistry(Base):
-    """Rich association between Member and Ministry with role and dates."""
+    """Rich association between Persona and Ministry with role and dates."""
 
     __tablename__ = "member_ministries"
     __table_args__ = (
-        UniqueConstraint("member_id", "ministry_id", name="uq_member_ministry"),
+        UniqueConstraint("persona_id", "ministry_id", name="uq_member_ministry"),
     )
     id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(
-        Integer,
-        ForeignKey("members.id", ondelete="CASCADE"),
+    persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -775,8 +799,8 @@ class MemberMinistry(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
 
-    member = relationship("Member", overlaps="member,members,ministries,ministry")
-    ministry = relationship("Ministry", overlaps="member,members,ministries,ministry")
+    persona = relationship("Persona", overlaps="persona,personas,ministries,ministry")
+    ministry = relationship("Ministry", overlaps="persona,personas,ministries,ministry")
 
 
 class Fund(Base):
@@ -827,6 +851,12 @@ class EvangelismStrategy(Base):
     name = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
 
+    # MULTI-TENANT: Sede a la que pertenece esta estrategia
+    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=True, index=True)
+
+    # CATEGORIA: Tipo de estrategia (Faro en Casa, Evento Masivo, etc.)
+    categoria_id = Column(Integer, ForeignKey("categorias_estrategia.id"), nullable=True, index=True)
+
     # Typology: relacional | evento_masivo | sectorial
     typology = Column(String(50), nullable=True, index=True)
 
@@ -851,8 +881,11 @@ class EvangelismStrategy(Base):
 
     roles_personalizados = relationship(
         "RolPersonalizadoEstrategia",
-        backref="estrategia",
+        back_populates="estrategia",
         cascade="all, delete-orphan",
         foreign_keys="RolPersonalizadoEstrategia.estrategia_id",
         primaryjoin="EvangelismStrategy.codigo == RolPersonalizadoEstrategia.estrategia_id",
     )
+
+    sede = relationship("Sede", foreign_keys=[sede_id])
+    categoria = relationship("CategoriaEstrategia", foreign_keys=[categoria_id])

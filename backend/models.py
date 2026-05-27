@@ -1,76 +1,83 @@
 # Identity & auth
 # Academy / LMS
 from backend.models_academy import AcademyActivityLog  # noqa: F401
-from backend.models_academy import (Assessment, AssessmentAttempt,
-                                    AssessmentOption, AssessmentQuestion,
-                                    AssignmentSubmission, Certificate, Course,
-                                    CourseAttendance, CoursePrerequisite,
-                                    Enrollment, Family, FaroSeason, FormalActa,
-                                    ForumComment, ForumThread, GloryHouse,
-                                    GloryHouseAttendance, GloryHouseMember,
-                                    GloryHouseSession, Lesson, LessonProgress,
-                                    Resource)
+from backend.models_academy import (  # noqa: F401
+    Assessment, AssessmentAttempt, AssessmentOption, AssessmentQuestion,
+    AssignmentSubmission, Certificate, Course, CourseAttendance,
+    CoursePrerequisite, Enrollment, Family, FaroSeason, FormalActa,
+    ForumComment, ForumThread, GloryHouse, GloryHouseAttendance,
+    GloryHouseMember, GloryHouseSession, Lesson, LessonProgress, Resource)
 
 # Assets / Agents / Governance / Ops
 from backend.models_assets import (AssetItem, InventoryItem,  # noqa: F401
                                    MaintenanceLog)
 # CMS
 from backend.models_cms import CmsMediaItem  # noqa: F401
-from backend.models_cms import (Announcement, CmsMenu, CmsMenuItem, CmsPage,
-                                CmsPageVersion, CmsPublishLog, CmsSection,
-                                CmsSite, CmsTheme, ContentMetric,
-                                ContentPublication, MediaAsset,
-                                NewsletterSubscription, PageContent,
-                                PageContentVersion, Testimonial)
+from backend.models_cms import (  # noqa: F401
+    Announcement, CmsMenu, CmsMenuItem, CmsPage,
+    CmsPageVersion, CmsPublishLog, CmsSection,
+    CmsSite, CmsTheme, ContentMetric,
+    ContentPublication, MediaAsset,
+    NewsletterSubscription, PageContent,
+    PageContentVersion, Testimonial)
+# Personas (reemplaza Member — UUID PK)
+from backend.models_personas import Persona  # noqa: F401
+
 # CRM / Pastoral
 from backend.models_crm import ChatMessage  # noqa: F401
-from backend.models_crm import (AgendaEvent, ColombianCity,
-                                ColombianDepartment,
-                                CommunicationLog, CommunityBoardCard,
-                                ConsolidationAssignment, ConsolidationCase,
-                                ConsolidationFollowUpTask,
-                                ConsolidationInteraction,
-                                ConsolidationPipeline, CounselingTicket,
-                                CrmAutomation, CrmEvent, CrmTask, Donation,
-                                DonationCategory, EventAssignment,
-                                EventAttendance, EvangelismStrategy, Fund, Member,
-                                MemberMinistry, MemberPosition,
-                                MemberRole, Ministry,
-                                PastoralCallLog, Position, PrayerRequest,
-                                RoleDefinition, SpiritualMilestone,
-                                SupportTicket, VolunteerShift, VolunteerSkill,
-                                member_volunteer_skills)
+from backend.models_crm import (  # noqa: F401
+    AgendaEvent, ColombianCity, ColombianDepartment,
+    CommunicationLog, CommunityBoardCard,
+    ConsolidationAssignment, ConsolidationCase,
+    ConsolidationFollowUpTask, ConsolidationInteraction,
+    ConsolidationPipeline, CounselingTicket, CrmAutomation,
+    CrmEvent, CrmTask, Donation, DonationCategory, EventAssignment,
+    EventAttendance, EvangelismStrategy, Fund, Member, MemberMinistry,
+    MemberPosition, MemberRole, Ministry, PastoralCallLog, Position,
+    PrayerRequest, RoleDefinition, SpiritualMilestone, SupportTicket,
+    VolunteerShift, VolunteerSkill, member_volunteer_skills)
 from backend.models_governance import (AdminAuditLog,  # noqa: F401
                                        AutomationRule)
 from backend.models_identity import Notification  # noqa: F401
-from backend.models_identity import (Badge, Level, RefreshToken, ResetToken,
-                                     Role, User, UserBadge, UserReminder,
-                                     UserUIPreference, VerificationToken)
+from backend.models_identity import (  # noqa: F401
+    Badge, Level, RefreshToken, ResetToken,
+    Role, User, UserBadge, UserReminder,
+    UserUIPreference, VerificationToken)
 from backend.models_ops import SocialChannel  # noqa: F401
-from backend.models_ops import ChurchLocation, SystemVariable
+from backend.models_ops import ChurchLocation, SystemVariable  # noqa: F401
 # Projects
 from backend.models_projects import ProjectActivityLog  # noqa: F401
-from backend.models_projects import (Project, ProjectAttachment,
-                                     ProjectComment, ProjectDocument,
-                                     ProjectInboxState, ProjectMilestone,
-                                     ProjectPhase, ProjectTask,
-                                     ProjectWhiteboard, TaskSupply)
+from backend.models_projects import (  # noqa: F401
+    Project, ProjectAttachment, ProjectComment, ProjectDocument,
+    ProjectInboxState, ProjectMilestone, ProjectPhase, ProjectTask,
+    ProjectWhiteboard, TaskSupply)
 
 # Agent identity models (canonical person)
-from backend.models_agents import (Agent, AgentAuth, AgentContact, AgentRole,
+from backend.models_agents import (  # noqa: F401
+    Agent, AgentAuth, AgentContact, AgentRole,
     AgentActivity, AgentFamily, AgentJourney, AgentPermission, AgentTask,
     AgentInsight)
 
 # Evangelismo — Nuevos modelos (enums, roles personalizados, seguimiento)
 from backend.models_evangelism import (ClaseEstrategiaEnum,  # noqa: F401
     EstadoAsistenciaEnum, TipoSeguimientoEnum, RolEnGrupoEnum,
-    RolPersonalizadoEstrategia, RegistroSeguimiento)
+    MotivoExcusa, RolPersonalizadoEstrategia, RegistroSeguimiento,
+    FrecuenciaEnum, EstadoSesionEnum)
+
+# Evangelismo Super Pro — Multi-Tenant, Auditoría, Velocidad del Embudo
+from backend.models_evangelism_super import (  # noqa: F401
+    Sede, LogAuditoria, CategoriaEstrategia,
+    EstrategiaEvangelismo, GrupoEvangelismoSuper,
+    HistorialEmbudo,
+)
 
 # Kernel — Protocolo de Identidad y Roles
-from backend.models_kernel import (ActivityStatus, MinistryOffice, ChurchRole,
-    PlatformRole)  # noqa: F401
-from backend.models_kernel import (UserMinistry, UserRoleAssignment,
-    UserRoleHistory, PlatformRoleDefinition, UserPlatformRole)  # noqa: F401
+from backend.models_kernel import (  # noqa: F401
+    ActivityStatus, MinistryOffice, ChurchRole,
+    PlatformRole)
+from backend.models_kernel import (  # noqa: F401
+    UserMinistry, UserRoleAssignment,
+    UserRoleHistory, PlatformRoleDefinition, UserPlatformRole)
 
 # Knowledge Base
 from backend.services.knowledge_base import AgentKnowledgeBase  # noqa: F401
