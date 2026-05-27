@@ -31,15 +31,14 @@ class ContactRecord:
     notes: Optional[str] = None
     spiritual_status: str = "Nuevo"
     church_role: str = "Visitante"
-    # Optional: extra notes to append (e.g. book title, course name)
     extra_notes: list[str] = field(default_factory=list)
 
 
 @dataclass
 class ContactResult:
     """Output record after tracking a contact."""
-    member: Optional[models.Persona] = None
-    member_created: bool = False
+    persona: Optional[models.Persona] = None
+    persona_created: bool = False
     case: Optional[models.ConsolidationCase] = None
     case_created: bool = False
 
@@ -67,10 +66,10 @@ class PublicContactTracker:
         phone = _normalize(record.phone)
 
         # 1. Find existing Persona by phone or email
-        persona = self._find_member(db, email, phone)
+        persona = self._find_persona(db, email, phone)
 
         # 2. Create Persona if not found
-        if not member:
+        if not persona:
             persona = models.Persona(
                 first_name=record.first_name or "Visitante",
                 last_name=record.last_name or "",
@@ -79,15 +78,15 @@ class PublicContactTracker:
                 spiritual_status=record.spiritual_status,
                 church_role=record.church_role,
             )
-            db.add(member)
+            db.add(persona)
             db.flush()
-            result.member_created = True
+            result.persona_created = True
             logger.info(
-                f"New Persona created via public contact: "
-                f"{member.first_name} {member.last_name} ({email or phone})"
+                f"Nuevo Persona creado via public contact: "
+                f"{persona.first_name} {persona.last_name} ({email or phone})"
             )
 
-        result.persona = member
+        result.persona = persona
 
         # 3. Create ConsolidationCase
         notes_lines = list(record.extra_notes)
@@ -99,7 +98,7 @@ class PublicContactTracker:
             notes_lines.append(f"Campaign: {record.campaign}")
 
         case = models.ConsolidationCase(
-            member_id=member.id,
+            persona_id=persona.id,
             stage="new",
             status="active",
             source=record.source,
@@ -113,7 +112,7 @@ class PublicContactTracker:
         return result
 
     @staticmethod
-    def _find_member(
+    def _find_persona(
         db: Session, email: Optional[str], phone: Optional[str]
     ) -> Optional[models.Persona]:
         """Find an existing Persona by email or phone."""

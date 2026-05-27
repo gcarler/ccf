@@ -43,14 +43,14 @@ def _warn_deprecated_crm_alias(alias_path: str, canonical_path: str) -> None:
 @router.get("/counseling/", response_model=List[schemas.CounselingTicket])
 def list_counseling_tickets(
     status: Optional[str] = None,
-    member_id: Optional[int] = None,
+    persona_id: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     _warn_deprecated_crm_alias("/api/evangelism/counseling/", "/api/crm/counseling/")
     tickets = crud.get_counseling_tickets(db, status=status)
-    if member_id:
-        tickets = [t for t in tickets if t.persona_id == member_id]
+    if persona_id:
+        tickets = [t for t in tickets if t.persona_id == persona_id]
     return tickets
 
 
@@ -86,7 +86,7 @@ def get_counseling_ticket(
         "id": ticket.id,
         "persona_id": ticket.persona_id,
         "member_name": (
-            f"{member.first_name} {member.last_name}" if member else "Miembro CCF"
+            f"{persona.first_name} {persona.last_name}" if persona else "Miembro CCF"
         ),
         "pastor_id": ticket.pastor_id,
         "topic": ticket.subject,
@@ -286,11 +286,11 @@ def _channel_label(channel: str) -> str:
 
 
 def _member_matches_segment(
-    member: models.Persona, segment: str, donation_member_ids: set[int]
+    persona: models.Persona, segment: str, donation_persona_ids: set[str]
 ) -> bool:
     value = str(segment or "").strip().lower()
     if value == "active":
-        return str(member.church_role or "").strip().lower() in {
+        return str(persona.church_role or "").strip().lower() in {
             "miembro",
             "servidor",
             "lider",
@@ -299,9 +299,9 @@ def _member_matches_segment(
             "coordinador",
         }
     if value == "new":
-        return str(member.spiritual_status or "").strip().lower() == "nuevo"
+        return str(persona.spiritual_status or "").strip().lower() == "nuevo"
     if value == "staff":
-        return str(member.church_role or "").strip().lower() in {
+        return str(persona.church_role or "").strip().lower() in {
             "pastor",
             "coordinador",
             "staff",
@@ -309,14 +309,14 @@ def _member_matches_segment(
             "admin",
         }
     if value == "groups":
-        return member.family_id is not None
+        return persona.family_id is not None
     if value == "low":
-        return str(member.spiritual_status or "").strip().lower() in {
+        return str(persona.spiritual_status or "").strip().lower() in {
             "nuevo",
             "creyente",
         }
     if value == "vip":
-        return member.id in donation_member_ids
+        return persona.id in donation_persona_ids
     return False
 
 
@@ -327,25 +327,25 @@ def _resolve_campaign_members(db: Session, segments: list[str]) -> list[models.P
     if not normalized_segments:
         return []
 
-    donation_member_ids = {
-        member_id
-        for (member_id,) in db.query(models.Donation.persona_id)
+    donation_persona_ids = {
+        persona_id
+        for (persona_id,) in db.query(models.Donation.persona_id)
         .filter(models.Donation.persona_id.isnot(None))
         .distinct()
         .all()
     }
     personas = db.query(models.Persona).all()
     selected = []
-    seen_ids: set[int] = set()
-    for persona in members:
-        if member.id in seen_ids:
+    seen_ids: set[str] = set()
+    for persona in personas:
+        if persona.id in seen_ids:
             continue
         if any(
-            _member_matches_segment(member, segment, donation_member_ids)
+            _member_matches_segment(persona, segment, donation_persona_ids)
             for segment in normalized_segments
         ):
-            selected.append(member)
-            seen_ids.add(member.id)
+            selected.append(persona)
+            seen_ids.add(persona.id)
     return selected
 
 
@@ -353,7 +353,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     ordered = sorted(logs, key=lambda log: log.created_at or datetime.min, reverse=True)
     representative = ordered[0]
     persona = getattr(representative, "member", None)
-    member_name = f"{member.first_name} {member.last_name}" if member else "Desconocido"
+    member_name = f"{persona.first_name} {persona.last_name}" if persona else "Desconocido"
     campaign_name = next(
         (log.campaign_name for log in ordered if log.campaign_name), None
     )
@@ -392,7 +392,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
 
 @router.get("/messaging/history", response_model=List[dict])
 def get_messaging_history(
-    member_id: Optional[int] = None,
+    persona_id: Optional[str] = None,
     limit: int = 50,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -408,8 +408,8 @@ def get_messaging_history(
             joinedload(models.CommunicationLog.member)
         )
 
-        if member_id:
-            q = q.filter(models.CommunicationLog.persona_id == member_id)
+        if persona_id:
+            q = q.filter(models.CommunicationLog.persona_id == persona_id)
 
         logs = q.order_by(models.CommunicationLog.created_at.desc()).limit(limit).all()
         grouped: dict[str, list[models.CommunicationLog]] = {}
@@ -425,7 +425,7 @@ def get_messaging_history(
     except Exception:
         logger.exception(
             "Failed to list CRM messaging history",
-            extra={"persona_id": member_id, "limit": limit},
+            extra={"persona_id": persona_id, "limit": limit},
         )
         raise HTTPException(
             status_code=500, detail="No se pudo consultar el historial de mensajes"
@@ -478,7 +478,7 @@ async def send_crm_message(
     )
     from backend.services.messaging import MessagingGateway
 
-    member_id = payload.get("persona_id")
+    persona_id = payload.get("persona_id")
     channel = _channel_label(payload.get("channel", "WhatsApp"))
     content = payload.get("content")
     campaign_name = payload.get("campaign_name") or payload.get("name")
@@ -490,7 +490,7 @@ async def send_crm_message(
                     status_code=400, detail="campaign_name and content required"
                 )
             personas = _resolve_campaign_members(db, list(target_segments))
-            if not members:
+            if not personas:
                 raise HTTPException(
                     status_code=404,
                     detail="No se encontraron destinatarios para la campaÃ±a",
@@ -500,12 +500,12 @@ async def send_crm_message(
             logs: list[models.CommunicationLog] = []
             delivered_count = 0
             failed_count = 0
-            for persona in members:
+            for persona in personas:
                 try:
                     if channel.lower() == "whatsapp":
                         log = await MessagingGateway.send_whatsapp(
                             db,
-                            member.id,
+                            persona.id,
                             content,
                             current_user.id,
                             campaign_name=campaign_name,
@@ -514,7 +514,7 @@ async def send_crm_message(
                     elif channel.lower() == "email":
                         log = await MessagingGateway.send_email(
                             db,
-                            member.id,
+                            persona.id,
                             content,
                             current_user.id,
                             campaign_name=campaign_name,
@@ -523,7 +523,7 @@ async def send_crm_message(
                     else:
                         log = await MessagingGateway.send_sms(
                             db,
-                            member.id,
+                            persona.id,
                             content,
                             current_user.id,
                             campaign_name=campaign_name,
@@ -533,10 +533,10 @@ async def send_crm_message(
                     delivered_count += 1
                 except ValueError:
                     fallback_log = models.CommunicationLog(
-                        member_id=member.id,
+                        persona_id=persona.id,
                         channel=channel,
                         campaign_name=campaign_name,
-                        recipient_phone=member.phone,
+                        recipient_phone=persona.phone,
                         content=content,
                         leader_id=current_user.id,
                         outcome="failed",
@@ -552,35 +552,35 @@ async def send_crm_message(
                 "status": "success",
                 "campaign_name": campaign_name,
                 "external_id": campaign_id,
-                "target_count": len(members),
+                "target_count": len(personas),
                 "delivered_count": delivered_count,
                 "failed_count": failed_count,
                 "log_ids": [log.id for log in logs],
             }
 
-        if not member_id or not content:
+        if not persona_id or not content:
             raise HTTPException(
-                status_code=400, detail="member_id and content required"
+                status_code=400, detail="persona_id and content required"
             )
 
         if channel.lower() == "whatsapp":
             log = await MessagingGateway.send_whatsapp(
                 db,
-                member_id,
+                persona_id,
                 content,
                 current_user.id,
             )
         elif channel.lower() == "email":
             log = await MessagingGateway.send_email(
                 db,
-                member_id,
+                persona_id,
                 content,
                 current_user.id,
             )
         else:
             log = await MessagingGateway.send_sms(
                 db,
-                member_id,
+                persona_id,
                 content,
                 current_user.id,
             )
@@ -591,7 +591,7 @@ async def send_crm_message(
         logger.exception(
             "Failed to send CRM message",
             extra={
-                "persona_id": member_id,
+                "persona_id": persona_id,
                 "channel": channel,
                 "sender_user_id": getattr(current_user, "id", None),
                 "campaign_name": campaign_name,
@@ -611,7 +611,7 @@ def _serialize_crm_task(
 ) -> dict:
     persona = getattr(task, "member", None)
     member_name = contact_name or (
-        f"{member.first_name} {member.last_name}" if member else None
+        f"{persona.first_name} {persona.last_name}" if persona else None
     )
     assignee = getattr(task, "assignee", None)
     assigned_to = assignee_name or (assignee.username if assignee else None)
@@ -635,7 +635,7 @@ def _serialize_crm_task(
 def list_crm_tasks(
     status: Optional[str] = None,
     assignee_id: Optional[int] = None,
-    member_id: Optional[int] = None,
+    persona_id: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -649,8 +649,8 @@ def list_crm_tasks(
         )
         if assignee_id:
             q = q.filter(models.CrmTask.assignee_id == assignee_id)
-        if member_id:
-            q = q.filter(models.CrmTask.persona_id == member_id)
+        if persona_id:
+            q = q.filter(models.CrmTask.persona_id == persona_id)
 
         tasks = q.all()
         result = [_serialize_crm_task(t) for t in tasks]
@@ -665,7 +665,7 @@ def list_crm_tasks(
             extra={
                 "status": status,
                 "assignee_id": assignee_id,
-                "persona_id": member_id,
+                "persona_id": persona_id,
             },
         )
         raise HTTPException(status_code=500, detail="No se pudo consultar las tareas")
@@ -750,7 +750,7 @@ async def create_crm_task(
             priority=payload.get("priority", "medium"),
             category=payload.get("category", "Pastoral"),
             assignee_id=current_user.id,
-            member_id=int(payload["persona_id"]) if payload.get("persona_id") else None,
+            persona_id=payload["persona_id"] if payload.get("persona_id") else None,
             due_date=due_date,
             created_at=utc_now(),
         )
@@ -815,7 +815,7 @@ def update_crm_task(
             if field == "due_date" and payload[field]:
                 setattr(task, field, datetime.fromisoformat(payload[field]))
             elif field == "persona_id" and payload[field]:
-                setattr(task, field, int(payload[field]))
+                setattr(task, field, payload[field])
             else:
                 setattr(task, field, payload[field])
     db.commit()
@@ -840,14 +840,14 @@ def update_crm_task(
 
 @router.get("/volunteers/shifts", response_model=List[schemas.VolunteerShift])
 def list_volunteer_shifts(
-    member_id: Optional[int] = None,
+    persona_id: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     _warn_deprecated_crm_alias(
         "/api/evangelism/volunteers/shifts", "/api/crm/volunteers"
     )
-    return crud.get_volunteer_shifts(db, member_id=member_id)
+    return crud.get_volunteer_shifts(db, persona_id=persona_id)
 
 
 @router.post("/volunteers/shifts", response_model=schemas.VolunteerShift)
@@ -862,22 +862,22 @@ def create_shift(
     return crud.create_volunteer_shift(db, payload)
 
 
-@router.get("/volunteers/{member_id}", response_model=dict)
+@router.get("/volunteers/{persona_id}", response_model=dict)
 def get_volunteer_detail(
-    member_id: int,
+    persona_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     _warn_deprecated_crm_alias(
-        "/api/evangelism/volunteers/{member_id}", "/api/crm/volunteers/{member_id}"
+        "/api/evangelism/volunteers/{persona_id}", "/api/crm/volunteers/{persona_id}"
     )
-    persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
-    if not member:
+    persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
+    if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
 
     shifts = (
         db.query(models.VolunteerShift)
-        .filter(models.VolunteerShift.persona_id == member_id)
+        .filter(models.VolunteerShift.persona_id == persona_id)
         .order_by(models.VolunteerShift.created_at.desc())
         .all()
     )
@@ -895,7 +895,7 @@ def get_volunteer_detail(
                 models.member_volunteer_skills,
                 models.VolunteerSkill.id == models.member_volunteer_skills.c.skill_id,
             )
-            .filter(models.member_volunteer_skills.c.persona_id == member_id)
+            .filter(models.member_volunteer_skills.c.persona_id == persona_id)
             .order_by(models.VolunteerSkill.name.asc())
             .all()
         )
@@ -903,21 +903,21 @@ def get_volunteer_detail(
     primary_shift = shifts[0] if shifts else None
 
     return {
-        "id": member.id,
-        "name": f"{member.first_name} {member.last_name}".strip(),
-        "role": member.church_role,
+        "id": persona.id,
+        "name": f"{persona.first_name} {persona.last_name}".strip(),
+        "role": persona.church_role,
         "team": (
             primary_shift.team_name
             if primary_shift
-            else (member.church_role or "General")
+            else (persona.church_role or "General")
         ),
         "status": (
             primary_shift.status
             if primary_shift
-            else ("active" if member.is_baptized else "pending")
+            else ("active" if persona.is_baptized else "pending")
         ),
         "joined_date": (
-            member.created_at.date().isoformat() if member.created_at else None
+            persona.created_at.date().isoformat() if persona.created_at else None
         ),
         "total_hours": total_hours,
         "skills": skills,
@@ -943,10 +943,10 @@ def apply_volunteer(
             .filter(models.Persona.user_id == current_user.id)
             .first()
         )
-        if not member:
+        if not persona:
             raise HTTPException(404, "Perfil de miembro no encontrado")
         shift = models.VolunteerShift(
-            member_id=member.id,
+            persona_id=persona.id,
             role_name=payload.get("team", "General"),
             team_name=payload.get("team", "General"),
             shift_start=utc_now(),
@@ -1036,12 +1036,12 @@ def validate_scanner_token(
 
     try:
         parts = token.split("-")
-        member_id = int(parts[2])
+        persona_id = parts[2]
         secret = parts[3] if len(parts) > 3 else None
 
-        persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
+        persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
 
-        if not member:
+        if not persona:
             raise HTTPException(status_code=404, detail="Miembro no encontrado")
 
         # VALIDACIÃ“N DE INTEGRIDAD (Simulada para MVP, en PROD comparar con hash en DB)
@@ -1052,10 +1052,10 @@ def validate_scanner_token(
 
         return {
             "valid": True,
-            "persona_id": member.id,
-            "name": f"{member.first_name} {member.last_name}",
-            "role": member.church_role,
-            "status": member.spiritual_status,
+            "persona_id": persona.id,
+            "name": f"{persona.first_name} {persona.last_name}",
+            "role": persona.church_role,
+            "status": persona.spiritual_status,
             "timestamp": utc_now().isoformat(),
         }
     except (ValueError, IndexError):

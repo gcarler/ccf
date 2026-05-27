@@ -7,6 +7,7 @@ El orquestador puede descubrir y ejecutar herramientas dinámicamente.
 from __future__ import annotations
 
 import logging
+import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
@@ -225,31 +226,31 @@ class CRMGetMemberProfile(AgentTool):
     def parameters(self):
         return [
             ToolParameter(
-                name="persona_id", type="integer",
-                description="Persona ID",
+                name="persona_id", type="string",
+                description="Persona ID (UUID)",
             ),
         ]
 
-    def execute(self, member_id: int, **kwargs) -> Dict[str, Any]:
+    def execute(self, persona_id: str, **kwargs) -> Dict[str, Any]:
         from backend import models
         from backend.core.database import SessionLocal
 
         db = SessionLocal()
         try:
             persona = db.query(models.Persona).filter(
-                models.Persona.id == member_id,
+                models.Persona.id == uuid.UUID(persona_id),
             ).first()
-            if not member:
-                return {"error": f"Persona {member_id} not found"}
+            if not persona:
+                return {"error": f"Persona {persona_id} not found"}
             return {
-                "id": member.id,
-                "name": f"{member.first_name} {member.last_name}",
-                "email": member.email,
-                "phone": member.phone,
-                "church_role": member.church_role,
-                "baptized": member.baptized,
-                "ministry": member.ministry,
-                "status": member.status,
+                "id": persona.id,
+                "name": f"{persona.first_name} {persona.last_name}",
+                "email": persona.email,
+                "phone": persona.phone,
+                "church_role": persona.church_role,
+                "baptized": persona.baptized,
+                "ministry": persona.ministry,
+                "status": persona.status,
             }
         finally:
             db.close()

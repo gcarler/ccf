@@ -357,40 +357,39 @@ def transition_stage(agent_id: int, data: StageTransition, db=Depends(get_db), c
 from backend.models_agents import AgentAuth as AgentModelAuth
 
 
-def sync_member_to_agent(db: Session, member) -> int:
+def sync_persona_to_agent(db: Session, persona) -> int:
     """Create an Agent from a Persona if one doesn't exist yet."""
-    if member.user_id:
+    if persona.user_id:
         existing = db.query(AgentModel).filter(
             or_(
-                AgentModel.email == member.email,
-                AgentModel.phone == member.phone,
+                AgentModel.email == persona.email,
+                AgentModel.phone == persona.phone,
             )
         ).first()
     else:
         existing = db.query(AgentModel).filter(
             or_(
-                AgentModel.email == member.email,
-                AgentModel.phone == member.phone,
+                AgentModel.email == persona.email,
+                AgentModel.phone == persona.phone,
             )
         ).first()
-    
+
     if existing:
         return existing.id
-    
+
     agent = AgentModel(
         code=_generate_agent_code(db),
-        first_name=member.first_name,
-        last_name=member.last_name,
-        email=member.email,
-        phone=member.phone,
-        spiritual_stage="visitor" if (member.church_role or "").lower().startswith("visitante") else "believer",
+        first_name=persona.first_name,
+        last_name=persona.last_name,
+        email=persona.email,
+        phone=persona.phone,
+        spiritual_stage="visitor" if (persona.church_role or "").lower().startswith("visitante") else "believer",
     )
     db.add(agent)
     db.flush()
-    
-    # Link Persona to Agent via user_id (if Persona has a User, link through that)
-    if member.user_id:
-        user = db.query(User).filter(User.id == member.user_id).first()
+
+    if persona.user_id:
+        user = db.query(User).filter(User.id == persona.user_id).first()
         if user:
             auth = AgentModelAuth(
                 agent_id=agent.id,
@@ -398,15 +397,14 @@ def sync_member_to_agent(db: Session, member) -> int:
                 provider="local",
             )
             db.add(auth)
-    
-    # Create AgentRole for church role
-    if member.church_role:
+
+    if persona.church_role:
         db.add(AgentRole(
             agent_id=agent.id,
             role_type="church",
-            role_value=member.church_role,
+            role_value=persona.church_role,
         ))
-    
+
     return agent.id
 
 

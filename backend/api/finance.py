@@ -116,13 +116,13 @@ def register_donation(
     amount: float,
     donation_type: str = "Ofrenda",
     donor_name: Optional[str] = None,
-    member_id: Optional[int] = None,
+    persona_id: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    """Registra una nueva donación. Solo para admin."""
+    """Registra una nueva donacion. Solo para admin."""
     donation = models.Donation(
-        member_id=member_id,
+        persona_id=persona_id,
         amount=amount,
         donation_type=donation_type,
         donor_name=donor_name or current_user.username,

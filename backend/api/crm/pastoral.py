@@ -1417,10 +1417,10 @@ def list_volunteers(
     """Lista todos los voluntarios con sus horas y ministerios."""
     personas = db.query(models.Persona).all()
     result = []
-    for persona in members:
+    for persona in personas:
         shifts = (
             db.query(models.VolunteerShift)
-            .filter(models.VolunteerShift.persona_id == member.id)
+            .filter(models.VolunteerShift.persona_id == persona.id)
             .all()
         )
         total_hours = 0
@@ -1431,8 +1431,8 @@ def list_volunteers(
                 )
         result.append(
             {
-                "id": member.id,
-                "name": f"{member.first_name} {member.last_name}",
+                "id": persona.id,
+                "name": f"{persona.first_name} {persona.last_name}",
                 "total_hours": total_hours,
                 "ministry_count": len(set(s.ministry for s in shifts if s.ministry)),
             }
@@ -1446,7 +1446,7 @@ def get_volunteer_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Volunteer not found")
     shifts = (
@@ -1498,7 +1498,7 @@ def update_volunteer(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Volunteer not found")
     allowed = {"church_role", "first_name", "last_name", "phone", "email"}
@@ -1520,7 +1520,7 @@ def delete_volunteer(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Volunteer not found")
     db.query(models.VolunteerShift).filter(

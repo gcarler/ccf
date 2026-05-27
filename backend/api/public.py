@@ -25,8 +25,8 @@ def public_register_event(
     payload: schemas.PublicRegistrationCreate, db: Session = Depends(get_db)
 ) -> Any:
     """
-    Registra a una persona desde un QR pblico y vincula su asistencia a un evento.
-    Si la persona ya existe (por email o telfono), se usa ese perfil.
+    Registra a una persona desde un QR publico y vincula su asistencia a un evento.
+    Si la persona ya existe (por email o telefono), se usa ese perfil.
     Si no existe, se crea un nuevo Persona con spiritual_status = 'Nuevo'.
     """
     event = (
@@ -35,7 +35,7 @@ def public_register_event(
     if not event:
         raise HTTPException(status_code=404, detail="Evento no encontrado.")
 
-    # 1. Buscar si ya existe el miembro por email o telfono
+    # 1. Buscar si ya existe la persona por email o telefono
     persona = None
     if payload.email or payload.phone:
         query = db.query(models.Persona)
@@ -48,7 +48,7 @@ def public_register_event(
         persona = query.filter(or_(*conditions)).first()
 
     # 2. Si no existe, lo creamos
-    if not member:
+    if not persona:
         persona = models.Persona(
             first_name=payload.first_name,
             last_name=payload.last_name,
@@ -57,14 +57,14 @@ def public_register_event(
             spiritual_status="Nuevo",
             church_role="Visitante",
         )
-        db.add(member)
+        db.add(persona)
         db.commit()
-        db.refresh(member)
+        db.refresh(persona)
         logger.info(
-            f"Nuevo visitante creado desde QR: {member.first_name} {member.last_name}"
+            f"Nuevo visitante creado desde QR: {persona.first_name} {persona.last_name}"
         )
 
-    # 3. Registrar asistencia al evento si no est registrada an
+    # 3. Registrar asistencia al evento si no esta registrada aun
     session_date = (
         event.event_date.date()
         if event.event_date
@@ -75,7 +75,7 @@ def public_register_event(
         .filter(
             models.EventAttendance.event_id == event.id,
             models.EventAttendance.session_date == session_date,
-            models.EventAttendance.persona_id == member.id,
+            models.EventAttendance.persona_id == persona.id,
         )
         .first()
     )
@@ -84,28 +84,22 @@ def public_register_event(
         attendance = models.EventAttendance(
             event_id=event.id,
             session_date=session_date,
-            member_id=member.id,
+            persona_id=persona.id,
             attended=True,
         )
         db.add(attendance)
         db.commit()
         logger.info(
-            f"Asistencia registrada para {member.first_name} al evento {event.name} (ID {event.id})"
+            f"Asistencia registrada para {persona.first_name} al evento {event.name} (ID {event.id})"
         )
 
-    # podramos aadirlo a una pipeline de Consolidacin. Por ahora, el hecho
-    # de tener el email/telfono y estar en la BD lo hace accesible al CRM.
-
-    return member
+    return persona
 
 
 @router.get("/courses", response_model=list[schemas.Course])
 def public_list_courses(db: Session = Depends(get_db)):
-    """
-    Retorna la lista de cursos públicos disponibles.
-    """
+    """Retorna la lista de cursos publicos disponibles."""
     courses = db.query(models.Course).filter(models.Course.is_published == True).all()
-    # Mocking lesson count dynamically if needed
     for c in courses:
         c.lesson_count = (
             db.query(models.Lesson).filter(models.Lesson.course_id == c.id).count()
@@ -115,9 +109,7 @@ def public_list_courses(db: Session = Depends(get_db)):
 
 @router.get("/courses/{course_id}", response_model=schemas.Course)
 def public_get_course(course_id: int, db: Session = Depends(get_db)):
-    """
-    Retorna los detalles de un curso específico.
-    """
+    """Retorna los detalles de un curso especifico."""
     course = (
         db.query(models.Course)
         .filter(models.Course.id == course_id, models.Course.is_published == True)
@@ -136,10 +128,7 @@ def public_get_course(course_id: int, db: Session = Depends(get_db)):
 def public_newsletter_subscribe(
     payload: schemas.NewsletterSubscriptionCreate, db: Session = Depends(get_db)
 ):
-    """
-    Registra un correo en el boletín (Newsletter).
-    Además crea un Persona y ConsolidationCase para que el equipo CRM pueda dar seguimiento.
-    """
+    """Registra un correo en el boletin (Newsletter)."""
     email = payload.email.strip().lower()
     existing_sub = (
         db.query(models.NewsletterSubscription)
@@ -153,7 +142,6 @@ def public_newsletter_subscribe(
     subscription = models.NewsletterSubscription(email=email)
     db.add(subscription)
 
-    # Use unified contact tracker
     tracker.record_contact(db, ContactRecord(
         email=email,
         phone=payload.phone,
@@ -170,7 +158,7 @@ def public_newsletter_subscribe(
 
 
 class PublicEnrollCreate(BaseModel):
-    """Datos para inscripción pública a un curso."""
+    """Datos para inscripcion publica a un curso."""
     full_name: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
@@ -184,10 +172,7 @@ def public_course_enroll(
     payload: PublicEnrollCreate,
     db: Session = Depends(get_db),
 ):
-    """
-    Inscripción pública a un curso.
-    Crea User + Persona + Enrollment + ConsolidationCase para visibilidad en CRM.
-    """
+    """Inscripcion publica a un curso."""
     course = (
         db.query(models.Course)
         .filter(models.Course.id == course_id, models.Course.is_published == True)
@@ -199,15 +184,12 @@ def public_course_enroll(
     email = (payload.email or "").strip().lower()
     phone = (payload.phone or "").strip()
 
-    # Buscar User existente
     user = None
     if email:
         user = db.query(models.User).filter(models.User.email == email).first()
 
     if not user:
-        # Crear User para el curso
         username = email.split("@")[0] if email else f"web_{secrets.token_hex(6)}"
-        # Check username uniqueness
         existing = db.query(models.User).filter(models.User.username == username).first()
         if existing:
             username = f"{username}_{secrets.token_hex(4)}"
@@ -215,7 +197,7 @@ def public_course_enroll(
         user = models.User(
             username=username,
             email=email or f"{secrets.token_hex(8)}@temp.faro",
-            password_hash=secrets.token_hex(32),  # Will set later on real registration
+            password_hash=secrets.token_hex(32),
             role="estudiante",
             is_active=True,
             is_email_verified=False,
@@ -223,7 +205,6 @@ def public_course_enroll(
         db.add(user)
         db.flush()
 
-    # Check if already enrolled
     existing_enroll = (
         db.query(models.Enrollment)
         .filter(
@@ -240,7 +221,6 @@ def public_course_enroll(
             "enrollment_id": existing_enroll.id,
         }
 
-    # Buscar Persona existente o crearlo via tracker unificado
     notes_parts = [f"Curso: {course.title}"]
 
     result = tracker.record_contact(db, ContactRecord(
@@ -255,10 +235,9 @@ def public_course_enroll(
         church_role="Visitante",
         extra_notes=notes_parts,
     ))
-    persona = result.member
+    persona = result.persona
     case = result.case
 
-    # Crear Enrollment
     enrollment = models.Enrollment(
         user_id=user.id,
         course_id=course_id,
@@ -267,20 +246,18 @@ def public_course_enroll(
     db.add(enrollment)
     db.flush()
 
-    # Task 3.4: Auto-create follow-up task for CRM team
-    if member:
+    if persona:
         followup_task = models.ConsolidationTask(
             case_id=case.id,
             title=f"Seguimiento: nuevo estudiante en {course.title}",
-            description=f"Contactar a {member.first_name} {member.last_name} para dar la bienvenida al curso '{course.title}' y ofrecer apoyo pastoral.",
+            description=f"Contactar a {persona.first_name} {persona.last_name} para dar la bienvenida al curso '{course.title}' y ofrecer apoyo pastoral.",
             due_date=datetime.utcnow() + timedelta(days=3),
             status="pending",
         )
         db.add(followup_task)
 
-        # Log in CommunicationLog
         comm_log = models.CommunicationLog(
-            member_id=member.id,
+            persona_id=persona.id,
             channel="system",
             content=f"Auto follow-up task created: student enrolled in '{course.title}'",
             outcome="task_created",
@@ -296,7 +273,7 @@ def public_course_enroll(
         "user_id": user.id,
         "course_id": course_id,
         "enrollment_id": enrollment.id,
-        "persona_id": member.id if member else None,
+        "persona_id": persona.id if persona else None,
         "course_title": course.title,
     }
 
@@ -311,12 +288,9 @@ class PublicContactCreate(BaseModel):
 
 @router.post("/contact", response_model=dict)
 def public_contact(payload: PublicContactCreate, db: Session = Depends(get_db)):
-    """
-    Recibe un contacto desde un formulario público (ej. Conocer a Jesús).
-    Usa el tracker unificado para crear Persona + ConsolidationCase.
-    """
+    """Recibe un contacto desde un formulario publico."""
     result = tracker.record_contact(db, ContactRecord(
-        first_name=payload.full_name.strip().split(" ", 1)[0] if payload.full_name else "Anónimo",
+        first_name=payload.full_name.strip().split(" ", 1)[0] if payload.full_name else "Anonimo",
         last_name=payload.full_name.strip().split(" ", 1)[1] if payload.full_name and " " in payload.full_name.strip() else "",
         phone=payload.phone,
         source=payload.source or "conocer-a-jesus",
@@ -325,7 +299,6 @@ def public_contact(payload: PublicContactCreate, db: Session = Depends(get_db)):
         church_role="Visitante",
     ))
 
-    # Si dejó notas/mensaje, crear una solicitud de oración para el CRM
     if payload.notes and payload.notes.strip():
         prayer = models.PrayerRequest(
             requester_name=payload.full_name,
@@ -341,13 +314,13 @@ def public_contact(payload: PublicContactCreate, db: Session = Depends(get_db)):
 
     return {
         "status": "success",
-        "persona_id": result.persona.id if result.member else None,
+        "persona_id": result.persona.id if result.persona else None,
         "case_id": result.case.id if result.case else None,
     }
 
 
 class WishlistCreate(BaseModel):
-    """Interés en un libro/recurso de la librería."""
+    """Interes en un libro/recurso de la libreria."""
     title: str
     email: Optional[str] = None
     phone: Optional[str] = None
@@ -357,10 +330,7 @@ class WishlistCreate(BaseModel):
 
 @router.post("/wishlist", response_model=dict)
 def public_wishlist(payload: WishlistCreate, db: Session = Depends(get_db)):
-    """
-    Cuando un visitante muestra interés en un libro de la librería FARO.
-    Crea ConsolidationCase con source="books-web" para que el equipo CRM contacte.
-    """
+    """Cuando un visitante muestra interes en un libro de la libreria FARO."""
     email = (payload.email or "").strip().lower()
     phone = (payload.phone or "").strip()
 
@@ -378,11 +348,9 @@ def public_wishlist(payload: WishlistCreate, db: Session = Depends(get_db)):
     return {
         "status": "success",
         "title": payload.title,
-        "persona_id": result.persona.id if result.member else None,
+        "persona_id": result.persona.id if result.persona else None,
     }
 
-
-# ── Document Upload ─────────────────────────────────────────────────────────────
 
 ALLOWED_DOC_TYPES = {
     ".pdf": "application/pdf",
@@ -405,10 +373,7 @@ async def upload_public_document(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
-    """
-    Sube un documento público (PDF, imagen, documento).
-    Guarda en uploads/ con nombre único y registra en cms_media_items.
-    """
+    """Sube un documento publico (PDF, imagen, documento)."""
     ext = os.path.splitext(file.filename or "")[1].lower()
     if ext not in ALLOWED_DOC_TYPES:
         raise HTTPException(status_code=400, detail=f"Tipo no permitido: {ext}")
@@ -429,7 +394,6 @@ async def upload_public_document(
     file_size = len(contents)
     mime_type = ALLOWED_DOC_TYPES.get(ext, file.content_type or "application/octet-stream")
 
-    # Register in cms_media_items
     media = models.CmsMediaItem(
         url=f"/uploads/{unique_name}",
         filename=unique_name,

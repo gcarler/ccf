@@ -15,7 +15,7 @@ settings = get_settings()
 def _create_log(
     db: Session,
     *,
-    member_id: int,
+    persona_id: str,
     channel: str,
     content: str,
     leader_id: int,
@@ -25,7 +25,7 @@ def _create_log(
     external_id: str | None = None,
 ):
     log = models.CommunicationLog(
-        member_id=member_id,
+        persona_id=persona_id,
         channel=channel,
         campaign_name=campaign_name,
         recipient_phone=recipient_phone,
@@ -46,24 +46,22 @@ class MessagingGateway:
     @staticmethod
     async def send_whatsapp(
         db: Session,
-        member_id: int,
+        persona_id: str,
         content: str,
         leader_id: int,
         campaign_name: str | None = None,
         external_id: str | None = None,
     ):
-        """Simula integraciÃ³n con API de Meta/Twilio para WhatsApp."""
-        persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
-        if not member or not member.phone:
-            raise ValueError("Miembro no encontrado o sin nÃºmero de telÃ©fono")
+        """Simula integracion con API de Meta/Twilio para WhatsApp."""
+        persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
+        if not persona or not persona.phone:
+            raise ValueError("Persona no encontrada o sin numero de telefono")
 
-        # LOGICA REAL (MOCK PARA MVP)
-        # AquÃ­ irÃ­a el POST a https://graph.facebook.com/v17.0/{{PHONE_ID}}/messages
         return _create_log(
             db,
-            member_id=member_id,
+            persona_id=persona_id,
             channel="WhatsApp",
-            recipient_phone=member.phone,
+            recipient_phone=persona.phone,
             content=content,
             leader_id=leader_id,
             campaign_name=campaign_name,
@@ -73,22 +71,22 @@ class MessagingGateway:
     @staticmethod
     async def send_sms(
         db: Session,
-        member_id: int,
+        persona_id: str,
         content: str,
         leader_id: int,
         campaign_name: str | None = None,
         external_id: str | None = None,
     ):
-        """Simula integraciÃ³n con proveedor de SMS."""
-        persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
-        if not member or not member.phone:
-            raise ValueError("Miembro sin nÃºmero celular")
+        """Simula integracion con proveedor de SMS."""
+        persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
+        if not persona or not persona.phone:
+            raise ValueError("Persona sin numero celular")
 
         return _create_log(
             db,
-            member_id=member_id,
+            persona_id=persona_id,
             channel="SMS",
-            recipient_phone=member.phone,
+            recipient_phone=persona.phone,
             content=content,
             leader_id=leader_id,
             campaign_name=campaign_name,
@@ -98,20 +96,19 @@ class MessagingGateway:
     @staticmethod
     async def send_email(
         db: Session,
-        member_id: int,
+        persona_id: str,
         content: str,
         leader_id: int,
         campaign_name: str | None = None,
         external_id: str | None = None,
     ):
-        """Envía email real vía SMTP (si configurado)."""
+        """Envia email real via SMTP (si configurado)."""
         persona = db.query(models.Persona).filter(
-            models.Persona.id == member_id,
+            models.Persona.id == uuid.UUID(persona_id),
         ).first()
-        if not member or not member.email:
-            raise ValueError("Miembro sin correo electrónico")
+        if not persona or not persona.email:
+            raise ValueError("Persona sin correo electronico")
 
-        # Intentar envío real SMTP
         smtp_host = getattr(settings, "smtp_host", None)
         smtp_port = getattr(settings, "smtp_port", 587)
         smtp_user = getattr(settings, "smtp_user", None)
@@ -121,9 +118,9 @@ class MessagingGateway:
         if smtp_host and smtp_user and smtp_pass:
             try:
                 msg = MIMEText(content, "plain", "utf-8")
-                msg["Subject"] = campaign_name or "Comunicación CCF"
+                msg["Subject"] = campaign_name or "Comunicacion CCF"
                 msg["From"] = smtp_user
-                msg["To"] = member.email
+                msg["To"] = persona.email
 
                 with smtplib.SMTP(smtp_host, smtp_port) as server:
                     server.starttls()
@@ -131,17 +128,17 @@ class MessagingGateway:
                     server.send_message(msg)
 
                 outcome = "sent_real"
-                logger.info("Email real enviado a %s", member.email)
+                logger.info("Email real enviado a %s", persona.email)
             except Exception as exc:
                 logger.warning("SMTP fallido, registrando como pending: %s", exc)
                 outcome = "smtp_failed"
         else:
             outcome = "pending_smtp_config"
-            logger.info("SMTP no configurado, registrando comunicación")
+            logger.info("SMTP no configurado, registrando comunicacion")
 
         return _create_log(
             db,
-            member_id=member_id,
+            persona_id=persona_id,
             channel="Email",
             content=content,
             leader_id=leader_id,

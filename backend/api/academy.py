@@ -753,21 +753,21 @@ def get_academy_candidates(
 # -----------------
 # Forum API
 # -----------------
-@router.get("/members/{member_id}/profile")
+@router.get("/members/{persona_id}/profile")
 def get_member_academy_profile(
-    member_id: int,
+    persona_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_coordinator_or_admin),
 ):
-    """Obtiene el perfil académico de un miembro del CRM."""
-    persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
-    if not member:
+    """Obtiene el perfil academico de un miembro del CRM."""
+    persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
+    if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
 
-    if not member.user_id:
+    if not persona.user_id:
         return {"is_linked": False, "message": "No tiene cuenta de academia vinculada"}
 
-    user_id = member.user_id
+    user_id = persona.user_id
     enrollments = (
         db.query(models.Enrollment).filter(models.Enrollment.user_id == user_id).all()
     )
@@ -798,41 +798,41 @@ class CreateAcademyAccountRequest(BaseModel):
     password: str
 
 
-@router.post("/members/{member_id}/create-account")
+@router.post("/members/{persona_id}/create-account")
 def create_academy_account(
-    member_id: int,
+    persona_id: str,
     payload: CreateAcademyAccountRequest,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_coordinator_or_admin),
 ):
     """Crea una cuenta de usuario (Academia) para un miembro del CRM."""
-    persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
-    if not member:
+    persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
+    if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
 
-    if member.user_id:
+    if persona.user_id:
         raise HTTPException(
-            status_code=400, detail="El miembro ya tiene una cuenta vinculada"
+            status_code=400, detail="La persona ya tiene una cuenta vinculada"
         )
 
-    if not member.email:
+    if not persona.email:
         raise HTTPException(
-            status_code=400, detail="El miembro debe tener un email para crear cuenta"
+            status_code=400, detail="La persona debe tener un email para crear cuenta"
         )
 
     # Crear Usuario
     from backend.core.security import get_password_hash
 
     new_user = models.User(
-        username=member.email.split("@")[0],
-        email=member.email,
+        username=persona.email.split("@")[0],
+        email=persona.email,
         password_hash=get_password_hash(payload.password),
         role="estudiante",
     )
     db.add(new_user)
-    db.flush()  # Para obtener el ID
+    db.flush()
 
-    member.user_id = new_user.id
+    persona.user_id = new_user.id
     db.commit()
 
     record_admin_action(
@@ -841,7 +841,7 @@ def create_academy_account(
         action="create_member_academy_account",
         resource_type="user",
         resource_id=str(new_user.id),
-        metadata={"persona_id": member_id},
+        metadata={"persona_id": persona_id},
     )
 
     return {"status": "success", "user_id": new_user.id, "username": new_user.username}

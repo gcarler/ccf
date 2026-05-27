@@ -460,7 +460,7 @@ class EventAudienceUpdate(BaseModel):
     target_audience: schemas.EventAudienceType
     target_role_id: Optional[int] = None
     target_role_ids: Optional[List[int]] = None
-    target_member_ids: Optional[List[int]] = None
+    target_member_ids: Optional[List[str]] = None
 
 
 class VisitorCreate(BaseModel):

@@ -532,24 +532,28 @@ def award_milestone_bulk(
 ):
     """Asigna un hito a una lista de miembros de forma masiva."""
     badge_id = payload["badge_id"]
-    member_ids = payload["member_ids"]  # List of member IDs
+    persona_ids = payload.get("persona_ids", payload.get("member_ids", []))
 
+    import uuid as _uuid
     awarded_count = 0
-    for m_id in member_ids:
-        persona = db.query(models.Persona).filter(models.Persona.id == m_id).first()
-        if member and member.user_id:
-            # Verificar si ya lo tiene
+    for persona_id in persona_ids:
+        try:
+            pid = _uuid.UUID(str(persona_id))
+        except (ValueError, AttributeError):
+            continue
+        persona = db.query(models.Persona).filter(models.Persona.id == pid).first()
+        if persona and persona.user_id:
             exists = (
                 db.query(models.UserBadge)
                 .filter(
-                    models.UserBadge.user_id == member.user_id,
+                    models.UserBadge.user_id == persona.user_id,
                     models.UserBadge.badge_id == badge_id,
                 )
                 .first()
             )
 
             if not exists:
-                ub = models.UserBadge(user_id=member.user_id, badge_id=badge_id)
+                ub = models.UserBadge(user_id=persona.user_id, badge_id=badge_id)
                 db.add(ub)
                 awarded_count += 1
 

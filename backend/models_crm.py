@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import uuid
 
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy import func as _func
+
 from backend.models_shared import *
 from backend.models_shared import _utcnow
 
@@ -268,6 +271,27 @@ class Persona(Base):
     origen_fecha = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow, index=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+    # Computed aliases used by evangelism module
+    @hybrid_property
+    def nombre_completo(self):
+        parts = [self.first_name or "", self.last_name or ""]
+        return " ".join(p for p in parts if p).strip() or "Sin nombre"
+
+    @nombre_completo.expression
+    def nombre_completo(cls):
+        return _func.trim(_func.concat(
+            _func.coalesce(cls.first_name, ""), " ",
+            _func.coalesce(cls.last_name, "")
+        ))
+
+    @hybrid_property
+    def telefono(self):
+        return self.phone or self.mobile_phone
+
+    @telefono.expression
+    def telefono(cls):
+        return _func.coalesce(cls.phone, cls.mobile_phone)
 
     user = relationship("User", backref=backref("member_profile", uselist=False))
     family = relationship("Family", overlaps="family,members,personas")

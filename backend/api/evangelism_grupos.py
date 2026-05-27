@@ -875,7 +875,7 @@ def add_faro_attendance(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    member_ids = payload.get("member_ids", [])
+    member_ids = payload.get("persona_ids") or payload.get("member_ids", [])
     attendees = payload.get("attendees")
 
     session = (
