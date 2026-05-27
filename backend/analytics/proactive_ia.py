@@ -46,27 +46,6 @@ def run_proactive_analysis(db: Session):
         )
         insights_created += 1
 
-    # 2. Analyze CRM Pipeline Velocity
-    new_leads = (
-        db.query(models.ConsolidationPipeline)
-        .filter(
-            models.ConsolidationPipeline.stage == "new",
-            models.ConsolidationPipeline.created_at < (_utcnow() - timedelta(days=3)),
-        )
-        .all()
-    )
-
-    if len(new_leads) > 0:
-        crud.create_agent_insight(
-            db,
-            schemas.AgentInsightCreate(
-                title="Cuello de Botella en Consolidación",
-                insight_type="operational",
-                payload=f"Hay {len(new_leads)} nuevos prospectos esperando llamada inicial por más de 72 horas.",
-            ),
-        )
-        insights_created += 1
-
     # 3. High Performance Recognition
     top_performers = db.query(models.User).filter(models.User.xp > 1000).limit(5).all()
     if top_performers:

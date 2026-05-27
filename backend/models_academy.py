@@ -292,7 +292,7 @@ class CellGroupMember(Base):
     fecha_ingreso = Column(DateTime, default=_utcnow)
     activo = Column(Boolean, default=True, index=True)
 
-    cell_group = relationship("CellGroup", back_populates="cell_members")
+    cell_group = relationship("CellGroup", back_populates="base_attendees")
     persona = relationship("Persona")
 
 
@@ -337,7 +337,7 @@ class CellGroupSession(Base):
     created_at = Column(DateTime, default=_utcnow)
 
     cell_group = relationship("CellGroup")
-    season = relationship("CampaignSeason")
+    season = relationship("CampaignSeason", foreign_keys=[season_id])
     reported_by_persona = relationship("Persona")
 
 
@@ -399,6 +399,22 @@ class CampaignSeason(Base):
     created_at = Column(DateTime, default=_utcnow)
 
 
+class ConsolidationPipeline(Base):
+    """Pipeline leads table (legacy). Referenced by multiple modules."""
+
+    __tablename__ = "consolidation_pipeline"
+    id = Column(Integer, primary_key=True, index=True)
+    first_name = Column(String(100), nullable=False, index=True)
+    last_name = Column(String(100), nullable=False, index=True)
+    phone = Column(String(20), nullable=False)
+    source = Column(String(100), nullable=True)
+    landing_page = Column(String(500), nullable=True)
+    campaign = Column(String(200), nullable=True, index=True)
+    stage = Column(String(20), default="new", index=True)
+    notes = Column(Text, nullable=True)
+    assigned_pastor_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 
 class Enrollment(Base):

@@ -31,8 +31,6 @@ class ContactRecord:
     notes: Optional[str] = None
     spiritual_status: str = "Nuevo"
     church_role: str = "Visitante"
-    # Optional: create a ConsolidationPipeline lead in addition to the Case
-    create_pipeline_lead: bool = False
     # Optional: extra notes to append (e.g. book title, course name)
     extra_notes: list[str] = field(default_factory=list)
 
@@ -44,7 +42,6 @@ class ContactResult:
     member_created: bool = False
     case: Optional[models.ConsolidationCase] = None
     case_created: bool = False
-    pipeline_lead: Optional[models.ConsolidationPipeline] = None
 
 
 def _normalize(val: Optional[str]) -> Optional[str]:
@@ -112,22 +109,6 @@ class PublicContactTracker:
         db.flush()
         result.case = case
         result.case_created = True
-
-        # 4. Optionally create a ConsolidationPipeline lead
-        if record.create_pipeline_lead:
-            pipeline_lead = models.ConsolidationPipeline(
-                first_name=record.first_name or "Visitante",
-                last_name=record.last_name or "",
-                phone=phone or "",
-                source=record.source,
-                landing_page=record.landing_page,
-                campaign=record.campaign,
-                stage="new",
-                notes="\n".join(notes_lines) if notes_lines else None,
-            )
-            db.add(pipeline_lead)
-            db.flush()
-            result.pipeline_lead = pipeline_lead
 
         return result
 

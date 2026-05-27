@@ -914,6 +914,30 @@ class ConsolidationTask(ConsolidationTaskBase):
     model_config = orm_config
 
 
+class ConsolidationPipelineCreate(BaseModel):
+    first_name: str
+    last_name: str
+    phone: str
+    source: Optional[str] = None
+    landing_page: Optional[str] = None
+    campaign: Optional[str] = None
+    stage: str = "new"
+    notes: Optional[str] = None
+    assigned_pastor_id: Optional[int] = None
+
+
+class ConsolidationPipelineUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone: Optional[str] = None
+    source: Optional[str] = None
+    landing_page: Optional[str] = None
+    campaign: Optional[str] = None
+    stage: Optional[str] = None
+    notes: Optional[str] = None
+    assigned_pastor_id: Optional[int] = None
+
+
 class Family(BaseModel):
     id: int
     name: str

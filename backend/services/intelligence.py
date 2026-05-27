@@ -30,26 +30,6 @@ class IntelligenceMESH:
         """Detecta miembros o leads que necesitan atención inmediata."""
         insights = []
 
-        # 1. Leads estancados en el pipeline
-        one_week_ago = dt.datetime.now() - dt.timedelta(days=7)
-        stagnant_leads = (
-            db.query(models.ConsolidationPipeline)
-            .filter(
-                models.ConsolidationPipeline.updated_at <= one_week_ago,
-                models.ConsolidationPipeline.stage != "converted",
-            )
-            .all()
-        )
-
-        if stagnant_leads:
-            insights.append(
-                {
-                    "title": "Abandono en Consolidación",
-                    "type": "pastoral_alert",
-                    "payload": f"Hay {len(stagnant_leads)} personas sin seguimiento en la última semana. Riesgo de enfriamiento.",
-                }
-            )
-
         # 2. Miembros sin comunicación reciente
         # (Heurística: Miembros activos con > 30 días sin logs de comunicación)
         # implementation omitted for brevity but logic is clear

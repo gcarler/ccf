@@ -1083,23 +1083,6 @@ def crm_analytics(
         .count()
     )
 
-    # Pipeline por etapa
-    pipeline_rows = (
-        db.query(
-            models.ConsolidationPipeline.stage,
-            sqlfunc.count(models.ConsolidationPipeline.id),
-        )
-        .group_by(models.ConsolidationPipeline.stage)
-        .all()
-    )
-    pipeline_by_stage = {}
-    for stage, count in pipeline_rows:
-        normalized_stage = schemas.normalize_pipeline_stage(stage)
-        pipeline_by_stage[normalized_stage] = (
-            pipeline_by_stage.get(normalized_stage, 0) + count
-        )
-    total_leads = sum(pipeline_by_stage.values())
-
     # Consejería
     open_counseling = (
         db.query(models.CounselingTicket)
@@ -1129,8 +1112,6 @@ def crm_analytics(
     return {
         "total_members": total_members,
         "active_members": active_members,
-        "total_leads": total_leads,
-        "pipeline_by_stage": pipeline_by_stage,
         "open_counseling": open_counseling,
         "events_this_month": events_this_month,
         "total_groups": total_groups,

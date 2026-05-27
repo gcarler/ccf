@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 @router.get("/consolidation/cases/{case_id}", response_model=dict)
 def get_consolidation_case(
-    case_id: int,
+    case_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -46,11 +46,11 @@ def create_consolidation_case(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    member = (
-        db.query(models.Member).filter(models.Member.id == payload.persona_id).first()
+    persona = (
+        db.query(models.Persona).filter(models.Persona.id == payload.persona_id).first()
     )
-    if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+    if not persona:
+        raise HTTPException(status_code=404, detail="Persona not found")
     row = models.ConsolidationCase(**payload.model_dump())
     db.add(row)
     db.commit()
@@ -60,7 +60,7 @@ def create_consolidation_case(
 
 @router.patch("/consolidation/cases/{case_id}", response_model=dict)
 def update_consolidation_case(
-    case_id: int,
+    case_id: str,
     payload: schemas.ConsolidationCaseUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -220,7 +220,7 @@ def list_consolidation_cases(
 
 @router.delete("/consolidation/cases/{case_id}", status_code=204)
 def delete_consolidation_case(
-    case_id: int,
+    case_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -239,7 +239,7 @@ def delete_consolidation_case(
 
 @router.get("/consolidation/cases/{case_id}/tasks", response_model=List[dict])
 def list_consolidation_tasks(
-    case_id: int,
+    case_id: str,
     status_filter: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -279,9 +279,9 @@ def list_consolidation_tasks(
 
 @router.patch("/consolidation/cases/{case_id}/tasks/{task_id}", response_model=dict)
 def update_consolidation_task(
-    case_id: int,
-    task_id: int,
-    payload: schemas.ConsolidationFollowUpTaskUpdate,
+    case_id: str,
+    task_id: str,
+    payload: schemas.ConsolidationTaskUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -316,7 +316,7 @@ def update_consolidation_task(
 
 @router.get("/consolidation/cases/{case_id}/interactions", response_model=List[dict])
 def list_consolidation_interactions(
-    case_id: int,
+    case_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -339,7 +339,7 @@ def list_consolidation_interactions(
         {
             "id": i.id,
             "case_id": i.case_id,
-            "performed_by_member_id": i.performed_by_member_id,
+            "performed_by_id": i.performed_by_id,
             "interaction_type": i.interaction_type,
             "interaction_date": i.interaction_date.isoformat() if i.interaction_date else None,
             "result": i.result,
@@ -374,260 +374,12 @@ def update_consolidation_assignment(
     return {
         "id": assignment.id,
         "case_id": assignment.case_id,
-        "assigned_by_member_id": assignment.assigned_by_member_id,
-        "assigned_to_member_id": assignment.assigned_to_member_id,
+        "assigned_by_id": assignment.assigned_by_id,
+        "assigned_to_id": assignment.assigned_to_id,
         "status": assignment.status,
         "priority": assignment.priority,
         "end_date": assignment.end_date.isoformat() if assignment.end_date else None,
         "created_at": assignment.created_at.isoformat() if assignment.created_at else None,
-    }
-
-
-# --- CONSOLIDATION & PIPELINE ---
-
-
-@router.get("/consolidation/pipeline", response_model=List[dict])
-def get_pipeline(
-    stage: Optional[str] = None,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    leads = crud.get_pipeline_leads(db, stage=stage)
-    result = []
-    for lead in leads:
-        result.append(
-            {
-                "id": lead.id,
-                "first_name": lead.first_name,
-                "last_name": lead.last_name,
-                "phone": lead.phone,
-                "source": lead.source,
-                "stage": schemas.normalize_pipeline_stage(lead.stage),
-                "notes": lead.notes,
-                "created_at": lead.created_at.isoformat(),
-                "assigned_pastor_id": lead.assigned_pastor_id,
-            }
-        )
-    return result
-
-
-@router.post("/consolidation/pipeline", response_model=dict)
-async def create_pipeline_lead(
-    payload: schemas.ConsolidationPipelineCreate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    lead = crud.create_pipeline_lead(db, payload)
-
-    record_admin_action(
-        db,
-        current_user,
-        action="create_pipeline_lead",
-        resource_type="pipeline_lead",
-        resource_id=str(lead.id),
-        metadata={
-            "source": lead.source,
-            "stage": lead.stage,
-            "assigned_pastor_id": lead.assigned_pastor_id,
-        },
-    )
-
-    await manager.broadcast_event(
-        {
-            "type": "PIPELINE_CREATED",
-            "lead_id": lead.id,
-            "stage": schemas.normalize_pipeline_stage(lead.stage),
-            "actor": current_user.username,
-        },
-        room="pastoral_ops",
-    )
-
-    return {
-        "id": lead.id,
-        "first_name": lead.first_name,
-        "last_name": lead.last_name,
-        "phone": lead.phone,
-        "source": lead.source,
-        "stage": schemas.normalize_pipeline_stage(lead.stage),
-        "notes": lead.notes,
-        "created_at": lead.created_at.isoformat() if lead.created_at else None,
-        "assigned_pastor_id": lead.assigned_pastor_id,
-    }
-
-
-@router.get("/consolidation/pipeline/{lead_id}", response_model=dict)
-def get_pipeline_lead(
-    lead_id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    """Obtiene el detalle de un prospecto especifico."""
-    lead = (
-        db.query(models.ConsolidationPipeline)
-        .filter(models.ConsolidationPipeline.id == lead_id)
-        .first()
-    )
-    if not lead:
-        raise HTTPException(status_code=404, detail="Lead not found")
-    return {
-        "id": lead.id,
-        "first_name": lead.first_name,
-        "last_name": lead.last_name,
-        "phone": lead.phone,
-        "source": lead.source,
-        "stage": schemas.normalize_pipeline_stage(lead.stage),
-        "notes": lead.notes,
-        "created_at": lead.created_at.isoformat(),
-        "assigned_pastor_id": lead.assigned_pastor_id,
-    }
-
-
-@router.patch("/consolidation/pipeline/{lead_id}", response_model=dict)
-async def update_pipeline_lead(
-    lead_id: int,
-    payload: schemas.ConsolidationPipelineUpdate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    lead = crud.update_pipeline_lead(db, lead_id=lead_id, payload=payload)
-    if not lead:
-        raise HTTPException(status_code=404, detail="Lead not found")
-
-    # Audit logging for pipeline movements
-    record_admin_action(
-        db,
-        current_user,
-        action="update_pipeline_lead",
-        resource_type="pipeline_lead",
-        resource_id=str(lead.id),
-        metadata=payload.model_dump(exclude_unset=True),
-    )
-
-    # BROADCAST REAL-TIME UPDATE
-    await manager.broadcast_event(
-        {
-            "type": "PIPELINE_UPDATED",
-            "lead_id": lead.id,
-            "stage": lead.stage,
-            "actor": current_user.username,
-        },
-        room="pastoral_ops",
-    )
-
-    return {
-        "status": "success",
-        "lead_id": lead.id,
-        "stage": schemas.normalize_pipeline_stage(lead.stage),
-    }
-
-
-@router.delete("/consolidation/pipeline/{lead_id}", status_code=204)
-def delete_pipeline_lead(
-    lead_id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    """Elimina un lead del pipeline de consolidacion."""
-    lead = (
-        db.query(models.ConsolidationPipeline)
-        .filter(models.ConsolidationPipeline.id == lead_id)
-        .first()
-    )
-    if not lead:
-        raise HTTPException(status_code=404, detail="Lead not found")
-    db.delete(lead)
-    db.commit()
-    return None
-
-
-@router.get(
-    "/consolidation/pipeline/{lead_id}/audit",
-    response_model=List[schemas.AdminAuditLog],
-)
-def get_pipeline_lead_audit(
-    lead_id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    """Retrieve the audit trail for a specific pipeline lead."""
-    logs = (
-        db.query(models.AdminAuditLog)
-        .filter(
-            models.AdminAuditLog.resource_type == "pipeline_lead",
-            models.AdminAuditLog.resource_id == str(lead_id),
-        )
-        .order_by(models.AdminAuditLog.created_at.desc())
-        .all()
-    )
-    return logs
-
-
-@router.get("/pipeline/leads/{lead_id}/calls", response_model=List[dict])
-def get_lead_calls(
-    lead_id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    logs = crud.get_pastoral_call_logs(db, lead_id)
-    return [
-        {
-            "id": l.id,
-            "outcome": l.outcome,
-            "notes": l.notes,
-            "prayer_requests": None,
-            "created_at": l.created_at.isoformat() if l.created_at else None,
-        }
-        for l in logs
-    ]
-
-
-@router.post("/pipeline/leads/{lead_id}/calls", response_model=dict)
-def create_lead_call(
-    lead_id: int,
-    payload: dict,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
-):
-    lead = (
-        db.query(models.ConsolidationPipeline)
-        .filter(models.ConsolidationPipeline.id == lead_id)
-        .first()
-    )
-    if not lead:
-        raise HTTPException(status_code=404, detail="Lead not found")
-
-    outcome = str(payload.get("outcome", "Exitoso"))
-    notes = payload.get("notes")
-    duration_seconds = int(payload.get("duration_seconds", 0) or 0)
-
-    row = models.PastoralCallLog(
-        lead_id=lead_id,
-        pastor_id=current_user.id,
-        outcome=outcome,
-        notes=notes,
-        duration_seconds=duration_seconds,
-    )
-    db.add(row)
-    db.commit()
-    db.refresh(row)
-
-    record_admin_action(
-        db,
-        current_user,
-        action="create_pastoral_call_log",
-        resource_type="pipeline_lead",
-        resource_id=str(lead_id),
-        metadata={"outcome": outcome},
-    )
-
-    return {
-        "id": row.id,
-        "lead_id": row.lead_id,
-        "pastor_id": row.pastor_id,
-        "outcome": row.outcome,
-        "notes": row.notes,
-        "prayer_requests": payload.get("prayer_requests"),
-        "created_at": row.created_at.isoformat() if row.created_at else None,
     }
 
 
@@ -1426,21 +1178,6 @@ def get_crm_analytics_summary(
         )
         .count()
     )
-    pipeline_rows = (
-        db.query(
-            models.ConsolidationPipeline.stage,
-            func.count(models.ConsolidationPipeline.id),
-        )
-        .group_by(models.ConsolidationPipeline.stage)
-        .all()
-    )
-    pipeline_by_stage = {}
-    for stage, count in pipeline_rows:
-        normalized_stage = schemas.normalize_pipeline_stage(stage)
-        pipeline_by_stage[normalized_stage] = (
-            pipeline_by_stage.get(normalized_stage, 0) + count
-        )
-    total_leads = sum(pipeline_by_stage.values())
     open_counseling = (
         db.query(models.CounselingTicket)
         .filter(models.CounselingTicket.status == "open")
@@ -1461,8 +1198,6 @@ def get_crm_analytics_summary(
     return {
         "total_members": total_members,
         "active_members": active_members,
-        "total_leads": total_leads,
-        "pipeline_by_stage": pipeline_by_stage,
         "open_counseling": open_counseling,
         "events_this_month": events_this_month,
         "total_groups": total_groups,
@@ -1860,7 +1595,7 @@ def get_newsletter_leads(
     """
     query = (
         db.query(models.ConsolidationCase)
-        .join(models.Member, models.ConsolidationCase.persona_id == models.Member.id)
+        .join(models.Persona, models.ConsolidationCase.persona_id == models.Persona.id)
         .filter(
             models.ConsolidationCase.source.like("%newsletter%"),
             models.ConsolidationCase.status == "active",
@@ -1890,14 +1625,13 @@ def get_newsletter_leads(
 
     leads = []
     for case in cases:
-        member = case.persona
+        persona = case.persona
         leads.append({
             "case_id": case.id,
-            "member_id": member.id if member else None,
-            "first_name": member.first_name if member else "",
-            "last_name": member.last_name if member else "",
-            "email": member.email if member else None,
-            "phone": member.phone if member else None,
+            "persona_id": persona.id if persona else None,
+            "nombre_completo": persona.nombre_completo if persona else "",
+            "email": persona.email if persona else None,
+            "telefono": persona.telefono if persona else None,
             "source": case.source,
             "stage": case.stage,
             "notes": case.notes,
@@ -1926,7 +1660,7 @@ def export_newsletter_leads_csv(
     """
     query = (
         db.query(models.ConsolidationCase)
-        .join(models.Member, models.ConsolidationCase.persona_id == models.Member.id)
+        .join(models.Persona, models.ConsolidationCase.persona_id == models.Persona.id)
         .filter(
             models.ConsolidationCase.source.like("%newsletter%"),
             models.ConsolidationCase.status == "active",

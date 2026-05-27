@@ -108,30 +108,6 @@ def _family_nodes(db: Session, limit: int) -> List[Dict[str, Any]]:
     ]
 
 
-def _lead_nodes(db: Session, limit: int) -> List[Dict[str, Any]]:
-    leads = (
-        db.query(models.ConsolidationPipeline)
-        .order_by(models.ConsolidationPipeline.created_at.desc())
-        .limit(limit)
-        .all()
-    )
-    nodes: List[Dict[str, Any]] = []
-    for lead in leads:
-        nodes.append(
-            {
-                "id": f"lead-{lead.id}",
-                "type": "lead",
-                "label": f"{lead.first_name} {lead.last_name}",
-                "detail": lead.phone,
-                "meta": {
-                    "stage": lead.stage,
-                    "pastor_id": lead.assigned_pastor_id,
-                },
-            }
-        )
-    return nodes
-
-
 def _project_nodes(db: Session, limit: int) -> List[Dict[str, Any]]:
     projects = (
         db.query(models.Project)
@@ -171,7 +147,6 @@ def build_graph_snapshot(
         "asset": lambda: _asset_nodes(db, limit // 2),
         "fund": lambda: _fund_nodes(db),
         "family": lambda: _family_nodes(db, limit // 3),
-        "lead": lambda: _lead_nodes(db, limit // 2),
         "project": lambda: _project_nodes(db, limit // 2),
     }
 
@@ -241,35 +216,6 @@ def build_graph_snapshot(
                     "from": pid,
                     "to": fid,
                     "relation": "BELONGS_TO_FAMILY",
-                }
-            )
-
-    # Lead -> Pastor edges
-    leads = (
-        db.query(models.ConsolidationPipeline)
-        .filter(models.ConsolidationPipeline.assigned_pastor_id.isnot(None))
-        .limit(limit)
-        .all()
-    )
-    for lead in leads:
-        source = f"lead-{lead.id}"
-        target = f"user-{lead.assigned_pastor_id}"
-        if source in seen:
-            if target not in seen:
-                nodes.append(
-                    {
-                        "id": target,
-                        "type": "pastor",
-                        "label": f"Pastor #{lead.assigned_pastor_id}",
-                        "detail": "Asignado",
-                    }
-                )
-                seen.add(target)
-            edges.append(
-                {
-                    "from": source,
-                    "to": target,
-                    "relation": "ASSIGNED_TO",
                 }
             )
 

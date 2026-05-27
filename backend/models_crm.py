@@ -171,7 +171,11 @@ class Ministry(Base):
     members = relationship(
         "Persona",
         secondary="member_ministries",
+        primaryjoin="Ministry.id == MemberMinistry.ministry_id",
+        secondaryjoin="MemberMinistry.persona_id == Persona.id",
         overlaps="persona,personas,ministries,ministry",
+        viewonly=True,
+        foreign_keys="[MemberMinistry.ministry_id, MemberMinistry.persona_id]",
     )
 
 
@@ -280,43 +284,7 @@ class Member(Base):
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
     user = relationship("User", backref=backref("member_profile", uselist=False))
-    family = relationship("Family", back_populates="members")
-    ministries = relationship(
-        "Ministry",
-        secondary="member_ministries",
-        back_populates="members",
-        overlaps="member,members,ministries,ministry",
-    )
-    donations = relationship("Donation", back_populates="member")
-    tasks = relationship("CrmTask", back_populates="member")
-    event_attendances = relationship(
-        "EventAttendance", back_populates="member", cascade="all, delete-orphan"
-    )
-    volunteer_shifts = relationship(
-        "VolunteerShift", back_populates="member", cascade="all, delete-orphan"
-    )
-    communication_logs = relationship(
-        "CommunicationLog", back_populates="member", cascade="all, delete-orphan"
-    )
-    positions = relationship(
-        "MemberPosition", back_populates="member", cascade="all, delete-orphan"
-    )
-    consolidation_cases = relationship(
-        "ConsolidationCase",
-        foreign_keys="ConsolidationCase.persona_id",
-        back_populates="persona",
-        cascade="all, delete-orphan",
-    )
-    consolidated_cases_as_pastor = relationship(
-        "ConsolidationCase",
-        foreign_keys="ConsolidationCase.assigned_pastor_id",
-        back_populates="assigned_pastor",
-    )
-    consolidated_cases_as_leader = relationship(
-        "ConsolidationCase",
-        foreign_keys="ConsolidationCase.assigned_leader_id",
-        back_populates="assigned_leader",
-    )
+    family = relationship("Family", overlaps="family,members,personas")
     colombian_department = relationship("ColombianDepartment", foreign_keys=[colombian_department_id])
 
     # --- Origen y tags (evangelismo) ---
@@ -540,24 +508,6 @@ class ConsolidationTask(Base):
     assignment = relationship(
         "ConsolidationAssignment", back_populates="tasks"
     )
-
-
-class ConsolidationPipeline(Base):
-    __tablename__ = "consolidation_pipeline"
-    id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String(100), nullable=False, index=True)
-    last_name = Column(String(100), nullable=False, index=True)
-    phone = Column(String(20), nullable=False)
-    source = Column(String(100), nullable=True)
-    landing_page = Column(String(500), nullable=True)
-    campaign = Column(String(200), nullable=True, index=True)
-    stage = Column(String(20), default="new", index=True)
-    notes = Column(Text, nullable=True)
-    assigned_pastor_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    pastor = relationship("User", back_populates="assigned_leads")
-
 
 class Donation(Base):
     __tablename__ = "donations"
@@ -869,7 +819,3 @@ class EvangelismStrategy(Base):
 
 
 
-
-
-# Backward-compat alias
-ConsolidationFollowUpTask = ConsolidationTask

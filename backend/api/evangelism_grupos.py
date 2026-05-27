@@ -1228,19 +1228,9 @@ def register_faro_visitor(
     )
     db.add(case)
 
-    lead = models.ConsolidationPipeline(
-        first_name=visitor.first_name,
-        last_name=visitor.last_name,
-        phone=visitor.phone or "",
-        source="faro_session",
-        stage="new",
-        notes=f"Registrado como invitado en sesión de grupo (ID {visitor.cell_group_id})",
-    )
-    db.add(lead)
-
     db.commit()
 
-    return {"status": "created", "member_id": new_member.id}
+    return {"status": "created", "member_id": new_persona.id}
 
 
 # ── Sessions & Attendance ──

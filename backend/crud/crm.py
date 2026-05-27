@@ -243,78 +243,6 @@ def update_member(db: Session, member_id: int, payload: schemas.MemberUpdate):
     return row
 
 
-# ── Pipeline ───────────────────────────────────────────
-
-
-def create_pipeline_lead(db: Session, payload: schemas.ConsolidationPipelineCreate):
-    row = models.ConsolidationPipeline(**payload.model_dump())
-    db.add(row)
-    db.commit()
-    db.refresh(row)
-    return row
-
-
-def update_pipeline_lead(
-    db: Session, lead_id: int, payload: schemas.ConsolidationPipelineUpdate
-):
-    row = (
-        db.query(models.ConsolidationPipeline)
-        .filter(models.ConsolidationPipeline.id == lead_id)
-        .first()
-    )
-    if not row:
-        return None
-    for key, value in payload.model_dump(exclude_unset=True).items():
-        setattr(row, key, value)
-    db.commit()
-    db.refresh(row)
-    return row
-
-
-def get_pipeline_leads(
-    db: Session,
-    stage: str | None = None,
-    assigned_pastor_id: int | None = None,
-    search: str | None = None,
-):
-    query = db.query(models.ConsolidationPipeline)
-    if stage:
-        query = query.filter(models.ConsolidationPipeline.stage == stage)
-    if assigned_pastor_id is not None:
-        query = query.filter(
-            models.ConsolidationPipeline.assigned_pastor_id == assigned_pastor_id
-        )
-    if search:
-        like = f"%{search}%"
-        query = query.filter(
-            or_(
-                models.ConsolidationPipeline.first_name.ilike(like),
-                models.ConsolidationPipeline.last_name.ilike(like),
-            )
-        )
-    return query.all()
-
-
-def create_pastoral_call_log(
-    db: Session, lead_id: int, call_log: schemas.PastoralCallLogCreate
-):
-    row = models.PastoralCallLog(
-        lead_id=lead_id, pastor_id=call_log.pastor_id, outcome=call_log.outcome
-    )
-    db.add(row)
-    db.commit()
-    db.refresh(row)
-    return row
-
-
-def get_pastoral_call_logs(db: Session, lead_id: int):
-    return (
-        db.query(models.PastoralCallLog)
-        .filter(models.PastoralCallLog.lead_id == lead_id)
-        .all()
-    )
-
-
 # ── CRM Events ─────────────────────────────────────────
 
 
@@ -359,15 +287,12 @@ def get_crm_tasks(
     db: Session,
     assignee_id: Optional[int] = None,
     persona_id: Optional[str] = None,
-    lead_id: Optional[int] = None,
 ) -> List[models.CrmTask]:
     query = db.query(models.CrmTask)
     if assignee_id:
         query = query.filter(models.CrmTask.assignee_id == assignee_id)
     if persona_id:
         query = query.filter(models.CrmTask.persona_id == persona_id)
-    if lead_id:
-        query = query.filter(models.CrmTask.lead_id == lead_id)
     return query.order_by(models.CrmTask.due_date.asc()).all()
 
 
@@ -1000,53 +925,6 @@ def delete_member(db: Session, member_id: int) -> bool:
     return True
 
 
-# ── Pipeline ───────────────────────────────────────────
-
-
-def get_pipeline_lead(
-    db: Session, lead_id: int
-) -> Optional[models.ConsolidationPipeline]:
-    return (
-        db.query(models.ConsolidationPipeline)
-        .filter(models.ConsolidationPipeline.id == lead_id)
-        .first()
-    )
-
-
-def delete_pipeline_lead(db: Session, lead_id: int) -> bool:
-    row = (
-        db.query(models.ConsolidationPipeline)
-        .filter(models.ConsolidationPipeline.id == lead_id)
-        .first()
-    )
-    if not row:
-        return False
-    db.delete(row)
-    db.commit()
-    return True
-
-
-def get_pastoral_call_log(db: Session, log_id: int) -> Optional[models.PastoralCallLog]:
-    return (
-        db.query(models.PastoralCallLog)
-        .filter(models.PastoralCallLog.id == log_id)
-        .first()
-    )
-
-
-def delete_pastoral_call_log(db: Session, log_id: int) -> bool:
-    row = (
-        db.query(models.PastoralCallLog)
-        .filter(models.PastoralCallLog.id == log_id)
-        .first()
-    )
-    if not row:
-        return False
-    db.delete(row)
-    db.commit()
-    return True
-
-
 # ── CRM Events ─────────────────────────────────────────
 
 
@@ -1447,7 +1325,7 @@ def delete_community_card(db: Session, card_id: int) -> bool:
 # ── Consolidation Cases ─────────────────────────────────
 
 
-def get_consolidation_case(db: Session, case_id: int):
+def get_consolidation_case(db: Session, case_id: str):
     return (
         db.query(models.ConsolidationCase)
         .filter(models.ConsolidationCase.id == case_id)
@@ -1466,7 +1344,7 @@ def create_consolidation_case(
 
 
 def update_consolidation_case(
-    db: Session, case_id: int, payload: schemas.ConsolidationCaseUpdate
+    db: Session, case_id: str, payload: schemas.ConsolidationCaseUpdate
 ) -> Optional[models.ConsolidationCase]:
     row = (
         db.query(models.ConsolidationCase)
@@ -1482,7 +1360,7 @@ def update_consolidation_case(
     return row
 
 
-def delete_consolidation_case(db: Session, case_id: int) -> bool:
+def delete_consolidation_case(db: Session, case_id: str) -> bool:
     row = (
         db.query(models.ConsolidationCase)
         .filter(models.ConsolidationCase.id == case_id)

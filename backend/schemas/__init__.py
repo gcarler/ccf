@@ -82,6 +82,8 @@ from backend.schemas.crm import (EVENT_TYPES, MINISTRY_ROLES,
                                  ConsolidationTaskBase,
                                  ConsolidationTaskCreate,
                                  ConsolidationTaskUpdate,
+                                 ConsolidationPipelineCreate,
+                                 ConsolidationPipelineUpdate,
                                  CounselingTicket,
                                  CounselingTicketBase, CounselingTicketCreate,
                                  CounselingTicketUpdate, CrmEvent,
@@ -126,8 +128,7 @@ from backend.schemas.crm import (EVENT_TYPES, MINISTRY_ROLES,
                                  TeachingAssignmentCreate,
                                  TeachingAssignmentUpdate, VolunteerShift,
                                  VolunteerShiftBase, VolunteerShiftCreate,
-                                 VolunteerShiftUpdate,
-                                 normalize_pipeline_stage)
+                                 VolunteerShiftUpdate)
 # ── Dashboard & Analytics ───────────────────────────────────────────────────
 from backend.schemas.dashboard import (AcademyDashboard, AdminGlobalDashboard,
                                        AssetsDashboard, ChartDataPoint,

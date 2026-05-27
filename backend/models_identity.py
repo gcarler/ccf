@@ -42,8 +42,6 @@ class User(Base):
     badges = relationship("UserBadge", back_populates="user")
     ui_prefs = relationship("UserUIPreference", back_populates="user", uselist=False)
 
-    # Relationships for CRM & Pipeline
-    assigned_leads = relationship("ConsolidationPipeline", back_populates="pastor")
 
     # Relationships for Projects
     assigned_tasks = relationship("ProjectTask", back_populates="assignee")

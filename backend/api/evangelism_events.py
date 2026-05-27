@@ -1054,16 +1054,6 @@ def fast_checkin_visitor(
         )
         db.add(case)
 
-        # Pipeline lead for pastoral follow-up
-        lead = models.ConsolidationPipeline(
-            first_name=visitor.first_name,
-            last_name=visitor.last_name,
-            phone=new_visitor.phone or "",
-            source="evangelism_event",
-            stage="new",
-            notes=f"Registrado como visitante en evento {event.name or event_id}",
-        )
-        db.add(lead)
     db.commit()
 
     message = (
