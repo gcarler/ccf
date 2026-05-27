@@ -5,8 +5,7 @@ from backend.models_academy import (  # noqa: F401
     Assessment, AssessmentAttempt, AssessmentOption, AssessmentQuestion,
     AssignmentSubmission, Certificate, Course, CourseAttendance,
     CoursePrerequisite, Enrollment, Family, CampaignSeason, FormalActa,
-    ForumComment, ForumThread, GloryHouse, GloryHouseAttendance,
-    GloryHouseMember, GloryHouseSession, Lesson, LessonProgress, Resource)
+    ForumComment, ForumThread, Lesson, LessonProgress, Resource)
 
 # Assets / Agents / Governance / Ops
 from backend.models_assets import (AssetItem, InventoryItem,  # noqa: F401

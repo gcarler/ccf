@@ -138,23 +138,23 @@ def get_expected_members_for_event(
     return db.query(models.Persona).all()
 
 
-def faro_expected_member_rows(db: Session, glory_house_id: int):
+def expected_group_rows(db: Session, grupo_id: int):
     rows = (
-        db.query(models.GloryHouseMember, models.Persona)
-        .join(models.Persona, models.Persona.id == models.GloryHouseMember.persona_id)
-        .filter(models.GloryHouseMember.glory_house_id == glory_house_id)
+        db.query(models.ParticipanteGrupo, models.Persona)
+        .join(models.Persona, models.Persona.id == models.ParticipanteGrupo.persona_id)
+        .filter(models.ParticipanteGrupo.grupo_id == grupo_id)
         .order_by(models.Persona.nombre_completo.asc())
         .all()
     )
-    house = (
-        db.query(models.GloryHouse)
-        .filter(models.GloryHouse.id == glory_house_id)
+    grupo = (
+        db.query(models.GrupoEvangelismo)
+        .filter(models.GrupoEvangelismo.id == grupo_id)
         .first()
     )
     seen_ids = {persona.id for _, persona in rows}
     extra_personas = []
-    if house:
-        for pid in [house.leader_persona_id, house.assistant_persona_id, house.host_persona_id]:
+    if grupo:
+        for pid in [grupo.lider_persona_id, grupo.asistente_persona_id, grupo.anfitrion_persona_id]:
             if pid and pid not in seen_ids:
                 p = (
                     db.query(models.Persona)
@@ -313,7 +313,7 @@ def _serialize_crm_task(
     }
 
 
-def faro_member_payload(
+def member_payload(
     persona: models.Persona,
     attended: bool,
     scanned_at=None,

@@ -153,17 +153,33 @@ class GrupoEvangelismo(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     estrategia_id = Column(String(50), ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"), nullable=False)
     sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=False)
+    codigo = Column(String(30), unique=True, nullable=True, index=True)
     nombre = Column(String(150), nullable=False)
     ubicacion = Column(String(255), nullable=True)
+    direccion = Column(String(255), nullable=True)
+    capacidad = Column(Integer, default=15)
     latitud = Column(Float, nullable=True)
     longitud = Column(Float, nullable=True)
     dia_reunion = Column(String(20), nullable=True)
     hora_reunion = Column(String(10), nullable=True)
     activo = Column(Boolean, default=True)
+    lider_persona_id = Column(
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+    )
+    asistente_persona_id = Column(
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+    )
+    anfitrion_persona_id = Column(
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+    )
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
     estrategia = relationship("EstrategiaEvangelismo", back_populates="grupos")
     sede = relationship("Sede")
+    lider = relationship("Persona", foreign_keys=[lider_persona_id])
+    asistente = relationship("Persona", foreign_keys=[asistente_persona_id])
+    anfitrion = relationship("Persona", foreign_keys=[anfitrion_persona_id])
     participantes = relationship("ParticipanteGrupo", back_populates="grupo", cascade="all, delete-orphan")
     sesiones = relationship("SesionGrupo", back_populates="grupo", cascade="all, delete-orphan")
 
