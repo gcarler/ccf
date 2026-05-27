@@ -240,6 +240,31 @@ class CellGroup(Base):
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
+    # ── Alias properties for schema compatibility (leader_id → leader_persona_id) ──
+    @property
+    def leader_id(self):
+        return str(self.leader_persona_id) if self.leader_persona_id else None
+
+    @leader_id.setter
+    def leader_id(self, value):
+        self.leader_persona_id = value
+
+    @property
+    def assistant_id(self):
+        return str(self.assistant_persona_id) if self.assistant_persona_id else None
+
+    @assistant_id.setter
+    def assistant_id(self, value):
+        self.assistant_persona_id = value
+
+    @property
+    def host_id(self):
+        return str(self.host_persona_id) if self.host_persona_id else None
+
+    @host_id.setter
+    def host_id(self, value):
+        self.host_persona_id = value
+
     leader = relationship("Persona", foreign_keys=[leader_persona_id])
     assistant = relationship("Persona", foreign_keys=[assistant_persona_id])
     host = relationship("Persona", foreign_keys=[host_persona_id])
@@ -258,12 +283,12 @@ class CellGroupMember(Base):
         index=True,
     )
     persona_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("personas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
-    role = Column(String(50), default="asistente")
+    role = Column(String(30), default="miembro", index=True)
 
     rol_personalizado_id = Column(
         Integer,

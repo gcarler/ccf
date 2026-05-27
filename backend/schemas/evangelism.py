@@ -287,7 +287,7 @@ class GrupoEvangelismoCreate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     leader_name: Optional[str] = None
-    evangelism_strategy_id: int
+    evangelism_strategy_id: Optional[int] = None
     leader_id: Optional[str] = None
     assistant_id: Optional[str] = None
     host_id: Optional[str] = None

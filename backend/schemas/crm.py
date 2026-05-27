@@ -115,7 +115,7 @@ class EventAttendance(EventAttendanceBase):
     model_config = orm_config
 
 class CounselingTicketBase(BaseModel):
-    persona_id: str
+    persona_id: int
     subject: str
     notes: Optional[str] = None
     status: str = "open"
@@ -839,16 +839,16 @@ class CellGroupCreate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     leader_name: Optional[str] = None
-    evangelism_strategy_id: int
-    leader_id: Optional[int] = None
-    assistant_id: Optional[int] = None
-    host_id: Optional[int] = None
+    evangelism_strategy_id: Optional[int] = None
+    leader_id: Optional[str] = None
+    assistant_id: Optional[str] = None
+    host_id: Optional[str] = None
     capacity: int = 15
     status: Optional[str] = "Activo"
     day_of_week: Optional[str] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
-    base_attendee_ids: Optional[List[int]] = None
+    base_attendee_ids: Optional[List[str]] = None
 
 class CellGroupMemberWithRole(BaseModel):
     persona_id: str
@@ -859,15 +859,15 @@ class CellGroupUpdate(BaseModel):
     name: Optional[str] = None
     zone: Optional[str] = None
     address: Optional[str] = None
-    leader_id: Optional[int] = None
-    assistant_id: Optional[int] = None
-    host_id: Optional[int] = None
+    leader_id: Optional[str] = None
+    assistant_id: Optional[str] = None
+    host_id: Optional[str] = None
     capacity: Optional[int] = None
     status: Optional[str] = None
     day_of_week: Optional[str] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
-    base_attendee_ids: Optional[List[int]] = None
+    base_attendee_ids: Optional[List[str]] = None
     base_attendees_with_roles: Optional[List[CellGroupMemberWithRole]] = None
 
 class FaroAttendanceReportItem(BaseModel):
