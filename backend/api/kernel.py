@@ -220,6 +220,11 @@ def update_church_role(persona_id: str, payload: ChurchRoleUpdate,
                        db: Session = Depends(get_db),
                        current_user=Depends(require_kernel_permission("system:config"))):
     from backend.crud import kernel as kernel_crud
+    from backend.models_kernel import ChurchRole
+    valid_roles = [r.value for r in ChurchRole]
+    if payload.church_role not in valid_roles:
+        raise HTTPException(status_code=400,
+                            detail=f"Rol inválido: {payload.church_role}. Válidos: {valid_roles}")
     result = kernel_crud.set_persona_church_role(
         db, persona_id=persona_id, church_role=payload.church_role,
         changed_by_id=current_user.id, reason=payload.reason, notes=payload.notes,
