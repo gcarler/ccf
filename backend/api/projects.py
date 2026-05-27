@@ -564,7 +564,7 @@ def list_inbox(
         db.query(models.ProjectComment, models.Project)
         .join(models.Project, models.Project.id == models.ProjectComment.project_id)
         .filter(
-            models.ProjectComment.is_resolved == False,
+            ~models.ProjectComment.is_resolved,
             models.ProjectComment.author_id != current_user.id,
         )
         .order_by(models.ProjectComment.created_at.desc())
