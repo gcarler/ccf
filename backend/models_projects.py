@@ -1,6 +1,8 @@
 from backend.models_shared import *
 from backend.models_shared import _utcnow
 
+from backend.models_identity import User
+
 
 # 4. PROJECTS & ACTIVITIES
 class Project(Base):

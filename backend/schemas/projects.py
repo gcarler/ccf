@@ -57,6 +57,15 @@ class ProjectAttachment(BaseModel):
     model_config = orm_config
 
 
+PRIORITY_MAP = {
+    "baja": "low", "bajo": "low",
+    "normal": "medium",
+    "alta": "high", "altas": "high", "alto": "high",
+    "urgente": "urgent",
+}
+PRIORITY_VALUES = {"low", "medium", "high", "urgent"}
+
+
 class ProjectTaskBase(BaseModel):
     title: str
     description: Optional[str] = None
@@ -67,6 +76,16 @@ class ProjectTaskBase(BaseModel):
     due_date: Optional[datetime] = None
     labels: List[str] = Field(default_factory=list)
     attachments: List[Any] = Field(default_factory=list)
+
+    @field_validator("priority", mode="before")
+    @classmethod
+    def _normalize_priority(cls, value: Any) -> str:
+        if isinstance(value, str):
+            v = value.lower().strip()
+            if v in PRIORITY_VALUES:
+                return v
+            return PRIORITY_MAP.get(v, "medium")
+        return "medium"
 
     @field_validator("labels", mode="before")
     @classmethod
@@ -96,6 +115,18 @@ class ProjectTaskUpdate(BaseModel):
     due_date: Optional[datetime] = None
     labels: Optional[List[str]] = None
     attachments: Optional[List[dict]] = None
+
+    @field_validator("priority", mode="before")
+    @classmethod
+    def _normalize_priority(cls, value: Any) -> Optional[str]:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            v = value.lower().strip()
+            if v in PRIORITY_VALUES:
+                return v
+            return PRIORITY_MAP.get(v, "medium")
+        return "medium"
 
     @field_validator("labels", mode="before")
     @classmethod

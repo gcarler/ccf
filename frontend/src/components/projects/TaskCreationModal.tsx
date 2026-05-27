@@ -16,14 +16,14 @@ interface Props {
 const PRIORITIES = [
     { value: 'urgent', label: 'Urgente', color: 'bg-rose-500', iconColor: 'text-rose-500' },
     { value: 'high', label: 'Alta', color: 'bg-amber-500', iconColor: 'text-amber-500' },
-    { value: 'normal', label: 'Normal', color: 'bg-blue-500', iconColor: 'text-blue-500' },
+    { value: 'medium', label: 'Normal', color: 'bg-blue-500', iconColor: 'text-blue-500' },
     { value: 'low', label: 'Baja', color: 'bg-slate-500', iconColor: 'text-slate-500' }
 ];
 
 export default function TaskCreationModal({ isOpen, defaultStatus = 'todo', onClose, onSubmit }: Props) {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [priority, setPriority] = useState('normal');
+    const [priority, setPriority] = useState('medium');
     const [assigneeId, setAssigneeId] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
 

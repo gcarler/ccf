@@ -401,9 +401,9 @@ def list_ministerial_users(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin),
+    current_user: models.User = Depends(require_active_user),
 ):
-    """Lista de usuarios. Solo para administradores."""
+    """Lista de usuarios. Requiere autenticación."""
     return crud.get_users(db, skip=skip, limit=limit)
 
 
