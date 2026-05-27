@@ -1520,13 +1520,18 @@ def delete_volunteer(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
+    """Soft-delete: desactiva turnos de voluntario y marca persona como INACTIVA."""
     persona = db.query(models.Persona).filter(models.Persona.id == uuid.UUID(persona_id)).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Volunteer not found")
+    # Cancelar turnos futuros del voluntario (datos satélite, no Persona)
     db.query(models.VolunteerShift).filter(
         models.VolunteerShift.persona_id == persona_id
     ).delete()
-    db.delete(persona)
+    # Soft-delete de la Persona
+    persona.estado_vital = "INACTIVO"
+    from datetime import date
+    persona.unregistration_date = date.today()
     db.commit()
 
 

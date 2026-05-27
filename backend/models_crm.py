@@ -220,7 +220,7 @@ class Persona(Base):
     mobile_phone = Column(String(20), nullable=True)
     landline_phone = Column(String(20), nullable=True)
     other_phone = Column(String(20), nullable=True)
-    church_role = Column(String(50), default="Miembro", index=True)
+    church_role = Column(String(50), default="Miembro", index=True, doc="DEPRECADO: usar church_role_effective (Kernel PersonaRoleAssignment)")
     is_baptized = Column(Boolean, default=False, index=True)
     fecha_bautismo = Column(Date, nullable=True)
     spiritual_status = Column(String(50), default="Nuevo", index=True)
@@ -293,6 +293,22 @@ class Persona(Base):
     @telefono.expression
     def telefono(cls):
         return _func.coalesce(cls.phone, cls.mobile_phone)
+
+    # ── church_role deprecado: usar Kernel PersonaRoleAssignment ──
+    # Este @property resuelve church_role desde el Kernel cuando existe,
+    # con fallback a la columna legacy (Persona.church_role).
+    # Migración pendiente: eliminar la columna física y usar solo Kernel.
+    @property
+    def church_role_effective(self) -> str:
+        """Rol en la iglesia resuelto desde el Kernel (PersonaRoleAssignment).
+        
+        Si existe un registro en persona_church_roles vinculado a esta persona,
+        devuelve ese valor. En caso contrario, hace fallback a la columna legacy.
+        """
+        if self.rol_iglesia and self.rol_iglesia.church_role:
+            val = self.rol_iglesia.church_role
+            return val.value if hasattr(val, 'value') else str(val)
+        return self.church_role or "Miembro"
 
     user = relationship("User", backref=backref("member_profile", uselist=False))
     family = relationship("Family", overlaps="family,members,personas")

@@ -16,16 +16,94 @@ from backend.schemas.crm import (CrmEventUpdate, EvangelismStrategyCreate,
 from backend.schemas.legacy import CommunityBoardCardUpdate
 from backend.schemas.notifications import CommunicationLogUpdate
 
+
+def get_user_sede_id(db: Session, user_id: int) -> int | None:
+    """Obtiene el sede_id de la Persona vinculada al usuario actual.
+    
+    Retorna None si el usuario no tiene persona asociada o la persona no tiene sede.
+    Usado para imponer filtro Multi-Tenant (Axioma 3) en todas las queries.
+    """
+    persona = (
+        db.query(models.Persona)
+        .filter(models.Persona.user_id == user_id)
+        .first()
+    )
+    if persona:
+        return persona.sede_id
+    return None
+
+
+def _audit_log(db: Session, tabla: str, registro_id: str, accion: str,
+               detalles: dict | None = None, usuario_id: str | None = None) -> None:
+    """Registra una entrada en logs_auditoria (JSONB) para trazabilidad.
+    
+    Axioma 1 — Auditoría Estricta: toda mutación sensible debe dejar traza.
+    """
+    from backend.models_evangelism import LogAuditoria
+    import uuid as _uuid
+    db.add(LogAuditoria(
+        tabla_afectada=tabla,
+        registro_id=str(registro_id),
+        accion=accion,
+        detalles_cambio=detalles or {},
+        usuario_id=_uuid.UUID(usuario_id) if usuario_id else None,
+    ))
+
+
 # ── Personas ────────────────────────────────────────────
 
 
 def create_persona(db: Session, payload: schemas.PersonaCreate) -> models.Persona:
+    # Axioma 1 — Validación de Identidad Previa: buscar persona existente
+    # por teléfono o documento antes de crear un duplicado.
+    existing = _find_existing_persona(db, payload)
+    if existing:
+        # Si existe, devolver el registro existente (no crear duplicado)
+        return existing
+    
+    import uuid as _uuid
     data = payload.model_dump(exclude_unset=True)
+    data.setdefault("qr_token", _uuid.uuid4().hex[:16].upper())
     row = models.Persona(**data)
     db.add(row)
     db.commit()
     db.refresh(row)
+    _audit_log(db, "personas", str(row.id), "CREATE",
+               detalles={"first_name": row.first_name, "last_name": row.last_name,
+                         "phone": row.phone, "church_role": row.church_role})
     return row
+
+
+def _find_existing_persona(db: Session, payload: schemas.PersonaCreate) -> Optional[models.Persona]:
+    """Busca una persona existente por teléfono o número de documento.
+    
+    Axioma 1 — Person-Centric Kernel: anexar al UUID existente, no duplicar.
+    """
+    phones = [p for p in (payload.phone, payload.mobile_phone) if p]
+    if phones:
+        match = (
+            db.query(models.Persona)
+            .filter(
+                or_(
+                    models.Persona.phone.in_(phones),
+                    models.Persona.mobile_phone.in_(phones),
+                )
+            )
+            .first()
+        )
+        if match:
+            return match
+    
+    if payload.id_number:
+        match = (
+            db.query(models.Persona)
+            .filter(models.Persona.id_number == payload.id_number)
+            .first()
+        )
+        if match:
+            return match
+    
+    return None
 
 
 def search_personas(
@@ -34,12 +112,16 @@ def search_personas(
     role: str | None = None,
     estado_vital: str | None = None,
     family_id: int | None = None,
+    sede_id: int | None = None,
     skip: int = 0,
     limit: int = 1000,
     sort_by: str | None = None,
     sort_dir: str = "asc",
 ):
     query = db.query(models.Persona)
+    # Axioma 3 — Multi-Tenant: filtrar por sede obligatoriamente
+    if sede_id is not None:
+        query = query.filter(models.Persona.sede_id == sede_id)
     if search:
         like = f"%{search}%"
         query = query.filter(
@@ -72,19 +154,93 @@ def update_persona(
     row = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
     if not row:
         return None
+    
+    # Capturar valores anteriores para el trigger de embudo
+    old_church_role = row.church_role
+    old_estado_vital = row.estado_vital
+    old_fecha_bautismo = row.fecha_bautismo
+    
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(row, key, value)
+    
+    # Axioma 1 — Integridad de Embudo: registrar cambios en historial_embudo
+    _track_funnel_changes(db, row, old_church_role, old_estado_vital, old_fecha_bautismo)
+    
     db.commit()
     db.refresh(row)
+    _audit_log(db, "personas", str(row.id), "UPDATE",
+               detalles={"church_role": row.church_role,
+                         "estado_vital": row.estado_vital})
     return row
+
+
+def _track_funnel_changes(db: Session, persona, old_church_role, old_estado_vital, old_fecha_bautismo):
+    """Registra en HistorialEmbudo los cambios en church_role, estado_vital, o fecha_bautismo."""
+    from backend.models_evangelism import HistorialEmbudo
+    
+    now = _utcnow()
+    pid = persona.id if hasattr(persona, 'id') else persona.id
+    
+    # church_role
+    if old_church_role and old_church_role != persona.church_role:
+        days = _compute_days_in_state(db, pid, old_church_role)
+        db.add(HistorialEmbudo(
+            persona_id=pid,
+            rol_anterior=str(old_church_role),
+            rol_nuevo=str(persona.church_role),
+            fecha_cambio=now,
+            dias_en_estado_anterior=days,
+        ))
+    
+    # estado_vital
+    if old_estado_vital and old_estado_vital != persona.estado_vital:
+        days = _compute_days_in_state(db, pid, old_estado_vital)
+        db.add(HistorialEmbudo(
+            persona_id=pid,
+            rol_anterior=str(old_estado_vital),
+            rol_nuevo=str(persona.estado_vital),
+            fecha_cambio=now,
+            dias_en_estado_anterior=days,
+        ))
+    
+    # fecha_bautismo (nuevo bautismo)
+    if old_fecha_bautismo is None and persona.fecha_bautismo is not None:
+        db.add(HistorialEmbudo(
+            persona_id=pid,
+            rol_anterior="NO_BAUTIZADO",
+            rol_nuevo="BAUTIZADO",
+            fecha_cambio=now,
+            dias_en_estado_anterior=None,
+        ))
+
+
+def _compute_days_in_state(db: Session, persona_id, state_name: str) -> int | None:
+    """Calcula cuántos días pasó la persona en el estado anterior."""
+    from backend.models_evangelism import HistorialEmbudo
+    last_entry = (
+        db.query(HistorialEmbudo)
+        .filter(HistorialEmbudo.persona_id == persona_id)
+        .order_by(HistorialEmbudo.fecha_cambio.desc())
+        .first()
+    )
+    if last_entry and last_entry.fecha_cambio:
+        delta = _utcnow() - last_entry.fecha_cambio
+        return delta.days
+    return None
 
 
 def delete_persona(db: Session, persona_id: str) -> bool:
     row = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
     if not row:
         return False
-    db.delete(row)
+    # Soft-delete: nunca eliminar físicamente una Persona.
+    # Axioma 1 — Person-Centric Kernel: solo se cambia estado_vital a INACTIVO.
+    row.estado_vital = "INACTIVO"
+    row.unregistration_date = _utcnow().date()
     db.commit()
+    _audit_log(db, "personas", str(row.id), "SOFT_DELETE",
+               detalles={"estado_vital": "INACTIVO",
+                         "unregistration_date": str(row.unregistration_date)})
     return True
 
 
@@ -101,6 +257,10 @@ def get_persona_donations(db: Session, persona_id: str):
 
 
 def create_persona(db: Session, payload: schemas.PersonaCreate):
+    # Axioma 1 — Validación de Identidad Previa
+    existing = _find_existing_persona(db, payload)
+    if existing:
+        return existing
     import uuid
     data = payload.model_dump()
     data.setdefault("qr_token", uuid.uuid4().hex[:16].upper())
@@ -108,6 +268,9 @@ def create_persona(db: Session, payload: schemas.PersonaCreate):
     db.add(row)
     db.commit()
     db.refresh(row)
+    _audit_log(db, "personas", str(row.id), "CREATE",
+               detalles={"first_name": row.first_name, "last_name": row.last_name,
+                         "phone": row.phone, "church_role": row.church_role})
     return row
 
 
@@ -127,12 +290,16 @@ def search_members(
     role: str | None = None,
     spiritual_status: str | None = None,
     family_id: int | None = None,
+    sede_id: int | None = None,
     skip: int = 0,
     limit: int = 1000,
     sort_by: str | None = None,
     sort_dir: str = "asc",
 ):
     query = db.query(models.Persona)
+    # Axioma 3 — Multi-Tenant: filtrar por sede obligatoriamente
+    if sede_id is not None:
+        query = query.filter(models.Persona.sede_id == sede_id)
     if search:
         like = f"%{search}%"
         query = query.filter(
@@ -156,7 +323,7 @@ def search_members(
 
     personas = query.offset(skip).limit(limit).all()
 
-    user_ids = [m.user_id for m in members if m.user_id]
+    user_ids = [p.user_id for p in personas if p.user_id]
     progress_map = {}
     if user_ids:
         progress_data = (
@@ -169,11 +336,11 @@ def search_members(
         )
         progress_map = {uid: avg for uid, avg in progress_data}
 
-    for m in members:
-        m.spiritual_health = 0.5 + (abs(hash(m.first_name)) % 50) / 100.0
-        m.academy_progress = float(progress_map.get(m.user_id, 0.0))
+    for p in personas:
+        p.spiritual_health = 0.5 + (abs(hash(p.first_name)) % 50) / 100.0
+        p.academy_progress = float(progress_map.get(p.user_id, 0.0))
 
-    return members
+    return personas
 
 
 def search_members_paginated(
@@ -181,6 +348,7 @@ def search_members_paginated(
     search: str | None = None,
     role: str | None = None,
     spiritual_status: str | None = None,
+    sede_id: int | None = None,
     offset: int = 0,
     limit: int = 100,
     sort_by: str | None = None,
@@ -188,6 +356,9 @@ def search_members_paginated(
 ) -> dict:
     """Returns { items: [...], total: N } for server-side AG Grid pagination."""
     query = db.query(models.Persona)
+    # Axioma 3 — Multi-Tenant: filtrar por sede obligatoriamente
+    if sede_id is not None:
+        query = query.filter(models.Persona.sede_id == sede_id)
     if search:
         like = f"%{search}%"
         query = query.filter(
@@ -210,7 +381,7 @@ def search_members_paginated(
 
     personas = query.offset(offset).limit(limit).all()
 
-    user_ids = [m.user_id for m in members if m.user_id]
+    user_ids = [p.user_id for p in personas if p.user_id]
     progress_map = {}
     if user_ids:
         progress_data = (
@@ -221,11 +392,11 @@ def search_members_paginated(
         )
         progress_map = {uid: avg for uid, avg in progress_data}
 
-    for m in members:
-        m.spiritual_health = 0.5 + (abs(hash(m.first_name)) % 50) / 100.0
-        m.academy_progress = float(progress_map.get(m.user_id, 0.0))
+    for p in personas:
+        p.spiritual_health = 0.5 + (abs(hash(p.first_name)) % 50) / 100.0
+        p.academy_progress = float(progress_map.get(p.user_id, 0.0))
 
-    return {"items": members, "total": total}
+    return {"items": personas, "total": total}
 
 
 def get_personas(db: Session, search: str | None = None, role: str | None = None):
@@ -236,10 +407,19 @@ def update_persona(db: Session, persona_id: str, payload: schemas.PersonaUpdate)
     row = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
     if not row:
         return None
+    # Capturar valores anteriores para el trigger de embudo
+    old_church_role = row.church_role
+    old_estado_vital = row.estado_vital
+    old_fecha_bautismo = row.fecha_bautismo
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(row, key, value)
+    # Axioma 1 — Integridad de Embudo: registrar cambios en historial_embudo
+    _track_funnel_changes(db, row, old_church_role, old_estado_vital, old_fecha_bautismo)
     db.commit()
     db.refresh(row)
+    _audit_log(db, "personas", str(row.id), "UPDATE",
+               detalles={"church_role": row.church_role,
+                         "estado_vital": row.estado_vital})
     return row
 
 
@@ -920,8 +1100,13 @@ def delete_persona(db: Session, persona_id: str) -> bool:
     row = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
     if not row:
         return False
-    db.delete(row)
+    # Soft-delete: nunca eliminar físicamente una Persona.
+    row.estado_vital = "INACTIVO"
+    row.unregistration_date = _utcnow().date()
     db.commit()
+    _audit_log(db, "personas", str(row.id), "SOFT_DELETE",
+               detalles={"estado_vital": "INACTIVO",
+                         "unregistration_date": str(row.unregistration_date)})
     return True
 
 
@@ -1150,6 +1335,39 @@ def delete_family(db: Session, family_id: int) -> bool:
     return True
 
 
+# ── Consolidation ──────────────────────────────────────
+
+
+def _emit_mesh_event(event_type: str, case_id: str, persona_id: str | None = None,
+                     extra: dict | None = None) -> None:
+    """Emite un evento asíncrono al motor Mesh vía Redis PubSub.
+    
+    No bloquea el request HTTP. El motor Mesh consume estos eventos para
+    calcular SLAs, asignar alertas Overdue, y actualizar dashboards en tiempo real.
+    """
+    try:
+        from backend.core.cache import get_redis
+        from backend.core.config import get_settings
+        import json
+        
+        redis_client = get_redis()
+        if redis_client is None:
+            return
+        
+        settings = get_settings()
+        channel = f"{settings.environment}:ws"
+        payload = {
+            "event": event_type,
+            "case_id": case_id,
+            "persona_id": persona_id,
+            "timestamp": _utcnow().isoformat(),
+            **(extra or {}),
+        }
+        redis_client.publish(channel, json.dumps(payload, default=str))
+    except Exception:
+        pass  # Fire-and-forget: no bloquear el request si Redis no está disponible
+
+
 # ── Communication Logs ─────────────────────────────────
 
 
@@ -1340,6 +1558,9 @@ def create_consolidation_case(
     db.add(row)
     db.commit()
     db.refresh(row)
+    _emit_mesh_event("consolidation.case.created", str(row.id),
+                     persona_id=str(row.persona_id) if row.persona_id else None,
+                     extra={"status": row.status})
     return row
 
 
@@ -1353,10 +1574,15 @@ def update_consolidation_case(
     )
     if not row:
         return None
+    old_status = row.status
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(row, key, value)
     db.commit()
     db.refresh(row)
+    if old_status != row.status:
+        _emit_mesh_event("consolidation.case.updated", str(row.id),
+                         persona_id=str(row.persona_id) if row.persona_id else None,
+                         extra={"old_status": old_status, "new_status": row.status})
     return row
 
 

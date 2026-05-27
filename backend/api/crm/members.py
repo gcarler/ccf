@@ -28,8 +28,9 @@ def list_personas(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    """Lista miembros con búsqueda, paginación y ordenamiento."""
-    return crud.search_members(db, search=search, role=role, skip=skip, limit=limit, sort_by=sort_by, sort_dir=sort_dir)
+    """Lista miembros con búsqueda, paginación y ordenamiento. Filtrado por sede del usuario."""
+    sede_id = crud.get_user_sede_id(db, current_user.id)
+    return crud.search_members(db, search=search, role=role, sede_id=sede_id, skip=skip, limit=limit, sort_by=sort_by, sort_dir=sort_dir)
 
 
 @router.get("/members/paginated")
@@ -44,12 +45,14 @@ def list_members_paginated(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    """Endpoint paginado para AG Grid server-side. Retorna { items: [...], total: N }."""
+    """Endpoint paginado para AG Grid server-side. Retorna { items: [...], total: N }. Filtrado por sede."""
+    sede_id = crud.get_user_sede_id(db, current_user.id)
     return crud.search_members_paginated(
         db,
         search=search,
         role=role,
         spiritual_status=spiritual_status,
+        sede_id=sede_id,
         offset=offset,
         limit=limit,
         sort_by=sort_by,
@@ -287,11 +290,14 @@ def delete_persona(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
+    """Soft-delete: marca estado_vital = INACTIVO. Nunca eliminar físicamente."""
     persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
 
-    db.delete(persona)
+    persona.estado_vital = "INACTIVO"
+    from datetime import date
+    persona.unregistration_date = date.today()
     db.commit()
     return None
 

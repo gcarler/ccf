@@ -22,10 +22,11 @@ def list_personas(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    """Lista personas con búsqueda, paginación y ordenamiento."""
+    """Lista personas con búsqueda, paginación y ordenamiento. Filtrado por sede."""
+    sede_id = crud.get_user_sede_id(db, current_user.id)
     return crud.search_personas(
         db, search=search, role=role, estado_vital=estado_vital,
-        skip=skip, limit=limit, sort_by=sort_by, sort_dir=sort_dir,
+        sede_id=sede_id, skip=skip, limit=limit, sort_by=sort_by, sort_dir=sort_dir,
     )
 
 
@@ -72,7 +73,7 @@ def delete_persona(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    """Elimina una persona."""
+    """Soft-delete: marca estado_vital = INACTIVO. Nunca eliminar físicamente."""
     if not crud.delete_persona(db, persona_id):
         raise HTTPException(404, detail="Persona no encontrada")
     return {"ok": True}
