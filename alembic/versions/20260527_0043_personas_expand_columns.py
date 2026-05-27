@@ -161,52 +161,65 @@ def _expand_personas_columns() -> None:
 
 
 def _migrate_legacy_nombre_completo() -> None:
-    """Puebla first_name/last_name desde nombre_completo y phone desde telefono."""
-    op.execute(sa.text("""
-        UPDATE personas SET
-            first_name = CASE
-                WHEN nombre_completo IS NOT NULL AND TRIM(nombre_completo) <> ''
-                THEN SPLIT_PART(TRIM(nombre_completo), ' ', 1)
-                ELSE 'Sin'
-            END,
-            last_name = CASE
-                WHEN nombre_completo IS NOT NULL AND POSITION(' ' IN TRIM(nombre_completo)) > 0
-                THEN SUBSTRING(TRIM(nombre_completo) FROM POSITION(' ' IN TRIM(nombre_completo)) + 1)
-                ELSE 'Nombre'
-            END
-        WHERE first_name IS NULL
-    """))
+    """Puebla first_name/last_name desde nombre_completo y phone desde telefono.
+    Solo aplica si las columnas legacy existen (migration 0037 style).
+    """
+    if _col_exists("personas", "nombre_completo"):
+        op.execute(sa.text("""
+            UPDATE personas SET
+                first_name = CASE
+                    WHEN nombre_completo IS NOT NULL AND TRIM(nombre_completo) <> ''
+                    THEN SPLIT_PART(TRIM(nombre_completo), ' ', 1)
+                    ELSE 'Sin'
+                END,
+                last_name = CASE
+                    WHEN nombre_completo IS NOT NULL AND POSITION(' ' IN TRIM(nombre_completo)) > 0
+                    THEN SUBSTRING(TRIM(nombre_completo) FROM POSITION(' ' IN TRIM(nombre_completo)) + 1)
+                    ELSE 'Nombre'
+                END
+            WHERE first_name IS NULL
+        """))
 
-    op.execute(sa.text("""
-        UPDATE personas SET phone = telefono
-        WHERE phone IS NULL AND telefono IS NOT NULL
-    """))
+    if _col_exists("personas", "telefono"):
+        op.execute(sa.text("""
+            UPDATE personas SET phone = telefono
+            WHERE phone IS NULL AND telefono IS NOT NULL
+        """))
+
+
+def _personas_id_type() -> str:
+    """Devuelve el tipo de datos de personas.id en la BD actual."""
+    conn = op.get_bind()
+    r = conn.execute(sa.text(
+        "SELECT data_type FROM information_schema.columns "
+        "WHERE table_name='personas' AND column_name='id'"
+    ))
+    row = r.fetchone()
+    return (row[0] if row else "integer").lower()
 
 
 def _add_persona_id_to_historial() -> None:
-    """Agrega persona_id (UUID) a historial_ministerial junto a miembro_id legacy."""
+    """Agrega persona_id a historial_ministerial con el mismo tipo que personas.id."""
     if not _col_exists("historial_ministerial", "persona_id"):
+        pk_type = _personas_id_type()
+        col_type = postgresql.UUID(as_uuid=True) if "uuid" in pk_type else sa.Integer()
         op.add_column(
             "historial_ministerial",
             sa.Column(
                 "persona_id",
-                postgresql.UUID(as_uuid=True),
+                col_type,
                 sa.ForeignKey("personas.id", ondelete="CASCADE"),
                 nullable=True,
                 index=True,
             ),
         )
-        # Poblar persona_id desde miembro_id vía members si la tabla aún existe
-        op.execute(sa.text("""
-            UPDATE historial_ministerial hm
-            SET persona_id = p.id
-            FROM personas p
-            WHERE p.user_id IS NOT NULL
-              AND EXISTS (
-                  SELECT 1 FROM members m
-                  WHERE m.id = hm.miembro_id AND m.user_id = p.user_id
-              )
-        """))
+        # Poblar persona_id: JOIN directo por miembro_id = personas.id (misma tabla)
+        if not _table_exists("members"):
+            op.execute(sa.text("""
+                UPDATE historial_ministerial hm
+                SET persona_id = hm.miembro_id
+                WHERE hm.miembro_id IS NOT NULL
+            """))
 
 
 def _update_stored_procedures() -> None:
@@ -222,14 +235,17 @@ def _update_stored_procedures() -> None:
     ]:
         op.execute(sa.text(f"DROP FUNCTION IF EXISTS {sp} CASCADE"))
 
+    pk_type = _personas_id_type()
+    id_sql_type = "UUID" if "uuid" in pk_type else "INTEGER"
+
     # fn_buscar_personas
-    op.execute(sa.text("""
+    op.execute(sa.text(f"""
         CREATE OR REPLACE FUNCTION fn_buscar_personas(
             p_query TEXT,
             p_limit INT DEFAULT 20
         )
         RETURNS TABLE (
-            id UUID,
+            id {id_sql_type},
             nombre_completo TEXT,
             email VARCHAR,
             telefono VARCHAR,
@@ -258,8 +274,8 @@ def _update_stored_procedures() -> None:
     """))
 
     # fn_engagement_persona
-    op.execute(sa.text("""
-        CREATE OR REPLACE FUNCTION fn_engagement_persona(p_persona_id UUID)
+    op.execute(sa.text(f"""
+        CREATE OR REPLACE FUNCTION fn_engagement_persona(p_persona_id {id_sql_type})
         RETURNS JSONB AS $$
         DECLARE
             v_result JSONB;
@@ -318,7 +334,27 @@ def _update_stored_procedures() -> None:
 
 def _create_persona_engagement_view() -> None:
     op.execute(sa.text("DROP MATERIALIZED VIEW IF EXISTS mv_persona_engagement CASCADE"))
-    op.execute(sa.text("""
+    # Si personas.id es UUID y asistencias.persona_id también es UUID: JOIN directo.
+    # Si tipos difieren (persona INT, asistencias UUID en transición): vista sin JOIN a asistencias.
+    pk_type = _personas_id_type()
+    conn = op.get_bind()
+    r = conn.execute(sa.text(
+        "SELECT data_type FROM information_schema.columns "
+        "WHERE table_name='asistencias' AND column_name='persona_id'"
+    ))
+    asist_type = (r.fetchone() or ("integer",))[0].lower()
+    types_match = ("uuid" in pk_type) == ("uuid" in asist_type)
+
+    if types_match:
+        join_clause = "LEFT JOIN asistencias a ON a.persona_id = p.id"
+        count_asist = "COUNT(DISTINCT a.id)"
+        extra_group = ""
+    else:
+        join_clause = ""
+        count_asist = "0"
+        extra_group = ""
+
+    op.execute(sa.text(f"""
         CREATE MATERIALIZED VIEW mv_persona_engagement AS
         SELECT
             p.id AS persona_id,
@@ -327,12 +363,10 @@ def _create_persona_engagement_view() -> None:
             COALESCE(p.phone, p.mobile_phone) AS telefono,
             p.church_role,
             p.estado_vital,
-            COUNT(DISTINCT a.id) AS asistencias_totales,
-            COUNT(DISTINCT rs.id) AS seguimientos_totales,
-            MAX(a.sesion_id) AS ultima_sesion_id
+            {count_asist} AS asistencias_totales,
+            0 AS seguimientos_totales
         FROM personas p
-        LEFT JOIN asistencias a ON a.persona_id = p.id
-        LEFT JOIN registros_seguimiento rs ON rs.responsable_id = p.id
+        {join_clause}
         GROUP BY p.id, p.first_name, p.last_name, p.email, p.phone, p.mobile_phone,
                  p.church_role, p.estado_vital
         WITH DATA;
@@ -434,8 +468,8 @@ def _migrate_kernel_data_to_persona() -> None:
     # user_ministries → persona_ministries
     if _table_exists("user_ministries"):
         conn.execute(sa.text("""
-            INSERT INTO persona_ministries (persona_id, ministry, is_primary, recognized_at, recognized_by_id, notes)
-            SELECT p.id, um.ministry, um.is_primary, um.recognized_at, um.recognized_by_id, um.notes
+            INSERT INTO persona_ministries (persona_id, ministry, is_primary, recognized_at, recognized_by, notes)
+            SELECT p.id, um.ministry, um.is_primary, um.recognized_at, um.recognized_by, um.notes
             FROM user_ministries um
             JOIN personas p ON p.user_id = um.user_id
             ON CONFLICT (persona_id, ministry) DO NOTHING
@@ -444,8 +478,8 @@ def _migrate_kernel_data_to_persona() -> None:
     # user_church_roles → persona_church_roles
     if _table_exists("user_church_roles"):
         conn.execute(sa.text("""
-            INSERT INTO persona_church_roles (persona_id, church_role, assigned_at, changed_by_id, reason, notes)
-            SELECT p.id, ur.church_role, ur.assigned_at, ur.changed_by_id, ur.reason, ur.notes
+            INSERT INTO persona_church_roles (persona_id, church_role, assigned_at, assigned_by, notes)
+            SELECT p.id, ur.church_role, ur.assigned_at, ur.assigned_by, ur.notes
             FROM user_church_roles ur
             JOIN personas p ON p.user_id = ur.user_id
             ON CONFLICT (persona_id) DO NOTHING
@@ -454,8 +488,8 @@ def _migrate_kernel_data_to_persona() -> None:
     # user_role_history → persona_role_history
     if _table_exists("user_role_history"):
         conn.execute(sa.text("""
-            INSERT INTO persona_role_history (persona_id, previous_role, new_role, changed_at, changed_by_id, reason, notes)
-            SELECT p.id, rh.previous_role, rh.new_role, rh.changed_at, rh.changed_by_id, rh.reason, rh.notes
+            INSERT INTO persona_role_history (persona_id, from_role, to_role, changed_at, changed_by, reason)
+            SELECT p.id, rh.from_role, rh.to_role, rh.changed_at, rh.changed_by, rh.reason
             FROM user_role_history rh
             JOIN personas p ON p.user_id = rh.user_id
         """))
@@ -463,11 +497,11 @@ def _migrate_kernel_data_to_persona() -> None:
     # user_platform_roles → persona_platform_roles
     if _table_exists("user_platform_roles"):
         conn.execute(sa.text("""
-            INSERT INTO persona_platform_roles (persona_id, platform_role, assigned_at, assigned_by_id, expires_at, notes, is_active)
-            SELECT p.id, upr.platform_role, upr.assigned_at, upr.assigned_by_id, upr.expires_at, upr.notes, upr.is_active
+            INSERT INTO persona_platform_roles (persona_id, role_id, assigned_at, assigned_by, expires_at, notes, is_active)
+            SELECT p.id, upr.role_id, upr.assigned_at, upr.assigned_by, upr.expires_at, upr.notes, upr.is_active
             FROM user_platform_roles upr
             JOIN personas p ON p.user_id = upr.user_id
-            ON CONFLICT (persona_id, platform_role) DO NOTHING
+            ON CONFLICT (persona_id, role_id) DO NOTHING
         """))
 
     # Sincronizar estado_vital desde users.is_active para personas con user_id
