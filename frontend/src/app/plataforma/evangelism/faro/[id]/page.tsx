@@ -399,7 +399,7 @@ export default function FaroDetailPage() {
                     </button>
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-<p className=\"text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1\">Grupos en Casa</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Grupos en Casa</p>
                             <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{house.name}</h1>
                             <div className="flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400 font-medium mt-1.5">
                                 {house.code && <span className="flex items-center gap-1.5"><Activity size={12} /> CÃ³digo: {house.code}</span>}
