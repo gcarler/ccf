@@ -4,12 +4,11 @@ import asyncio
 import logging
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from fastapi import (APIRouter, Depends, File, HTTPException, Query,
                      UploadFile, status)
-from pydantic import BaseModel as pydantic_BaseModel
-from sqlalchemy import cast, func, Integer, text
+from sqlalchemy import cast, func, Integer
 from sqlalchemy.orm import Session, selectinload
 
 from backend import crud, models, schemas
@@ -279,7 +278,7 @@ def set_project_phases(
     El orden en el array define el order_index de cada fase.
     Solo administradores y gestores pueden modificar fases.
     """
-    project = _ensure_project(db, project_id)
+    _project = _ensure_project(db, project_id)
     # Only admins/staff can modify phases
     user_role = normalize_role(getattr(current_user, "role", ""))
     if user_role not in ("admin", "gestor", "coordinador", "docente", "pastor"):
@@ -330,7 +329,7 @@ def list_all_comments(
     """Lista todos los comentarios de proyectos con filtros opcionales."""
     q = db.query(models.ProjectComment)
     if unresolved_only:
-        q = q.filter(models.ProjectComment.is_resolved == False)
+        q = q.filter(models.ProjectComment.is_resolved.is_(False))
     if project_id:
         q = q.filter(models.ProjectComment.project_id == project_id)
     if task_id:
@@ -780,7 +779,7 @@ async def upload_task_attachment(
     unique_name = f"task_{task_id}_{uuid.uuid4().hex[:8]}_{filename}"
     contents = await file.read()
 
-    url = save_upload(contents, unique_name, settings.uploads_dir)
+    save_upload(contents, unique_name, settings.uploads_dir)
 
     attachment = models.ProjectAttachment(
         task_id=task_id,
