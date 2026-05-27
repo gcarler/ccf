@@ -309,7 +309,7 @@ class ColombianDepartment(BaseModel):
     model_config = orm_config
 
 
-class MemberResponse(BaseModel):
+class PersonaResponse(BaseModel):
     id: int
     first_name: str
     last_name: str
@@ -321,7 +321,7 @@ class MemberResponse(BaseModel):
     model_config = orm_config
 
 
-class Member(BaseModel):
+class Persona(BaseModel):
     id: int
     user_id: Optional[int] = None
     first_name: str
@@ -379,7 +379,7 @@ class Member(BaseModel):
     model_config = orm_config
 
     @model_validator(mode="after")
-    def restrict_crm_fields(self) -> "Member":
+    def restrict_crm_fields(self) -> "Persona":
         from backend.auth import is_crm_privileged
 
         role = user_role_context.get()
@@ -391,7 +391,7 @@ class Member(BaseModel):
         return self
 
 
-class MemberCreate(BaseModel):
+class PersonaCreate(BaseModel):
     first_name: str = Field(..., min_length=2, max_length=100)
     last_name: str = Field(..., min_length=2, max_length=100)
     email: Optional[str] = None
@@ -440,7 +440,7 @@ class MemberCreate(BaseModel):
     city: Optional[str] = None
 
 
-class MemberUpdate(BaseModel):
+class PersonaUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     email: Optional[str] = None
@@ -490,40 +490,7 @@ class MemberUpdate(BaseModel):
     city: Optional[str] = None
 
 
-# ── PERSONA (reemplaza Member — UUID PK) ────────────────────
-
-class PersonaResponse(BaseModel):
-    id: str  # UUID como string
-    nombre_completo: str
-    email: Optional[str] = None
-    telefono: Optional[str] = None
-    church_role: Optional[str] = None
-    estado_vital: Optional[str] = "ACTIVO"
-    user_id: Optional[int] = None
-    family_id: Optional[int] = None
-    created_at: Optional[datetime] = None
-    model_config = orm_config
-
-
-class PersonaCreate(BaseModel):
-    nombre_completo: str = Field(..., min_length=2, max_length=300)
-    email: Optional[str] = None
-    telefono: Optional[str] = None
-    church_role: str = "Miembro"
-    estado_vital: str = "ACTIVO"
-    family_id: Optional[int] = None
-    tags: Optional[list[str]] = None
-
-
-class PersonaUpdate(BaseModel):
-    nombre_completo: Optional[str] = None
-    email: Optional[str] = None
-    telefono: Optional[str] = None
-    church_role: Optional[str] = None
-    estado_vital: Optional[str] = None
-    family_id: Optional[int] = None
-    tags: Optional[list[str]] = None
-
+# ── PERSONA (reemplaza Persona — UUID PK) ────────────────────
 
 class PositionBase(BaseModel):
     name: str

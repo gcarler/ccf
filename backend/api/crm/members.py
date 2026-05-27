@@ -16,8 +16,8 @@ router = APIRouter(tags=["CRM"])
 # --- MEMBERS ENDPOINTS ---
 
 
-@router.get("/members", response_model=List[schemas.Member])
-def list_members(
+@router.get("/members", response_model=List[schemas.Persona])
+def list_personas(
     search: Optional[str] = None,
     role: Optional[str] = None,
     skip: int = Query(0, ge=0),
@@ -56,14 +56,14 @@ def list_members_paginated(
     )
 
 
-@router.post("/members/", response_model=schemas.Member)
-def create_member(
-    payload: schemas.MemberCreate,
+@router.post("/members/", response_model=schemas.Persona)
+def create_persona(
+    payload: schemas.PersonaCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Registra un nuevo miembro en el CRM."""
-    return crud.create_member(db, payload)
+    return crud.create_persona(db, payload)
 
 
 @router.get("/members/me", response_model=dict)
@@ -72,8 +72,8 @@ def get_my_crm_card(
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Devuelve la tarjeta de miembro del usuario actual vinculada por user_id."""
-    member = (
-        db.query(models.Member).filter(models.Member.user_id == current_user.id).first()
+    persona = (
+        db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
     )
     if member:
         return {
@@ -98,8 +98,8 @@ def get_my_ministry_profile(
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Perfil ministerial completo del usuario autenticado: datos del miembro, oficios, habilidades, badges y nivel."""
-    member = (
-        db.query(models.Member).filter(models.Member.user_id == current_user.id).first()
+    persona = (
+        db.query(models.Persona).filter(models.Persona.user_id == current_user.id).first()
     )
 
     # ── Positions (Oficios Eclesiásticos) ──────────────────────────
@@ -108,7 +108,7 @@ def get_my_ministry_profile(
         member_positions = (
             db.query(models.MemberPosition, models.Position)
             .join(models.Position, models.Position.id == models.MemberPosition.position_id)
-            .filter(models.MemberPosition.member_id == member.id)
+            .filter(models.MemberPosition.persona_id == member.id)
             .order_by(models.MemberPosition.is_active.desc(), models.MemberPosition.start_date.desc())
             .all()
         )
@@ -133,7 +133,7 @@ def get_my_ministry_profile(
                     models.member_volunteer_skills,
                     models.member_volunteer_skills.c.skill_id == models.VolunteerSkill.id,
                 )
-                .filter(models.member_volunteer_skills.c.member_id == member.id)
+                .filter(models.member_volunteer_skills.c.persona_id == member.id)
                 .all()
             )
             if row.name
@@ -212,7 +212,7 @@ def list_all_member_donations(
     for donation in donations:
         donor_name = donation.donor_name
         if not donor_name and donation.member:
-            donor_name = f"{donation.member.first_name} {donation.member.last_name}"
+            donor_name = f"{donation.persona.first_name} {donation.persona.last_name}"
         result.append(
             {
                 "id": donation.id,
@@ -224,22 +224,22 @@ def list_all_member_donations(
                 ),
                 "status": donation.status,
                 "reference_code": donation.reference_code,
-                "member_id": donation.member_id,
+                "persona_id": donation.persona_id,
             }
         )
     return result
 
 
-@router.get("/members/{member_id}", response_model=schemas.Member)
-def get_member(
+@router.get("/members/{member_id}", response_model=schemas.Persona)
+def get_persona(
     member_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Obtiene el detalle de un miembro con validacion de propiedad (IDOR)."""
-    member = db.query(models.Member).filter(models.Member.id == member_id).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Persona not found")
 
     # Check if user is looking at their own profile OR is a pastor/admin
     is_self = member.user_id == current_user.id
@@ -257,22 +257,22 @@ def get_member(
     return member
 
 
-@router.patch("/members/{member_id}", response_model=schemas.Member)
-def update_member(
+@router.patch("/members/{member_id}", response_model=schemas.Persona)
+def update_persona(
     member_id: int,
-    payload: schemas.MemberUpdate,
+    payload: schemas.PersonaUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Actualiza datos de un miembro con persistencia y auditoria."""
-    member = crud.update_member(db, member_id=member_id, payload=payload)
+    persona = crud.update_persona(db, member_id=member_id, payload=payload)
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Persona not found")
 
     record_admin_action(
         db,
         current_user,
-        action="update_member",
+        action="update_persona",
         resource_type="member",
         resource_id=str(member.id),
         metadata=payload.model_dump(exclude_unset=True),
@@ -281,14 +281,14 @@ def update_member(
 
 
 @router.delete("/members/{member_id}", status_code=204)
-def delete_member(
+def delete_persona(
     member_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    member = db.query(models.Member).filter(models.Member.id == member_id).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Persona not found")
 
     db.delete(member)
     db.commit()
@@ -305,7 +305,7 @@ def get_member_communications(
 ):
     return (
         db.query(models.CommunicationLog)
-        .filter(models.CommunicationLog.member_id == member_id)
+        .filter(models.CommunicationLog.persona_id == member_id)
         .all()
     )
 
@@ -338,7 +338,7 @@ def get_member_ministries(
     """Devuelve todas las vinculaciones ministeriales de un miembro con su rol."""
     rows = (
         db.query(models.MemberMinistry)
-        .filter(models.MemberMinistry.member_id == member_id)
+        .filter(models.MemberMinistry.persona_id == member_id)
         .order_by(
             models.MemberMinistry.is_active.desc(),
             models.MemberMinistry.start_date.desc(),
@@ -355,7 +355,7 @@ def get_member_ministries(
         result.append(
             {
                 "id": mm.id,
-                "member_id": mm.member_id,
+                "persona_id": mm.persona_id,
                 "ministry_id": mm.ministry_id,
                 "ministry_name": ministry.name if ministry else None,
                 "ministry": (
@@ -378,14 +378,14 @@ def get_member_consolidation_profile(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Devuelve el perfil de consolidacion de un miembro: roles, casos y seguimiento."""
-    member = db.query(models.Member).filter(models.Member.id == member_id).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Persona not found")
 
     positions = (
         db.query(models.MemberPosition, models.Position)
         .join(models.Position, models.Position.id == models.MemberPosition.position_id)
-        .filter(models.MemberPosition.member_id == member_id)
+        .filter(models.MemberPosition.persona_id == member_id)
         .order_by(
             models.MemberPosition.is_active.desc(),
             models.MemberPosition.start_date.desc(),
@@ -395,7 +395,7 @@ def get_member_consolidation_profile(
 
     cases = (
         db.query(models.ConsolidationCase)
-        .filter(models.ConsolidationCase.member_id == member_id)
+        .filter(models.ConsolidationCase.persona_id == member_id)
         .order_by(models.ConsolidationCase.created_at.desc())
         .all()
     )
@@ -405,7 +405,7 @@ def get_member_consolidation_profile(
         case_rows.append(
             {
                 "id": case.id,
-                "member_id": case.member_id,
+                "persona_id": case.persona_id,
                 "stage": case.stage,
                 "status": case.status,
                 "source": case.source,
@@ -451,7 +451,7 @@ def get_member_consolidation_profile(
         position_rows.append(
             {
                 "id": member_position.id,
-                "member_id": member_position.member_id,
+                "persona_id": member_position.persona_id,
                 "position_id": member_position.position_id,
                 "position_name": position.name if position else None,
                 "category": position.category if position else None,
@@ -537,9 +537,9 @@ def assign_member_position(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    member = db.query(models.Member).filter(models.Member.id == member_id).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Persona not found")
     position = (
         db.query(models.Position)
         .filter(models.Position.id == payload.position_id)
@@ -551,7 +551,7 @@ def assign_member_position(
     existing = (
         db.query(models.MemberPosition)
         .filter(
-            models.MemberPosition.member_id == member_id,
+            models.MemberPosition.persona_id == member_id,
             models.MemberPosition.position_id == payload.position_id,
             models.MemberPosition.start_date == payload.start_date,
         )
@@ -593,12 +593,12 @@ def update_member_position(
         db.query(models.MemberPosition)
         .filter(
             models.MemberPosition.id == member_position_id,
-            models.MemberPosition.member_id == member_id,
+            models.MemberPosition.persona_id == member_id,
         )
         .first()
     )
     if not row:
-        raise HTTPException(status_code=404, detail="Member position not found")
+        raise HTTPException(status_code=404, detail="Persona position not found")
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(row, key, value)
     db.commit()
@@ -617,7 +617,7 @@ def assign_member_ministry(
     existing = (
         db.query(models.MemberMinistry)
         .filter(
-            models.MemberMinistry.member_id == member_id,
+            models.MemberMinistry.persona_id == member_id,
             models.MemberMinistry.ministry_id == payload.ministry_id,
         )
         .first()
@@ -655,7 +655,7 @@ def update_member_ministry(
         db.query(models.MemberMinistry)
         .filter(
             models.MemberMinistry.id == mm_id,
-            models.MemberMinistry.member_id == member_id,
+            models.MemberMinistry.persona_id == member_id,
         )
         .first()
     )

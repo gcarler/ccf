@@ -214,7 +214,7 @@ class Family(Base):
     name = Column(String(100), nullable=False)
     address = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    members = relationship("Persona", back_populates="family")
+    personas = relationship("Persona", back_populates="family")
 
 
 class CellGroup(Base):
@@ -237,9 +237,9 @@ class CellGroup(Base):
     sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=True, index=True)
 
     evangelism_strategy_id = Column(
-        Integer,
-        ForeignKey("evangelism_strategies.id", ondelete="CASCADE"),
-        nullable=False,
+        String(50),
+        ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
     )
 
@@ -285,7 +285,7 @@ class CellGroupMember(Base):
 
     rol_personalizado_id = Column(
         Integer,
-        ForeignKey("roles_personalizados_estrategia.id", ondelete="SET NULL"),
+        ForeignKey("estrategia_roles_personalizados.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )

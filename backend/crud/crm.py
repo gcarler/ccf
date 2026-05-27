@@ -100,11 +100,11 @@ def get_persona_donations(db: Session, persona_id: str):
     )
 
 
-def create_member(db: Session, payload: schemas.MemberCreate):
+def create_persona(db: Session, payload: schemas.PersonaCreate):
     import uuid
     data = payload.model_dump()
     data.setdefault("qr_token", uuid.uuid4().hex[:16].upper())
-    row = models.Member(**data)
+    row = models.Persona(**data)
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -112,12 +112,12 @@ def create_member(db: Session, payload: schemas.MemberCreate):
 
 
 _MEMBER_SORT_FIELDS = {
-    "first_name":       models.Member.first_name,
-    "last_name":        models.Member.last_name,
-    "email":            models.Member.email,
-    "church_role":      models.Member.church_role,
-    "spiritual_status": models.Member.spiritual_status,
-    "created_at":       models.Member.created_at,
+    "first_name":       models.Persona.first_name,
+    "last_name":        models.Persona.last_name,
+    "email":            models.Persona.email,
+    "church_role":      models.Persona.church_role,
+    "spiritual_status": models.Persona.spiritual_status,
+    "created_at":       models.Persona.created_at,
 }
 
 
@@ -132,29 +132,29 @@ def search_members(
     sort_by: str | None = None,
     sort_dir: str = "asc",
 ):
-    query = db.query(models.Member)
+    query = db.query(models.Persona)
     if search:
         like = f"%{search}%"
         query = query.filter(
             or_(
-                models.Member.first_name.ilike(like),
-                models.Member.last_name.ilike(like),
-                models.Member.email.ilike(like),
-                models.Member.church_role.ilike(like),
+                models.Persona.first_name.ilike(like),
+                models.Persona.last_name.ilike(like),
+                models.Persona.email.ilike(like),
+                models.Persona.church_role.ilike(like),
             )
         )
     if role:
-        query = query.filter(models.Member.church_role == role)
+        query = query.filter(models.Persona.church_role == role)
     if spiritual_status:
-        query = query.filter(models.Member.spiritual_status == spiritual_status)
+        query = query.filter(models.Persona.spiritual_status == spiritual_status)
     if family_id:
-        query = query.filter(models.Member.family_id == family_id)
+        query = query.filter(models.Persona.family_id == family_id)
 
     # Sorting
-    sort_col = _MEMBER_SORT_FIELDS.get(sort_by or "last_name", models.Member.last_name)
+    sort_col = _MEMBER_SORT_FIELDS.get(sort_by or "last_name", models.Persona.last_name)
     query = query.order_by(sort_col.desc() if sort_dir == "desc" else sort_col.asc())
 
-    members = query.offset(skip).limit(limit).all()
+    personas = query.offset(skip).limit(limit).all()
 
     user_ids = [m.user_id for m in members if m.user_id]
     progress_map = {}
@@ -187,28 +187,28 @@ def search_members_paginated(
     sort_dir: str = "asc",
 ) -> dict:
     """Returns { items: [...], total: N } for server-side AG Grid pagination."""
-    query = db.query(models.Member)
+    query = db.query(models.Persona)
     if search:
         like = f"%{search}%"
         query = query.filter(
             or_(
-                models.Member.first_name.ilike(like),
-                models.Member.last_name.ilike(like),
-                models.Member.email.ilike(like),
-                models.Member.church_role.ilike(like),
+                models.Persona.first_name.ilike(like),
+                models.Persona.last_name.ilike(like),
+                models.Persona.email.ilike(like),
+                models.Persona.church_role.ilike(like),
             )
         )
     if role:
-        query = query.filter(models.Member.church_role == role)
+        query = query.filter(models.Persona.church_role == role)
     if spiritual_status:
-        query = query.filter(models.Member.spiritual_status == spiritual_status)
+        query = query.filter(models.Persona.spiritual_status == spiritual_status)
 
     total = query.count()
 
-    sort_col = _MEMBER_SORT_FIELDS.get(sort_by or "last_name", models.Member.last_name)
+    sort_col = _MEMBER_SORT_FIELDS.get(sort_by or "last_name", models.Persona.last_name)
     query = query.order_by(sort_col.desc() if sort_dir == "desc" else sort_col.asc())
 
-    members = query.offset(offset).limit(limit).all()
+    personas = query.offset(offset).limit(limit).all()
 
     user_ids = [m.user_id for m in members if m.user_id]
     progress_map = {}
@@ -228,12 +228,12 @@ def search_members_paginated(
     return {"items": members, "total": total}
 
 
-def get_members(db: Session, search: str | None = None, role: str | None = None):
+def get_personas(db: Session, search: str | None = None, role: str | None = None):
     return search_members(db, search=search, role=role)
 
 
-def update_member(db: Session, member_id: int, payload: schemas.MemberUpdate):
-    row = db.query(models.Member).filter(models.Member.id == member_id).first()
+def update_persona(db: Session, member_id: int, payload: schemas.PersonaUpdate):
+    row = db.query(models.Persona).filter(models.Persona.id == member_id).first()
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -561,7 +561,7 @@ def create_family(db: Session, name: str):
     return fam
 
 
-# ── Member Timeline ────────────────────────────────────
+# ── Persona Timeline ────────────────────────────────────
 
 
 def get_persona_timeline(db: Session, persona_id: str):
@@ -912,12 +912,12 @@ def delete_evangelism_strategy(db: Session, strategy_id: int) -> bool:
 # ── Members ─────────────────────────────────────────────
 
 
-def get_member(db: Session, member_id: int) -> Optional[models.Member]:
-    return db.query(models.Member).filter(models.Member.id == member_id).first()
+def get_persona(db: Session, member_id: int) -> Optional[models.Persona]:
+    return db.query(models.Persona).filter(models.Persona.id == member_id).first()
 
 
-def delete_member(db: Session, member_id: int) -> bool:
-    row = db.query(models.Member).filter(models.Member.id == member_id).first()
+def delete_persona(db: Session, member_id: int) -> bool:
+    row = db.query(models.Persona).filter(models.Persona.id == member_id).first()
     if not row:
         return False
     db.delete(row)

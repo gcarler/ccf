@@ -202,7 +202,7 @@ def delete_position(db: Session, position_id: int) -> bool:
     return True
 
 
-# ── Member Positions ─────────────────────────────────────────────────────
+# ── Persona Positions ─────────────────────────────────────────────────────
 
 
 def get_member_positions(
@@ -212,7 +212,7 @@ def get_member_positions(
 ) -> List[models.MemberPosition]:
     q = db.query(models.MemberPosition)
     if member_id is not None:
-        q = q.filter(models.MemberPosition.member_id == member_id)
+        q = q.filter(models.MemberPosition.persona_id == member_id)
     if only_active:
         q = q.filter(models.MemberPosition.is_active)
     return q.order_by(models.MemberPosition.created_at.desc()).all()
@@ -279,7 +279,7 @@ def get_event_assignments(
     if event_id is not None:
         q = q.filter(models.EventAssignment.event_id == event_id)
     if member_id is not None:
-        q = q.filter(models.EventAssignment.member_id == member_id)
+        q = q.filter(models.EventAssignment.persona_id == member_id)
     if role:
         q = q.filter(models.EventAssignment.role == role)
     return q.order_by(models.EventAssignment.session_date.desc()).all()
@@ -374,7 +374,7 @@ def delete_ministry(db: Session, ministry_id: int) -> bool:
     return True
 
 
-# ── Member Ministries ────────────────────────────────────────────────────
+# ── Persona Ministries ────────────────────────────────────────────────────
 
 
 def get_member_ministries(
@@ -385,7 +385,7 @@ def get_member_ministries(
 ) -> List[models.MemberMinistry]:
     q = db.query(models.MemberMinistry)
     if member_id is not None:
-        q = q.filter(models.MemberMinistry.member_id == member_id)
+        q = q.filter(models.MemberMinistry.persona_id == member_id)
     if ministry_id is not None:
         q = q.filter(models.MemberMinistry.ministry_id == ministry_id)
     if only_active:
@@ -569,7 +569,7 @@ def delete_role_definition(db: Session, role_id: int) -> bool:
     return True
 
 
-# ── Member Roles ─────────────────────────────────────────────────────────
+# ── Persona Roles ─────────────────────────────────────────────────────────
 
 
 def get_member_roles(
@@ -579,7 +579,7 @@ def get_member_roles(
 ) -> List[models.MemberRole]:
     q = db.query(models.MemberRole)
     if member_id is not None:
-        q = q.filter(models.MemberRole.member_id == member_id)
+        q = q.filter(models.MemberRole.persona_id == member_id)
     if role_id is not None:
         q = q.filter(models.MemberRole.role_id == role_id)
     return q.order_by(models.MemberRole.created_at.desc()).all()

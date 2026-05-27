@@ -26,7 +26,7 @@ def _get_persona_for_user(db: Session, user_id: int) -> Optional[models.Persona]
     return db.query(models.Persona).filter(models.Persona.user_id == user_id).first()
 
 
-def _can_manage_grupo(db: Session, user: models.User, house: models.GrupoEvangelismo) -> bool:
+def _can_manage_grupo(db: Session, user: models.User, house) -> bool:
     if _is_crm_admin_or_pastor(user):
         return True
     persona = _get_persona_for_user(db, user.id)
@@ -37,10 +37,34 @@ def _can_manage_grupo(db: Session, user: models.User, house: models.GrupoEvangel
 
 @router.get("/grupos", response_model=List[dict])
 def list_cell_groups(
+    estrategia_id: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    return crud.get_cell_groups(db)
+    from backend.models_academy import CellGroup
+    q = db.query(CellGroup)
+    if estrategia_id:
+        q = q.filter(CellGroup.evangelism_strategy_id == estrategia_id)
+    groups = q.order_by(CellGroup.name.asc()).all()
+    return [
+        {
+            "id": g.id,
+            "name": g.name,
+            "zone": g.zone,
+            "address": g.address,
+            "leader_name": g.leader_name,
+            "leader_id": str(g.leader_persona_id) if g.leader_persona_id else None,
+            "assistant_id": str(g.assistant_persona_id) if g.assistant_persona_id else None,
+            "host_id": str(g.host_persona_id) if g.host_persona_id else None,
+            "members_count": g.members_count or 0,
+            "capacity": g.capacity,
+            "day_of_week": g.day_of_week,
+            "start_time": g.start_time,
+            "status": g.status,
+            "evangelism_strategy_id": g.evangelism_strategy_id,
+        }
+        for g in groups
+    ]
 
 
 @router.get("/grupos/mine", response_model=List[dict])
@@ -155,7 +179,8 @@ def get_cell_group(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    house = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == grupo_id).first()
+    from backend.models_academy import CellGroup, CellGroupMember, CellGroupSession, CellGroupAttendance
+    house = db.query(CellGroup).filter(CellGroup.id == grupo_id).first()
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     if not _can_manage_grupo(db, current_user, house):
@@ -164,17 +189,17 @@ def get_cell_group(
         )
 
     base_rows = (
-        db.query(models.ParticipanteGrupo, models.Persona)
-        .join(models.Persona, models.Persona.id == models.ParticipanteGrupo.persona_id)
-        .filter(models.ParticipanteGrupo.grupo_id == grupo_id)
+        db.query(CellGroupMember, models.Persona)
+        .join(models.Persona, models.Persona.id == CellGroupMember.persona_id)
+        .filter(CellGroupMember.cell_group_id == grupo_id)
         .order_by(models.Persona.nombre_completo.asc())
         .all()
     )
     base_attendees = [
         {
-            "persona_id": persona.id,
+            "persona_id": str(persona.id),
             "name": persona.nombre_completo,
-            "role": row.role,
+            "role": row.role or "miembro",
             "church_role": persona.church_role,
             "phone": persona.telefono,
         }
@@ -183,15 +208,14 @@ def get_cell_group(
     base_attendee_ids = [item["persona_id"] for item in base_attendees]
 
     sessions = (
-        db.query(models.SesionGrupo)
-        .filter(models.SesionGrupo.grupo_id == grupo_id)
-        .order_by(models.SesionGrupo.fecha_sesion.desc())
+        db.query(CellGroupSession)
+        .filter(CellGroupSession.cell_group_id == grupo_id)
+        .order_by(CellGroupSession.session_date.desc())
         .limit(20)
         .all()
     )
 
-    expected_rows = expected_group_rows(db, grupo_id)
-    expected_count = len(expected_rows)
+    expected_count = len(base_attendees)
     absence_counter = collections.Counter()
     absence_details: dict[int, list[dict]] = collections.defaultdict(list)
     attendance_by_session = collections.defaultdict(list)
@@ -200,55 +224,42 @@ def get_cell_group(
         from sqlalchemy import func as sqlfunc
 
         session_ids = [session.id for session in sessions]
-        season_ids = list({session.season_id for session in sessions})
         attendance_rows = (
-            db.query(models.Asistencia)
-            .options(joinedload(models.Asistencia.persona))
-            .filter(models.Asistencia.sesion_id.in_(session_ids))
+            db.query(CellGroupAttendance)
+            .filter(CellGroupAttendance.session_id.in_(session_ids))
             .all()
         )
         for row in attendance_rows:
             attendance_by_session[row.session_id].append(row)
-            if not row.attended and row.persona:
+            if not row.attended and row.persona_id:
                 absence_counter[row.persona_id] += 1
                 absence_details[row.persona_id].append(
                     {
                         "session_id": row.session_id,
-                        "session_date": (
-                            row.session.session_date.isoformat()
-                            if row.session and row.session.session_date
-                            else None
-                        ),
+                        "session_date": None,
                         "reason": row.absence_reason,
                         "reason_detail": row.absence_reason_detail,
                     }
                 )
         attendance_counts = (
             db.query(
-                models.Asistencia.sesion_id,
-                sqlfunc.count(models.Asistencia.id).label("cnt"),
+                CellGroupAttendance.session_id,
+                sqlfunc.count(CellGroupAttendance.id).label("cnt"),
             )
-            .filter(models.Asistencia.sesion_id.in_(session_ids))
-            .group_by(models.Asistencia.sesion_id)
+            .filter(CellGroupAttendance.session_id.in_(session_ids))
+            .group_by(CellGroupAttendance.session_id)
             .all()
         )
         attendance_map = {row.session_id: row.cnt for row in attendance_counts}
-        seasons_batch = (
-            db.query(models.CampaignSeason)
-            .filter(models.CampaignSeason.id.in_(season_ids))
-            .all()
-        )
-        season_map = {season.id: season.name for season in seasons_batch}
     else:
         attendance_map = {}
-        season_map = {}
 
     sessions_data = [
         {
             "id": session.id,
+            "glory_house_id": session.cell_group_id,
             "session_date": session.session_date.isoformat(),
             "status": session.status,
-            "season_name": season_map.get(session.season_id),
             "attendance_count": attendance_map.get(session.id, 0),
             "present_count": sum(
                 1 for row in attendance_by_session.get(session.id, []) if row.attended
@@ -275,9 +286,7 @@ def get_cell_group(
                 else 0
             ),
             "topic": session.topic,
-            "report_deadline": (
-                session.report_deadline.isoformat() if session.report_deadline else None
-            ),
+            "report_deadline": None,
             "offering_amount": (
                 float(session.offering_amount)
                 if session.offering_amount is not None
@@ -321,14 +330,10 @@ def get_cell_group(
         for session in monitoring_sessions
     ]
 
-    member_lookup = {member.id: member for _, member in expected_rows}
     repeat_absentees = []
     for persona_id, count in absence_counter.items():
         if count >= 2:
-            p = (
-                member_lookup.get(persona_id)
-                or db.query(models.Persona).filter(models.Persona.id == persona_id).first()
-            )
+            p = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
             repeat_absentees.append(
                 {
                     "persona_id": persona_id,
@@ -424,9 +429,8 @@ def update_cell_group(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    house_db = (
-        db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == grupo_id).first()
-    )
+    from backend.models_academy import CellGroup
+    house_db = db.query(CellGroup).filter(CellGroup.id == grupo_id).first()
     if not house_db:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     if not _can_manage_grupo(db, current_user, house_db):
@@ -434,7 +438,7 @@ def update_cell_group(
             status_code=403, detail="No autorizado para este grupo"
         )
     if not _is_crm_admin_or_pastor(current_user):
-        allowed_fields = {"base_attendee_ids"}
+        allowed_fields = {"base_attendee_ids", "base_attendees_with_roles"}
         incoming_fields = set(payload.model_dump(exclude_unset=True).keys())
         if not incoming_fields:
             raise HTTPException(status_code=400, detail="No hay campos para actualizar")
@@ -446,7 +450,7 @@ def update_cell_group(
     house = crud.update_cell_group(db, grupo_id, payload)
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
-    return house
+    return {"id": house.id, "name": house.name, "members_count": house.members_count}
 
 
 @router.delete("/grupos/{grupo_id}", status_code=204)
@@ -456,7 +460,8 @@ def delete_cell_group(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Elimina un grupo de evangelismo."""
-    house = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == grupo_id).first()
+    from backend.models_academy import CellGroup
+    house = db.query(CellGroup).filter(CellGroup.id == grupo_id).first()
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     db.delete(house)
@@ -599,7 +604,7 @@ def list_my_pending_faro_sessions(
     if _is_crm_admin_or_pastor(current_user):
         house_ids = [row[0] for row in db.query(models.GrupoEvangelismo.id).all()]
     else:
-        member = _get_member_for_user(db, current_user.id)
+        persona = _get_member_for_user(db, current_user.id)
         if not member:
             return []
         house_ids = [
@@ -911,7 +916,7 @@ def add_faro_attendance(
     if attendees:
         processed = 0
         for item in attendees:
-            member_id = item.get("member_id")
+            member_id = item.get("persona_id")
             if not member_id:
                 continue
             attended = bool(item.get("attended", True))
@@ -1230,29 +1235,41 @@ def register_faro_visitor(
 
     db.commit()
 
-    return {"status": "created", "member_id": new_persona.id}
+    return {"status": "created", "persona_id": new_persona.id}
 
 
 # ── Sessions & Attendance ──
 
 @router.get("/sessions", response_model=List[dict])
 def list_sessions(
-    strategy_id: Optional[int] = None,
+    strategy_id: Optional[str] = None,
     house_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """List sessions, optionally filtered by strategy or house."""
     from backend.models_academy import CellGroupSession, CellGroup
-    
+
     q = db.query(CellGroupSession)
     if strategy_id:
         q = q.join(CellGroup, CellGroup.id == CellGroupSession.cell_group_id).filter(
             CellGroup.evangelism_strategy_id == strategy_id
         )
     if house_id:
-        q = q.filter(CellGroupSession.cell_group_id == grupo_id)
-    return q.order_by(CellGroupSession.session_date.desc()).all()
+        q = q.filter(CellGroupSession.cell_group_id == house_id)
+    rows = q.order_by(CellGroupSession.session_date.desc()).all()
+    return [
+        {
+            "id": s.id,
+            "glory_house_id": s.cell_group_id,
+            "session_date": s.session_date.isoformat() if s.session_date else None,
+            "status": s.status or "Realizada",
+            "topic": s.topic,
+            "offering_amount": float(s.offering_amount) if s.offering_amount else None,
+            "report_notes": s.report_notes,
+        }
+        for s in rows
+    ]
 
 
 @router.post("/sessions", response_model=dict)
@@ -1264,8 +1281,11 @@ def create_session(
     """Create a new session."""
     from backend.models_academy import CellGroupSession as SessionModel
     
+    cell_group_id = data.grupo_id or data.glory_house_id
+    if not cell_group_id:
+        raise HTTPException(status_code=400, detail="grupo_id es requerido")
     db_session = SessionModel(
-        cell_group_id=data.grupo_id,
+        cell_group_id=cell_group_id,
         season_id=data.season_id,
         session_date=data.session_date,
         topic=data.topic,
@@ -1281,7 +1301,15 @@ def create_session(
     db.add(db_session)
     db.commit()
     db.refresh(db_session)
-    return db_session
+    return {
+        "id": db_session.id,
+        "glory_house_id": db_session.cell_group_id,
+        "session_date": db_session.session_date.isoformat() if db_session.session_date else None,
+        "status": db_session.status or "Realizada",
+        "topic": db_session.topic,
+        "offering_amount": float(db_session.offering_amount) if db_session.offering_amount else None,
+        "report_notes": db_session.report_notes,
+    }
 
 
 @router.get("/sessions/{session_id}", response_model=dict)

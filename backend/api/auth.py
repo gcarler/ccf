@@ -632,7 +632,7 @@ def google_callback(
 
         # Try to create member profile
         try:
-            member = models.Member(
+            persona = models.Persona(
                 user_id=user.id,
                 first_name=(
                     google_name.split(" ")[0]

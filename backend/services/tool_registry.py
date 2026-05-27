@@ -185,11 +185,11 @@ class CRMSearchMember(AgentTool):
         db = SessionLocal()
         try:
             term = f"%{query}%"
-            members = db.query(models.Member).filter(
-                models.Member.first_name.ilike(term)
-                | models.Member.last_name.ilike(term)
-                | models.Member.email.ilike(term)
-                | (models.Member.phone == query),
+            personas = db.query(models.Persona).filter(
+                models.Persona.first_name.ilike(term)
+                | models.Persona.last_name.ilike(term)
+                | models.Persona.email.ilike(term)
+                | (models.Persona.phone == query),
             ).limit(10).all()
             return {
                 "count": len(members),
@@ -225,8 +225,8 @@ class CRMGetMemberProfile(AgentTool):
     def parameters(self):
         return [
             ToolParameter(
-                name="member_id", type="integer",
-                description="Member ID",
+                name="persona_id", type="integer",
+                description="Persona ID",
             ),
         ]
 
@@ -236,11 +236,11 @@ class CRMGetMemberProfile(AgentTool):
 
         db = SessionLocal()
         try:
-            member = db.query(models.Member).filter(
-                models.Member.id == member_id,
+            persona = db.query(models.Persona).filter(
+                models.Persona.id == member_id,
             ).first()
             if not member:
-                return {"error": f"Member {member_id} not found"}
+                return {"error": f"Persona {member_id} not found"}
             return {
                 "id": member.id,
                 "name": f"{member.first_name} {member.last_name}",
@@ -467,7 +467,7 @@ class AnalyticsGetRadar(AgentTool):
         db = SessionLocal()
         try:
             return {
-                "members": db.query(models.Member).count(),
+                "members": db.query(models.Persona).count(),
                 "active_projects": db.query(models.Project).filter(
                     models.Project.status == "active",
                 ).count(),

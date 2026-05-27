@@ -760,9 +760,9 @@ def get_member_academy_profile(
     current_user: models.User = Depends(require_coordinator_or_admin),
 ):
     """Obtiene el perfil académico de un miembro del CRM."""
-    member = db.query(models.Member).filter(models.Member.id == member_id).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Persona not found")
 
     if not member.user_id:
         return {"is_linked": False, "message": "No tiene cuenta de academia vinculada"}
@@ -806,9 +806,9 @@ def create_academy_account(
     current_user: models.User = Depends(require_coordinator_or_admin),
 ):
     """Crea una cuenta de usuario (Academia) para un miembro del CRM."""
-    member = db.query(models.Member).filter(models.Member.id == member_id).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Persona not found")
 
     if member.user_id:
         raise HTTPException(
@@ -841,7 +841,7 @@ def create_academy_account(
         action="create_member_academy_account",
         resource_type="user",
         resource_id=str(new_user.id),
-        metadata={"member_id": member_id},
+        metadata={"persona_id": member_id},
     )
 
     return {"status": "success", "user_id": new_user.id, "username": new_user.username}

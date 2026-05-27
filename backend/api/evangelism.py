@@ -71,8 +71,8 @@ def get_counseling_ticket(
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
-    member = (
-        db.query(models.Member).filter(models.Member.id == ticket.persona_id).first()
+    persona = (
+        db.query(models.Persona).filter(models.Persona.id == ticket.persona_id).first()
     )
     related_history = (
         db.query(models.CounselingTicket)
@@ -84,7 +84,7 @@ def get_counseling_ticket(
 
     return {
         "id": ticket.id,
-        "member_id": ticket.persona_id,
+        "persona_id": ticket.persona_id,
         "member_name": (
             f"{member.first_name} {member.last_name}" if member else "Miembro CCF"
         ),
@@ -286,7 +286,7 @@ def _channel_label(channel: str) -> str:
 
 
 def _member_matches_segment(
-    member: models.Member, segment: str, donation_member_ids: set[int]
+    member: models.Persona, segment: str, donation_member_ids: set[int]
 ) -> bool:
     value = str(segment or "").strip().lower()
     if value == "active":
@@ -320,7 +320,7 @@ def _member_matches_segment(
     return False
 
 
-def _resolve_campaign_members(db: Session, segments: list[str]) -> list[models.Member]:
+def _resolve_campaign_members(db: Session, segments: list[str]) -> list[models.Persona]:
     normalized_segments = [
         segment for segment in (s.strip().lower() for s in segments) if segment
     ]
@@ -334,10 +334,10 @@ def _resolve_campaign_members(db: Session, segments: list[str]) -> list[models.M
         .distinct()
         .all()
     }
-    members = db.query(models.Member).all()
+    personas = db.query(models.Persona).all()
     selected = []
     seen_ids: set[int] = set()
-    for member in members:
+    for persona in members:
         if member.id in seen_ids:
             continue
         if any(
@@ -352,7 +352,7 @@ def _resolve_campaign_members(db: Session, segments: list[str]) -> list[models.M
 def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     ordered = sorted(logs, key=lambda log: log.created_at or datetime.min, reverse=True)
     representative = ordered[0]
-    member = getattr(representative, "member", None)
+    persona = getattr(representative, "member", None)
     member_name = f"{member.first_name} {member.last_name}" if member else "Desconocido"
     campaign_name = next(
         (log.campaign_name for log in ordered if log.campaign_name), None
@@ -425,7 +425,7 @@ def get_messaging_history(
     except Exception:
         logger.exception(
             "Failed to list CRM messaging history",
-            extra={"member_id": member_id, "limit": limit},
+            extra={"persona_id": member_id, "limit": limit},
         )
         raise HTTPException(
             status_code=500, detail="No se pudo consultar el historial de mensajes"
@@ -478,7 +478,7 @@ async def send_crm_message(
     )
     from backend.services.messaging import MessagingGateway
 
-    member_id = payload.get("member_id")
+    member_id = payload.get("persona_id")
     channel = _channel_label(payload.get("channel", "WhatsApp"))
     content = payload.get("content")
     campaign_name = payload.get("campaign_name") or payload.get("name")
@@ -489,7 +489,7 @@ async def send_crm_message(
                 raise HTTPException(
                     status_code=400, detail="campaign_name and content required"
                 )
-            members = _resolve_campaign_members(db, list(target_segments))
+            personas = _resolve_campaign_members(db, list(target_segments))
             if not members:
                 raise HTTPException(
                     status_code=404,
@@ -500,7 +500,7 @@ async def send_crm_message(
             logs: list[models.CommunicationLog] = []
             delivered_count = 0
             failed_count = 0
-            for member in members:
+            for persona in members:
                 try:
                     if channel.lower() == "whatsapp":
                         log = await MessagingGateway.send_whatsapp(
@@ -591,7 +591,7 @@ async def send_crm_message(
         logger.exception(
             "Failed to send CRM message",
             extra={
-                "member_id": member_id,
+                "persona_id": member_id,
                 "channel": channel,
                 "sender_user_id": getattr(current_user, "id", None),
                 "campaign_name": campaign_name,
@@ -609,7 +609,7 @@ def _serialize_crm_task(
     contact_name: Optional[str] = None,
     assignee_name: Optional[str] = None,
 ) -> dict:
-    member = getattr(task, "member", None)
+    persona = getattr(task, "member", None)
     member_name = contact_name or (
         f"{member.first_name} {member.last_name}" if member else None
     )
@@ -623,7 +623,7 @@ def _serialize_crm_task(
         "priority": task.priority,
         "category": task.category,
         "due_date": task.due_date.isoformat() if task.due_date else None,
-        "member_id": task.persona_id,
+        "persona_id": task.persona_id,
         "member_name": member_name,
         "contact_name": member_name,
         "assigned_to": assigned_to,
@@ -665,7 +665,7 @@ def list_crm_tasks(
             extra={
                 "status": status,
                 "assignee_id": assignee_id,
-                "member_id": member_id,
+                "persona_id": member_id,
             },
         )
         raise HTTPException(status_code=500, detail="No se pudo consultar las tareas")
@@ -750,7 +750,7 @@ async def create_crm_task(
             priority=payload.get("priority", "medium"),
             category=payload.get("category", "Pastoral"),
             assignee_id=current_user.id,
-            member_id=int(payload["member_id"]) if payload.get("member_id") else None,
+            member_id=int(payload["persona_id"]) if payload.get("persona_id") else None,
             due_date=due_date,
             created_at=utc_now(),
         )
@@ -809,12 +809,12 @@ def update_crm_task(
         "priority",
         "category",
         "due_date",
-        "member_id",
+        "persona_id",
     ]:
         if field in payload:
             if field == "due_date" and payload[field]:
                 setattr(task, field, datetime.fromisoformat(payload[field]))
-            elif field == "member_id" and payload[field]:
+            elif field == "persona_id" and payload[field]:
                 setattr(task, field, int(payload[field]))
             else:
                 setattr(task, field, payload[field])
@@ -871,9 +871,9 @@ def get_volunteer_detail(
     _warn_deprecated_crm_alias(
         "/api/evangelism/volunteers/{member_id}", "/api/crm/volunteers/{member_id}"
     )
-    member = db.query(models.Member).filter(models.Member.id == member_id).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Persona not found")
 
     shifts = (
         db.query(models.VolunteerShift)
@@ -938,9 +938,9 @@ def apply_volunteer(
         from datetime import timedelta
 
         # Crear un turno pendiente como postulaciÃ³n
-        member = (
-            db.query(models.Member)
-            .filter(models.Member.user_id == current_user.id)
+        persona = (
+            db.query(models.Persona)
+            .filter(models.Persona.user_id == current_user.id)
             .first()
         )
         if not member:
@@ -1039,7 +1039,7 @@ def validate_scanner_token(
         member_id = int(parts[2])
         secret = parts[3] if len(parts) > 3 else None
 
-        member = db.query(models.Member).filter(models.Member.id == member_id).first()
+        persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
 
         if not member:
             raise HTTPException(status_code=404, detail="Miembro no encontrado")
@@ -1052,7 +1052,7 @@ def validate_scanner_token(
 
         return {
             "valid": True,
-            "member_id": member.id,
+            "persona_id": member.id,
             "name": f"{member.first_name} {member.last_name}",
             "role": member.church_role,
             "status": member.spiritual_status,
@@ -1074,11 +1074,11 @@ def crm_analytics(
     """MÃ©tricas agregadas del CRM para el dashboard de analÃ­ticas."""
     from sqlalchemy import func as sqlfunc
 
-    total_members = db.query(models.Member).count()
+    total_members = db.query(models.Persona).count()
     active_members = (
-        db.query(models.Member)
+        db.query(models.Persona)
         .filter(
-            models.Member.spiritual_status.in_(["Activo", "active", "Miembro Activo"])
+            models.Persona.spiritual_status.in_(["Activo", "active", "Miembro Activo"])
         )
         .count()
     )

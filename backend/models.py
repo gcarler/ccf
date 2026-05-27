@@ -21,7 +21,7 @@ from backend.models_cms import (  # noqa: F401
     ContentPublication, MediaAsset,
     NewsletterSubscription, PageContent,
     PageContentVersion, Testimonial)
-# Personas (reemplaza Member — UUID PK)
+# Personas (reemplaza Persona — UUID PK)
 from backend.models_personas import Persona  # noqa: F401
 
 # CRM / Pastoral
@@ -33,7 +33,7 @@ from backend.models_crm import (  # noqa: F401
     ConsolidationInteraction, ConsolidationTask,
     CounselingTicket, CrmAutomation,
     CrmEvent, CrmTask, Donation, DonationCategory, EventAssignment,
-    EventAttendance, EvangelismStrategy, Fund, Member, MemberMinistry,
+    EventAttendance, EvangelismStrategy, Fund, Persona, MemberMinistry,
     MemberPosition, MemberRole, Ministry, PastoralCallLog, Position,
     PrayerRequest, RoleDefinition, SpiritualMilestone, SupportTicket,
     VolunteerShift, VolunteerSkill, member_volunteer_skills)

@@ -136,7 +136,7 @@ class GraphUpdateConsumer(EventConsumer):
         """Miembro cambió de estado → log."""
         log.info(
             "Graph update: member status changed for %s",
-            payload.get("member_id"),
+            payload.get("persona_id"),
         )
 
     def handle_spiritual_stage_transition(self, payload: Dict[str, Any]) -> None:

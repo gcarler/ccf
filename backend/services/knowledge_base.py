@@ -157,13 +157,13 @@ class KnowledgeIndexer:
         """Indexa estadísticas de miembros (no datos personales)."""
         from backend import models
 
-        total = self.db.query(models.Member).count()
+        total = self.db.query(models.Persona).count()
         by_role = {}
         for role, cnt in self.db.query(
-            models.Member.church_role, func.count(models.Member.id),
+            models.Persona.church_role, func.count(models.Persona.id),
         ).filter(
-            models.Member.church_role.isnot(None),
-        ).group_by(models.Member.church_role).all():
+            models.Persona.church_role.isnot(None),
+        ).group_by(models.Persona.church_role).all():
             by_role[role] = cnt
 
         self._upsert_kb(

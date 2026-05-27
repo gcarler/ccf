@@ -168,7 +168,7 @@ class Ministry(Base):
     )
     created_at = Column(DateTime, default=_utcnow)
 
-    members = relationship(
+    personas = relationship(
         "Persona",
         secondary="member_ministries",
         primaryjoin="Ministry.id == MemberMinistry.ministry_id",
@@ -201,8 +201,8 @@ class ColombianCity(Base):
     department = relationship("ColombianDepartment", back_populates="cities")
 
 
-class Member(Base):
-    __tablename__ = "members"
+class Persona(Base):
+    __tablename__ = "personas"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(
         Integer,

@@ -2,7 +2,7 @@
 Public Contact Tracking Service (Task 3.1)
 
 Reusable service that encapsulates the pattern:
-  "find-or-create Member, create ConsolidationCase/Pipeline lead, track source"
+  "find-or-create Persona, create ConsolidationCase/Pipeline lead, track source"
 
 All public-facing endpoints should use this service instead of inline duplication.
 """
@@ -38,7 +38,7 @@ class ContactRecord:
 @dataclass
 class ContactResult:
     """Output record after tracking a contact."""
-    member: Optional[models.Member] = None
+    member: Optional[models.Persona] = None
     member_created: bool = False
     case: Optional[models.ConsolidationCase] = None
     case_created: bool = False
@@ -66,12 +66,12 @@ class PublicContactTracker:
         email = _normalize(record.email)
         phone = _normalize(record.phone)
 
-        # 1. Find existing Member by phone or email
-        member = self._find_member(db, email, phone)
+        # 1. Find existing Persona by phone or email
+        persona = self._find_member(db, email, phone)
 
-        # 2. Create Member if not found
+        # 2. Create Persona if not found
         if not member:
-            member = models.Member(
+            persona = models.Persona(
                 first_name=record.first_name or "Visitante",
                 last_name=record.last_name or "",
                 email=email,
@@ -83,11 +83,11 @@ class PublicContactTracker:
             db.flush()
             result.member_created = True
             logger.info(
-                f"New Member created via public contact: "
+                f"New Persona created via public contact: "
                 f"{member.first_name} {member.last_name} ({email or phone})"
             )
 
-        result.member = member
+        result.persona = member
 
         # 3. Create ConsolidationCase
         notes_lines = list(record.extra_notes)
@@ -115,18 +115,18 @@ class PublicContactTracker:
     @staticmethod
     def _find_member(
         db: Session, email: Optional[str], phone: Optional[str]
-    ) -> Optional[models.Member]:
-        """Find an existing Member by email or phone."""
+    ) -> Optional[models.Persona]:
+        """Find an existing Persona by email or phone."""
         conditions = []
         if phone:
-            conditions.append(models.Member.phone == phone)
+            conditions.append(models.Persona.phone == phone)
         if email:
-            conditions.append(models.Member.email == email)
+            conditions.append(models.Persona.email == email)
 
         if not conditions:
             return None
 
-        return db.query(models.Member).filter(or_(*conditions)).first()
+        return db.query(models.Persona).filter(or_(*conditions)).first()
 
 
 # Module-level convenience instance

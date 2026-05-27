@@ -113,7 +113,7 @@ def messaging_send(
     entry = crud.create_communication_log(
         db,
         schemas.CommunicationLogCreate(
-            member_id=payload.member_id,
+            member_id=payload.persona_id,
             channel=payload.channel,
             content=payload.content,
             leader_id=current_user.id,

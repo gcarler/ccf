@@ -314,7 +314,7 @@ def list_admin_members(
     db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)
 ):
     """Lista miembros para administracion."""
-    members = db.query(models.Member).all()
+    personas = db.query(models.Persona).all()
     return [
         {
             "id": m.id,
@@ -536,7 +536,7 @@ def award_milestone_bulk(
 
     awarded_count = 0
     for m_id in member_ids:
-        member = db.query(models.Member).filter(models.Member.id == m_id).first()
+        persona = db.query(models.Persona).filter(models.Persona.id == m_id).first()
         if member and member.user_id:
             # Verificar si ya lo tiene
             exists = (

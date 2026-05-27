@@ -20,14 +20,14 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/register", response_model=schemas.MemberResponse)
+@router.post("/register", response_model=schemas.PersonaResponse)
 def public_register_event(
     payload: schemas.PublicRegistrationCreate, db: Session = Depends(get_db)
 ) -> Any:
     """
     Registra a una persona desde un QR pblico y vincula su asistencia a un evento.
     Si la persona ya existe (por email o telfono), se usa ese perfil.
-    Si no existe, se crea un nuevo Member con spiritual_status = 'Nuevo'.
+    Si no existe, se crea un nuevo Persona con spiritual_status = 'Nuevo'.
     """
     event = (
         db.query(models.CrmEvent).filter(models.CrmEvent.id == payload.event_id).first()
@@ -36,20 +36,20 @@ def public_register_event(
         raise HTTPException(status_code=404, detail="Evento no encontrado.")
 
     # 1. Buscar si ya existe el miembro por email o telfono
-    member = None
+    persona = None
     if payload.email or payload.phone:
-        query = db.query(models.Member)
+        query = db.query(models.Persona)
         conditions = []
         if payload.email:
-            conditions.append(models.Member.email == payload.email)
+            conditions.append(models.Persona.email == payload.email)
         if payload.phone:
-            conditions.append(models.Member.phone == payload.phone)
+            conditions.append(models.Persona.phone == payload.phone)
 
-        member = query.filter(or_(*conditions)).first()
+        persona = query.filter(or_(*conditions)).first()
 
     # 2. Si no existe, lo creamos
     if not member:
-        member = models.Member(
+        persona = models.Persona(
             first_name=payload.first_name,
             last_name=payload.last_name,
             email=payload.email,
@@ -75,7 +75,7 @@ def public_register_event(
         .filter(
             models.EventAttendance.event_id == event.id,
             models.EventAttendance.session_date == session_date,
-            models.EventAttendance.member_id == member.id,
+            models.EventAttendance.persona_id == member.id,
         )
         .first()
     )
@@ -138,7 +138,7 @@ def public_newsletter_subscribe(
 ):
     """
     Registra un correo en el boletín (Newsletter).
-    Además crea un Member y ConsolidationCase para que el equipo CRM pueda dar seguimiento.
+    Además crea un Persona y ConsolidationCase para que el equipo CRM pueda dar seguimiento.
     """
     email = payload.email.strip().lower()
     existing_sub = (
@@ -186,7 +186,7 @@ def public_course_enroll(
 ):
     """
     Inscripción pública a un curso.
-    Crea User + Member + Enrollment + ConsolidationCase para visibilidad en CRM.
+    Crea User + Persona + Enrollment + ConsolidationCase para visibilidad en CRM.
     """
     course = (
         db.query(models.Course)
@@ -240,7 +240,7 @@ def public_course_enroll(
             "enrollment_id": existing_enroll.id,
         }
 
-    # Buscar Member existente o crearlo via tracker unificado
+    # Buscar Persona existente o crearlo via tracker unificado
     notes_parts = [f"Curso: {course.title}"]
 
     result = tracker.record_contact(db, ContactRecord(
@@ -255,7 +255,7 @@ def public_course_enroll(
         church_role="Visitante",
         extra_notes=notes_parts,
     ))
-    member = result.member
+    persona = result.member
     case = result.case
 
     # Crear Enrollment
@@ -296,7 +296,7 @@ def public_course_enroll(
         "user_id": user.id,
         "course_id": course_id,
         "enrollment_id": enrollment.id,
-        "member_id": member.id if member else None,
+        "persona_id": member.id if member else None,
         "course_title": course.title,
     }
 
@@ -313,7 +313,7 @@ class PublicContactCreate(BaseModel):
 def public_contact(payload: PublicContactCreate, db: Session = Depends(get_db)):
     """
     Recibe un contacto desde un formulario público (ej. Conocer a Jesús).
-    Usa el tracker unificado para crear Member + ConsolidationCase.
+    Usa el tracker unificado para crear Persona + ConsolidationCase.
     """
     result = tracker.record_contact(db, ContactRecord(
         first_name=payload.full_name.strip().split(" ", 1)[0] if payload.full_name else "Anónimo",
@@ -341,7 +341,7 @@ def public_contact(payload: PublicContactCreate, db: Session = Depends(get_db)):
 
     return {
         "status": "success",
-        "member_id": result.member.id if result.member else None,
+        "persona_id": result.persona.id if result.member else None,
         "case_id": result.case.id if result.case else None,
     }
 
@@ -378,7 +378,7 @@ def public_wishlist(payload: WishlistCreate, db: Session = Depends(get_db)):
     return {
         "status": "success",
         "title": payload.title,
-        "member_id": result.member.id if result.member else None,
+        "persona_id": result.persona.id if result.member else None,
     }
 
 

@@ -395,30 +395,30 @@ async def send_crm_message(
         raise HTTPException(status_code=400, detail="channel and content are required")
 
     campaign_name = payload.get("campaign_name") or payload.get("name")
-    member_id = payload.get("member_id")
+    member_id = payload.get("persona_id")
     target_segments = payload.get("target_segments") or []
 
     if member_id:
         target_members = [{"id": int(member_id)}]
     else:
-        member_map: dict[int, models.Member] = {}
+        member_map: dict[int, models.Persona] = {}
         for segment in target_segments:
             normalized = str(segment).strip().lower()
             if normalized == "active":
                 rows = (
-                    db.query(models.Member)
-                    .filter(models.Member.church_role == "Miembro")
+                    db.query(models.Persona)
+                    .filter(models.Persona.church_role == "Miembro")
                     .all()
                 )
             elif normalized == "groups":
                 rows = (
-                    db.query(models.Member)
-                    .filter(models.Member.family_id.isnot(None))
+                    db.query(models.Persona)
+                    .filter(models.Persona.family_id.isnot(None))
                     .all()
                 )
             else:
                 rows = []
-            for member in rows:
+            for persona in rows:
                 member_map[member.id] = member
         target_members = list(member_map.values())
 
@@ -430,7 +430,7 @@ async def send_crm_message(
     failed_count = 0
     log_ids: list[int] = []
 
-    for member in target_members:
+    for persona in target_members:
         member_id_value = member["id"] if isinstance(member, dict) else member.id
         try:
             if channel == "whatsapp":
@@ -567,7 +567,7 @@ def create_crm_task(
         title=title,
         description=payload.get("description"),
         category=payload.get("category") or "Pastoral",
-        member_id=payload.get("member_id"),
+        member_id=payload.get("persona_id"),
         assignee_id=payload.get("assignee_id") or current_user.id,
         due_date=due_date,
         status=payload.get("status") or "pending",
@@ -630,7 +630,7 @@ def update_crm_task(
         "priority",
         "due_date",
         "assignee_id",
-        "member_id",
+        "persona_id",
     ):
         if field in payload:
             val = payload[field]
@@ -689,7 +689,7 @@ def get_counseling_detail(
     )
     return {
         "id": ticket.id,
-        "member_id": ticket.persona_id,
+        "persona_id": ticket.persona_id,
         "member_name": _persona_full_name(ticket.persona),
         "topic": ticket.subject,
         "summary": ticket.subject,
@@ -889,7 +889,7 @@ def list_counseling_tickets(
     return [
         {
             "id": t.id,
-            "member_id": t.persona_id,
+            "persona_id": t.persona_id,
             "member_name": _persona_full_name(t.persona) if t.persona else "",
             "topic": t.subject,
             "summary": t.subject,
@@ -911,7 +911,7 @@ def create_counseling_ticket(
     ticket = crud.create_counseling_ticket(db, payload)
     return {
         "id": ticket.id,
-        "member_id": ticket.persona_id,
+        "persona_id": ticket.persona_id,
         "member_name": _persona_full_name(ticket.persona) if ticket.persona else "",
         "topic": ticket.subject,
         "summary": ticket.subject,
@@ -937,7 +937,7 @@ def get_counseling_by_lead(
     return [
         {
             "id": t.id,
-            "member_id": t.persona_id,
+            "persona_id": t.persona_id,
             "member_name": _persona_full_name(t.persona) if t.persona else "",
             "topic": t.subject,
             "summary": t.subject,
@@ -976,7 +976,7 @@ def update_counseling_ticket(
     db.refresh(ticket)
     return {
         "id": ticket.id,
-        "member_id": ticket.persona_id,
+        "persona_id": ticket.persona_id,
         "member_name": _persona_full_name(ticket.persona) if ticket.persona else "",
         "topic": ticket.subject,
         "status": ticket.status,
@@ -1108,7 +1108,7 @@ def update_crm_role(
             raise HTTPException(
                 status_code=400, detail="Ya existe otro rol con ese nombre"
             )
-        db.query(models.Member).filter(models.Member.church_role == row.name).update(
+        db.query(models.Persona).filter(models.Persona.church_role == row.name).update(
             {"church_role": new_name}
         )
         row.name = new_name
@@ -1154,7 +1154,7 @@ def delete_crm_role(
         raise HTTPException(status_code=404, detail="Rol a eliminar no encontrado")
     if not fallback:
         raise HTTPException(status_code=400, detail="Rol de reemplazo no valido")
-    db.query(models.Member).filter(models.Member.church_role == role.name).update(
+    db.query(models.Persona).filter(models.Persona.church_role == role.name).update(
         {"church_role": fallback.name}
     )
     db.delete(role)
@@ -1170,11 +1170,11 @@ def get_crm_analytics_summary(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    total_members = db.query(models.Member).count()
+    total_members = db.query(models.Persona).count()
     active_members = (
-        db.query(models.Member)
+        db.query(models.Persona)
         .filter(
-            models.Member.spiritual_status.in_(["Activo", "active", "Miembro Activo"])
+            models.Persona.spiritual_status.in_(["Activo", "active", "Miembro Activo"])
         )
         .count()
     )
@@ -1214,14 +1214,14 @@ def create_public_prayer_request(
     db: Session = Depends(get_db),
 ):
     """Pedido de oracion desde pagina web publica (sin auth).
-    Crea PrayerRequest + Member + ConsolidationCase para que el equipo de
+    Crea PrayerRequest + Persona + ConsolidationCase para que el equipo de
     consolidacion pueda contactar para orar. Source='prayer-web'."""
     # Extract name parts
     name_parts = payload.requester_name.strip().split(" ", 1)
     first_name = name_parts[0] if name_parts else payload.requester_name
     last_name = name_parts[1] if len(name_parts) > 1 else ""
 
-    # Create Member + ConsolidationCase via ContactTracker
+    # Create Persona + ConsolidationCase via ContactTracker
     result = tracker.record_contact(db, ContactRecord(
         email=payload.email,
         phone=payload.phone,
@@ -1253,7 +1253,7 @@ def create_public_prayer_request(
         "category": prayer.category,
         "status": prayer.status,
         "source": prayer.source,
-        "member_id": result.persona.id if result.persona else None,
+        "persona_id": result.persona.id if result.persona else None,
         "case_id": result.case.id if result.case else None,
     }
 
@@ -1354,13 +1354,13 @@ def create_volunteer(
     if not name:
         raise HTTPException(status_code=400, detail="name is required")
 
-    member_id = payload.get("member_id")
+    member_id = payload.get("persona_id")
     if not member_id:
         # Create a minimal member record for standalone volunteers
         parts = name.split(" ", 1)
         first_name = parts[0]
         last_name = parts[1] if len(parts) > 1 else ""
-        member = models.Member(
+        persona = models.Persona(
             first_name=first_name,
             last_name=last_name,
             church_role=payload.get("role") or "volunteer",
@@ -1401,7 +1401,7 @@ def create_volunteer(
     db.refresh(shift)
     return {
         "id": shift.id,
-        "member_id": member_id,
+        "persona_id": member_id,
         "name": name,
         "team": shift.team_name,
         "status": shift.status,
@@ -1414,9 +1414,9 @@ def list_volunteers(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Lista todos los voluntarios con sus horas y ministerios."""
-    members = db.query(models.Member).all()
+    personas = db.query(models.Persona).all()
     result = []
-    for member in members:
+    for persona in members:
         shifts = (
             db.query(models.VolunteerShift)
             .filter(models.VolunteerShift.persona_id == member.id)
@@ -1445,7 +1445,7 @@ def get_volunteer_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    member = db.query(models.Member).filter(models.Member.id == member_id).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
     if not member:
         raise HTTPException(status_code=404, detail="Volunteer not found")
     shifts = (
@@ -1497,7 +1497,7 @@ def update_volunteer(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    member = db.query(models.Member).filter(models.Member.id == member_id).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
     if not member:
         raise HTTPException(status_code=404, detail="Volunteer not found")
     allowed = {"church_role", "first_name", "last_name", "phone", "email"}
@@ -1519,7 +1519,7 @@ def delete_volunteer(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    member = db.query(models.Member).filter(models.Member.id == member_id).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == member_id).first()
     if not member:
         raise HTTPException(status_code=404, detail="Volunteer not found")
     db.query(models.VolunteerShift).filter(
@@ -1554,7 +1554,7 @@ def get_crm_radar(
     current_user: models.User = Depends(require_active_user),
 ):
     """Datos del radar ministerial para dashboard."""
-    total_members = db.query(models.Member).count()
+    total_members = db.query(models.Persona).count()
     total_ministries = db.query(models.Ministry).count()
     active_cases = (
         db.query(models.ConsolidationCase)
@@ -1678,7 +1678,7 @@ def export_newsletter_leads_csv(
 
     rows = []
     for case in cases:
-        member = case.persona
+        persona = case.persona
         rows.append({
             "first_name": member.first_name if member else "",
             "last_name": member.last_name if member else "",

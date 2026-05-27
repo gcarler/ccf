@@ -81,15 +81,15 @@ def get_academy_dashboard(db: Session) -> schemas.AcademyDashboard:
 
 @cached(ttl=300)
 def get_crm_dashboard(db: Session) -> schemas.CrmDashboard:
-    total_members = db.query(models.Member).count()
+    total_members = db.query(models.Persona).count()
     active_cases = (
         db.query(models.ConsolidationCase)
         .filter(models.ConsolidationCase.status == "active")
         .count()
     )
     new_visits_30d = (
-        db.query(models.Member)
-        .filter(models.Member.created_at >= _utcnow() - timedelta(days=30))
+        db.query(models.Persona)
+        .filter(models.Persona.created_at >= _utcnow() - timedelta(days=30))
         .count()
     )
 
@@ -321,7 +321,7 @@ def get_dashboard_metrics(db: Session):
 
 def get_pastor_radar(db: Session):
     return {
-        "membresia_viva": db.query(models.Member).count(),
+        "membresia_viva": db.query(models.Persona).count(),
         "bautismos_este_anio": 0,
         "estudiantes_activos": db.query(models.Enrollment)
         .filter(models.Enrollment.status == "active")

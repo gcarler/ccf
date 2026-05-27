@@ -34,8 +34,8 @@ def _course_nodes(db: Session, limit: int) -> List[Dict[str, Any]]:
 
 def _person_nodes(db: Session, limit: int) -> List[Dict[str, Any]]:
     persons = (
-        db.query(models.Member)
-        .order_by(models.Member.created_at.desc())
+        db.query(models.Persona)
+        .order_by(models.Persona.created_at.desc())
         .limit(limit)
         .all()
     )
@@ -164,8 +164,8 @@ def build_graph_snapshot(
         person_id = None
         if enrollment.user_id is not None:
             person = (
-                db.query(models.Member)
-                .filter(models.Member.user_id == enrollment.user_id)
+                db.query(models.Persona)
+                .filter(models.Persona.user_id == enrollment.user_id)
                 .first()
             )
             if person:
@@ -202,8 +202,8 @@ def build_graph_snapshot(
 
     # Family membership edges
     family_members = (
-        db.query(models.Member)
-        .filter(models.Member.family_id.isnot(None))
+        db.query(models.Persona)
+        .filter(models.Persona.family_id.isnot(None))
         .limit(limit)
         .all()
     )

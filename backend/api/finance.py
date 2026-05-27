@@ -104,7 +104,7 @@ def get_transactions(
                 "description": d.donor_name or f"Donación #{d.id}",
                 "amount": d.amount,
                 "date": d.created_at.isoformat() if d.created_at else None,
-                "member_id": d.member_id,
+                "persona_id": d.persona_id,
             }
         )
     return result
@@ -231,7 +231,7 @@ def delete_fund(
 @router.get("/impact")
 def get_mission_impact(db: Session = Depends(get_db)):
     """Impacto social calculado en tiempo real. Público."""
-    total_members = db.query(func.count(models.Member.id)).scalar() or 0
+    total_members = db.query(func.count(models.Persona.id)).scalar() or 0
     total_families = db.query(func.count(models.Family.id)).scalar() or 0
     total_donations = db.query(func.sum(models.Donation.amount)).scalar() or 0
     total_enrollments = db.query(func.count(models.Enrollment.id)).scalar() or 0

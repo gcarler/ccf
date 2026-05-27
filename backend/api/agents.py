@@ -19,7 +19,7 @@ def analytics_summary(
     current_user: models.User = Depends(require_active_user),
 ):
     """Resumen global para el Dashboard de Administración."""
-    total_members = db.query(models.Member).count()
+    total_members = db.query(models.Persona).count()
     total_projects = db.query(models.Project).count()
     total_enrollments = db.query(models.Enrollment).count()
     total_certificates = db.query(models.Certificate).count()
@@ -352,13 +352,13 @@ def transition_stage(agent_id: int, data: StageTransition, db=Depends(get_db), c
 
 # ── Dual Write Hooks (Phase 2) ──
 # These are called from existing registration/member creation endpoints
-# to ensure a canonical Agent is created alongside User/Member records.
+# to ensure a canonical Agent is created alongside User/Persona records.
 
 from backend.models_agents import AgentAuth as AgentModelAuth
 
 
 def sync_member_to_agent(db: Session, member) -> int:
-    """Create an Agent from a Member if one doesn't exist yet."""
+    """Create an Agent from a Persona if one doesn't exist yet."""
     if member.user_id:
         existing = db.query(AgentModel).filter(
             or_(
@@ -388,7 +388,7 @@ def sync_member_to_agent(db: Session, member) -> int:
     db.add(agent)
     db.flush()
     
-    # Link Member to Agent via user_id (if Member has a User, link through that)
+    # Link Persona to Agent via user_id (if Persona has a User, link through that)
     if member.user_id:
         user = db.query(User).filter(User.id == member.user_id).first()
         if user:

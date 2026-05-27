@@ -118,12 +118,12 @@ def get_global_calendar(
     from sqlalchemy import func as sqlfunc
     today = datetime.now(timezone.utc).date()
     try:
-        members = db.query(models.Member).filter(
-            models.Member.birthday.isnot(None),
-            sqlfunc.extract("month", models.Member.birthday) >= 1,
+        personas = db.query(models.Persona).filter(
+            models.Persona.birthday.isnot(None),
+            sqlfunc.extract("month", models.Persona.birthday) >= 1,
         ).all()
     except Exception:
-        members = []
+        personas = []
 
     for m in members:
         if not m.birthday:
