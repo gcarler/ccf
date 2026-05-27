@@ -603,15 +603,15 @@ def list_my_pending_faro_sessions(
     if _is_crm_admin_or_pastor(current_user):
         house_ids = [row[0] for row in db.query(models.GrupoEvangelismo.id).all()]
     else:
-        persona = _get_member_for_user(db, current_user.id)
-        if not member:
+        persona = _get_persona_for_user(db, current_user.id)
+        if not persona:
             return []
         house_ids = [
             row[0]
             for row in db.query(models.GrupoEvangelismo.id)
             .filter(
-                (models.GrupoEvangelismo.lider_persona_id == member.id)
-                | (models.GrupoEvangelismo.asistente_persona_id == member.id)
+                (models.GrupoEvangelismo.lider_persona_id == persona.id)
+                | (models.GrupoEvangelismo.asistente_persona_id == persona.id)
             )
             .all()
         ]
@@ -735,7 +735,7 @@ def create_faro_session(
     if str(cell_group_id).lower() == "all":
         houses = (
             db.query(models.GrupoEvangelismo)
-            .filter(models.GrupoEvangelismo.activo == True)
+            .filter(models.GrupoEvangelismo.activo.is_(True))
             .all()
         )
         houses_to_process = [h.id for h in houses]
@@ -1104,7 +1104,7 @@ def get_macro_despliegue(
     # 2. Get all active houses
     houses = (
         db.query(models.GrupoEvangelismo)
-        .filter(models.GrupoEvangelismo.activo == True)
+        .filter(models.GrupoEvangelismo.activo.is_(True))
         .order_by(models.GrupoEvangelismo.nombre.asc())
         .all()
     )
